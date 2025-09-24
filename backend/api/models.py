@@ -102,7 +102,7 @@ class Produit(models.Model):
     rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True) 
     name = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     stock = models.IntegerField()
     cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True)
     cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True)
