@@ -6,6 +6,7 @@ import Ventes from './components/Ventes'
 import Fournisseurs from './components/Fournisseurs'
 import Clients from './components/Clients'
 import Rayons from './components/Rayons'
+import Facturation from './components/Facturation'
 
 const router = createBrowserRouter([
   {
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
       { path: 'fournisseurs', element: <Fournisseurs /> },
       { path: 'clients', element: <Clients /> },
       { path: 'rayons', element: <Rayons /> },
+      { path: 'facturation', element: <Facturation /> },
     ],
   },
 ])

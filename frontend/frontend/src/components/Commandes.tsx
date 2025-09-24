@@ -38,6 +38,9 @@ export default function Commandes() {
     date_expiration: '',
   });
 
+  const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -210,6 +213,11 @@ export default function Commandes() {
 
   function selectProduct(product: ProduitModel) {
     setSelectedProduitToAdd(product);
+    setLineItem(prev => ({
+      ...prev,
+      price: product.cost_price,
+      selling_price: product.selling_price,
+    }));
     setSearchProduitQuery('');
     setHighlightedIndex(-1);
   }
@@ -496,6 +504,55 @@ export default function Commandes() {
     }
   }
 
+  async function handleImprimerReception() {
+    if (!selectedCommande) {
+      setError("Aucune commande sélectionnée.");
+      return;
+    }
+
+    try {
+      const imprimerEndpoint = `${commandesEndpoint}${selectedCommande.id}/imprimer_reception/`;
+      const response = await axios.get(imprimerEndpoint, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `reception_commande_${selectedCommande.id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      setError("Erreur lors de l'impression du bon de réception.");
+      console.error(err);
+    }
+  }
+
+
+  const sortedCommandes = useMemo(() => {
+    const sorted = [...commandes].sort((a, b) => {
+      let valA, valB;
+      if (sortKey === 'numero') {
+        // Tri par numéro de facture (ou id si vide)
+        valA = a.numero_facture || a.id;
+        valB = b.numero_facture || b.id;
+      } else if (sortKey === 'date') {
+        valA = a.date;
+        valB = b.date;
+      } else if (sortKey === 'fournisseur') {
+        // Cherche le nom du fournisseur
+        const fA = fournisseurs.find(f => f.id === a.fournisseur)?.name || '';
+        const fB = fournisseurs.find(f => f.id === b.fournisseur)?.name || '';
+        valA = fA.toLowerCase();
+        valB = fB.toLowerCase();
+      }
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [commandes, sortKey, sortOrder, fournisseurs]);
+
 
   return (
     <>
@@ -521,20 +578,18 @@ export default function Commandes() {
             <table className="table table-zebra">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Date</th>
-                  <th>N° Facture</th>
-                  <th>Fournisseur</th>
+                  <th onClick={() => setSortKey('numero')}>N° Facture</th>
+                  <th onClick={() => setSortKey('date')}>Date</th>
+                  <th onClick={() => setSortKey('fournisseur')}>Fournisseur</th>
                   <th>Statut</th>
                   <th>Total (F)</th>
                 </tr>
               </thead>
               <tbody>
-                {commandes.map(commande => (
+                {sortedCommandes.map(commande => (
                   <tr key={commande.id} className="hover" onClick={() => setSelectedCommande(commande)}>
-                    <th className={selectedCommande?.id === commande.id ? 'bg-base-300' : ''}>{commande.id}</th>
+                    <td className={selectedCommande?.id === commande.id ? 'bg-base-300' : ''}>{commande.numero_facture || commande.id}</td>
                     <td>{new Date(commande.date).toLocaleString('fr-FR')}</td>
-                    <td>{commande.numero_facture}</td>
                     <td>{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
                     <td><span className="badge badge-ghost">{commande.status_display}</span></td>
                     <td>{commande.total}</td>
@@ -579,6 +634,13 @@ export default function Commandes() {
                   disabled={!selectedCommande}
                 >
                   Supprimer
+                </button>
+                <button 
+                  className="btn btn-primary btn-sm"
+                  onClick={handleImprimerReception}
+                  disabled={!selectedCommande || selectedCommande.status !== 'CLOT'}
+                >
+                  Imprimer le bon
                 </button>
               </div>
             </div>
