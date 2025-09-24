@@ -3,6 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import transaction
 from django.db.models import F
+from django.http import HttpResponse
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageBreak, PageTemplate, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from datetime import datetime
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProduitFilter
 from .models import (
@@ -39,6 +48,59 @@ class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all().order_by('name')
     serializer_class = ClientSerializer
 
+def header_footer(canvas, doc, company_info, commande_info, total_achat):
+    canvas.saveState()
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='RightAlign', alignment=2))
+    
+    page_width, page_height = letter
+    margin = doc.leftMargin
+    content_width = doc.width
+
+    # Header
+    header_data = [
+        [
+            Paragraph(f"<b>{company_info['name']}</b><br/>{company_info['address']}<br/>Tel: {company_info['tel']}", styles['Normal']),
+            Paragraph("<b>BON DE RÉCEPTION</b>", styles['h1'])
+        ]
+    ]
+    header_table = Table(header_data, colWidths=[content_width / 2, content_width / 2])
+    header_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+    ]))
+    w_header, h_header = header_table.wrapOn(canvas, content_width, doc.topMargin)
+    header_table.drawOn(canvas, margin, page_height - doc.topMargin - h_header)
+
+    # Separator line after header
+    canvas.line(margin, page_height - doc.topMargin - h_header - 0.1*inch, margin + content_width, page_height - doc.topMargin - h_header - 0.1*inch)
+
+    # Info box
+    info_data = [
+        [
+            Paragraph(f"<b>Fournisseur:</b><br/>{commande_info['fournisseur_name']}<br/>{commande_info['fournisseur_address']}", styles['Normal']),
+            Paragraph(f"<b>Commande N°:</b> {commande_info['commande_id']}<br/><b>Date Commande:</b> {commande_info['date_commande']}<br/><b>Date Réception:</b> {commande_info['date_reception']}", styles['Normal'])
+        ]
+    ]
+    info_table = Table(info_data, colWidths=[content_width / 2, content_width / 2])
+    info_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('TOPPADDING', (0,0), (-1,-1), 12)
+    ]))
+    w_info, h_info = info_table.wrapOn(canvas, content_width, doc.topMargin)
+    info_table.drawOn(canvas, margin, page_height - doc.topMargin - h_header - 0.1*inch - h_info - 0.1*inch)
+
+    # Footer
+    footer_texts = [
+        f"Page {doc.page}",
+        f"Montant Total: {total_achat} F"
+    ]
+    canvas.drawString(margin, 0.75 * inch, footer_texts[0])
+    canvas.drawRightString(margin + content_width, 0.75 * inch, footer_texts[1])
+    
+    canvas.restoreState()
+
 class CommandeViewSet(viewsets.ModelViewSet):
     """API endpoint for commandes."""
     queryset = Commande.objects.all().order_by('-date')
@@ -65,6 +127,92 @@ class CommandeViewSet(viewsets.ModelViewSet):
         commande.save(update_fields=['status'])
 
         return Response({'status': 'Commande clôturée et stock mis à jour.'})
+
+    @action(detail=True, methods=['get'])
+    def imprimer_reception(self, request, pk=None):
+        """
+        Génère un PDF pour le bon de réception d'une commande.
+        """
+        commande = self.get_object()
+
+        if commande.status != Commande.Status.CLOTUREE:
+            return Response({'detail': 'Le bon de réception ne peut être généré que pour une commande clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="reception_commande_{commande.id}.pdf"'
+
+        buffer = io.BytesIO()
+
+        company_info = {
+            "name": "Djadeu Pharmacy",
+            "address": "Logbessou",
+            "tel": "697268949"
+        }
+
+        commande_info = {
+            "commande_id": commande.id,
+            "fournisseur_name": commande.fournisseur.name,
+            "fournisseur_address": commande.fournisseur.address,
+            "date_commande": commande.date.strftime("%d/%m/%Y"),
+            "date_reception": datetime.now().strftime("%d/%m/%Y")
+        }
+
+        doc = BaseDocTemplate(buffer, pagesize=letter, topMargin=2.5*inch, bottomMargin=1*inch)
+        total_achat = sum(item.price * item.quantity for item in commande.produits.all())
+        
+        # Create a Frame for the content
+        frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')
+
+        # Create a PageTemplate and add the header/footer function
+        template = PageTemplate(id='main_template', frames=[frame], 
+                                onPage=lambda canvas, doc: header_footer(canvas, doc, company_info, commande_info, total_achat))
+        doc.addPageTemplates([template])
+
+        story = []
+        
+        # Table Header
+        data = [['ID', 'Nom', 'Prix Achat', 'Prix Vente', 'Stock Avant', 'Qte Reçue', 'Stock Après']]
+        
+        for item in commande.produits.all():
+            produit = item.produit
+            stock_apres = produit.stock
+            stock_avant = stock_apres - item.quantity
+            
+            data.append([
+                str(produit.id),
+                produit.name,
+                str(item.price),
+                str(produit.selling_price),
+                str(stock_avant),
+                str(item.quantity),
+                str(stock_apres)
+            ])
+
+        table = Table(data, colWidths=[0.5*inch, 2*inch, 1*inch, 1*inch, 1*inch, 1*inch, 1*inch])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#008080')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        
+        story.append(table)
+
+        styles = getSampleStyleSheet()
+        total_text = f"<b>Montant d'achat final: {total_achat} F</b>"
+        p_total = Paragraph(total_text, styles['h3'])
+        story.append(p_total)
+
+        doc.build(story)
+
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+
+        return response
 
 class CommandeProduitViewSet(viewsets.ModelViewSet):
     """API endpoint for commande produits."""

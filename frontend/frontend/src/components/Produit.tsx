@@ -149,16 +149,19 @@ export default function Produit() {
     return () => controller.abort()
   }, [])
 
+  // Trie toujours les produits par ordre alphabétique (nom)
   const filteredProduits = useMemo(() => {
-    if (!searchQuery) {
-      return produits;
+    let list = produits;
+    if (searchQuery) {
+      const q = searchQuery.trim().toLowerCase();
+      list = produits.filter(p => {
+        const inName = p.name?.toLowerCase().includes(q);
+        const inCips = [p.cip1, p.cip2, p.cip3].some(c => (c || '').toLowerCase().includes(q));
+        return inName || inCips;
+      });
     }
-    const q = searchQuery.trim().toLowerCase();
-    return produits.filter(p => {
-      const inName = p.name?.toLowerCase().includes(q);
-      const inCips = [p.cip1, p.cip2, p.cip3].some(c => (c || '').toLowerCase().includes(q));
-      return inName || inCips;
-    });
+    // Tri alphabétique par nom
+    return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [produits, searchQuery]);
 
   const selectedProduit = useMemo(
@@ -309,13 +312,13 @@ export default function Produit() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <div className="card bg-base-100 shadow">
-          <div className="card-body p-0">
+        {/* Liste des produits */}
+        <div className="card bg-base-100 shadow h-[700px] flex flex-col">
+          <div className="card-body p-0 flex-1 flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="card-title">Liste des produits</h2>
               {loading && <span className="loading loading-spinner loading-sm" />}
             </div>
-
             <div className="p-4 pb-0">
               <div className="join w-full">
                 <input
@@ -333,39 +336,41 @@ export default function Produit() {
                 <button className="btn join-item" onClick={() => setSearchQuery('')}>Effacer</button>
               </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="table table-zebra">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Nom</th>
-                    <th>Prix</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProduits.map((produit, index) => {
-                    const isSelected = produit.id === selectedProductId
-                    const isHighlighted = searchQuery && highlightedIndex === index
-                    return (
-                      <tr
-                        key={produit.id}
-                        className={`cursor-pointer ${
-                          isSelected ? 'active' : 'hover'
-                        } ${
-                          isHighlighted ? 'bg-primary text-primary-content' : ''
-                        }`}
-                        onClick={() => selectProduct(produit)}
-                      >
-                        <th>{produit.id}</th>
-                        <td className="uppercase">{produit.name}</td>
-                        <td>{produit.selling_price} F</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+            {/* Barre de défilement ici */}
+            <div className="overflow-x-auto flex-1">
+              <div className="h-full max-h-[500px] overflow-y-auto">
+                <table className="table table-zebra">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nom</th>
+                      <th>Prix</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProduits.map((produit, index) => {
+                      const isSelected = produit.id === selectedProductId
+                      const isHighlighted = searchQuery && highlightedIndex === index
+                      return (
+                        <tr
+                          key={produit.id}
+                          className={`cursor-pointer ${
+                            isSelected ? 'active' : 'hover'
+                          } ${
+                            isHighlighted ? 'bg-primary text-primary-content' : ''
+                          }`}
+                          onClick={() => selectProduct(produit)}
+                        >
+                          <th>{produit.id}</th>
+                          <td className="uppercase">{produit.name}</td>
+                          <td>{produit.selling_price} F</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-
             <div className="p-4 border-t flex flex-wrap gap-2 justify-end">
               <button className="btn btn-outline" onClick={handleRefresh}>
                 Actualiser
@@ -384,8 +389,9 @@ export default function Produit() {
           </div>
         </div>
 
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
+        {/* Détails du produit */}
+        <div className="card bg-base-100 shadow h-[700px] flex flex-col">
+          <div className="card-body flex-1">
             <h2 className="card-title">Détails du produit</h2>
             {!selectedProduit ? (
               <p className="text-base-content/70">Sélectionnez un produit dans la liste.</p>
