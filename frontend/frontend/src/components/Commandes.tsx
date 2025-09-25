@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent, useRef } from 'react'
 import axios from 'axios'
-import type { Fournisseur, ProduitModel, Commande, CommandeProduit } from '../types'
+import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
+import ProduitFormModal from './ProduitFormModal'
+ // Correction du nom du fichier
 
 export default function Commandes() {
   const [commandes, setCommandes] = useState<Commande[]>([])
@@ -11,6 +13,7 @@ export default function Commandes() {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false)
   const [isAddProductsModalOpen, setIsAddProductsModalOpen] = useState<boolean>(false)
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
+  const [rayons, setRayons] = useState<Rayon[]>([])
   const [newCommandeFournisseurId, setNewCommandeFournisseurId] = useState<string>('')
 
   // State for editing commande
@@ -41,6 +44,7 @@ export default function Commandes() {
   const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -52,7 +56,15 @@ export default function Commandes() {
   const fournisseursEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/fournisseurs/`
     : '/api/fournisseurs/'
-  const produitsEndpoint = apiBaseUrl ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/` : '/api/produits/'
+  const rayonsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/rayons/`
+    : '/api/rayons/'
+  const produitsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
+    : '/api/produits/'
+  const commandeProduitsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
+    : '/api/commande-produits/'
 
   // Filtrer les produits selon la recherche
   const filteredProduits = useMemo(() => {
@@ -73,14 +85,16 @@ export default function Commandes() {
       setError(null)
       try {
         // On récupère les commandes et les fournisseurs en parallèle
-        const [commandesResponse, fournisseursResponse, produitsResponse] = await Promise.all([
+        const [commandesResponse, fournisseursResponse, produitsResponse, rayonsResponse] = await Promise.all([
           axios.get<Commande[]>(commandesEndpoint, { signal: controller.signal }),
           axios.get<Fournisseur[]>(fournisseursEndpoint, { signal: controller.signal }),
           axios.get<ProduitModel[]>(produitsEndpoint, { signal: controller.signal }),
+          axios.get<Rayon[]>(rayonsEndpoint, { signal: controller.signal }),
         ])
         setCommandes(commandesResponse.data)
         setFournisseurs(fournisseursResponse.data)
         setProduitsList(produitsResponse.data)
+        setRayons(rayonsResponse.data)
       } catch (err: unknown) {
         if (axios.isCancel(err)) return
         if (axios.isAxiosError(err)) {
@@ -96,7 +110,7 @@ export default function Commandes() {
     fetchInitialData()
 
     return () => controller.abort()
-  }, [commandesEndpoint, fournisseursEndpoint, produitsEndpoint]) // Dépendances de l'effet
+  }, [commandesEndpoint, fournisseursEndpoint, produitsEndpoint, rayonsEndpoint]) // Dépendances de l'effet
 
   useEffect(() => {
     if (selectedCommande && !commandes.some(c => c.id === selectedCommande.id)) {
@@ -328,8 +342,8 @@ export default function Commandes() {
 
     try {
       const commandeProduitsEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
-        : '/api/commande-produits/';
+        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
+        : '/api/commande-produits/'
 
       // Ajouter tous les produits à la commande
       for (const produit of productsToAdd) {
@@ -388,8 +402,8 @@ export default function Commandes() {
       
       // Ajouter tous les produits à la commande
       const commandeProduitsEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
-        : '/api/commande-produits/';
+        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
+        : '/api/commande-produits/'
 
       for (const produit of commandeProduits) {
         const produitPayload = {
@@ -523,7 +537,7 @@ export default function Commandes() {
       link.click();
       link.parentNode.removeChild(link);
     } catch (err) {
-      setError("Erreur lors de l'impression du bon de réception.");
+      setError("Erreur lors de l\'impression du bon de réception.");
       console.error(err);
     }
   }
@@ -553,6 +567,15 @@ export default function Commandes() {
     return sorted;
   }, [commandes, sortKey, sortOrder, fournisseurs]);
 
+
+  // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
+  function handleProduitCreated(produit: ProduitModel) {
+    setProduitsList(prev => [...prev, produit]);
+    setSelectedProduitToAdd(produit);
+    setSearchProduitQuery('');
+    setHighlightedIndex(-1);
+    setIsCreateProduitModalOpen(false); // Fermer le modal après création
+  }
 
   return (
     <>
@@ -601,7 +624,7 @@ export default function Commandes() {
         </div>
       </div>
 
-        {/* Section des détails de la commande */}
+        {/* Section des détails de la commande */} 
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
                                     <div className="flex justify-between items-center">
@@ -706,7 +729,7 @@ export default function Commandes() {
         </div>
       </div>
 
-      {/* Modal d'ajout de commande */}
+      {/* Modal d'ajout de commande */} 
       <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-6xl">
           <div className="flex items-center justify-between mb-6">
@@ -720,8 +743,8 @@ export default function Commandes() {
             </button>
           </div>
           
-          <form className="space-y-6" onSubmit={handleAddCommande}>
-            {/* Informations de la commande */}
+          <form className="space-y-6" onSubmit={handleAddCommande}> 
+            {/* Informations de la commande */} 
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
                 Informations de la commande
@@ -758,11 +781,21 @@ export default function Commandes() {
               </div>
             </div>
 
-            {/* Ajout de produits */}
+            {/* Ajout de produits */} 
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
                 Ajouter des produits
               </h4>
+              {/* Bouton pour ouvrir le modal de création de produit */} 
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setIsCreateProduitModalOpen(true)}
+                >
+                  + Créer un nouveau produit
+                </button>
+              </div>
               
               <div className="p-4 border rounded-lg bg-base-50">
                 <div className="form-control mb-4">
@@ -829,7 +862,7 @@ export default function Commandes() {
                       </label>
                       <label className="form-control w-full">
                         <div className="label">
-                          <span className="label-text">Prix d'achat *</span>
+                          <span className="label-text">Prix d\'achat *</span>
                         </div>
                         <input 
                           type="number" 
@@ -868,7 +901,7 @@ export default function Commandes() {
                       </label>
                       <label className="form-control w-full">
                         <div className="label">
-                          <span className="label-text">Date d'expiration</span>
+                          <span className="label-text">Date d\'expiration</span>
                         </div>
                         <input 
                           type="date" 
@@ -893,7 +926,7 @@ export default function Commandes() {
               </div>
             </div>
 
-            {/* Liste des produits ajoutés */}
+            {/* Liste des produits ajoutés */} 
             {commandeProduits.length > 0 && (
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
@@ -906,7 +939,7 @@ export default function Commandes() {
                       <tr>
                         <th>Produit</th>
                         <th>Quantité</th>
-                        <th>Prix d'achat</th>
+                        <th>Prix d\'achat</th>
                         <th>Prix de vente</th>
                         <th>Lot</th>
                         <th>Actions</th>
@@ -937,7 +970,7 @@ export default function Commandes() {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions */} 
             <div className="modal-action pt-4">
               <button 
                 type="button" 
@@ -964,7 +997,7 @@ export default function Commandes() {
         </form>
       </dialog>
 
-      {/* Modal de modification de commande */}
+      {/* Modal de modification de commande */} 
       <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-2xl">
           <div className="flex items-center justify-between mb-6">
@@ -978,8 +1011,8 @@ export default function Commandes() {
             </button>
           </div>
           
-          <form className="space-y-6" onSubmit={handleEditCommande}>
-            {/* Informations de la commande */}
+          <form className="space-y-6" onSubmit={handleEditCommande}> 
+            {/* Informations de la commande */} 
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
                 Informations de la commande
@@ -1016,7 +1049,7 @@ export default function Commandes() {
               </label>
             </div>
 
-            {/* Informations de la commande actuelle */}
+            {/* Informations de la commande actuelle */} 
             {selectedCommande && (
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
@@ -1054,7 +1087,7 @@ export default function Commandes() {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions */} 
             <div className="modal-action pt-4">
               <button 
                 type="button" 
@@ -1080,7 +1113,7 @@ export default function Commandes() {
         </form>
       </dialog>
 
-      {/* Modal d'ajout de produits à une commande existante */}
+      {/* Modal d'ajout de produits à une commande existante */} 
       <dialog className={`modal ${isAddProductsModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-6xl">
           <div className="flex items-center justify-between mb-6">
@@ -1095,7 +1128,7 @@ export default function Commandes() {
           </div>
           
           <div className="space-y-6">
-            {/* Informations de la commande */}
+            {/* Informations de la commande */} 
             {selectedCommande && (
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
@@ -1133,11 +1166,21 @@ export default function Commandes() {
               </div>
             )}
 
-            {/* Ajout de produits */}
+            {/* Ajout de produits */} 
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
                 Ajouter des produits
               </h4>
+              {/* Bouton pour ouvrir le modal de création de produit */} 
+              <div className="flex justify-end mb-2">
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm"
+                  onClick={() => setIsCreateProduitModalOpen(true)}
+                >
+                  + Créer un nouveau produit
+                </button>
+              </div>
               
               <div className="p-4 border rounded-lg bg-base-50">
                 <div className="form-control mb-4">
@@ -1204,7 +1247,7 @@ export default function Commandes() {
                       </label>
                       <label className="form-control w-full">
                         <div className="label">
-                          <span className="label-text">Prix d'achat *</span>
+                          <span className="label-text">Prix d\'achat *</span>
                         </div>
                         <input 
                           type="number" 
@@ -1243,7 +1286,7 @@ export default function Commandes() {
                       </label>
                       <label className="form-control w-full">
                         <div className="label">
-                          <span className="label-text">Date d'expiration</span>
+                          <span className="label-text">Date d\'expiration</span>
                         </div>
                         <input 
                           type="date" 
@@ -1268,7 +1311,7 @@ export default function Commandes() {
               </div>
             </div>
 
-            {/* Liste des produits à ajouter */}
+            {/* Liste des produits à ajouter */} 
             {productsToAdd.length > 0 && (
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
@@ -1281,7 +1324,7 @@ export default function Commandes() {
                       <tr>
                         <th>Produit</th>
                         <th>Quantité</th>
-                        <th>Prix d'achat</th>
+                        <th>Prix d\'achat</th>
                         <th>Prix de vente</th>
                         <th>Lot</th>
                         <th>Actions</th>
@@ -1312,7 +1355,7 @@ export default function Commandes() {
               </div>
             )}
 
-            {/* Actions */}
+            {/* Actions */} 
             <div className="modal-action pt-4">
               <button 
                 type="button" 
@@ -1339,6 +1382,19 @@ export default function Commandes() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Modal de création de produit réutilisable */} 
+      <ProduitFormModal
+        open={isCreateProduitModalOpen}
+        onClose={() => setIsCreateProduitModalOpen(false)}
+        produitsEndpoint={produitsEndpoint}
+        onCreated={handleProduitCreated}
+        rayons={rayons}
+        fournisseurs={fournisseurs}
+        title="Créer un nouveau produit"
+      />
+
+      {/* ...existing code... */} 
     </>
   )
 }
