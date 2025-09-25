@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import axios from 'axios'
 
 import type { Fournisseur, Rayon, ProduitModel, ProduitForm, AchatProduit } from '../types'
+import ProduitCreateModal from './ProduitFormModal' // Correction du nom du fichier
 
 export default function Produit() {
   const [produits, setProduits] = useState<ProduitModel[]>([])
@@ -33,6 +34,7 @@ export default function Produit() {
   const [isEditing, setIsEditing] = useState<boolean>(false)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
+  const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   const apiBaseUrl = useMemo(
@@ -142,6 +144,7 @@ export default function Produit() {
         ])
         setRayons(r)
         setFournisseurs(f)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         /* silent load */
       }
@@ -288,6 +291,12 @@ export default function Produit() {
     fetchProduits(controller.signal)
   }
 
+  // Callback pour ajouter le produit créé à la liste
+  function handleProduitCreated(produit: ProduitModel) {
+    setProduits(prev => [...prev, produit]);
+    setIsCreateProduitModalOpen(false);
+  }
+
   return (
     <>
       <h1 className="text-3xl font-bold mb-4 text-center">Gestion des Produits</h1>
@@ -310,6 +319,16 @@ export default function Produit() {
           <span>{error}</span>
         </div>
       )}
+
+      {/* Bouton pour ouvrir le modal de création */}
+      <div className="flex justify-end mb-4">
+        <button
+          className="btn btn-primary"
+          onClick={() => setIsCreateProduitModalOpen(true)}
+        >
+          + Créer un nouveau produit
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Liste des produits */}
@@ -748,6 +767,14 @@ export default function Produit() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Modal de création de produit réutilisable */}
+      <ProduitCreateModal
+        open={isCreateProduitModalOpen}
+        onClose={() => setIsCreateProduitModalOpen(false)}
+        produitsEndpoint={produitsEndpoint}
+        onCreated={handleProduitCreated}
+      />
     </>
   )
 }
