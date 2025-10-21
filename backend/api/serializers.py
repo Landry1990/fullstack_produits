@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit
+    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit
 )
 
 class ProduitSerializer(serializers.ModelSerializer):
@@ -77,3 +77,36 @@ class CommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = ['id', 'fournisseur', 'numero_facture', 'date', 'status', 'status_display', 'total', 'produits']
+
+
+class FactureProduitSerializer(serializers.ModelSerializer):
+    # On imbrique le serializer du produit pour avoir tous les détails du produit
+    produit = ProduitSerializer(read_only=True)
+    # Pour permettre la création/mise à jour, on ajoute un champ pour l'ID.
+    produit_id = serializers.PrimaryKeyRelatedField(
+        queryset=Produit.objects.all(), source='produit', write_only=True
+    )
+
+    class Meta:
+        model = FactureProduit
+        fields = [
+            'id', 'produit', 'produit_id', 'quantity', 'selling_price', 'lot', 'date_expiration'
+        ]
+
+
+class FactureSerializer(serializers.ModelSerializer):
+    # On imbrique les lignes de facture pour les voir directement avec la facture.
+    produits = FactureProduitSerializer(many=True, read_only=True)
+    # On définit les totaux comme des champs en lecture seule qui utilisent les propriétés du modèle.
+    total_ht = serializers.ReadOnlyField()
+    total_tva = serializers.ReadOnlyField()
+    total_ttc = serializers.ReadOnlyField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    client_name = serializers.CharField(source='client.name', read_only=True)
+
+    class Meta:
+        model = Facture
+        fields = [
+            'id', 'client', 'client_name', 'numero_facture', 'date', 'status', 'status_display',
+            'remise', 'tva', 'notes', 'total_ht', 'total_tva', 'total_ttc', 'produits'
+        ]

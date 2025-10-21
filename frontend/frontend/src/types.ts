@@ -63,6 +63,9 @@ export interface CommandeProduit {
   produit: ProduitModel
   quantity: number
   price: string
+  selling_price?: string
+  lot?: string
+  date_expiration?: string
 }
 
 export interface Commande {
@@ -82,4 +85,30 @@ export interface Client {
   address: string;
   phone: string;
   email: string;
+}
+
+export interface FactureProduit {
+  id: number
+  produit: ProduitModel
+  quantity: number
+  selling_price: string
+  lot?: string
+  date_expiration?: string
+}
+
+export interface Facture {
+  id: number
+  client: number
+  client_name?: string
+  numero_facture: string | null
+  date: string
+  status: string
+  status_display: string
+  remise: string
+  tva: string
+  notes?: string
+  total_ht: string
+  total_tva: string
+  total_ttc: string
+  produits: FactureProduit[]
 }

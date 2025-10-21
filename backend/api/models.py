@@ -119,3 +119,67 @@ class Produit(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Facture(models.Model):
+    """Model representing a sales invoice."""
+    class Status(models.TextChoices):
+        BROUILLON = 'BROU', 'Brouillon'
+        VALIDEE = 'VAL', 'Validée'
+        PAYEE = 'PAY', 'Payée'
+        ANNULEE = 'ANN', 'Annulée'
+
+    id = models.AutoField(primary_key=True)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT)
+    numero_facture = models.CharField(max_length=100, blank=True, null=True)
+    date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=4,
+        choices=Status.choices,
+        default=Status.BROUILLON,
+    )
+    remise = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Facture {self.numero_facture or self.id}"
+    
+    @property
+    def total_ht(self):
+        """Calcule le total hors taxes."""
+        total_value = self.produits.aggregate(
+            total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
+        )['total']
+        return total_value or "0.00"
+    
+    @property
+    def total_tva(self):
+        """Calcule le montant de la TVA."""
+        total_ht = float(self.total_ht)
+        remise = float(self.remise)
+        return round((total_ht - remise) * (float(self.tva) / 100), 2)
+    
+    @property
+    def total_ttc(self):
+        """Calcule le total toutes taxes comprises."""
+        total_ht = float(self.total_ht)
+        remise = float(self.remise)
+        tva = self.total_tva
+        return round(total_ht - remise + tva, 2)
+
+
+class FactureProduit(models.Model):
+    """Model representing a product in an invoice."""
+    id = models.AutoField(primary_key=True)
+    produit = models.ForeignKey('Produit', on_delete=models.CASCADE)
+    facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='produits')
+    quantity = models.IntegerField()
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    lot = models.CharField(max_length=20, blank=True, null=True)
+    date_expiration = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Ligne de facture {self.id}"
