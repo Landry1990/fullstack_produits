@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState, type FormEvent, useRef } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
 import axios from 'axios'
 import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
 import ProduitFormModal from './ProduitFormModal'
- // Correction du nom du fichier
 
 export default function Commandes() {
   const [commandes, setCommandes] = useState<Commande[]>([])
@@ -42,9 +41,60 @@ export default function Commandes() {
   });
 
   const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder] = useState<'asc' | 'desc'>('desc');
 
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
+
+  // Fonction utilitaire pour valider les champs obligatoires
+  const validateProductFields = useCallback((quantity: string, price: string, selling_price: string) => {
+    if (!quantity || !price || !selling_price) {
+      return "Veuillez remplir tous les champs obligatoires (quantité, prix d'achat, prix de vente).";
+    }
+    if (parseInt(quantity, 10) <= 0) {
+      return "La quantité doit être supérieure à 0.";
+    }
+    if (parseFloat(price) <= 0) {
+      return "Le prix d'achat doit être supérieur à 0.";
+    }
+    if (parseFloat(selling_price) <= 0) {
+      return "Le prix de vente doit être supérieur à 0.";
+    }
+    return null;
+  }, []);
+
+  // Fonction utilitaire pour créer un objet CommandeProduit
+  const createCommandeProduit = useCallback((produit: ProduitModel, lineItem: any) => ({
+    id: Date.now(), // ID temporaire
+    produit,
+    quantity: parseInt(lineItem.quantity, 10),
+    price: lineItem.price,
+    selling_price: lineItem.selling_price,
+    lot: lineItem.lot,
+    date_expiration: lineItem.date_expiration,
+  }), []);
+
+  // Fonction utilitaire pour reset le formulaire de produit
+  const resetProductForm = useCallback(() => {
+    setSelectedProduitToAdd(null);
+    setLineItem({
+      quantity: '1',
+      price: '',
+      selling_price: '',
+      lot: '',
+      date_expiration: '',
+    });
+  }, []);
+
+  // Fonction utilitaire pour gérer les erreurs
+  const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
+    if (axios.isAxiosError(err)) {
+      const errorMessage = err.response?.data?.message || err.message || defaultMessage;
+      setError(errorMessage);
+    } else {
+      setError(defaultMessage);
+    }
+    console.error('Erreur API:', err);
+  }, []);
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -62,9 +112,6 @@ export default function Commandes() {
   const produitsEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
     : '/api/produits/'
-  const commandeProduitsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
-    : '/api/commande-produits/'
 
   // Filtrer les produits selon la recherche
   const filteredProduits = useMemo(() => {
@@ -123,31 +170,17 @@ export default function Commandes() {
     setNumeroFacture('')
     setCommandeProduits([])
     setSearchProduitQuery('')
-    setSelectedProduitToAdd(null)
     setHighlightedIndex(-1)
-    setLineItem({
-      quantity: '1',
-      price: '',
-      selling_price: '',
-      lot: '',
-      date_expiration: '',
-    })
+    resetProductForm()
     setIsAddModalOpen(true)
   }
 
   function closeAddModal() {
     setIsAddModalOpen(false)
     setSearchProduitQuery('')
-    setSelectedProduitToAdd(null)
     setHighlightedIndex(-1)
     setCommandeProduits([])
-    setLineItem({
-      quantity: '1',
-      price: '',
-      selling_price: '',
-      lot: '',
-      date_expiration: '',
-    })
+    resetProductForm()
   }
 
   function openEditModal() {
@@ -167,15 +200,8 @@ export default function Commandes() {
     if (!selectedCommande) return
     setProductsToAdd([])
     setSearchProduitQuery('')
-    setSelectedProduitToAdd(null)
     setHighlightedIndex(-1)
-    setLineItem({
-      quantity: '1',
-      price: '',
-      selling_price: '',
-      lot: '',
-      date_expiration: '',
-    })
+    resetProductForm()
     setIsAddProductsModalOpen(true)
   }
 
@@ -183,15 +209,8 @@ export default function Commandes() {
     setIsAddProductsModalOpen(false)
     setProductsToAdd([])
     setSearchProduitQuery('')
-    setSelectedProduitToAdd(null)
     setHighlightedIndex(-1)
-    setLineItem({
-      quantity: '1',
-      price: '',
-      selling_price: '',
-      lot: '',
-      date_expiration: '',
-    })
+    resetProductForm()
   }
 
   // Fonctions de navigation au clavier
@@ -229,8 +248,8 @@ export default function Commandes() {
     setSelectedProduitToAdd(product);
     setLineItem(prev => ({
       ...prev,
-      price: product.cost_price,
-      selling_price: product.selling_price,
+      price: product.cost_price || '',
+      selling_price: product.selling_price || '',
     }));
     setSearchProduitQuery('');
     setHighlightedIndex(-1);
@@ -243,39 +262,23 @@ export default function Commandes() {
     }
 
     // Validation des champs obligatoires
-    if (!lineItem.quantity || !lineItem.price || !lineItem.selling_price) {
-      setError("Veuillez remplir tous les champs obligatoires (quantité, prix d'achat, prix de vente).");
+    const validationError = validateProductFields(lineItem.quantity, lineItem.price, lineItem.selling_price);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
-      // Créer un objet CommandeProduit temporaire pour l'affichage avec toutes les informations
-      const tempCommandeProduit = {
-        id: Date.now(), // ID temporaire
-        produit: selectedProduitToAdd,
-        quantity: parseInt(lineItem.quantity, 10),
-        price: lineItem.price,
-        selling_price: lineItem.selling_price,
-        lot: lineItem.lot,
-        date_expiration: lineItem.date_expiration,
-      };
+      // Créer un objet CommandeProduit temporaire pour l'affichage
+      const tempCommandeProduit = createCommandeProduit(selectedProduitToAdd, lineItem);
 
       // Ajouter à la liste des produits de la commande
       setCommandeProduits(prev => [...prev, tempCommandeProduit]);
 
       // Reset form
-      setSelectedProduitToAdd(null);
-      setLineItem({
-        quantity: '1',
-        price: '',
-        selling_price: '',
-        lot: '',
-        date_expiration: '',
-      });
-
+      resetProductForm();
     } catch (err) {
-      setError("Erreur lors de l'ajout du produit.");
-      console.error(err);
+      handleApiError(err, "Erreur lors de l'ajout du produit.");
     }
   }
 
@@ -290,39 +293,23 @@ export default function Commandes() {
     }
 
     // Validation des champs obligatoires
-    if (!lineItem.quantity || !lineItem.price || !lineItem.selling_price) {
-      setError("Veuillez remplir tous les champs obligatoires (quantité, prix d'achat, prix de vente).");
+    const validationError = validateProductFields(lineItem.quantity, lineItem.price, lineItem.selling_price);
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
     try {
-      // Créer un objet CommandeProduit temporaire pour l'affichage avec toutes les informations
-      const tempCommandeProduit = {
-        id: Date.now(), // ID temporaire
-        produit: selectedProduitToAdd,
-        quantity: parseInt(lineItem.quantity, 10),
-        price: lineItem.price,
-        selling_price: lineItem.selling_price,
-        lot: lineItem.lot,
-        date_expiration: lineItem.date_expiration,
-      };
+      // Créer un objet CommandeProduit temporaire pour l'affichage
+      const tempCommandeProduit = createCommandeProduit(selectedProduitToAdd, lineItem);
 
       // Ajouter à la liste des produits à ajouter
       setProductsToAdd(prev => [...prev, tempCommandeProduit]);
 
       // Reset form
-      setSelectedProduitToAdd(null);
-      setLineItem({
-        quantity: '1',
-        price: '',
-        selling_price: '',
-        lot: '',
-        date_expiration: '',
-      });
-
+      resetProductForm();
     } catch (err) {
-      setError("Erreur lors de l'ajout du produit.");
-      console.error(err);
+      handleApiError(err, "Erreur lors de l'ajout du produit.");
     }
   }
 
@@ -371,13 +358,7 @@ export default function Commandes() {
       // Fermer le modal
       closeAddProductsModal()
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || err.message || 'Erreur lors de l\'ajout des produits'
-        setError(errorMessage)
-      } else {
-        setError('Erreur lors de l\'ajout des produits.')
-      }
-      console.error('Erreur lors de l\'ajout des produits:', err)
+      handleApiError(err, 'Erreur lors de l\'ajout des produits')
     }
   }
 
@@ -430,13 +411,7 @@ export default function Commandes() {
       // Fermer le modal
       closeAddModal()
     } catch (err) {
-      if (axios.isAxiosError(err)) {
-        const errorMessage = err.response?.data?.message || err.message || 'Erreur lors de la création de la commande'
-        setError(errorMessage)
-      } else {
-        setError('Erreur lors de la création de la commande.')
-      }
-      console.error('Erreur lors de la création de la commande:', err)
+      handleApiError(err, 'Erreur lors de la création de la commande')
     }
   }
 
@@ -465,8 +440,7 @@ export default function Commandes() {
       setSelectedCommande(updatedCommande)
       closeEditModal()
     } catch (err) {
-      setError('Erreur lors de la modification de la commande.')
-      console.error(err)
+      handleApiError(err, 'Erreur lors de la modification de la commande')
     }
   }
 
@@ -495,8 +469,7 @@ export default function Commandes() {
       setSelectedCommande(commandesResponse.data.find(c => c.id === selectedCommande.id) ?? null)
 
     } catch (err) {
-      setError("Erreur lors de la clôture de la commande.");
-      console.error(err);
+      handleApiError(err, "Erreur lors de la clôture de la commande")
     }
   }
 
@@ -512,8 +485,7 @@ export default function Commandes() {
         setCommandes(prev => prev.filter(c => c.id !== selectedCommande.id));
         setSelectedCommande(null);
       } catch (err) {
-        setError("Erreur lors de la suppression de la commande.");
-        console.error(err);
+        handleApiError(err, "Erreur lors de la suppression de la commande")
       }
     }
   }
@@ -535,10 +507,9 @@ export default function Commandes() {
       link.setAttribute('download', `reception_commande_${selectedCommande.id}.pdf`);
       document.body.appendChild(link);
       link.click();
-      link.parentNode.removeChild(link);
+      link.parentNode?.removeChild(link);
     } catch (err) {
-      setError("Erreur lors de l\'impression du bon de réception.");
-      console.error(err);
+      handleApiError(err, "Erreur lors de l\'impression du bon de réception")
     }
   }
 
@@ -560,8 +531,8 @@ export default function Commandes() {
         valA = fA.toLowerCase();
         valB = fB.toLowerCase();
       }
-      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      if (valA! < valB!) return sortOrder === 'asc' ? -1 : 1;
+      if (valA! > valB!) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
     return sorted;
@@ -576,6 +547,7 @@ export default function Commandes() {
     setHighlightedIndex(-1);
     setIsCreateProduitModalOpen(false); // Fermer le modal après création
   }
+
 
   return (
     <>
@@ -1388,6 +1360,8 @@ export default function Commandes() {
         open={isCreateProduitModalOpen}
         onClose={() => setIsCreateProduitModalOpen(false)}
         produitsEndpoint={produitsEndpoint}
+        rayonsEndpoint={rayonsEndpoint}
+        fournisseursEndpoint={fournisseursEndpoint}
         onCreated={handleProduitCreated}
         rayons={rayons}
         fournisseurs={fournisseurs}
