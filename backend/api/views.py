@@ -22,6 +22,7 @@ from .serializers import (
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer
 )
+from decimal import Decimal
 
 # Create your views here.
 
@@ -246,29 +247,57 @@ class FactureViewSet(viewsets.ModelViewSet):
         if facture.status == Facture.Status.VALIDEE:
             return Response({'detail': 'Cette facture est déjà validée.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Vérifier le stock avant validation
-        for item in facture.produits.all():
+        # Récupère et verrouille les lignes de facture + produits pour éviter les conditions de concurrence
+        items = FactureProduit.objects.select_for_update().select_related('produit').filter(facture=facture)
+
+        # Vérifier le stock avant validation (comparaisons en Decimal)
+        # Les quantités négatives sont autorisées (retours de produits)
+        for item in items:
             produit = item.produit
-            if produit.stock < item.quantity:
+            try:
+                qty = Decimal(str(item.quantity))
+                stock = Decimal(str(produit.stock))
+            except Exception:
+                return Response({'detail': f'Impossible de comparer les quantités pour le produit {produit.id}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Seulement vérifier le stock si la quantité est positive (vente)
+            # Les quantités négatives (retours) sont autorisées et augmenteront le stock
+            if qty > 0 and stock < qty:
                 return Response(
-                    {'detail': f'Stock insuffisant pour le produit {produit.name}. Stock disponible: {produit.stock}, Quantité demandée: {item.quantity}'},
+                    {'detail': f'Stock insuffisant pour le produit {produit.name}. Stock disponible: {stock}, Quantité demandée: {qty}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # Mettre à jour le stock pour chaque produit dans la facture
-        for item in facture.produits.all():
-            produit = item.produit
-            produit.stock = F('stock') - item.quantity
-            produit.save(update_fields=['stock'])
+        # Mettre à jour le stock (opération atomique au niveau DB)
+        # Si quantity est négatif, cela augmente le stock (retour)
+        # Si quantity est positif, cela diminue le stock (vente)
+        for item in items:
+            Produit.objects.filter(pk=item.produit.pk).update(stock=F('stock') - item.quantity)
 
-        # Changer le statut de la facture
+        # Changer le statut de la facture et générer un numéro si besoin
         facture.status = Facture.Status.VALIDEE
-        # Générer un numéro de facture si pas déjà défini
         if not facture.numero_facture:
             facture.numero_facture = f"FAC-{facture.id:06d}"
         facture.save(update_fields=['status', 'numero_facture'])
 
-        return Response({'status': 'Facture validée et stock mis à jour.'})
+        # Rafraîchir et sérialiser la facture
+        facture.refresh_from_db()
+        serializer = self.get_serializer(facture)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['delete'])
+    @transaction.atomic
+    def supprimer_brouillons(self, request):
+        """
+        Supprime toutes les factures en statut brouillon.
+        """
+        brouillons = Facture.objects.filter(status=Facture.Status.BROUILLON)
+        count = brouillons.count()
+        brouillons.delete()
+        return Response({
+            'detail': f'{count} facture(s) brouillon supprimée(s) avec succès.',
+            'count': count
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def marquer_payee(self, request, pk=None):

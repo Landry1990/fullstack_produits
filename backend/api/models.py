@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.db.models import Sum, F, DecimalField
+from decimal import Decimal
 
 # Create your models here
 
@@ -151,22 +152,31 @@ class Facture(models.Model):
         total_value = self.produits.aggregate(
             total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
         )['total']
-        return total_value or "0.00"
+        return total_value or Decimal('0.00')
     
     @property
     def total_tva(self):
         """Calcule le montant de la TVA."""
-        total_ht = float(self.total_ht)
-        remise = float(self.remise)
-        return round((total_ht - remise) * (float(self.tva) / 100), 2)
+        try:
+            total_ht = Decimal(str(self.total_ht))
+            remise = Decimal(str(self.remise))
+            tva_rate = Decimal(str(self.tva))
+            result = (total_ht - remise) * (tva_rate / 100)
+            return result.quantize(Decimal('0.01'))
+        except (ValueError, TypeError, AttributeError):
+            return Decimal('0.00')
     
     @property
     def total_ttc(self):
         """Calcule le total toutes taxes comprises."""
-        total_ht = float(self.total_ht)
-        remise = float(self.remise)
-        tva = self.total_tva
-        return round(total_ht - remise + tva, 2)
+        try:
+            total_ht = Decimal(str(self.total_ht))
+            remise = Decimal(str(self.remise))
+            tva = self.total_tva
+            result = total_ht - remise + tva
+            return result.quantize(Decimal('0.01'))
+        except (ValueError, TypeError, AttributeError):
+            return Decimal('0.00')
 
 
 class FactureProduit(models.Model):

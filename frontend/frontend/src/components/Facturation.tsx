@@ -1,116 +1,179 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import axios from 'axios'
+import type { ProduitModel, Client, Facture } from '../types'
 
-
-interface Produit {
-  id: number
-  name: string
-  stock: number
-  selling_price: string
-}
-
-interface LigneFacture {
-  produit: Produit
+// Interface locale pour la gestion des lignes de facture dans le state
+type LigneFacture = {
+  produit: ProduitModel
   quantite: number
   prix_unitaire: string
   total_ligne: number
 }
 
+type FactureProduitPayload = {
+  facture: number
+  produit_id: number
+  quantity: number
+  selling_price: string
+  lot: string | null
+  date_expiration: string | null
+}
+
+const normalizeNumberInput = (value: string | number, options?: { min?: number; max?: number }) => {
+  let parsedValue = typeof value === 'number' ? value : Number(value)
+
+  if (!Number.isFinite(parsedValue)) {
+    parsedValue = 0
+  }
+
+  if (options?.min !== undefined) {
+    parsedValue = Math.max(options.min, parsedValue)
+  }
+
+  if (options?.max !== undefined) {
+    parsedValue = Math.min(options.max, parsedValue)
+  }
+
+  return parsedValue
+}
+
 export default function Facturation() {
-  const [produits, setProduits] = useState<Produit[]>([])
-  const [clients, setClients] = useState<{id: number, name: string}[]>([])
+  const [produits, setProduits] = useState<ProduitModel[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<number | null>(null)
   const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
   const [loading, setLoading] = useState(false)
   const [remise, setRemise] = useState('0')
   const [tva, setTva] = useState('19.25')
   const [searchQuery, setSearchQuery] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
 
-  const apiBaseUrl = useMemo(
-    () => (import.meta.env.VITE_API_BASE_URL ?? ''),
-    [],
-  )
+  const apiBaseUrl = useMemo(() => {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+    return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
+  }, [])
   const produitsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
+    ? `${apiBaseUrl}/api/produits/`
     : '/api/produits/'
   const clientsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/clients/`
+    ? `${apiBaseUrl}/api/clients/`
     : '/api/clients/'
 
-  useEffect(() => {
-    fetchProduits()
-    fetchClients()
+  const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
+    if (axios.isAxiosError(err)) {
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message || defaultMessage
+      const errorData = err.response?.data
+      console.error('Erreur API:', {
+        status: err.response?.status,
+        data: errorData,
+        message: errorMessage
+      })
+      // Afficher plus de détails pour les erreurs 500
+      if (err.response?.status === 500) {
+        const fullError = errorData?.error || errorData?.traceback || JSON.stringify(errorData, null, 2)
+        setError(`${errorMessage}\n\nDétails: ${fullError}`)
+      } else {
+        setError(errorMessage)
+      }
+      setSuccessInfo(null)
+    } else {
+      setError(defaultMessage)
+      console.error('Erreur API:', err)
+    }
   }, [])
 
-  const fetchProduits = async () => {
-    try {
-      const response = await fetch(produitsEndpoint)
-      if (response.ok) {
-        const data = await response.json()
-        setProduits(data)
-      } else {
-        console.error('Erreur API produits:', response.status)
+  useEffect(() => {
+    const controller = new AbortController()
+    async function fetchInitialData() {
+      setLoading(true)
+      setError(null)
+      setSuccessInfo(null)
+      try {
+        const [produitsResponse, clientsResponse] = await Promise.all([
+          axios.get<ProduitModel[]>(produitsEndpoint, { signal: controller.signal }),
+          axios.get<Client[]>(clientsEndpoint, { signal: controller.signal }),
+        ])
+        setProduits(produitsResponse.data)
+        setClients(clientsResponse.data)
+      } catch (err) {
+        handleApiError(err, 'Erreur lors du chargement des données initiales.')
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Erreur lors du chargement des produits:', error)
     }
-  }
+    fetchInitialData()
+    return () => controller.abort()
+  }, [produitsEndpoint, clientsEndpoint, handleApiError])
 
-  const fetchClients = async () => {
-    try {
-      const response = await fetch(clientsEndpoint)
-      if (response.ok) {
-        const data = await response.json()
-        setClients(data)
-      } else {
-        console.error('Erreur API clients:', response.status)
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement des clients:', error)
-    }
-  }
-
-  const addProduitToFacture = (produit: Produit) => {
+  const addProduitToFacture = (produit: ProduitModel) => {
     const existingLigne = lignesFacture.find(ligne => ligne.produit.id === produit.id)
-    
+
     if (existingLigne) {
-      // Si le produit existe déjà, augmenter la quantité
-      const updatedLignes = lignesFacture.map(ligne => 
-        ligne.produit.id === produit.id 
-          ? { ...ligne, quantite: ligne.quantite + 1, total_ligne: (ligne.quantite + 1) * parseFloat(ligne.prix_unitaire) }
+      // Pour les quantités positives, vérifier le stock
+      // Pour les quantités négatives (retours), permettre sans limite
+      const nouvelleQuantite = existingLigne.quantite + 1
+      if (nouvelleQuantite > 0 && nouvelleQuantite > (produit.stock ?? 0)) {
+        setError(`Le stock pour "${produit.name}" est insuffisant. Stock disponible: ${produit.stock}`)
+        return
+      }
+      const updatedLignes = lignesFacture.map(ligne =>
+        ligne.produit.id === produit.id
+          ? {
+              ...ligne,
+              quantite: nouvelleQuantite,
+              total_ligne: Math.abs(nouvelleQuantite) * parseFloat(ligne.prix_unitaire),
+            }
           : ligne
       )
       setLignesFacture(updatedLignes)
     } else {
-      // Ajouter une nouvelle ligne
+      // Permettre l'ajout même si le stock est à 0 (pour les retours avec quantité négative)
+      const prixUnitaire = normalizeNumberInput(produit.selling_price ?? '0', { min: 0 })
       const nouvelleLigne: LigneFacture = {
         produit,
         quantite: 1,
-        prix_unitaire: produit.selling_price,
-        total_ligne: parseFloat(produit.selling_price)
+        prix_unitaire: produit.selling_price ?? '0',
+        total_ligne: prixUnitaire,
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
     }
   }
 
   const updateQuantite = (produitId: number, quantite: number) => {
-    if (quantite <= 0) {
+    // Permettre les quantités négatives (retours) et positives (ventes)
+    const normalizedQuantite = Math.floor(normalizeNumberInput(quantite))
+
+    if (normalizedQuantite === 0) {
       // Supprimer la ligne si quantité = 0
       setLignesFacture(lignesFacture.filter(ligne => ligne.produit.id !== produitId))
       return
     }
 
+    const ligne = lignesFacture.find(l => l.produit.id === produitId)
+    // Vérifier le stock seulement pour les quantités positives (ventes)
+    // Les quantités négatives (retours) sont autorisées
+    if (ligne && normalizedQuantite > 0 && normalizedQuantite > (ligne.produit.stock ?? 0)) {
+      setError(`La quantité ne peut pas dépasser le stock disponible (${ligne.produit.stock})`)
+      return
+    }
     const updatedLignes = lignesFacture.map(ligne => 
-      ligne.produit.id === produitId 
-        ? { ...ligne, quantite, total_ligne: quantite * parseFloat(ligne.prix_unitaire) }
+      ligne.produit.id === produitId
+        ? { 
+            ...ligne, 
+            quantite: normalizedQuantite, 
+            total_ligne: Math.abs(normalizedQuantite) * normalizeNumberInput(ligne.prix_unitaire, { min: 0 }) 
+          }
         : ligne
     )
     setLignesFacture(updatedLignes)
   }
 
   const updatePrix = (produitId: number, prix: string) => {
+    const prixNormalise = normalizeNumberInput(prix, { min: 0 })
     const updatedLignes = lignesFacture.map(ligne => 
       ligne.produit.id === produitId 
-        ? { ...ligne, prix_unitaire: prix, total_ligne: ligne.quantite * parseFloat(prix) }
+        ? { ...ligne, prix_unitaire: prix, total_ligne: Math.abs(ligne.quantite) * prixNormalise }
         : ligne
     )
     setLignesFacture(updatedLignes)
@@ -120,12 +183,21 @@ export default function Facturation() {
     setLignesFacture(lignesFacture.filter(ligne => ligne.produit.id !== produitId))
   }
 
-  const calculateTotal = () => {
-    const sousTotal = lignesFacture.reduce((total, ligne) => total + ligne.total_ligne, 0)
-    const remiseMontant = parseFloat(remise)
-    const montantTva = (sousTotal - remiseMontant) * (parseFloat(tva) / 100)
-    return sousTotal - remiseMontant + montantTva
-  }
+  const totals = useMemo(() => {
+    const sousTotal = lignesFacture.reduce((total, ligne) => total + normalizeNumberInput(ligne.total_ligne, { min: 0 }), 0)
+    const remiseMontant = Math.min(sousTotal, normalizeNumberInput(remise, { min: 0 }))
+    const tvaRate = normalizeNumberInput(tva, { min: 0 })
+    const baseHT = sousTotal - remiseMontant
+    const montantTva = Math.round(baseHT * (tvaRate / 100))
+    const totalTtc = baseHT + montantTva
+
+    return {
+      sousTotal,
+      remiseMontant,
+      montantTva,
+      totalTtc,
+    }
+  }, [lignesFacture, remise, tva])
 
   // Filtrer les produits selon la recherche
   const filteredProduits = produits.filter(produit =>
@@ -134,85 +206,146 @@ export default function Facturation() {
 
   const createFacture = async () => {
     if (!selectedClient) {
-      alert('Veuillez sélectionner un client')
+      setError('Veuillez sélectionner un client')
       return
     }
     if (lignesFacture.length === 0) {
-      alert('Veuillez ajouter au moins un produit')
+      setError('Veuillez ajouter au moins un produit')
       return
     }
 
     setLoading(true)
+    setError(null)
+    setSuccessInfo(null)
+    const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+    const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
+
     try {
-      const facturesEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/`
-        : '/api/factures/'
-      const factureProduitsEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/facture-produits/`
-        : '/api/facture-produits/'
-
-      // Créer la facture
-      const response = await fetch(facturesEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          client: selectedClient,
-          remise: remise,
-          tva: tva
-        })
-      })
-
-      if (response.ok) {
-        const facture = await response.json()
-        
-        // Ajouter les produits à la facture
-        for (const ligne of lignesFacture) {
-          await fetch(factureProduitsEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              facture: facture.id,
-              produit_id: ligne.produit.id,
-              quantity: ligne.quantite,
-              selling_price: ligne.prix_unitaire
-            })
-          })
-        }
-
-        alert('Facture créée avec succès !')
-        // Réinitialiser le formulaire
-        setLignesFacture([])
-        setSelectedClient(null)
-        setRemise('0')
-      } else {
-        alert('Erreur lors de la création de la facture')
+      // 1. Créer la facture en mode brouillon
+      const facturePayload = {
+        client: selectedClient,
+        remise: normalizeNumberInput(remise, { min: 0 }).toString(),
+        tva: normalizeNumberInput(tva, { min: 0 }).toString(),
       }
-    } catch (error) {
-      console.error('Erreur:', error)
-      alert('Erreur lors de la création de la facture')
+      const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
+
+      // 2. Ajouter les produits à la facture
+      const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => ({
+        facture: createdFacture.id,
+        produit_id: ligne.produit.id,
+        quantity: Number(ligne.quantite),
+        selling_price: normalizeNumberInput(ligne.prix_unitaire, { min: 0 }).toString(),
+        lot: null, // Ajout du champ lot
+        date_expiration: null, // Ajout du champ date_expiration
+      }))
+
+      // On peut utiliser Promise.all pour envoyer les requêtes en parallèle
+      await Promise.all(
+        produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
+      )
+
+      // 3. Valider la facture (le backend s'occupe du stock)
+      const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
+      const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint)
+
+      // 4. Afficher le succès et réinitialiser
+      setSuccessInfo(validatedFacture)
+      setLignesFacture([])
+      setSelectedClient(null)
+      setRemise('0')
+      
+      // Rafraîchir la liste des produits pour mettre à jour les stocks
+      try {
+        const produitsResponse = await axios.get<ProduitModel[]>(produitsEndpoint)
+        setProduits(produitsResponse.data)
+      } catch (err) {
+        console.error('Erreur lors du rafraîchissement des produits:', err)
+        // En cas d'erreur, essayer de mettre à jour manuellement avec les données de la facture validée
+        setProduits(prevProduits => 
+          prevProduits.map(p => {
+            const factureProduit = validatedFacture.produits.find(fp => fp.produit.id === p.id)
+            return factureProduit ? factureProduit.produit : p
+          })
+        )
+      }
+    } catch (err) {
+      handleApiError(err, 'Une erreur est survenue lors de la création de la facture.')
     } finally {
       setLoading(false)
     }
   }
 
+  const handleImprimerFacture = async (facture: Facture) => {
+    if (!facture) {
+      setError("Aucune facture à imprimer.");
+      return;
+    }
+
+    try {
+      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      const imprimerEndpoint = `${facturesEndpoint}${facture.id}/imprimer_facture/`;
+      const response = await axios.get(imprimerEndpoint, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `facture_${facture.numero_facture}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (err) {
+      handleApiError(err, "Erreur lors de l'impression de la facture")
+    }
+  }
+
   return (
-    <div className="p-6">
+    <div className="p-6 bg-base-200 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Facturation</h1>
       
+      {error && (
+        <div role="alert" className="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{error}</span>
+          <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
+
+      {successInfo && (
+        <div role="alert" className="alert alert-success mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div>
+            <h3 className="font-bold">Facture créée avec succès !</h3>
+            <div className="text-xs">
+              Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour le client <span className="font-semibold">{successInfo.client_name}</span> d'un montant total de <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>.
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              className="btn btn-sm btn-outline"
+              onClick={() => handleImprimerFacture(successInfo)}
+            >
+              Imprimer
+            </button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setSuccessInfo(null)}>✕</button>
+          </div>
+        </div>
+      )}
+
       {/* Sélection du client */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <h2 className="text-lg font-semibold mb-3">Informations Client</h2>
+      <div className="card bg-base-100 shadow-xl mb-6">
+        <div className="card-body">
+        <h2 className="card-title">Informations Client</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Client</label>
+            <label className="label"><span className="label-text">Client</span></label>
             <select
-              value={selectedClient || ''}
-              onChange={(e) => setSelectedClient(parseInt(e.target.value))}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
+              value={selectedClient !== null ? String(selectedClient) : ''}
+              onChange={(e) => {
+                const value = e.target.value
+                setSelectedClient(value ? Number(value) : null)
+              }}
+              className="select select-bordered w-full"
             >
               <option value="">Sélectionner un client</option>
               {clients.map((client) => (
@@ -223,35 +356,35 @@ export default function Facturation() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Remise (F)</label>
+            <label className="label"><span className="label-text">Remise (F)</span></label>
             <input
               type="number"
               step="0.01"
               value={remise}
               onChange={(e) => setRemise(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
+              className="input input-bordered w-full"
             />
           </div>
-    <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TVA (%)</label>
+          <div>
+            <label className="label"><span className="label-text">TVA (%)</span></label>
             <input
               type="number"
               step="0.01"
               value={tva}
               onChange={(e) => setTva(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-black"
+              className="input input-bordered w-full"
             />
           </div>
+        </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Liste des produits disponibles */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Produits Disponibles</h2>
-          </div>
-          <div className="p-4">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Produits Disponibles</h2>
+
             {/* Champ de recherche */}
             <div className="mb-4">
               <input
@@ -259,31 +392,32 @@ export default function Facturation() {
                 placeholder="Rechercher un produit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
+                className="input input-bordered w-full"
               />
             </div>
             
-            <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
               {filteredProduits.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  {searchQuery ? 'Aucun produit trouvé' : 'Aucun produit disponible'}
+                <div className="text-center py-4 text-base-content/70">
+                  {loading && <span className="loading loading-spinner"></span>}
+                  {!loading && (searchQuery ? 'Aucun produit trouvé' : 'Aucun produit disponible')}
                 </div>
               ) : (
                 filteredProduits.map((produit) => (
-                  <div key={produit.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  <div key={produit.id} className="flex items-center justify-between p-3 border border-base-300 rounded-lg hover:bg-base-200 transition-colors">
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{produit.name}</div>
-                      <div className="text-sm text-gray-600">
-                        Stock: <span className={produit.stock === 0 ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>{produit.stock}</span> | 
-                        Prix: <span className="text-blue-600 font-medium">{produit.selling_price} F</span>
+                      <div className="font-medium text-base-content">{produit.name}</div>
+                      <div className="text-sm text-base-content/70">
+                        Stock: <span className={(produit.stock ?? 0) === 0 ? 'text-error font-medium' : 'text-success font-medium'}>{produit.stock}</span> | 
+                        Prix: <span className="text-info font-medium">{produit.selling_price} F</span>
                       </div>
                     </div>
                     <button
                       onClick={() => addProduitToFacture(produit)}
-                      disabled={produit.stock === 0}
-                      className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                      disabled={(produit.stock ?? 0) === 0}
+                      className="btn btn-sm btn-primary"
                     >
-                      {produit.stock === 0 ? 'Rupture' : 'Ajouter'}
+                      {(produit.stock ?? 0) === 0 ? 'Rupture' : 'Ajouter'}
                     </button>
                   </div>
                 ))
@@ -293,44 +427,47 @@ export default function Facturation() {
         </div>
 
         {/* Tableau de la facture */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Facture</h2>
-          </div>
-          <div className="p-4">
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body">
+            <h2 className="card-title">Facture</h2>
+
             {lignesFacture.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-base-content/70">
                 Aucun produit ajouté à la facture
               </div>
             ) : (
               <>
                 <div className="overflow-x-auto">
-                  <table className="min-w-full">
+                  <table className="table table-zebra w-full">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="text-left py-3 px-2 font-medium text-gray-900">Produit</th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-900">Qty</th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-900">Prix</th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-900">Total</th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-900">Action</th>
+                      <tr>
+                        <th>Produit</th>
+                        <th className="text-right">Qté</th>
+                        <th className="text-right">Prix</th>
+                        <th className="text-right">Total</th>
+                        <th className="text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {lignesFacture.map((ligne) => (
-                        <tr key={ligne.produit.id} className="border-b border-gray-200 hover:bg-gray-50">
+                        <tr key={ligne.produit.id}>
                           <td className="py-3 px-2">
-                            <div className="font-medium text-gray-900">{ligne.produit.name}</div>
-                            <div className="text-sm text-gray-600">Stock: <span className="font-medium">{ligne.produit.stock}</span></div>
+                            <div className="font-medium">{ligne.produit.name}</div>
+                            <div className="text-sm opacity-70">Stock: <span className="font-medium">{ligne.produit.stock}</span></div>
                           </td>
                           <td className="py-3 px-2">
                             <input
                               type="number"
-                              min="1"
-                              max={ligne.produit.stock}
+                              min={undefined}
+                              max={ligne.quantite > 0 ? ligne.produit.stock : undefined}
                               value={ligne.quantite}
-                              onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value))}
-                              className="w-16 text-right border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                              onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
+                              className="input input-bordered input-sm w-20 text-right"
+                              title={ligne.quantite < 0 ? "Quantité négative = retour (augmente le stock)" : "Quantité positive = vente (diminue le stock)"}
                             />
+                            {ligne.quantite < 0 && (
+                              <div className="text-xs text-warning mt-1">Retour</div>
+                            )}
                           </td>
                           <td className="py-3 px-2">
                             <input
@@ -338,19 +475,19 @@ export default function Facturation() {
                               step="0.01"
                               value={ligne.prix_unitaire}
                               onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                              className="w-20 text-right border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                              className="input input-bordered input-sm w-24 text-right"
                             />
                           </td>
-                          <td className="py-3 px-2 text-right font-medium text-gray-900">
-                            {ligne.total_ligne.toFixed(0)} F
+                          <td className="py-3 px-2 text-right font-medium">
+                            {Math.round(ligne.total_ligne)} F
                           </td>
                           <td className="py-3 px-2 text-center">
                             <button
                               onClick={() => removeLigne(ligne.produit.id)}
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1 rounded text-sm transition-colors"
+                              className="btn btn-ghost btn-xs"
                               title="Supprimer"
                             >
-                              ✕
+                              Supprimer
                             </button>
                           </td>
                         </tr>
@@ -360,22 +497,22 @@ export default function Facturation() {
                 </div>
 
                 {/* Totaux */}
-                <div className="mt-4 pt-4 border-t text-black">
+                <div className="mt-4 pt-4 border-t border-base-300">
                   <div className="flex justify-between mb-2">
                     <span>Sous-total:</span>
-                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">{lignesFacture.reduce((total, ligne) => total + ligne.total_ligne, 0).toFixed(0)} F</span>
+                    <span className="font-medium">{Math.round(totals.sousTotal)} F</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>Remise:</span>
-                    <span>-{parseFloat(remise).toFixed(0)} F</span>
+                    <span className="font-medium">-{Math.round(totals.remiseMontant)} F</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>TVA ({tva}%):</span>
-                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">{((lignesFacture.reduce((total, ligne) => total + ligne.total_ligne, 0) - parseFloat(remise)) * (parseFloat(tva) / 100)).toFixed(0)} F</span>
+                    <span className="font-medium">{Math.round(totals.montantTva)} F</span>
                   </div>
                   <div className="flex justify-between font-extrabold text-2xl border-t pt-2 text-black">
                     <span>Total TTC:</span>
-                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">{calculateTotal().toFixed(0)} F</span>
+                    <span className="text-primary">{Math.round(totals.totalTtc)} F</span>
                   </div>
                 </div>
 
@@ -383,8 +520,8 @@ export default function Facturation() {
                 <div className="mt-6">
                   <button
                     onClick={createFacture}
-                    disabled={loading || !selectedClient || lignesFacture.length === 0}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={loading || !selectedClient || lignesFacture.length === 0 }
+                    className="btn btn-success btn-block"
                   >
                     {loading ? 'Création...' : 'Créer la Facture'}
                   </button>
