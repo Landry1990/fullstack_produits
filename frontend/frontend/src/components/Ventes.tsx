@@ -11,6 +11,21 @@ export default function Ventes() {
   const [deletingBrouillons, setDeletingBrouillons] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showCaisseTranches, setShowCaisseTranches] = useState(false)
+  const [loadingCaisse, setLoadingCaisse] = useState(false)
+  const [caisseData, setCaisseData] = useState<any>(null)
+  const [dateDebut, setDateDebut] = useState<string>(() => {
+    const now = new Date()
+    const date = now.toISOString().split('T')[0]
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    return `${date}T${time}`
+  })
+  const [dateFin, setDateFin] = useState<string>(() => {
+    const now = new Date()
+    const date = now.toISOString().split('T')[0]
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+    return `${date}T${time}`
+  })
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -88,6 +103,48 @@ export default function Ventes() {
 
   const brouillonsCount = factures.filter(f => f.status === 'BROU').length
 
+  const fetchCaisseParTranche = async () => {
+    const dateDebutObj = new Date(dateDebut)
+    const dateFinObj = new Date(dateFin)
+    
+    if (dateDebutObj >= dateFinObj) {
+      setError("La date/heure de début doit être antérieure à la date/heure de fin.")
+      return
+    }
+
+    setLoadingCaisse(true)
+    setError(null)
+    try {
+      const response = await axios.get(`${facturesEndpoint}caisse_par_tranche_horaire/`, {
+        params: {
+          date_debut: dateDebut,
+          date_fin: dateFin
+        }
+      })
+      setCaisseData(response.data)
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Erreur lors du calcul de la caisse par tranche horaire.')
+      } else {
+        setError('Erreur lors du calcul de la caisse par tranche horaire.')
+      }
+      console.error('Erreur lors du calcul de la caisse:', err)
+    } finally {
+      setLoadingCaisse(false)
+    }
+  }
+
+  useEffect(() => {
+    if (showCaisseTranches) {
+      const dateDebutObj = new Date(dateDebut)
+      const dateFinObj = new Date(dateFin)
+      if (dateDebutObj < dateFinObj) {
+        fetchCaisseParTranche()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCaisseTranches, dateDebut, dateFin])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'BROU': return 'bg-yellow-100 text-yellow-800'
@@ -127,22 +184,30 @@ export default function Ventes() {
               </span>
             )}
           </div>
-          {brouillonsCount > 0 && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleDeleteBrouillons}
-              disabled={deletingBrouillons}
-              className="btn btn-sm btn-error"
+              onClick={() => setShowCaisseTranches(!showCaisseTranches)}
+              className="btn btn-sm btn-info"
             >
-              {deletingBrouillons ? (
-                <>
-                  <span className="loading loading-spinner loading-xs"></span>
-                  Suppression...
-                </>
-              ) : (
-                `Supprimer ${brouillonsCount} brouillon${brouillonsCount > 1 ? 's' : ''}`
-              )}
+              {showCaisseTranches ? 'Masquer' : 'Caisse par tranche'}
             </button>
-          )}
+            {brouillonsCount > 0 && (
+              <button
+                onClick={handleDeleteBrouillons}
+                disabled={deletingBrouillons}
+                className="btn btn-sm btn-error"
+              >
+                {deletingBrouillons ? (
+                  <>
+                    <span className="loading loading-spinner loading-xs"></span>
+                    Suppression...
+                  </>
+                ) : (
+                  `Supprimer ${brouillonsCount} brouillon${brouillonsCount > 1 ? 's' : ''}`
+                )}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -163,6 +228,128 @@ export default function Ventes() {
           </svg>
           <span>{successMessage}</span>
           <button className="btn btn-sm btn-ghost" onClick={() => setSuccessMessage(null)}>✕</button>
+        </div>
+      )}
+
+      {/* Section Caisse par tranche horaire */}
+      {showCaisseTranches && (
+        <div className="card bg-base-100 shadow-xl mb-6">
+          <div className="card-body">
+            <h2 className="card-title">Caisse par tranche horaire</h2>
+            
+            <div className="flex gap-4 mb-4 flex-wrap">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Date et heure de début</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={dateDebut}
+                  onChange={(e) => setDateDebut(e.target.value)}
+                  className="input input-bordered"
+                  step="60"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text">Date et heure de fin</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={dateFin}
+                  onChange={(e) => setDateFin(e.target.value)}
+                  className="input input-bordered"
+                  step="60"
+                />
+              </div>
+              <div className="form-control flex justify-end">
+                <label className="label">
+                  <span className="label-text invisible">Calculer</span>
+                </label>
+                <button
+                  onClick={fetchCaisseParTranche}
+                  disabled={loadingCaisse || new Date(dateDebut) >= new Date(dateFin)}
+                  className="btn btn-primary"
+                >
+                  {loadingCaisse ? (
+                    <span className="loading loading-spinner"></span>
+                  ) : (
+                    'Calculer'
+                  )}
+                </button>
+              </div>
+            </div>
+            {new Date(dateDebut) >= new Date(dateFin) && (
+              <div className="alert alert-warning mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>La date/heure de début doit être antérieure à la date/heure de fin.</span>
+              </div>
+            )}
+
+            {loadingCaisse ? (
+              <div className="flex justify-center items-center py-8">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            ) : caisseData ? (
+              <div className="space-y-4">
+                <div className="card bg-base-200 shadow-lg">
+                  <div className="card-body">
+                    <h3 className="card-title text-lg">Résultat pour la tranche</h3>
+                    <div className="mb-2">
+                      <div className="text-sm opacity-70">Période</div>
+                      <div className="text-lg font-semibold">{caisseData.tranche}</div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+                      <div className="stat">
+                        <div className="stat-title">Début</div>
+                        <div className="stat-value text-sm">{caisseData.date_debut}</div>
+                      </div>
+                      <div className="stat">
+                        <div className="stat-title">Fin</div>
+                        <div className="stat-value text-sm">{caisseData.date_fin}</div>
+                      </div>
+                      <div className="stat">
+                        <div className="stat-title">Nombre de factures</div>
+                        <div className="stat-value text-lg">{caisseData.nombre_factures}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-100 shadow">
+                  <div className="card-body">
+                    <h4 className="font-semibold mb-4">Détails des totaux</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="p-4 bg-base-200 rounded-lg">
+                        <div className="text-sm opacity-70">Total HT</div>
+                        <div className="text-2xl font-bold">
+                          {Math.round(Number(caisseData.total_ht || 0)).toLocaleString('fr-FR')} F
+                        </div>
+                      </div>
+                      <div className="p-4 bg-base-200 rounded-lg">
+                        <div className="text-sm opacity-70">Total TVA</div>
+                        <div className="text-2xl font-bold">
+                          {Math.round(Number(caisseData.total_tva || 0)).toLocaleString('fr-FR')} F
+                        </div>
+                      </div>
+                      <div className="p-4 bg-primary text-primary-content rounded-lg">
+                        <div className="text-sm opacity-90">Total TTC</div>
+                        <div className="text-2xl font-bold">
+                          {Math.round(Number(caisseData.total_ttc || 0)).toLocaleString('fr-FR')} F
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                Sélectionnez une tranche horaire et cliquez sur "Calculer" pour voir les résultats
+              </div>
+            )}
+          </div>
         </div>
       )}
 

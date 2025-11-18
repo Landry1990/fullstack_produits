@@ -11,7 +11,9 @@ from reportlab.lib.units import inch
 from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageBreak, PageTemplate, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.utils import timezone
+from django.db.models import Sum, Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProduitFilter
 from .models import (
@@ -297,6 +299,68 @@ class FactureViewSet(viewsets.ModelViewSet):
         return Response({
             'detail': f'{count} facture(s) brouillon supprimée(s) avec succès.',
             'count': count
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def caisse_par_tranche_horaire(self, request):
+        """
+        Calcule la caisse pour une tranche horaire spécifique.
+        Paramètres:
+        - date_debut: Date et heure de début au format YYYY-MM-DDTHH:MM (ex: 2025-11-18T08:52)
+        - date_fin: Date et heure de fin au format YYYY-MM-DDTHH:MM (ex: 2025-11-18T18:30)
+        """
+        # Récupérer les paramètres
+        date_debut_str = request.query_params.get('date_debut', None)
+        date_fin_str = request.query_params.get('date_fin', None)
+        
+        # Valider et parser les dates/heures
+        try:
+            if date_debut_str:
+                start_datetime = datetime.strptime(date_debut_str, '%Y-%m-%dT%H:%M')
+                start_datetime = timezone.make_aware(start_datetime)
+            else:
+                return Response({'detail': 'Le paramètre date_debut est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if date_fin_str:
+                end_datetime = datetime.strptime(date_fin_str, '%Y-%m-%dT%H:%M')
+                end_datetime = timezone.make_aware(end_datetime)
+            else:
+                return Response({'detail': 'Le paramètre date_fin est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if start_datetime >= end_datetime:
+                return Response({'detail': "La date de début doit être antérieure à la date de fin."}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError as e:
+            return Response({'detail': f'Format de date/heure invalide. Utilisez YYYY-MM-DDTHH:MM (ex: 2025-11-18T08:52). Erreur: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Récupérer toutes les factures validées ou payées dans cette tranche
+        factures = Facture.objects.filter(
+            date__gte=start_datetime,
+            date__lt=end_datetime,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )
+        
+        # Calculer les totaux
+        total_ttc = Decimal('0.00')
+        total_ht = Decimal('0.00')
+        total_tva = Decimal('0.00')
+        nombre_factures = factures.count()
+        
+        for facture in factures:
+            try:
+                total_ttc += Decimal(str(facture.total_ttc))
+                total_ht += Decimal(str(facture.total_ht))
+                total_tva += Decimal(str(facture.total_tva))
+            except (ValueError, TypeError, AttributeError):
+                pass
+        
+        return Response({
+            'date_debut': start_datetime.strftime('%Y-%m-%d %H:%M'),
+            'date_fin': end_datetime.strftime('%Y-%m-%d %H:%M'),
+            'tranche': f"{start_datetime.strftime('%d-%m-%Y %Hh%M')} - {end_datetime.strftime('%d-%m-%Y %Hh%M')}",
+            'nombre_factures': nombre_factures,
+            'total_ht': str(total_ht.quantize(Decimal('0.01'))),
+            'total_tva': str(total_tva.quantize(Decimal('0.01'))),
+            'total_ttc': str(total_ttc.quantize(Decimal('0.01')))
         }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
