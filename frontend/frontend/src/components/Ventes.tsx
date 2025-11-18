@@ -1,19 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react'
-
-interface Facture {
-  id: number
-  client_name: string
-  numero_facture: string | null
-  date: string
-  status: string
-  status_display: string
-  total_ttc: string
-}
+import { useState, useEffect, useMemo } from 'react'
+import axios from 'axios'
+import type { Facture } from '../types'
 
 export default function Ventes() {
   const [factures, setFactures] = useState<Facture[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
+  const [loadingDetails, setLoadingDetails] = useState(false)
+  const [deletingBrouillons, setDeletingBrouillons] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -29,61 +26,67 @@ export default function Ventes() {
 
   const fetchFactures = async () => {
     try {
-      const response = await fetch(facturesEndpoint)
-      if (response.ok) {
-        const data = await response.json()
-        setFactures(data)
-      } else {
-        console.error('Erreur API factures:', response.status)
-        // Données de test en cas d'erreur
-        setFactures([
-          {
-            id: 1,
-            client_name: 'Client Test 1',
-            numero_facture: 'FAC-000001',
-            date: '2024-01-15',
-            status: 'VAL',
-            status_display: 'Validée',
-            total_ttc: '15000'
-          },
-          {
-            id: 2,
-            client_name: 'Client Test 2',
-            numero_facture: null,
-            date: '2024-01-16',
-            status: 'BROU',
-            status_display: 'Brouillon',
-            total_ttc: '8500'
-          }
-        ])
-      }
+      const response = await axios.get<Facture[]>(facturesEndpoint)
+      setFactures(response.data)
     } catch (error) {
       console.error('Erreur lors du chargement des factures:', error)
-      // Données de test en cas d'erreur
-      setFactures([
-        {
-          id: 1,
-          client_name: 'Client Test 1',
-          numero_facture: 'FAC-000001',
-          date: '2024-01-15',
-          status: 'VAL',
-          status_display: 'Validée',
-          total_ttc: '15000'
-        },
-        {
-          id: 2,
-          client_name: 'Client Test 2',
-          numero_facture: null,
-          date: '2024-01-16',
-          status: 'BROU',
-          status_display: 'Brouillon',
-          total_ttc: '8500'
-        }
-      ])
+      setFactures([])
     } finally {
       setLoading(false)
     }
   }
+
+  const fetchFactureDetails = async (factureId: number) => {
+    setLoadingDetails(true)
+    try {
+      const response = await axios.get<Facture>(`${facturesEndpoint}${factureId}/`)
+      setSelectedFacture(response.data)
+    } catch (error) {
+      console.error('Erreur lors du chargement des détails de la facture:', error)
+    } finally {
+      setLoadingDetails(false)
+    }
+  }
+
+  const handleViewProducts = async (facture: Facture) => {
+    // Si la facture a déjà les produits chargés, les afficher directement
+    if (facture.produits && facture.produits.length > 0) {
+      setSelectedFacture(facture)
+    } else {
+      // Sinon, charger les détails complets
+      await fetchFactureDetails(facture.id)
+    }
+  }
+
+  const handleDeleteBrouillons = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les factures brouillons ? Cette action est irréversible.')) {
+      return
+    }
+
+    setDeletingBrouillons(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      const response = await axios.delete(`${facturesEndpoint}supprimer_brouillons/`)
+      setSuccessMessage(response.data.detail || `${response.data.count} facture(s) brouillon supprimée(s) avec succès.`)
+      // Rafraîchir la liste des factures
+      await fetchFactures()
+      // Effacer le message de succès après 5 secondes
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Erreur lors de la suppression des factures brouillons.')
+      } else {
+        setError('Erreur lors de la suppression des factures brouillons.')
+      }
+      console.error('Erreur lors de la suppression des factures brouillons:', err)
+    } finally {
+      setDeletingBrouillons(false)
+    }
+  }
+
+  const brouillonsCount = factures.filter(f => f.status === 'BROU').length
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -97,7 +100,7 @@ export default function Ventes() {
 
   // Filtrer les factures
   const filteredFactures = factures.filter(facture =>
-    facture.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (facture.client_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (facture.numero_facture && facture.numero_facture.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
@@ -115,10 +118,53 @@ export default function Ventes() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Gestion des Ventes</h1>
-        <div className="text-sm text-gray-600">
-          {factures.length} facture{factures.length > 1 ? 's' : ''} au total
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            {factures.length} facture{factures.length > 1 ? 's' : ''} au total
+            {brouillonsCount > 0 && (
+              <span className="ml-2 text-yellow-600 font-semibold">
+                ({brouillonsCount} brouillon{brouillonsCount > 1 ? 's' : ''})
+              </span>
+            )}
+          </div>
+          {brouillonsCount > 0 && (
+            <button
+              onClick={handleDeleteBrouillons}
+              disabled={deletingBrouillons}
+              className="btn btn-sm btn-error"
+            >
+              {deletingBrouillons ? (
+                <>
+                  <span className="loading loading-spinner loading-xs"></span>
+                  Suppression...
+                </>
+              ) : (
+                `Supprimer ${brouillonsCount} brouillon${brouillonsCount > 1 ? 's' : ''}`
+              )}
+            </button>
+          )}
         </div>
       </div>
+
+      {error && (
+        <div role="alert" className="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
+          <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
+
+      {successMessage && (
+        <div role="alert" className="alert alert-success mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{successMessage}</span>
+          <button className="btn btn-sm btn-ghost" onClick={() => setSuccessMessage(null)}>✕</button>
+        </div>
+      )}
 
       {/* Filtres */}
       <div className="bg-white p-4 rounded-lg shadow mb-6">
@@ -157,8 +203,11 @@ export default function Ventes() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-base-content uppercase tracking-wider">
-                    Total TTC
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Montant TTC
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -174,7 +223,7 @@ export default function Ventes() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {facture.client_name}
+                      {facture.client_name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {new Date(facture.date).toLocaleDateString('fr-FR')}
@@ -184,8 +233,23 @@ export default function Ventes() {
                         {facture.status_display}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-base-content text-right">
-                      {parseFloat(facture.total_ttc).toFixed(0)} F
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="text-sm font-bold text-primary">
+                        {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => handleViewProducts(facture)}
+                        className="btn btn-sm btn-outline btn-primary"
+                        disabled={loadingDetails}
+                      >
+                        {loadingDetails && selectedFacture?.id === facture.id ? (
+                          <span className="loading loading-spinner loading-xs"></span>
+                        ) : (
+                          'Voir produits'
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -194,6 +258,100 @@ export default function Ventes() {
           </div>
         )}
       </div>
+
+      {/* Modal pour afficher les produits de la facture */}
+      {selectedFacture && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <h3 className="font-bold text-lg mb-4">
+              Produits de la facture {selectedFacture.numero_facture || `Brouillon ${selectedFacture.id}`}
+            </h3>
+            
+            {loadingDetails ? (
+              <div className="flex justify-center items-center py-8">
+                <span className="loading loading-spinner loading-lg"></span>
+              </div>
+            ) : selectedFacture.produits && selectedFacture.produits.length > 0 ? (
+              <>
+                <div className="mb-4 p-4 bg-base-200 rounded-lg">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-semibold">Client:</span> {selectedFacture.client_name || 'N/A'}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Date:</span> {new Date(selectedFacture.date).toLocaleDateString('fr-FR')}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Total HT:</span> {Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F
+                    </div>
+                    <div>
+                      <span className="font-semibold">TVA:</span> {Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F
+                    </div>
+                    <div className="col-span-2">
+                      <span className="font-semibold">Total TTC:</span> 
+                      <span className="text-primary font-bold text-lg ml-2">
+                        {Math.round(Number(selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="table table-zebra w-full">
+                    <thead>
+                      <tr>
+                        <th>Produit</th>
+                        <th className="text-right">Quantité</th>
+                        <th className="text-right">Prix unitaire</th>
+                        <th className="text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedFacture.produits.map((produit) => (
+                        <tr key={produit.id}>
+                          <td>
+                            <div className="font-medium">{produit.produit.name}</div>
+                            {produit.produit.description && (
+                              <div className="text-sm opacity-70">{produit.produit.description}</div>
+                            )}
+                          </td>
+                          <td className="text-right">{produit.quantity}</td>
+                          <td className="text-right">{Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F</td>
+                          <td className="text-right font-semibold">
+                            {Math.round(produit.quantity * Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="font-bold">
+                        <td colSpan={3} className="text-right">Total:</td>
+                        <td className="text-right text-primary">
+                          {Math.round(Number(selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                Aucun produit dans cette facture
+              </div>
+            )}
+
+            <div className="modal-action">
+              <button 
+                className="btn" 
+                onClick={() => setSelectedFacture(null)}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setSelectedFacture(null)}></div>
+        </div>
+      )}
     </div>
   )
 }
