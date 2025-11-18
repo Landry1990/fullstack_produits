@@ -112,3 +112,15 @@ export interface Facture {
   total_ttc: string
   produits: FactureProduit[]
 }
+
+export interface TicketCaisse {
+  id: number
+  facture: number | Facture  // Peut être l'ID ou l'objet complet
+  facture_numero?: string
+  client_name?: string
+  mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement'
+  montant: string
+  reference?: string | null
+  statut: string
+  date_paiement: string
+}

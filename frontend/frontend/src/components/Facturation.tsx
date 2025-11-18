@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import axios from 'axios'
-import type { ProduitModel, Client, Facture } from '../types'
+import type { ProduitModel, Client, Facture, TicketCaisse } from '../types'
 
 // Interface locale pour la gestion des lignes de facture dans le state
 type LigneFacture = {
   produit: ProduitModel
   quantite: number
   prix_unitaire: string
+  remise_produit: string // Remise en pourcentage pour ce produit
   total_ligne: number
 }
 
@@ -44,6 +45,7 @@ export default function Facturation() {
   const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
   const [loading, setLoading] = useState(false)
   const [remise, setRemise] = useState('0')
+  const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
   const [tva, setTva] = useState('19.25')
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -53,6 +55,8 @@ export default function Facturation() {
   const [montantPaye, setMontantPaye] = useState('')
   const [reference, setReference] = useState('')
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
+  const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
+  const [showTicketPreview, setShowTicketPreview] = useState(false)
 
   useEffect(() => {
     if (successInfo && successInfo.status !== 'PAY') {
@@ -117,6 +121,16 @@ export default function Facturation() {
     return () => controller.abort()
   }, [produitsEndpoint, clientsEndpoint, handleApiError])
 
+  // Fonction pour calculer le total d'une ligne avec remise produit
+  const calculateLigneTotal = (quantite: number, prixUnitaire: string, remiseProduit: string): number => {
+    const qty = Math.abs(quantite)
+    const prix = normalizeNumberInput(prixUnitaire, { min: 0 })
+    const remise = normalizeNumberInput(remiseProduit, { min: 0, max: 100 })
+    const sousTotal = qty * prix
+    const montantRemise = sousTotal * (remise / 100)
+    return sousTotal - montantRemise
+  }
+
   const addProduitToFacture = (produit: ProduitModel) => {
     const existingLigne = lignesFacture.find(ligne => ligne.produit.id === produit.id)
 
@@ -133,7 +147,7 @@ export default function Facturation() {
           ? {
               ...ligne,
               quantite: nouvelleQuantite,
-              total_ligne: Math.abs(nouvelleQuantite) * parseFloat(ligne.prix_unitaire),
+              total_ligne: calculateLigneTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
             }
           : ligne
       )
@@ -145,6 +159,7 @@ export default function Facturation() {
         produit,
         quantite: 1,
         prix_unitaire: produit.selling_price ?? '0',
+        remise_produit: '0',
         total_ligne: prixUnitaire,
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
@@ -173,7 +188,7 @@ export default function Facturation() {
         ? { 
             ...ligne, 
             quantite: normalizedQuantite, 
-            total_ligne: Math.abs(normalizedQuantite) * normalizeNumberInput(ligne.prix_unitaire, { min: 0 }) 
+            total_ligne: calculateLigneTotal(normalizedQuantite, ligne.prix_unitaire, ligne.remise_produit)
           }
         : ligne
     )
@@ -181,10 +196,18 @@ export default function Facturation() {
   }
 
   const updatePrix = (produitId: number, prix: string) => {
-    const prixNormalise = normalizeNumberInput(prix, { min: 0 })
     const updatedLignes = lignesFacture.map(ligne => 
       ligne.produit.id === produitId 
-        ? { ...ligne, prix_unitaire: prix, total_ligne: Math.abs(ligne.quantite) * prixNormalise }
+        ? { ...ligne, prix_unitaire: prix, total_ligne: calculateLigneTotal(ligne.quantite, prix, ligne.remise_produit) }
+        : ligne
+    )
+    setLignesFacture(updatedLignes)
+  }
+
+  const updateRemiseProduit = (produitId: number, remise: string) => {
+    const updatedLignes = lignesFacture.map(ligne => 
+      ligne.produit.id === produitId 
+        ? { ...ligne, remise_produit: remise, total_ligne: calculateLigneTotal(ligne.quantite, ligne.prix_unitaire, remise) }
         : ligne
     )
     setLignesFacture(updatedLignes)
@@ -195,8 +218,19 @@ export default function Facturation() {
   }
 
   const totals = useMemo(() => {
+    // Sous-total après remises produits
     const sousTotal = lignesFacture.reduce((total, ligne) => total + normalizeNumberInput(ligne.total_ligne, { min: 0 }), 0)
-    const remiseMontant = Math.min(sousTotal, normalizeNumberInput(remise, { min: 0 }))
+    
+    // Calculer la remise globale selon le mode
+    let remiseMontant = 0
+    if (remiseMode === 'montant') {
+      remiseMontant = Math.min(sousTotal, normalizeNumberInput(remise, { min: 0 }))
+    } else {
+      // Mode taux (pourcentage)
+      const tauxRemise = normalizeNumberInput(remise, { min: 0, max: 100 })
+      remiseMontant = sousTotal * (tauxRemise / 100)
+    }
+    
     const tvaRate = normalizeNumberInput(tva, { min: 0 })
     const baseHT = sousTotal - remiseMontant
     const montantTva = Math.round(baseHT * (tvaRate / 100))
@@ -208,7 +242,7 @@ export default function Facturation() {
       montantTva,
       totalTtc,
     }
-  }, [lignesFacture, remise, tva])
+  }, [lignesFacture, remise, remiseMode, tva])
 
   // Filtrer les produits selon la recherche
   const filteredProduits = produits.filter(produit =>
@@ -338,7 +372,15 @@ export default function Facturation() {
         statut: 'completee',
       }
 
-      await axios.post(caisseEndpoint, paiementPayload)
+      // Créer le ticket de caisse
+      const caisseResponse = await axios.post(caisseEndpoint, paiementPayload)
+      console.log('Ticket de caisse créé:', caisseResponse.data)
+      
+      // Stocker les données du ticket pour l'aperçu
+      setTicketCaisse({
+        ...caisseResponse.data,
+        facture: factureAPayer
+      })
 
       // Mettre à jour le statut de la facture à "PAYEE"
       const factureUpdateEndpoint = apiBaseUrl
@@ -346,8 +388,21 @@ export default function Facturation() {
         : `/api/factures/${factureAPayer.id}/`
 
       await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
+      
+      // Rafraîchir les données de la facture pour avoir les dernières informations
+      const factureDetailEndpoint = apiBaseUrl
+        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/${factureAPayer.id}/`
+        : `/api/factures/${factureAPayer.id}/`
+      const { data: factureUpdated } = await axios.get<Facture>(factureDetailEndpoint)
 
-      setSuccessInfo({ ...factureAPayer, status: 'PAY' })
+      setSuccessInfo(factureUpdated)
+      
+      // Mettre à jour le ticket avec les données complètes de la facture
+      setTicketCaisse({
+        ...caisseResponse.data,
+        facture: factureUpdated
+      })
+      
       if (facturePourPaiement) {
         fermerModalPaiement()
       }
@@ -394,6 +449,7 @@ export default function Facturation() {
             <div className="text-xs mb-4">
               Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour le client <span className="font-semibold">{successInfo.client_name}</span> d'un montant total de <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>.
               {successInfo.status === 'PAY' && <span className="badge badge-success ml-2">PAYÉE</span>}
+              {successInfo.status === 'PAY' && <span className="badge badge-info ml-2">Ticket de caisse enregistré</span>}
             </div>
             
             {/* Formulaire de paiement */}
@@ -444,14 +500,27 @@ export default function Facturation() {
               </div>
             </div>
             )}
+            {successInfo.status === 'PAY' && (
+              <div className="text-xs text-base-content/70 mb-2">
+                Le paiement a été enregistré. Le ticket de caisse a été créé.
+              </div>
+            )}
           </div>
           
           <div className="flex items-center gap-2">
+            {successInfo.status === 'PAY' && ticketCaisse && (
+              <button 
+                className="btn btn-sm btn-info"
+                onClick={() => setShowTicketPreview(true)}
+              >
+                Aperçu Ticket
+              </button>
+            )}
             <button 
               className="btn btn-sm btn-outline"
               onClick={() => handleImprimerFacture(successInfo)}
             >
-              Imprimer
+              Imprimer Facture
             </button>
             <button className="btn btn-sm btn-ghost" onClick={() => setSuccessInfo(null)}>✕</button>
           </div>
@@ -482,14 +551,30 @@ export default function Facturation() {
             </select>
           </div>
           <div>
-            <label className="label"><span className="label-text">Remise (F)</span></label>
-            <input
-              type="number"
-              step="0.01"
-              value={remise}
-              onChange={(e) => setRemise(e.target.value)}
-              className="input input-bordered w-full"
-            />
+            <label className="label"><span className="label-text">Remise globale</span></label>
+            <div className="flex gap-2">
+              <select
+                value={remiseMode}
+                onChange={(e) => {
+                  setRemiseMode(e.target.value as 'montant' | 'taux')
+                  setRemise('0')
+                }}
+                className="select select-bordered w-24"
+              >
+                <option value="montant">Montant</option>
+                <option value="taux">Taux %</option>
+              </select>
+              <input
+                type="number"
+                step="0.01"
+                value={remise}
+                onChange={(e) => setRemise(e.target.value)}
+                placeholder={remiseMode === 'montant' ? 'Montant (F)' : 'Taux (%)'}
+                className="input input-bordered flex-1"
+                min="0"
+                max={remiseMode === 'taux' ? '100' : undefined}
+              />
+            </div>
           </div>
           <div>
             <label className="label"><span className="label-text">TVA (%)</span></label>
@@ -570,6 +655,7 @@ export default function Facturation() {
                         <th>Produit</th>
                         <th className="text-right">Qté</th>
                         <th className="text-right">Prix</th>
+                        <th className="text-right">Remise %</th>
                         <th className="text-right">Total</th>
                         <th className="text-center">Action</th>
                       </tr>
@@ -604,6 +690,18 @@ export default function Facturation() {
                               className="input input-bordered input-sm w-24 text-right"
                             />
                           </td>
+                          <td className="py-3 px-2">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              value={ligne.remise_produit}
+                              onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
+                              className="input input-bordered input-sm w-20 text-right"
+                              placeholder="0%"
+                            />
+                          </td>
                           <td className="py-3 px-2 text-right font-medium">
                             {Math.round(ligne.total_ligne)} F
                           </td>
@@ -629,8 +727,8 @@ export default function Facturation() {
                     <span className="font-medium">{Math.round(totals.sousTotal)} F</span>
                   </div>
                   <div className="flex justify-between mb-2">
-                    <span>Remise:</span>
-                    <span className="font-medium">-{Math.round(totals.remiseMontant)} F</span>
+                    <span>Remise {remiseMode === 'taux' && remise ? `(${remise}%)` : ''}:</span>
+                    <span className="font-medium text-error">-{Math.round(totals.remiseMontant)} F</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span>TVA ({tva}%):</span>
@@ -774,6 +872,178 @@ export default function Facturation() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Modal d'aperçu du ticket de caisse */}
+      {showTicketPreview && ticketCaisse && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Aperçu du Ticket de Caisse</h3>
+              <button 
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={() => setShowTicketPreview(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Aperçu du ticket formaté pour l'impression */}
+            <div className="bg-white p-6 rounded-lg shadow-lg" id="ticket-preview" style={{ maxWidth: '80mm', margin: '0 auto' }}>
+              {/* En-tête */}
+              <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
+                <h2 className="text-xl font-bold">DJADEU PHARMACY</h2>
+                <p className="text-sm">Logbessou</p>
+                <p className="text-sm">Tel: 697268949</p>
+              </div>
+              
+              {/* Informations du ticket */}
+              <div className="mb-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-semibold">Ticket N°:</span>
+                  <span>#{ticketCaisse.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Facture:</span>
+                  <span>{ticketCaisse.facture_numero || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.numero_facture : null) || `FAC-${typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.id : ticketCaisse.facture}`}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Client:</span>
+                  <span className="text-right">{ticketCaisse.client_name || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.client_name : null) || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Date:</span>
+                  <span>{new Date(ticketCaisse.date_paiement || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.date : new Date().toISOString())).toLocaleString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Mode de paiement:</span>
+                  <span className="uppercase">
+                    {ticketCaisse.mode_paiement === 'especes' ? 'Espèces' :
+                     ticketCaisse.mode_paiement === 'cheque' ? 'Chèque' :
+                     ticketCaisse.mode_paiement === 'carte' ? 'Carte' :
+                     ticketCaisse.mode_paiement === 'virement' ? 'Virement' : ticketCaisse.mode_paiement}
+                  </span>
+                </div>
+                {ticketCaisse.reference && (
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Référence:</span>
+                    <span>{ticketCaisse.reference}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Détails de la facture */}
+              {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.produits && ticketCaisse.facture.produits.length > 0 && (
+                <div className="mb-4 border-t border-b border-gray-300 py-2">
+                  <div className="text-xs font-semibold mb-2">Détails:</div>
+                  {ticketCaisse.facture.produits.slice(0, 5).map((produit) => (
+                    <div key={produit.id} className="flex justify-between text-xs mb-1">
+                      <span className="flex-1">{produit.produit.name} x{Math.abs(produit.quantity)}</span>
+                      <span>{Math.round(Math.abs(produit.quantity) * Number(produit.selling_price || 0))} F</span>
+                    </div>
+                  ))}
+                  {ticketCaisse.facture.produits.length > 5 && (
+                    <div className="text-xs text-gray-500 mt-1">... et {ticketCaisse.facture.produits.length - 5} autre(s) produit(s)</div>
+                  )}
+                </div>
+              )}
+              
+              {/* Totaux */}
+              <div className="mb-4 space-y-1 text-sm border-t border-gray-300 pt-2">
+                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Sous-total HT:</span>
+                      <span>{Math.round(Number(ticketCaisse.facture.total_ht || 0)).toLocaleString('fr-FR')} F</span>
+                    </div>
+                    {Number(ticketCaisse.facture.remise || 0) > 0 && (
+                      <div className="flex justify-between text-red-600">
+                        <span>Remise:</span>
+                        <span>-{Math.round(Number(ticketCaisse.facture.remise || 0)).toLocaleString('fr-FR')} F</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>TVA ({ticketCaisse.facture.tva}%):</span>
+                      <span>{Math.round(Number(ticketCaisse.facture.total_tva || 0)).toLocaleString('fr-FR')} F</span>
+                    </div>
+                  </>
+                )}
+                <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2">
+                  <span>TOTAL:</span>
+                  <span>{Math.round(Number(ticketCaisse.montant || 0)).toLocaleString('fr-FR')} F</span>
+                </div>
+              </div>
+              
+              {/* Pied de page */}
+              <div className="text-center text-xs border-t border-gray-300 pt-3 mt-4">
+                <p>Merci de votre visite !</p>
+                <p className="mt-1">Ticket généré le {new Date().toLocaleString('fr-FR')}</p>
+              </div>
+            </div>
+            
+            {/* Boutons d'action */}
+            <div className="modal-action">
+              <button 
+                className="btn btn-ghost"
+                onClick={() => setShowTicketPreview(false)}
+              >
+                Fermer
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  const printContent = document.getElementById('ticket-preview')
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank')
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                          <head>
+                            <title>Ticket de Caisse - ${ticketCaisse.facture_numero || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.numero_facture : '')}</title>
+                            <style>
+                              @media print {
+                                @page { margin: 0; size: 80mm auto; }
+                                body { margin: 0; padding: 10mm; font-family: Arial, sans-serif; font-size: 12px; }
+                              }
+                              body { margin: 0; padding: 10mm; font-family: Arial, sans-serif; font-size: 12px; }
+                              .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                              .header h2 { margin: 0; font-size: 18px; font-weight: bold; }
+                              .info { margin-bottom: 15px; }
+                              .info div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+                              .details { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 15px 0; }
+                              .totals { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; }
+                              .totals div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+                              .total-final { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; }
+                              .footer { text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; font-size: 10px; }
+                            </style>
+                          </head>
+                          <body>
+                            ${printContent.innerHTML}
+                          </body>
+                        </html>
+                      `)
+                      printWindow.document.close()
+                      setTimeout(() => {
+                        printWindow.print()
+                        printWindow.close()
+                      }, 250)
+                    }
+                  }
+                }}
+              >
+                Imprimer Ticket
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
+        </div>
+      )}
     </div>
   )
 }
