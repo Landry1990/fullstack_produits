@@ -216,5 +216,8 @@ class Caisse(models.Model):
     statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
     date_paiement = models.DateTimeField(auto_now_add=True)
     
+    def __str__(self):
+        return f"Paiement {self.id} - {self.montant} F - {self.get_mode_paiement_display()}"
+    
     class Meta:
         ordering = ['-date_paiement']

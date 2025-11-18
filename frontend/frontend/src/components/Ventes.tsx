@@ -17,8 +17,8 @@ export default function Ventes() {
   const [dateDebut, setDateDebut] = useState<string>(() => {
     const now = new Date()
     const date = now.toISOString().split('T')[0]
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    return `${date}T${time}`
+    // Par défaut, commencer à 00:00 du jour actuel
+    return `${date}T00:00`
   })
   const [dateFin, setDateFin] = useState<string>(() => {
     const now = new Date()
@@ -121,6 +121,7 @@ export default function Ventes() {
           date_fin: dateFin
         }
       })
+      console.log('Réponse caisse:', response.data)
       setCaisseData(response.data)
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -315,6 +316,22 @@ export default function Ventes() {
                         <div className="stat-value text-lg">{caisseData.nombre_factures}</div>
                       </div>
                     </div>
+                    {caisseData.nombre_factures === 0 && (
+                      <div className="alert alert-warning mt-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span>Aucune facture validée ou payée trouvée dans cette tranche horaire. Vérifiez que les dates correspondent aux dates de création des factures.</span>
+                      </div>
+                    )}
+                    {caisseData.debug && (
+                      <div className="mt-4 text-xs opacity-70">
+                        <div>Debug: {caisseData.debug.factures_ids?.length || 0} facture(s) trouvée(s)</div>
+                        {caisseData.debug.factures_ids && caisseData.debug.factures_ids.length > 0 && (
+                          <div>IDs: {caisseData.debug.factures_ids.join(', ')}</div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -378,22 +395,22 @@ export default function Ventes() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Facture
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Client
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Montant TTC
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -401,40 +418,43 @@ export default function Ventes() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredFactures.map((facture) => (
                   <tr key={facture.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <div className="text-xs font-medium text-gray-900">
                         {facture.numero_facture || `Brouillon ${facture.id}`}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        ID: {facture.id}
-                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
                       {facture.client_name || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(facture.date).toLocaleDateString('fr-FR')}
+                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                      {new Date(facture.date).toLocaleString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(facture.status)}`}>
+                    <td className="px-3 py-2 whitespace-nowrap">
+                      <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(facture.status)}`}>
                         {facture.status_display}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-bold text-primary">
+                    <td className="px-3 py-2 whitespace-nowrap text-right">
+                      <div className="text-xs font-bold text-primary">
                         {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 py-2 whitespace-nowrap text-center">
                       <button
                         onClick={() => handleViewProducts(facture)}
-                        className="btn btn-sm btn-outline btn-primary"
+                        className="btn btn-xs btn-outline btn-primary"
                         disabled={loadingDetails}
                       >
                         {loadingDetails && selectedFacture?.id === facture.id ? (
                           <span className="loading loading-spinner loading-xs"></span>
                         ) : (
-                          'Voir produits'
+                          'Voir'
                         )}
                       </button>
                     </td>
@@ -466,13 +486,38 @@ export default function Ventes() {
                       <span className="font-semibold">Client:</span> {selectedFacture.client_name || 'N/A'}
                     </div>
                     <div>
-                      <span className="font-semibold">Date:</span> {new Date(selectedFacture.date).toLocaleDateString('fr-FR')}
+                      <span className="font-semibold">Date:</span> {new Date(selectedFacture.date).toLocaleString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </div>
                     <div>
-                      <span className="font-semibold">Total HT:</span> {Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F
+                      <span className="font-semibold">Sous-total HT:</span> {Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F
                     </div>
                     <div>
-                      <span className="font-semibold">TVA:</span> {Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F
+                      <span className="font-semibold">Remise:</span> {(() => {
+                        const remise = Number(selectedFacture.remise || 0)
+                        const sousTotal = Number(selectedFacture.total_ht || 0)
+                        const pourcentageRemise = sousTotal > 0 ? (remise / sousTotal) * 100 : 0
+                        if (remise > 0) {
+                          return (
+                            <span className="text-error font-semibold">
+                              -{Math.round(remise).toLocaleString('fr-FR')} F 
+                              {pourcentageRemise > 0 && ` (${pourcentageRemise.toFixed(2)}%)`}
+                            </span>
+                          )
+                        }
+                        return <span className="text-gray-500">Aucune</span>
+                      })()}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Total HT:</span> {Math.round(Math.max(0, Number(selectedFacture.total_ht || 0) - Number(selectedFacture.remise || 0))).toLocaleString('fr-FR')} F
+                    </div>
+                    <div>
+                      <span className="font-semibold">TVA ({selectedFacture.tva}%):</span> {Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F
                     </div>
                     <div className="col-span-2">
                       <span className="font-semibold">Total TTC:</span> 
@@ -511,9 +556,41 @@ export default function Ventes() {
                       ))}
                     </tbody>
                     <tfoot>
-                      <tr className="font-bold">
-                        <td colSpan={3} className="text-right">Total:</td>
-                        <td className="text-right text-primary">
+                      <tr>
+                        <td colSpan={3} className="text-right font-semibold">Sous-total HT:</td>
+                        <td className="text-right font-semibold">
+                          {Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F
+                        </td>
+                      </tr>
+                      {Number(selectedFacture.remise || 0) > 0 && (
+                        <tr>
+                          <td colSpan={3} className="text-right text-error font-semibold">Remise:</td>
+                          <td className="text-right text-error font-semibold">
+                            -{Math.round(Number(selectedFacture.remise || 0)).toLocaleString('fr-FR')} F
+                            {(() => {
+                              const remise = Number(selectedFacture.remise || 0)
+                              const sousTotal = Number(selectedFacture.total_ht || 0)
+                              const pourcentage = sousTotal > 0 ? (remise / sousTotal) * 100 : 0
+                              return pourcentage > 0 ? ` (${pourcentage.toFixed(2)}%)` : ''
+                            })()}
+                          </td>
+                        </tr>
+                      )}
+                      <tr>
+                        <td colSpan={3} className="text-right font-semibold">Total HT:</td>
+                        <td className="text-right font-semibold">
+                          {Math.round(Math.max(0, Number(selectedFacture.total_ht || 0) - Number(selectedFacture.remise || 0))).toLocaleString('fr-FR')} F
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={3} className="text-right font-semibold">TVA ({selectedFacture.tva}%):</td>
+                        <td className="text-right font-semibold">
+                          {Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F
+                        </td>
+                      </tr>
+                      <tr className="font-bold border-t-2 border-primary">
+                        <td colSpan={3} className="text-right text-primary">Total TTC:</td>
+                        <td className="text-right text-primary text-lg">
                           {Math.round(Number(selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F
                         </td>
                       </tr>

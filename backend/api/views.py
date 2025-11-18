@@ -17,12 +17,12 @@ from django.db.models import Sum, Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProduitFilter
 from .models import (
-    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit
+    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
-    FactureSerializer, FactureProduitSerializer
+    FactureSerializer, FactureProduitSerializer, CaisseSerializer
 )
 from decimal import Decimal
 
@@ -316,13 +316,27 @@ class FactureViewSet(viewsets.ModelViewSet):
         # Valider et parser les dates/heures
         try:
             if date_debut_str:
-                start_datetime = datetime.strptime(date_debut_str, '%Y-%m-%dT%H:%M')
+                # Gérer les formats avec ou sans secondes
+                try:
+                    start_datetime = datetime.strptime(date_debut_str, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    try:
+                        start_datetime = datetime.strptime(date_debut_str, '%Y-%m-%dT%H:%M:%S')
+                    except ValueError:
+                        return Response({'detail': f'Format de date/heure invalide pour date_debut: {date_debut_str}. Utilisez YYYY-MM-DDTHH:MM ou YYYY-MM-DDTHH:MM:SS'}, status=status.HTTP_400_BAD_REQUEST)
                 start_datetime = timezone.make_aware(start_datetime)
             else:
                 return Response({'detail': 'Le paramètre date_debut est requis.'}, status=status.HTTP_400_BAD_REQUEST)
             
             if date_fin_str:
-                end_datetime = datetime.strptime(date_fin_str, '%Y-%m-%dT%H:%M')
+                # Gérer les formats avec ou sans secondes
+                try:
+                    end_datetime = datetime.strptime(date_fin_str, '%Y-%m-%dT%H:%M')
+                except ValueError:
+                    try:
+                        end_datetime = datetime.strptime(date_fin_str, '%Y-%m-%dT%H:%M:%S')
+                    except ValueError:
+                        return Response({'detail': f'Format de date/heure invalide pour date_fin: {date_fin_str}. Utilisez YYYY-MM-DDTHH:MM ou YYYY-MM-DDTHH:MM:SS'}, status=status.HTTP_400_BAD_REQUEST)
                 end_datetime = timezone.make_aware(end_datetime)
             else:
                 return Response({'detail': 'Le paramètre date_fin est requis.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -333,34 +347,83 @@ class FactureViewSet(viewsets.ModelViewSet):
             return Response({'detail': f'Format de date/heure invalide. Utilisez YYYY-MM-DDTHH:MM (ex: 2025-11-18T08:52). Erreur: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Récupérer toutes les factures validées ou payées dans cette tranche
+        # Utiliser prefetch_related pour charger les produits et éviter les requêtes N+1
+        # Utiliser date__lte pour inclure les factures créées exactement à la date de fin
         factures = Facture.objects.filter(
             date__gte=start_datetime,
-            date__lt=end_datetime,
+            date__lte=end_datetime,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).prefetch_related('produits', 'produits__produit')
         
-        # Calculer les totaux
+        # Debug: logger le nombre de factures trouvées
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Recherche de factures entre {start_datetime} et {end_datetime}. Trouvé: {factures.count()} factures")
+        
+        # Calculer les totaux à partir des factures
+        # total_ht représente le sous-total HT (avant remise globale)
+        # total_ht_apres_remise représente le total HT après remise globale
         total_ttc = Decimal('0.00')
-        total_ht = Decimal('0.00')
+        total_ht = Decimal('0.00')  # Sous-total HT avant remise
+        total_ht_apres_remise = Decimal('0.00')  # Total HT après remise
         total_tva = Decimal('0.00')
+        total_remise = Decimal('0.00')
         nombre_factures = factures.count()
         
         for facture in factures:
             try:
-                total_ttc += Decimal(str(facture.total_ttc))
-                total_ht += Decimal(str(facture.total_ht))
-                total_tva += Decimal(str(facture.total_tva))
-            except (ValueError, TypeError, AttributeError):
+                # Utiliser les propriétés calculées du modèle Facture
+                # total_ht du modèle = somme des produits (avant remise)
+                facture_sous_total_ht = Decimal(str(facture.total_ht))
+                facture_remise = Decimal(str(facture.remise))
+                facture_total_tva = Decimal(str(facture.total_tva))
+                facture_total_ttc = Decimal(str(facture.total_ttc))
+                
+                # Calculer le total HT après remise
+                facture_total_ht_apres_remise = facture_sous_total_ht - facture_remise
+                
+                # Ajouter aux totaux
+                total_ht += facture_sous_total_ht
+                total_remise += facture_remise
+                total_ht_apres_remise += facture_total_ht_apres_remise
+                total_tva += facture_total_tva
+                total_ttc += facture_total_ttc
+                
+                # Debug pour chaque facture
+                logger.debug(f"Facture {facture.id}: Sous-total HT={facture_sous_total_ht}, Remise={facture_remise}, HT après remise={facture_total_ht_apres_remise}, TVA={facture_total_tva}, TTC={facture_total_ttc}")
+                
+            except (ValueError, TypeError, AttributeError) as e:
+                # Logger l'erreur pour le débogage
+                logger.error(f"Erreur lors du calcul des totaux pour la facture {facture.id}: {e}")
+                logger.error(f"Détails facture: id={facture.id}, status={facture.status}, produits_count={facture.produits.count()}")
+                import traceback
+                logger.error(traceback.format_exc())
                 pass
+        
+        # Pour la réponse, on utilise total_ht_apres_remise comme total_ht (après remise)
+        # car c'est ce sur quoi la TVA est calculée
+        total_ht_final = total_ht_apres_remise
+        
+        logger.info(f"Totaux calculés: Sous-total HT={total_ht}, Remise totale={total_remise}, Total HT après remise={total_ht_apres_remise}, TVA={total_tva}, TTC={total_ttc}")
         
         return Response({
             'date_debut': start_datetime.strftime('%Y-%m-%d %H:%M'),
             'date_fin': end_datetime.strftime('%Y-%m-%d %H:%M'),
             'tranche': f"{start_datetime.strftime('%d-%m-%Y %Hh%M')} - {end_datetime.strftime('%d-%m-%Y %Hh%M')}",
             'nombre_factures': nombre_factures,
-            'total_ht': str(total_ht.quantize(Decimal('0.01'))),
+            'total_ht': str(total_ht_final.quantize(Decimal('0.01'))),  # Total HT après remise (sur lequel la TVA est calculée)
             'total_tva': str(total_tva.quantize(Decimal('0.01'))),
-            'total_ttc': str(total_ttc.quantize(Decimal('0.01')))
+            'total_ttc': str(total_ttc.quantize(Decimal('0.01'))),
+            'sous_total_ht': str(total_ht.quantize(Decimal('0.01'))),  # Sous-total avant remise
+            'total_remise': str(total_remise.quantize(Decimal('0.01'))),  # Total des remises
+            'debug': {
+                'date_debut_parsed': start_datetime.isoformat(),
+                'date_fin_parsed': end_datetime.isoformat(),
+                'factures_ids': [f.id for f in factures[:10]],  # Limiter à 10 pour éviter une réponse trop grande
+                'sous_total_ht': str(total_ht),
+                'total_remise': str(total_remise),
+                'total_ht_apres_remise': str(total_ht_apres_remise)
+            }
         }, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
@@ -543,3 +606,11 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     serializer_class = FactureProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit', 'facture']
+
+
+class CaisseViewSet(viewsets.ModelViewSet):
+    """API endpoint for caisse (paiements)."""
+    queryset = Caisse.objects.select_related('facture', 'facture__client').order_by('-date_paiement')
+    serializer_class = CaisseSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['facture', 'mode_paiement', 'statut']

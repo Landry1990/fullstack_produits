@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit
+    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse
 )
 
 class ProduitSerializer(serializers.ModelSerializer):
@@ -110,3 +110,28 @@ class FactureSerializer(serializers.ModelSerializer):
             'id', 'client', 'client_name', 'numero_facture', 'date', 'status', 'status_display',
             'remise', 'tva', 'notes', 'total_ht', 'total_tva', 'total_ttc', 'produits'
         ]
+
+
+class CaisseSerializer(serializers.ModelSerializer):
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True, allow_null=True)
+    client_name = serializers.CharField(source='facture.client.name', read_only=True)
+
+    class Meta:
+        model = Caisse
+        fields = [
+            'id', 'facture', 'facture_numero', 'client_name', 'mode_paiement', 
+            'montant', 'reference', 'statut', 'date_paiement'
+        ]
+        read_only_fields = ['facture_numero', 'client_name', 'date_paiement']
+    
+    def validate_montant(self, value):
+        """Valide que le montant est positif."""
+        if value <= 0:
+            raise serializers.ValidationError("Le montant doit être supérieur à zéro.")
+        return value
+    
+    def validate_facture(self, value):
+        """Valide que la facture existe."""
+        if not value:
+            raise serializers.ValidationError("Une facture doit être spécifiée.")
+        return value
