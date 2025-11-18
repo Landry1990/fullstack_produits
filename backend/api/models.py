@@ -193,3 +193,28 @@ class FactureProduit(models.Model):
 
     def __str__(self):
         return f"Ligne de facture {self.id}"
+
+
+class Caisse(models.Model):
+    MODES_PAIEMENT = [
+        ('especes', 'Espèces'),
+        ('cheque', 'Chèque'),
+        ('carte', 'Carte'),
+        ('virement', 'Virement'),
+    ]
+    
+    STATUTS = [
+        ('en_attente', 'En attente'),
+        ('completee', 'Complétée'),
+        ('annulee', 'Annulée'),
+    ]
+    
+    facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='paiements')
+    mode_paiement = models.CharField(max_length=20, choices=MODES_PAIEMENT)
+    montant = models.DecimalField(max_digits=10, decimal_places=2)
+    reference = models.CharField(max_length=100, blank=True, null=True)
+    statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
+    date_paiement = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-date_paiement']

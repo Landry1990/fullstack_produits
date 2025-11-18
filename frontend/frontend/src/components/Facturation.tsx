@@ -48,6 +48,17 @@ export default function Facturation() {
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+  const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement'>('especes')
+  const [montantPaye, setMontantPaye] = useState('')
+  const [reference, setReference] = useState('')
+  const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
+
+  useEffect(() => {
+    if (successInfo && successInfo.status !== 'PAY') {
+      setMontantPaye(Math.round(Number(successInfo.total_ttc)).toString())
+    }
+  }, [successInfo])
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -299,6 +310,70 @@ export default function Facturation() {
     }
   }
 
+  const enregistrerPaiement = async (facture?: Facture) => {
+    const factureAPayer = facture || facturePourPaiement
+    if (!factureAPayer) {
+      setError('Aucune facture sélectionnée')
+      return
+    }
+
+    if (!montantPaye || Number(montantPaye) <= 0) {
+      setError('Veuillez entrer un montant valide')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      const caisseEndpoint = apiBaseUrl
+        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/caisse/`
+        : '/api/caisse/'
+
+      const paiementPayload = {
+        facture: factureAPayer.id,
+        mode_paiement: modePaiement,
+        montant: normalizeNumberInput(montantPaye, { min: 0 }),
+        reference: reference || null,
+        statut: 'completee',
+      }
+
+      await axios.post(caisseEndpoint, paiementPayload)
+
+      // Mettre à jour le statut de la facture à "PAYEE"
+      const factureUpdateEndpoint = apiBaseUrl
+        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/${factureAPayer.id}/`
+        : `/api/factures/${factureAPayer.id}/`
+
+      await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
+
+      setSuccessInfo({ ...factureAPayer, status: 'PAY' })
+      if (facturePourPaiement) {
+        fermerModalPaiement()
+      }
+    } catch (err) {
+      handleApiError(err, "Erreur lors de l'enregistrement du paiement")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const ouvrirModalPaiement = (facture: Facture) => {
+    setFacturePourPaiement(facture)
+    setMontantPaye(Math.round(Number(facture.total_ttc)).toString())
+    setModePaiement('especes')
+    setReference('')
+    setIsPaymentModalOpen(true)
+  }
+
+  const fermerModalPaiement = () => {
+    setIsPaymentModalOpen(false)
+    setFacturePourPaiement(null)
+    setMontantPaye('')
+    setReference('')
+    setModePaiement('especes')
+  }
+
   return (
     <div className="p-6 bg-base-200 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Facturation</h1>
@@ -314,12 +389,63 @@ export default function Facturation() {
       {successInfo && (
         <div role="alert" className="alert alert-success mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <div>
+          <div className="flex-1">
             <h3 className="font-bold">Facture créée avec succès !</h3>
-            <div className="text-xs">
+            <div className="text-xs mb-4">
               Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour le client <span className="font-semibold">{successInfo.client_name}</span> d'un montant total de <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>.
+              {successInfo.status === 'PAY' && <span className="badge badge-success ml-2">PAYÉE</span>}
             </div>
+            
+            {/* Formulaire de paiement */}
+            {successInfo.status !== 'PAY' && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+              <div>
+                <label className="label label-text-sm">Mode de paiement</label>
+                <select
+                  value={modePaiement}
+                  onChange={(e) => setModePaiement(e.target.value as any)}
+                  className="select select-bordered select-sm w-full"
+                >
+                  <option value="especes">Espèces</option>
+                  <option value="cheque">Chèque</option>
+                  <option value="carte">Carte</option>
+                  <option value="virement">Virement</option>
+                </select>
+              </div>
+              <div>
+                <label className="label label-text-sm">Montant payé</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={montantPaye}
+                  onChange={(e) => setMontantPaye(e.target.value)}
+                  placeholder={`${Math.round(Number(successInfo.total_ttc))}`}
+                  className="input input-bordered input-sm w-full"
+                />
+              </div>
+              <div>
+                <label className="label label-text-sm">Référence (opt.)</label>
+                <input
+                  type="text"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder="N° chèque, ref..."
+                  className="input input-bordered input-sm w-full"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={() => enregistrerPaiement(successInfo)}
+                  disabled={loading || !montantPaye}
+                  className="btn btn-sm btn-success w-full"
+                >
+                  {loading ? 'Enregistrement...' : 'Enregistrer Paiement'}
+                </button>
+              </div>
+            </div>
+            )}
           </div>
+          
           <div className="flex items-center gap-2">
             <button 
               className="btn btn-sm btn-outline"
@@ -531,6 +657,123 @@ export default function Facturation() {
           </div>
         </div>
       </div>
+
+      {/* Modal de paiement */}
+      <dialog className={`modal ${isPaymentModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box max-w-md">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-lg">Enregistrer le paiement</h3>
+            <button
+              type="button"
+              className="btn btn-sm btn-circle btn-ghost"
+              onClick={fermerModalPaiement}
+            >
+              ✕
+            </button>
+          </div>
+
+          {facturePourPaiement && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                enregistrerPaiement()
+              }}
+              className="space-y-4"
+            >
+              {/* Infos facture */}
+              <div className="bg-base-200 p-4 rounded mb-4">
+                <div className="text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span>Facture :</span>
+                    <span className="font-semibold">{facturePourPaiement.numero_facture}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Client :</span>
+                    <span className="font-semibold">{facturePourPaiement.client_name}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2">
+                    <span>Montant à payer :</span>
+                    <span className="font-bold text-lg">{Math.round(Number(facturePourPaiement.total_ttc))} F</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mode de paiement */}
+              <label className="form-control w-full">
+                <span className="label-text font-semibold">Mode de paiement *</span>
+                <select
+                  value={modePaiement}
+                  onChange={(e) => setModePaiement(e.target.value as any)}
+                  className="select select-bordered w-full"
+                  required
+                >
+                  <option value="especes">Espèces</option>
+                  <option value="cheque">Chèque</option>
+                  <option value="carte">Carte</option>
+                  <option value="virement">Virement</option>
+                </select>
+              </label>
+
+              {/* Montant payé */}
+              <label className="form-control w-full">
+                <span className="label-text font-semibold">Montant payé *</span>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={montantPaye}
+                  onChange={(e) => setMontantPaye(e.target.value)}
+                  className="input input-bordered w-full"
+                  required
+                />
+              </label>
+
+              {/* Référence */}
+              <label className="form-control w-full">
+                <span className="label-text font-semibold">Référence (optionnel)</span>
+                <input
+                  type="text"
+                  value={reference}
+                  onChange={(e) => setReference(e.target.value)}
+                  placeholder="N° chèque, N° de transaction..."
+                  className="input input-bordered w-full"
+                />
+              </label>
+
+              {/* Monnaie rendue */}
+              {Number(montantPaye) > Number(facturePourPaiement.total_ttc) && (
+                <div className="alert alert-info">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Monnaie à rendre : <span className="font-bold">{(Number(montantPaye) - Number(facturePourPaiement.total_ttc)).toFixed(2)} F</span></span>
+                </div>
+              )}
+
+              {error && (
+                <div role="alert" className="alert alert-error">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l-2-2m0 0l-2-2m2 2l2-2m-2 2l-2 2" />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="modal-action">
+                <button type="button" className="btn btn-ghost" onClick={fermerModalPaiement}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-success" disabled={loading}>
+                  {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Confirmer le paiement'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={fermerModalPaiement}>
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   )
 }
