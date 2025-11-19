@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import type { Facture } from '../types'
+import type { Facture, TicketCaisse } from '../types'
 
 export default function Ventes() {
   const [factures, setFactures] = useState<Facture[]>([])
@@ -14,6 +14,8 @@ export default function Ventes() {
   const [showCaisseTranches, setShowCaisseTranches] = useState(false)
   const [loadingCaisse, setLoadingCaisse] = useState(false)
   const [caisseData, setCaisseData] = useState<any>(null)
+  const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
+  const [showTicketPreview, setShowTicketPreview] = useState(false)
   const [dateDebut, setDateDebut] = useState<string>(() => {
     const now = new Date()
     const date = now.toISOString().split('T')[0]
@@ -34,6 +36,9 @@ export default function Ventes() {
   const facturesEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/`
     : '/api/factures/'
+  const caisseEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/caisse/`
+    : '/api/caisse/'
 
   useEffect(() => {
     fetchFactures()
@@ -70,6 +75,23 @@ export default function Ventes() {
     } else {
       // Sinon, charger les détails complets
       await fetchFactureDetails(facture.id)
+    }
+  }
+
+  const handleOpenTicketPreview = async () => {
+    if (!selectedFacture) return
+    try {
+      const { data } = await axios.get<TicketCaisse[]>(`${caisseEndpoint}?facture=${selectedFacture.id}`)
+      if (!data || data.length === 0) {
+        setTicketCaisse(null)
+        setShowTicketPreview(false)
+        setError('Aucun ticket de caisse trouvé pour cette facture.')
+        return
+      }
+      setTicketCaisse(data[0])
+      setShowTicketPreview(true)
+    } catch (err) {
+      setError('Erreur lors de la récupération du ticket de caisse.')
     }
   }
 
@@ -605,6 +627,14 @@ export default function Ventes() {
             )}
 
             <div className="modal-action">
+              {selectedFacture.status === 'PAY' && (
+                <button 
+                  className="btn btn-info"
+                  onClick={handleOpenTicketPreview}
+                >
+                  Consulter le ticket
+                </button>
+              )}
               <button 
                 className="btn" 
                 onClick={() => setSelectedFacture(null)}
@@ -614,6 +644,156 @@ export default function Ventes() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setSelectedFacture(null)}></div>
+        </div>
+      )}
+
+      {showTicketPreview && ticketCaisse && selectedFacture && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Aperçu du Ticket de Caisse</h3>
+              <button 
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={() => setShowTicketPreview(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-lg" id="ticket-preview" style={{ maxWidth: '80mm', margin: '0 auto', color: '#000', fontFamily: "'Arial Black', Arial, sans-serif" }}>
+              <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
+                <h2 className="text-xl font-bold">DJADEU PHARMACY</h2>
+                <p className="text-sm">Logbessou</p>
+                <p className="text-sm">Tel: 697268949</p>
+              </div>
+              <div className="mb-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-semibold">Ticket N°:</span>
+                  <span>#{ticketCaisse.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Facture:</span>
+                  <span>{selectedFacture.numero_facture || `FAC-${selectedFacture.id}`}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Client:</span>
+                  <span className="text-right">{selectedFacture.client_name || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Date:</span>
+                  <span>{new Date(ticketCaisse.date_paiement || selectedFacture.date).toLocaleString('fr-FR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                  })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Mode de paiement:</span>
+                  <span className="uppercase">
+                    {ticketCaisse.mode_paiement === 'especes' ? 'Espèces' :
+                     ticketCaisse.mode_paiement === 'cheque' ? 'Chèque' :
+                     ticketCaisse.mode_paiement === 'carte' ? 'Carte' :
+                     ticketCaisse.mode_paiement === 'virement' ? 'Virement' : ticketCaisse.mode_paiement}
+                  </span>
+                </div>
+                {ticketCaisse.reference && (
+                  <div className="flex justify-between">
+                    <span className="font-semibold">Référence:</span>
+                    <span>{ticketCaisse.reference}</span>
+                  </div>
+                )}
+              </div>
+              {selectedFacture.produits && selectedFacture.produits.length > 0 && (
+                <div className="mb-4 border-t border-b border-gray-300 py-2">
+                  <div className="text-xs font-semibold mb-2">Détails:</div>
+                  {selectedFacture.produits.slice(0, 5).map((p) => (
+                    <div key={p.id} className="flex justify-between text-xs mb-1">
+                      <span className="flex-1">{p.produit.name} x{Math.abs(p.quantity)}</span>
+                      <span>{Math.round(Math.abs(p.quantity) * Number(p.selling_price || 0))} F</span>
+                    </div>
+                  ))}
+                  {selectedFacture.produits.length > 5 && (
+                    <div className="text-xs text-gray-500 mt-1">... et {selectedFacture.produits.length - 5} autre(s) produit(s)</div>
+                  )}
+                </div>
+              )}
+              <div className="mb-4 space-y-1 text-sm border-t border-gray-300 pt-2">
+                <div className="flex justify-between">
+                  <span>Sous-total HT:</span>
+                  <span>{Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F</span>
+                </div>
+                {Number(selectedFacture.remise || 0) > 0 && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Remise:</span>
+                    <span>-{Math.round(Number(selectedFacture.remise || 0)).toLocaleString('fr-FR')} F</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>TVA ({selectedFacture.tva}%):</span>
+                  <span>{Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F</span>
+                </div>
+                <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2">
+                  <span>TOTAL:</span>
+                  <span>{Math.round(Number(ticketCaisse.montant || selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F</span>
+                </div>
+              </div>
+              <div className="text-center text-xs border-t border-gray-300 pt-3 mt-4">
+                <p>Merci de votre visite !</p>
+                <p className="mt-1">Ticket généré le {new Date().toLocaleString('fr-FR')}</p>
+              </div>
+            </div>
+            <div className="modal-action">
+              <button 
+                className="btn btn-ghost"
+                onClick={() => setShowTicketPreview(false)}
+              >
+                Fermer
+              </button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  const printContent = document.getElementById('ticket-preview')
+                  if (printContent) {
+                    const printWindow = window.open('', '_blank')
+                    if (printWindow) {
+                      printWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                          <head>
+                            <title>Ticket de Caisse - ${selectedFacture.numero_facture || ''}</title>
+                            <style>
+                              @media print {
+                                @page { margin: 0; size: 80mm auto; }
+                                body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                              }
+                              body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; }
+                              .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                              .header h2 { margin: 0; font-size: 18px; font-weight: bold; }
+                              .info { margin-bottom: 15px; }
+                              .info div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+                              .details { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 15px 0; }
+                              .totals { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; }
+                              .totals div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
+                              .total-final { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; }
+                              .footer { text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; font-size: 10px; }
+                            </style>
+                          </head>
+                          <body>
+                            ${printContent.innerHTML}
+                          </body>
+                        </html>
+                      `)
+                      printWindow.document.close()
+                      setTimeout(() => {
+                        printWindow.print()
+                        printWindow.close()
+                      }, 250)
+                    }
+                  }
+                }}
+              >
+                Imprimer Ticket
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
         </div>
       )}
     </div>
