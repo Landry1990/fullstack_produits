@@ -888,7 +888,7 @@ export default function Facturation() {
             </div>
             
             {/* Aperçu du ticket formaté pour l'impression */}
-            <div className="bg-white p-6 rounded-lg shadow-lg" id="ticket-preview" style={{ maxWidth: '80mm', margin: '0 auto' }}>
+            <div className="bg-white p-6 rounded-lg shadow-lg" id="ticket-preview" style={{ maxWidth: '80mm', margin: '0 auto', color: '#000', fontFamily: "'Arial Black', Arial, sans-serif" }}>
               {/* En-tête */}
               <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
                 <h2 className="text-xl font-bold">DJADEU PHARMACY</h2>
@@ -1009,9 +1009,9 @@ export default function Facturation() {
                             <style>
                               @media print {
                                 @page { margin: 0; size: 80mm auto; }
-                                body { margin: 0; padding: 10mm; font-family: Arial, sans-serif; font-size: 12px; }
+                                body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                               }
-                              body { margin: 0; padding: 10mm; font-family: Arial, sans-serif; font-size: 12px; }
+                              body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; }
                               .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
                               .header h2 { margin: 0; font-size: 18px; font-weight: bold; }
                               .info { margin-bottom: 15px; }
