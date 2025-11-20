@@ -1,28 +1,94 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+interface DashboardStats {
+  revenue: { value: number; change: number };
+  sales: { value: number; change: number };
+  clients: { value: number; change: number };
+  low_stock: { value: number; change: number };
+}
+
+interface Transaction {
+  id: number;
+  client: string;
+  amount: number;
+  date: string;
+  status: string;
+  status_code: string;
+}
+
+interface RevenueChartData {
+  labels: string[];
+  data: number[];
+}
+
+interface LowStockItem {
+  id: number;
+  name: string;
+  stock: number;
+}
 
 export default function Dashboard() {
-  // Mock data for demonstration
-  const stats = [
-    { title: "Chiffre d'affaires", value: "150 000 F", change: "+12%", icon: "💰", color: "bg-emerald-100 text-emerald-700" },
-    { title: "Ventes du jour", value: "24", change: "+5%", icon: "shopping_cart", color: "bg-blue-100 text-blue-700" },
-    { title: "Nouveaux Clients", value: "3", change: "+1", icon: "group", color: "bg-purple-100 text-purple-700" },
-    { title: "Alertes Stock", value: "5", change: "-2", icon: "warning", color: "bg-red-100 text-red-700" },
-  ];
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [revenueChart, setRevenueChart] = useState<RevenueChartData | null>(null);
+  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const recentTransactions = [
-    { id: 1, client: "Jean Dupont", amount: "15 000 F", date: "10:30", status: "Payé" },
-    { id: 2, client: "Marie Curie", amount: "8 500 F", date: "10:15", status: "Payé" },
-    { id: 3, client: "Pierre Martin", amount: "22 000 F", date: "09:45", status: "En attente" },
-    { id: 4, client: "Sophie Germain", amount: "5 000 F", date: "09:30", status: "Payé" },
-    { id: 5, client: "Client Comptoir", amount: "3 200 F", date: "09:15", status: "Payé" },
-  ];
+  const apiBaseUrl = useMemo(
+    () => (import.meta.env.VITE_API_BASE_URL ?? ''),
+    [],
+  )
+  const dashboardEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/dashboard/`
+    : '/api/dashboard/'
 
-  const lowStockItems = [
-    { name: "Doliprane 1000mg", stock: 2 },
-    { name: "Efferalgan 500mg", stock: 0 },
-    { name: "Spasfon", stock: 5 },
-    { name: "Amoxicilline", stock: 3 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [statsRes, transactionsRes, chartRes, lowStockRes] = await Promise.all([
+          axios.get(`${dashboardEndpoint}stats/`),
+          axios.get(`${dashboardEndpoint}recent_transactions/`),
+          axios.get(`${dashboardEndpoint}revenue_chart/`),
+          axios.get(`${dashboardEndpoint}low_stock/`)
+        ]);
+
+        setStats(statsRes.data);
+        setRecentTransactions(transactionsRes.data);
+        setRevenueChart(chartRes.data);
+        setLowStockItems(lowStockRes.data);
+      } catch (err) {
+        console.error('Erreur lors du chargement du tableau de bord:', err);
+        setError('Impossible de charger les données du tableau de bord.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [dashboardEndpoint]);
+
+  if (loading) {
+    return (
+      <div className="p-6 flex justify-center items-center h-96">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="alert alert-error shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{error}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
@@ -39,14 +105,19 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {stats && [
+          { title: "Chiffre d'affaires", value: `${Math.round(stats.revenue.value).toLocaleString('fr-FR')} F`, change: `${stats.revenue.change > 0 ? '+' : ''}${stats.revenue.change}%`, icon: "💰", color: "bg-emerald-100 text-emerald-700", isPositive: stats.revenue.change >= 0 },
+          { title: "Ventes du jour", value: stats.sales.value, change: `${stats.sales.change > 0 ? '+' : ''}${stats.sales.change}%`, icon: "shopping_cart", color: "bg-blue-100 text-blue-700", isPositive: stats.sales.change >= 0 },
+          { title: "Nouveaux Clients", value: stats.clients.value, change: `${stats.clients.change > 0 ? '+' : ''}${stats.clients.change}%`, icon: "group", color: "bg-purple-100 text-purple-700", isPositive: stats.clients.change >= 0 },
+          { title: "Alertes Stock", value: stats.low_stock.value, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false }, // Pas de variation pertinente pour le stock
+        ].map((stat, index) => (
           <div key={index} className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4 flex flex-row items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-base-content/70">{stat.title}</p>
                 <h3 className="text-2xl font-bold text-base-content mt-1">{stat.value}</h3>
-                <span className={`text-xs font-medium ${stat.change.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
-                  {stat.change} <span className="text-base-content/60">vs hier</span>
+                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' ? 'text-base-content/60' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
+                  {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : 'vs hier'}</span>
                 </span>
               </div>
               <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${stat.color}`}>
@@ -69,26 +140,30 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Charts & Transactions */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Revenue Chart (Mock Visual) */}
+          {/* Revenue Chart */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <h2 className="card-title text-lg font-bold text-base-content mb-4">Évolution du Chiffre d'Affaires</h2>
+              <h2 className="card-title text-lg font-bold text-base-content mb-4">Évolution du Chiffre d'Affaires (7 derniers jours)</h2>
               <div className="h-64 flex items-end justify-between gap-2 px-2">
-                {[40, 65, 45, 80, 55, 90, 70].map((height, i) => (
-                  <div key={i} className="flex flex-col items-center gap-2 w-full group cursor-pointer">
-                    <div 
-                      className="w-full bg-primary/20 rounded-t-lg hover:bg-primary/40 transition-all relative group-hover:shadow-lg"
-                      style={{ height: `${height}%` }}
-                    >
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-base-content text-base-100 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                        {height * 1500} F
+                {revenueChart && revenueChart.data.map((value, i) => {
+                  const maxVal = Math.max(...revenueChart.data, 1); // Avoid division by zero
+                  const height = (value / maxVal) * 100;
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-2 w-full group cursor-pointer">
+                      <div 
+                        className="w-full bg-primary/20 rounded-t-lg hover:bg-primary/40 transition-all relative group-hover:shadow-lg"
+                        style={{ height: `${Math.max(height, 5)}%` }} // Min height for visibility
+                      >
+                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-base-content text-base-100 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                          {Math.round(value).toLocaleString('fr-FR')} F
+                        </div>
                       </div>
+                      <span className="text-xs text-base-content/60 font-medium">
+                        {revenueChart.labels[i]}
+                      </span>
                     </div>
-                    <span className="text-xs text-base-content/60 font-medium">
-                      {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'][i]}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -106,23 +181,37 @@ export default function Dashboard() {
                     <tr className="text-base-content/70 border-b-base-200">
                       <th>Client</th>
                       <th>Montant</th>
-                      <th>Heure</th>
+                      <th>Date</th>
                       <th>Statut</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recentTransactions.map((tx) => (
-                      <tr key={tx.id} className="hover:bg-base-200/50 border-b-base-200">
-                        <td className="font-medium text-base-content">{tx.client}</td>
-                        <td className="font-bold text-base-content">{tx.amount}</td>
-                        <td className="text-base-content/70">{tx.date}</td>
-                        <td>
-                          <span className={`badge badge-sm ${tx.status === 'Payé' ? 'badge-success text-white' : 'badge-warning text-warning-content'}`}>
-                            {tx.status}
-                          </span>
-                        </td>
+                    {recentTransactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="text-center py-4 text-base-content/50">Aucune transaction récente</td>
                       </tr>
-                    ))}
+                    ) : (
+                      recentTransactions.map((tx) => (
+                        <tr key={tx.id} className="hover:bg-base-200/50 border-b-base-200">
+                          <td className="font-medium text-base-content">{tx.client}</td>
+                          <td className="font-bold text-base-content">{Math.round(Number(tx.amount)).toLocaleString('fr-FR')} F</td>
+                          <td className="text-base-content/70">
+                            {new Date(tx.date).toLocaleString('fr-FR', {
+                              day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                            })}
+                          </td>
+                          <td>
+                            <span className={`badge badge-sm ${
+                              tx.status_code === 'PAY' ? 'badge-success text-white' : 
+                              tx.status_code === 'VAL' ? 'badge-info text-white' : 
+                              'badge-warning text-warning-content'
+                            }`}>
+                              {tx.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -158,20 +247,26 @@ export default function Dashboard() {
             <div className="card-body p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-lg font-bold text-base-content">Alertes Stock</h2>
-                <span className="badge badge-error text-white badge-sm">5</span>
+                {stats && stats.low_stock.value > 0 && (
+                  <span className="badge badge-error text-white badge-sm">{stats.low_stock.value}</span>
+                )}
               </div>
               <div className="space-y-3">
-                {lowStockItems.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-error"></div>
-                      <span className="text-sm font-medium text-base-content">{item.name}</span>
+                {lowStockItems.length === 0 ? (
+                  <div className="text-sm text-base-content/60 text-center py-2">Aucune alerte de stock</div>
+                ) : (
+                  lowStockItems.map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-error"></div>
+                        <span className="text-sm font-medium text-base-content">{item.name}</span>
+                      </div>
+                      <span className="text-xs font-bold text-error">
+                        {item.stock <= 0 ? 'Rupture' : `Reste: ${item.stock}`}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold text-error">
-                      {item.stock === 0 ? 'Rupture' : `Reste: ${item.stock}`}
-                    </span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
               <Link to="/produits" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
                 Voir tout le stock

@@ -46,7 +46,7 @@ export default function Facturation() {
   const [loading, setLoading] = useState(false)
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
-  const [tva, setTva] = useState('19.25')
+  const [tva, setTva] = useState('0')
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
@@ -99,26 +99,28 @@ export default function Facturation() {
   }, [])
 
   useEffect(() => {
-    const controller = new AbortController()
-    async function fetchInitialData() {
+    const fetchData = async () => {
       setLoading(true)
-      setError(null)
-      setSuccessInfo(null)
       try {
-        const [produitsResponse, clientsResponse] = await Promise.all([
-          axios.get<ProduitModel[]>(produitsEndpoint, { signal: controller.signal }),
-          axios.get<Client[]>(clientsEndpoint, { signal: controller.signal }),
+        const [produitsRes, clientsRes] = await Promise.all([
+          axios.get<ProduitModel[]>(produitsEndpoint),
+          axios.get<Client[]>(clientsEndpoint)
         ])
-        setProduits(produitsResponse.data)
-        setClients(clientsResponse.data)
+        setProduits(produitsRes.data)
+        setClients(clientsRes.data)
+        
+        // Sélectionner "Clients divers" par défaut
+        const defaultClient = clientsRes.data.find(c => c.name.toLowerCase() === 'clients divers')
+        if (defaultClient) {
+          setSelectedClient(defaultClient.id)
+        }
       } catch (err) {
-        handleApiError(err, 'Erreur lors du chargement des données initiales.')
+        handleApiError(err, 'Erreur lors du chargement des données.')
       } finally {
         setLoading(false)
       }
     }
-    fetchInitialData()
-    return () => controller.abort()
+    fetchData()
   }, [produitsEndpoint, clientsEndpoint, handleApiError])
 
   // Fonction pour calculer le total d'une ligne avec remise produit
@@ -249,7 +251,9 @@ export default function Facturation() {
     produit.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const createFacture = async () => {
+  const [isNewSale, setIsNewSale] = useState(false)
+
+  const handleCompleteSale = async () => {
     if (!selectedClient) {
       setError('Veuillez sélectionner un client')
       return
@@ -258,12 +262,18 @@ export default function Facturation() {
       setError('Veuillez ajouter au moins un produit')
       return
     }
+    if (!montantPaye || Number(montantPaye) <= 0) {
+      setError('Veuillez entrer un montant valide')
+      return
+    }
 
     setLoading(true)
     setError(null)
     setSuccessInfo(null)
+    
     const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
     const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
+    const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/'
 
     try {
       // 1. Créer la facture en mode brouillon
@@ -280,41 +290,57 @@ export default function Facturation() {
         produit_id: ligne.produit.id,
         quantity: Number(ligne.quantite),
         selling_price: normalizeNumberInput(ligne.prix_unitaire, { min: 0 }).toString(),
-        lot: null, // Ajout du champ lot
-        date_expiration: null, // Ajout du champ date_expiration
+        lot: null,
+        date_expiration: null,
       }))
 
-      // On peut utiliser Promise.all pour envoyer les requêtes en parallèle
       await Promise.all(
         produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
       )
 
-      // 3. Valider la facture (le backend s'occupe du stock)
+      // 3. Valider la facture
       const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
       const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint)
 
-      // 4. Afficher le succès et réinitialiser
-      setSuccessInfo(validatedFacture)
+      // 4. Enregistrer le paiement
+      const paiementPayload = {
+        facture: validatedFacture.id,
+        mode_paiement: modePaiement,
+        montant: normalizeNumberInput(montantPaye, { min: 0 }),
+        reference: reference || null,
+        statut: 'completee',
+      }
+      const caisseResponse = await axios.post(caisseEndpoint, paiementPayload)
+
+      // 5. Mettre à jour le statut de la facture à "PAYEE"
+      const factureUpdateEndpoint = `${facturesEndpoint}${validatedFacture.id}/`
+      await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
+
+      // 6. Récupérer la facture finale mise à jour
+      const { data: finalFacture } = await axios.get<Facture>(factureUpdateEndpoint)
+
+      // 7. Finaliser
+      setSuccessInfo(finalFacture)
+      setTicketCaisse({
+        ...caisseResponse.data,
+        facture: finalFacture
+      })
+      
       setLignesFacture([])
       setSelectedClient(null)
       setRemise('0')
+      fermerModalPaiement()
       
-      // Rafraîchir la liste des produits pour mettre à jour les stocks
+      // Rafraîchir les stocks
       try {
         const produitsResponse = await axios.get<ProduitModel[]>(produitsEndpoint)
         setProduits(produitsResponse.data)
       } catch (err) {
         console.error('Erreur lors du rafraîchissement des produits:', err)
-        // En cas d'erreur, essayer de mettre à jour manuellement avec les données de la facture validée
-        setProduits(prevProduits => 
-          prevProduits.map(p => {
-            const factureProduit = validatedFacture.produits.find(fp => fp.produit.id === p.id)
-            return factureProduit ? factureProduit.produit : p
-          })
-        )
       }
+
     } catch (err) {
-      handleApiError(err, 'Une erreur est survenue lors de la création de la facture.')
+      handleApiError(err, 'Une erreur est survenue lors de l\'enregistrement de la vente.')
     } finally {
       setLoading(false)
     }
@@ -374,14 +400,7 @@ export default function Facturation() {
 
       // Créer le ticket de caisse
       const caisseResponse = await axios.post(caisseEndpoint, paiementPayload)
-      console.log('Ticket de caisse créé:', caisseResponse.data)
       
-      // Stocker les données du ticket pour l'aperçu
-      setTicketCaisse({
-        ...caisseResponse.data,
-        facture: factureAPayer
-      })
-
       // Mettre à jour le statut de la facture à "PAYEE"
       const factureUpdateEndpoint = apiBaseUrl
         ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/${factureAPayer.id}/`
@@ -389,23 +408,16 @@ export default function Facturation() {
 
       await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
       
-      // Rafraîchir les données de la facture pour avoir les dernières informations
-      const factureDetailEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/${factureAPayer.id}/`
-        : `/api/factures/${factureAPayer.id}/`
-      const { data: factureUpdated } = await axios.get<Facture>(factureDetailEndpoint)
+      // Rafraîchir les données de la facture
+      const { data: factureUpdated } = await axios.get<Facture>(factureUpdateEndpoint)
 
       setSuccessInfo(factureUpdated)
-      
-      // Mettre à jour le ticket avec les données complètes de la facture
       setTicketCaisse({
         ...caisseResponse.data,
         facture: factureUpdated
       })
       
-      if (facturePourPaiement) {
-        fermerModalPaiement()
-      }
+      fermerModalPaiement()
     } catch (err) {
       handleApiError(err, "Erreur lors de l'enregistrement du paiement")
     } finally {
@@ -413,9 +425,26 @@ export default function Facturation() {
     }
   }
 
-  const ouvrirModalPaiement = (facture: Facture) => {
-    setFacturePourPaiement(facture)
-    setMontantPaye(Math.round(Number(facture.total_ttc)).toString())
+  const ouvrirModalPaiement = (facture?: Facture) => {
+    if (facture) {
+      // Paiement d'une facture existante
+      setFacturePourPaiement(facture)
+      setMontantPaye(Math.round(Number(facture.total_ttc)).toString())
+      setIsNewSale(false)
+    } else {
+      // Nouvelle vente (Encaisser)
+      if (!selectedClient) {
+        setError('Veuillez sélectionner un client')
+        return
+      }
+      if (lignesFacture.length === 0) {
+        setError('Veuillez ajouter au moins un produit')
+        return
+      }
+      setFacturePourPaiement(null)
+      setMontantPaye(Math.round(totals.totalTtc).toString())
+      setIsNewSale(true)
+    }
     setModePaiement('especes')
     setReference('')
     setIsPaymentModalOpen(true)
@@ -427,6 +456,7 @@ export default function Facturation() {
     setMontantPaye('')
     setReference('')
     setModePaiement('especes')
+    setIsNewSale(false)
   }
 
   return (
@@ -454,60 +484,21 @@ export default function Facturation() {
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <div className="flex-1">
             <h3 className="font-bold">Facture créée avec succès !</h3>
-            <div className="text-xs mb-4">
+            <div className="text-xs">
               Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour <span className="font-semibold">{successInfo.client_name}</span> • <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>
               {successInfo.status === 'PAY' && <span className="badge badge-sm badge-success ml-2">PAYÉE</span>}
             </div>
-            
-            {/* Formulaire de paiement inline si non payé */}
-            {successInfo.status !== 'PAY' && (
-            <div className="bg-base-100/50 p-3 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-              <div>
-                <label className="label label-text-sm py-0 pb-1">Mode</label>
-                <select
-                  value={modePaiement}
-                  onChange={(e) => setModePaiement(e.target.value as any)}
-                  className="select select-bordered select-sm w-full"
-                >
-                  <option value="especes">Espèces</option>
-                  <option value="cheque">Chèque</option>
-                  <option value="carte">Carte</option>
-                  <option value="virement">Virement</option>
-                </select>
-              </div>
-              <div>
-                <label className="label label-text-sm py-0 pb-1">Montant</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={montantPaye}
-                  onChange={(e) => setMontantPaye(e.target.value)}
-                  placeholder={`${Math.round(Number(successInfo.total_ttc))}`}
-                  className="input input-bordered input-sm w-full"
-                />
-              </div>
-              <div>
-                <label className="label label-text-sm py-0 pb-1">Réf.</label>
-                <input
-                  type="text"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  placeholder="Optionnel"
-                  className="input input-bordered input-sm w-full"
-                />
-              </div>
-              <button
-                onClick={() => enregistrerPaiement(successInfo)}
-                disabled={loading || !montantPaye}
-                className="btn btn-sm btn-primary w-full"
-              >
-                {loading ? '...' : 'Payer'}
-              </button>
-            </div>
-            )}
           </div>
           
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-row gap-2 items-center">
+            {successInfo.status !== 'PAY' && (
+              <button 
+                className="btn btn-sm btn-primary"
+                onClick={() => ouvrirModalPaiement(successInfo)}
+              >
+                Payer maintenant
+              </button>
+            )}
             {successInfo.status === 'PAY' && ticketCaisse && (
               <button className="btn btn-sm btn-info" onClick={() => setShowTicketPreview(true)}>
                 Ticket
@@ -738,11 +729,11 @@ export default function Facturation() {
               </div>
               
               <button
-                onClick={createFacture}
+                onClick={() => ouvrirModalPaiement()}
                 disabled={loading || !selectedClient || lignesFacture.length === 0 }
                 className="btn btn-primary w-full shadow-lg shadow-primary/20"
               >
-                {loading ? <span className="loading loading-spinner"></span> : 'Valider la Facture'}
+                {loading ? <span className="loading loading-spinner"></span> : 'Encaisser'}
               </button>
             </div>
           </div>
@@ -757,21 +748,38 @@ export default function Facturation() {
             <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={fermerModalPaiement}>✕</button>
           </div>
 
-          {facturePourPaiement && (
-            <form onSubmit={(e) => { e.preventDefault(); enregistrerPaiement(); }} className="space-y-4">
+          {(facturePourPaiement || isNewSale) && (
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              if (isNewSale) {
+                handleCompleteSale();
+              } else {
+                enregistrerPaiement(); 
+              }
+            }} className="space-y-4">
               <div className="bg-base-200 p-4 rounded-lg mb-4">
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
                     <span className="opacity-70">Facture</span>
-                    <span className="font-semibold">{facturePourPaiement.numero_facture}</span>
+                    <span className="font-semibold">
+                      {isNewSale ? 'Nouvelle Vente' : facturePourPaiement?.numero_facture}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="opacity-70">Client</span>
-                    <span className="font-semibold">{facturePourPaiement.client_name}</span>
+                    <span className="font-semibold">
+                      {isNewSale 
+                        ? clients.find(c => c.id === selectedClient)?.name 
+                        : facturePourPaiement?.client_name}
+                    </span>
                   </div>
                   <div className="flex justify-between border-t border-base-300 pt-2 mt-2">
                     <span className="font-bold">À payer</span>
-                    <span className="font-bold text-lg text-primary">{Math.round(Number(facturePourPaiement.total_ttc))} F</span>
+                    <span className="font-bold text-lg text-primary">
+                      {isNewSale 
+                        ? Math.round(totals.totalTtc) 
+                        : Math.round(Number(facturePourPaiement?.total_ttc))} F
+                    </span>
                   </div>
                 </div>
               </div>
@@ -812,12 +820,15 @@ export default function Facturation() {
                 />
               </div>
 
-              {Number(montantPaye) > Number(facturePourPaiement.total_ttc) && (
-                <div className="alert alert-info py-2 shadow-sm">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span>Rendre : <span className="font-bold">{(Number(montantPaye) - Number(facturePourPaiement.total_ttc)).toFixed(2)} F</span></span>
-                </div>
-              )}
+              {(() => {
+                const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                return Number(montantPaye) > totalAPayer && (
+                  <div className="alert alert-info py-2 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>Rendre : <span className="font-bold">{(Number(montantPaye) - totalAPayer).toFixed(2)} F</span></span>
+                  </div>
+                )
+              })()}
 
               <div className="modal-action">
                 <button type="button" className="btn btn-ghost" onClick={fermerModalPaiement}>Annuler</button>

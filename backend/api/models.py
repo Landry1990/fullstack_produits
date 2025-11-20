@@ -44,6 +44,7 @@ class Client(models.Model):
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
     email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
