@@ -430,11 +430,19 @@ export default function Facturation() {
   }
 
   return (
-    <div className="p-6 bg-base-200 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Facturation</h1>
+    <div className="h-full flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-base-content">Nouvelle Facture</h1>
+          <p className="text-sm text-base-content/80">Créez et gérez les factures clients</p>
+        </div>
+        <div className="text-sm text-base-content/80">
+          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        </div>
+      </div>
       
       {error && (
-        <div role="alert" className="alert alert-error mb-4">
+        <div role="alert" className="alert alert-error shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span>{error}</span>
           <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
@@ -442,21 +450,20 @@ export default function Facturation() {
       )}
 
       {successInfo && (
-        <div role="alert" className="alert alert-success mb-4">
+        <div role="alert" className="alert alert-success shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <div className="flex-1">
             <h3 className="font-bold">Facture créée avec succès !</h3>
             <div className="text-xs mb-4">
-              Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour le client <span className="font-semibold">{successInfo.client_name}</span> d'un montant total de <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>.
-              {successInfo.status === 'PAY' && <span className="badge badge-success ml-2">PAYÉE</span>}
-              {successInfo.status === 'PAY' && <span className="badge badge-info ml-2">Ticket de caisse enregistré</span>}
+              Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour <span className="font-semibold">{successInfo.client_name}</span> • <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>
+              {successInfo.status === 'PAY' && <span className="badge badge-sm badge-success ml-2">PAYÉE</span>}
             </div>
             
-            {/* Formulaire de paiement */}
+            {/* Formulaire de paiement inline si non payé */}
             {successInfo.status !== 'PAY' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
+            <div className="bg-base-100/50 p-3 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
               <div>
-                <label className="label label-text-sm">Mode de paiement</label>
+                <label className="label label-text-sm py-0 pb-1">Mode</label>
                 <select
                   value={modePaiement}
                   onChange={(e) => setModePaiement(e.target.value as any)}
@@ -469,7 +476,7 @@ export default function Facturation() {
                 </select>
               </div>
               <div>
-                <label className="label label-text-sm">Montant payé</label>
+                <label className="label label-text-sm py-0 pb-1">Montant</label>
                 <input
                   type="number"
                   step="0.01"
@@ -480,278 +487,264 @@ export default function Facturation() {
                 />
               </div>
               <div>
-                <label className="label label-text-sm">Référence (opt.)</label>
+                <label className="label label-text-sm py-0 pb-1">Réf.</label>
                 <input
                   type="text"
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
-                  placeholder="N° chèque, ref..."
+                  placeholder="Optionnel"
                   className="input input-bordered input-sm w-full"
                 />
               </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => enregistrerPaiement(successInfo)}
-                  disabled={loading || !montantPaye}
-                  className="btn btn-sm btn-success w-full"
-                >
-                  {loading ? 'Enregistrement...' : 'Enregistrer Paiement'}
-                </button>
-              </div>
+              <button
+                onClick={() => enregistrerPaiement(successInfo)}
+                disabled={loading || !montantPaye}
+                className="btn btn-sm btn-primary w-full"
+              >
+                {loading ? '...' : 'Payer'}
+              </button>
             </div>
-            )}
-            {successInfo.status === 'PAY' && (
-              <div className="text-xs text-base-content/70 mb-2">
-                Le paiement a été enregistré. Le ticket de caisse a été créé.
-              </div>
             )}
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-2">
             {successInfo.status === 'PAY' && ticketCaisse && (
-              <button 
-                className="btn btn-sm btn-info"
-                onClick={() => setShowTicketPreview(true)}
-              >
-                Aperçu Ticket
+              <button className="btn btn-sm btn-info" onClick={() => setShowTicketPreview(true)}>
+                Ticket
               </button>
             )}
-            <button 
-              className="btn btn-sm btn-outline"
-              onClick={() => handleImprimerFacture(successInfo)}
-            >
-              Imprimer Facture
+            <button className="btn btn-sm btn-outline" onClick={() => handleImprimerFacture(successInfo)}>
+              Imprimer
             </button>
-            <button className="btn btn-sm btn-ghost" onClick={() => setSuccessInfo(null)}>✕</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => setSuccessInfo(null)}>Fermer</button>
           </div>
         </div>
       )}
 
-      {/* Sélection du client */}
-      <div className="card bg-base-100 shadow-xl mb-6">
-        <div className="card-body">
-        <h2 className="card-title">Informations Client</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="label"><span className="label-text">Client</span></label>
-            <select
-              value={selectedClient !== null ? String(selectedClient) : ''}
-              onChange={(e) => {
-                const value = e.target.value
-                setSelectedClient(value ? Number(value) : null)
-              }}
-              className="select select-bordered w-full"
-            >
-              <option value="">Sélectionner un client</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="label"><span className="label-text">Remise globale</span></label>
-            <div className="flex gap-2">
-              <select
-                value={remiseMode}
-                onChange={(e) => {
-                  setRemiseMode(e.target.value as 'montant' | 'taux')
-                  setRemise('0')
-                }}
-                className="select select-bordered w-24"
-              >
-                <option value="montant">Montant</option>
-                <option value="taux">Taux %</option>
-              </select>
-              <input
-                type="number"
-                step="0.01"
-                value={remise}
-                onChange={(e) => setRemise(e.target.value)}
-                placeholder={remiseMode === 'montant' ? 'Montant (F)' : 'Taux (%)'}
-                className="input input-bordered flex-1"
-                min="0"
-                max={remiseMode === 'taux' ? '100' : undefined}
-              />
+      <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
+        {/* Left Panel: Client & Products */}
+        <div className="col-span-12 lg:col-span-5 flex flex-col gap-4 min-h-0">
+          {/* Client Selection */}
+          <div className="card bg-base-100 shadow-sm border border-base-200">
+            <div className="card-body p-4">
+              <h2 className="card-title text-sm uppercase tracking-wider text-base-content/80 mb-2">Client & Conditions</h2>
+              <div className="grid gap-3">
+                <div>
+                  <select
+                    value={selectedClient !== null ? String(selectedClient) : ''}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      setSelectedClient(value ? Number(value) : null)
+                    }}
+                    className="select select-bordered w-full"
+                  >
+                    <option value="">Sélectionner un client...</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>{client.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="join w-full">
+                    <select
+                      value={remiseMode}
+                      onChange={(e) => {
+                        setRemiseMode(e.target.value as 'montant' | 'taux')
+                        setRemise('0')
+                      }}
+                      className="select select-bordered join-item w-24 text-xs px-1"
+                    >
+                      <option value="montant">Remise (F)</option>
+                      <option value="taux">Remise (%)</option>
+                    </select>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={remise}
+                      onChange={(e) => setRemise(e.target.value)}
+                      className="input input-bordered join-item w-full"
+                      min="0"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 border border-base-300 rounded-lg px-3 bg-base-200/30">
+                    <span className="text-sm text-base-content/80">TVA</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={tva}
+                      onChange={(e) => setTva(e.target.value)}
+                      className="input input-ghost input-sm w-full text-right font-medium"
+                    />
+                    <span className="text-sm">%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div>
-            <label className="label"><span className="label-text">TVA (%)</span></label>
-            <input
-              type="number"
-              step="0.01"
-              value={tva}
-              onChange={(e) => setTva(e.target.value)}
-              className="input input-bordered w-full"
-            />
+
+          {/* Product Selection */}
+          <div className="card bg-base-100 shadow-sm border border-base-200 flex-1 flex flex-col min-h-0">
+            <div className="card-body p-4 flex flex-col h-full min-h-0">
+              <h2 className="card-title text-sm uppercase tracking-wider text-base-content/80 mb-2">Produits</h2>
+              <div className="relative mb-3">
+                <input
+                  type="text"
+                  placeholder="Rechercher un produit..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="input input-bordered w-full pl-10"
+                />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto pr-1 space-y-2">
+                {filteredProduits.length === 0 ? (
+                  <div className="text-center py-8 text-base-content/80">
+                    {loading ? <span className="loading loading-spinner"></span> : 'Aucun produit trouvé'}
+                  </div>
+                ) : (
+                  filteredProduits.map((produit) => (
+                    <div key={produit.id} className="group flex items-center justify-between p-3 border border-base-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer" onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-base-content truncate">{produit.name}</div>
+                        <div className="text-xs text-base-content/80 flex gap-3 mt-1">
+                          <span className={(produit.stock ?? 0) === 0 ? 'text-error font-medium' : 'text-success'}>
+                            Stock: {produit.stock}
+                          </span>
+                          <span className="font-medium text-base-content">{produit.selling_price} F</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addProduitToFacture(produit);
+                        }}
+                        disabled={(produit.stock ?? 0) === 0}
+                        className="btn btn-sm btn-square btn-ghost text-primary group-hover:bg-primary group-hover:text-primary-content"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Liste des produits disponibles */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Produits Disponibles</h2>
-
-            {/* Champ de recherche */}
-            <div className="mb-4">
-              <input
-                type="text"
-                placeholder="Rechercher un produit..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input input-bordered w-full"
-              />
+        {/* Right Panel: Invoice */}
+        <div className="col-span-12 lg:col-span-7 card bg-base-100 shadow-sm border border-base-200 flex flex-col h-full overflow-hidden">
+          <div className="card-body p-0 flex flex-col h-full">
+            {/* Header */}
+            <div className="p-4 border-b border-base-200 bg-base-200/30 flex justify-between items-center">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                Détails de la facture
+              </h2>
+              <div className="badge badge-ghost">{lignesFacture.length} articles</div>
             </div>
-            
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
-              {filteredProduits.length === 0 ? (
-                <div className="text-center py-4 text-base-content/70">
-                  {loading && <span className="loading loading-spinner"></span>}
-                  {!loading && (searchQuery ? 'Aucun produit trouvé' : 'Aucun produit disponible')}
+
+            {/* Table */}
+            <div className="flex-1 overflow-y-auto">
+              {lignesFacture.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-base-content/40 gap-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                  <p>Le panier est vide</p>
                 </div>
               ) : (
-                filteredProduits.map((produit) => (
-                  <div key={produit.id} className="flex items-center justify-between p-3 border border-base-300 rounded-lg hover:bg-base-200 transition-colors">
-                    <div className="flex-1">
-                      <div className="font-medium text-base-content">{produit.name}</div>
-                      <div className="text-sm text-base-content/70">
-                        Stock: <span className={(produit.stock ?? 0) === 0 ? 'text-error font-medium' : 'text-success font-medium'}>{produit.stock}</span> | 
-                        Prix: <span className="text-info font-medium">{produit.selling_price} F</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => addProduitToFacture(produit)}
-                      disabled={(produit.stock ?? 0) === 0}
-                      className="btn btn-sm btn-primary"
-                    >
-                      {(produit.stock ?? 0) === 0 ? 'Rupture' : 'Ajouter'}
-                    </button>
-                  </div>
-                ))
+                <table className="table table-pin-rows">
+                  <thead>
+                    <tr className="bg-base-200/50 text-xs uppercase">
+                      <th>Produit</th>
+                      <th className="text-right w-24">Qté</th>
+                      <th className="text-right w-28">Prix</th>
+                      <th className="text-right w-20">Remise</th>
+                      <th className="text-right w-28">Total</th>
+                      <th className="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lignesFacture.map((ligne) => (
+                      <tr key={ligne.produit.id} className="hover:bg-base-100">
+                        <td>
+                          <div className="font-medium">{ligne.produit.name}</div>
+                        </td>
+                        <td className="text-right">
+                          <input
+                            type="number"
+                            value={ligne.quantite}
+                            onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
+                            className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-200"
+                          />
+                        </td>
+                        <td className="text-right">
+                          <input
+                            type="number"
+                            value={ligne.prix_unitaire}
+                            onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
+                            className="input input-ghost input-xs w-full text-right focus:bg-base-200"
+                          />
+                        </td>
+                        <td className="text-right">
+                          <input
+                            type="number"
+                            value={ligne.remise_produit}
+                            onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
+                            className="input input-ghost input-xs w-full text-right focus:bg-base-200"
+                            placeholder="%"
+                          />
+                        </td>
+                        <td className="text-right font-medium">
+                          {Math.round(ligne.total_ligne)}
+                        </td>
+                        <td className="text-center">
+                          <button
+                            onClick={() => removeLigne(ligne.produit.id)}
+                            className="btn btn-ghost btn-xs text-error btn-square"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Tableau de la facture */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Facture</h2>
-
-            {lignesFacture.length === 0 ? (
-              <div className="text-center py-8 text-base-content/70">
-                Aucun produit ajouté à la facture
+            {/* Footer Totals */}
+            <div className="p-4 bg-base-200/30 border-t border-base-200 space-y-3">
+              <div className="grid grid-cols-2 gap-8 text-sm">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-base-content/80">
+                    <span>Sous-total</span>
+                    <span>{Math.round(totals.sousTotal)} F</span>
+                  </div>
+                  <div className="flex justify-between text-error">
+                    <span>Remise globale</span>
+                    <span>-{Math.round(totals.remiseMontant)} F</span>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-base-content/80">
+                    <span>TVA ({tva}%)</span>
+                    <span>{Math.round(totals.montantTva)} F</span>
+                  </div>
+                  <div className="flex justify-between font-black text-xl text-primary pt-1 border-t border-base-300">
+                    <span>Total TTC</span>
+                    <span>{Math.round(totals.totalTtc)} F</span>
+                  </div>
+                </div>
               </div>
-            ) : (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
-                    <thead>
-                      <tr>
-                        <th>Produit</th>
-                        <th className="text-right">Qté</th>
-                        <th className="text-right">Prix</th>
-                        <th className="text-right">Remise %</th>
-                        <th className="text-right">Total</th>
-                        <th className="text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lignesFacture.map((ligne) => (
-                        <tr key={ligne.produit.id}>
-                          <td className="py-3 px-2">
-                            <div className="font-medium">{ligne.produit.name}</div>
-                            <div className="text-sm opacity-70">Stock: <span className="font-medium">{ligne.produit.stock}</span></div>
-                          </td>
-                          <td className="py-3 px-2">
-                            <input
-                              type="number"
-                              min={undefined}
-                              max={ligne.quantite > 0 ? ligne.produit.stock : undefined}
-                              value={ligne.quantite}
-                              onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
-                              className="input input-bordered input-sm w-20 text-right"
-                              title={ligne.quantite < 0 ? "Quantité négative = retour (augmente le stock)" : "Quantité positive = vente (diminue le stock)"}
-                            />
-                            {ligne.quantite < 0 && (
-                              <div className="text-xs text-warning mt-1">Retour</div>
-                            )}
-                          </td>
-                          <td className="py-3 px-2">
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={ligne.prix_unitaire}
-                              onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                              className="input input-bordered input-sm w-24 text-right"
-                            />
-                          </td>
-                          <td className="py-3 px-2">
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max="100"
-                              value={ligne.remise_produit}
-                              onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
-                              className="input input-bordered input-sm w-20 text-right"
-                              placeholder="0%"
-                            />
-                          </td>
-                          <td className="py-3 px-2 text-right font-medium">
-                            {Math.round(ligne.total_ligne)} F
-                          </td>
-                          <td className="py-3 px-2 text-center">
-                            <button
-                              onClick={() => removeLigne(ligne.produit.id)}
-                              className="btn btn-ghost btn-xs"
-                              title="Supprimer"
-                            >
-                              Supprimer
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Totaux */}
-                <div className="mt-4 pt-4 border-t border-base-300">
-                  <div className="flex justify-between mb-2">
-                    <span>Sous-total:</span>
-                    <span className="font-medium">{Math.round(totals.sousTotal)} F</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span>Remise {remiseMode === 'taux' && remise ? `(${remise}%)` : ''}:</span>
-                    <span className="font-medium text-error">-{Math.round(totals.remiseMontant)} F</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span>TVA ({tva}%):</span>
-                    <span className="font-medium">{Math.round(totals.montantTva)} F</span>
-                  </div>
-                  <div className="flex justify-between font-extrabold text-2xl border-t pt-2 text-black">
-                    <span>Total TTC:</span>
-                    <span className="text-primary">{Math.round(totals.totalTtc)} F</span>
-                  </div>
-                </div>
-
-                {/* Bouton de création */}
-                <div className="mt-6">
-                  <button
-                    onClick={createFacture}
-                    disabled={loading || !selectedClient || lignesFacture.length === 0 }
-                    className="btn btn-success btn-block"
-                  >
-                    {loading ? 'Création...' : 'Créer la Facture'}
-                  </button>
-                </div>
-              </>
-            )}
+              
+              <button
+                onClick={createFacture}
+                disabled={loading || !selectedClient || lignesFacture.length === 0 }
+                className="btn btn-primary w-full shadow-lg shadow-primary/20"
+              >
+                {loading ? <span className="loading loading-spinner"></span> : 'Valider la Facture'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -761,283 +754,163 @@ export default function Facturation() {
         <div className="modal-box max-w-md">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-lg">Enregistrer le paiement</h3>
-            <button
-              type="button"
-              className="btn btn-sm btn-circle btn-ghost"
-              onClick={fermerModalPaiement}
-            >
-              ✕
-            </button>
+            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={fermerModalPaiement}>✕</button>
           </div>
 
           {facturePourPaiement && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault()
-                enregistrerPaiement()
-              }}
-              className="space-y-4"
-            >
-              {/* Infos facture */}
-              <div className="bg-base-200 p-4 rounded mb-4">
+            <form onSubmit={(e) => { e.preventDefault(); enregistrerPaiement(); }} className="space-y-4">
+              <div className="bg-base-200 p-4 rounded-lg mb-4">
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
-                    <span>Facture :</span>
+                    <span className="opacity-70">Facture</span>
                     <span className="font-semibold">{facturePourPaiement.numero_facture}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Client :</span>
+                    <span className="opacity-70">Client</span>
                     <span className="font-semibold">{facturePourPaiement.client_name}</span>
                   </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <span>Montant à payer :</span>
-                    <span className="font-bold text-lg">{Math.round(Number(facturePourPaiement.total_ttc))} F</span>
+                  <div className="flex justify-between border-t border-base-300 pt-2 mt-2">
+                    <span className="font-bold">À payer</span>
+                    <span className="font-bold text-lg text-primary">{Math.round(Number(facturePourPaiement.total_ttc))} F</span>
                   </div>
                 </div>
               </div>
 
-              {/* Mode de paiement */}
-              <label className="form-control w-full">
-                <span className="label-text font-semibold">Mode de paiement *</span>
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-medium">Mode de paiement</span></label>
                 <select
                   value={modePaiement}
                   onChange={(e) => setModePaiement(e.target.value as any)}
                   className="select select-bordered w-full"
-                  required
                 >
                   <option value="especes">Espèces</option>
                   <option value="cheque">Chèque</option>
                   <option value="carte">Carte</option>
                   <option value="virement">Virement</option>
                 </select>
-              </label>
+              </div>
 
-              {/* Montant payé */}
-              <label className="form-control w-full">
-                <span className="label-text font-semibold">Montant payé *</span>
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-medium">Montant reçu</span></label>
                 <input
                   type="number"
                   step="0.01"
                   value={montantPaye}
                   onChange={(e) => setMontantPaye(e.target.value)}
-                  className="input input-bordered w-full"
-                  required
+                  className="input input-bordered w-full font-bold text-lg"
                 />
-              </label>
+              </div>
 
-              {/* Référence */}
-              <label className="form-control w-full">
-                <span className="label-text font-semibold">Référence (optionnel)</span>
+              <div className="form-control w-full">
+                <label className="label"><span className="label-text font-medium">Référence</span></label>
                 <input
                   type="text"
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
-                  placeholder="N° chèque, N° de transaction..."
+                  placeholder="N° chèque, transaction..."
                   className="input input-bordered w-full"
                 />
-              </label>
+              </div>
 
-              {/* Monnaie rendue */}
               {Number(montantPaye) > Number(facturePourPaiement.total_ttc) && (
-                <div className="alert alert-info">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Monnaie à rendre : <span className="font-bold">{(Number(montantPaye) - Number(facturePourPaiement.total_ttc)).toFixed(2)} F</span></span>
+                <div className="alert alert-info py-2 shadow-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span>Rendre : <span className="font-bold">{(Number(montantPaye) - Number(facturePourPaiement.total_ttc)).toFixed(2)} F</span></span>
                 </div>
               )}
 
-              {error && (
-                <div role="alert" className="alert alert-error">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l-2-2m0 0l-2-2m2 2l2-2m-2 2l-2 2" />
-                  </svg>
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Actions */}
               <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={fermerModalPaiement}>
-                  Annuler
-                </button>
-                <button type="submit" className="btn btn-success" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Confirmer le paiement'}
+                <button type="button" className="btn btn-ghost" onClick={fermerModalPaiement}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer'}
                 </button>
               </div>
             </form>
           )}
         </div>
-        <form method="dialog" className="modal-backdrop" onClick={fermerModalPaiement}>
-          <button>close</button>
-        </form>
+        <form method="dialog" className="modal-backdrop" onClick={fermerModalPaiement}><button>close</button></form>
       </dialog>
 
       {/* Modal d'aperçu du ticket de caisse */}
       {showTicketPreview && ticketCaisse && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">Aperçu du Ticket de Caisse</h3>
-              <button 
-                className="btn btn-sm btn-circle btn-ghost"
-                onClick={() => setShowTicketPreview(false)}
-              >
-                ✕
-              </button>
+          <div className="modal-box max-w-md p-0 overflow-hidden">
+            <div className="bg-base-200 p-4 flex justify-between items-center">
+              <h3 className="font-bold text-lg">Ticket de Caisse</h3>
+              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>
             </div>
             
-            {/* Aperçu du ticket formaté pour l'impression */}
-            <div className="bg-white p-6 rounded-lg shadow-lg" id="ticket-preview" style={{ maxWidth: '80mm', margin: '0 auto', color: '#000', fontFamily: "'Arial Black', Arial, sans-serif" }}>
-              {/* En-tête */}
-              <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
-                <h2 className="text-xl font-bold">DJADEU PHARMACY</h2>
-                <p className="text-sm">Logbessou</p>
-                <p className="text-sm">Tel: 697268949</p>
+            <div className="p-6 bg-white text-black font-mono text-sm overflow-y-auto max-h-[60vh]" id="ticket-preview">
+              <div className="text-center mb-4 border-b-2 border-black pb-4">
+                <h2 className="text-xl font-black">PHARMA STOCK</h2>
+                <p>Douala, Cameroun</p>
+                <p>Tel: +237 6XX XX XX XX</p>
               </div>
               
-              {/* Informations du ticket */}
-              <div className="mb-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-semibold">Ticket N°:</span>
-                  <span>#{ticketCaisse.id}</span>
+              <div className="space-y-1 mb-4">
+                <div className="flex justify-between"><span>Ticket:</span><span>#{ticketCaisse.id}</span></div>
+                <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span></div>
+                <div className="flex justify-between"><span>Client:</span><span>{ticketCaisse.client_name || 'Passage'}</span></div>
+              </div>
+              
+              <div className="border-y border-dashed border-black py-2 mb-4">
+                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.produits?.map((p: any) => (
+                  <div key={p.id} className="flex justify-between mb-1">
+                    <span>{p.produit.name} x{p.quantity}</span>
+                    <span>{Math.round(p.quantity * p.selling_price)}</span>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="space-y-1 font-bold text-right">
+                <div className="flex justify-between text-xs font-normal border-t border-dashed border-black pt-2">
+                  <span>Sous-total HT</span>
+                  <span>{typeof ticketCaisse.facture === 'object' ? Math.round(Number(ticketCaisse.facture.total_ht)) : 0}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Facture:</span>
-                  <span>{ticketCaisse.facture_numero || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.numero_facture : null) || `FAC-${typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.id : ticketCaisse.facture}`}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Client:</span>
-                  <span className="text-right">{ticketCaisse.client_name || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.client_name : null) || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Date:</span>
-                  <span>{new Date(ticketCaisse.date_paiement || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.date : new Date().toISOString())).toLocaleString('fr-FR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Mode de paiement:</span>
-                  <span className="uppercase">
-                    {ticketCaisse.mode_paiement === 'especes' ? 'Espèces' :
-                     ticketCaisse.mode_paiement === 'cheque' ? 'Chèque' :
-                     ticketCaisse.mode_paiement === 'carte' ? 'Carte' :
-                     ticketCaisse.mode_paiement === 'virement' ? 'Virement' : ticketCaisse.mode_paiement}
-                  </span>
-                </div>
-                {ticketCaisse.reference && (
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Référence:</span>
-                    <span>{ticketCaisse.reference}</span>
+                {typeof ticketCaisse.facture === 'object' && Number(ticketCaisse.facture.remise) > 0 && (
+                  <div className="flex justify-between text-xs font-normal">
+                    <span>Remise</span>
+                    <span>-{Math.round(Number(ticketCaisse.facture.remise))}</span>
                   </div>
                 )}
-              </div>
-              
-              {/* Détails de la facture */}
-              {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.produits && ticketCaisse.facture.produits.length > 0 && (
-                <div className="mb-4 border-t border-b border-gray-300 py-2">
-                  <div className="text-xs font-semibold mb-2">Détails:</div>
-                  {ticketCaisse.facture.produits.slice(0, 5).map((produit) => (
-                    <div key={produit.id} className="flex justify-between text-xs mb-1">
-                      <span className="flex-1">{produit.produit.name} x{Math.abs(produit.quantity)}</span>
-                      <span>{Math.round(Math.abs(produit.quantity) * Number(produit.selling_price || 0))} F</span>
-                    </div>
-                  ))}
-                  {ticketCaisse.facture.produits.length > 5 && (
-                    <div className="text-xs text-gray-500 mt-1">... et {ticketCaisse.facture.produits.length - 5} autre(s) produit(s)</div>
-                  )}
+                <div className="flex justify-between text-xs font-normal">
+                  <span>TVA</span>
+                  <span>{typeof ticketCaisse.facture === 'object' ? Math.round(Number(ticketCaisse.facture.total_tva)) : 0}</span>
                 </div>
-              )}
-              
-              {/* Totaux */}
-              <div className="mb-4 space-y-1 text-sm border-t border-gray-300 pt-2">
-                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture && (
-                  <>
-                    <div className="flex justify-between">
-                      <span>Sous-total HT:</span>
-                      <span>{Math.round(Number(ticketCaisse.facture.total_ht || 0)).toLocaleString('fr-FR')} F</span>
-                    </div>
-                    {Number(ticketCaisse.facture.remise || 0) > 0 && (
-                      <div className="flex justify-between text-red-600">
-                        <span>Remise:</span>
-                        <span>-{Math.round(Number(ticketCaisse.facture.remise || 0)).toLocaleString('fr-FR')} F</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span>TVA ({ticketCaisse.facture.tva}%):</span>
-                      <span>{Math.round(Number(ticketCaisse.facture.total_tva || 0)).toLocaleString('fr-FR')} F</span>
-                    </div>
-                  </>
-                )}
-                <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2">
-                  <span>TOTAL:</span>
-                  <span>{Math.round(Number(ticketCaisse.montant || 0)).toLocaleString('fr-FR')} F</span>
+                <div className="flex justify-between text-lg border-t-2 border-black pt-2 mt-1">
+                  <span>TOTAL TTC</span>
+                  <span>{Math.round(Number(ticketCaisse.montant))} F</span>
+                </div>
+                <div className="text-xs font-normal mt-2 text-center">
+                  Mode: {ticketCaisse.mode_paiement.toUpperCase()}
                 </div>
               </div>
               
-              {/* Pied de page */}
-              <div className="text-center text-xs border-t border-gray-300 pt-3 mt-4">
+              <div className="text-center mt-6 text-xs">
                 <p>Merci de votre visite !</p>
-                <p className="mt-1">Ticket généré le {new Date().toLocaleString('fr-FR')}</p>
+                <p>À bientôt.</p>
               </div>
             </div>
             
-            {/* Boutons d'action */}
-            <div className="modal-action">
+            <div className="p-4 bg-base-100 border-t border-base-200 flex justify-end gap-2">
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>Fermer</button>
               <button 
-                className="btn btn-ghost"
-                onClick={() => setShowTicketPreview(false)}
-              >
-                Fermer
-              </button>
-              <button 
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm"
                 onClick={() => {
-                  const printContent = document.getElementById('ticket-preview')
-                  if (printContent) {
-                    const printWindow = window.open('', '_blank')
-                    if (printWindow) {
-                      printWindow.document.write(`
-                        <!DOCTYPE html>
-                        <html>
-                          <head>
-                            <title>Ticket de Caisse - ${ticketCaisse.facture_numero || (typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.numero_facture : '')}</title>
-                            <style>
-                              @media print {
-                                @page { margin: 0; size: 80mm auto; }
-                                body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                              }
-                              body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; }
-                              .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                              .header h2 { margin: 0; font-size: 18px; font-weight: bold; }
-                              .info { margin-bottom: 15px; }
-                              .info div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
-                              .details { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 15px 0; }
-                              .totals { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; }
-                              .totals div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
-                              .total-final { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; }
-                              .footer { text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; font-size: 10px; }
-                            </style>
-                          </head>
-                          <body>
-                            ${printContent.innerHTML}
-                          </body>
-                        </html>
-                      `)
-                      printWindow.document.close()
-                      setTimeout(() => {
-                        printWindow.print()
-                        printWindow.close()
-                      }, 250)
-                    }
+                  const content = document.getElementById('ticket-preview')?.innerHTML;
+                  const win = window.open('', '', 'height=600,width=400');
+                  if (win && content) {
+                    win.document.write('<html><head><title>Ticket</title>');
+                    win.document.write('<style>body { font-family: monospace; padding: 20px; } .text-center { text-align: center; } .flex { display: flex; justify-content: space-between; } .font-bold { font-weight: bold; } .border-b-2 { border-bottom: 2px solid black; } .border-t-2 { border-top: 2px solid black; } .mb-4 { margin-bottom: 1rem; } .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }</style>');
+                    win.document.write('</head><body>');
+                    win.document.write(content);
+                    win.document.write('</body></html>');
+                    win.document.close();
+                    win.print();
                   }
                 }}
               >
-                Imprimer Ticket
+                Imprimer
               </button>
             </div>
           </div>
