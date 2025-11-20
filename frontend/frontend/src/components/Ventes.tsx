@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import type { Facture, TicketCaisse } from '../types'
+import type { Facture, TicketCaisse, CaisseParTranche } from '../types'
 
 export default function Ventes() {
   const [factures, setFactures] = useState<Facture[]>([])
@@ -13,7 +13,7 @@ export default function Ventes() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showCaisseTranches, setShowCaisseTranches] = useState(false)
   const [loadingCaisse, setLoadingCaisse] = useState(false)
-  const [caisseData, setCaisseData] = useState<any>(null)
+  const [caisseData, setCaisseData] = useState<CaisseParTranche | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
   const [dateDebut, setDateDebut] = useState<string>(() => {
@@ -91,7 +91,13 @@ export default function Ventes() {
       setTicketCaisse(data[0])
       setShowTicketPreview(true)
     } catch (err) {
-      setError('Erreur lors de la récupération du ticket de caisse.')
+      setTicketCaisse(null)
+      setShowTicketPreview(false)
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Erreur lors de la récupération du ticket de caisse.')
+      } else {
+        setError('Erreur lors de la récupération du ticket de caisse.')
+      }
     }
   }
 
@@ -137,13 +143,12 @@ export default function Ventes() {
     setLoadingCaisse(true)
     setError(null)
     try {
-      const response = await axios.get(`${facturesEndpoint}caisse_par_tranche_horaire/`, {
+      const response = await axios.get<CaisseParTranche>(`${facturesEndpoint}caisse_par_tranche_horaire/`, {
         params: {
           date_debut: dateDebut,
           date_fin: dateFin
         }
       })
-      console.log('Réponse caisse:', response.data)
       setCaisseData(response.data)
     } catch (err) {
       if (axios.isAxiosError(err)) {
