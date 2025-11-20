@@ -1,137 +1,118 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 from .models import (
-    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse
+    Produit, Rayon, Fournisseur, Client, Commande, 
+    CommandeProduit, Facture, FactureProduit, Caisse, Profile
 )
 
-class ProduitSerializer(serializers.ModelSerializer):
-    # Pour un affichage plus clair, on utilise le nom des objets liés.
-    # C'est en lecture seule.
-    rayon_name = serializers.CharField(source='rayon.name', read_only=True)
-    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['allowed_menus']
 
-    # Pour la création/mise à jour, on attend les IDs.
-    # 'source' pointe vers le champ du modèle, 'queryset' valide l'entrée.
-    rayon = serializers.PrimaryKeyRelatedField(
-        queryset=Rayon.objects.all(), write_only=True, required=False, allow_null=True
-    )
-    fournisseur = serializers.PrimaryKeyRelatedField(
-        queryset=Fournisseur.objects.all(), write_only=True, required=False, allow_null=True
-    )
+class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(required=False)
+    password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
-        model = Produit
-        # On liste explicitement les champs pour la sécurité et la clarté.
-        fields = [
-            'id', 'name', 'description', 'stock', 'cip1', 'cip2', 'cip3',
-            'cost_price', 'selling_price', 'expire_date', 'stock_alert',
-            'stock_minimum', 'stock_maximum', 'created_at', 'updated_at',
-            'rayon', 'fournisseur', 'rayon_name', 'fournisseur_name'
-        ]
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_superuser', 'password', 'profile']
+
+    def create(self, validated_data):
+        profile_data = validated_data.pop('profile', {})
+        password = validated_data.pop('password')
+        user = User(**validated_data)
+        user.set_password(password)
+        user.save()
+        
+        # Profile is created by signal, update it
+        if profile_data:
+            profile = user.profile
+            profile.allowed_menus = profile_data.get('allowed_menus', [])
+            profile.save()
+            
+        return user
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', {})
+        password = validated_data.pop('password', None)
+        
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        
+        if password:
+            instance.set_password(password)
+            
+        instance.save()
+
+        if profile_data:
+            profile = instance.profile
+            profile.allowed_menus = profile_data.get('allowed_menus', profile.allowed_menus)
+            profile.save()
+            
+        return instance
 
 class RayonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rayon
-        fields = ['id', 'name']
+        fields = '__all__'
 
 class FournisseurSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fournisseur
-        fields = ['id', 'name', 'address', 'phone', 'email']
+        fields = '__all__'
 
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
-        fields = ['id', 'name', 'address', 'phone', 'email']
+        fields = '__all__'
 
-
-class CommandeProduitSerializer(serializers.ModelSerializer):
-    # On imbrique le serializer du produit pour avoir tous les détails du produit
-    # au lieu de juste son ID. C'est en lecture seule (read_only=True).
-    # Le champ 'produit' correspond au champ du modèle.
-    produit = ProduitSerializer(read_only=True)
-    commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
-    fournisseur_name = serializers.CharField(source='commande.fournisseur.name', read_only=True)
-    # Pour permettre la création/mise à jour, on ajoute un champ pour l'ID.
-    produit_id = serializers.PrimaryKeyRelatedField(
-        queryset=Produit.objects.all(), source='produit', write_only=True
-    )
-    selling_price = serializers.DecimalField(max_digits=10, decimal_places=2, write_only=True, required=False)
+class ProduitSerializer(serializers.ModelSerializer):
+    rayon_nom = serializers.CharField(source='rayon.name', read_only=True)
+    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
 
     class Meta:
+        model = Produit
+        fields = '__all__'
+
+class CommandeProduitSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    
+    class Meta:
         model = CommandeProduit
-        fields = [
-            'id', 'commande', 'commande_date', 'fournisseur_name',
-            'produit', 'produit_id', 'quantity', 'price', 'price_cost', 'lot', 'date_expiration',
-            'selling_price'
-        ]
+        fields = '__all__'
 
 class CommandeSerializer(serializers.ModelSerializer):
-    # On imbrique les lignes de commande pour les voir directement avec la commande.
+    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
     produits = CommandeProduitSerializer(many=True, read_only=True)
-    # On définit 'total' comme un champ en lecture seule qui utilise la propriété du modèle.
-    # Il sera calculé automatiquement et inclus dans les réponses GET, mais ne sera pas
-    # attendu dans les requêtes POST ou PUT.
-    total = serializers.ReadOnlyField()
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Commande
-        fields = ['id', 'fournisseur', 'numero_facture', 'date', 'status', 'status_display', 'total', 'produits']
-
+        fields = '__all__'
 
 class FactureProduitSerializer(serializers.ModelSerializer):
-    # On imbrique le serializer du produit pour avoir tous les détails du produit
-    produit = ProduitSerializer(read_only=True)
-    # Pour permettre la création/mise à jour, on ajoute un champ pour l'ID.
-    produit_id = serializers.PrimaryKeyRelatedField(
-        queryset=Produit.objects.all(), source='produit', write_only=True
-    )
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
 
     class Meta:
         model = FactureProduit
-        fields = [
-            'id', 'facture', 'produit', 'produit_id', 'quantity', 'selling_price', 'lot', 'date_expiration'
-        ]
+        fields = '__all__'
 
+class CaisseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Caisse
+        fields = '__all__'
 
 class FactureSerializer(serializers.ModelSerializer):
-    # On imbrique les lignes de facture pour les voir directement avec la facture.
+    client_nom = serializers.CharField(source='client.name', read_only=True)
     produits = FactureProduitSerializer(many=True, read_only=True)
-    # On définit les totaux comme des champs en lecture seule qui utilisent les propriétés du modèle.
-    total_ht = serializers.ReadOnlyField()
-    total_tva = serializers.ReadOnlyField()
-    total_ttc = serializers.ReadOnlyField()
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    client_name = serializers.CharField(source='client.name', read_only=True)
+    paiements = CaisseSerializer(many=True, read_only=True)
+    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Facture
-        fields = [
-            'id', 'client', 'client_name', 'numero_facture', 'date', 'status', 'status_display',
-            'remise', 'tva', 'notes', 'total_ht', 'total_tva', 'total_ttc', 'produits'
-        ]
-
-
-class CaisseSerializer(serializers.ModelSerializer):
-    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True, allow_null=True)
-    client_name = serializers.CharField(source='facture.client.name', read_only=True)
-
-    class Meta:
-        model = Caisse
-        fields = [
-            'id', 'facture', 'facture_numero', 'client_name', 'mode_paiement', 
-            'montant', 'reference', 'statut', 'date_paiement'
-        ]
-        read_only_fields = ['facture_numero', 'client_name', 'date_paiement']
-    
-    def validate_montant(self, value):
-        """Valide que le montant est positif."""
-        if value <= 0:
-            raise serializers.ValidationError("Le montant doit être supérieur à zéro.")
-        return value
-    
-    def validate_facture(self, value):
-        """Valide que la facture existe."""
-        if not value:
-            raise serializers.ValidationError("Une facture doit être spécifiée.")
-        return value
+        fields = '__all__'

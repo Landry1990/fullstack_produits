@@ -1,6 +1,9 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from django.db import transaction
 from django.db.models import F
 from django.http import HttpResponse
@@ -9,12 +12,13 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageBreak, PageTemplate, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.db.models import Sum, Count, Q
+from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.auth.models import User
 from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse
@@ -22,11 +26,33 @@ from .models import (
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
-    FactureSerializer, FactureProduitSerializer, CaisseSerializer
+    FactureSerializer, FactureProduitSerializer, CaisseSerializer,
+    UserSerializer # Assuming PaiementSerializer is not needed for this specific change, but UserSerializer is.
 )
 from decimal import Decimal
 
 # Create your views here.
+
+class CustomAuthToken(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data,
+                                           context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'token': token.key,
+            'user_id': user.pk,
+            'username': user.username,
+            'email': user.email,
+            'is_superuser': user.is_superuser,
+            'allowed_menus': user.profile.allowed_menus if hasattr(user, 'profile') else []
+        })
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser] # Only admin can manage users
 
 class ProduitViewSet(viewsets.ModelViewSet):
     """
@@ -36,6 +62,77 @@ class ProduitViewSet(viewsets.ModelViewSet):
     serializer_class = ProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ProduitFilter
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['get'])
+    def history(self, request, pk=None):
+        """
+        Reconstructs the stock history for a product.
+        """
+        produit = self.get_object()
+        
+        # 1. Récupérer les entrées (Commandes clôturées)
+        entrees = CommandeProduit.objects.filter(
+            produit=produit,
+            commande__status=Commande.Status.CLOTUREE
+        ).select_related('commande', 'commande__fournisseur').order_by('-created_at')
+
+        # 2. Récupérer les sorties (Factures validées ou payées)
+        sorties = FactureProduit.objects.filter(
+            produit=produit,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).select_related('facture', 'facture__client').order_by('-created_at')
+
+        # 3. Combiner et trier par date décroissante
+        transactions = []
+        
+        for entree in entrees:
+            transactions.append({
+                'type': 'ENTREE',
+                'date': entree.created_at,
+                'quantity': entree.quantity,
+                'libelle': f"Commande #{entree.commande.id} - {entree.commande.fournisseur.name}",
+                'prix_unitaire': entree.price
+            })
+            
+        for sortie in sorties:
+            transactions.append({
+                'type': 'SORTIE',
+                'date': sortie.created_at,
+                'quantity': sortie.quantity,
+                'libelle': f"Facture #{sortie.facture.numero_facture or sortie.facture.id} - {sortie.facture.client.name}",
+                'prix_unitaire': sortie.selling_price
+            })
+            
+        # Trier par date décroissante (le plus récent en premier)
+        transactions.sort(key=lambda x: x['date'], reverse=True)
+        
+        # 4. Reconstruire l'historique du stock (en remontant le temps)
+        current_stock = produit.stock
+        history = []
+        
+        running_stock = current_stock
+        
+        for trans in transactions:
+            stock_after = running_stock
+            
+            if trans['type'] == 'ENTREE':
+                # Si c'était une entrée, on avait MOINS avant
+                stock_before = running_stock - trans['quantity']
+            else: # SORTIE
+                # Si c'était une sortie, on avait PLUS avant
+                stock_before = running_stock + trans['quantity']
+                
+            history.append({
+                **trans,
+                'stock_avant': stock_before,
+                'stock_apres': stock_after
+            })
+            
+            # Pour la prochaine itération (plus ancienne), le stock courant devient le stock avant de celle-ci
+            running_stock = stock_before
+            
+        return Response(history)
 
 class RayonViewSet(viewsets.ModelViewSet):
     """API endpoint for rayons."""
