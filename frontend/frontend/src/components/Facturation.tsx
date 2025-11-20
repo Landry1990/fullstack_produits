@@ -279,20 +279,27 @@ export default function Facturation() {
       // 1. Créer la facture en mode brouillon
       const facturePayload = {
         client: selectedClient,
-        remise: normalizeNumberInput(remise, { min: 0 }).toString(),
+        remise: totals.remiseMontant.toString(),
         tva: normalizeNumberInput(tva, { min: 0 }).toString(),
       }
       const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
 
       // 2. Ajouter les produits à la facture
-      const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => ({
-        facture: createdFacture.id,
-        produit_id: ligne.produit.id,
-        quantity: Number(ligne.quantite),
-        selling_price: normalizeNumberInput(ligne.prix_unitaire, { min: 0 }).toString(),
-        lot: null,
-        date_expiration: null,
-      }))
+      const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => {
+        // Calculer le prix unitaire net après remise produit
+        const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
+        const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
+        const prixNet = prixUnitaire * (1 - remiseProduit / 100)
+        
+        return {
+          facture: createdFacture.id,
+          produit_id: ligne.produit.id,
+          quantity: Number(ligne.quantite),
+          selling_price: prixNet.toString(), // Envoyer le prix net au backend
+          lot: null,
+          date_expiration: null,
+        }
+      })
 
       await Promise.all(
         produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
@@ -303,10 +310,11 @@ export default function Facturation() {
       const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint)
 
       // 4. Enregistrer le paiement
+      // On enregistre le montant total de la facture comme paiement, pas le montant donné (qui sert au rendu monnaie)
       const paiementPayload = {
         facture: validatedFacture.id,
         mode_paiement: modePaiement,
-        montant: normalizeNumberInput(montantPaye, { min: 0 }),
+        montant: validatedFacture.total_ttc, // Utiliser le total TTC validé
         reference: reference || null,
         statut: 'completee',
       }
@@ -393,7 +401,7 @@ export default function Facturation() {
       const paiementPayload = {
         facture: factureAPayer.id,
         mode_paiement: modePaiement,
-        montant: normalizeNumberInput(montantPaye, { min: 0 }),
+        montant: factureAPayer.total_ttc, // Utiliser le total TTC de la facture
         reference: reference || null,
         statut: 'completee',
       }

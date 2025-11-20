@@ -1,11 +1,27 @@
-
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic.base import RedirectView
+from rest_framework.routers import DefaultRouter
+from api.views import (
+    ProduitViewSet, RayonViewSet, FournisseurViewSet, 
+    ClientViewSet, CommandeViewSet, CommandeProduitViewSet,
+    FactureViewSet, FactureProduitViewSet, DashboardViewSet,
+    UserViewSet, CustomAuthToken
+)
+
+router = DefaultRouter()
+router.register(r'users', UserViewSet)
+router.register(r'produits', ProduitViewSet)
+router.register(r'rayons', RayonViewSet)
+router.register(r'fournisseurs', FournisseurViewSet)
+router.register(r'clients', ClientViewSet)
+router.register(r'commandes', CommandeViewSet)
+router.register(r'commande-produits', CommandeProduitViewSet)
+router.register(r'factures', FactureViewSet)
+router.register(r'facture-produits', FactureProduitViewSet)
+router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
-    # Redirige la racine du site (/) vers la racine de l'API (/api/) pour plus de commodité.
-    path('', RedirectView.as_view(url='/api/', permanent=False)),
+    path('api/', include(router.urls)),
+    path('api-token-auth/', CustomAuthToken.as_view()),
 ]
