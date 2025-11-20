@@ -614,3 +614,149 @@ class CaisseViewSet(viewsets.ModelViewSet):
     serializer_class = CaisseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['facture', 'mode_paiement', 'statut']
+
+
+class DashboardViewSet(viewsets.ViewSet):
+    """
+    API endpoint for dashboard statistics.
+    """
+    
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        Returns dashboard statistics: revenue, sales count, new clients, low stock.
+        """
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        # Chiffre d'affaires du jour (Total TTC des factures payées ou validées aujourd'hui)
+        factures_today = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).prefetch_related('produits')
+        
+        revenue_today = sum(f.total_ttc for f in factures_today)
+        
+        factures_yesterday = Facture.objects.filter(
+            date__date=yesterday,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).prefetch_related('produits')
+        
+        revenue_yesterday = sum(f.total_ttc for f in factures_yesterday)
+        
+        # Calculer la variation en pourcentage
+        if revenue_yesterday > 0:
+            revenue_change = ((revenue_today - revenue_yesterday) / revenue_yesterday) * 100
+        else:
+            revenue_change = 100 if revenue_today > 0 else 0
+            
+        # Ventes du jour (Nombre de factures)
+        sales_count_today = factures_today.count()
+        sales_count_yesterday = factures_yesterday.count()
+        
+        if sales_count_yesterday > 0:
+            sales_change = ((sales_count_today - sales_count_yesterday) / sales_count_yesterday) * 100
+        else:
+            sales_change = 100 if sales_count_today > 0 else 0
+            
+        # Nouveaux Clients
+        new_clients_today = Client.objects.filter(created_at__date=today).count()
+        new_clients_yesterday = Client.objects.filter(created_at__date=yesterday).count()
+        
+        if new_clients_yesterday > 0:
+            clients_change = ((new_clients_today - new_clients_yesterday) / new_clients_yesterday) * 100
+        else:
+            clients_change = 100 if new_clients_today > 0 else 0
+            
+        # Alertes Stock (Produits avec stock <= 5)
+        low_stock_count = Produit.objects.filter(stock__lte=5).count()
+        # Pour la variation, c'est plus compliqué sans historique de stock, on met 0 pour l'instant
+        stock_change = 0
+        
+        return Response({
+            'revenue': {
+                'value': revenue_today,
+                'change': round(revenue_change, 1)
+            },
+            'sales': {
+                'value': sales_count_today,
+                'change': round(sales_change, 1)
+            },
+            'clients': {
+                'value': new_clients_today,
+                'change': round(clients_change, 1)
+            },
+            'low_stock': {
+                'value': low_stock_count,
+                'change': stock_change
+            }
+        })
+
+    @action(detail=False, methods=['get'])
+    def recent_transactions(self, request):
+        """
+        Returns the 5 most recent transactions (factures).
+        """
+        recent_factures = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).select_related('client').prefetch_related('produits').order_by('-date')[:5]
+        
+        data = []
+        for facture in recent_factures:
+            data.append({
+                'id': facture.id,
+                'client': facture.client.name if facture.client else 'Client de passage',
+                'amount': facture.total_ttc,
+                'date': facture.date,
+                'status': facture.get_status_display(),
+                'status_code': facture.status
+            })
+            
+        return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def revenue_chart(self, request):
+        """
+        Returns revenue for the last 7 days.
+        """
+        today = timezone.now().date()
+        days = []
+        revenue_data = []
+        
+        for i in range(6, -1, -1):
+            date = today - timedelta(days=i)
+            day_name = date.strftime('%a') # Mon, Tue, etc.
+            # Traduction simple
+            days_map = {'Mon': 'Lun', 'Tue': 'Mar', 'Wed': 'Mer', 'Thu': 'Jeu', 'Fri': 'Ven', 'Sat': 'Sam', 'Sun': 'Dim'}
+            days.append(days_map.get(day_name, day_name))
+            
+            factures = Facture.objects.filter(
+                date__date=date,
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).prefetch_related('produits')
+            
+            daily_revenue = sum(f.total_ttc for f in factures)
+            revenue_data.append(daily_revenue)
+            
+        return Response({
+            'labels': days,
+            'data': revenue_data
+        })
+
+    @action(detail=False, methods=['get'])
+    def low_stock(self, request):
+        """
+        Returns products with low stock.
+        """
+        limit = int(request.query_params.get('limit', 5))
+        low_stock_products = Produit.objects.filter(stock__lte=5).order_by('stock')[:limit]
+        
+        data = []
+        for product in low_stock_products:
+            data.append({
+                'id': product.id,
+                'name': product.name,
+                'stock': product.stock
+            })
+            
+        return Response(data)
