@@ -124,3 +124,16 @@ export interface TicketCaisse {
   statut: string
   date_paiement: string
 }
+
+export interface CaisseParTranche {
+  tranche: string
+  date_debut: string
+  date_fin: string
+  nombre_factures: number
+  total_ht: string
+  total_tva: string
+  total_ttc: string
+  debug?: {
+    factures_ids?: number[]
+  }
+}
