@@ -7,13 +7,14 @@ import Fournisseurs from './components/Fournisseurs'
 import Clients from './components/Clients'
 import Rayons from './components/Rayons'
 import Facturation from './components/Facturation'
+import Dashboard from './components/Dashboard'
 
 const router = createBrowserRouter([
   {
     path: '/',
     element: <Layout />,
     children: [
-      { index: true, element: <Produit /> },
+      { index: true, element: <Dashboard /> },
       { path: 'produits', element: <Produit /> },
       { path: 'commandes', element: <Commandes /> },
       { path: 'ventes', element: <Ventes /> },

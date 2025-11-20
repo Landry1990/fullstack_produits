@@ -168,16 +168,6 @@ export default function Ventes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCaisseTranches, dateDebut, dateFin])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'BROU': return 'bg-yellow-100 text-yellow-800'
-      case 'VAL': return 'bg-green-100 text-green-800'
-      case 'PAY': return 'bg-blue-100 text-blue-800'
-      case 'ANN': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
   // Filtrer les factures
   const filteredFactures = factures.filter(facture =>
     (facture.client_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -188,304 +178,227 @@ export default function Ventes() {
     return (
       <div className="p-6">
         <div className="flex justify-center items-center h-64">
-          <div className="text-lg text-gray-600">Chargement des factures...</div>
+          <span className="loading loading-spinner loading-lg text-primary"></span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Gestion des Ventes</h1>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600">
-            {factures.length} facture{factures.length > 1 ? 's' : ''} au total
-            {brouillonsCount > 0 && (
-              <span className="ml-2 text-yellow-600 font-semibold">
-                ({brouillonsCount} brouillon{brouillonsCount > 1 ? 's' : ''})
-              </span>
-            )}
+    <div className="p-6 space-y-6 animate-fade-in">
+      {/* Header & Stats */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-base-content">Historique des Ventes</h1>
+          <p className="text-base-content/70">Consultez et gérez l'historique de toutes les factures</p>
+        </div>
+        
+        <div className="stats shadow bg-base-100 border border-base-200">
+          <div className="stat place-items-center py-2 px-4">
+            <div className="stat-title text-xs uppercase tracking-wider">Total Factures</div>
+            <div className="stat-value text-primary text-2xl">{factures.length}</div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowCaisseTranches(!showCaisseTranches)}
-              className="btn btn-sm btn-info"
-            >
-              {showCaisseTranches ? 'Masquer' : 'Caisse par tranche'}
-            </button>
-            {brouillonsCount > 0 && (
-              <button
-                onClick={handleDeleteBrouillons}
-                disabled={deletingBrouillons}
-                className="btn btn-sm btn-error"
-              >
-                {deletingBrouillons ? (
-                  <>
-                    <span className="loading loading-spinner loading-xs"></span>
-                    Suppression...
-                  </>
-                ) : (
-                  `Supprimer ${brouillonsCount} brouillon${brouillonsCount > 1 ? 's' : ''}`
-                )}
-              </button>
-            )}
-          </div>
+          
+          {brouillonsCount > 0 && (
+            <div className="stat place-items-center py-2 px-4 border-l border-base-200">
+              <div className="stat-title text-xs uppercase tracking-wider text-warning">Brouillons</div>
+              <div className="stat-value text-warning text-2xl">{brouillonsCount}</div>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Alerts */}
       {error && (
-        <div role="alert" className="alert alert-error mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+        <div role="alert" className="alert alert-error shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span>{error}</span>
           <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
         </div>
       )}
 
       {successMessage && (
-        <div role="alert" className="alert alert-success mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+        <div role="alert" className="alert alert-success shadow-sm text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span>{successMessage}</span>
           <button className="btn btn-sm btn-ghost" onClick={() => setSuccessMessage(null)}>✕</button>
         </div>
       )}
 
+      {/* Control Bar */}
+      <div className="card bg-base-100 shadow-sm border border-base-200">
+        <div className="card-body p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Rechercher client, n° facture..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input input-bordered pl-10 w-full focus:outline-none focus:border-primary"
+            />
+          </div>
+          
+          <div className="flex gap-2 w-full md:w-auto">
+            <button
+              onClick={() => setShowCaisseTranches(!showCaisseTranches)}
+              className={`btn btn-sm flex-1 md:flex-none gap-2 ${showCaisseTranches ? 'btn-primary' : 'btn-outline'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              {showCaisseTranches ? 'Masquer Rapport' : 'Rapport Caisse'}
+            </button>
+            
+            {brouillonsCount > 0 && (
+              <button
+                onClick={handleDeleteBrouillons}
+                disabled={deletingBrouillons}
+                className="btn btn-sm btn-error text-white flex-1 md:flex-none gap-2"
+              >
+                {deletingBrouillons ? <span className="loading loading-spinner loading-xs"></span> : <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+                Supprimer Brouillons
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Section Caisse par tranche horaire */}
       {showCaisseTranches && (
-        <div className="card bg-base-100 shadow-xl mb-6">
-          <div className="card-body">
-            <h2 className="card-title">Caisse par tranche horaire</h2>
-            
-            <div className="flex gap-4 mb-4 flex-wrap">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Date et heure de début</span>
-                </label>
+        <div className="card bg-base-100 shadow-md border border-base-200 overflow-hidden">
+          <div className="bg-base-200/50 px-6 py-3 border-b border-base-200 flex justify-between items-center">
+            <h2 className="font-bold text-base-content flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Rapport de Caisse
+            </h2>
+          </div>
+          <div className="card-body p-6">
+            <div className="flex flex-col md:flex-row gap-6 items-end">
+              <div className="form-control flex-1">
+                <label className="label"><span className="label-text font-medium">Début</span></label>
                 <input
                   type="datetime-local"
                   value={dateDebut}
                   onChange={(e) => setDateDebut(e.target.value)}
-                  className="input input-bordered"
+                  className="input input-bordered w-full"
                   step="60"
                 />
               </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Date et heure de fin</span>
-                </label>
+              <div className="form-control flex-1">
+                <label className="label"><span className="label-text font-medium">Fin</span></label>
                 <input
                   type="datetime-local"
                   value={dateFin}
                   onChange={(e) => setDateFin(e.target.value)}
-                  className="input input-bordered"
+                  className="input input-bordered w-full"
                   step="60"
                 />
               </div>
-              <div className="form-control flex justify-end">
-                <label className="label">
-                  <span className="label-text invisible">Calculer</span>
-                </label>
-                <button
-                  onClick={fetchCaisseParTranche}
-                  disabled={loadingCaisse || new Date(dateDebut) >= new Date(dateFin)}
-                  className="btn btn-primary"
-                >
-                  {loadingCaisse ? (
-                    <span className="loading loading-spinner"></span>
-                  ) : (
-                    'Calculer'
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={fetchCaisseParTranche}
+                disabled={loadingCaisse || new Date(dateDebut) >= new Date(dateFin)}
+                className="btn btn-primary w-full md:w-auto"
+              >
+                {loadingCaisse ? <span className="loading loading-spinner"></span> : 'Générer le rapport'}
+              </button>
             </div>
+
             {new Date(dateDebut) >= new Date(dateFin) && (
-              <div className="alert alert-warning mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span>La date/heure de début doit être antérieure à la date/heure de fin.</span>
+              <div className="alert alert-warning mt-4 text-sm py-2">
+                <span>La date de début doit être antérieure à la date de fin.</span>
               </div>
             )}
 
-            {loadingCaisse ? (
-              <div className="flex justify-center items-center py-8">
-                <span className="loading loading-spinner loading-lg"></span>
-              </div>
-            ) : caisseData ? (
-              <div className="space-y-4">
-                <div className="card bg-base-200 shadow-lg">
-                  <div className="card-body">
-                    <h3 className="card-title text-lg">Résultat pour la tranche</h3>
-                    <div className="mb-2">
-                      <div className="text-sm opacity-70">Période</div>
-                      <div className="text-lg font-semibold">{caisseData.tranche}</div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                      <div className="stat">
-                        <div className="stat-title">Début</div>
-                        <div className="stat-value text-sm">{caisseData.date_debut}</div>
-                      </div>
-                      <div className="stat">
-                        <div className="stat-title">Fin</div>
-                        <div className="stat-value text-sm">{caisseData.date_fin}</div>
-                      </div>
-                      <div className="stat">
-                        <div className="stat-title">Nombre de factures</div>
-                        <div className="stat-value text-lg">{caisseData.nombre_factures}</div>
-                      </div>
-                    </div>
-                    {caisseData.nombre_factures === 0 && (
-                      <div className="alert alert-warning mt-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <span>Aucune facture validée ou payée trouvée dans cette tranche horaire. Vérifiez que les dates correspondent aux dates de création des factures.</span>
-                      </div>
-                    )}
-                    {caisseData.debug && (
-                      <div className="mt-4 text-xs opacity-70">
-                        <div>Debug: {caisseData.debug.factures_ids?.length || 0} facture(s) trouvée(s)</div>
-                        {caisseData.debug.factures_ids && caisseData.debug.factures_ids.length > 0 && (
-                          <div>IDs: {caisseData.debug.factures_ids.join(', ')}</div>
-                        )}
-                      </div>
-                    )}
+            {caisseData && !loadingCaisse && (
+              <div className="mt-6 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                    <div className="stat-title text-xs uppercase tracking-wider">Total HT</div>
+                    <div className="stat-value text-xl">{Math.round(Number(caisseData.total_ht || 0)).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                    <div className="stat-title text-xs uppercase tracking-wider">Total TVA</div>
+                    <div className="stat-value text-xl">{Math.round(Number(caisseData.total_tva || 0)).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="stat bg-primary text-primary-content rounded-xl shadow-lg p-4">
+                    <div className="stat-title text-primary-content/80 text-xs uppercase tracking-wider">Total TTC</div>
+                    <div className="stat-value text-2xl">{Math.round(Number(caisseData.total_ttc || 0)).toLocaleString('fr-FR')} F</div>
+                    <div className="stat-desc text-primary-content/60 mt-1">{caisseData.nombre_factures} facture(s)</div>
                   </div>
                 </div>
-
-                <div className="card bg-base-100 shadow">
-                  <div className="card-body">
-                    <h4 className="font-semibold mb-4">Détails des totaux</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="p-4 bg-base-200 rounded-lg">
-                        <div className="text-sm opacity-70">Total HT</div>
-                        <div className="text-2xl font-bold">
-                          {Math.round(Number(caisseData.total_ht || 0)).toLocaleString('fr-FR')} F
-                        </div>
-                      </div>
-                      <div className="p-4 bg-base-200 rounded-lg">
-                        <div className="text-sm opacity-70">Total TVA</div>
-                        <div className="text-2xl font-bold">
-                          {Math.round(Number(caisseData.total_tva || 0)).toLocaleString('fr-FR')} F
-                        </div>
-                      </div>
-                      <div className="p-4 bg-primary text-primary-content rounded-lg">
-                        <div className="text-sm opacity-90">Total TTC</div>
-                        <div className="text-2xl font-bold">
-                          {Math.round(Number(caisseData.total_ttc || 0)).toLocaleString('fr-FR')} F
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                Sélectionnez une tranche horaire et cliquez sur "Calculer" pour voir les résultats
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Filtres */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
-          <input
-            type="text"
-            placeholder="Rechercher par client ou numéro de facture..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-          />
-        </div>
-      </div>
-
       {/* Liste des factures */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {filteredFactures.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            {searchQuery ? 'Aucune facture trouvée' : 'Aucune facture créée'}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table table-zebra w-full">
+            <thead className="bg-base-200/50 text-base-content/70">
+              <tr>
+                <th>N° Facture</th>
+                <th>Client</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th className="text-right">Montant TTC</th>
+                <th className="text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFactures.length === 0 ? (
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Facture
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Client
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Montant TTC
-                  </th>
-                  <th className="px-3 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <td colSpan={6} className="text-center py-12 text-base-content/50">
+                    {searchQuery ? 'Aucune facture trouvée pour cette recherche' : 'Aucune facture enregistrée'}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredFactures.map((facture) => (
-                  <tr key={facture.id} className="hover:bg-gray-50">
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <div className="text-xs font-medium text-gray-900">
-                        {facture.numero_facture || `Brouillon ${facture.id}`}
-                      </div>
+              ) : (
+                filteredFactures.map((facture) => (
+                  <tr key={facture.id} className="hover:bg-base-200/30 transition-colors">
+                    <td className="font-medium">
+                      {facture.numero_facture || <span className="italic text-base-content/50">Brouillon #{facture.id}</span>}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
-                      {facture.client_name || 'N/A'}
+                    <td>
+                      <div className="font-medium">{facture.client_name || 'Client de passage'}</div>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-900">
+                    <td className="text-sm text-base-content/70">
                       {new Date(facture.date).toLocaleString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
                       })}
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(facture.status)}`}>
+                    <td>
+                      <span className={`badge badge-sm font-medium ${
+                        facture.status === 'PAY' ? 'badge-success text-white' :
+                        facture.status === 'BROU' ? 'badge-warning text-warning-content' :
+                        facture.status === 'VAL' ? 'badge-info text-white' :
+                        'badge-ghost'
+                      }`}>
                         {facture.status_display}
                       </span>
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-right">
-                      <div className="text-xs font-bold text-primary">
-                        {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
-                      </div>
+                    <td className="text-right font-bold text-base-content">
+                      {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
                     </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-center">
+                    <td className="text-center">
                       <button
                         onClick={() => handleViewProducts(facture)}
-                        className="btn btn-xs btn-outline btn-primary"
-                        disabled={loadingDetails}
+                        className="btn btn-sm btn-ghost btn-square text-primary hover:bg-primary/10"
+                        title="Voir détails"
                       >
-                        {loadingDetails && selectedFacture?.id === facture.id ? (
-                          <span className="loading loading-spinner loading-xs"></span>
-                        ) : (
-                          'Voir'
-                        )}
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                       </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Modal pour afficher les produits de la facture */}
