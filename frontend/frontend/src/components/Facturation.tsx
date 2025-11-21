@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import axios from 'axios'
+import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Client, Facture, TicketCaisse } from '../types'
 
 // Interface locale pour la gestion des lignes de facture dans le state
@@ -13,7 +14,7 @@ type LigneFacture = {
 
 type FactureProduitPayload = {
   facture: number
-  produit_id: number
+  produit: number
   quantity: number
   selling_price: string
   lot: string | null
@@ -39,6 +40,7 @@ const normalizeNumberInput = (value: string | number, options?: { min?: number; 
 }
 
 export default function Facturation() {
+  const { user } = useAuth()
   const [produits, setProduits] = useState<ProduitModel[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<number | null>(null)
@@ -84,13 +86,7 @@ export default function Facturation() {
         data: errorData,
         message: errorMessage
       })
-      // Afficher plus de détails pour les erreurs 500
-      if (err.response?.status === 500) {
-        const fullError = errorData?.error || errorData?.traceback || JSON.stringify(errorData, null, 2)
-        setError(`${errorMessage}\n\nDétails: ${fullError}`)
-      } else {
-        setError(errorMessage)
-      }
+      setError(errorMessage)
       setSuccessInfo(null)
     } else {
       setError(defaultMessage)
@@ -140,7 +136,7 @@ export default function Facturation() {
       // Pour les quantités positives, vérifier le stock
       // Pour les quantités négatives (retours), permettre sans limite
       const nouvelleQuantite = existingLigne.quantite + 1
-      if (nouvelleQuantite > 0 && nouvelleQuantite > (produit.stock ?? 0)) {
+      if (nouvelleQuantite > 0 && nouvelleQuantite > (produit.stock ?? 0) && !user?.can_sell_negative_stock) {
         setError(`Le stock pour "${produit.name}" est insuffisant. Stock disponible: ${produit.stock}`)
         return
       }
@@ -179,9 +175,16 @@ export default function Facturation() {
     }
 
     const ligne = lignesFacture.find(l => l.produit.id === produitId)
+    
+    // Vérifier les permissions pour les retours (quantité négative)
+    if (normalizedQuantite < 0 && !user?.can_do_returns) {
+      setError("Vous n'avez pas la permission d'effectuer des retours (quantités négatives).")
+      return
+    }
+
     // Vérifier le stock seulement pour les quantités positives (ventes)
     // Les quantités négatives (retours) sont autorisées
-    if (ligne && normalizedQuantite > 0 && normalizedQuantite > (ligne.produit.stock ?? 0)) {
+    if (ligne && normalizedQuantite > 0 && normalizedQuantite > (ligne.produit.stock ?? 0) && !user?.can_sell_negative_stock) {
       setError(`La quantité ne peut pas dépasser le stock disponible (${ligne.produit.stock})`)
       return
     }
@@ -293,7 +296,7 @@ export default function Facturation() {
         
         return {
           facture: createdFacture.id,
-          produit_id: ligne.produit.id,
+          produit: ligne.produit.id,
           quantity: Number(ligne.quantite),
           selling_price: prixNet.toString(), // Envoyer le prix net au backend
           lot: null,
@@ -328,10 +331,15 @@ export default function Facturation() {
       const { data: finalFacture } = await axios.get<Facture>(factureUpdateEndpoint)
 
       // 7. Finaliser
+      const montantVerse = Number(montantPaye)
+      const rendu = montantVerse - Number(finalFacture.total_ttc)
+
       setSuccessInfo(finalFacture)
       setTicketCaisse({
         ...caisseResponse.data,
-        facture: finalFacture
+        facture: finalFacture,
+        montant_verse: montantVerse.toString(),
+        rendu: rendu.toString()
       })
       
       setLignesFacture([])
@@ -419,10 +427,15 @@ export default function Facturation() {
       // Rafraîchir les données de la facture
       const { data: factureUpdated } = await axios.get<Facture>(factureUpdateEndpoint)
 
+      const montantVerse = Number(montantPaye)
+      const rendu = montantVerse - Number(factureUpdated.total_ttc)
+
       setSuccessInfo(factureUpdated)
       setTicketCaisse({
         ...caisseResponse.data,
-        facture: factureUpdated
+        facture: factureUpdated,
+        montant_verse: montantVerse.toString(),
+        rendu: rendu.toString()
       })
       
       fermerModalPaiement()
@@ -900,6 +913,18 @@ export default function Facturation() {
                   <span>TOTAL TTC</span>
                   <span>{Math.round(Number(ticketCaisse.montant))} F</span>
                 </div>
+                {ticketCaisse.montant_verse && (
+                  <div className="flex justify-between text-sm font-normal mt-1 border-t border-dashed border-black pt-1">
+                    <span>Montant Versé</span>
+                    <span>{Math.round(Number(ticketCaisse.montant_verse))} F</span>
+                  </div>
+                )}
+                {ticketCaisse.rendu && (
+                  <div className="flex justify-between text-sm font-normal">
+                    <span>Rendu</span>
+                    <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
+                  </div>
+                )}
                 <div className="text-xs font-normal mt-2 text-center">
                   Mode: {ticketCaisse.mode_paiement.toUpperCase()}
                 </div>

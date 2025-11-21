@@ -8,7 +8,7 @@ from .models import (
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['allowed_menus']
+        fields = ['allowed_menus', 'can_do_returns', 'can_sell_negative_stock']
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(required=False)
@@ -28,7 +28,10 @@ class UserSerializer(serializers.ModelSerializer):
         # Profile is created by signal, update it
         if profile_data:
             profile = user.profile
+            profile = user.profile
             profile.allowed_menus = profile_data.get('allowed_menus', [])
+            profile.can_do_returns = profile_data.get('can_do_returns', False)
+            profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', False)
             profile.save()
             
         return user
@@ -49,7 +52,10 @@ class UserSerializer(serializers.ModelSerializer):
 
         if profile_data:
             profile = instance.profile
+            profile = instance.profile
             profile.allowed_menus = profile_data.get('allowed_menus', profile.allowed_menus)
+            profile.can_do_returns = profile_data.get('can_do_returns', profile.can_do_returns)
+            profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', profile.can_sell_negative_stock)
             profile.save()
             
         return instance
@@ -76,6 +82,7 @@ class ProduitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Produit
         fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
@@ -83,6 +90,7 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
     class Meta:
         model = CommandeProduit
         fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
 
 class CommandeSerializer(serializers.ModelSerializer):
     fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
@@ -92,6 +100,7 @@ class CommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = '__all__'
+        read_only_fields = ['date', 'status']
 
 class FactureProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
@@ -99,11 +108,13 @@ class FactureProduitSerializer(serializers.ModelSerializer):
     class Meta:
         model = FactureProduit
         fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at']
 
 class CaisseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Caisse
         fields = '__all__'
+        read_only_fields = ['date_paiement']
 
 class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.CharField(source='client.name', read_only=True)
@@ -116,3 +127,4 @@ class FactureSerializer(serializers.ModelSerializer):
     class Meta:
         model = Facture
         fields = '__all__'
+        read_only_fields = ['date', 'status', 'numero_facture']

@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from django.db import transaction
@@ -34,6 +35,8 @@ from decimal import Decimal
 # Create your views here.
 
 class CustomAuthToken(ObtainAuthToken):
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'auth'
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
@@ -46,7 +49,9 @@ class CustomAuthToken(ObtainAuthToken):
             'username': user.username,
             'email': user.email,
             'is_superuser': user.is_superuser,
-            'allowed_menus': user.profile.allowed_menus if hasattr(user, 'profile') else []
+            'allowed_menus': user.profile.allowed_menus if hasattr(user, 'profile') else [],
+            'can_do_returns': user.profile.can_do_returns if hasattr(user, 'profile') else False,
+            'can_sell_negative_stock': user.profile.can_sell_negative_stock if hasattr(user, 'profile') else False
         })
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -138,16 +143,19 @@ class RayonViewSet(viewsets.ModelViewSet):
     """API endpoint for rayons."""
     queryset = Rayon.objects.all().order_by('name')
     serializer_class = RayonSerializer
+    permission_classes = [IsAuthenticated]
 
 class FournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for fournisseurs."""
     queryset = Fournisseur.objects.all().order_by('name')
     serializer_class = FournisseurSerializer
+    permission_classes = [IsAuthenticated]
 
 class ClientViewSet(viewsets.ModelViewSet):
     """API endpoint for clients."""
     queryset = Client.objects.all().order_by('name')
     serializer_class = ClientSerializer
+    permission_classes = [IsAuthenticated]
 
 def header_footer(canvas, doc, company_info, commande_info, total_achat):
     canvas.saveState()
@@ -206,6 +214,7 @@ class CommandeViewSet(viewsets.ModelViewSet):
     """API endpoint for commandes."""
     queryset = Commande.objects.all().order_by('-date')
     serializer_class = CommandeSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -321,6 +330,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
     serializer_class = CommandeProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit']
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         selling_price = serializer.validated_data.pop('selling_price', None)
@@ -335,6 +345,7 @@ class FactureViewSet(viewsets.ModelViewSet):
     """API endpoint for factures."""
     queryset = Facture.objects.all().order_by('-date')
     serializer_class = FactureSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -361,11 +372,28 @@ class FactureViewSet(viewsets.ModelViewSet):
 
             # Seulement vérifier le stock si la quantité est positive (vente)
             # Les quantités négatives (retours) sont autorisées et augmenteront le stock
-            if qty > 0 and stock < qty:
-                return Response(
-                    {'detail': f'Stock insuffisant pour le produit {produit.name}. Stock disponible: {stock}, Quantité demandée: {qty}'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            if qty > 0:
+                # Vérifier si l'utilisateur a le droit de vendre avec stock négatif
+                can_sell_negative = False
+                if hasattr(request.user, 'profile'):
+                    can_sell_negative = request.user.profile.can_sell_negative_stock
+                
+                if stock < qty and not can_sell_negative:
+                    return Response(
+                        {'detail': f'Stock insuffisant pour le produit {produit.name}. Stock disponible: {stock}, Quantité demandée: {qty}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            elif qty < 0:
+                # Vérifier si l'utilisateur a le droit de faire des retours
+                can_return = False
+                if hasattr(request.user, 'profile'):
+                    can_return = request.user.profile.can_do_returns
+                
+                if not can_return:
+                    return Response(
+                        {'detail': 'Vous n\'avez pas la permission d\'effectuer des retours (quantités négatives).'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
 
         # Mettre à jour le stock (opération atomique au niveau DB)
         # Si quantity est négatif, cela augmente le stock (retour)
@@ -384,7 +412,7 @@ class FactureViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(facture)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['delete'])
+    @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     @transaction.atomic
     def supprimer_brouillons(self, request):
         """
@@ -398,7 +426,7 @@ class FactureViewSet(viewsets.ModelViewSet):
             'count': count
         }, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def caisse_par_tranche_horaire(self, request):
         """
         Calcule la caisse pour une tranche horaire spécifique.
@@ -503,7 +531,7 @@ class FactureViewSet(viewsets.ModelViewSet):
         
         logger.info(f"Totaux calculés: Sous-total HT={total_ht}, Remise totale={total_remise}, Total HT après remise={total_ht_apres_remise}, TVA={total_tva}, TTC={total_ttc}")
         
-        return Response({
+        response_data = {
             'date_debut': start_datetime.strftime('%Y-%m-%d %H:%M'),
             'date_fin': end_datetime.strftime('%Y-%m-%d %H:%M'),
             'tranche': f"{start_datetime.strftime('%d-%m-%Y %Hh%M')} - {end_datetime.strftime('%d-%m-%Y %Hh%M')}",
@@ -512,16 +540,18 @@ class FactureViewSet(viewsets.ModelViewSet):
             'total_tva': str(total_tva.quantize(Decimal('0.01'))),
             'total_ttc': str(total_ttc.quantize(Decimal('0.01'))),
             'sous_total_ht': str(total_ht.quantize(Decimal('0.01'))),  # Sous-total avant remise
-            'total_remise': str(total_remise.quantize(Decimal('0.01'))),  # Total des remises
-            'debug': {
+            'total_remise': str(total_remise.quantize(Decimal('0.01')))
+        }
+        if request.user and request.user.is_superuser:
+            response_data['debug'] = {
                 'date_debut_parsed': start_datetime.isoformat(),
                 'date_fin_parsed': end_datetime.isoformat(),
-                'factures_ids': [f.id for f in factures[:10]],  # Limiter à 10 pour éviter une réponse trop grande
+                'factures_ids': [f.id for f in factures[:10]],
                 'sous_total_ht': str(total_ht),
                 'total_remise': str(total_remise),
                 'total_ht_apres_remise': str(total_ht_apres_remise)
             }
-        }, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def marquer_payee(self, request, pk=None):
@@ -703,6 +733,7 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     serializer_class = FactureProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit', 'facture']
+    permission_classes = [IsAuthenticated]
 
 
 class CaisseViewSet(viewsets.ModelViewSet):
@@ -711,12 +742,14 @@ class CaisseViewSet(viewsets.ModelViewSet):
     serializer_class = CaisseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['facture', 'mode_paiement', 'statut']
+    permission_classes = [IsAuthenticated]
 
 
 class DashboardViewSet(viewsets.ViewSet):
     """
     API endpoint for dashboard statistics.
     """
+    permission_classes = [IsAuthenticated]
     
     @action(detail=False, methods=['get'])
     def stats(self, request):

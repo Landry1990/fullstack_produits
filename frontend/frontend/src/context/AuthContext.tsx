@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
 
 // Définition de la structure de l'objet User
@@ -8,6 +8,8 @@ interface User {
   token: string;      // Le token d'authentification (ex: Token JWT ou DRF)
   is_superuser: boolean; // Indique si l'utilisateur est administrateur
   allowed_menus: string[]; // Liste des menus auxquels l'utilisateur a accès
+  can_do_returns?: boolean;
+  can_sell_negative_stock?: boolean;
 }
 
 // Définition du type pour le contexte d'authentification
@@ -38,10 +40,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const username = localStorage.getItem('username');
     const is_superuser = localStorage.getItem('is_superuser') === 'true';
     const allowed_menus = JSON.parse(localStorage.getItem('allowed_menus') || '[]');
+    const can_do_returns = localStorage.getItem('can_do_returns') === 'true';
+    const can_sell_negative_stock = localStorage.getItem('can_sell_negative_stock') === 'true';
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
-      setUser({ username, token, is_superuser, allowed_menus });
+      setUser({ 
+        username, 
+        token, 
+        is_superuser, 
+        allowed_menus,
+        can_do_returns,
+        can_sell_negative_stock
+      });
       // On configure axios pour inclure ce token dans toutes les futures requêtes HTTP
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
     }
@@ -56,6 +67,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('username', userData.username);
     localStorage.setItem('is_superuser', String(userData.is_superuser));
     localStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
+    localStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
+    localStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
     
     // 2. On met à jour l'état de l'application
     setUser(userData);
@@ -71,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('username');
     localStorage.removeItem('is_superuser');
     localStorage.removeItem('allowed_menus');
+    localStorage.removeItem('can_do_returns');
+    localStorage.removeItem('can_sell_negative_stock');
     
     // 2. On remet l'utilisateur à null
     setUser(null);
