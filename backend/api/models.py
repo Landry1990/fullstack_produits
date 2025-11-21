@@ -12,6 +12,8 @@ from django.dispatch import receiver
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     allowed_menus = models.JSONField(default=list, blank=True)
+    can_do_returns = models.BooleanField(default=False)
+    can_sell_negative_stock = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Profile of {self.user.username}"

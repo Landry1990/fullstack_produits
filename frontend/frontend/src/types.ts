@@ -123,6 +123,8 @@ export interface TicketCaisse {
   reference?: string | null
   statut: string
   date_paiement: string
+  montant_verse?: string
+  rendu?: string
 }
 
 export interface CaisseParTranche {

@@ -11,6 +11,8 @@ interface User {
   is_superuser: boolean;
   profile: {
     allowed_menus: string[];
+    can_do_returns?: boolean;
+    can_sell_negative_stock?: boolean;
   };
 }
 
@@ -40,6 +42,8 @@ export default function GestionUtilisateurs() {
     first_name: '',
     last_name: '',
     allowed_menus: [] as string[],
+    can_do_returns: false,
+    can_sell_negative_stock: false,
   });
 
   useEffect(() => {
@@ -67,6 +71,8 @@ export default function GestionUtilisateurs() {
         first_name: user.first_name,
         last_name: user.last_name,
         allowed_menus: user.profile?.allowed_menus || [],
+        can_do_returns: user.profile?.can_do_returns || false,
+        can_sell_negative_stock: user.profile?.can_sell_negative_stock || false,
       });
     } else {
       setEditingUser(null);
@@ -77,6 +83,8 @@ export default function GestionUtilisateurs() {
         first_name: '',
         last_name: '',
         allowed_menus: [],
+        can_do_returns: false,
+        can_sell_negative_stock: false,
       });
     }
     setModalOpen(true);
@@ -97,7 +105,9 @@ export default function GestionUtilisateurs() {
       const payload = {
         ...formData,
         profile: {
-          allowed_menus: formData.allowed_menus
+          allowed_menus: formData.allowed_menus,
+          can_do_returns: formData.can_do_returns,
+          can_sell_negative_stock: formData.can_sell_negative_stock
         }
       };
       
@@ -262,6 +272,30 @@ export default function GestionUtilisateurs() {
                       <span className="label-text">{menu.label}</span>
                     </label>
                   ))}
+                </div>
+                </div>
+
+              <div className="form-control">
+                <label className="label">Permissions Spéciales</label>
+                <div className="grid grid-cols-1 gap-2 bg-base-200 p-4 rounded-lg">
+                  <label className="label cursor-pointer justify-start gap-2">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-sm checkbox-secondary"
+                      checked={formData.can_do_returns}
+                      onChange={e => setFormData({...formData, can_do_returns: e.target.checked})}
+                    />
+                    <span className="label-text">Autoriser les retours (Quantités négatives)</span>
+                  </label>
+                  <label className="label cursor-pointer justify-start gap-2">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-sm checkbox-secondary"
+                      checked={formData.can_sell_negative_stock}
+                      onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})}
+                    />
+                    <span className="label-text">Autoriser la vente avec stock négatif</span>
+                  </label>
                 </div>
               </div>
 
