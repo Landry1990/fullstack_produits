@@ -118,11 +118,13 @@ class CaisseSerializer(serializers.ModelSerializer):
 
 class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.CharField(source='client.name', read_only=True)
+    client_name = serializers.CharField(source='client.name', read_only=True)
     produits = FactureProduitSerializer(many=True, read_only=True)
     paiements = CaisseSerializer(many=True, read_only=True)
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Facture

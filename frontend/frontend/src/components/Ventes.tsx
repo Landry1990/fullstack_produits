@@ -418,7 +418,7 @@ export default function Ventes() {
               <div className="flex justify-center items-center py-8">
                 <span className="loading loading-spinner loading-lg"></span>
               </div>
-            ) : selectedFacture.produits && selectedFacture.produits.length > 0 ? (
+            ) : (
               <>
                 <div className="mb-4 p-4 bg-base-200 rounded-lg">
                   <div className="grid grid-cols-2 gap-4 text-sm">
@@ -426,145 +426,59 @@ export default function Ventes() {
                       <span className="font-semibold">Client:</span> {selectedFacture.client_name || 'N/A'}
                     </div>
                     <div>
-                      <span className="font-semibold">Date:</span> {new Date(selectedFacture.date).toLocaleString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Sous-total HT:</span> {Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F
-                    </div>
-                    <div>
-                      <span className="font-semibold">Remise:</span> {(() => {
-                        const remise = Number(selectedFacture.remise || 0)
-                        const sousTotal = Number(selectedFacture.total_ht || 0)
-                        const pourcentageRemise = sousTotal > 0 ? (remise / sousTotal) * 100 : 0
-                        if (remise > 0) {
-                          return (
-                            <span className="text-error font-semibold">
-                              -{Math.round(remise).toLocaleString('fr-FR')} F 
-                              {pourcentageRemise > 0 && ` (${pourcentageRemise.toFixed(2)}%)`}
-                            </span>
-                          )
-                        }
-                        return <span className="text-gray-500">Aucune</span>
-                      })()}
-                    </div>
-                    <div>
-                      <span className="font-semibold">Total HT:</span> {Math.round(Math.max(0, Number(selectedFacture.total_ht || 0) - Number(selectedFacture.remise || 0))).toLocaleString('fr-FR')} F
-                    </div>
-                    <div>
-                      <span className="font-semibold">TVA ({selectedFacture.tva}%):</span> {Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-semibold">Total TTC:</span> 
-                      <span className="text-primary font-bold text-lg ml-2">
-                        {Math.round(Number(selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F
-                      </span>
+                      <span className="font-semibold">Date:</span> {new Date(selectedFacture.date).toLocaleString('fr-FR')}
                     </div>
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
-                    <thead>
-                      <tr>
-                        <th>Produit</th>
-                        <th className="text-right">Quantité</th>
-                        <th className="text-right">Prix unitaire</th>
-                        <th className="text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedFacture.produits.map((produit) => (
-                        <tr key={produit.id}>
-                          <td>
-                            <div className="font-medium">{produit.produit.name}</div>
-                            {produit.produit.description && (
-                              <div className="text-sm opacity-70">{produit.produit.description}</div>
-                            )}
-                          </td>
-                          <td className="text-right">{produit.quantity}</td>
-                          <td className="text-right">{Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F</td>
-                          <td className="text-right font-semibold">
-                            {Math.round(produit.quantity * Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                    <tfoot>
-                      <tr>
-                        <td colSpan={3} className="text-right font-semibold">Sous-total HT:</td>
-                        <td className="text-right font-semibold">
-                          {Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F
-                        </td>
-                      </tr>
-                      {Number(selectedFacture.remise || 0) > 0 && (
+                {selectedFacture.produits && selectedFacture.produits.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="table table-zebra w-full">
+                      <thead>
                         <tr>
-                          <td colSpan={3} className="text-right text-error font-semibold">Remise:</td>
-                          <td className="text-right text-error font-semibold">
-                            -{Math.round(Number(selectedFacture.remise || 0)).toLocaleString('fr-FR')} F
-                            {(() => {
-                              const remise = Number(selectedFacture.remise || 0)
-                              const sousTotal = Number(selectedFacture.total_ht || 0)
-                              const pourcentage = sousTotal > 0 ? (remise / sousTotal) * 100 : 0
-                              return pourcentage > 0 ? ` (${pourcentage.toFixed(2)}%)` : ''
-                            })()}
-                          </td>
+                          <th>Produit</th>
+                          <th className="text-right">Prix Unitaire</th>
+                          <th className="text-right">Quantité</th>
+                          <th className="text-right">Total</th>
                         </tr>
-                      )}
-                      <tr>
-                        <td colSpan={3} className="text-right font-semibold">Total HT:</td>
-                        <td className="text-right font-semibold">
-                          {Math.round(Math.max(0, Number(selectedFacture.total_ht || 0) - Number(selectedFacture.remise || 0))).toLocaleString('fr-FR')} F
-                        </td>
-                      </tr>
-                      <tr>
-                        <td colSpan={3} className="text-right font-semibold">TVA ({selectedFacture.tva}%):</td>
-                        <td className="text-right font-semibold">
-                          {Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F
-                        </td>
-                      </tr>
-                      <tr className="font-bold border-t-2 border-primary">
-                        <td colSpan={3} className="text-right text-primary">Total TTC:</td>
-                        <td className="text-right text-primary text-lg">
-                          {Math.round(Number(selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {selectedFacture.produits.map((p, index) => {
+                           const produitNom = typeof p.produit === 'object' ? p.produit.name : (p.produit_nom ?? `Produit #${p.produit}`)
+                           return (
+                          <tr key={index}>
+                            <td>{produitNom}</td>
+                            <td className="text-right">{Math.round(Number(p.selling_price)).toLocaleString('fr-FR')} F</td>
+                            <td className="text-right">{Math.abs(p.quantity)}</td>
+                            <td className="text-right">{Math.round(Math.abs(p.quantity) * Number(p.selling_price)).toLocaleString('fr-FR')} F</td>
+                          </tr>
+                           )
+                        })}
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <td colSpan={3} className="text-right font-bold">Total TTC:</td>
+                          <td className="text-right font-bold">{Math.round(Number(selectedFacture.total_ttc)).toLocaleString('fr-FR')} F</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-base-content/50">
+                    Aucune ligne de produit pour cette facture.
+                  </div>
+                )}
               </>
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                Aucun produit dans cette facture
-              </div>
             )}
-
+            
             <div className="modal-action">
-              {selectedFacture.status === 'PAY' && (
-                <button 
-                  className="btn btn-info"
-                  onClick={handleOpenTicketPreview}
-                >
-                  Consulter le ticket
-                </button>
-              )}
-              <button 
-                className="btn" 
-                onClick={() => setSelectedFacture(null)}
-              >
-                Fermer
-              </button>
+              <button className="btn" onClick={() => setSelectedFacture(null)}>Fermer</button>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setSelectedFacture(null)}></div>
         </div>
       )}
 
+      {/* Modal Aperçu Ticket */}
       {showTicketPreview && ticketCaisse && selectedFacture && (
         <div className="modal modal-open">
           <div className="modal-box max-w-2xl">
@@ -621,12 +535,15 @@ export default function Ventes() {
               {selectedFacture.produits && selectedFacture.produits.length > 0 && (
                 <div className="mb-4 border-t border-b border-gray-300 py-2">
                   <div className="text-xs font-semibold mb-2">Détails:</div>
-                  {selectedFacture.produits.slice(0, 5).map((p) => (
-                    <div key={p.id} className="flex justify-between text-xs mb-1">
-                      <span className="flex-1">{p.produit.name} x{Math.abs(p.quantity)}</span>
-                      <span>{Math.round(Math.abs(p.quantity) * Number(p.selling_price || 0))} F</span>
-                    </div>
-                  ))}
+                  {selectedFacture.produits.slice(0, 5).map((p) => {
+                    const produitNom = typeof p.produit === 'object' ? p.produit.name : (p.produit_nom ?? `Produit #${p.produit}`)
+                    return (
+                      <div key={p.id} className="flex justify-between text-xs mb-1">
+                        <span className="flex-1">{produitNom} x{Math.abs(p.quantity)}</span>
+                        <span>{Math.round(Math.abs(p.quantity) * Number(p.selling_price || 0))} F</span>
+                      </div>
+                    )
+                  })}
                   {selectedFacture.produits.length > 5 && (
                     <div className="text-xs text-gray-500 mt-1">... et {selectedFacture.produits.length - 5} autre(s) produit(s)</div>
                   )}

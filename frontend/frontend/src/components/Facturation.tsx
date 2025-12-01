@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Client, Facture, TicketCaisse } from '../types'
@@ -59,6 +59,13 @@ export default function Facturation() {
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
+
+  // Keyboard Navigation State
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const clientSelectRef = useRef<HTMLSelectElement>(null)
+  const productListRef = useRef<HTMLDivElement>(null)
+  const paymentInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (successInfo && successInfo.status !== 'PAY') {
@@ -162,6 +169,10 @@ export default function Facturation() {
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
     }
+    // Clear search after adding (optional, but good for flow)
+    // setSearchQuery('') 
+    // Instead of clearing, maybe just keep focus on search
+    searchInputRef.current?.focus()
   }
 
   const updateQuantite = (produitId: number, quantite: number) => {
@@ -250,9 +261,26 @@ export default function Facturation() {
   }, [lignesFacture, remise, remiseMode, tva])
 
   // Filtrer les produits selon la recherche
-  const filteredProduits = produits.filter(produit =>
-    produit.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredProduits = useMemo(() => {
+    return produits.filter(produit =>
+      produit.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [produits, searchQuery])
+
+  // Reset selected index when search changes
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [searchQuery])
+
+  // Scroll selected product into view
+  useEffect(() => {
+    if (productListRef.current) {
+      const selectedElement = productListRef.current.children[selectedIndex] as HTMLElement
+      if (selectedElement) {
+        selectedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }
+    }
+  }, [selectedIndex])
 
   const [isNewSale, setIsNewSale] = useState(false)
 
@@ -469,6 +497,12 @@ export default function Facturation() {
     setModePaiement('especes')
     setReference('')
     setIsPaymentModalOpen(true)
+    
+    // Focus sur le montant après un court délai pour laisser la modale s'ouvrir
+    setTimeout(() => {
+        paymentInputRef.current?.focus()
+        paymentInputRef.current?.select()
+    }, 100)
   }
 
   const fermerModalPaiement = () => {
@@ -478,294 +512,346 @@ export default function Facturation() {
     setReference('')
     setModePaiement('especes')
     setIsNewSale(false)
+    
+    // Retourner le focus à la recherche
+    setTimeout(() => {
+        searchInputRef.current?.focus()
+    }, 100)
   }
 
+  // Global Keyboard Listeners
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if inside an input/textarea UNLESS it's a specific shortcut key
+      const isInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement
+      
+      if (e.key === 'F2') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+        return
+      }
+      
+      if (e.key === 'F4') {
+         e.preventDefault()
+         clientSelectRef.current?.focus()
+         return
+      }
+      
+      if (e.key === 'F9') {
+        e.preventDefault()
+        if (!isPaymentModalOpen && lignesFacture.length > 0 && selectedClient) {
+           ouvrirModalPaiement()
+        }
+        return
+      }
+      
+      if (e.key === 'Escape') {
+        if (isPaymentModalOpen) {
+           fermerModalPaiement()
+        } else if (showTicketPreview) {
+            setShowTicketPreview(false)
+        } else if (successInfo) {
+            setSuccessInfo(null)
+        } else {
+           setSearchQuery('')
+           searchInputRef.current?.blur()
+        }
+        return
+      }
+
+      // Navigation dans la liste des produits (si focus sur recherche ou pas d'autre input focus)
+      if (!isPaymentModalOpen && !showTicketPreview && (!isInput || e.target === searchInputRef.current)) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault()
+          setSelectedIndex(prev => Math.min(prev + 1, filteredProduits.length - 1))
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault()
+          setSelectedIndex(prev => Math.max(prev - 1, 0))
+        }
+        if (e.key === 'Enter') {
+           // Si on est dans le champ de recherche, Enter ajoute le produit sélectionné
+           if (e.target === searchInputRef.current && filteredProduits[selectedIndex]) {
+             e.preventDefault()
+             addProduitToFacture(filteredProduits[selectedIndex])
+           }
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [filteredProduits, selectedIndex, lignesFacture, selectedClient, isPaymentModalOpen, showTicketPreview, successInfo])
+
   return (
-    <div className="h-full flex flex-col gap-4">
-      <div className="flex items-center justify-between">
+    <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
+      {/* Header Minimaliste */}
+      <div className="flex items-center justify-between px-6 py-3 border-b border-base-200 bg-white shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">Nouvelle Facture</h1>
-          <p className="text-sm text-base-content/80">Créez et gérez les factures clients</p>
+          <h1 className="text-xl font-light tracking-tight text-base-content">Facturation</h1>
+          <div className="flex gap-4 text-xs text-base-content/50 mt-1">
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Client</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F9</kbd> Encaisser</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Esc</kbd> Annuler</span>
+          </div>
         </div>
-        <div className="text-sm text-base-content/80">
-          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <div className="text-sm font-medium text-base-content/60">
+          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
       </div>
       
+      {/* Notifications */}
       {error && (
-        <div role="alert" className="alert alert-error shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span>{error}</span>
-          <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
+        <div className="px-6 pt-4 shrink-0">
+            <div role="alert" className="alert alert-error shadow-sm rounded-lg py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <span>{error}</span>
+            <button className="btn btn-sm btn-ghost btn-square" onClick={() => setError(null)}>✕</button>
+            </div>
         </div>
       )}
 
       {successInfo && (
-        <div role="alert" className="alert alert-success shadow-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <div className="flex-1">
-            <h3 className="font-bold">Facture créée avec succès !</h3>
-            <div className="text-xs">
-              Facture N° <span className="font-semibold">{successInfo.numero_facture}</span> pour <span className="font-semibold">{successInfo.client_name}</span> • <span className="font-semibold">{Math.round(Number(successInfo.total_ttc))} F</span>
-              {successInfo.status === 'PAY' && <span className="badge badge-sm badge-success ml-2">PAYÉE</span>}
+        <div className="px-6 pt-4 shrink-0">
+            <div role="alert" className="alert alert-success shadow-sm rounded-lg py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div className="flex-1 flex items-center justify-between">
+                <div className="text-sm">
+                    <span className="font-bold">Succès !</span> Facture <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F
+                </div>
+                <div className="flex gap-2">
+                    {successInfo.status !== 'PAY' && (
+                        <button className="btn btn-xs btn-primary" onClick={() => ouvrirModalPaiement(successInfo)}>Payer</button>
+                    )}
+                    {successInfo.status === 'PAY' && ticketCaisse && (
+                        <button className="btn btn-xs btn-info" onClick={() => setShowTicketPreview(true)}>Ticket</button>
+                    )}
+                    <button className="btn btn-xs btn-outline" onClick={() => handleImprimerFacture(successInfo)}>Imprimer</button>
+                    <button className="btn btn-xs btn-ghost" onClick={() => setSuccessInfo(null)}>Fermer</button>
+                </div>
             </div>
-          </div>
-          
-          <div className="flex flex-row gap-2 items-center">
-            {successInfo.status !== 'PAY' && (
-              <button 
-                className="btn btn-sm btn-primary"
-                onClick={() => ouvrirModalPaiement(successInfo)}
-              >
-                Payer maintenant
-              </button>
-            )}
-            {successInfo.status === 'PAY' && ticketCaisse && (
-              <button className="btn btn-sm btn-info" onClick={() => setShowTicketPreview(true)}>
-                Ticket
-              </button>
-            )}
-            <button className="btn btn-sm btn-outline" onClick={() => handleImprimerFacture(successInfo)}>
-              Imprimer
-            </button>
-            <button className="btn btn-sm btn-ghost" onClick={() => setSuccessInfo(null)}>Fermer</button>
-          </div>
+            </div>
         </div>
       )}
 
-      <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
-        {/* Left Panel: Client & Products */}
-        <div className="col-span-12 lg:col-span-5 flex flex-col gap-4 min-h-0">
-          {/* Client Selection */}
-          <div className="card bg-base-100 shadow-sm border border-base-200">
-            <div className="card-body p-4">
-              <h2 className="card-title text-sm uppercase tracking-wider text-base-content/80 mb-2">Client & Conditions</h2>
-              <div className="grid gap-3">
-                <div>
-                  <select
+      {/* Main Layout */}
+      <div className="flex-1 flex overflow-hidden p-6 gap-6">
+        {/* Left Panel: Search & Products */}
+        <div className="w-1/3 flex flex-col gap-4 min-h-0">
+            {/* Client Selection */}
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-base-200 shrink-0">
+                <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Client (F4)</label>
+                <select
+                    ref={clientSelectRef}
                     value={selectedClient !== null ? String(selectedClient) : ''}
                     onChange={(e) => {
-                      const value = e.target.value
-                      setSelectedClient(value ? Number(value) : null)
+                        const value = e.target.value
+                        setSelectedClient(value ? Number(value) : null)
                     }}
-                    className="select select-bordered w-full"
-                  >
+                    className="select select-bordered w-full select-sm bg-base-50 focus:bg-white transition-colors"
+                >
                     <option value="">Sélectionner un client...</option>
                     {clients.map((client) => (
-                      <option key={client.id} value={client.id}>{client.name}</option>
+                        <option key={client.id} value={client.id}>{client.name}</option>
                     ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="join w-full">
-                    <select
-                      value={remiseMode}
-                      onChange={(e) => {
-                        setRemiseMode(e.target.value as 'montant' | 'taux')
-                        setRemise('0')
-                      }}
-                      className="select select-bordered join-item w-24 text-xs px-1"
-                    >
-                      <option value="montant">Remise (F)</option>
-                      <option value="taux">Remise (%)</option>
-                    </select>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={remise}
-                      onChange={(e) => setRemise(e.target.value)}
-                      className="input input-bordered join-item w-full"
-                      min="0"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 border border-base-300 rounded-lg px-3 bg-base-200/30">
-                    <span className="text-sm text-base-content/80">TVA</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={tva}
-                      onChange={(e) => setTva(e.target.value)}
-                      className="input input-ghost input-sm w-full text-right font-medium"
-                    />
-                    <span className="text-sm">%</span>
-                  </div>
-                </div>
-              </div>
+                </select>
             </div>
-          </div>
 
-          {/* Product Selection */}
-          <div className="card bg-base-100 shadow-sm border border-base-200 flex-1 flex flex-col min-h-0">
-            <div className="card-body p-4 flex flex-col h-full min-h-0">
-              <h2 className="card-title text-sm uppercase tracking-wider text-base-content/80 mb-2">Produits</h2>
-              <div className="relative mb-3">
-                <input
-                  type="text"
-                  placeholder="Rechercher un produit..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input input-bordered w-full pl-10"
-                />
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-                {filteredProduits.length === 0 ? (
-                  <div className="text-center py-8 text-base-content/80">
-                    {loading ? <span className="loading loading-spinner"></span> : 'Aucun produit trouvé'}
-                  </div>
-                ) : (
-                  filteredProduits.map((produit) => (
-                    <div key={produit.id} className="group flex items-center justify-between p-3 border border-base-200 rounded-lg hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer" onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-base-content truncate">{produit.name}</div>
-                        <div className="text-xs text-base-content/80 flex gap-3 mt-1">
-                          <span className={(produit.stock ?? 0) === 0 ? 'text-error font-medium' : 'text-success'}>
-                            Stock: {produit.stock}
-                          </span>
-                          <span className="font-medium text-base-content">{produit.selling_price} F</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addProduitToFacture(produit);
-                        }}
-                        disabled={(produit.stock ?? 0) === 0}
-                        className="btn btn-sm btn-square btn-ghost text-primary group-hover:bg-primary group-hover:text-primary-content"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                      </button>
+            {/* Product Search & List */}
+            <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="p-4 border-b border-base-100 shrink-0">
+                     <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Produits (F2)</label>
+                    <div className="relative">
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            placeholder="Rechercher..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="input input-bordered w-full pl-9 bg-base-50 focus:bg-white transition-colors"
+                        />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
-                  ))
-                )}
-              </div>
+                </div>
+                
+                <div className="flex-1 overflow-y-auto p-2 space-y-1" ref={productListRef}>
+                    {filteredProduits.length === 0 ? (
+                        <div className="text-center py-10 text-base-content/40 text-sm">
+                            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Aucun produit trouvé'}
+                        </div>
+                    ) : (
+                        filteredProduits.map((produit, idx) => (
+                            <div 
+                                key={produit.id} 
+                                onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}
+                                className={`
+                                    group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                                    ${idx === selectedIndex ? 'bg-primary text-primary-content shadow-md ring-2 ring-primary ring-offset-1' : 'hover:bg-base-100 text-base-content'}
+                                    ${(produit.stock ?? 0) === 0 ? 'opacity-50' : ''}
+                                `}
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-medium truncate text-sm">{produit.name}</div>
+                                    <div className={`text-xs flex gap-3 mt-0.5 ${idx === selectedIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                                        <span className={(produit.stock ?? 0) === 0 ? 'text-error font-bold' : ''}>
+                                            Stock: {produit.stock}
+                                        </span>
+                                        <span>{produit.selling_price} F</span>
+                                    </div>
+                                </div>
+                                {(produit.stock ?? 0) > 0 && (
+                                    <div className={`opacity-0 group-hover:opacity-100 ${idx === selectedIndex ? 'opacity-100' : ''}`}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
-          </div>
         </div>
 
-        {/* Right Panel: Invoice */}
-        <div className="col-span-12 lg:col-span-7 card bg-base-100 shadow-sm border border-base-200 flex flex-col h-full overflow-hidden">
-          <div className="card-body p-0 flex flex-col h-full">
-            {/* Header */}
-            <div className="p-4 border-b border-base-200 bg-base-200/30 flex justify-between items-center">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                Détails de la facture
-              </h2>
-              <div className="badge badge-ghost">{lignesFacture.length} articles</div>
+        {/* Right Panel: Invoice Details */}
+        <div className="flex-1 bg-white rounded-xl shadow-sm border border-base-200 flex flex-col min-h-0 overflow-hidden">
+            <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-lg text-base-content">Panier</h2>
+                <div className="badge badge-ghost font-mono">{lignesFacture.length} articles</div>
             </div>
 
             {/* Table */}
             <div className="flex-1 overflow-y-auto">
-              {lignesFacture.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-base-content/40 gap-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                  <p>Le panier est vide</p>
-                </div>
-              ) : (
-                <table className="table table-pin-rows">
-                  <thead>
-                    <tr className="bg-base-200/50 text-xs uppercase">
-                      <th>Produit</th>
-                      <th className="text-right w-24">Qté</th>
-                      <th className="text-right w-28">Prix</th>
-                      <th className="text-right w-20">Remise</th>
-                      <th className="text-right w-28">Total</th>
-                      <th className="w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lignesFacture.map((ligne) => (
-                      <tr key={ligne.produit.id} className="hover:bg-base-100">
-                        <td>
-                          <div className="font-medium">{ligne.produit.name}</div>
-                        </td>
-                        <td className="text-right">
-                          <input
-                            type="number"
-                            value={ligne.quantite}
-                            onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
-                            className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-200"
-                          />
-                        </td>
-                        <td className="text-right">
-                          <input
-                            type="number"
-                            value={ligne.prix_unitaire}
-                            onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                            className="input input-ghost input-xs w-full text-right focus:bg-base-200"
-                          />
-                        </td>
-                        <td className="text-right">
-                          <input
-                            type="number"
-                            value={ligne.remise_produit}
-                            onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
-                            className="input input-ghost input-xs w-full text-right focus:bg-base-200"
-                            placeholder="%"
-                          />
-                        </td>
-                        <td className="text-right font-medium">
-                          {Math.round(ligne.total_ligne)}
-                        </td>
-                        <td className="text-center">
-                          <button
-                            onClick={() => removeLigne(ligne.produit.id)}
-                            className="btn btn-ghost btn-xs text-error btn-square"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                {lignesFacture.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-base-content/30 gap-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        <p className="font-light">Commencez par ajouter des produits (F2)</p>
+                    </div>
+                ) : (
+                    <table className="table table-pin-rows w-full">
+                        <thead>
+                            <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
+                                <th className="bg-base-50 pl-6">Produit</th>
+                                <th className="bg-base-50 text-right w-24">Qté</th>
+                                <th className="bg-base-50 text-right w-28">Prix</th>
+                                <th className="bg-base-50 text-right w-20">Remise</th>
+                                <th className="bg-base-50 text-right w-32 pr-6">Total</th>
+                                <th className="bg-base-50 w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {lignesFacture.map((ligne) => (
+                                <tr key={ligne.produit.id} className="hover:bg-base-50/50 group border-b border-base-100 last:border-0">
+                                    <td className="pl-6 py-3">
+                                        <div className="font-medium text-sm">{ligne.produit.name}</div>
+                                    </td>
+                                    <td className="text-right py-3">
+                                        <input
+                                            type="number"
+                                            value={ligne.quantite}
+                                            onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
+                                            className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
+                                        />
+                                    </td>
+                                    <td className="text-right py-3">
+                                        <input
+                                            type="number"
+                                            value={ligne.prix_unitaire}
+                                            onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
+                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                                        />
+                                    </td>
+                                    <td className="text-right py-3">
+                                        <input
+                                            type="number"
+                                            value={ligne.remise_produit}
+                                            onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
+                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                                            placeholder="%"
+                                        />
+                                    </td>
+                                    <td className="text-right font-medium text-base-content pr-6 py-3">
+                                        {Math.round(ligne.total_ligne)}
+                                    </td>
+                                    <td className="text-center py-3">
+                                        <button
+                                            onClick={() => removeLigne(ligne.produit.id)}
+                                            className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
 
             {/* Footer Totals */}
-            <div className="p-4 bg-base-200/30 border-t border-base-200 space-y-3">
-              <div className="grid grid-cols-2 gap-8 text-sm">
-                <div className="space-y-1">
-                  <div className="flex justify-between text-base-content/80">
-                    <span>Sous-total</span>
-                    <span>{Math.round(totals.sousTotal)} F</span>
-                  </div>
-                  <div className="flex justify-between text-error">
-                    <span>Remise globale</span>
-                    <span>-{Math.round(totals.remiseMontant)} F</span>
-                  </div>
+            <div className="p-6 bg-base-50 border-t border-base-200 shrink-0">
+                <div className="grid grid-cols-2 gap-8 mb-6">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                             <select
+                                value={remiseMode}
+                                onChange={(e) => {
+                                    setRemiseMode(e.target.value as 'montant' | 'taux')
+                                    setRemise('0')
+                                }}
+                                className="select select-bordered select-xs w-24"
+                            >
+                                <option value="montant">Remise (F)</option>
+                                <option value="taux">Remise (%)</option>
+                            </select>
+                            <input
+                                type="number"
+                                value={remise}
+                                onChange={(e) => setRemise(e.target.value)}
+                                className="input input-bordered input-xs w-32"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold uppercase text-base-content/50 w-24">TVA (%)</span>
+                            <input
+                                type="number"
+                                value={tva}
+                                onChange={(e) => setTva(e.target.value)}
+                                className="input input-bordered input-xs w-32"
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-1 text-right">
+                        <div className="text-sm text-base-content/60">
+                            Sous-total: <span className="font-medium text-base-content">{Math.round(totals.sousTotal)} F</span>
+                        </div>
+                        <div className="text-sm text-base-content/60">
+                            Remise: <span className="font-medium text-error">-{Math.round(totals.remiseMontant)} F</span>
+                        </div>
+                        <div className="text-sm text-base-content/60">
+                            TVA: <span className="font-medium text-base-content">{Math.round(totals.montantTva)} F</span>
+                        </div>
+                        <div className="text-3xl font-light text-primary mt-2">
+                            {Math.round(totals.totalTtc)} <span className="text-lg font-normal text-primary/60">FCFA</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-base-content/80">
-                    <span>TVA ({tva}%)</span>
-                    <span>{Math.round(totals.montantTva)} F</span>
-                  </div>
-                  <div className="flex justify-between font-black text-xl text-primary pt-1 border-t border-base-300">
-                    <span>Total TTC</span>
-                    <span>{Math.round(totals.totalTtc)} F</span>
-                  </div>
-                </div>
-              </div>
-              
-              <button
-                onClick={() => ouvrirModalPaiement()}
-                disabled={loading || !selectedClient || lignesFacture.length === 0 }
-                className="btn btn-primary w-full shadow-lg shadow-primary/20"
-              >
-                {loading ? <span className="loading loading-spinner"></span> : 'Encaisser'}
-              </button>
+                
+                <button
+                    onClick={() => ouvrirModalPaiement()}
+                    disabled={loading || !selectedClient || lignesFacture.length === 0 }
+                    className="btn btn-primary w-full shadow-lg shadow-primary/20 h-12 text-lg font-normal"
+                >
+                    {loading ? <span className="loading loading-spinner"></span> : <span>Encaisser <span className="opacity-70 text-sm ml-2">(F9)</span></span>}
+                </button>
             </div>
-          </div>
         </div>
       </div>
 
       {/* Modal de paiement */}
       <dialog className={`modal ${isPaymentModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-md">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-lg">Enregistrer le paiement</h3>
+        <div className="modal-box max-w-md p-0 overflow-hidden bg-white">
+          <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-50">
+            <h3 className="font-bold text-lg">Paiement</h3>
             <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={fermerModalPaiement}>✕</button>
           </div>
 
@@ -777,84 +863,60 @@ export default function Facturation() {
               } else {
                 enregistrerPaiement(); 
               }
-            }} className="space-y-4">
-              <div className="bg-base-200 p-4 rounded-lg mb-4">
-                <div className="text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="opacity-70">Facture</span>
-                    <span className="font-semibold">
-                      {isNewSale ? 'Nouvelle Vente' : facturePourPaiement?.numero_facture}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="opacity-70">Client</span>
-                    <span className="font-semibold">
-                      {isNewSale 
-                        ? clients.find(c => c.id === selectedClient)?.name 
-                        : facturePourPaiement?.client_name}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-t border-base-300 pt-2 mt-2">
-                    <span className="font-bold">À payer</span>
-                    <span className="font-bold text-lg text-primary">
-                      {isNewSale 
+            }} className="p-6 space-y-5">
+              
+              <div className="text-center mb-6">
+                <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">Total à payer</div>
+                <div className="text-4xl font-light text-primary">
+                    {isNewSale 
                         ? Math.round(totals.totalTtc) 
                         : Math.round(Number(facturePourPaiement?.total_ttc))} F
-                    </span>
-                  </div>
                 </div>
               </div>
 
               <div className="form-control w-full">
-                <label className="label"><span className="label-text font-medium">Mode de paiement</span></label>
-                <select
-                  value={modePaiement}
-                  onChange={(e) => setModePaiement(e.target.value as any)}
-                  className="select select-bordered w-full"
-                >
-                  <option value="especes">Espèces</option>
-                  <option value="cheque">Chèque</option>
-                  <option value="carte">Carte</option>
-                  <option value="virement">Virement</option>
-                </select>
+                <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
+                <div className="grid grid-cols-2 gap-2">
+                    {['especes', 'cheque', 'carte', 'virement'].map((mode) => (
+                        <button
+                            key={mode}
+                            type="button"
+                            className={`btn btn-sm ${modePaiement === mode ? 'btn-primary' : 'btn-outline border-base-300 text-base-content font-normal'}`}
+                            onClick={() => setModePaiement(mode as any)}
+                        >
+                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                        </button>
+                    ))}
+                </div>
               </div>
 
               <div className="form-control w-full">
-                <label className="label"><span className="label-text font-medium">Montant reçu</span></label>
+                <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant reçu</span></label>
                 <input
+                  ref={paymentInputRef}
                   type="number"
                   step="0.01"
                   value={montantPaye}
                   onChange={(e) => setMontantPaye(e.target.value)}
-                  className="input input-bordered w-full font-bold text-lg"
-                />
-              </div>
-
-              <div className="form-control w-full">
-                <label className="label"><span className="label-text font-medium">Référence</span></label>
-                <input
-                  type="text"
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  placeholder="N° chèque, transaction..."
-                  className="input input-bordered w-full"
+                  className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
 
               {(() => {
                 const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                return Number(montantPaye) > totalAPayer && (
-                  <div className="alert alert-info py-2 shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span>Rendre : <span className="font-bold">{(Number(montantPaye) - totalAPayer).toFixed(2)} F</span></span>
+                const rendu = Number(montantPaye) - totalAPayer
+                return rendu > 0 && (
+                  <div className="alert bg-success/10 text-success border-success/20 py-3 shadow-sm flex justify-between items-center">
+                    <span className="text-sm font-medium">Monnaie à rendre</span>
+                    <span className="text-xl font-bold">{rendu.toFixed(0)} F</span>
                   </div>
                 )
               })()}
 
-              <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={fermerModalPaiement}>Annuler</button>
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer'}
+              <div className="pt-4 flex gap-3">
+                <button type="button" className="btn btn-ghost flex-1" onClick={fermerModalPaiement}>Annuler (Esc)</button>
+                <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
+                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer (Entrée)'}
                 </button>
               </div>
             </form>
@@ -863,17 +925,18 @@ export default function Facturation() {
         <form method="dialog" className="modal-backdrop" onClick={fermerModalPaiement}><button>close</button></form>
       </dialog>
 
-      {/* Modal d'aperçu du ticket de caisse */}
+      {/* Modal Ticket (Same as before but cleaner) */}
       {showTicketPreview && ticketCaisse && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-md p-0 overflow-hidden">
-            <div className="bg-base-200 p-4 flex justify-between items-center">
+          <div className="modal-box max-w-md p-0 overflow-hidden bg-white">
+            <div className="bg-base-50 p-4 flex justify-between items-center border-b border-base-200">
               <h3 className="font-bold text-lg">Ticket de Caisse</h3>
               <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>
             </div>
             
             <div className="p-6 bg-white text-black font-mono text-sm overflow-y-auto max-h-[60vh]" id="ticket-preview">
-              <div className="text-center mb-4 border-b-2 border-black pb-4">
+                {/* ... Ticket Content (kept mostly same for print compatibility) ... */}
+                <div className="text-center mb-4 border-b-2 border-black pb-4">
                 <h2 className="text-xl font-black">PHARMA STOCK</h2>
                 <p>Douala, Cameroun</p>
                 <p>Tel: +237 6XX XX XX XX</p>
@@ -936,8 +999,8 @@ export default function Facturation() {
               </div>
             </div>
             
-            <div className="p-4 bg-base-100 border-t border-base-200 flex justify-end gap-2">
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>Fermer</button>
+            <div className="p-4 bg-base-50 border-t border-base-200 flex justify-end gap-2">
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>Fermer (Esc)</button>
               <button 
                 className="btn btn-primary btn-sm"
                 onClick={() => {

@@ -60,7 +60,8 @@ export interface AchatProduit {
 
 export interface CommandeProduit {
   id: number
-  produit: ProduitModel
+  produit: number | ProduitModel
+  produit_nom?: string
   quantity: number
   price: string
   selling_price?: string
@@ -89,7 +90,8 @@ export interface Client {
 
 export interface FactureProduit {
   id: number
-  produit: ProduitModel
+  produit: number | ProduitModel
+  produit_nom?: string
   quantity: number
   selling_price: string
   lot?: string
