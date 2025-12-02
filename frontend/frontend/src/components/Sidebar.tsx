@@ -26,9 +26,18 @@ export default function Sidebar() {
     { path: '/clients', label: 'Clients', key: 'clients', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
     )},
-    { path: '/rayons', label: 'Rayons', key: 'rayons', icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-    )},
+    { 
+      label: 'Stock', 
+      key: 'stock', 
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+      ),
+      submenus: [
+        { path: '/inventaire', label: 'Inventaire', key: 'inventaire' },
+        { path: '/formes', label: 'Formes', key: 'formes' },
+        { path: '/rayons', label: 'Rayons', key: 'rayons' }
+      ]
+    },
     { path: '/statistiques', label: 'Statistiques', key: 'statistiques', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
     )},
@@ -39,6 +48,13 @@ export default function Sidebar() {
     if (user?.is_superuser) return true;
     // Dashboard is always accessible
     if (item.key === 'dashboard') return true;
+    
+    // Check if item has submenus
+    if (item.submenus) {
+      // If any submenu is allowed, show the parent
+      return item.submenus.some(sub => user?.allowed_menus?.includes(sub.key));
+    }
+    
     return user?.allowed_menus?.includes(item.key);
   });
 
@@ -69,20 +85,46 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="menu w-full px-2 gap-1">
           {menuItems.map((item) => (
-            <li key={item.path}>
-              <NavLink 
-                to={item.path}
-                className={({ isActive }) => 
-                  `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive 
-                      ? 'bg-primary/10 text-primary font-medium' 
-                      : 'text-base-content/80 hover:bg-base-200 hover:text-base-content'
-                  }`
-                }
-              >
-                {item.icon}
-                {item.label}
-              </NavLink>
+            <li key={item.key}>
+              {item.submenus ? (
+                <details className="group">
+                  <summary className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base-content/80 hover:bg-base-200 hover:text-base-content cursor-pointer marker:content-none">
+                    {item.icon}
+                    <span className="flex-1">{item.label}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </summary>
+                  <ul className="menu menu-sm pl-8 mt-1 gap-1">
+                    {item.submenus.map((sub) => (
+                      (!user?.is_superuser && !user?.allowed_menus?.includes(sub.key)) ? null : (
+                      <li key={sub.path}>
+                        <NavLink 
+                          to={sub.path}
+                          className={({ isActive }) => 
+                            `rounded-lg ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-base-content/70'}`
+                          }
+                        >
+                          {sub.label}
+                        </NavLink>
+                      </li>
+                      )
+                    ))}
+                  </ul>
+                </details>
+              ) : (
+                <NavLink 
+                  to={item.path}
+                  className={({ isActive }) => 
+                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                      isActive 
+                        ? 'bg-primary/10 text-primary font-medium' 
+                        : 'text-base-content/80 hover:bg-base-200 hover:text-base-content'
+                    }`
+                  }
+                >
+                  {item.icon}
+                  {item.label}
+                </NavLink>
+              )}
             </li>
           ))}
         </ul>

@@ -11,6 +11,8 @@ import Facturation from './components/Facturation'
 import Dashboard from './components/Dashboard'
 import StatistiquesProduit from './components/StatistiquesProduit'
 import GestionUtilisateurs from './components/GestionUtilisateurs'
+import Inventaire from './components/Inventaire'
+import Formes from './components/Formes'
 import Login from './components/Login'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
@@ -78,6 +80,8 @@ const router = createBrowserRouter([
           { path: 'ventes', element: <Ventes /> },
           { path: 'fournisseurs', element: <Fournisseurs /> },
           { path: 'clients', element: <Clients /> },
+          { path: 'inventaire', element: <Inventaire /> },
+          { path: 'formes', element: <Formes /> },
           { path: 'rayons', element: <Rayons /> },
           { path: 'facturation', element: <Facturation /> },
           { path: 'statistiques', element: <StatistiquesProduit /> },

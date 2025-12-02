@@ -53,7 +53,7 @@ export default function Facturation() {
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement'>('especes')
+  const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
   const [montantPaye, setMontantPaye] = useState('')
   const [reference, setReference] = useState('')
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
@@ -877,14 +877,20 @@ export default function Facturation() {
               <div className="form-control w-full">
                 <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
                 <div className="grid grid-cols-2 gap-2">
-                    {['especes', 'cheque', 'carte', 'virement'].map((mode) => (
+                    {[
+                      { value: 'especes', label: 'Espèces' },
+                      { value: 'cheque', label: 'Chèque' },
+                      { value: 'carte', label: 'Carte' },
+                      { value: 'virement', label: 'Virement' },
+                      { value: 'en_compte', label: 'En compte' }
+                    ].map((mode) => (
                         <button
-                            key={mode}
+                            key={mode.value}
                             type="button"
-                            className={`btn btn-sm ${modePaiement === mode ? 'btn-primary' : 'btn-outline border-base-300 text-base-content font-normal'}`}
-                            onClick={() => setModePaiement(mode as any)}
+                            className={`btn btn-sm ${modePaiement === mode.value ? 'btn-primary' : 'btn-outline border-base-300 text-base-content font-normal'}`}
+                            onClick={() => setModePaiement(mode.value as any)}
                         >
-                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                            {mode.label}
                         </button>
                     ))}
                 </div>
