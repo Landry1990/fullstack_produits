@@ -16,7 +16,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure--ije7l3syf1-*m__k6!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = ['*']  # Accepte toutes les connexions en développement
 
 
 # Application definition
@@ -151,9 +151,9 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # CORS / CSRF configuration
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+CORS_ALLOW_ALL_ORIGINS = True  # Accepte toutes les origines en développement
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [o.replace('http://', 'https://') for o in CORS_ALLOWED_ORIGINS] + CORS_ALLOWED_ORIGINS
+CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
 
 # Security cookies in production
 if not DEBUG:

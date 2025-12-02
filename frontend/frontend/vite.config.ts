@@ -4,8 +4,8 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server:{
-    host: '127.0.0.1',
+  server: {
+    host: '0.0.0.0', // Accepte les connexions de tous les appareils du réseau
     port: 3000,
     strictPort: true,
     proxy: {
@@ -16,5 +16,5 @@ export default defineConfig({
       }
     }
   }
-  
+
 })

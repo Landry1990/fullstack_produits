@@ -153,7 +153,8 @@ class Facture(models.Model):
         ANNULEE = 'ANN', 'Annulée'
 
     id = models.AutoField(primary_key=True)
-    client = models.ForeignKey(Client, on_delete=models.PROTECT)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
+    client_name_override = models.CharField(max_length=100, blank=True, null=True)
     numero_facture = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(

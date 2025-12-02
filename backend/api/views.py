@@ -590,9 +590,9 @@ class FactureViewSet(viewsets.ModelViewSet):
 
         facture_info = {
             "facture_id": facture.numero_facture,
-            "client_name": facture.client.name,
-            "client_address": facture.client.address,
-            "client_phone": facture.client.phone,
+            "client_name": facture.client.name if facture.client else (facture.client_name_override or "Client de passage"),
+            "client_address": facture.client.address if facture.client else "",
+            "client_phone": facture.client.phone if facture.client else "",
             "date_facture": facture.date.strftime("%d/%m/%Y"),
             "remise": str(facture.remise),
             "tva": str(facture.tva)
