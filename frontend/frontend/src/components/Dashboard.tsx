@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import type { ProduitModel } from '../types';
 import {
   LineChart,
   Line,
@@ -45,6 +46,8 @@ export default function Dashboard() {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [revenueChart, setRevenueChart] = useState<RevenueChartData | null>(null);
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+  const [produits, setProduits] = useState<ProduitModel[]>([]);
+  const [expirationMonths, setExpirationMonths] = useState(6); // Délai par défaut: 6 mois
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +58,9 @@ export default function Dashboard() {
   const dashboardEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/dashboard/`
     : '/api/dashboard/'
+  const produitsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
+    : '/api/produits/'
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -65,21 +71,51 @@ export default function Dashboard() {
     }));
   }, [revenueChart]);
 
+  // Calculate stock value
+  const stockValue = useMemo(() => {
+    return produits.reduce((sum, p) => {
+      const price = Number(p.cost_price || 0);
+      return sum + (price * (p.stock || 0));
+    }, 0);
+  }, [produits]);
+
+  // Calculate expiring products
+  const expiringProducts = useMemo(() => {
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setMonth(today.getMonth() + expirationMonths);
+
+    return produits
+      .filter(p => {
+        if (!p.expire_date) return false;
+        const expireDate = new Date(p.expire_date);
+        return expireDate > today && expireDate <= futureDate;
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.expire_date!).getTime();
+        const dateB = new Date(b.expire_date!).getTime();
+        return dateA - dateB; // Trier du plus proche au plus éloigné
+      })
+      .slice(0, 10); // Limiter à 10 produits
+  }, [produits, expirationMonths]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, transactionsRes, chartRes, lowStockRes] = await Promise.all([
+        const [statsRes, transactionsRes, chartRes, lowStockRes, produitsRes] = await Promise.all([
           axios.get(`${dashboardEndpoint}stats/`),
           axios.get(`${dashboardEndpoint}recent_transactions/`),
           axios.get(`${dashboardEndpoint}revenue_chart/`),
-          axios.get(`${dashboardEndpoint}low_stock/`)
+          axios.get(`${dashboardEndpoint}low_stock/`),
+          axios.get<ProduitModel[]>(produitsEndpoint)
         ]);
 
         setStats(statsRes.data);
         setRecentTransactions(transactionsRes.data);
         setRevenueChart(chartRes.data);
         setLowStockItems(lowStockRes.data);
+        setProduits(produitsRes.data);
       } catch (err) {
         console.error('Erreur lors du chargement du tableau de bord:', err);
         setError('Impossible de charger les données du tableau de bord.');
@@ -89,7 +125,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [dashboardEndpoint]);
+  }, [dashboardEndpoint, produitsEndpoint]);
 
   if (loading) {
     return (
@@ -124,11 +160,12 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {stats && [
           { title: "Chiffre d'affaires", value: `${Math.round(stats.revenue.value).toLocaleString('fr-FR')} F`, change: `${stats.revenue.change > 0 ? '+' : ''}${stats.revenue.change}%`, icon: "💰", color: "bg-emerald-100 text-emerald-700", isPositive: stats.revenue.change >= 0 },
           { title: "Ventes du jour", value: stats.sales.value, change: `${stats.sales.change > 0 ? '+' : ''}${stats.sales.change}%`, icon: "shopping_cart", color: "bg-blue-100 text-blue-700", isPositive: stats.sales.change >= 0 },
           { title: "Nouveaux Clients", value: stats.clients.value, change: `${stats.clients.change > 0 ? '+' : ''}${stats.clients.change}%`, icon: "group", color: "bg-purple-100 text-purple-700", isPositive: stats.clients.change >= 0 },
+          { title: "Valeur Stock", value: `${Math.round(stockValue).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
           { title: "Alertes Stock", value: stats.low_stock.value, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false }, // Pas de variation pertinente pour le stock
         ].map((stat, index) => (
           <div key={index} className="card bg-base-100 shadow-sm border border-base-200">
@@ -136,8 +173,8 @@ export default function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-base-content/70">{stat.title}</p>
                 <h3 className="text-2xl font-bold text-base-content mt-1">{stat.value}</h3>
-                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' ? 'text-base-content/60' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
-                  {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : 'vs hier'}</span>
+                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === 'Valeur Stock' ? 'text-base-content/60' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
+                  {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : 'vs hier'}</span>
                 </span>
               </div>
               <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${stat.color}`}>
@@ -146,6 +183,9 @@ export default function Dashboard() {
                 )}
                 {stat.icon === 'group' && (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                )}
+                {stat.icon === 'inventory' && (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                 )}
                 {stat.icon === 'warning' && (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
@@ -354,6 +394,65 @@ export default function Dashboard() {
               </div>
               <Link to="/produits" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
                 Voir tout le stock
+              </Link>
+            </div>
+          </div>
+
+          {/* Expiring Products */}
+          <div className="card bg-base-100 shadow-sm border border-base-200">
+            <div className="card-body p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="card-title text-lg font-bold text-base-content">Péremption Proche</h2>
+                {expiringProducts.length > 0 && (
+                  <span className="badge badge-error text-white badge-sm">{expiringProducts.length}</span>
+                )}
+              </div>
+              
+              {/* Period Selector */}
+              <div className="form-control mb-4">
+                <label className="label py-1">
+                  <span className="label-text text-xs">Période d'alerte</span>
+                </label>
+                <select 
+                  className="select select-bordered select-sm w-full"
+                  value={expirationMonths}
+                  onChange={(e) => setExpirationMonths(Number(e.target.value))}
+                >
+                  <option value={2}>2 mois</option>
+                  <option value={3}>3 mois</option>
+                  <option value={6}>6 mois</option>
+                  <option value={12}>1 an</option>
+                </select>
+              </div>
+
+              <div className="space-y-3 max-h-80 overflow-y-auto">
+                {expiringProducts.length === 0 ? (
+                  <div className="text-sm text-base-content/60 text-center py-2">Aucun produit proche de la péremption</div>
+                ) : (
+                  expiringProducts.map((item, i) => {
+                    const daysUntilExpiry = Math.floor((new Date(item.expire_date!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    return (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-2 h-2 rounded-full bg-error"></div>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium text-base-content block truncate">{item.name}</span>
+                            <span className="text-xs text-base-content/60">
+                              {new Date(item.expire_date!).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold whitespace-nowrap ml-2 text-error">
+                          {daysUntilExpiry} j
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <Link to="/produits" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
+                Voir tous les produits
               </Link>
             </div>
           </div>
