@@ -117,9 +117,17 @@ class CaisseSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_paiement']
 
 class FactureSerializer(serializers.ModelSerializer):
-    client_nom = serializers.CharField(source='client.name', read_only=True)
-    client_name = serializers.CharField(source='client.name', read_only=True)
+    client_nom = serializers.SerializerMethodField()
+    client_name = serializers.SerializerMethodField()
     produits = FactureProduitSerializer(many=True, read_only=True)
+
+    def get_client_nom(self, obj):
+        if obj.client:
+            return obj.client.name
+        return obj.client_name_override or "Client de passage"
+
+    def get_client_name(self, obj):
+        return self.get_client_nom(obj)
     paiements = CaisseSerializer(many=True, read_only=True)
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)

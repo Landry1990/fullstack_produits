@@ -44,6 +44,8 @@ export default function Facturation() {
   const [produits, setProduits] = useState<ProduitModel[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<number | null>(null)
+  const [manualClientName, setManualClientName] = useState('') // Nom client saisi manuellement
+  const [useManualClient, setUseManualClient] = useState(false) // Toggle entre select et input
   const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
   const [loading, setLoading] = useState(false)
   const [remise, setRemise] = useState('0')
@@ -309,7 +311,8 @@ export default function Facturation() {
     try {
       // 1. Créer la facture en mode brouillon
       const facturePayload = {
-        client: selectedClient,
+        client: useManualClient ? null : selectedClient,
+        client_name_override: useManualClient ? manualClientName : null,
         remise: totals.remiseMontant.toString(),
         tva: normalizeNumberInput(tva, { min: 0 }).toString(),
       }
@@ -636,26 +639,52 @@ export default function Facturation() {
       )}
 
       {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden p-6 gap-6">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-3 md:p-4 lg:p-6 gap-4 lg:gap-6">
         {/* Left Panel: Search & Products */}
-        <div className="w-1/3 flex flex-col gap-4 min-h-0">
+        <div className="w-full lg:w-1/3 flex flex-col gap-4 min-h-0 h-auto lg:h-full">
             {/* Client Selection */}
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-base-200 shrink-0">
-                <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Client (F4)</label>
-                <select
-                    ref={clientSelectRef}
-                    value={selectedClient !== null ? String(selectedClient) : ''}
-                    onChange={(e) => {
-                        const value = e.target.value
-                        setSelectedClient(value ? Number(value) : null)
-                    }}
-                    className="select select-bordered w-full select-sm bg-base-50 focus:bg-white transition-colors"
-                >
-                    <option value="">Sélectionner un client...</option>
-                    {clients.map((client) => (
-                        <option key={client.id} value={client.id}>{client.name}</option>
-                    ))}
-                </select>
+            <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                    <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">Client (F4)</label>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setUseManualClient(!useManualClient)
+                            if (!useManualClient) {
+                                setSelectedClient(null)
+                                setManualClientName('')
+                            }
+                        }}
+                        className="btn btn-xs btn-ghost"
+                        title={useManualClient ? "Sélectionner dans la liste" : "Saisir manuellement"}
+                    >
+                        {useManualClient ? '📋 Liste' : '✏️ Saisir'}
+                    </button>
+                </div>
+                {useManualClient ? (
+                    <input
+                        type="text"
+                        value={manualClientName}
+                        onChange={(e) => setManualClientName(e.target.value)}
+                        placeholder="Nom du client..."
+                        className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
+                    />
+                ) : (
+                    <select
+                        ref={clientSelectRef}
+                        value={selectedClient !== null ? String(selectedClient) : ''}
+                        onChange={(e) => {
+                            const value = e.target.value
+                            setSelectedClient(value ? Number(value) : null)
+                        }}
+                        className="select select-bordered w-full select-sm bg-base-50 focus:bg-white transition-colors"
+                    >
+                        <option value="">Sélectionner un client...</option>
+                        {clients.map((client) => (
+                            <option key={client.id} value={client.id}>{client.name}</option>
+                        ))}
+                    </select>
+                )}
             </div>
 
             {/* Product Search & List */}
@@ -713,14 +742,14 @@ export default function Facturation() {
         </div>
 
         {/* Right Panel: Invoice Details */}
-        <div className="flex-1 bg-white rounded-xl shadow-sm border border-base-200 flex flex-col min-h-0 overflow-hidden">
+        <div className="w-full lg:flex-1 bg-white rounded-xl shadow-sm border border-base-200 flex flex-col min-h-0 overflow-hidden">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
                 <h2 className="font-bold text-lg text-base-content">Panier</h2>
                 <div className="badge badge-ghost font-mono">{lignesFacture.length} articles</div>
             </div>
 
             {/* Table */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-x-auto overflow-y-auto">
                 {lignesFacture.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-base-content/30 gap-4">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -730,21 +759,21 @@ export default function Facturation() {
                     <table className="table table-pin-rows w-full">
                         <thead>
                             <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-                                <th className="bg-base-50 pl-6">Produit</th>
-                                <th className="bg-base-50 text-right w-24">Qté</th>
-                                <th className="bg-base-50 text-right w-28">Prix</th>
-                                <th className="bg-base-50 text-right w-20">Remise</th>
-                                <th className="bg-base-50 text-right w-32 pr-6">Total</th>
+                                <th className="bg-base-50 pl-3 md:pl-6">Produit</th>
+                                <th className="bg-base-50 text-right w-20 md:w-24">Qté</th>
+                                <th className="bg-base-50 text-right w-24 md:w-28">Prix</th>
+                                <th className="bg-base-50 text-right w-16 md:w-20 hidden sm:table-cell">Remise</th>
+                                <th className="bg-base-50 text-right w-24 md:w-32 pr-3 md:pr-6">Total</th>
                                 <th className="bg-base-50 w-10"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {lignesFacture.map((ligne) => (
                                 <tr key={ligne.produit.id} className="hover:bg-base-50/50 group border-b border-base-100 last:border-0">
-                                    <td className="pl-6 py-3">
-                                        <div className="font-medium text-sm">{ligne.produit.name}</div>
+                                    <td className="pl-3 md:pl-6 py-2 md:py-3">
+                                        <div className="font-medium text-xs md:text-sm">{ligne.produit.name}</div>
                                     </td>
-                                    <td className="text-right py-3">
+                                    <td className="text-right py-2 md:py-3">
                                         <input
                                             type="number"
                                             value={ligne.quantite}
@@ -752,7 +781,7 @@ export default function Facturation() {
                                             className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
                                         />
                                     </td>
-                                    <td className="text-right py-3">
+                                    <td className="text-right py-2 md:py-3">
                                         <input
                                             type="number"
                                             value={ligne.prix_unitaire}
@@ -760,7 +789,7 @@ export default function Facturation() {
                                             className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
                                         />
                                     </td>
-                                    <td className="text-right py-3">
+                                    <td className="text-right py-2 md:py-3 hidden sm:table-cell">
                                         <input
                                             type="number"
                                             value={ligne.remise_produit}
@@ -769,7 +798,7 @@ export default function Facturation() {
                                             placeholder="%"
                                         />
                                     </td>
-                                    <td className="text-right font-medium text-base-content pr-6 py-3">
+                                    <td className="text-right font-medium text-base-content pr-3 md:pr-6 py-2 md:py-3 text-xs md:text-sm">
                                         {Math.round(ligne.total_ligne)}
                                     </td>
                                     <td className="text-center py-3">
@@ -788,8 +817,8 @@ export default function Facturation() {
             </div>
 
             {/* Footer Totals */}
-            <div className="p-6 bg-base-50 border-t border-base-200 shrink-0">
-                <div className="grid grid-cols-2 gap-8 mb-6">
+            <div className="p-3 md:p-4 lg:p-6 bg-base-50 border-t border-base-200 shrink-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-6">
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
                              <select
@@ -838,7 +867,7 @@ export default function Facturation() {
                 
                 <button
                     onClick={() => ouvrirModalPaiement()}
-                    disabled={loading || !selectedClient || lignesFacture.length === 0 }
+                    disabled={loading || (!selectedClient && !useManualClient) || lignesFacture.length === 0 }
                     className="btn btn-primary w-full shadow-lg shadow-primary/20 h-12 text-lg font-normal"
                 >
                     {loading ? <span className="loading loading-spinner"></span> : <span>Encaisser <span className="opacity-70 text-sm ml-2">(F9)</span></span>}
@@ -849,7 +878,7 @@ export default function Facturation() {
 
       {/* Modal de paiement */}
       <dialog className={`modal ${isPaymentModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-md p-0 overflow-hidden bg-white">
+        <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
           <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-50">
             <h3 className="font-bold text-lg">Paiement</h3>
             <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={fermerModalPaiement}>✕</button>
@@ -876,23 +905,31 @@ export default function Facturation() {
 
               <div className="form-control w-full">
                 <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {[
                       { value: 'especes', label: 'Espèces' },
                       { value: 'cheque', label: 'Chèque' },
                       { value: 'carte', label: 'Carte' },
                       { value: 'virement', label: 'Virement' },
                       { value: 'en_compte', label: 'En compte' }
-                    ].map((mode) => (
-                        <button
-                            key={mode.value}
-                            type="button"
-                            className={`btn btn-sm ${modePaiement === mode.value ? 'btn-primary' : 'btn-outline border-base-300 text-base-content font-normal'}`}
-                            onClick={() => setModePaiement(mode.value as any)}
-                        >
-                            {mode.label}
-                        </button>
-                    ))}
+                    ].map((mode) => {
+                        // Désactiver "En compte" si client de passage (null) ou saisie manuelle
+                        const isDisabled = mode.value === 'en_compte' && (selectedClient === null || useManualClient)
+                        return (
+                            <button
+                                key={mode.value}
+                                type="button"
+                                className={`btn btn-sm ${
+                                    modePaiement === mode.value ? 'btn-primary' : 'btn-outline border-base-300 text-base-content font-normal'
+                                } ${isDisabled ? 'btn-disabled opacity-50' : ''}`}
+                                onClick={() => !isDisabled && setModePaiement(mode.value as any)}
+                                disabled={isDisabled}
+                                title={isDisabled ? 'Disponible uniquement pour les clients enregistrés' : ''}
+                            >
+                                {mode.label}
+                            </button>
+                        )
+                    })}
                 </div>
               </div>
 
@@ -934,7 +971,7 @@ export default function Facturation() {
       {/* Modal Ticket (Same as before but cleaner) */}
       {showTicketPreview && ticketCaisse && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-md p-0 overflow-hidden bg-white">
+          <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
             <div className="bg-base-50 p-4 flex justify-between items-center border-b border-base-200">
               <h3 className="font-bold text-lg">Ticket de Caisse</h3>
               <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>

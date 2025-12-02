@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSidebar } from '../context/SidebarContext';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
+  const { isOpen, toggleSidebar, closeSidebar } = useSidebar();
   
   const allMenuItems = [
     { path: '/', label: 'Tableau de bord', key: 'dashboard', icon: (
@@ -71,7 +73,37 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-64 bg-base-100 border-r border-base-300 flex flex-col h-screen sticky top-0">
+    <>
+      {/* Bouton Hamburger Mobile */}
+      <button
+        onClick={toggleSidebar}
+        className="fixed top-4 left-4 z-50 lg:hidden btn btn-circle btn-primary shadow-lg"
+        aria-label="Toggle menu"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          {isOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          )}
+        </svg>
+      </button>
+
+      {/* Sidebar */}
+      <aside 
+        className={`
+          w-64 bg-base-100 border-r border-base-300 flex flex-col h-screen
+          fixed lg:sticky top-0 z-50
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
       <div className="p-6 border-b border-base-300 flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-xl">
           P
@@ -99,6 +131,7 @@ export default function Sidebar() {
                       <li key={sub.path}>
                         <NavLink 
                           to={sub.path}
+                          onClick={closeSidebar}
                           className={({ isActive }) => 
                             `rounded-lg ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-base-content/70'}`
                           }
@@ -113,6 +146,7 @@ export default function Sidebar() {
               ) : (
                 <NavLink 
                   to={item.path}
+                  onClick={closeSidebar}
                   className={({ isActive }) => 
                     `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                       isActive 
@@ -149,5 +183,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

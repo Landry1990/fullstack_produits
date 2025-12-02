@@ -298,8 +298,8 @@ export default function Produit() {
   }
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-4 text-center">Gestion des Produits</h1>
+    <div className="p-3 md:p-4 lg:p-6">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-center">Gestion des Produits</h1>
 
       {error && (
         <div role="alert" className="alert alert-error mb-4">
@@ -323,28 +323,29 @@ export default function Produit() {
       {/* Bouton pour ouvrir le modal de création */}
       <div className="flex justify-end mb-4">
         <button
-          className="btn btn-primary"
+          className="btn btn-primary btn-sm md:btn-md"
           onClick={() => setIsCreateProduitModalOpen(true)}
         >
-          + Créer un nouveau produit
+          <span className="hidden sm:inline">+ Créer un nouveau produit</span>
+          <span className="sm:hidden">+ Nouveau</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {/* Liste des produits */}
-        <div className="card bg-base-100 shadow h-[700px] flex flex-col">
+        <div className="card bg-base-100 shadow h-auto lg:h-[700px] flex flex-col">
           <div className="card-body p-0 flex-1 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="card-title">Liste des produits</h2>
+            <div className="flex items-center justify-between p-3 md:p-4 border-b">
+              <h2 className="card-title text-base md:text-lg">Liste des produits</h2>
               {loading && <span className="loading loading-spinner loading-sm" />}
             </div>
-            <div className="p-4 pb-0">
+            <div className="p-3 md:p-4 pb-0">
               <div className="join w-full">
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="input input-bordered join-item w-full"
-                  placeholder="Rechercher par CIP ou Nom... (utilisez ↑↓ pour naviguer, Entrée pour sélectionner)"
+                  className="input input-bordered input-sm md:input-md join-item w-full"
+                  placeholder="Rechercher par CIP ou Nom..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -352,7 +353,7 @@ export default function Produit() {
                   }}
                   onKeyDown={handleKeyDown}
                 />
-                <button className="btn join-item" onClick={() => setSearchQuery('')}>Effacer</button>
+                <button className="btn btn-sm md:btn-md join-item" onClick={() => setSearchQuery('')}>Effacer</button>
               </div>
             </div>
             {/* Barre de défilement ici */}
@@ -390,15 +391,15 @@ export default function Produit() {
                 </table>
               </div>
             </div>
-            <div className="p-4 border-t flex flex-wrap gap-2 justify-end">
-              <button className="btn btn-outline" onClick={handleRefresh}>
+            <div className="p-3 md:p-4 border-t flex flex-wrap gap-2 justify-end">
+              <button className="btn btn-outline btn-sm md:btn-md" onClick={handleRefresh}>
                 Actualiser
               </button>
-              <button className="btn btn-primary" onClick={openAddModal}>
+              <button className="btn btn-primary btn-sm md:btn-md" onClick={openAddModal}>
                 Ajouter
               </button>
               <button
-                className="btn btn-error"
+                className="btn btn-error btn-sm md:btn-md"
                 onClick={handleDeleteSelected}
                 disabled={!selectedProductId}
               >
@@ -409,8 +410,8 @@ export default function Produit() {
         </div>
 
         {/* Détails du produit */}
-        <div className="card bg-base-100 shadow h-[700px] flex flex-col">
-          <div className="card-body flex-1">
+        <div className="card bg-base-100 shadow h-auto lg:h-[700px] flex flex-col">
+          <div className="card-body flex-1 p-3 md:p-6">
             <h2 className="card-title">Détails du produit</h2>
             {!selectedProduit ? (
               <p className="text-base-content/70">Sélectionnez un produit dans la liste.</p>
@@ -633,7 +634,7 @@ export default function Produit() {
 
       {/* Modal d'ajout */}
       <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box">
+        <div className="modal-box max-w-2xl mx-4">
           <h3 className="font-bold text-lg mb-4">Ajouter un produit</h3>
           <form className="space-y-4" onSubmit={handleAddProduit}>
             <label className="form-control w-full">
@@ -775,6 +776,6 @@ export default function Produit() {
         produitsEndpoint={produitsEndpoint}
         onCreated={handleProduitCreated}
       />
-    </>
+    </div>
   )
 }
