@@ -223,6 +223,7 @@ class Caisse(models.Model):
         ('cheque', 'Chèque'),
         ('carte', 'Carte'),
         ('virement', 'Virement'),
+        ('en_compte', 'En compte'),
     ]
     
     STATUTS = [
@@ -243,3 +244,19 @@ class Caisse(models.Model):
     
     class Meta:
         ordering = ['-date_paiement']
+
+@receiver(post_save, sender=Caisse)
+def update_facture_status_on_payment(sender, instance, created, **kwargs):
+    """
+    Met à jour automatiquement le statut de la facture vers PAYEE
+    lorsqu'un paiement est enregistré et complété.
+    Exception: les paiements 'en_compte' ne marquent pas la facture comme payée.
+    """
+    if created and instance.statut == 'completee':
+        # Ne pas marquer comme payée si le mode de paiement est 'en_compte'
+        if instance.mode_paiement != 'en_compte':
+            facture = instance.facture
+            if facture.status == Facture.Status.VALIDEE:
+                facture.status = Facture.Status.PAYEE
+                facture.save(update_fields=['status'])
+

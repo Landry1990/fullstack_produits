@@ -1,6 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 interface DashboardStats {
   revenue: { value: number; change: number };
@@ -44,6 +55,15 @@ export default function Dashboard() {
   const dashboardEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/dashboard/`
     : '/api/dashboard/'
+
+  // Transform data for Recharts
+  const chartData = useMemo(() => {
+    if (!revenueChart) return [];
+    return revenueChart.labels.map((label, index) => ({
+      jour: label,
+      montant: revenueChart.data[index]
+    }));
+  }, [revenueChart]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,31 +160,95 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Charts & Transactions */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Revenue Chart */}
+          {/* Revenue Bar Chart */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
               <h2 className="card-title text-lg font-bold text-base-content mb-4">Évolution du Chiffre d'Affaires (7 derniers jours)</h2>
-              <div className="h-64 flex items-end justify-between gap-2 px-2">
-                {revenueChart && revenueChart.data.map((value, i) => {
-                  const maxVal = Math.max(...revenueChart.data, 1); // Avoid division by zero
-                  const height = (value / maxVal) * 100;
-                  return (
-                    <div key={i} className="flex flex-col items-center gap-2 w-full group cursor-pointer">
-                      <div 
-                        className="w-full bg-primary/20 rounded-t-lg hover:bg-primary/40 transition-all relative group-hover:shadow-lg"
-                        style={{ height: `${Math.max(height, 5)}%` }} // Min height for visibility
-                      >
-                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-base-content text-base-100 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                          {Math.round(value).toLocaleString('fr-FR')} F
-                        </div>
-                      </div>
-                      <span className="text-xs text-base-content/60 font-medium">
-                        {revenueChart.labels[i]}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#059669" stopOpacity={0.6} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="jour" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    stroke="#9ca3af"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    stroke="#9ca3af"
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Montant']}
+                    contentStyle={{ 
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                  />
+                  <Bar 
+                    dataKey="montant" 
+                    fill="url(#barGradient)" 
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={800}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Revenue Line Chart (Trend) */}
+          <div className="card bg-base-100 shadow-sm border border-base-200">
+            <div className="card-body p-4">
+              <h2 className="card-title text-lg font-bold text-base-content mb-4">Tendance des Ventes (7 derniers jours)</h2>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={chartData}>
+                  <defs>
+                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#10b981" />
+                      <stop offset="100%" stopColor="#059669" />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="jour" 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    stroke="#9ca3af"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: '#6b7280' }}
+                    stroke="#9ca3af"
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Chiffre d\'affaires']}
+                    contentStyle={{ 
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="montant" 
+                    stroke="url(#lineGradient)" 
+                    strokeWidth={3}
+                    dot={{ fill: '#10b981', r: 5 }}
+                    activeDot={{ r: 7, fill: '#059669' }}
+                    animationDuration={1000}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
