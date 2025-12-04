@@ -14,6 +14,8 @@ import GestionUtilisateurs from './components/GestionUtilisateurs'
 import Inventaire from './components/Inventaire'
 import Formes from './components/Formes'
 import Login from './components/Login'
+import StatistiquesFournisseur from './components/StatistiquesFournisseur'
+import JournalCaisse from './components/JournalCaisse'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 const ProtectedRoute = () => {
@@ -23,7 +25,7 @@ const ProtectedRoute = () => {
     return <div className="h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg"></span></div>;
   }
 
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/" />;
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -34,10 +36,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
-  return user.is_superuser ? <>{children}</> : <Navigate to="/produits" />;
+  return user.is_superuser ? <>{children}</> : <Navigate to="/app/produits" />;
 };
 
 const HomeRedirector = () => {
@@ -48,19 +50,19 @@ const HomeRedirector = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/" />;
   }
 
-  return user.is_superuser ? <Navigate to="/dashboard" /> : <Navigate to="/produits" />;
+  return user.is_superuser ? <Navigate to="/app/dashboard" /> : <Navigate to="/app/produits" />;
 };
 
 const router = createBrowserRouter([
   {
-    path: '/login',
+    path: '/',
     element: <Login />,
   },
   {
-    path: '/',
+    path: '/app',
     element: <ProtectedRoute />,
     children: [
       {
@@ -85,6 +87,8 @@ const router = createBrowserRouter([
           { path: 'rayons', element: <Rayons /> },
           { path: 'facturation', element: <Facturation /> },
           { path: 'statistiques', element: <StatistiquesProduit /> },
+          { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
+          { path: 'journal-caisse', element: <JournalCaisse /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
         ],
       },

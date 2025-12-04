@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProduitViewSet, RayonViewSet, FournisseurViewSet, ClientViewSet,
     CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
-    DashboardViewSet
+    DashboardViewSet, StatistiquesViewSet
 )
 
 # Create a router and register our viewsets with it.
@@ -18,6 +18,7 @@ router.register(r'factures', FactureViewSet, basename='facture')
 router.register(r'facture-produits', FactureProduitViewSet, basename='factureproduit')
 router.register(r'caisse', CaisseViewSet, basename='caisse')
 router.register(r'dashboard', DashboardViewSet, basename='dashboard')
+router.register(r'statistiques', StatistiquesViewSet, basename='statistiques')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [

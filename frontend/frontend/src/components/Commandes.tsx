@@ -336,7 +336,7 @@ export default function Commandes() {
       for (const produit of productsToAdd) {
         const produitPayload = {
           commande: selectedCommande.id,
-          produit_id: produit.produit.id,
+          produit: produit.produit.id,
           quantity: produit.quantity,
           price: produit.price,
           price_cost: produit.price,
@@ -389,7 +389,7 @@ export default function Commandes() {
       for (const produit of commandeProduits) {
         const produitPayload = {
           commande: createdCommande.id,
-          produit_id: produit.produit.id,
+          produit: produit.produit.id,
           quantity: produit.quantity,
           price: produit.price,
           price_cost: produit.price,

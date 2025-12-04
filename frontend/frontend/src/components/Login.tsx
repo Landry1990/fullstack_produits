@@ -29,7 +29,7 @@ export default function Login() {
 
       const { token, is_superuser, allowed_menus } = response.data;
       login({ username, token, is_superuser, allowed_menus });
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       console.error('Login error:', err);
       setError('Identifiants incorrects. Veuillez réessayer.');
