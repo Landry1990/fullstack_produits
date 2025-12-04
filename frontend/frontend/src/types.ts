@@ -6,6 +6,9 @@ export interface Rayon {
 export interface Fournisseur {
   id: number;
   name: string;
+  address: string;
+  phone: string;
+  email: string;
 }
 
 export interface ProduitModel {
@@ -140,4 +143,22 @@ export interface CaisseParTranche {
   debug?: {
     factures_ids?: number[]
   }
+}
+
+export interface CaisseTransaction {
+  id: number
+  facture: number
+  facture_numero: string
+  mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'
+  mode_paiement_display: string
+  montant: string
+  reference: string | null
+  statut: 'en_attente' | 'completee' | 'annulee'
+  date_paiement: string
+  user_details: {
+    id: number
+    username: string
+    full_name: string
+  } | null
+  client_name: string
 }

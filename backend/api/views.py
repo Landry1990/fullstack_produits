@@ -22,7 +22,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from .filters import ProduitFilter
 from .models import (
-    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse
+    Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
+    StockLot, FactureProduitAllocation
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
@@ -220,7 +221,7 @@ class CommandeViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def cloturer(self, request, pk=None):
         """
-        Clôture une commande et met à jour le stock des produits.
+        Clôture une commande, met à jour le stock des produits et crée les lots de stock (FIFO).
         """
         commande = self.get_object()
         if commande.status == Commande.Status.CLOTUREE:
@@ -228,6 +229,20 @@ class CommandeViewSet(viewsets.ModelViewSet):
 
         # Mettre à jour le stock pour chaque produit dans la commande
         for item in commande.produits.all():
+            # 1. Créer un lot de stock pour la traçabilité
+            StockLot.objects.create(
+                produit=item.produit,
+                commande_produit=item,
+                fournisseur=commande.fournisseur,
+                quantity_initial=item.quantity,
+                quantity_remaining=item.quantity,
+                price_cost=item.price_cost,
+                lot=item.lot,
+                date_expiration=item.date_expiration,
+                date_reception=commande.date
+            )
+
+            # 2. Mettre à jour le stock global
             produit = item.produit
             produit.stock = F('stock') + item.quantity
             produit.save(update_fields=['stock'])
@@ -236,7 +251,7 @@ class CommandeViewSet(viewsets.ModelViewSet):
         commande.status = Commande.Status.CLOTUREE
         commande.save(update_fields=['status'])
 
-        return Response({'status': 'Commande clôturée et stock mis à jour.'})
+        return Response({'status': 'Commande clôturée, stock mis à jour et lots créés.'})
 
     @action(detail=True, methods=['get'])
     def imprimer_reception(self, request, pk=None):
@@ -351,7 +366,7 @@ class FactureViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def valider(self, request, pk=None):
         """
-        Valide une facture et met à jour le stock des produits.
+        Valide une facture, met à jour le stock et alloue les lots (FIFO).
         """
         facture = self.get_object()
         if facture.status == Facture.Status.VALIDEE:
@@ -360,8 +375,7 @@ class FactureViewSet(viewsets.ModelViewSet):
         # Récupère et verrouille les lignes de facture + produits pour éviter les conditions de concurrence
         items = FactureProduit.objects.select_for_update().select_related('produit').filter(facture=facture)
 
-        # Vérifier le stock avant validation (comparaisons en Decimal)
-        # Les quantités négatives sont autorisées (retours de produits)
+        # Vérifier le stock avant validation
         for item in items:
             produit = item.produit
             try:
@@ -370,8 +384,6 @@ class FactureViewSet(viewsets.ModelViewSet):
             except Exception:
                 return Response({'detail': f'Impossible de comparer les quantités pour le produit {produit.id}.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Seulement vérifier le stock si la quantité est positive (vente)
-            # Les quantités négatives (retours) sont autorisées et augmenteront le stock
             if qty > 0:
                 # Vérifier si l'utilisateur a le droit de vendre avec stock négatif
                 can_sell_negative = False
@@ -395,11 +407,42 @@ class FactureViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
-        # Mettre à jour le stock (opération atomique au niveau DB)
-        # Si quantity est négatif, cela augmente le stock (retour)
-        # Si quantity est positif, cela diminue le stock (vente)
+        # Mettre à jour le stock et appliquer FIFO
         for item in items:
+            # 1. Mise à jour du stock global (inchangé)
             Produit.objects.filter(pk=item.produit.pk).update(stock=F('stock') - item.quantity)
+            
+            # 2. Logique FIFO pour les VENTES (qty > 0)
+            if item.quantity > 0:
+                quantity_to_allocate = item.quantity
+                
+                # Récupérer les lots disponibles par ordre FIFO (plus anciens en premier)
+                available_lots = StockLot.objects.filter(
+                    produit=item.produit,
+                    quantity_remaining__gt=0
+                ).order_by('date_reception')
+                
+                for lot in available_lots:
+                    if quantity_to_allocate <= 0:
+                        break
+                        
+                    # On prend le max possible du lot
+                    quantity_from_lot = min(lot.quantity_remaining, quantity_to_allocate)
+                    
+                    # Créer l'allocation
+                    FactureProduitAllocation.objects.create(
+                        facture_produit=item,
+                        stock_lot=lot,
+                        quantity=quantity_from_lot,
+                        cost_price=lot.price_cost,
+                        selling_price=item.selling_price
+                    )
+                    
+                    # Mettre à jour le lot
+                    lot.quantity_remaining -= quantity_from_lot
+                    lot.save()
+                    
+                    quantity_to_allocate -= quantity_from_lot
 
         # Changer le statut de la facture et générer un numéro si besoin
         facture.status = Facture.Status.VALIDEE
@@ -738,11 +781,15 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
 
 class CaisseViewSet(viewsets.ModelViewSet):
     """API endpoint for caisse (paiements)."""
-    queryset = Caisse.objects.select_related('facture', 'facture__client').order_by('-date_paiement')
+    queryset = Caisse.objects.select_related('facture', 'facture__client', 'user').order_by('-date_paiement')
     serializer_class = CaisseSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ['facture', 'mode_paiement', 'statut']
+    filterset_fields = ['facture', 'mode_paiement', 'statut', 'user']
     permission_classes = [IsAuthenticated]
+    
+    def perform_create(self, serializer):
+        # Enregistrer automatiquement l'utilisateur lors de la création
+        serializer.save(user=self.request.user)
 
 
 class DashboardViewSet(viewsets.ViewSet):
@@ -797,6 +844,8 @@ class DashboardViewSet(viewsets.ViewSet):
             clients_change = ((new_clients_today - new_clients_yesterday) / new_clients_yesterday) * 100
         else:
             clients_change = 100 if new_clients_today > 0 else 0
+            
+
             
         # Alertes Stock (Produits avec stock <= 5)
         low_stock_count = Produit.objects.filter(stock__lte=5).count()
@@ -890,3 +939,68 @@ class DashboardViewSet(viewsets.ViewSet):
             })
             
         return Response(data)
+
+
+class StatistiquesViewSet(viewsets.ViewSet):
+    """
+    API endpoint for detailed statistics.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def ca_par_fournisseur(self, request):
+        """
+        Calcule le CA et la marge par fournisseur pour une période donnée.
+        Paramètres: date_debut, date_fin (YYYY-MM-DD)
+        """
+        print(f"DEBUG API: ca_par_fournisseur called. Params: {request.query_params}")
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        if not date_debut or not date_fin:
+            return Response({'detail': 'Les paramètres date_debut et date_fin sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # Parse dates (assuming YYYY-MM-DD)
+            start_date = datetime.strptime(date_debut, '%Y-%m-%d')
+            end_date = datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1) # Include the end date fully by going to next day 00:00
+            start_date = timezone.make_aware(start_date)
+            end_date = timezone.make_aware(end_date)
+            print(f"DEBUG API: Date range: {start_date} to {end_date}")
+        except ValueError:
+            return Response({'detail': 'Format de date invalide. Utilisez YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Récupérer les allocations pour les factures validées/payées dans la période
+        allocations = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            facture_produit__facture__date__gte=start_date,
+            facture_produit__facture__date__lt=end_date
+        ).select_related('stock_lot__fournisseur')
+        
+        print(f"DEBUG API: Allocations found: {allocations.count()}")
+        
+        stats_par_fournisseur = {}
+        
+        for alloc in allocations:
+            fournisseur = alloc.stock_lot.fournisseur
+            if fournisseur.id not in stats_par_fournisseur:
+                stats_par_fournisseur[fournisseur.id] = {
+                    'id': fournisseur.id,
+                    'nom': fournisseur.name,
+                    'ca_ttc': Decimal('0.00'),
+                    'cout_achat': Decimal('0.00'),
+                    'marge_brute': Decimal('0.00'),
+                    'quantite_vendue': 0
+                }
+            
+            # Calculs
+            # Attention: selling_price dans FactureProduitAllocation est unitaire
+            ca_ligne = Decimal(str(alloc.selling_price)) * alloc.quantity
+            cout_ligne = Decimal(str(alloc.cost_price)) * alloc.quantity
+            
+            stats_par_fournisseur[fournisseur.id]['ca_ttc'] += ca_ligne
+            stats_par_fournisseur[fournisseur.id]['cout_achat'] += cout_ligne
+            stats_par_fournisseur[fournisseur.id]['marge_brute'] += (ca_ligne - cout_ligne)
+            stats_par_fournisseur[fournisseur.id]['quantite_vendue'] += alloc.quantity
+            
+        return Response(list(stats_par_fournisseur.values()))

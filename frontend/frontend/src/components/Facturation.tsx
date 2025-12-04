@@ -171,9 +171,10 @@ export default function Facturation() {
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
     }
-    // Clear search after adding (optional, but good for flow)
-    // setSearchQuery('') 
-    // Instead of clearing, maybe just keep focus on search
+    
+    // Clear search after adding for better UX
+    setSearchQuery('')
+    // Keep focus on search for quick consecutive additions
     searchInputRef.current?.focus()
   }
 
@@ -639,11 +640,11 @@ export default function Facturation() {
       )}
 
       {/* Main Layout */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-3 md:p-4 lg:p-6 gap-4 lg:gap-6">
-        {/* Left Panel: Search & Products */}
-        <div className="w-full lg:w-1/3 flex flex-col gap-4 min-h-0 h-auto lg:h-full">
+      <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4 lg:p-6 gap-4 lg:gap-6">
+        {/* Top Section: Client & Search */}
+        <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
             {/* Client Selection */}
-            <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 shrink-0">
+            <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-80 shrink-0">
                 <div className="flex items-center justify-between mb-2">
                     <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">Client (F4)</label>
                     <button
@@ -687,62 +688,65 @@ export default function Facturation() {
                 )}
             </div>
 
-            {/* Product Search & List */}
-            <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 flex flex-col min-h-0 overflow-hidden">
-                <div className="p-4 border-b border-base-100 shrink-0">
-                     <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Produits (F2)</label>
-                    <div className="relative">
-                        <input
-                            ref={searchInputRef}
-                            type="text"
-                            placeholder="Rechercher..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="input input-bordered w-full pl-9 bg-base-50 focus:bg-white transition-colors"
-                        />
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    </div>
+            {/* Product Search */}
+            <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative">
+                <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Rechercher un produit (F2)</label>
+                <div className="relative">
+                    <input
+                        ref={searchInputRef}
+                        type="text"
+                        placeholder="Tapez pour rechercher un produit..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-white transition-colors focus:ring-2 focus:ring-primary/20"
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-2 space-y-1" ref={productListRef}>
-                    {filteredProduits.length === 0 ? (
-                        <div className="text-center py-10 text-base-content/40 text-sm">
-                            {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Aucun produit trouvé'}
-                        </div>
-                    ) : (
-                        filteredProduits.map((produit, idx) => (
-                            <div 
-                                key={produit.id} 
-                                onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}
-                                className={`
-                                    group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                                    ${idx === selectedIndex ? 'bg-primary text-primary-content shadow-md ring-2 ring-primary ring-offset-1' : 'hover:bg-base-100 text-base-content'}
-                                    ${(produit.stock ?? 0) === 0 ? 'opacity-50' : ''}
-                                `}
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium truncate text-sm">{produit.name}</div>
-                                    <div className={`text-xs flex gap-3 mt-0.5 ${idx === selectedIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
-                                        <span className={(produit.stock ?? 0) === 0 ? 'text-error font-bold' : ''}>
-                                            Stock: {produit.stock}
-                                        </span>
-                                        <span>{produit.selling_price} F</span>
-                                    </div>
-                                </div>
-                                {(produit.stock ?? 0) > 0 && (
-                                    <div className={`opacity-0 group-hover:opacity-100 ${idx === selectedIndex ? 'opacity-100' : ''}`}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                                    </div>
-                                )}
+                {/* Search Results Dropdown */}
+                {searchQuery && (
+                    <div className="absolute left-3 right-3 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50" ref={productListRef}>
+                        {filteredProduits.length === 0 ? (
+                            <div className="text-center py-8 text-base-content/40 text-sm">
+                                {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Aucun produit trouvé'}
                             </div>
-                        ))
-                    )}
-                </div>
+                        ) : (
+                            <div className="p-2 space-y-1">
+                                {filteredProduits.map((produit, idx) => (
+                                    <div 
+                                        key={produit.id} 
+                                        onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}
+                                        className={`
+                                            group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                                            ${idx === selectedIndex ? 'bg-primary text-primary-content shadow-md ring-2 ring-primary ring-offset-1' : 'hover:bg-base-100 text-base-content'}
+                                            ${(produit.stock ?? 0) === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                                        `}
+                                    >
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium truncate text-sm">{produit.name}</div>
+                                            <div className={`text-xs flex gap-3 mt-0.5 ${idx === selectedIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                                                <span className={(produit.stock ?? 0) === 0 ? 'text-error font-bold' : ''}>
+                                                    Stock: {produit.stock}
+                                                </span>
+                                                <span>{produit.selling_price} F</span>
+                                            </div>
+                                        </div>
+                                        {(produit.stock ?? 0) > 0 && (
+                                            <div className={`opacity-0 group-hover:opacity-100 ${idx === selectedIndex ? 'opacity-100' : ''}`}>
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
 
-        {/* Right Panel: Invoice Details */}
-        <div className="w-full lg:flex-1 bg-white rounded-xl shadow-sm border border-base-200 flex flex-col min-h-0 overflow-hidden">
+        {/* Bottom Section: Cart/Invoice Details */}
+        <div className="w-full bg-white rounded-xl shadow-sm border border-base-200 flex flex-col min-h-0 overflow-hidden flex-1">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
                 <h2 className="font-bold text-lg text-base-content">Panier</h2>
                 <div className="badge badge-ghost font-mono">{lignesFacture.length} articles</div>

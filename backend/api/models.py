@@ -239,6 +239,7 @@ class Caisse(models.Model):
     reference = models.CharField(max_length=100, blank=True, null=True)
     statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
     date_paiement = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions_caisse')
     
     def __str__(self):
         return f"Paiement {self.id} - {self.montant} F - {self.get_mode_paiement_display()}"
@@ -261,3 +262,59 @@ def update_facture_status_on_payment(sender, instance, created, **kwargs):
                 facture.status = Facture.Status.PAYEE
                 facture.save(update_fields=['status'])
 
+
+class StockLot(models.Model):
+    """
+    Représente un lot de stock reçu d'un fournisseur.
+    Permet la traçabilité FIFO et le calcul du CA par fournisseur.
+    """
+    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='stock_lots')
+    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot')
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT)
+    quantity_initial = models.IntegerField(help_text="Quantité initiale du lot")
+    quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
+    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire")
+    lot = models.CharField(max_length=20, blank=True, null=True)
+    date_expiration = models.DateField(blank=True, null=True)
+    date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date_reception']  # FIFO: Premier arrivé, premier servi
+        indexes = [
+            models.Index(fields=['produit', 'date_reception']),
+            models.Index(fields=['produit', 'quantity_remaining']),
+        ]
+
+    def __str__(self):
+        return f"Lot {self.id} - {self.produit.name} ({self.quantity_remaining}/{self.quantity_initial})"
+
+
+class FactureProduitAllocation(models.Model):
+    """
+    Traçabilité: enregistre quelle part d'une vente provient de quel lot.
+    Permet de calculer la marge et le CA par fournisseur.
+    """
+    facture_produit = models.ForeignKey('FactureProduit', on_delete=models.CASCADE, related_name='allocations')
+    stock_lot = models.ForeignKey('StockLot', on_delete=models.PROTECT)
+    quantity = models.IntegerField(help_text="Quantité prélevée de ce lot")
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat du lot")
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de vente")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Allocation {self.id} - {self.quantity} unités du lot {self.stock_lot.id}"
+    
+    @property
+    def margin(self):
+        """Calcule la marge brute pour cette allocation"""
+        return (self.selling_price - self.cost_price) * self.quantity
+    
+    @property
+    def revenue(self):
+        """Calcule le CA pour cette allocation"""
+        return self.selling_price * self.quantity

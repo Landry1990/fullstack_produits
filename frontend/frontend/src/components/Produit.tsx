@@ -36,6 +36,8 @@ export default function Produit() {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1)
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [filterRayon, setFilterRayon] = useState<string>('')
+  const [filterFournisseur, setFilterFournisseur] = useState<string>('')
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -163,6 +165,12 @@ export default function Produit() {
         return inName || inCips;
       });
     }
+    if (filterRayon) {
+      list = list.filter(p => (p.rayon_name || '').toLowerCase() === filterRayon.toLowerCase())
+    }
+    if (filterFournisseur) {
+      list = list.filter(p => (p.fournisseur_name || '').toLowerCase() === filterFournisseur.toLowerCase())
+    }
     // Tri alphabétique par nom
     return [...list].sort((a, b) => a.name.localeCompare(b.name));
   }, [produits, searchQuery]);
@@ -171,6 +179,10 @@ export default function Produit() {
     () => produits.find((p) => p.id === selectedProductId) ?? null,
     [produits, selectedProductId],
   )
+
+  const totalProduits = produits.length
+  const lowStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= (p.stock_alert ?? 0)).length, [produits])
+  const outOfStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= 0).length, [produits])
   useEffect(() => {
     if (!selectedProduit) {
       setEditProduit(null)
@@ -320,8 +332,28 @@ export default function Produit() {
         </div>
       )}
 
-      {/* Bouton pour ouvrir le modal de création */}
-      <div className="flex justify-end mb-4">
+      {/* Actions rapides */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="hidden md:flex gap-2">
+          <div className="stats shadow bg-base-100 border border-base-200">
+            <div className="stat">
+              <div className="stat-title">Produits</div>
+              <div className="stat-value text-primary">{totalProduits}</div>
+            </div>
+          </div>
+          <div className="stats shadow bg-base-100 border border-base-200">
+            <div className="stat">
+              <div className="stat-title">Faible stock</div>
+              <div className="stat-value text-warning">{lowStockCount}</div>
+            </div>
+          </div>
+          <div className="stats shadow bg-base-100 border border-base-200">
+            <div className="stat">
+              <div className="stat-title">Ruptures</div>
+              <div className="stat-value text-error">{outOfStockCount}</div>
+            </div>
+          </div>
+        </div>
         <button
           className="btn btn-primary btn-sm md:btn-md"
           onClick={() => setIsCreateProduitModalOpen(true)}
@@ -340,11 +372,12 @@ export default function Produit() {
               {loading && <span className="loading loading-spinner loading-sm" />}
             </div>
             <div className="p-3 md:p-4 pb-0">
-              <div className="join w-full">
+              <label className="input input-bordered input-sm md:input-md flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4 opacity-70"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/></svg>
                 <input
                   ref={searchInputRef}
                   type="text"
-                  className="input input-bordered input-sm md:input-md join-item w-full"
+                  className="grow"
                   placeholder="Rechercher par CIP ou Nom..."
                   value={searchQuery}
                   onChange={(e) => {
@@ -353,42 +386,70 @@ export default function Produit() {
                   }}
                   onKeyDown={handleKeyDown}
                 />
-                <button className="btn btn-sm md:btn-md join-item" onClick={() => setSearchQuery('')}>Effacer</button>
+                {searchQuery && (
+                  <button type="button" className="btn btn-ghost btn-xs" onClick={() => setSearchQuery('')}>Effacer</button>
+                )}
+              </label>
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <select
+                  className="select select-bordered select-sm md:select-md w-full"
+                  value={filterRayon}
+                  onChange={(e) => setFilterRayon(e.target.value)}
+                >
+                  <option value="">Tous les rayons</option>
+                  {rayons.map(r => (
+                    <option key={r.id} value={r.name}>{r.name}</option>
+                  ))}
+                </select>
+                <select
+                  className="select select-bordered select-sm md:select-md w-full"
+                  value={filterFournisseur}
+                  onChange={(e) => setFilterFournisseur(e.target.value)}
+                >
+                  <option value="">Tous les fournisseurs</option>
+                  {fournisseurs.map(f => (
+                    <option key={f.id} value={f.name}>{f.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
-            {/* Barre de défilement ici */}
-            <div className="overflow-x-auto flex-1">
+            <div className="overflow-x-hidden flex-1 p-3 md:p-4 pt-0">
               <div className="h-full max-h-[500px] overflow-y-auto">
-                <table className="table table-zebra">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Nom</th>
-                      <th>Prix</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredProduits.map((produit, index) => {
-                      const isSelected = produit.id === selectedProductId
-                      const isHighlighted = searchQuery && highlightedIndex === index
-                      return (
-                        <tr
-                          key={produit.id}
-                          className={`cursor-pointer ${
-                            isSelected ? 'active' : 'hover'
-                          } ${
-                            isHighlighted ? 'bg-primary text-primary-content' : ''
-                          }`}
-                          onClick={() => selectProduct(produit)}
-                        >
-                          <th>{produit.id}</th>
-                          <td className="uppercase">{produit.name}</td>
-                          <td>{produit.selling_price} F</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+                  {filteredProduits.map((produit, index) => {
+                    const isSelected = produit.id === selectedProductId
+                    const isHighlighted = !!searchQuery && highlightedIndex === index
+                    const stock = produit.stock ?? 0
+                    const alert = produit.stock_alert ?? 0
+                    const stockClass = stock <= 0 ? 'badge-error' : stock <= alert ? 'badge-warning' : 'badge-success'
+                    const price = Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')
+                    return (
+                      <div
+                        key={produit.id}
+                        onClick={() => selectProduct(produit)}
+                        className={`card bg-base-100 border ${isSelected ? 'border-primary' : 'border-base-200'} hover:border-primary transition-colors cursor-pointer ${isHighlighted ? 'ring ring-primary' : ''}`}
+                      >
+                        <div className="card-body p-3 md:p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <div className="font-bold uppercase leading-tight">{produit.name}</div>
+                              <div className="text-xs text-base-content/60 flex gap-1 mt-1">
+                                {produit.cip1 && <span className="badge badge-ghost badge-xs">{produit.cip1}</span>}
+                                {produit.cip2 && <span className="badge badge-ghost badge-xs">{produit.cip2}</span>}
+                                {produit.cip3 && <span className="badge badge-ghost badge-xs">{produit.cip3}</span>}
+                              </div>
+                            </div>
+                            <span className={`badge ${stockClass}`}>{stock}</span>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between">
+                            <div className="text-sm"><span className="opacity-70">Prix:</span> <span className="font-semibold text-primary">{price} F</span></div>
+                            <div className="text-xs opacity-60 uppercase">{produit.rayon_name}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             </div>
             <div className="p-3 md:p-4 border-t flex flex-wrap gap-2 justify-end">
@@ -428,23 +489,27 @@ export default function Produit() {
                   <div className="space-y-3">
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Nom</span>
-                      <span className="col-span-2 uppercase">{selectedProduit.name}</span>
+                      <span className="col-span-2 uppercase text-lg font-bold">{selectedProduit.name}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Description</span>
-                      <span className="col-span-2 uppercase whitespace-pre-wrap">{selectedProduit.description || '—'}</span>
+                      <span className="col-span-2 uppercase whitespace-pre-wrap text-base-content/80">{selectedProduit.description || '—'}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Stock</span>
-                      <span className="col-span-2">{selectedProduit.stock ?? '—'}</span>
+                      <span className="col-span-2">
+                        <span className={`badge ${ (selectedProduit.stock ?? 0) <= 0 ? 'badge-error' : (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' : 'badge-success' }`}>
+                          {selectedProduit.stock ?? '—'}
+                        </span>
+                      </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Prix de revient</span>
-                      <span className="col-span-2">{selectedProduit.cost_price ?? '—'} F</span>
+                      <span className="col-span-2 text-blue-600 font-semibold">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR')} F</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Prix de vente</span>
-                      <span className="col-span-2">{selectedProduit.selling_price ?? '—'} F</span>
+                      <span className="col-span-2 text-primary font-bold">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">CIP1</span>
@@ -476,11 +541,11 @@ export default function Produit() {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Rayon</span>
-                      <span className="col-span-2 uppercase">{selectedProduit.rayon_name || '—'}</span>
+                      <span className="col-span-2 uppercase badge badge-outline">{selectedProduit.rayon_name || '—'}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Fournisseur</span>
-                      <span className="col-span-2">{selectedProduit.fournisseur_name || '—'}</span>
+                      <span className="col-span-2 badge badge-ghost">{selectedProduit.fournisseur_name || '—'}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Créé le</span>
@@ -775,6 +840,10 @@ export default function Produit() {
         onClose={() => setIsCreateProduitModalOpen(false)}
         produitsEndpoint={produitsEndpoint}
         onCreated={handleProduitCreated}
+        rayonsEndpoint={rayonsEndpoint}
+        fournisseursEndpoint={fournisseursEndpoint}
+        rayons={rayons}
+        fournisseurs={fournisseurs}
       />
     </div>
   )
