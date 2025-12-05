@@ -3,26 +3,47 @@ import axios from 'axios';
 
 import type { Client } from '../types';
 
-const emptyForm: Omit<Client, 'id'> = {
+interface AyantDroit {
+  id?: number;
+  matricule: string;
+  nom: string;
+  societe?: string;
+  date_creation?: string;
+}
+
+interface ExtendedClient extends Client {
+  client_type: 'PARTICULIER' | 'PROFESSIONNEL';
+  plafond: string;
+  ayants_droit?: AyantDroit[];
+  current_debt?: string;
+}
+
+const emptyForm: Omit<ExtendedClient, 'id'> = {
   name: '',
   address: '',
   phone: '',
   email: '',
+  client_type: 'PARTICULIER',
+  plafond: '0',
+  ayants_droit: []
 };
 
 export default function Clients() {
-  const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clients, setClients] = useState<ExtendedClient[]>([]);
+  const [selectedClient, setSelectedClient] = useState<ExtendedClient | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [newClient, setNewClient] = useState(emptyForm);
-  const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [editingClient, setEditingClient] = useState<ExtendedClient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // State for managing Ayants Droit in forms
+  const [tempAyantDroit, setTempAyantDroit] = useState<AyantDroit>({ matricule: '', nom: '' });
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -31,6 +52,10 @@ export default function Clients() {
   const clientsEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/clients/` 
     : '/api/clients/';
+  
+  const ayantsDroitEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/ayants-droit/` 
+    : '/api/ayants-droit/';
 
   // Filtrer les clients selon le terme de recherche
   const filteredClients = useMemo(() => {
@@ -49,7 +74,7 @@ export default function Clients() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get<Client[]>(clientsEndpoint);
+      const { data } = await axios.get<ExtendedClient[]>(clientsEndpoint);
       setClients(data);
     } catch (err: unknown) {
       if (axios.isCancel(err)) return;
@@ -75,13 +100,14 @@ export default function Clients() {
 
   function openAddModal() {
     setNewClient(emptyForm);
+    setTempAyantDroit({ matricule: '', nom: '' });
     setIsAddModalOpen(true);
   }
 
   function closeAddModal() {
     setIsAddModalOpen(false);
-    setError(null); // Réinitialiser l'erreur lors de la fermeture
-    setNewClient(emptyForm); // Réinitialiser le formulaire
+    setError(null);
+    setNewClient(emptyForm);
   }
 
   // Fonctions de navigation au clavier
@@ -115,7 +141,7 @@ export default function Clients() {
     }
   }
 
-  function selectClient(client: Client) {
+  function selectClient(client: ExtendedClient) {
     setSelectedClient(client);
     setSearchTerm('');
     setHighlightedIndex(-1);
@@ -123,7 +149,8 @@ export default function Clients() {
 
   function openEditModal() {
     if (!selectedClient) return;
-    setEditingClient(selectedClient);
+    setEditingClient(JSON.parse(JSON.stringify(selectedClient))); // Deep copy
+    setTempAyantDroit({ matricule: '', nom: '' });
     setIsEditModalOpen(true);
   }
 
@@ -150,15 +177,60 @@ export default function Clients() {
     return String(data)
   }
 
+  // Helper to add Ayant Droit locally
+  function addAyantDroitToForm(isEditing: boolean) {
+    if (!tempAyantDroit.matricule || !tempAyantDroit.nom) return;
+    
+    if (isEditing && editingClient) {
+      setEditingClient({
+        ...editingClient,
+        ayants_droit: [...(editingClient.ayants_droit || []), { ...tempAyantDroit }]
+      });
+    } else {
+      setNewClient({
+        ...newClient,
+        ayants_droit: [...(newClient.ayants_droit || []), { ...tempAyantDroit }]
+      });
+    }
+    setTempAyantDroit({ matricule: '', nom: '' });
+  }
+
+  function removeAyantDroitFromForm(index: number, isEditing: boolean) {
+    if (isEditing && editingClient) {
+      const updated = [...(editingClient.ayants_droit || [])];
+      updated.splice(index, 1);
+      setEditingClient({ ...editingClient, ayants_droit: updated });
+    } else {
+      const updated = [...(newClient.ayants_droit || [])];
+      updated.splice(index, 1);
+      setNewClient({ ...newClient, ayants_droit: updated });
+    }
+  }
+
   async function handleAddClient(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null); // Réinitialiser l'erreur avant la tentative
+    setError(null);
     setIsSubmitting(true);
     try {
-      const { data: addedClient } = await axios.post<Client>(clientsEndpoint, newClient);
-      setClients(prev => [addedClient, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
-      setSelectedClient(addedClient);
-      setNewClient(emptyForm); // Réinitialiser le formulaire
+      // 1. Create Client
+      const { data: addedClient } = await axios.post<ExtendedClient>(clientsEndpoint, {
+        ...newClient,
+        ayants_droit: [] // Don't send nested for now if backend doesn't support writable nested
+      });
+
+      // 2. Create Ayants Droit if any
+      if (newClient.client_type === 'PROFESSIONNEL' && newClient.ayants_droit && newClient.ayants_droit.length > 0) {
+        await Promise.all(newClient.ayants_droit.map(ad => 
+          axios.post(ayantsDroitEndpoint, { ...ad, client: addedClient.id })
+        ));
+      }
+
+      // Refresh to get full data
+      const { data: refreshedClient } = await axios.get<ExtendedClient>(`${clientsEndpoint}${addedClient.id}/`);
+      
+      setClients(prev => [refreshedClient, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedClient(refreshedClient);
+      setNewClient(emptyForm);
       closeAddModal();
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
@@ -176,11 +248,45 @@ export default function Clients() {
   async function handleEditClient(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editingClient) return;
+    setIsSubmitting(true);
     try {
-      const { data: updatedClient } = await axios.patch<Client>(
+      // 1. Update Client
+      await axios.patch<ExtendedClient>(
         `${clientsEndpoint}${editingClient.id}/`,
-        editingClient
+        {
+            name: editingClient.name,
+            address: editingClient.address,
+            phone: editingClient.phone,
+            email: editingClient.email,
+            client_type: editingClient.client_type,
+            plafond: editingClient.plafond
+        }
       );
+
+      // 2. Handle Ayants Droit (Sync: Add new, Remove deleted)
+      // This is complex without a bulk sync endpoint. 
+      // Simplified strategy: 
+      // - Get current ADs from backend.
+      // - Compare with editingClient.ayants_droit.
+      // - Delete missing, Create new.
+      
+      if (editingClient.client_type === 'PROFESSIONNEL') {
+          const { data: currentADs } = await axios.get<AyantDroit[]>(`${ayantsDroitEndpoint}?client=${editingClient.id}`);
+          // currentIDs was unused
+          const newIDs = new Set(editingClient.ayants_droit?.map(ad => ad.id).filter((id): id is number => id !== undefined));
+          
+          // Delete removed
+          const toDelete = currentADs.filter(ad => ad.id !== undefined && !newIDs.has(ad.id));
+          await Promise.all(toDelete.map(ad => axios.delete(`${ayantsDroitEndpoint}${ad.id}/`)));
+
+          // Create new (those without ID)
+          const toCreate = editingClient.ayants_droit?.filter(ad => !ad.id) || [];
+          await Promise.all(toCreate.map(ad => axios.post(ayantsDroitEndpoint, { ...ad, client: editingClient.id })));
+      }
+
+      // Refresh
+      const { data: updatedClient } = await axios.get<ExtendedClient>(`${clientsEndpoint}${editingClient.id}/`);
+
       setClients(prev => 
         prev.map(c => (c.id === updatedClient.id ? updatedClient : c))
       );
@@ -194,6 +300,8 @@ export default function Clients() {
         setError("Erreur inconnue lors de la modification du client")
       }
       console.error(err);
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
@@ -242,7 +350,7 @@ export default function Clients() {
                 <input 
                   ref={searchInputRef}
                   type="text" 
-                  placeholder="Rechercher un client... (utilisez ↑↓ pour naviguer, Entrée pour sélectionner)" 
+                  placeholder="Rechercher un client..." 
                   className="input input-bordered flex-1" 
                   value={searchTerm}
                   onChange={(e) => {
@@ -263,8 +371,8 @@ export default function Clients() {
                 <thead>
                   <tr>
                     <th>Nom</th>
+                    <th>Type</th>
                     <th>Téléphone</th>
-                    <th>Email</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -280,8 +388,12 @@ export default function Clients() {
                         onClick={() => selectClient(client)}
                       >
                         <td>{client.name}</td>
+                        <td>
+                            <span className={`badge ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
+                                {client.client_type === 'PROFESSIONNEL' ? 'Pro' : 'Particulier'}
+                            </span>
+                        </td>
                         <td>{client.phone}</td>
-                        <td>{client.email}</td>
                       </tr>
                     ))
                   ) : (
@@ -313,8 +425,12 @@ export default function Clients() {
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">ID</span>
-                  <span className="col-span-2">{selectedClient.id}</span>
+                  <span className="font-semibold col-span-1">Type</span>
+                  <span className="col-span-2">
+                    <span className={`badge ${selectedClient.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
+                        {selectedClient.client_type}
+                    </span>
+                  </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <span className="font-semibold col-span-1">Nom</span>
@@ -332,6 +448,35 @@ export default function Clients() {
                   <span className="font-semibold col-span-1">Email</span>
                   <span className="col-span-2">{selectedClient.email}</span>
                 </div>
+                
+                {selectedClient.client_type === 'PROFESSIONNEL' && (
+                    <>
+                        <div className="divider">Informations Pro</div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <span className="font-semibold col-span-1">Plafond</span>
+                            <span className="col-span-2">{Number(selectedClient.plafond).toLocaleString()} F</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <span className="font-semibold col-span-1">Dette Actuelle</span>
+                            <span className={`col-span-2 font-bold ${Number(selectedClient.current_debt) > Number(selectedClient.plafond) ? 'text-error' : 'text-success'}`}>
+                                {Number(selectedClient.current_debt).toLocaleString()} F
+                            </span>
+                        </div>
+                        
+                        <div className="mt-4">
+                            <h4 className="font-semibold mb-2">Ayants Droit</h4>
+                            {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
+                                <ul className="list-disc list-inside text-sm">
+                                    {selectedClient.ayants_droit.map(ad => (
+                                        <li key={ad.id}>{ad.nom} (Mat: {ad.matricule}){ad.societe ? ` - ${ad.societe}` : ''}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-base-content/70">Aucun ayant droit enregistré.</p>
+                            )}
+                        </div>
+                    </>
+                )}
               </div>
             )}
           </div>
@@ -340,250 +485,226 @@ export default function Clients() {
 
       {/* Add Modal */} 
       <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-2xl">
+        <div className="modal-box max-w-3xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-xl">Ajouter un nouveau client</h3>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeAddModal}
-              disabled={isSubmitting}
-            >
-              ✕
-            </button>
+            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={closeAddModal} disabled={isSubmitting}>✕</button>
           </div>
           
           <form className="space-y-6" onSubmit={handleAddClient}>
+            {/* Type de Client */}
+            <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                    <span className="label-text font-semibold">Type de Client:</span>
+                    <label className="label cursor-pointer gap-2">
+                        <input 
+                            type="radio" 
+                            name="client_type" 
+                            className="radio radio-primary" 
+                            checked={newClient.client_type === 'PARTICULIER'}
+                            onChange={() => setNewClient({...newClient, client_type: 'PARTICULIER'})} 
+                        />
+                        <span className="label-text">Particulier</span>
+                    </label>
+                    <label className="label cursor-pointer gap-2">
+                        <input 
+                            type="radio" 
+                            name="client_type" 
+                            className="radio radio-secondary" 
+                            checked={newClient.client_type === 'PROFESSIONNEL'}
+                            onChange={() => setNewClient({...newClient, client_type: 'PROFESSIONNEL'})} 
+                        />
+                        <span className="label-text">Professionnel</span>
+                    </label>
+                </label>
+            </div>
+
             {/* Informations personnelles */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Informations personnelles
-              </h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">Nom complet *</span>
-                  </div>
-                  <input 
-                    type="text" 
-                    placeholder="Ex: Jean Dupont" 
-                    value={newClient.name} 
-                    onChange={e => setNewClient(c => ({...c, name: e.target.value}))} 
-                    className="input input-bordered w-full" 
-                    required 
-                    disabled={isSubmitting}
-                  />
+                  <div className="label"><span className="label-text font-medium">Nom complet *</span></div>
+                  <input type="text" placeholder="Ex: Jean Dupont" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
                 </label>
                 
                 <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">Téléphone *</span>
-                  </div>
-                  <input 
-                    type="tel" 
-                    placeholder="Ex: 0123456789" 
-                    value={newClient.phone} 
-                    onChange={e => setNewClient(c => ({...c, phone: e.target.value}))} 
-                    className="input input-bordered w-full" 
-                    required 
-                    disabled={isSubmitting}
-                  />
+                  <div className="label"><span className="label-text font-medium">Téléphone *</span></div>
+                  <input type="tel" placeholder="Ex: 0123456789" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
                 </label>
-              </div>
-              
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text font-medium">Adresse email *</span>
-                </div>
-                <input 
-                  type="email" 
-                  placeholder="Ex: jean.dupont@email.com" 
-                  value={newClient.email} 
-                  onChange={e => setNewClient(c => ({...c, email: e.target.value}))} 
-                  className="input input-bordered w-full" 
-                  required 
-                  disabled={isSubmitting}
-                />
-              </label>
             </div>
-
-            {/* Adresse */}
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Adresse
-              </h4>
               
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text font-medium">Adresse complète *</span>
-                </div>
-                <textarea 
-                  placeholder="Ex: 123 Rue de la Paix&#10;75001 Paris, France" 
-                  value={newClient.address} 
-                  onChange={e => setNewClient(c => ({...c, address: e.target.value}))} 
-                  className="textarea textarea-bordered w-full h-24 resize-none" 
-                  required 
-                  disabled={isSubmitting}
-                />
-                <div className="label">
-                  <span className="label-text-alt">Séparez les lignes d'adresse par des retours à la ligne</span>
-                </div>
-              </label>
-            </div>
+            <label className="form-control w-full">
+                <div className="label"><span className="label-text font-medium">Adresse email *</span></div>
+                <input type="email" placeholder="Ex: jean.dupont@email.com" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
+            </label>
 
-            {/* Actions */}
+            <label className="form-control w-full">
+                <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
+                <textarea placeholder="Ex: 123 Rue de la Paix" value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required disabled={isSubmitting}/>
+            </label>
+
+            {/* Champs Professionnels */}
+            {newClient.client_type === 'PROFESSIONNEL' && (
+                <div className="bg-base-200 p-4 rounded-lg space-y-4">
+                    <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
+                    
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
+                        <input type="number" value={newClient.plafond} onChange={e => setNewClient({...newClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                    </label>
+
+                    <div className="divider">Ayants Droit</div>
+                    
+                    <div className="flex gap-2 items-end">
+                        <label className="form-control flex-1">
+                            <span className="label-text text-xs">Nom</span>
+                            <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
+                        </label>
+                        <label className="form-control flex-1">
+                            <span className="label-text text-xs">Matricule</span>
+                            <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
+                        </label>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(false)}>Ajouter</button>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="table table-xs bg-base-100">
+                            <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
+                            <tbody>
+                                {newClient.ayants_droit?.map((ad, idx) => (
+                                    <tr key={idx}>
+                                        <td>{ad.nom}</td>
+                                        <td>{ad.matricule}</td>
+                                        <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, false)}>Supprimer</button></td>
+                                    </tr>
+                                ))}
+                                {(!newClient.ayants_droit || newClient.ayants_droit.length === 0) && (
+                                    <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
             <div className="modal-action pt-4">
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                onClick={closeAddModal} 
-                disabled={isSubmitting}
-              >
-                Annuler
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    Enregistrement...
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Ajouter le client
-                  </>
-                )}
+              <button type="button" className="btn btn-ghost" onClick={closeAddModal} disabled={isSubmitting}>Annuler</button>
+              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : 'Ajouter le client'}
               </button>
             </div>
           </form>
         </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeAddModal}>
-          <button>close</button>
-        </form>
+        <form method="dialog" className="modal-backdrop" onSubmit={closeAddModal}><button>close</button></form>
       </dialog>
 
       {/* Edit Modal */} 
       <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-2xl">
+        <div className="modal-box max-w-3xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-xl">Modifier le client</h3>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeEditModal}
-            >
-              ✕
-            </button>
+            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={closeEditModal}>✕</button>
           </div>
           
           {editingClient && (
             <form className="space-y-6" onSubmit={handleEditClient}>
-              {/* Informations personnelles */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Informations personnelles
-                </h4>
-                
+                <div className="form-control">
+                    <label className="label cursor-pointer justify-start gap-4">
+                        <span className="label-text font-semibold">Type de Client:</span>
+                        <label className="label cursor-pointer gap-2">
+                            <input 
+                                type="radio" 
+                                name="edit_client_type" 
+                                className="radio radio-primary" 
+                                checked={editingClient.client_type === 'PARTICULIER'}
+                                onChange={() => setEditingClient({...editingClient, client_type: 'PARTICULIER'})} 
+                            />
+                            <span className="label-text">Particulier</span>
+                        </label>
+                        <label className="label cursor-pointer gap-2">
+                            <input 
+                                type="radio" 
+                                name="edit_client_type" 
+                                className="radio radio-secondary" 
+                                checked={editingClient.client_type === 'PROFESSIONNEL'}
+                                onChange={() => setEditingClient({...editingClient, client_type: 'PROFESSIONNEL'})} 
+                            />
+                            <span className="label-text">Professionnel</span>
+                        </label>
+                    </label>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text font-medium">Nom complet *</span>
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder="Ex: Jean Dupont" 
-                      value={editingClient.name} 
-                      onChange={e => setEditingClient(c => c ? ({...c, name: e.target.value}) : null)} 
-                      className="input input-bordered w-full" 
-                      required 
-                    />
-                  </label>
-                  
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text font-medium">Téléphone *</span>
-                    </div>
-                    <input 
-                      type="tel" 
-                      placeholder="Ex: 0123456789" 
-                      value={editingClient.phone} 
-                      onChange={e => setEditingClient(c => c ? ({...c, phone: e.target.value}) : null)} 
-                      className="input input-bordered w-full" 
-                      required 
-                    />
-                  </label>
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Nom complet *</span></div>
+                        <input type="text" value={editingClient.name} onChange={e => setEditingClient({...editingClient, name: e.target.value})} className="input input-bordered w-full" required/>
+                    </label>
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Téléphone *</span></div>
+                        <input type="tel" value={editingClient.phone} onChange={e => setEditingClient({...editingClient, phone: e.target.value})} className="input input-bordered w-full" required/>
+                    </label>
                 </div>
                 
                 <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">Adresse email *</span>
-                  </div>
-                  <input 
-                    type="email" 
-                    placeholder="Ex: jean.dupont@email.com" 
-                    value={editingClient.email} 
-                    onChange={e => setEditingClient(c => c ? ({...c, email: e.target.value}) : null)} 
-                    className="input input-bordered w-full" 
-                    required 
-                  />
+                    <div className="label"><span className="label-text font-medium">Adresse email *</span></div>
+                    <input type="email" value={editingClient.email} onChange={e => setEditingClient({...editingClient, email: e.target.value})} className="input input-bordered w-full" required/>
                 </label>
-              </div>
 
-              {/* Adresse */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Adresse
-                </h4>
-                
                 <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">Adresse complète *</span>
-                  </div>
-                  <textarea 
-                    placeholder="Ex: 123 Rue de la Paix&#10;75001 Paris, France" 
-                    value={editingClient.address} 
-                    onChange={e => setEditingClient(c => c ? ({...c, address: e.target.value}) : null)} 
-                    className="textarea textarea-bordered w-full h-24 resize-none" 
-                    required 
-                  />
-                  <div className="label">
-                    <span className="label-text-alt">Séparez les lignes d'adresse par des retours à la ligne</span>
-                  </div>
+                    <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
+                    <textarea value={editingClient.address} onChange={e => setEditingClient({...editingClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required/>
                 </label>
-              </div>
 
-              {/* Actions */}
+                {editingClient.client_type === 'PROFESSIONNEL' && (
+                    <div className="bg-base-200 p-4 rounded-lg space-y-4">
+                        <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
+                        
+                        <label className="form-control w-full">
+                            <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
+                            <input type="number" value={editingClient.plafond} onChange={e => setEditingClient({...editingClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                        </label>
+
+                        <div className="divider">Ayants Droit</div>
+                        
+                        <div className="flex gap-2 items-end">
+                            <label className="form-control flex-1">
+                                <span className="label-text text-xs">Nom</span>
+                                <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
+                            </label>
+                            <label className="form-control flex-1">
+                                <span className="label-text text-xs">Matricule</span>
+                                <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
+                            </label>
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(true)}>Ajouter</button>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="table table-xs bg-base-100">
+                                <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    {editingClient.ayants_droit?.map((ad, idx) => (
+                                        <tr key={idx}>
+                                            <td>{ad.nom}</td>
+                                            <td>{ad.matricule}</td>
+                                            <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, true)}>Supprimer</button></td>
+                                        </tr>
+                                    ))}
+                                    {(!editingClient.ayants_droit || editingClient.ayants_droit.length === 0) && (
+                                        <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
               <div className="modal-action pt-4">
-                <button 
-                  type="button" 
-                  className="btn btn-ghost" 
-                  onClick={closeEditModal}
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Enregistrer les modifications
-                </button>
+                <button type="button" className="btn btn-ghost" onClick={closeEditModal}>Annuler</button>
+                <button type="submit" className="btn btn-primary">Enregistrer les modifications</button>
               </div>
             </form>
           )}
         </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeEditModal}>
-          <button>close</button>
-        </form>
+        <form method="dialog" className="modal-backdrop" onSubmit={closeEditModal}><button>close</button></form>
       </dialog>
     </>
   );

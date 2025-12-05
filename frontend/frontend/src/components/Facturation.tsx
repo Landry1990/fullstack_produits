@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel, Client, Facture, TicketCaisse } from '../types'
+import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit } from '../types'
 
 // Interface locale pour la gestion des lignes de facture dans le state
 type LigneFacture = {
@@ -61,6 +61,14 @@ export default function Facturation() {
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
+
+  // Ayant Droit states
+  const [ayantDroitNom, setAyantDroitNom] = useState('')
+  const [ayantDroitMatricule, setAyantDroitMatricule] = useState('')
+  const [ayantDroitSociete, setAyantDroitSociete] = useState('')
+  const [selectedAyantDroit, setSelectedAyantDroit] = useState<number | null>(null)
+  const [ayantsDroitList, setAyantsDroitList] = useState<AyantDroit[]>([])
+  const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
 
   // Keyboard Navigation State
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -127,6 +135,37 @@ export default function Facturation() {
     }
     fetchData()
   }, [produitsEndpoint, clientsEndpoint, handleApiError])
+
+  // Charger les ayants droit quand un client professionnel est sélectionné
+  useEffect(() => {
+    const fetchAyantsDroit = async () => {
+      if (!selectedClient || useManualClient) {
+        setAyantsDroitList([])
+        setSelectedAyantDroit(null)
+        setShowNewAyantDroit(false)
+        return
+      }
+
+      const client = clients.find(c => c.id === selectedClient)
+      if (client?.client_type === 'PROFESSIONNEL') {
+        try {
+          const ayantsDroitEndpoint = apiBaseUrl
+            ? `${apiBaseUrl}/api/ayants-droit/?client=${selectedClient}`
+            : `/api/ayants-droit/?client=${selectedClient}`
+          const response = await axios.get<AyantDroit[]>(ayantsDroitEndpoint)
+          setAyantsDroitList(response.data)
+        } catch (err) {
+          console.error('Erreur lors du chargement des ayants droit:', err)
+          setAyantsDroitList([])
+        }
+      } else {
+        setAyantsDroitList([])
+        setSelectedAyantDroit(null)
+        setShowNewAyantDroit(false)
+      }
+    }
+    fetchAyantsDroit()
+  }, [selectedClient, clients, apiBaseUrl, useManualClient])
 
   // Fonction pour calculer le total d'une ligne avec remise produit
   const calculateLigneTotal = (quantite: number, prixUnitaire: string, remiseProduit: string): number => {
@@ -301,6 +340,27 @@ export default function Facturation() {
       return
     }
 
+    // Validation pour les clients professionnels : ayant droit obligatoire
+    if (!useManualClient && selectedClient) {
+      const client = clients.find(c => c.id === selectedClient)
+      if (client?.client_type === 'PROFESSIONNEL') {
+        // Si on est en mode "nouveau ayant droit" ou qu'il n'y a pas d'ayants droit existants
+        if (showNewAyantDroit || ayantsDroitList.length === 0) {
+          if (!ayantDroitNom || !ayantDroitMatricule) {
+            setError('Pour un client professionnel, veuillez renseigner le nom et le matricule de l\'ayant droit')
+            return
+          }
+        } else {
+          // Si on est en mode "sélection existant", vérifier qu'un ayant droit est sélectionné
+          if (!selectedAyantDroit) {
+            setError('Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau')
+            return
+          }
+        }
+      }
+    }
+
+
     setLoading(true)
     setError(null)
     setSuccessInfo(null)
@@ -340,6 +400,51 @@ export default function Facturation() {
         produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
       )
 
+      // 2.5. Créer l'ayant droit si nécessaire (client professionnel)
+      let ayantDroitId = selectedAyantDroit
+      const client = clients.find(c => c.id === selectedClient)
+      
+      if (client?.client_type === 'PROFESSIONNEL' && showNewAyantDroit) {
+        // Vérifier que les champs sont remplis
+        if (ayantDroitNom && ayantDroitMatricule) {
+          try {
+            const ayantsDroitEndpoint = apiBaseUrl 
+              ? `${apiBaseUrl}/api/ayants-droit/` 
+              : '/api/ayants-droit/'
+            
+            const ayantDroitPayload = {
+              client: selectedClient,
+              nom: ayantDroitNom,
+              matricule: ayantDroitMatricule,
+              societe: ayantDroitSociete || null
+            }
+            
+            const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
+            ayantDroitId = createdAyantDroit.id || null
+            
+            // Lier l'ayant droit à la facture
+            if (ayantDroitId) {
+              await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, {
+                ayant_droit: ayantDroitId
+              })
+            }
+          } catch (err) {
+            console.error('Erreur lors de la création de l\'ayant droit:', err)
+            // On continue même si la création de l'ayant droit échoue
+          }
+        }
+      } else if (client?.client_type === 'PROFESSIONNEL' && ayantDroitId) {
+        // Lier un ayant droit existant à la facture
+        try {
+          await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, {
+            ayant_droit: ayantDroitId
+          })
+        } catch (err) {
+          console.error('Erreur lors de la liaison de l\'ayant droit:', err)
+        }
+      }
+
+
       // 3. Valider la facture
       const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
       const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint)
@@ -377,6 +482,12 @@ export default function Facturation() {
       setLignesFacture([])
       setSelectedClient(null)
       setRemise('0')
+      // Reset ayant droit fields
+      setAyantDroitNom('')
+      setAyantDroitMatricule('')
+      setAyantDroitSociete('')
+      setSelectedAyantDroit(null)
+      setShowNewAyantDroit(false)
       fermerModalPaiement()
       
       // Rafraîchir les stocks
@@ -687,6 +798,74 @@ export default function Facturation() {
                     </select>
                 )}
             </div>
+
+            {/* Ayant Droit Section - Only for Professional Clients */}
+            {!useManualClient && selectedClient && clients.find(c => c.id === selectedClient)?.client_type === 'PROFESSIONNEL' && (
+              <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-80 shrink-0">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
+                    Ayant Droit <span className="text-error">*</span>
+                  </label>
+                  {ayantsDroitList.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowNewAyantDroit(!showNewAyantDroit)
+                        if (!showNewAyantDroit) {
+                          setSelectedAyantDroit(null)
+                          setAyantDroitNom('')
+                          setAyantDroitMatricule('')
+                          setAyantDroitSociete('')
+                        }
+                      }}
+                      className="btn btn-xs btn-ghost"
+                      title={showNewAyantDroit ? "Sélectionner existant" : "Nouveau"}
+                    >
+                      {showNewAyantDroit ? '📋 Existant' : '➕ Nouveau'}
+                    </button>
+                  )}
+                </div>
+                
+                {showNewAyantDroit || ayantsDroitList.length === 0 ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={ayantDroitNom}
+                      onChange={(e) => setAyantDroitNom(e.target.value)}
+                      placeholder="Nom de l'ayant droit *"
+                      className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                    />
+                    <input
+                      type="text"
+                      value={ayantDroitMatricule}
+                      onChange={(e) => setAyantDroitMatricule(e.target.value)}
+                      placeholder="Matricule *"
+                      className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                    />
+                    <input
+                      type="text"
+                      value={ayantDroitSociete}
+                      onChange={(e) => setAyantDroitSociete(e.target.value)}
+                      placeholder="Société (optionnel)"
+                      className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                    />
+                  </div>
+                ) : (
+                  <select
+                    value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
+                    onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
+                    className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
+                  >
+                    <option value="">Sélectionner un ayant droit...</option>
+                    {ayantsDroitList.map((ad) => (
+                      <option key={ad.id} value={ad.id}>
+                        {ad.nom} ({ad.matricule}){ad.societe ? ` - ${ad.societe}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
 
             {/* Product Search */}
             <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative">

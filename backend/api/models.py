@@ -65,10 +65,47 @@ class Client(models.Model):
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
     email = models.EmailField(unique=True)
+    
+    CLIENT_TYPE_CHOICES = [
+        ('PARTICULIER', 'Particulier'),
+        ('PROFESSIONNEL', 'Professionnel'),
+    ]
+    client_type = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, default='PARTICULIER')
+    plafond = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
+
+    @property
+    def current_debt(self):
+        """Calcule la dette actuelle du client (factures validées non payées)."""
+        # On considère les factures VALIDEE comme dette, moins ce qui a été payé ? 
+        # Ou simplement les factures qui ne sont pas PAYEE ou ANNULEE ?
+        # Simplification: Somme des restes à payer sur les factures validées.
+        # Pour l'instant, on va faire simple: Somme des totaux des factures VALIDEE.
+        # Une meilleure approche serait de sommer (Total TTC - Total Payé) pour toutes les factures non soldées.
+        # Mais le modèle actuel marque la facture comme PAYEE seulement si tout est payé.
+        
+        # Approche 1: Somme des factures VALIDEE (non encore PAYEE)
+        # Cela suppose que 'VALIDEE' signifie 'En attente de paiement complet'
+        factures_impayees = self.facture_set.filter(status=Facture.Status.VALIDEE)
+        total_dette = sum(f.total_ttc for f in factures_impayees)
+        return total_dette
+
+
+class AyantDroit(models.Model):
+    """Model representing a beneficiary for a professional client."""
+    id = models.AutoField(primary_key=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='ayants_droit')
+    matricule = models.CharField(max_length=100)
+    nom = models.CharField(max_length=100)
+    societe = models.CharField(max_length=200, blank=True, null=True)
+    date_creation = models.DateField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.nom} ({self.matricule})"
 
 
 class Commande(models.Model):
@@ -155,6 +192,7 @@ class Facture(models.Model):
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
     client_name_override = models.CharField(max_length=100, blank=True, null=True)
+    ayant_droit = models.ForeignKey(AyantDroit, on_delete=models.SET_NULL, null=True, blank=True, related_name='factures')
     numero_facture = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(

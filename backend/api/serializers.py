@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
     CommandeProduit, Facture, FactureProduit, Caisse, Profile,
-    StockLot, FactureProduitAllocation
+    StockLot, FactureProduitAllocation, AyantDroit
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -71,7 +71,15 @@ class FournisseurSerializer(serializers.ModelSerializer):
         model = Fournisseur
         fields = '__all__'
 
+class AyantDroitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AyantDroit
+        fields = '__all__'
+
 class ClientSerializer(serializers.ModelSerializer):
+    ayants_droit = AyantDroitSerializer(many=True, read_only=True)
+    current_debt = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
     class Meta:
         model = Client
         fields = '__all__'
@@ -143,25 +151,30 @@ class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.SerializerMethodField()
     client_name = serializers.SerializerMethodField()
     produits = FactureProduitSerializer(many=True, read_only=True)
+    ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
     def get_client_nom(self, obj):
         if obj.client:
             return obj.client.name
         return obj.client_name_override or "Client de passage"
-
+    
     def get_client_name(self, obj):
-        return self.get_client_nom(obj)
-    paiements = CaisseSerializer(many=True, read_only=True)
-    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
+        if obj.client:
+            return obj.client.name
+        return obj.client_name_override or "Client de passage"
 
     class Meta:
         model = Facture
-        fields = '__all__'
-        read_only_fields = ['date', 'status', 'numero_facture']
-
+        fields = [
+            'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
+            'ayant_droit', 'ayant_droit_details',
+            'date', 'status', 'status_display', 'produits', 
+            'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes'
+        ]
 
 class StockLotSerializer(serializers.ModelSerializer):
     """Serializer pour les lots de stock avec traçabilité fournisseur"""
