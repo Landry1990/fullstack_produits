@@ -106,14 +106,30 @@ class ProduitViewSet(viewsets.ModelViewSet):
                 'type': 'SORTIE',
                 'date': sortie.created_at,
                 'quantity': sortie.quantity,
-                'libelle': f"Facture #{sortie.facture.numero_facture or sortie.facture.id} - {sortie.facture.client.name}",
+                'libelle': f"Facture #{sortie.facture.numero_facture or sortie.facture.id} - {sortie.facture.client.name if sortie.facture.client else 'Client manuel'}",
                 'prix_unitaire': sortie.selling_price
             })
-            
-        # Trier par date décroissante (le plus récent en premier)
+        
+        # 3. Récupérer les retours (Factures annulées)
+        retours = FactureProduit.objects.filter(
+            produit=produit,
+            facture__status=Facture.Status.ANNULEE,
+            facture__date_annulation__isnull=False
+        ).select_related('facture', 'facture__client').order_by('-facture__date_annulation')
+        
+        for retour in retours:
+            transactions.append({
+                'type': 'RETOUR',
+                'date': retour.facture.date_annulation,
+                'quantity': retour.quantity,
+                'libelle': f"Retour Facture #{retour.facture.numero_facture or retour.facture.id} - {retour.facture.client.name if retour.facture.client else 'Client manuel'}",
+                'prix_unitaire': retour.selling_price
+            })
+        
+        # 4. Combiner et trier par date décroissante (le plus récent en premier)
         transactions.sort(key=lambda x: x['date'], reverse=True)
         
-        # 4. Reconstruire l'historique du stock (en remontant le temps)
+        # 5. Reconstruire l'historique du stock (en remontant le temps)
         current_stock = produit.stock
         history = []
         
@@ -122,8 +138,8 @@ class ProduitViewSet(viewsets.ModelViewSet):
         for trans in transactions:
             stock_after = running_stock
             
-            if trans['type'] == 'ENTREE':
-                # Si c'était une entrée, on avait MOINS avant
+            if trans['type'] == 'ENTREE' or trans['type'] == 'RETOUR':
+                # Si c'était une entrée ou un retour, on avait MOINS avant
                 stock_before = running_stock - trans['quantity']
             else: # SORTIE
                 # Si c'était une sortie, on avait PLUS avant
@@ -489,7 +505,7 @@ class FactureViewSet(viewsets.ModelViewSet):
     @transaction.atomic
     def annuler(self, request, pk=None):
         """
-        Annule une facture.
+        Annule une facture et restaure le stock.
         """
         facture = self.get_object()
         if facture.status == Facture.Status.ANNULEE:
@@ -498,18 +514,32 @@ class FactureViewSet(viewsets.ModelViewSet):
         # Récupérer le motif
         motif = request.data.get('motif', '')
 
-        # Changer le statut de la facture
+        # 1. Restaurer le stock des produits
+        for ligne in facture.produits.all():
+            produit = ligne.produit
+            produit.stock += ligne.quantity
+            produit.save(update_fields=['stock'])
+
+        # 2. Libérer les allocations FIFO
+        FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        ).delete()
+
+        # 3. Enregistrer la date d'annulation
+        facture.date_annulation = timezone.now()
+        
+        # 4. Changer le statut de la facture
         facture.status = Facture.Status.ANNULEE
         
-        # Enregistrer le motif dans les notes
+        # 5. Enregistrer le motif dans les notes
         if motif:
             current_notes = facture.notes or ""
-            timestamp = timezone.now().strftime('%d/%m/%Y %H:%M')
+            timestamp = facture.date_annulation.strftime('%d/%m/%Y %H:%M')
             facture.notes = f"{current_notes}\n[Annulation le {timestamp}] Motif: {motif}".strip()
             
-        facture.save(update_fields=['status', 'notes'])
+        facture.save(update_fields=['status', 'notes', 'date_annulation'])
 
-        return Response({'status': 'Facture annulée avec succès.'})
+        return Response({'status': 'Facture annulée avec succès. Stock restauré.'})
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     @transaction.atomic

@@ -404,7 +404,7 @@ export default function Facturation() {
       let ayantDroitId = selectedAyantDroit
       const client = clients.find(c => c.id === selectedClient)
       
-      if (client?.client_type === 'PROFESSIONNEL' && showNewAyantDroit) {
+      if (client?.client_type === 'PROFESSIONNEL' && (showNewAyantDroit || ayantsDroitList.length === 0)) {
         // Vérifier que les champs sont remplis
         if (ayantDroitNom && ayantDroitMatricule) {
           try {
