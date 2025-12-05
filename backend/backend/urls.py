@@ -5,7 +5,7 @@ from api.views import (
     ProduitViewSet, RayonViewSet, FournisseurViewSet, 
     ClientViewSet, CommandeViewSet, CommandeProduitViewSet,
     FactureViewSet, FactureProduitViewSet, DashboardViewSet,
-    UserViewSet, CustomAuthToken, CaisseViewSet
+    UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet
 )
 
 router = DefaultRouter()
@@ -14,6 +14,7 @@ router.register(r'produits', ProduitViewSet)
 router.register(r'rayons', RayonViewSet)
 router.register(r'fournisseurs', FournisseurViewSet)
 router.register(r'clients', ClientViewSet)
+router.register(r'ayants-droit', AyantDroitViewSet, basename='ayantdroit')
 router.register(r'commandes', CommandeViewSet)
 router.register(r'commande-produits', CommandeProduitViewSet)
 router.register(r'factures', FactureViewSet)

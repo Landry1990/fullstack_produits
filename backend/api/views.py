@@ -23,13 +23,13 @@ from django.contrib.auth.models import User
 from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
-    StockLot, FactureProduitAllocation
+    StockLot, FactureProduitAllocation, AyantDroit
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer, CaisseSerializer,
-    UserSerializer # Assuming PaiementSerializer is not needed for this specific change, but UserSerializer is.
+    UserSerializer, AyantDroitSerializer
 )
 from decimal import Decimal
 
@@ -157,6 +157,14 @@ class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all().order_by('name')
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
+
+class AyantDroitViewSet(viewsets.ModelViewSet):
+    """API endpoint for ayants droit."""
+    queryset = AyantDroit.objects.all().order_by('nom')
+    serializer_class = AyantDroitSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['client']
 
 def header_footer(canvas, doc, company_info, commande_info, total_achat):
     canvas.saveState()
@@ -375,6 +383,28 @@ class FactureViewSet(viewsets.ModelViewSet):
         # Récupère et verrouille les lignes de facture + produits pour éviter les conditions de concurrence
         items = FactureProduit.objects.select_for_update().select_related('produit').filter(facture=facture)
 
+        # 0. Vérifier le plafond de crédit pour les clients professionnels
+        if facture.client and facture.client.client_type == 'PROFESSIONNEL':
+            # Calculer la dette actuelle (factures validées non payées)
+            current_debt = facture.client.current_debt
+            
+            # Calculer le montant de la nouvelle facture
+            new_invoice_amount = facture.total_ttc
+            
+            # Vérifier si le plafond est dépassé
+            plafond = facture.client.plafond
+            if plafond > 0 and (current_debt + new_invoice_amount) > plafond:
+                return Response(
+                    {
+                        'detail': f"Le plafond de crédit du client est dépassé. "
+                                  f"Dette actuelle: {current_debt}, "
+                                  f"Montant facture: {new_invoice_amount}, "
+                                  f"Plafond: {plafond}. "
+                                  f"Total après validation: {current_debt + new_invoice_amount}"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
         # Vérifier le stock avant validation
         for item in items:
             produit = item.produit
@@ -454,6 +484,32 @@ class FactureViewSet(viewsets.ModelViewSet):
         facture.refresh_from_db()
         serializer = self.get_serializer(facture)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def annuler(self, request, pk=None):
+        """
+        Annule une facture.
+        """
+        facture = self.get_object()
+        if facture.status == Facture.Status.ANNULEE:
+            return Response({'detail': 'Cette facture est déjà annulée.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Récupérer le motif
+        motif = request.data.get('motif', '')
+
+        # Changer le statut de la facture
+        facture.status = Facture.Status.ANNULEE
+        
+        # Enregistrer le motif dans les notes
+        if motif:
+            current_notes = facture.notes or ""
+            timestamp = timezone.now().strftime('%d/%m/%Y %H:%M')
+            facture.notes = f"{current_notes}\n[Annulation le {timestamp}] Motif: {motif}".strip()
+            
+        facture.save(update_fields=['status', 'notes'])
+
+        return Response({'status': 'Facture annulée avec succès.'})
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     @transaction.atomic

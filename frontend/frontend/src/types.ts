@@ -11,6 +11,15 @@ export interface Fournisseur {
   email: string;
 }
 
+export interface AyantDroit {
+  id?: number;
+  client?: number;
+  matricule: string;
+  nom: string;
+  societe?: string;
+  date_creation?: string;
+}
+
 export interface ProduitModel {
   id: number
   name: string
@@ -89,6 +98,10 @@ export interface Client {
   address: string;
   phone: string;
   email: string;
+  client_type?: 'PARTICULIER' | 'PROFESSIONNEL';
+  plafond?: string;
+  ayants_droit?: AyantDroit[];
+  current_debt?: string;
 }
 
 export interface FactureProduit {
@@ -105,6 +118,8 @@ export interface Facture {
   id: number
   client: number
   client_name?: string
+  ayant_droit?: number | null
+  ayant_droit_details?: AyantDroit
   numero_facture: string | null
   date: string
   status: string

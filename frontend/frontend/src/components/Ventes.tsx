@@ -7,6 +7,7 @@ export default function Ventes() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'validated' | 'cancelled'>('all')
   const [loadingDetails, setLoadingDetails] = useState(false)
   const [deletingBrouillons, setDeletingBrouillons] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -16,6 +17,11 @@ export default function Ventes() {
   const [caisseData, setCaisseData] = useState<CaisseParTranche | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
+  const [showRefundModal, setShowRefundModal] = useState(false)
+  const [refundFacture, setRefundFacture] = useState<Facture | null>(null)
+  const [refundMode, setRefundMode] = useState('especes')
+  const [refundAmount, setRefundAmount] = useState('')
+  const [refundReference, setRefundReference] = useState('')
   const [dateDebut, setDateDebut] = useState<string>(() => {
     const now = new Date()
     const date = now.toISOString().split('T')[0]
@@ -101,6 +107,110 @@ export default function Ventes() {
     }
   }
 
+  const handlePrintInvoice = async () => {
+    if (!selectedFacture) return
+    
+    // Vérifier si c'est un client générique
+    const isGenericClient = !selectedFacture.client_name || 
+                            selectedFacture.client_name.toLowerCase().includes('divers') ||
+                            selectedFacture.client_name.toLowerCase().includes('passage')
+    
+    let clientName: string | null = null
+    
+    if (isGenericClient) {
+      // Demander le nom du client
+      clientName = window.prompt('Nom du client pour la facture:', '')
+      if (clientName === null) return // Annulation
+    }
+    
+    // Imprimer la facture
+    await printInvoicePDF(selectedFacture.id, clientName)
+  }
+
+  const handleOpenRefundModal = (facture: Facture) => {
+    setRefundFacture(facture)
+    // Calculer le montant restant à rembourser (total TTC négatif)
+    // On suppose qu'on rembourse tout le montant TTC
+    setRefundAmount((-Number(facture.total_ttc)).toString())
+    setRefundMode('especes')
+    setRefundReference('')
+    setShowRefundModal(true)
+  }
+
+  const handleConfirmRefund = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!refundFacture) return
+
+    setLoading(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    try {
+      // 1. Annuler la facture (changer le statut) avec le motif
+      await axios.post(`${facturesEndpoint}${refundFacture.id}/annuler/`, {
+        motif: refundReference
+      })
+
+      // 2. Créer la transaction négative dans la caisse
+      await axios.post(caisseEndpoint, {
+        facture: refundFacture.id,
+        mode_paiement: refundMode,
+        montant: refundAmount, // Montant négatif
+        reference: refundReference || `Remboursement Facture #${refundFacture.numero_facture || refundFacture.id}`,
+        statut: 'completee'
+      })
+
+      setSuccessMessage('Facture annulée et remboursement enregistré avec succès.')
+      setShowRefundModal(false)
+      setRefundFacture(null)
+      // Rafraîchir les données
+      await fetchFactures()
+      if (showCaisseTranches) {
+        fetchCaisseParTranche()
+      }
+      setTimeout(() => setSuccessMessage(null), 5000)
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement du remboursement.')
+      } else {
+        setError('Erreur lors de l\'enregistrement du remboursement.')
+      }
+      console.error('Erreur remboursement:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const printInvoicePDF = async (factureId: number, clientName?: string | null) => {
+    try {
+      const endpoint = `${facturesEndpoint}${factureId}/imprimer_facture/`
+      const params = clientName ? { client_name_override: clientName } : {}
+      
+      const response = await axios.get(endpoint, {
+        params,
+        responseType: 'blob'
+      })
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `facture_${factureId}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode?.removeChild(link)
+      
+      setSuccessMessage('Facture téléchargée avec succès')
+      setTimeout(() => setSuccessMessage(null), 3000)
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Erreur lors de l\'impression de la facture')
+      } else {
+        setError('Erreur lors de l\'impression de la facture')
+      }
+      console.error('Erreur impression:', err)
+    }
+  }
+
   const handleDeleteBrouillons = async () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les factures brouillons ? Cette action est irréversible.')) {
       return
@@ -174,10 +284,20 @@ export default function Ventes() {
   }, [showCaisseTranches, dateDebut, dateFin])
 
   // Filtrer les factures
-  const filteredFactures = factures.filter(facture =>
-    (facture.client_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredFactures = factures.filter(facture => {
+    const matchesSearch = (facture.client_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (facture.numero_facture && facture.numero_facture.toLowerCase().includes(searchQuery.toLowerCase()))
-  )
+
+    if (!matchesSearch) return false
+
+    if (filterStatus === 'validated') {
+      return facture.status === 'VAL' || facture.status === 'PAY'
+    } else if (filterStatus === 'cancelled') {
+      return facture.status === 'ANN'
+    }
+    
+    return true
+  })
 
   if (loading) {
     return (
@@ -249,6 +369,27 @@ export default function Ventes() {
           </div>
           
           <div className="flex gap-2 w-full md:w-auto">
+            <div className="join">
+              <button 
+                className={`join-item btn btn-sm ${filterStatus === 'all' ? 'btn-active' : ''}`}
+                onClick={() => setFilterStatus('all')}
+              >
+                Toutes
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${filterStatus === 'validated' ? 'btn-active btn-success text-white' : ''}`}
+                onClick={() => setFilterStatus('validated')}
+              >
+                Validées
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${filterStatus === 'cancelled' ? 'btn-active btn-error text-white' : ''}`}
+                onClick={() => setFilterStatus('cancelled')}
+              >
+                Annulées
+              </button>
+            </div>
+
             <button
               onClick={() => setShowCaisseTranches(!showCaisseTranches)}
               className={`btn btn-sm flex-1 md:flex-none gap-2 ${showCaisseTranches ? 'btn-primary' : 'btn-outline'}`}
@@ -350,6 +491,7 @@ export default function Ventes() {
                 <th>Client</th>
                 <th>Date</th>
                 <th>Statut</th>
+                {filterStatus === 'cancelled' && <th>Motif Annulation</th>}
                 <th className="text-right">Montant TTC</th>
                 <th className="text-center">Actions</th>
               </tr>
@@ -381,22 +523,37 @@ export default function Ventes() {
                         facture.status === 'PAY' ? 'badge-success text-white' :
                         facture.status === 'BROU' ? 'badge-warning text-warning-content' :
                         facture.status === 'VAL' ? 'badge-info text-white' :
+                        facture.status === 'ANN' ? 'badge-error text-white' :
                         'badge-ghost'
                       }`}>
                         {facture.status_display}
                       </span>
                     </td>
+                    {filterStatus === 'cancelled' && (
+                      <td className="text-sm text-error italic max-w-xs truncate" title={facture.notes || ''}>
+                        {facture.notes ? facture.notes.split('\n').pop()?.replace(/.*Motif: /, '') : '-'}
+                      </td>
+                    )}
                     <td className="text-right font-bold text-base-content">
                       {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
                     </td>
                     <td className="text-center">
-                      <button
-                        onClick={() => handleViewProducts(facture)}
-                        className="btn btn-sm btn-ghost btn-square text-primary hover:bg-primary/10"
-                        title="Voir détails"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                      </button>
+                      <div className="flex justify-center gap-2">
+                        <button
+                          onClick={() => handleViewProducts(facture)}
+                          className="btn btn-sm btn-ghost btn-square text-primary hover:bg-primary/10"
+                          title="Voir détails"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                        <button
+                          onClick={() => handleOpenRefundModal(facture)}
+                          className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/10"
+                          title="Annuler / Rembourser"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -472,6 +629,13 @@ export default function Ventes() {
             )}
             
             <div className="modal-action">
+              <button 
+                className="btn btn-primary gap-2"
+                onClick={handlePrintInvoice}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                Imprimer Facture
+              </button>
               <button className="btn" onClick={() => setSelectedFacture(null)}>Fermer</button>
             </div>
           </div>
@@ -629,6 +793,103 @@ export default function Ventes() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
+        </div>
+      )}
+
+      {/* Modal de Remboursement */}
+      {showRefundModal && refundFacture && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-md">
+            <div className="flex justify-between items-center mb-4 border-b pb-2">
+              <h3 className="font-bold text-lg text-error">Remboursement / Annulation</h3>
+              <button 
+                className="btn btn-sm btn-circle btn-ghost"
+                onClick={() => setShowRefundModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleConfirmRefund} className="space-y-4">
+              <div className="alert alert-warning text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>Cette action créera une transaction négative dans la caisse pour annuler la vente.</span>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Facture concernée</span>
+                </label>
+                <input 
+                  type="text" 
+                  value={refundFacture.numero_facture || `Facture #${refundFacture.id}`} 
+                  className="input input-bordered w-full bg-base-200" 
+                  disabled 
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Montant à rembourser (Négatif)</span>
+                </label>
+                <input 
+                  type="number" 
+                  value={refundAmount} 
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                  className="input input-bordered w-full text-error font-bold" 
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Mode de remboursement</span>
+                </label>
+                <select 
+                  value={refundMode} 
+                  onChange={(e) => setRefundMode(e.target.value)}
+                  className="select select-bordered w-full"
+                >
+                  <option value="especes">Espèces</option>
+                  <option value="cheque">Chèque</option>
+                  <option value="carte">Carte Bancaire</option>
+                  <option value="virement">Virement</option>
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Référence / Motif (Optionnel)</span>
+                </label>
+                <input 
+                  type="text" 
+                  value={refundReference} 
+                  onChange={(e) => setRefundReference(e.target.value)}
+                  placeholder="Ex: Erreur de saisie, Retour produit..."
+                  className="input input-bordered w-full" 
+                />
+              </div>
+
+              <div className="modal-action">
+                <button 
+                  type="button" 
+                  className="btn" 
+                  onClick={() => setShowRefundModal(false)}
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-error text-white"
+                  disabled={loading}
+                >
+                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer Remboursement'}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowRefundModal(false)}></div>
         </div>
       )}
     </div>
