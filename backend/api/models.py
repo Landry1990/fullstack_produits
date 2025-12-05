@@ -203,6 +203,7 @@ class Facture(models.Model):
     remise = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
     notes = models.TextField(blank=True, null=True)
+    date_annulation = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
