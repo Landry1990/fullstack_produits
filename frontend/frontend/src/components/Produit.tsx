@@ -26,6 +26,7 @@ export default function Produit() {
     stock_maximum: '',
     rayon: '',
     fournisseur: '',
+    tva: '19.25',
   })
   const [editProduit, setEditProduit] = useState<ProduitForm | null>(null)
   const [rayons, setRayons] = useState<Rayon[]>([])
@@ -38,6 +39,8 @@ export default function Produit() {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [filterRayon, setFilterRayon] = useState<string>('')
   const [filterFournisseur, setFilterFournisseur] = useState<string>('')
+  const [isEditingTva, setIsEditingTva] = useState(false)
+  const [tempTva, setTempTva] = useState('')
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -69,6 +72,7 @@ export default function Produit() {
       stock_maximum: '',
       rayon: '',
       fournisseur: '',
+      tva: '19.25',
     })
     setIsAddModalOpen(true)
   }
@@ -105,6 +109,36 @@ export default function Produit() {
         setSearchQuery('');
         setHighlightedIndex(-1);
         break;
+    }
+  }
+
+  const handleGenerateLabels = async (produit: ProduitModel) => {
+    const quantityStr = prompt(`Nombre d'étiquettes pour ${produit.name} ?`, "1")
+    if (!quantityStr) return
+    
+    const quantity = parseInt(quantityStr, 10)
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("Quantité invalide")
+      return
+    }
+
+    try {
+      const response = await axios.post(`${produitsEndpoint}generate_labels/`, {
+        products: [{ id: produit.id, quantity }]
+      }, {
+        responseType: 'blob' // Important for PDF download
+      })
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `etiquettes_${produit.name}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch (err) {
+      console.error('Erreur génération étiquettes:', err)
+      alert('Erreur lors de la génération des étiquettes')
     }
   }
 
@@ -205,6 +239,7 @@ export default function Produit() {
       stock_maximum: String(selectedProduit.stock_maximum ?? '0'),
       rayon: '',
       fournisseur: '',
+      tva: selectedProduit.tva || '19.25',
     })
     ;(async () => {
       try {
@@ -257,6 +292,7 @@ export default function Produit() {
         stock_maximum: newProduit.stock_maximum ? parseInt(newProduit.stock_maximum, 10) : 0,
         rayon: newProduit.rayon ? parseInt(newProduit.rayon, 10) : undefined,
         fournisseur: newProduit.fournisseur ? parseInt(newProduit.fournisseur, 10) : undefined,
+        tva: newProduit.tva || '19.25',
       }
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
         setError('Les champs Nom, Stock, Prix de revient et Prix de vente sont obligatoires')
@@ -413,43 +449,74 @@ export default function Produit() {
                 </select>
               </div>
             </div>
-            <div className="overflow-x-hidden flex-1 p-3 md:p-4 pt-0">
-              <div className="h-full max-h-[500px] overflow-y-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-                  {filteredProduits.map((produit, index) => {
-                    const isSelected = produit.id === selectedProductId
-                    const isHighlighted = !!searchQuery && highlightedIndex === index
-                    const stock = produit.stock ?? 0
-                    const alert = produit.stock_alert ?? 0
-                    const stockClass = stock <= 0 ? 'badge-error' : stock <= alert ? 'badge-warning' : 'badge-success'
-                    const price = Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')
-                    return (
-                      <div
-                        key={produit.id}
-                        onClick={() => selectProduct(produit)}
-                        className={`card bg-base-100 border ${isSelected ? 'border-primary' : 'border-base-200'} hover:border-primary transition-colors cursor-pointer ${isHighlighted ? 'ring ring-primary' : ''}`}
-                      >
-                        <div className="card-body p-3 md:p-4">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="font-bold uppercase leading-tight">{produit.name}</div>
-                              <div className="text-xs text-base-content/60 flex gap-1 mt-1">
-                                {produit.cip1 && <span className="badge badge-ghost badge-xs">{produit.cip1}</span>}
-                                {produit.cip2 && <span className="badge badge-ghost badge-xs">{produit.cip2}</span>}
-                                {produit.cip3 && <span className="badge badge-ghost badge-xs">{produit.cip3}</span>}
+            <div className="overflow-x-hidden flex-1 p-0">
+              <div className="h-full max-h-[600px] overflow-y-auto">
+                <table className="table table-pin-rows table-sm w-full">
+                  <thead>
+                    <tr>
+                      <th className="bg-base-100">Produit</th>
+                      <th className="bg-base-100 text-right">Prix</th>
+                      <th className="bg-base-100 text-center">Stock</th>
+                      <th className="bg-base-100 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProduits.map((produit, index) => {
+                      const isSelected = produit.id === selectedProductId
+                      const isHighlighted = !!searchQuery && highlightedIndex === index
+                      const stock = produit.stock ?? 0
+                      const price = Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')
+                      
+                      // Stock styling logic
+                      let nameClass = "font-normal opacity-70" // Default (Stock = 0)
+                      let stockClass = "badge badge-ghost badge-sm"
+                      
+                      if (stock > 0) {
+                        nameClass = "font-bold text-base-content"
+                        stockClass = "badge badge-success badge-sm"
+                      } else if (stock < 0) {
+                        nameClass = "font-bold text-error"
+                        stockClass = "badge badge-error badge-sm"
+                      }
+
+                      return (
+                        <tr
+                          key={produit.id}
+                          onClick={() => selectProduct(produit)}
+                          className={`cursor-pointer hover:bg-base-200 transition-colors ${isSelected ? 'bg-primary/10 border-l-4 border-primary' : ''} ${isHighlighted ? 'bg-base-200' : ''}`}
+                        >
+                          <td>
+                            <div className="flex flex-col">
+                              <span className={`${nameClass} uppercase`}>{produit.name}</span>
+                              <div className="flex gap-1 mt-0.5">
+                                {produit.cip1 && <span className="text-[10px] opacity-50">{produit.cip1}</span>}
+                                {produit.rayon_name && <span className="text-[10px] opacity-50">• {produit.rayon_name}</span>}
                               </div>
                             </div>
-                            <span className={`badge ${stockClass}`}>{stock}</span>
-                          </div>
-                          <div className="mt-2 flex items-center justify-between">
-                            <div className="text-sm"><span className="opacity-70">Prix:</span> <span className="font-semibold text-primary">{price} F</span></div>
-                            <div className="text-xs opacity-60 uppercase">{produit.rayon_name}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                          </td>
+                          <td className="text-right font-mono text-sm">
+                            {price}
+                          </td>
+                          <td className="text-center">
+                            <span className={stockClass}>{stock}</span>
+                          </td>
+                          <td className="text-center">
+                            <button 
+                              className="btn btn-ghost btn-xs text-info tooltip" 
+                              data-tip="Étiquettes"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleGenerateLabels(produit)
+                              }}
+                            >
+                              🏷️
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
             <div className="p-3 md:p-4 border-t flex flex-wrap gap-2 justify-end">
@@ -510,6 +577,60 @@ export default function Produit() {
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">Prix de vente</span>
                       <span className="col-span-2 text-primary font-bold">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-semibold col-span-1">TVA</span>
+                      <div className="col-span-2 flex items-center gap-2">
+                        {isEditingTva ? (
+                          <div className="join">
+                            <input 
+                              type="number" 
+                              className="input input-bordered input-xs join-item w-20" 
+                              value={tempTva}
+                              onChange={(e) => setTempTva(e.target.value)}
+                              step="0.01"
+                            />
+                            <button 
+                              className="btn btn-xs btn-success join-item"
+                              onClick={async () => {
+                                try {
+                                  const payload = { tva: tempTva }
+                                  const { data } = await axios.patch<ProduitModel>(`${produitsEndpoint}${selectedProduit.id}/`, payload)
+                                  setProduits((prev) => prev.map((p) => (p.id === data.id ? data : p)))
+                                  setIsEditingTva(false)
+                                } catch (err) {
+                                  console.error("Erreur update TVA", err)
+                                }
+                              }}
+                            >
+                              OK
+                            </button>
+                            <button className="btn btn-xs btn-ghost join-item" onClick={() => setIsEditingTva(false)}>X</button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => {
+                            setTempTva(selectedProduit.tva || '19.25')
+                            setIsEditingTva(true)
+                          }}>
+                            <span>{selectedProduit.tva || '19.25'} %</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3 opacity-0 group-hover:opacity-50">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-semibold col-span-1">Coef. Marge</span>
+                      <span className="col-span-2">{selectedProduit.taux_marge ? Number(selectedProduit.taux_marge).toFixed(2) : '0.00'}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-semibold col-span-1">% de Marge</span>
+                      <span className="col-span-2">{selectedProduit.pourcentage_marge ? Number(selectedProduit.pourcentage_marge).toFixed(2) : '0.00'} %</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <span className="font-semibold col-span-1">Rotation Moy.</span>
+                      <span className="col-span-2">{selectedProduit.rotation_moyenne ? Number(selectedProduit.rotation_moyenne).toFixed(2) : '0.00'} / mois</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <span className="font-semibold col-span-1">CIP1</span>
@@ -610,6 +731,7 @@ export default function Produit() {
                             stock_alert: parseInt(editProduit.stock_alert || '0', 10),
                             stock_minimum: parseInt(editProduit.stock_minimum || '0', 10),
                             stock_maximum: parseInt(editProduit.stock_maximum || '0', 10),
+                            tva: editProduit.tva || '19.25',
                           }
                           const { data } = await axios.patch<ProduitModel>(`${produitsEndpoint}${selectedProduit.id}/`, payload)
                           setProduits((prev) => prev.map((p) => (p.id === data.id ? data : p)))

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -6,13 +6,14 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum, Count, Q
 from django.http import HttpResponse
 import io
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
-from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageBreak, PageTemplate, Table, TableStyle
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib import colors
+from reportlab.lib.units import inch, cm
+from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageBreak, PageTemplate, Table, TableStyle, SimpleDocTemplate, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from datetime import datetime, timedelta
@@ -23,13 +24,13 @@ from django.contrib.auth.models import User
 from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
-    StockLot, FactureProduitAllocation, AyantDroit
+    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer, CaisseSerializer,
-    UserSerializer, AyantDroitSerializer
+    UserSerializer, AyantDroitSerializer, ClotureCaisseSerializer, StockLotSerializer
 )
 from decimal import Decimal
 
@@ -156,6 +157,90 @@ class ProduitViewSet(viewsets.ModelViewSet):
             
         return Response(history)
 
+    @action(detail=False, methods=['post'])
+    def generate_labels(self, request):
+        """
+        Génère des étiquettes codes-barres pour les produits sélectionnés.
+        Body: { 'products': [{ 'id': 1, 'quantity': 5 }, ...] }
+        """
+        products_data = request.data.get('products', [])
+        if not products_data:
+            return Response({'detail': 'Aucun produit sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        buffer = io.BytesIO()
+        # Etiquettes 5x3cm environ, ajuster selon besoin
+        # A4: 210x297mm. 
+        # On va faire simple: page A4 avec grille d'étiquettes
+        doc = BaseDocTemplate(buffer, pagesize=A4, topMargin=1*cm, bottomMargin=1*cm, leftMargin=0.5*cm, rightMargin=0.5*cm)
+        
+        story = []
+        styles = getSampleStyleSheet()
+        style_normal = styles['Normal']
+        style_normal.fontSize = 8
+        style_normal.alignment = 1 # Center
+        
+        # Prepare data for table
+        # 4 colonnes par page
+        col_width = 4.8 * cm
+        row_height = 3 * cm
+        
+        cells = []
+        
+        from reportlab.graphics.barcode import code128
+        from reportlab.graphics.shapes import Drawing
+        
+        for item in products_data:
+            try:
+                product = Produit.objects.get(pk=item['id'])
+                qty = int(item.get('quantity', 1))
+                
+                # Use CIP1 or ID as barcode
+                barcode_value = product.cip1 or str(product.id).zfill(8)
+                
+                for _ in range(qty):
+                    # Barcode
+                    barcode = code128.Code128(barcode_value, barHeight=1*cm, barWidth=1.2)
+                    d = Drawing(3.5*cm, 1.2*cm)
+                    d.add(barcode)
+                    
+                    # Cell content
+                    cell_content = [
+                        Paragraph(product.name[:30], style_normal),
+                        d,
+                        Paragraph(f"{product.selling_price} F", style_normal)
+                    ]
+                    cells.append(cell_content)
+                    
+            except Produit.DoesNotExist:
+                continue
+                
+        # Create table rows (chunks of 4)
+        table_data = [cells[i:i + 4] for i in range(0, len(cells), 4)]
+        
+        # Fill last row if needed
+        if table_data and len(table_data[-1]) < 4:
+            table_data[-1].extend([''] * (4 - len(table_data[-1])))
+            
+        table = Table(table_data, colWidths=[col_width]*4, rowHeights=[row_height]*len(table_data))
+        table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('LEFTPADDING', (0, 0), (-1, -1), 2),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        
+        story.append(table)
+        doc.build(story)
+        
+        pdf = buffer.getvalue()
+        buffer.close()
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="etiquettes.pdf"'
+        response.write(pdf)
+        return response
+
 class RayonViewSet(viewsets.ModelViewSet):
     """API endpoint for rayons."""
     queryset = Rayon.objects.all().order_by('name')
@@ -240,6 +325,100 @@ class CommandeViewSet(viewsets.ModelViewSet):
     queryset = Commande.objects.all().order_by('-date')
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def generate_replenishment(self, request):
+        """
+        Génère automatiquement des commandes brouillon pour les produits en rupture de stock.
+        Règle : Si stock <= stock_minimum, commander (stock_maximum - stock).
+        Si pas de stock_maximum, commander (stock_minimum * 2).
+        """
+        # 1. Identifier les produits à commander
+        produits_a_commander = Produit.objects.filter(stock__lte=F('stock_minimum'))
+        
+        if not produits_a_commander.exists():
+            return Response({'detail': 'Aucun produit ne nécessite un réapprovisionnement.'}, status=status.HTTP_200_OK)
+
+        commandes_creees = []
+        produits_par_fournisseur = {}
+
+        # 2. Grouper par fournisseur
+        for produit in produits_a_commander:
+            if not produit.fournisseur:
+                continue # On ignore les produits sans fournisseur
+            
+            if produit.fournisseur.id not in produits_par_fournisseur:
+                produits_par_fournisseur[produit.fournisseur.id] = {
+                    'fournisseur': produit.fournisseur,
+                    'produits': []
+                }
+            
+            produits_par_fournisseur[produit.fournisseur.id]['produits'].append(produit)
+
+        # 3. Créer les commandes
+        count_commandes = 0
+        count_produits = 0
+
+        for fournisseur_id, data in produits_par_fournisseur.items():
+            fournisseur = data['fournisseur']
+            produits = data['produits']
+            
+            # Vérifier s'il existe déjà une commande brouillon pour ce fournisseur
+            commande = Commande.objects.filter(
+                fournisseur=fournisseur, 
+                status=Commande.Status.BROUILLON
+            ).first()
+            
+            created = False
+            if not commande:
+                commande = Commande.objects.create(
+                    fournisseur=fournisseur,
+                    status=Commande.Status.BROUILLON
+                )
+                created = True
+                count_commandes += 1
+            
+            # Ajouter les produits à la commande
+            for produit in produits:
+                # Calculer la quantité à commander
+                if produit.stock_maximum > 0:
+                    qte_a_commander = produit.stock_maximum - produit.stock
+                else:
+                    qte_a_commander = produit.stock_minimum * 2
+                
+                # S'assurer que la quantité est positive et au moins 1
+                qte_a_commander = max(qte_a_commander, 1)
+                
+                # Vérifier si le produit est déjà dans la commande
+                commande_produit, cp_created = CommandeProduit.objects.get_or_create(
+                    commande=commande,
+                    produit=produit,
+                    defaults={
+                        'quantity': qte_a_commander,
+                        'price': produit.cost_price
+                    }
+                )
+                
+                if not cp_created:
+                    # Si déjà présent, on met à jour la quantité pour atteindre le stock cible
+                    # On prend le max entre ce qui était prévu et le nouveau calcul
+                    commande_produit.quantity = max(commande_produit.quantity, qte_a_commander)
+                    commande_produit.price = produit.cost_price # Mise à jour du prix coûtant au cas où
+                    commande_produit.save()
+                
+                count_produits += 1
+
+            commandes_creees.append({
+                'fournisseur': fournisseur.name,
+                'commande_id': commande.id,
+                'nouveau': created
+            })
+
+        return Response({
+            'detail': f'{count_commandes} commande(s) générée(s) ou mise(s) à jour pour {count_produits} produits.',
+            'commandes': commandes_creees
+        })
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -396,8 +575,17 @@ class FactureViewSet(viewsets.ModelViewSet):
         if facture.status == Facture.Status.VALIDEE:
             return Response({'detail': 'Cette facture est déjà validée.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Récupère et verrouille les lignes de facture + produits pour éviter les conditions de concurrence
-        items = FactureProduit.objects.select_for_update().select_related('produit').filter(facture=facture)
+        # Récupérer les lignes de facture
+        items = FactureProduit.objects.filter(facture=facture)
+        
+        # Récupérer les IDs des produits concernés
+        product_ids = [item.produit_id for item in items]
+        
+        # VERROUILLER les produits concernés pour éviter les modifications concurrentes
+        # select_for_update() empêche d'autres transactions de modifier ces produits
+        # jusqu'à la fin de la transaction actuelle.
+        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
+        product_map = {p.id: p for p in locked_products}
 
         # 0. Vérifier le plafond de crédit pour les clients professionnels
         if facture.client and facture.client.client_type == 'PROFESSIONNEL':
@@ -421,9 +609,12 @@ class FactureViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # Vérifier le stock avant validation
+        # Vérifier le stock avant validation en utilisant les instances VERROUILLÉES
         for item in items:
-            produit = item.produit
+            produit = product_map.get(item.produit_id)
+            if not produit:
+                continue # Should not happen if integrity is maintained
+
             try:
                 qty = Decimal(str(item.quantity))
                 stock = Decimal(str(produit.stock))
@@ -455,16 +646,20 @@ class FactureViewSet(viewsets.ModelViewSet):
 
         # Mettre à jour le stock et appliquer FIFO
         for item in items:
-            # 1. Mise à jour du stock global (inchangé)
-            Produit.objects.filter(pk=item.produit.pk).update(stock=F('stock') - item.quantity)
+            produit = product_map.get(item.produit_id)
+            
+            # 1. Mise à jour du stock global sur l'instance VERROUILLÉE
+            produit.stock = F('stock') - item.quantity
+            produit.save(update_fields=['stock'])
             
             # 2. Logique FIFO pour les VENTES (qty > 0)
             if item.quantity > 0:
                 quantity_to_allocate = item.quantity
                 
                 # Récupérer les lots disponibles par ordre FIFO (plus anciens en premier)
-                available_lots = StockLot.objects.filter(
-                    produit=item.produit,
+                # Note: On pourrait aussi verrouiller les lots, mais c'est moins critique si le stock global est bon
+                available_lots = StockLot.objects.select_for_update().filter(
+                    produit=produit,
                     quantity_remaining__gt=0
                 ).order_by('date_reception')
                 
@@ -590,7 +785,7 @@ class FactureViewSet(viewsets.ModelViewSet):
                     try:
                         end_datetime = datetime.strptime(date_fin_str, '%Y-%m-%dT%H:%M:%S')
                     except ValueError:
-                        return Response({'detail': f'Format de date/heure invalide pour date_fin: {date_fin_str}. Utilisez YYYY-MM-DDTHH:MM ou YYYY-MM-DDTHH:MM:SS'}, status=status.HTTP_400_BAD_REQUEST)
+                        return Response({'detail': f'Format de date/heure invalide pour date_fin: {date_fin_str}. Utilisez YYYY-MM-DDTHH:MM ou YYYY-MM-DDTHH:MM:%S'}, status=status.HTTP_400_BAD_REQUEST)
                 end_datetime = timezone.make_aware(end_datetime)
             else:
                 return Response({'detail': 'Le paramètre date_fin est requis.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -876,6 +1071,160 @@ class CaisseViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Enregistrer automatiquement l'utilisateur lors de la création
         serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def get_totals(self, request):
+        """
+        Retourne les totaux depuis la dernière clôture.
+        """
+        last_cloture = ClotureCaisse.objects.order_by('-date').first()
+        start_date = last_cloture.date if last_cloture else None
+        
+        transactions = Caisse.objects.filter(statut='completee')
+        if start_date:
+            transactions = transactions.filter(date_paiement__gt=start_date)
+            
+        total = transactions.aggregate(Sum('montant'))['montant__sum'] or 0
+        
+        # Totaux par mode
+        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: item['total'] for item in modes}
+        
+        return Response({
+            'start_date': start_date,
+            'total_theorique': total,
+            'details': details
+        })
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def cloturer(self, request):
+        """
+        Effectue la clôture de caisse.
+        Body: { 'montant_reel': 150000 }
+        """
+        montant_reel = request.data.get('montant_reel')
+        if montant_reel is None:
+            return Response({'detail': 'Le montant réel est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            montant_reel = Decimal(str(montant_reel))
+        except:
+            return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculer le théorique
+        last_cloture = ClotureCaisse.objects.order_by('-date').first()
+        start_date = last_cloture.date if last_cloture else None
+        
+        transactions = Caisse.objects.filter(statut='completee')
+        if start_date:
+            transactions = transactions.filter(date_paiement__gt=start_date)
+            
+        montant_theorique = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        # Détails
+        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        
+        ecart = montant_reel - montant_theorique
+        
+        cloture = ClotureCaisse.objects.create(
+            user=request.user,
+            montant_theorique=montant_theorique,
+            montant_reel=montant_reel,
+            ecart=ecart,
+            details=details
+        )
+        
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def cloturer(self, request):
+        """
+        Effectue la clôture de caisse.
+        Body: { 'montant_reel': 150000 }
+        """
+        montant_reel = request.data.get('montant_reel')
+        if montant_reel is None:
+            return Response({'detail': 'Le montant réel est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            montant_reel = Decimal(str(montant_reel))
+        except:
+            return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Calculer le théorique
+        last_cloture = ClotureCaisse.objects.order_by('-date').first()
+        start_date = last_cloture.date if last_cloture else None
+        
+        transactions = Caisse.objects.filter(statut='completee')
+        if start_date:
+            transactions = transactions.filter(date_paiement__gt=start_date)
+            
+        montant_theorique = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        # Détails
+        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        
+        ecart = montant_reel - montant_theorique
+        
+        cloture = ClotureCaisse.objects.create(
+            user=request.user,
+            montant_theorique=montant_theorique,
+            montant_reel=montant_reel,
+            ecart=ecart,
+            details=details
+        )
+        
+        return Response(ClotureCaisseSerializer(cloture).data)
+
+
+class StockLotViewSet(viewsets.ModelViewSet):
+    """API endpoint for stock lots (expiry management)."""
+    queryset = StockLot.objects.select_related('produit', 'fournisseur').order_by('date_expiration')
+    serializer_class = StockLotSerializer
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    filterset_fields = ['produit', 'fournisseur']
+    ordering_fields = ['date_expiration', 'date_reception']
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Filter by expiry date if provided
+        date_expiration_lte = self.request.query_params.get('date_expiration_lte')
+        if date_expiration_lte:
+            qs = qs.filter(date_expiration__lte=date_expiration_lte)
+        
+        # Filter only positive remaining quantity by default, unless specified
+        include_empty = self.request.query_params.get('include_empty', 'false')
+        if include_empty.lower() != 'true':
+            qs = qs.filter(quantity_remaining__gt=0)
+            
+        return qs
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def sortir_perimes(self, request, pk=None):
+        """
+        Sort un lot du stock (destruction/retour).
+        """
+        lot = self.get_object()
+        quantity_to_remove = int(request.data.get('quantity', lot.quantity_remaining))
+        reason = request.data.get('reason', 'Périmé')
+        
+        if quantity_to_remove > lot.quantity_remaining:
+            return Response({'detail': 'Quantité insuffisante dans le lot.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Update lot
+        lot.quantity_remaining -= quantity_to_remove
+        lot.save()
+        
+        # Update product stock
+        produit = lot.produit
+        produit.stock = F('stock') - quantity_to_remove
+        produit.save(update_fields=['stock'])
+        
+        return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.'})
 
 
 class DashboardViewSet(viewsets.ViewSet):

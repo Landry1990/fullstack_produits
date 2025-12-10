@@ -36,6 +36,10 @@ export interface ProduitModel {
   stock_maximum: number
   rayon_name: string
   fournisseur_name: string
+  tva?: string
+  rotation_moyenne?: string
+  taux_marge?: string
+  pourcentage_marge?: string
   created_at?: string
   updated_at?: string
 }
@@ -55,6 +59,7 @@ export interface ProduitForm {
   stock_maximum: string
   rayon: string
   fournisseur: string
+  tva: string
 }
 
 export interface AchatProduit {
@@ -176,4 +181,18 @@ export interface CaisseTransaction {
     full_name: string
   } | null
   client_name: string
+}
+
+export interface StockLot {
+  id: number
+  produit: number
+  produit_nom: string
+  fournisseur: number
+  fournisseur_nom: string
+  quantity_initial: number
+  quantity_remaining: number
+  price_cost: string
+  lot: string | null
+  date_expiration: string | null
+  date_reception: string
 }

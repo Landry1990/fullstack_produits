@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
     CommandeProduit, Facture, FactureProduit, Caisse, Profile,
-    StockLot, FactureProduitAllocation, AyantDroit
+    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -29,7 +29,6 @@ class UserSerializer(serializers.ModelSerializer):
         # Profile is created by signal, update it
         if profile_data:
             profile = user.profile
-            profile = user.profile
             profile.allowed_menus = profile_data.get('allowed_menus', [])
             profile.can_do_returns = profile_data.get('can_do_returns', False)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', False)
@@ -52,7 +51,6 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save()
 
         if profile_data:
-            profile = instance.profile
             profile = instance.profile
             profile.allowed_menus = profile_data.get('allowed_menus', profile.allowed_menus)
             profile.can_do_returns = profile_data.get('can_do_returns', profile.can_do_returns)
@@ -91,7 +89,7 @@ class ProduitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Produit
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
@@ -198,3 +196,11 @@ class FactureProduitAllocationSerializer(serializers.ModelSerializer):
         model = FactureProduitAllocation
         fields = '__all__'
         read_only_fields = ['created_at']
+
+class ClotureCaisseSerializer(serializers.ModelSerializer):
+    user_nom = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = ClotureCaisse
+        fields = '__all__'
+        read_only_fields = ['date']

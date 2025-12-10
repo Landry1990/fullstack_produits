@@ -173,8 +173,32 @@ class Produit(models.Model):
     stock_alert = models.IntegerField(default=0)
     stock_minimum = models.IntegerField(default=0)
     stock_maximum = models.IntegerField(default=0)
+    tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
+    rotation_moyenne = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
+    pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Calcul automatique des marges
+        if self.cost_price and self.selling_price:
+            try:
+                cp = Decimal(str(self.cost_price))
+                sp = Decimal(str(self.selling_price))
+                
+                if cp > 0:
+                    self.taux_marge = sp / cp
+                else:
+                    self.taux_marge = Decimal('0.00')
+                    
+                if sp > 0:
+                    self.pourcentage_marge = ((sp - cp) / sp) * 100
+                else:
+                    self.pourcentage_marge = Decimal('0.00')
+            except (ValueError, TypeError):
+                pass
+        super().save(*args, **kwargs)
 
 
     def __str__(self):
@@ -357,3 +381,15 @@ class FactureProduitAllocation(models.Model):
     def revenue(self):
         """Calcule le CA pour cette allocation"""
         return self.selling_price * self.quantity
+
+
+class ClotureCaisse(models.Model):
+    date = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    montant_theorique = models.DecimalField(max_digits=12, decimal_places=2)
+    montant_reel = models.DecimalField(max_digits=12, decimal_places=2)
+    ecart = models.DecimalField(max_digits=12, decimal_places=2)
+    details = models.JSONField(default=dict) # Détails par mode de paiement
+    
+    def __str__(self):
+        return f"Clôture du {self.date} par {self.user}"

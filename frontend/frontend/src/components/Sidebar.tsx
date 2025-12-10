@@ -44,6 +44,7 @@ export default function Sidebar() {
       ),
       submenus: [
         { path: '/app/inventaire', label: 'Inventaire', key: 'inventaire' },
+        { path: '/app/perimes', label: 'Périmés', key: 'inventaire' },
         { path: '/app/formes', label: 'Formes', key: 'formes' },
         { path: '/app/rayons', label: 'Rayons', key: 'rayons' }
       ]

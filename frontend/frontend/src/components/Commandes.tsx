@@ -490,6 +490,28 @@ export default function Commandes() {
     }
   }
 
+  async function handleGenerateReplenishment() {
+    setLoading(true);
+    setError(null);
+    try {
+      const replenishmentEndpoint = `${commandesEndpoint}generate_replenishment/`;
+      const response = await axios.post(replenishmentEndpoint);
+      
+      if (response.data.commandes && response.data.commandes.length > 0) {
+        alert(response.data.detail);
+        // Refresh commandes
+        const { data: updatedCommandes } = await axios.get<Commande[]>(commandesEndpoint);
+        setCommandes(updatedCommandes);
+      } else {
+        alert(response.data.detail || "Aucune commande générée.");
+      }
+    } catch (err) {
+      handleApiError(err, "Erreur lors de la génération du réapprovisionnement");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleImprimerReception() {
     if (!selectedCommande) {
       setError("Aucune commande sélectionnée.");
@@ -566,6 +588,14 @@ export default function Commandes() {
             <h2 className="card-title">Liste des commandes</h2>
             <div className="card-actions">
               {loading && <span className="loading loading-spinner loading-sm" />}
+              <button 
+                className="btn btn-secondary mr-2" 
+                onClick={handleGenerateReplenishment}
+                disabled={loading}
+              >
+                {loading && <span className="loading loading-spinner loading-sm" />}
+                Générer Réapprovisionnement
+              </button>
               <button className="btn btn-primary" onClick={openAddModal}>Créer</button>
             </div>
           </div>
