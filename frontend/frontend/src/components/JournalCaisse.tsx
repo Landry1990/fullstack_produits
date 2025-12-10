@@ -95,6 +95,42 @@ export default function JournalCaisse() {
     })
   }
 
+  const [isClosingModalOpen, setIsClosingModalOpen] = useState(false)
+  const [closingTotals, setClosingTotals] = useState<{
+    start_date: string | null,
+    total_theorique: number,
+    details: Record<string, number>
+  } | null>(null)
+  const [actualAmount, setActualAmount] = useState<string>('')
+
+  const fetchClosingTotals = async () => {
+    try {
+      const response = await axios.get(`${caisseEndpoint}get_totals/`)
+      setClosingTotals(response.data)
+      setActualAmount(response.data.total_theorique.toString()) // Default to theoretical
+      setIsClosingModalOpen(true)
+    } catch (err) {
+      console.error('Erreur chargement totaux:', err)
+      setError('Impossible de charger les totaux pour la clôture')
+    }
+  }
+
+  const handleCloseCaisse = async () => {
+    if (!actualAmount) return
+    
+    try {
+      await axios.post(`${caisseEndpoint}cloturer/`, {
+        montant_reel: parseFloat(actualAmount)
+      })
+      setIsClosingModalOpen(false)
+      alert('Caisse clôturée avec succès !')
+      fetchTransactions() // Refresh list
+    } catch (err) {
+      console.error('Erreur clôture:', err)
+      setError('Erreur lors de la clôture de caisse')
+    }
+  }
+
   const getModeIcon = (mode: string) => {
     switch (mode) {
       case 'especes': return '💵'
@@ -121,6 +157,13 @@ export default function JournalCaisse() {
         >
           {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
           Actualiser
+        </button>
+        <button
+          onClick={fetchClosingTotals}
+          className="btn btn-sm btn-primary gap-2 ml-2"
+          disabled={loading}
+        >
+          🔒 Clôturer la Caisse
         </button>
       </div>
 
@@ -317,6 +360,69 @@ export default function JournalCaisse() {
           {filteredTransactions.length !== transactions.length && ` sur ${transactions.length} au total`}
         </p>
       </div>
+
+      {/* Modal de Clôture */}
+      <dialog className={`modal ${isClosingModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg mb-4">Clôture de Caisse</h3>
+          
+          {closingTotals && (
+            <div className="space-y-4">
+              <div className="alert alert-info text-sm">
+                <span>Période : {closingTotals.start_date ? `Depuis le ${formatDate(closingTotals.start_date)}` : 'Depuis le début'}</span>
+              </div>
+
+              <div className="stats shadow w-full">
+                <div className="stat">
+                  <div className="stat-title">Total Théorique</div>
+                  <div className="stat-value text-primary">{Math.round(closingTotals.total_theorique)} F</div>
+                  <div className="stat-desc">Calculé d'après les transactions</div>
+                </div>
+              </div>
+
+              <div className="form-control w-full">
+                <label className="label">
+                  <span className="label-text font-bold">Montant Réel en Caisse</span>
+                </label>
+                <input 
+                  type="number" 
+                  placeholder="Entrez le montant compté..." 
+                  className="input input-bordered w-full input-lg" 
+                  value={actualAmount}
+                  onChange={(e) => setActualAmount(e.target.value)}
+                />
+                <label className="label">
+                  <span className="label-text-alt">
+                    Ecart : {actualAmount ? Math.round(parseFloat(actualAmount) - closingTotals.total_theorique) : 0} F
+                  </span>
+                </label>
+              </div>
+
+              <div className="collapse collapse-arrow bg-base-100 border border-base-200">
+                <input type="checkbox" /> 
+                <div className="collapse-title font-medium">
+                  Détails par mode de paiement
+                </div>
+                <div className="collapse-content"> 
+                  <ul className="menu menu-compact bg-base-100 w-full p-2 rounded-box">
+                    {Object.entries(closingTotals.details).map(([mode, montant]) => (
+                      <li key={mode} className="flex-row justify-between">
+                        <span>{getModeIcon(mode)} {mode}</span>
+                        <span className="font-bold">{Math.round(montant)} F</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="modal-action">
+            <button className="btn" onClick={() => setIsClosingModalOpen(false)}>Annuler</button>
+            <button className="btn btn-primary" onClick={handleCloseCaisse}>Confirmer la Clôture</button>
+          </div>
+        </div>
+      </dialog>
     </div>
   )
 }

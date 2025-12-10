@@ -54,6 +54,7 @@ export default function ProduitFormModal({
     stock_maximum: '',
     rayon: '',
     fournisseur: '',
+    tva: '19.25',
     ...initialData,
   });
   const [loading, setLoading] = useState(false);
@@ -78,10 +79,26 @@ export default function ProduitFormModal({
       stock_maximum: '',
       rayon: '',
       fournisseur: '',
+      tva: '19.25',
       ...initialData,
     });
     setError(null); // Clear errors when modal is reopened
   }, [open, initialData]);
+
+  // Calcul des marges en temps réel
+  const costPrice = parseFloat(form.cost_price) || 0;
+  const sellingPrice = parseFloat(form.selling_price) || 0;
+  
+  let tauxMarge = 0;
+  let pourcMarge = 0;
+
+  if (costPrice > 0) {
+    tauxMarge = sellingPrice / costPrice;
+  }
+  
+  if (sellingPrice > 0) {
+    pourcMarge = ((sellingPrice - costPrice) / sellingPrice) * 100;
+  }
 
   useEffect(() => {
     if (open) {
@@ -131,6 +148,7 @@ export default function ProduitFormModal({
         stock_maximum: form.stock_maximum ? parseInt(form.stock_maximum, 10) : 0,
         rayon: form.rayon ? parseInt(form.rayon, 10) : undefined,
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : undefined,
+        tva: form.tva || '19.25',
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
@@ -209,6 +227,32 @@ export default function ProduitFormModal({
                 required
               />
             </label>
+
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text">TVA (%)</span></div>
+              <input
+                type="number"
+                className="input input-bordered w-full"
+                value={form.tva}
+                onChange={(e) => setForm((p) => ({ ...p, tva: e.target.value }))}
+                step="0.01"
+              />
+            </label>
+            <div className="form-control w-full">
+               <div className="label"><span className="label-text">Coef. Marge</span></div>
+               <div className="input input-bordered w-full flex items-center bg-base-200 text-base-content/70">
+                 {tauxMarge.toFixed(2)}
+               </div>
+            </div>
+            <div className="form-control w-full">
+               <div className="label"><span className="label-text">% de Marge</span></div>
+               <div className="input input-bordered w-full flex items-center bg-base-200 text-base-content/70">
+                 {pourcMarge.toFixed(2)} %
+               </div>
+            </div>
           </div>
           <label className="form-control w-full">
             <div className="label"><span className="label-text">Description</span></div>
