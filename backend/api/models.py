@@ -287,6 +287,8 @@ class Caisse(models.Model):
         ('cheque', 'Chèque'),
         ('carte', 'Carte'),
         ('virement', 'Virement'),
+        ('om', 'Orange Money'),
+        ('momo', 'Mobile Money'),
         ('en_compte', 'En compte'),
     ]
     
