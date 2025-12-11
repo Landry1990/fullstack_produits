@@ -143,13 +143,14 @@ export interface TicketCaisse {
   facture: number | Facture  // Peut être l'ID ou l'objet complet
   facture_numero?: string
   client_name?: string
-  mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement'
+  mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte' | 'Mixte'
   montant: string
   reference?: string | null
   statut: string
   date_paiement: string
   montant_verse?: string
   rendu?: string
+  paiements_details?: { mode: string; montant: number }[]
 }
 
 export interface CaisseParTranche {
@@ -169,7 +170,7 @@ export interface CaisseTransaction {
   id: number
   facture: number
   facture_numero: string
-  mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'
+  mode_paiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo' | 'en_compte'
   mode_paiement_display: string
   montant: string
   reference: string | null

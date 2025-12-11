@@ -50,13 +50,13 @@ export default function Facturation() {
   const [loading, setLoading] = useState(false)
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
-  const [tva, setTva] = useState('0')
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
   const [montantPaye, setMontantPaye] = useState('')
+  const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
   const [reference, setReference] = useState('')
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
@@ -289,7 +289,7 @@ export default function Facturation() {
       remiseMontant = sousTotal * (tauxRemise / 100)
     }
     
-    const tvaRate = normalizeNumberInput(tva, { min: 0 })
+    const tvaRate = 0
     const baseHT = sousTotal - remiseMontant
     const montantTva = Math.round(baseHT * (tvaRate / 100))
     const totalTtc = baseHT + montantTva
@@ -300,7 +300,7 @@ export default function Facturation() {
       montantTva,
       totalTtc,
     }
-  }, [lignesFacture, remise, remiseMode, tva])
+  }, [lignesFacture, remise, remiseMode])
 
   // Filtrer les produits selon la recherche
   const filteredProduits = useMemo(() => {
@@ -369,13 +369,15 @@ export default function Facturation() {
     const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
     const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/'
 
+    let validatedFactureForRollback: Facture | null = null
+
     try {
       // 1. Créer la facture en mode brouillon
       const facturePayload = {
         client: useManualClient ? null : selectedClient,
         client_name_override: useManualClient ? manualClientName : null,
         remise: totals.remiseMontant.toString(),
-        tva: normalizeNumberInput(tva, { min: 0 }).toString(),
+        tva: '0',
       }
       const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
 
@@ -448,17 +450,27 @@ export default function Facturation() {
       // 3. Valider la facture
       const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
       const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint)
+      validatedFactureForRollback = validatedFacture
 
-      // 4. Enregistrer le paiement
-      // On enregistre le montant total de la facture comme paiement, pas le montant donné (qui sert au rendu monnaie)
-      const paiementPayload = {
-        facture: validatedFacture.id,
-        mode_paiement: modePaiement,
-        montant: validatedFacture.total_ttc, // Utiliser le total TTC validé
-        reference: reference || null,
-        statut: 'completee',
-      }
-      const caisseResponse = await axios.post(caisseEndpoint, paiementPayload)
+      // 4. Enregistrer les paiements
+      const paiementsList = paiements.length > 0 
+        ? paiements 
+        : [{ mode: modePaiement, montant: Number(montantPaye) }] // Si liste vide, utiliser la saisie courante
+
+      let totalVerse = 0
+      
+      // Promesse séquentielle ou parallèle pour les paiements
+      await Promise.all(paiementsList.map(async (paiement) => {
+          const paiementPayload = {
+            facture: validatedFacture.id,
+            mode_paiement: paiement.mode,
+            montant: paiement.montant, // Montant spécifique du paiement
+            reference: reference || null,
+            statut: 'completee',
+          }
+          await axios.post(caisseEndpoint, paiementPayload)
+          totalVerse += paiement.montant
+      }))
 
       // 5. Mettre à jour le statut de la facture à "PAYEE"
       const factureUpdateEndpoint = `${facturesEndpoint}${validatedFacture.id}/`
@@ -468,16 +480,26 @@ export default function Facturation() {
       const { data: finalFacture } = await axios.get<Facture>(factureUpdateEndpoint)
 
       // 7. Finaliser
-      const montantVerse = Number(montantPaye)
-      const rendu = montantVerse - Number(finalFacture.total_ttc)
+      const rendu = totalVerse - Number(finalFacture.total_ttc)
 
       setSuccessInfo(finalFacture)
+      
+      // Pour le ticket, on prend le premier paiement comme référence principale ou on adapte le ticket
+      // Note: Le backend renvoie un TicketCaisse par paiement, ici on en a plusieurs.
+      // On va simuler un objet TicketCaisse agrégé pour l'affichage
       setTicketCaisse({
-        ...caisseResponse.data,
+        id: 0, // Placeholder
         facture: finalFacture,
-        montant_verse: montantVerse.toString(),
-        rendu: rendu.toString()
-      })
+        mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
+        montant: finalFacture.total_ttc,
+        montant_verse: totalVerse.toString(),
+        rendu: rendu.toString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        statut: 'completee',
+        date_paiement: new Date().toISOString(),
+        paiements_details: paiementsList
+      } as TicketCaisse)
       
       setLignesFacture([])
       setSelectedClient(null)
@@ -499,6 +521,18 @@ export default function Facturation() {
       }
 
     } catch (err) {
+      // ROLLBACK STOCK IF NEEDED
+      if (validatedFactureForRollback) {
+        try {
+           const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+           await axios.post(`${facturesEndpoint}${validatedFactureForRollback.id}/annuler/`, {
+             motif: "Échec du paiement (Annulation automatique)"
+           })
+           console.log("Rollback successful: Invoice cancelled due to payment failure.")
+        } catch (rollbackErr) {
+           console.error("Critical: Failed to rollback invoice after payment failure", rollbackErr)
+        }
+      }
       handleApiError(err, 'Une erreur est survenue lors de l\'enregistrement de la vente.')
     } finally {
       setLoading(false)
@@ -549,16 +583,24 @@ export default function Facturation() {
         ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/caisse/`
         : '/api/caisse/'
 
-      const paiementPayload = {
-        facture: factureAPayer.id,
-        mode_paiement: modePaiement,
-        montant: factureAPayer.total_ttc, // Utiliser le total TTC de la facture
-        reference: reference || null,
-        statut: 'completee',
-      }
+      const paiementsList = paiements.length > 0 
+        ? paiements 
+        : [{ mode: modePaiement, montant: Number(montantPaye) }]
 
-      // Créer le ticket de caisse
-      const caisseResponse = await axios.post(caisseEndpoint, paiementPayload)
+      let totalVerse = 0
+
+      // Enregistrer chaque paiement
+      await Promise.all(paiementsList.map(async (paiement) => {
+          const paiementPayload = {
+            facture: factureAPayer.id,
+            mode_paiement: paiement.mode,
+            montant: paiement.montant,
+            reference: reference || null,
+            statut: 'completee',
+          }
+          await axios.post(caisseEndpoint, paiementPayload)
+          totalVerse += paiement.montant
+      }))
       
       // Mettre à jour le statut de la facture à "PAYEE"
       const factureUpdateEndpoint = apiBaseUrl
@@ -570,16 +612,24 @@ export default function Facturation() {
       // Rafraîchir les données de la facture
       const { data: factureUpdated } = await axios.get<Facture>(factureUpdateEndpoint)
 
-      const montantVerse = Number(montantPaye)
-      const rendu = montantVerse - Number(factureUpdated.total_ttc)
+      const rendu = totalVerse - Number(factureUpdated.total_ttc)
 
       setSuccessInfo(factureUpdated)
+
+      // Construction ticket simulé
       setTicketCaisse({
-        ...caisseResponse.data,
+        id: 0,
         facture: factureUpdated,
-        montant_verse: montantVerse.toString(),
-        rendu: rendu.toString()
-      })
+        mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
+        montant: factureUpdated.total_ttc,
+        montant_verse: totalVerse.toString(),
+        rendu: rendu.toString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        statut: 'completee',
+        date_paiement: new Date().toISOString(),
+        paiements_details: paiementsList
+      } as TicketCaisse)
       
       fermerModalPaiement()
     } catch (err) {
@@ -612,6 +662,8 @@ export default function Facturation() {
     setModePaiement('especes')
     setReference('')
     setIsPaymentModalOpen(true)
+    setPaiements([]) // Reset paiements list
+
     
     // Focus sur le montant après un court délai pour laisser la modale s'ouvrir
     setTimeout(() => {
@@ -624,6 +676,7 @@ export default function Facturation() {
     setIsPaymentModalOpen(false)
     setFacturePourPaiement(null)
     setMontantPaye('')
+    setPaiements([])
     setReference('')
     setModePaiement('especes')
     setIsNewSale(false)
@@ -1022,15 +1075,6 @@ export default function Facturation() {
                                 className="input input-bordered input-xs w-32"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold uppercase text-base-content/50 w-24">TVA (%)</span>
-                            <input
-                                type="number"
-                                value={tva}
-                                onChange={(e) => setTva(e.target.value)}
-                                className="input input-bordered input-xs w-32"
-                            />
-                        </div>
                     </div>
                     <div className="space-y-1 text-right">
                         <div className="text-sm text-base-content/60">
@@ -1038,9 +1082,6 @@ export default function Facturation() {
                         </div>
                         <div className="text-sm text-base-content/60">
                             Remise: <span className="font-medium text-error">-{Math.round(totals.remiseMontant)} F</span>
-                        </div>
-                        <div className="text-sm text-base-content/60">
-                            TVA: <span className="font-medium text-base-content">{Math.round(totals.montantTva)} F</span>
                         </div>
                         <div className="text-3xl font-light text-primary mt-2">
                             {Math.round(totals.totalTtc)} <span className="text-lg font-normal text-primary/60">FCFA</span>
@@ -1086,55 +1127,104 @@ export default function Facturation() {
                 </div>
               </div>
 
-              <div className="form-control w-full">
-                <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {[
-                      { value: 'especes', label: 'Espèces' },
-                      { value: 'cheque', label: 'Chèque' },
-                      { value: 'carte', label: 'Carte' },
-                      { value: 'virement', label: 'Virement' },
-                      { value: 'en_compte', label: 'En compte' }
-                    ].map((mode) => {
-                        // Désactiver "En compte" si client de passage (null) ou saisie manuelle
-                        const isDisabled = mode.value === 'en_compte' && (selectedClient === null || useManualClient)
-                        return (
-                            <button
-                                key={mode.value}
-                                type="button"
-                                className={`btn btn-sm ${
-                                    modePaiement === mode.value ? 'btn-primary' : 'btn-outline border-base-300 text-base-content font-normal'
-                                } ${isDisabled ? 'btn-disabled opacity-50' : ''}`}
-                                onClick={() => !isDisabled && setModePaiement(mode.value as any)}
-                                disabled={isDisabled}
-                                title={isDisabled ? 'Disponible uniquement pour les clients enregistrés' : ''}
-                            >
-                                {mode.label}
-                            </button>
-                        )
-                    })}
+                <div className="form-control w-full">
+                  <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
+                  <select
+                      value={modePaiement}
+                      onChange={(e) => setModePaiement(e.target.value as any)}
+                      className="select select-bordered w-full"
+                  >
+                      <option value="especes">Espèces</option>
+                      <option value="cheque">Chèque</option>
+                      <option value="carte">Carte</option>
+                      <option value="virement">Virement</option>
+                      <option value="om">Orange Money</option>
+                      <option value="momo">Mobile Money</option>
+                      <option value="en_compte" disabled={selectedClient === null || useManualClient}>
+                          En compte {selectedClient === null || useManualClient ? '(Client requis)' : ''}
+                      </option>
+                  </select>
                 </div>
-              </div>
 
-              <div className="form-control w-full">
-                <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant reçu</span></label>
-                <input
-                  ref={paymentInputRef}
-                  type="number"
-                  step="0.01"
-                  value={montantPaye}
-                  onChange={(e) => setMontantPaye(e.target.value)}
-                  className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
-                />
+              {/* Liste des paiements multiples */}
+              {paiements.length > 0 && (
+                <div className="bg-base-50 rounded-lg p-2 space-y-1">
+                    {paiements.map((p, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
+                            <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'virement' ? 'Virement' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'En compte'}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-mono">{p.montant} F</span>
+                                <button 
+                                    type="button"
+                                    onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
+                                    className="btn btn-ghost btn-xs text-error btn-square"
+                                >✕</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+              )}
+
+              <div className="flex items-end gap-2">
+                  <div className="form-control flex-1">
+                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant</span></label>
+                    <input
+                      ref={paymentInputRef}
+                      type="number"
+                      step="0.01"
+                      value={montantPaye}
+                      onChange={(e) => setMontantPaye(e.target.value)}
+                      onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                              e.preventDefault()
+                              if (montantPaye && Number(montantPaye) > 0) {
+                                  setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
+                                  // Calculer le reste à payer pour la prochaine entrée
+                                  const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                  const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
+                                  const reste = Math.max(0, totalAPayer - dejaVerse)
+                                  setMontantPaye(reste > 0 ? reste.toString() : '')
+                              }
+                          }
+                      }}
+                      className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      placeholder="Saisir montant..."
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary h-[3rem]" // Match input height roughly
+                    disabled={!montantPaye || Number(montantPaye) <= 0}
+                    onClick={() => {
+                        if (montantPaye && Number(montantPaye) > 0) {
+                            setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
+                            const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                            const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
+                            const reste = Math.max(0, totalAPayer - dejaVerse)
+                            setMontantPaye(reste > 0 ? reste.toString() : '')
+                        }
+                    }}
+                  >
+                    Ajouter
+                  </button>
               </div>
 
               {(() => {
                 const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                const rendu = Number(montantPaye) - totalAPayer
-                return rendu > 0 && (
-                  <div className="alert bg-success/10 text-success border-success/20 py-3 shadow-sm flex justify-between items-center">
-                    <span className="text-sm font-medium">Monnaie à rendre</span>
-                    <span className="text-xl font-bold">{rendu.toFixed(0)} F</span>
+                const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 ? Number(montantPaye) : 0)
+                const rendu = totalVerse - totalAPayer
+                return (
+                  <div className="flex flex-col gap-1">
+                      <div className="flex justify-between text-sm">
+                          <span>Total versé:</span>
+                          <span className="font-bold">{Math.round(totalVerse)} F</span>
+                      </div>
+                      {rendu > 0 && (
+                        <div className="alert bg-success/10 text-success border-success/20 py-2 px-3 shadow-sm flex justify-between items-center">
+                            <span className="text-sm font-medium">Monnaie à rendre</span>
+                            <span className="text-xl font-bold">{rendu.toFixed(0)} F</span>
+                        </div>
+                      )}
                   </div>
                 )
               })()}
@@ -1142,7 +1232,7 @@ export default function Facturation() {
               <div className="pt-4 flex gap-3">
                 <button type="button" className="btn btn-ghost flex-1" onClick={fermerModalPaiement}>Annuler (Esc)</button>
                 <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer (Entrée)'}
+                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer le paiement'}
                 </button>
               </div>
             </form>
@@ -1177,7 +1267,7 @@ export default function Facturation() {
               <div className="border-y border-dashed border-black py-2 mb-4">
                 {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.produits?.map((p: any) => (
                   <div key={p.id} className="flex justify-between mb-1">
-                    <span>{p.produit.name} x{p.quantity}</span>
+                    <span>{typeof p.produit === 'object' ? p.produit.name : (p.produit_nom || `Produit #${p.produit}`)} x{p.quantity}</span>
                     <span>{Math.round(p.quantity * p.selling_price)}</span>
                   </div>
                 ))}
@@ -1214,9 +1304,21 @@ export default function Facturation() {
                     <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
                   </div>
                 )}
-                <div className="text-xs font-normal mt-2 text-center">
-                  Mode: {ticketCaisse.mode_paiement.toUpperCase()}
-                </div>
+                {ticketCaisse.paiements_details ? (
+                  <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
+                      <div className="font-bold mb-1">Règlements:</div>
+                      {ticketCaisse.paiements_details.map((paiement, idx) => (
+                          <div key={idx} className="flex justify-between">
+                              <span>{paiement.mode.toUpperCase()}</span>
+                              <span>{Math.round(paiement.montant)} F</span>
+                          </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-xs font-normal mt-2 text-center">
+                    Mode: {ticketCaisse.mode_paiement.toUpperCase()}
+                  </div>
+                )}
               </div>
               
               <div className="text-center mt-6 text-xs">

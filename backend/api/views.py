@@ -1075,14 +1075,42 @@ class CaisseViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def get_totals(self, request):
         """
-        Retourne les totaux depuis la dernière clôture.
+        Retourne les totaux.
+        Si date_debut/date_fin fournis, utilise cette période.
+        Sinon, calcule depuis la dernière clôture.
         """
-        last_cloture = ClotureCaisse.objects.order_by('-date').first()
-        start_date = last_cloture.date if last_cloture else None
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        start_date = None
+        end_date = None
+        
+        if date_debut:
+            try:
+                start_date = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+                
+        if date_fin:
+            try:
+                # Si c'est juste une date YYYY-MM-DD, ajouter 23:59:59
+                if len(date_fin) == 10:
+                    end_date = datetime.fromisoformat(f"{date_fin}T23:59:59")
+                else:
+                    end_date = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+
+        if not start_date:
+            last_cloture = ClotureCaisse.objects.order_by('-date').first()
+            start_date = last_cloture.date if last_cloture else None
         
         transactions = Caisse.objects.filter(statut='completee')
+        
         if start_date:
-            transactions = transactions.filter(date_paiement__gt=start_date)
+            transactions = transactions.filter(date_paiement__gte=start_date)
+        if end_date:
+            transactions = transactions.filter(date_paiement__lte=end_date)
             
         total = transactions.aggregate(Sum('montant'))['montant__sum'] or 0
         
@@ -1092,10 +1120,12 @@ class CaisseViewSet(viewsets.ModelViewSet):
         
         return Response({
             'start_date': start_date,
+            'end_date': end_date,
             'total_theorique': total,
             'details': details
         })
 
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def cloturer(self, request):
@@ -1112,53 +1142,38 @@ class CaisseViewSet(viewsets.ModelViewSet):
         except:
             return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Calculer le théorique
-        last_cloture = ClotureCaisse.objects.order_by('-date').first()
-        start_date = last_cloture.date if last_cloture else None
+        # Paramètres optionnels de période
+        date_debut = request.data.get('date_debut')
+        date_fin = request.data.get('date_fin')
         
-        transactions = Caisse.objects.filter(statut='completee')
-        if start_date:
-            transactions = transactions.filter(date_paiement__gt=start_date)
-            
-        montant_theorique = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        start_date = None
+        end_date = None
         
-        # Détails
-        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
-        details = {item['mode_paiement']: float(item['total']) for item in modes}
-        
-        ecart = montant_reel - montant_theorique
-        
-        cloture = ClotureCaisse.objects.create(
-            user=request.user,
-            montant_theorique=montant_theorique,
-            montant_reel=montant_reel,
-            ecart=ecart,
-            details=details
-        )
-        
-    @action(detail=False, methods=['post'])
-    @transaction.atomic
-    def cloturer(self, request):
-        """
-        Effectue la clôture de caisse.
-        Body: { 'montant_reel': 150000 }
-        """
-        montant_reel = request.data.get('montant_reel')
-        if montant_reel is None:
-            return Response({'detail': 'Le montant réel est requis.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        try:
-            montant_reel = Decimal(str(montant_reel))
-        except:
-            return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+        if date_debut:
+            try:
+                start_date = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+                
+        if date_fin:
+            try:
+                if len(date_fin) == 10:
+                    end_date = datetime.fromisoformat(f"{date_fin}T23:59:59")
+                else:
+                    end_date = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
+            except ValueError:
+                pass
 
         # Calculer le théorique
-        last_cloture = ClotureCaisse.objects.order_by('-date').first()
-        start_date = last_cloture.date if last_cloture else None
+        if not start_date:
+            last_cloture = ClotureCaisse.objects.order_by('-date').first()
+            start_date = last_cloture.date if last_cloture else None
         
         transactions = Caisse.objects.filter(statut='completee')
         if start_date:
-            transactions = transactions.filter(date_paiement__gt=start_date)
+            transactions = transactions.filter(date_paiement__gte=start_date)
+        if end_date:
+            transactions = transactions.filter(date_paiement__lte=end_date)
             
         montant_theorique = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         

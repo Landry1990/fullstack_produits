@@ -69,6 +69,8 @@ export default function JournalCaisse() {
       cheque: 0,
       carte: 0,
       virement: 0,
+      om: 0,
+      momo: 0,
       en_compte: 0,
       total: 0
     }
@@ -98,14 +100,20 @@ export default function JournalCaisse() {
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false)
   const [closingTotals, setClosingTotals] = useState<{
     start_date: string | null,
+    end_date?: string | null,
     total_theorique: number,
-    details: Record<string, number>
+    details: Record<string, number>,
+    user?: string
   } | null>(null)
   const [actualAmount, setActualAmount] = useState<string>('')
 
   const fetchClosingTotals = async () => {
     try {
-      const response = await axios.get(`${caisseEndpoint}get_totals/`)
+      const params: any = {}
+      if (dateDebut) params.date_debut = dateDebut
+      if (dateFin) params.date_fin = dateFin
+      
+      const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
       setClosingTotals(response.data)
       setActualAmount(response.data.total_theorique.toString()) // Default to theoretical
       setIsClosingModalOpen(true)
@@ -120,7 +128,9 @@ export default function JournalCaisse() {
     
     try {
       await axios.post(`${caisseEndpoint}cloturer/`, {
-        montant_reel: parseFloat(actualAmount)
+        montant_reel: parseFloat(actualAmount),
+        date_debut: dateDebut || undefined,
+        date_fin: dateFin || undefined
       })
       setIsClosingModalOpen(false)
       alert('Caisse clôturée avec succès !')
@@ -131,12 +141,110 @@ export default function JournalCaisse() {
     }
   }
 
+  const handleImprimerCloture = () => {
+    if (!closingTotals) return
+    
+    const win = window.open('', '', 'height=600,width=400');
+    if (win) {
+      const formatDateLong = (d: string) => {
+        return new Date(d).toLocaleString('fr-FR', { 
+          day: 'numeric', month: 'numeric', year: 'numeric', 
+          hour: '2-digit', minute: '2-digit' 
+        });
+      };
+
+      const startStr = closingTotals.start_date ? formatDateLong(closingTotals.start_date) : 'Début';
+      const endStr = dateFin ? formatDateLong(dateFin) : 'Maintenant';
+
+      const content = `
+        <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black;">
+            <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">PHARMA STOCK</h2>
+                <div style="font-size: 0.9em;">Douala, Cameroun</div>
+                <div style="font-size: 0.9em;">CLÔTURE DE CAISSE</div>
+            </div>
+
+            <div style="font-size: 0.8em; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Date:</span>
+                    <span>${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Caissier:</span>
+                    <span>${closingTotals.user || 'Admin'}</span>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 8px 0; margin-bottom: 15px;">
+                <div style="font-weight: bold; text-align: center; margin-bottom: 5px; text-transform: uppercase;">Période (Tranche)</div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                    <span>Du:</span>
+                    <span>${startStr}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+                    <span>Au:</span>
+                    <span>${endStr}</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <div style="font-weight: bold; margin-bottom: 5px; border-bottom: 1px dashed black; padding-bottom: 2px;">DÉTAILS ENCAISSEMENTS</div>
+                ${Object.entries(closingTotals.details).map(([mode, montant]) => `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
+                        <span>${getModeIcon(mode)} ${mode.toUpperCase()}</span>
+                        <span>${Math.round(montant)} F</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div style="border-top: 2px solid black; padding-top: 10px; margin-top: 10px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-bottom: 5px;">
+                    <span>TOTAL THÉORIQUE</span>
+                    <span>${Math.round(closingTotals.total_theorique)} F</span>
+                </div>
+                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; border-top: 1px dashed black; padding-top: 5px; margin-top: 5px;">
+                    <span>Montant Réel (Compté)</span>
+                    <span>${actualAmount ? Math.round(parseFloat(actualAmount)) + ' F' : '_________'}</span>
+                </div>
+                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-top: 5px;">
+                    <span>Ecart Caisse</span>
+                    <span>${actualAmount ? Math.round(parseFloat(actualAmount) - closingTotals.total_theorique) + ' F' : '_________'}</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 0.8em;">
+                <div style="text-align: center;">
+                    <p style="margin-bottom: 40px; text-decoration: underline;">Signature Caissier</p>
+                </div>
+                <div style="text-align: center;">
+                    <p style="margin-bottom: 40px; text-decoration: underline;">Signature Responsable</p>
+                </div>
+            </div>
+            
+            <div style="text-align: center; font-size: 0.7em; margin-top: 20px;">
+                --- Fin du rapport de clôture ---
+            </div>
+        </div>
+      `;
+      
+      win.document.write('<html><head><title>Clôture Caisse</title>');
+      win.document.write('<style>body { font-family: monospace; padding: 0; margin: 0; } @media print { body { padding: 0; margin: 0; } }</style>');
+      win.document.write('</head><body>');
+      win.document.write(content);
+      win.document.write('</body></html>');
+      win.document.close();
+      win.print();
+    }
+  }
+
   const getModeIcon = (mode: string) => {
     switch (mode) {
       case 'especes': return '💵'
       case 'cheque': return '📝'
       case 'carte': return '💳'
       case 'virement': return '🏦'
+      case 'om': return '🟧'
+      case 'momo': return '📱'
       case 'en_compte': return '📊'
       default: return '💰'
     }
@@ -199,6 +307,8 @@ export default function JournalCaisse() {
               <option value="cheque">Chèque</option>
               <option value="carte">Carte</option>
               <option value="virement">Virement</option>
+              <option value="om">Orange Money</option>
+              <option value="momo">Mobile Money</option>
               <option value="en_compte">En compte</option>
             </select>
           </div>
@@ -206,10 +316,10 @@ export default function JournalCaisse() {
           {/* Date début */}
           <div className="form-control">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Date début</span>
+              <span className="label-text text-xs font-bold uppercase">Début (Date & Heure)</span>
             </label>
             <input
-              type="date"
+              type="datetime-local"
               value={dateDebut}
               onChange={(e) => setDateDebut(e.target.value)}
               className="input input-bordered input-sm"
@@ -219,10 +329,10 @@ export default function JournalCaisse() {
           {/* Date fin */}
           <div className="form-control">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Date fin</span>
+              <span className="label-text text-xs font-bold uppercase">Fin (Date & Heure)</span>
             </label>
             <input
-              type="date"
+              type="datetime-local"
               value={dateFin}
               onChange={(e) => setDateFin(e.target.value)}
               className="input input-bordered input-sm"
@@ -262,6 +372,12 @@ export default function JournalCaisse() {
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
             🏦 Virement: <span className="font-bold">{Math.round(totauxParMode.virement)} F</span>
+          </div>
+          <div className="badge badge-lg badge-ghost gap-2">
+            🟧 OM: <span className="font-bold">{Math.round(totauxParMode.om)} F</span>
+          </div>
+          <div className="badge badge-lg badge-ghost gap-2">
+            📱 MoMo: <span className="font-bold">{Math.round(totauxParMode.momo)} F</span>
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
             📊 En compte: <span className="font-bold">{Math.round(totauxParMode.en_compte)} F</span>
@@ -417,9 +533,12 @@ export default function JournalCaisse() {
             </div>
           )}
 
-          <div className="modal-action">
-            <button className="btn" onClick={() => setIsClosingModalOpen(false)}>Annuler</button>
-            <button className="btn btn-primary" onClick={handleCloseCaisse}>Confirmer la Clôture</button>
+          <div className="modal-action flex justify-between items-center">
+             <button className="btn btn-ghost" onClick={handleImprimerCloture}>🖨️ Imprimer Ticket</button>
+             <div className="flex gap-2">
+                <button className="btn" onClick={() => setIsClosingModalOpen(false)}>Annuler</button>
+                <button className="btn btn-primary" onClick={handleCloseCaisse}>Confirmer la Clôture</button>
+             </div>
           </div>
         </div>
       </dialog>
