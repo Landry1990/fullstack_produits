@@ -19,7 +19,10 @@ interface DashboardStats {
   sales: { value: number; change: number };
   clients: { value: number; change: number };
   low_stock: { value: number; change: number };
+  receivables: { value: number; count: number };
 }
+
+
 
 interface Transaction {
   id: number;
@@ -160,21 +163,20 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats && [
           { title: "Chiffre d'affaires", value: `${Math.round(stats.revenue.value).toLocaleString('fr-FR')} F`, change: `${stats.revenue.change > 0 ? '+' : ''}${stats.revenue.change}%`, icon: "💰", color: "bg-emerald-100 text-emerald-700", isPositive: stats.revenue.change >= 0 },
-          { title: "Ventes du jour", value: stats.sales.value, change: `${stats.sales.change > 0 ? '+' : ''}${stats.sales.change}%`, icon: "shopping_cart", color: "bg-blue-100 text-blue-700", isPositive: stats.sales.change >= 0 },
-          { title: "Nouveaux Clients", value: stats.clients.value, change: `${stats.clients.change > 0 ? '+' : ''}${stats.clients.change}%`, icon: "group", color: "bg-purple-100 text-purple-700", isPositive: stats.clients.change >= 0 },
+          { title: "Créances Clients", value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
           { title: "Valeur Stock", value: `${Math.round(stockValue).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
-          { title: "Alertes Stock", value: stats.low_stock.value, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false }, // Pas de variation pertinente pour le stock
-        ].map((stat, index) => (
-          <div key={index} className="card bg-base-100 shadow-sm border border-base-200">
-            <div className="card-body p-4 flex flex-row items-center justify-between">
+          { title: "Alertes Stock", value: stats.low_stock.value, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false },
+        ].map((stat: any, index) => {
+          const content = (
+            <div className={`card-body p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
               <div>
                 <p className="text-sm font-medium text-base-content/70">{stat.title}</p>
                 <h3 className="text-2xl font-bold text-base-content mt-1">{stat.value}</h3>
-                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === 'Valeur Stock' ? 'text-base-content/60' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
-                  {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : 'vs hier'}</span>
+                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === 'Valeur Stock' ? 'text-base-content/60' : stat.title === 'Créances Clients' ? 'text-orange-600' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
+                  {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : stat.title === 'Créances Clients' ? 'en attente' : 'vs hier'}</span>
                 </span>
               </div>
               <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${stat.color}`}>
@@ -190,11 +192,26 @@ export default function Dashboard() {
                 {stat.icon === 'warning' && (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 )}
+                {stat.icon === 'credit_card' && (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                )}
                 {stat.icon === '💰' && <span className="text-2xl">💰</span>}
               </div>
             </div>
-          </div>
-        ))}
+          );
+
+          return (
+            <div key={index} className="card bg-base-100 shadow-sm border border-base-200">
+              {stat.link ? (
+                <Link to={stat.link} className="block h-full">
+                  {content}
+                </Link>
+              ) : (
+                content
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

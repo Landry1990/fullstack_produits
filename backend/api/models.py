@@ -80,18 +80,34 @@ class Client(models.Model):
 
     @property
     def current_debt(self):
-        """Calcule la dette actuelle du client (factures validées non payées)."""
-        # On considère les factures VALIDEE comme dette, moins ce qui a été payé ? 
-        # Ou simplement les factures qui ne sont pas PAYEE ou ANNULEE ?
-        # Simplification: Somme des restes à payer sur les factures validées.
-        # Pour l'instant, on va faire simple: Somme des totaux des factures VALIDEE.
-        # Une meilleure approche serait de sommer (Total TTC - Total Payé) pour toutes les factures non soldées.
-        # Mais le modèle actuel marque la facture comme PAYEE seulement si tout est payé.
+        """
+        Calcule la dette actuelle du client.
+        Somme des restes à payer sur les factures VALIDEE.
+        """
+        total_dette = Decimal('0.00')
         
-        # Approche 1: Somme des factures VALIDEE (non encore PAYEE)
-        # Cela suppose que 'VALIDEE' signifie 'En attente de paiement complet'
-        factures_impayees = self.facture_set.filter(status=Facture.Status.VALIDEE)
-        total_dette = sum(f.total_ttc for f in factures_impayees)
+        # On ne prend que les factures VALIDEE. 
+        # Si une facture est PAYEE, la dette est nulle.
+        # Si elle est BROUILLON ou ANNULEE, pas de dette.
+        factures = self.facture_set.filter(status='VAL')
+        
+        for facture in factures:
+             # Somme des paiements réels (excluant 'en_compte')
+             # On utilise l'attribut factice 'paiements' via related_name
+             paiements_reels = facture.paiements.filter(
+                 statut='completee'
+             ).exclude(
+                 mode_paiement='en_compte'
+             ).aggregate(
+                 total=Sum('montant')
+             )['total'] or Decimal('0.00')
+             
+             reste = facture.total_ttc - paiements_reels
+             
+             # On ne compte que si le reste est positif (éviter négatifs bizarres)
+             if reste > 0:
+                 total_dette += reste
+                 
         return total_dette
 
 
@@ -316,16 +332,27 @@ class Caisse(models.Model):
 def update_facture_status_on_payment(sender, instance, created, **kwargs):
     """
     Met à jour automatiquement le statut de la facture vers PAYEE
-    lorsqu'un paiement est enregistré et complété.
+    lorsque le total des paiements atteint ou dépasse le montant total TTC.
     Exception: les paiements 'en_compte' ne marquent pas la facture comme payée.
     """
-    if created and instance.statut == 'completee':
+    if instance.statut == 'completee':
         # Ne pas marquer comme payée si le mode de paiement est 'en_compte'
         if instance.mode_paiement != 'en_compte':
             facture = instance.facture
             if facture.status == Facture.Status.VALIDEE:
-                facture.status = Facture.Status.PAYEE
-                facture.save(update_fields=['status'])
+                # Calculer le total des paiements complétés (hors 'en_compte')
+                total_paiements = facture.paiements.filter(
+                    statut='completee'
+                ).exclude(
+                    mode_paiement='en_compte'
+                ).aggregate(
+                    total=Sum('montant')
+                )['total'] or Decimal('0.00')
+                
+                # Marquer comme payée si le total des paiements >= total TTC
+                if total_paiements >= facture.total_ttc:
+                    facture.status = Facture.Status.PAYEE
+                    facture.save(update_fields=['status'])
 
 
 class StockLot(models.Model):

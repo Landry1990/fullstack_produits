@@ -197,3 +197,41 @@ export interface StockLot {
   date_expiration: string | null
   date_reception: string
 }
+
+export interface Paiement {
+  id: number
+  mode_paiement: string
+  mode_paiement_display: string
+  montant: string
+  reference?: string | null
+  statut: string
+  date_paiement: string
+  user_details?: {
+    id: number
+    username: string
+    full_name: string
+  } | null
+}
+
+export interface Creance {
+  id: number
+  numero_facture: string | null
+  client: number
+  client_name: string
+  client_name_override?: string | null
+  ayant_droit?: number | null
+  ayant_droit_details?: AyantDroit
+  date: string
+  status: string
+  status_display: string
+  total_ht: string
+  remise: string
+  tva: string
+  total_tva: string
+  total_ttc: string
+  montant_paye: string
+  reste_a_payer: string
+  paiements: Paiement[]
+  notes?: string
+}
+

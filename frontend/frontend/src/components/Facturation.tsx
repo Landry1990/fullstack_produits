@@ -372,12 +372,50 @@ export default function Facturation() {
     let validatedFactureForRollback: Facture | null = null
 
     try {
-      // 1. Créer la facture en mode brouillon
+      // 0. Préparer l'ayant droit (si nécessaire)
+      let ayantDroitId = selectedAyantDroit
+      const clientObj = clients.find(c => c.id === selectedClient)
+      
+      if (clientObj?.client_type === 'PROFESSIONNEL') {
+          // Cas lecture seule ou sélectionné : déjà dans ayantDroitId
+          
+          // Cas création nouveau
+          if (showNewAyantDroit || ayantsDroitList.length === 0) {
+              if (ayantDroitNom && ayantDroitMatricule) {
+                  try {
+                      const ayantsDroitEndpoint = apiBaseUrl 
+                        ? `${apiBaseUrl}/api/ayants-droit/` 
+                        : '/api/ayants-droit/'
+                      
+                      const ayantDroitPayload = {
+                        client: selectedClient,
+                        nom: ayantDroitNom,
+                        matricule: ayantDroitMatricule,
+                        societe: ayantDroitSociete || null
+                      }
+                      
+                      const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
+                      ayantDroitId = createdAyantDroit.id || null
+                      
+                      // Mettre à jour la liste locale pour éviter de recréer si on refait une vente tout de suite
+                      setAyantsDroitList(prev => [...prev, createdAyantDroit])
+                      setSelectedAyantDroit(createdAyantDroit.id || null)
+                      setShowNewAyantDroit(false)
+                  } catch (err) {
+                      console.error('Erreur lors de la création de l\'ayant droit:', err)
+                      throw new Error("Impossible de créer l'ayant droit. Veuillez réessayer.")
+                  }
+              }
+          }
+      }
+
+      // 1. Créer la facture en mode brouillon AVEC l'ayant droit
       const facturePayload = {
         client: useManualClient ? null : selectedClient,
         client_name_override: useManualClient ? manualClientName : null,
         remise: totals.remiseMontant.toString(),
         tva: '0',
+        ayant_droit: ayantDroitId // Lier directement à la création
       }
       const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
 
@@ -401,50 +439,6 @@ export default function Facturation() {
       await Promise.all(
         produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
       )
-
-      // 2.5. Créer l'ayant droit si nécessaire (client professionnel)
-      let ayantDroitId = selectedAyantDroit
-      const client = clients.find(c => c.id === selectedClient)
-      
-      if (client?.client_type === 'PROFESSIONNEL' && (showNewAyantDroit || ayantsDroitList.length === 0)) {
-        // Vérifier que les champs sont remplis
-        if (ayantDroitNom && ayantDroitMatricule) {
-          try {
-            const ayantsDroitEndpoint = apiBaseUrl 
-              ? `${apiBaseUrl}/api/ayants-droit/` 
-              : '/api/ayants-droit/'
-            
-            const ayantDroitPayload = {
-              client: selectedClient,
-              nom: ayantDroitNom,
-              matricule: ayantDroitMatricule,
-              societe: ayantDroitSociete || null
-            }
-            
-            const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
-            ayantDroitId = createdAyantDroit.id || null
-            
-            // Lier l'ayant droit à la facture
-            if (ayantDroitId) {
-              await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, {
-                ayant_droit: ayantDroitId
-              })
-            }
-          } catch (err) {
-            console.error('Erreur lors de la création de l\'ayant droit:', err)
-            // On continue même si la création de l'ayant droit échoue
-          }
-        }
-      } else if (client?.client_type === 'PROFESSIONNEL' && ayantDroitId) {
-        // Lier un ayant droit existant à la facture
-        try {
-          await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, {
-            ayant_droit: ayantDroitId
-          })
-        } catch (err) {
-          console.error('Erreur lors de la liaison de l\'ayant droit:', err)
-        }
-      }
 
 
       // 3. Valider la facture

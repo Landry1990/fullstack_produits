@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.db.models import Sum
+from decimal import Decimal
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
     CommandeProduit, Facture, FactureProduit, Caisse, Profile,
@@ -69,18 +71,65 @@ class FournisseurSerializer(serializers.ModelSerializer):
         model = Fournisseur
         fields = '__all__'
 
+from django.db import transaction
+
+# ... (imports)
+
 class AyantDroitSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all(), required=False)
+    
     class Meta:
         model = AyantDroit
-        fields = '__all__'
+        fields = ['id', 'client', 'matricule', 'nom', 'societe', 'date_creation']
+
 
 class ClientSerializer(serializers.ModelSerializer):
-    ayants_droit = AyantDroitSerializer(many=True, read_only=True)
+    ayants_droit = AyantDroitSerializer(many=True, required=False)
     current_debt = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Client
         fields = '__all__'
+
+    @transaction.atomic
+    def create(self, validated_data):
+        ayants_droit_data = validated_data.pop('ayants_droit', [])
+        client = Client.objects.create(**validated_data)
+        for ad_data in ayants_droit_data:
+            AyantDroit.objects.create(client=client, **ad_data)
+        return client
+
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        ayants_droit_data = validated_data.pop('ayants_droit', None)
+        
+        # Mise à jour des champs du client
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Mise à jour des ayants droit si fournis
+        if ayants_droit_data is not None:
+            # IDs des ayants droit reçus (ceux qui ont un ID)
+            incoming_ids = [item['id'] for item in ayants_droit_data if 'id' in item]
+            
+            # Supprimer ceux qui ne sont pas dans la liste reçue
+            instance.ayants_droit.exclude(id__in=incoming_ids).delete()
+            
+            # Mettre à jour ou créer
+            for ad_data in ayants_droit_data:
+                ad_id = ad_data.get('id')
+                if ad_id:
+                    ad = AyantDroit.objects.get(id=ad_id, client=instance)
+                    ad.matricule = ad_data.get('matricule', ad.matricule)
+                    ad.nom = ad_data.get('nom', ad.nom)
+                    ad.societe = ad_data.get('societe', ad.societe)
+                    ad.save()
+                else:
+                    AyantDroit.objects.create(client=instance, **ad_data)
+                    
+        return instance
 
 class ProduitSerializer(serializers.ModelSerializer):
     rayon_nom = serializers.CharField(source='rayon.name', read_only=True)
@@ -93,6 +142,8 @@ class ProduitSerializer(serializers.ModelSerializer):
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
+    fournisseur_name = serializers.CharField(source='commande.fournisseur.name', read_only=True)
     
     class Meta:
         model = CommandeProduit
@@ -204,3 +255,45 @@ class ClotureCaisseSerializer(serializers.ModelSerializer):
         model = ClotureCaisse
         fields = '__all__'
         read_only_fields = ['date']
+
+class CreanceSerializer(serializers.ModelSerializer):
+    """Serializer pour les créances (ventes en compte)"""
+    client_name = serializers.SerializerMethodField()
+    ayant_droit_details = AyantDroitSerializer(source='ayant_droit', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    montant_paye = serializers.SerializerMethodField()
+    reste_a_payer = serializers.SerializerMethodField()
+    paiements = CaisseSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Facture
+        fields = [
+            'id', 'numero_facture', 'client', 'client_name', 'client_name_override',
+            'ayant_droit', 'ayant_droit_details', 'date', 'status', 'status_display',
+            'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc',
+            'montant_paye', 'reste_a_payer', 'paiements', 'notes'
+        ]
+    
+    def get_client_name(self, obj):
+        if obj.client:
+            return obj.client.name
+        return obj.client_name_override or "Client de passage"
+    
+    def get_montant_paye(self, obj):
+        """Calcule le montant total payé (tous modes sauf en_compte)"""
+        total = obj.paiements.filter(
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).aggregate(
+            total=Sum('montant')
+        )['total']
+        return total or Decimal('0.00')
+    
+    def get_reste_a_payer(self, obj):
+        """Calcule le reste à payer"""
+        montant_paye = self.get_montant_paye(obj)
+        return obj.total_ttc - montant_paye
