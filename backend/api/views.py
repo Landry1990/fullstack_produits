@@ -30,7 +30,8 @@ from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer, CaisseSerializer,
-    UserSerializer, AyantDroitSerializer, ClotureCaisseSerializer, StockLotSerializer
+    UserSerializer, AyantDroitSerializer, ClotureCaisseSerializer, StockLotSerializer,
+    CreanceSerializer
 )
 from decimal import Decimal
 
@@ -156,6 +157,48 @@ class ProduitViewSet(viewsets.ModelViewSet):
             running_stock = stock_before
             
         return Response(history)
+
+
+    @action(detail=False, methods=['post'])
+    def recalculate_rotation(self, request):
+        """
+        Recalcule la rotation moyenne pour tous les produits.
+        Rotation = (Quantité totale vendue) / (Durée de vie du produit en mois)
+        """
+        try:
+            produits = Produit.objects.all()
+            total_updated = 0
+            
+            for produit in produits:
+                # 1. Calculer la durée de vie du produit en mois
+                creation_date = produit.created_at
+                now = timezone.now()
+                
+                # Approximatif: différence en jours / 30
+                lifetime_days = (now - creation_date).days
+                lifetime_months = max(Decimal(lifetime_days) / Decimal(30.0), Decimal(1.0)) # Min 1 mois pour éviter division par zéro ou infini
+                
+                # 2. Calculer la quantité totale vendue (Factures validées ou payées)
+                result = FactureProduit.objects.filter(
+                    produit=produit,
+                    facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+                ).aggregate(total_sold=Sum('quantity'))
+                
+                total_sold = result['total_sold'] or 0
+                
+                # 3. Calculer la rotation
+                rotation = Decimal(total_sold) / lifetime_months
+                
+                # 4. Mettre à jour le produit
+                produit.rotation_moyenne = rotation
+                produit.save(update_fields=['rotation_moyenne'])
+                
+                total_updated += 1
+            
+            return Response({'message': f'Rotation recalculée pour {total_updated} produits.'}, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'])
     def generate_labels(self, request):
@@ -1105,7 +1148,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
-        transactions = Caisse.objects.filter(statut='completee')
+        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
         
         if start_date:
             transactions = transactions.filter(date_paiement__gte=start_date)
@@ -1169,7 +1212,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
-        transactions = Caisse.objects.filter(statut='completee')
+        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
         if start_date:
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
@@ -1302,6 +1345,25 @@ class DashboardViewSet(viewsets.ViewSet):
         # Pour la variation, c'est plus compliqué sans historique de stock, on met 0 pour l'instant
         stock_change = 0
         
+        # Créances Clients (Total des dettes)
+        # On ne prend que les factures ayant un paiement 'en_compte' (crédit accordé)
+        # et qui sont validées OU payées (certaines anciennes peuvent être marquées payées tout en ayant du crédit)
+        factures_validees = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            paiements__mode_paiement='en_compte'
+        ).distinct().prefetch_related('produits', 'paiements')
+        
+        total_receivables = Decimal('0.00')
+        receivables_count = 0
+        
+        for f in factures_validees:
+            # Calculer le montant déjà payé (hors en_compte)
+            paiements_reels = sum(p.montant for p in f.paiements.all() if p.statut == 'completee' and p.mode_paiement != 'en_compte')
+            reste = f.total_ttc - paiements_reels
+            if reste > 0:
+                total_receivables += reste
+                receivables_count += 1
+        
         return Response({
             'revenue': {
                 'value': revenue_today,
@@ -1318,6 +1380,10 @@ class DashboardViewSet(viewsets.ViewSet):
             'low_stock': {
                 'value': low_stock_count,
                 'change': stock_change
+            },
+            'receivables': {
+                'value': total_receivables,
+                'count': receivables_count
             }
         })
 
@@ -1454,3 +1520,207 @@ class StatistiquesViewSet(viewsets.ViewSet):
             stats_par_fournisseur[fournisseur.id]['quantite_vendue'] += alloc.quantity
             
         return Response(list(stats_par_fournisseur.values()))
+
+
+class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint pour la gestion des créances (ventes en compte).
+    """
+    serializer_class = CreanceSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """
+        Retourne les factures validées avec paiement 'en_compte'.
+        Permet de filtrer par client et par période.
+        """
+        queryset = Facture.objects.filter(
+            paiements__mode_paiement='en_compte',
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).distinct().select_related(
+            'client', 'ayant_droit'
+        ).prefetch_related('paiements').order_by('-date')
+        
+        # Filtrer par client si spécifié
+        client_id = self.request.query_params.get('client_id', None)
+        if client_id:
+            queryset = queryset.filter(client_id=client_id)
+        
+        # Filtrer par période si spécifiée
+        date_debut = self.request.query_params.get('date_debut', None)
+        date_fin = self.request.query_params.get('date_fin', None)
+        
+        if date_debut:
+            try:
+                start_date = datetime.strptime(date_debut, '%Y-%m-%d')
+                start_date = timezone.make_aware(start_date)
+                queryset = queryset.filter(date__gte=start_date)
+            except ValueError:
+                pass
+        
+        if date_fin:
+            try:
+                end_date = datetime.strptime(date_fin, '%Y-%m-%d') + timedelta(days=1)
+                end_date = timezone.make_aware(end_date)
+                queryset = queryset.filter(date__lt=end_date)
+            except ValueError:
+                pass
+        
+        return queryset
+    
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def ajouter_paiement(self, request, pk=None):
+        """
+        Ajoute un paiement partiel à une créance.
+        Body: {
+            'mode_paiement': 'especes|om|momo|cheque|carte|virement',
+            'montant': 10000,
+            'reference': 'REF123' (optionnel)
+        }
+        """
+        facture = self.get_object()
+        
+        # Vérifier que la facture est bien une créance
+        if not facture.paiements.filter(mode_paiement='en_compte').exists():
+            return Response(
+                {'detail': 'Cette facture n\'est pas une créance (pas de paiement en compte).'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer les données du paiement
+        mode_paiement = request.data.get('mode_paiement')
+        montant = request.data.get('montant')
+        reference = request.data.get('reference', '')
+        
+        # Validation
+        if not mode_paiement or not montant:
+            return Response(
+                {'detail': 'Les champs mode_paiement et montant sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            montant = Decimal(str(montant))
+        except (ValueError, TypeError):
+            return Response(
+                {'detail': 'Le montant doit être un nombre valide.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Calculer le reste à payer
+        montant_paye = facture.paiements.filter(
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+        
+        reste_a_payer = facture.total_ttc - montant_paye
+        
+        # Vérifier que le montant ne dépasse pas le reste à payer
+        if montant > reste_a_payer:
+            return Response(
+                {
+                    'detail': f'Le montant du paiement ({montant}) dépasse le reste à payer ({reste_a_payer}).',
+                    'reste_a_payer': str(reste_a_payer)
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Créer le paiement
+        paiement = Caisse.objects.create(
+            facture=facture,
+            mode_paiement=mode_paiement,
+            montant=montant,
+            reference=reference,
+            statut='completee',
+            user=request.user
+        )
+        
+        # Rafraîchir la facture pour obtenir les données à jour
+        facture.refresh_from_db()
+        
+        # Sérialiser et retourner
+        serializer = self.get_serializer(facture)
+        return Response({
+            'detail': 'Paiement enregistré avec succès.',
+            'paiement_id': paiement.id,
+            'creance': serializer.data
+        })
+    
+    @action(detail=False, methods=['get'])
+    def releve(self, request):
+        """
+        Génère un relevé de créances pour un client sur une période.
+        Paramètres:
+        - client_id: ID du client (requis)
+        - date_debut: Date de début (YYYY-MM-DD, optionnel)
+        - date_fin: Date de fin (YYYY-MM-DD, optionnel)
+        """
+        client_id = request.query_params.get('client_id')
+        
+        if not client_id:
+            return Response(
+                {'detail': 'Le paramètre client_id est requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            client = Client.objects.get(pk=client_id)
+        except Client.DoesNotExist:
+            return Response(
+                {'detail': 'Client non trouvé.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Récupérer les créances du client
+        queryset = self.get_queryset().filter(client_id=client_id)
+        
+        # Calculer les totaux
+        total_factures = Decimal('0.00')
+        total_paye = Decimal('0.00')
+        total_reste = Decimal('0.00')
+        
+        creances_data = []
+        for facture in queryset:
+            montant_paye = facture.paiements.filter(
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+            
+            reste = facture.total_ttc - montant_paye
+            
+            total_factures += facture.total_ttc
+            total_paye += montant_paye
+            total_reste += reste
+            
+            creances_data.append({
+                'numero_facture': facture.numero_facture,
+                'date': facture.date,
+                'montant_total': facture.total_ttc,
+                'montant_paye': montant_paye,
+                'reste_a_payer': reste,
+                'ayant_droit': facture.ayant_droit.nom if facture.ayant_droit else None
+            })
+        
+        return Response({
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'address': client.address,
+                'phone': client.phone,
+                'email': client.email
+            },
+            'periode': {
+                'date_debut': request.query_params.get('date_debut'),
+                'date_fin': request.query_params.get('date_fin')
+            },
+            'creances': creances_data,
+            'totaux': {
+                'total_factures': str(total_factures),
+                'total_paye': str(total_paye),
+                'total_reste': str(total_reste)
+            }
+        })
+

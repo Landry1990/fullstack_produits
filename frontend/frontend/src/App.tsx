@@ -17,6 +17,7 @@ import Login from './components/Login'
 import StatistiquesFournisseur from './components/StatistiquesFournisseur'
 import JournalCaisse from './components/JournalCaisse'
 import Perimes from './components/Perimes'
+import Creances from './components/Creances'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 const ProtectedRoute = () => {
@@ -91,6 +92,7 @@ const router = createBrowserRouter([
           { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
           { path: 'journal-caisse', element: <JournalCaisse /> },
           { path: 'perimes', element: <Perimes /> },
+          { path: 'creances', element: <Creances /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
         ],
       },

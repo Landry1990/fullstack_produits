@@ -505,7 +505,11 @@ export default function Ventes() {
                 </tr>
               ) : (
                 filteredFactures.map((facture) => (
-                  <tr key={facture.id} className="hover:bg-base-200/30 transition-colors">
+                  <tr 
+                    key={facture.id} 
+                    className="hover:bg-base-200/30 transition-colors cursor-pointer"
+                    onClick={() => handleViewProducts(facture)}
+                  >
                     <td className="font-medium">
                       {facture.numero_facture || <span className="italic text-base-content/50">Brouillon #{facture.id}</span>}
                     </td>
@@ -540,14 +544,14 @@ export default function Ventes() {
                     <td className="text-center">
                       <div className="flex justify-center gap-2">
                         <button
-                          onClick={() => handleViewProducts(facture)}
+                          onClick={(e) => { e.stopPropagation(); handleViewProducts(facture); }}
                           className="btn btn-sm btn-ghost btn-square text-primary hover:bg-primary/10"
                           title="Voir détails"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                         </button>
                         <button
-                          onClick={() => handleOpenRefundModal(facture)}
+                          onClick={(e) => { e.stopPropagation(); handleOpenRefundModal(facture); }}
                           className="btn btn-sm btn-ghost btn-square text-error hover:bg-error/10"
                           title="Annuler / Rembourser"
                         >
@@ -612,10 +616,24 @@ export default function Ventes() {
                            )
                         })}
                       </tbody>
-                      <tfoot>
+                      <tfoot className="bg-base-100 font-bold text-sm">
                         <tr>
-                          <td colSpan={3} className="text-right font-bold">Total TTC:</td>
-                          <td className="text-right font-bold">{Math.round(Number(selectedFacture.total_ttc)).toLocaleString('fr-FR')} F</td>
+                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 pb-1">Sous-total HT:</td>
+                            <td className="text-right border-b-0 pb-1">{Math.round(Number(selectedFacture.total_ht)).toLocaleString('fr-FR')} F</td>
+                        </tr>
+                        {Number(selectedFacture.remise) > 0 && (
+                            <tr>
+                                <td colSpan={3} className="text-right font-normal text-error border-b-0 py-1">Remise:</td>
+                                <td className="text-right text-error border-b-0 py-1">-{Math.round(Number(selectedFacture.remise)).toLocaleString('fr-FR')} F</td>
+                            </tr>
+                        )}
+                        <tr>
+                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 py-1">TVA ({Math.round(Number(selectedFacture.total_tva) / (Number(selectedFacture.total_ht) - Number(selectedFacture.remise || 0)) * 100) || 0}%):</td>
+                            <td className="text-right border-b-0 py-1">{Math.round(Number(selectedFacture.total_tva)).toLocaleString('fr-FR')} F</td>
+                        </tr>
+                        <tr className="text-lg">
+                          <td colSpan={3} className="text-right pt-2 border-t border-base-300">Total TTC:</td>
+                          <td className="text-right pt-2 border-t border-base-300 text-primary">{Math.round(Number(selectedFacture.total_ttc)).toLocaleString('fr-FR')} F</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -628,14 +646,27 @@ export default function Ventes() {
               </>
             )}
             
-            <div className="modal-action">
-              <button 
-                className="btn btn-primary gap-2"
-                onClick={handlePrintInvoice}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                Imprimer Facture
-              </button>
+            <div className="modal-action flex justify-between">
+               <div className="flex gap-2">
+                  <button 
+                    className="btn btn-outline gap-2"
+                    onClick={async () => {
+                         // On charge le ticket s'il n'est pas là, puis on ouvre la preview
+                         await handleOpenTicketPreview() 
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Imprimer Ticket
+                  </button>
+                  
+                  <button 
+                    className="btn btn-primary gap-2"
+                    onClick={handlePrintInvoice}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    Imprimer Facture
+                  </button>
+               </div>
               <button className="btn" onClick={() => setSelectedFacture(null)}>Fermer</button>
             </div>
           </div>

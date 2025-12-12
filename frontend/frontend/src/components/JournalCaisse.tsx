@@ -45,6 +45,9 @@ export default function JournalCaisse() {
         transaction.facture_numero?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transaction.user_details?.full_name.toLowerCase().includes(searchQuery.toLowerCase())
 
+      // Exclure les transactions 'en_compte'
+      if (transaction.mode_paiement === 'en_compte') return false
+
       // Filtre par mode de paiement
       const matchesMode = filterMode === 'all' || transaction.mode_paiement === filterMode
 
@@ -309,7 +312,6 @@ export default function JournalCaisse() {
               <option value="virement">Virement</option>
               <option value="om">Orange Money</option>
               <option value="momo">Mobile Money</option>
-              <option value="en_compte">En compte</option>
             </select>
           </div>
 
@@ -379,9 +381,7 @@ export default function JournalCaisse() {
           <div className="badge badge-lg badge-ghost gap-2">
             📱 MoMo: <span className="font-bold">{Math.round(totauxParMode.momo)} F</span>
           </div>
-          <div className="badge badge-lg badge-ghost gap-2">
-            📊 En compte: <span className="font-bold">{Math.round(totauxParMode.en_compte)} F</span>
-          </div>
+
           <div className="badge badge-lg badge-primary gap-2">
             💰 TOTAL: <span className="font-bold">{Math.round(totauxParMode.total)} F</span>
           </div>

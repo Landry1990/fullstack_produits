@@ -53,9 +53,7 @@ export default function Clients() {
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/clients/` 
     : '/api/clients/';
   
-  const ayantsDroitEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/ayants-droit/` 
-    : '/api/ayants-droit/';
+
 
   // Filtrer les clients selon le terme de recherche
   const filteredClients = useMemo(() => {
@@ -212,20 +210,15 @@ export default function Clients() {
     setError(null);
     setIsSubmitting(true);
     try {
-      // 1. Create Client
+      // Create Client with nested Ayants Droit
       const { data: addedClient } = await axios.post<ExtendedClient>(clientsEndpoint, {
         ...newClient,
-        ayants_droit: [] // Don't send nested for now if backend doesn't support writable nested
+        // Ensure ayants_droit is sent if present, even if empty
+        ayants_droit: newClient.ayants_droit || []
       });
 
-      // 2. Create Ayants Droit if any
-      if (newClient.client_type === 'PROFESSIONNEL' && newClient.ayants_droit && newClient.ayants_droit.length > 0) {
-        await Promise.all(newClient.ayants_droit.map(ad => 
-          axios.post(ayantsDroitEndpoint, { ...ad, client: addedClient.id })
-        ));
-      }
-
-      // Refresh to get full data
+      // Refresh to get full data (though addedClient should have it now with the new serializer)
+      // We'll trust the response from create first, but a refresh ensures calculating fields like debt are correct
       const { data: refreshedClient } = await axios.get<ExtendedClient>(`${clientsEndpoint}${addedClient.id}/`);
       
       setClients(prev => [refreshedClient, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
@@ -250,7 +243,7 @@ export default function Clients() {
     if (!editingClient) return;
     setIsSubmitting(true);
     try {
-      // 1. Update Client
+      // Send Update including nested ayants_droit
       await axios.patch<ExtendedClient>(
         `${clientsEndpoint}${editingClient.id}/`,
         {
@@ -259,30 +252,10 @@ export default function Clients() {
             phone: editingClient.phone,
             email: editingClient.email,
             client_type: editingClient.client_type,
-            plafond: editingClient.plafond
+            plafond: editingClient.plafond,
+            ayants_droit: editingClient.ayants_droit // Send the full list for synchronization
         }
       );
-
-      // 2. Handle Ayants Droit (Sync: Add new, Remove deleted)
-      // This is complex without a bulk sync endpoint. 
-      // Simplified strategy: 
-      // - Get current ADs from backend.
-      // - Compare with editingClient.ayants_droit.
-      // - Delete missing, Create new.
-      
-      if (editingClient.client_type === 'PROFESSIONNEL') {
-          const { data: currentADs } = await axios.get<AyantDroit[]>(`${ayantsDroitEndpoint}?client=${editingClient.id}`);
-          // currentIDs was unused
-          const newIDs = new Set(editingClient.ayants_droit?.map(ad => ad.id).filter((id): id is number => id !== undefined));
-          
-          // Delete removed
-          const toDelete = currentADs.filter(ad => ad.id !== undefined && !newIDs.has(ad.id));
-          await Promise.all(toDelete.map(ad => axios.delete(`${ayantsDroitEndpoint}${ad.id}/`)));
-
-          // Create new (those without ID)
-          const toCreate = editingClient.ayants_droit?.filter(ad => !ad.id) || [];
-          await Promise.all(toCreate.map(ad => axios.post(ayantsDroitEndpoint, { ...ad, client: editingClient.id })));
-      }
 
       // Refresh
       const { data: updatedClient } = await axios.get<ExtendedClient>(`${clientsEndpoint}${editingClient.id}/`);
