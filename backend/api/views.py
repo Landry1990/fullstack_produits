@@ -370,6 +370,12 @@ class CommandeViewSet(viewsets.ModelViewSet):
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_destroy(self, instance):
+        if instance.status == Commande.Status.CLOTUREE:
+             from rest_framework.exceptions import ValidationError
+             raise ValidationError("Impossible de supprimer une commande clôturée.")
+        super().perform_destroy(instance)
+
     @action(detail=False, methods=['post'])
     @transaction.atomic
     def generate_replenishment(self, request):
@@ -489,10 +495,33 @@ class CommandeViewSet(viewsets.ModelViewSet):
                 date_reception=commande.date
             )
 
-            # 2. Mettre à jour le stock global
+            # 2. Mettre à jour le stock global et le PMP
             produit = item.produit
+            
+            # Calcul PMP
+            # Formule: (AncienStock * AncienPMP + QteReçue * PrixAchat) / (AncienStock + QteReçue)
+            old_stock = Decimal(produit.stock)
+            old_pmp = Decimal(produit.pmp)
+            qty_received = Decimal(item.quantity)
+            cost_price = Decimal(item.price_cost) # On utilise le prix d'achat réel (coût)
+            
+            new_total_qty = old_stock + qty_received
+            
+            if new_total_qty > 0:
+                # Si le stock était négatif, le calcul peut être faussé. 
+                # On assume que la valorisation suit le stock physique positif.
+                # Si old_stock < 0, on peut considérer qu'on remet à zéro ou on continue.
+                # Approche simple : Somme des valeurs / Somme des quantités
+                
+                # Note: Si stock négatif, old_stock * old_pmp peut être négatif (dette de stock).
+                current_val = old_stock * old_pmp
+                incoming_val = qty_received * cost_price
+                
+                new_pmp = (current_val + incoming_val) / new_total_qty
+                produit.pmp = new_pmp
+            
             produit.stock = F('stock') + item.quantity
-            produit.save(update_fields=['stock'])
+            produit.save(update_fields=['stock', 'pmp'])
 
         # Changer le statut de la commande
         commande.status = Commande.Status.CLOTUREE

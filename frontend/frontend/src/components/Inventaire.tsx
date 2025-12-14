@@ -49,7 +49,7 @@ export default function Inventaire() {
     if (aValue === bValue) return 0;
     
     // Handle numeric values
-    if (['stock', 'stock_alert', 'cost_price', 'selling_price'].includes(sortConfig.key)) {
+    if (['stock', 'stock_alert', 'cost_price', 'selling_price', 'pmp'].includes(sortConfig.key)) {
       return sortConfig.direction === 'asc' 
         ? Number(aValue) - Number(bValue) 
         : Number(bValue) - Number(aValue);
@@ -242,6 +242,9 @@ export default function Inventaire() {
                 <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('cost_price')}>
                   <div className="flex items-center justify-end gap-2">Prix Achat {getSortIcon('cost_price')}</div>
                 </th>
+                <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('pmp')}>
+                  <div className="flex items-center justify-end gap-2 text-primary">PMP {getSortIcon('pmp')}</div>
+                </th>
                 <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('selling_price')}>
                   <div className="flex items-center justify-end gap-2">Prix Vente {getSortIcon('selling_price')}</div>
                 </th>
@@ -261,6 +264,7 @@ export default function Inventaire() {
                     <td className="text-right font-bold">{produit.stock}</td>
                     <td className="text-right">{produit.stock_alert}</td>
                     <td className="text-right">{Math.round(Number(produit.cost_price)).toLocaleString('fr-FR')} F</td>
+                    <td className="text-right font-medium text-primary">{Math.round(Number(produit.pmp || 0)).toLocaleString('fr-FR')} F</td>
                     <td className="text-right">{Math.round(Number(produit.selling_price)).toLocaleString('fr-FR')} F</td>
                     <td>
                       {(produit.stock || 0) <= 0 ? (

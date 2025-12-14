@@ -9,38 +9,29 @@ export default function Commandes() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
-  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false)
-  const [isAddProductsModalOpen, setIsAddProductsModalOpen] = useState<boolean>(false)
+
+
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [rayons, setRayons] = useState<Rayon[]>([])
   const [newCommandeFournisseurId, setNewCommandeFournisseurId] = useState<string>('')
 
-  // State for editing commande
-  const [editCommandeFournisseurId, setEditCommandeFournisseurId] = useState<string>('')
-  const [editNumeroFacture, setEditNumeroFacture] = useState<string>('')
+
   
   // State for creating commande (single modal)
   const [numeroFacture, setNumeroFacture] = useState('');
   const [commandeProduits, setCommandeProduits] = useState<CommandeProduit[]>([]);
   
-  // State for adding products to existing commande
-  const [productsToAdd, setProductsToAdd] = useState<CommandeProduit[]>([]);
+
   
   // State for the product search/addition form
   const [produitsList, setProduitsList] = useState<ProduitModel[]>([]); // To hold all products for searching
   const [searchProduitQuery, setSearchProduitQuery] = useState('');
-  const [selectedProduitToAdd, setSelectedProduitToAdd] = useState<ProduitModel | null>(null);
+
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null); // Ref pour l'input file
   const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
-  const [lineItem, setLineItem] = useState({
-    quantity: '1',
-    price: '', // prix achat
-    selling_price: '',
-    lot: '',
-    date_expiration: '',
-  });
+
 
   // States for table navigation and selection
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
@@ -53,47 +44,14 @@ export default function Commandes() {
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
   const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
 
+
+
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
 
-  // Fonction utilitaire pour valider les champs obligatoires
-  const validateProductFields = useCallback((quantity: string, price: string, selling_price: string) => {
-    if (!quantity || !price || !selling_price) {
-      return "Veuillez remplir tous les champs obligatoires (quantité, prix d'achat, prix de vente).";
-    }
-    if (parseInt(quantity, 10) <= 0) {
-      return "La quantité doit être supérieure à 0.";
-    }
-    if (parseFloat(price) <= 0) {
-      return "Le prix d'achat doit être supérieur à 0.";
-    }
-    if (parseFloat(selling_price) <= 0) {
-      return "Le prix de vente doit être supérieur à 0.";
-    }
-    return null;
-  }, []);
 
-  // Fonction utilitaire pour créer un objet CommandeProduit
-  const createCommandeProduit = useCallback((produit: ProduitModel, lineItem: any) => ({
-    id: Date.now(), // ID temporaire
-    produit,
-    quantity: parseInt(lineItem.quantity, 10),
-    price: lineItem.price,
-    selling_price: lineItem.selling_price,
-    lot: lineItem.lot,
-    date_expiration: lineItem.date_expiration,
-  }), []);
 
-  // Fonction utilitaire pour reset le formulaire de produit
-  const resetProductForm = useCallback(() => {
-    setSelectedProduitToAdd(null);
-    setLineItem({
-      quantity: '1',
-      price: '',
-      selling_price: '',
-      lot: '',
-      date_expiration: '',
-    });
-  }, []);
+
 
   // Fonction utilitaire pour gérer les erreurs
   const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
@@ -180,24 +138,7 @@ export default function Commandes() {
     }
   }, [commandes, selectedCommande])
 
-  // Définir les fonctions de fermeture avant le useEffect qui les utilise
-  const closeAddModal = useCallback(() => {
-    setIsAddModalOpen(false)
-    setSearchProduitQuery('')
-    setHighlightedIndex(-1)
-    setCommandeProduits([])
-    setSelectedRows(new Set())
-    setFocusedField(null)
-    resetProductForm()
-  }, [resetProductForm])
 
-  const closeAddProductsModal = useCallback(() => {
-    setIsAddProductsModalOpen(false)
-    setProductsToAdd([])
-    setSearchProduitQuery('')
-    setHighlightedIndex(-1)
-    resetProductForm()
-  }, [resetProductForm])
 
   // Raccourcis clavier globaux
   useEffect(() => {
@@ -206,7 +147,7 @@ export default function Commandes() {
       const target = e.target as HTMLElement;
       const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
       
-      if (!isAddModalOpen && !isAddProductsModalOpen) return;
+      if (viewMode !== 'CREATE' && viewMode !== 'EDIT') return;
       
       // F2 : Focus recherche produit
       if (e.key === 'F2') {
@@ -239,10 +180,9 @@ export default function Commandes() {
       
       // Escape : Fermer modals
       if (e.key === 'Escape' && !isInput) {
-        if (isAddModalOpen) {
-          closeAddModal();
-        } else if (isAddProductsModalOpen) {
-          closeAddProductsModal();
+        if (viewMode === 'CREATE' || viewMode === 'EDIT') {
+          handleBackToList();
+
         }
         return;
       }
@@ -250,39 +190,12 @@ export default function Commandes() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, [isAddModalOpen, isAddProductsModalOpen, commandeProduits, selectedRows, closeAddModal, closeAddProductsModal])
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [viewMode, commandeProduits, selectedRows])
 
-  function openAddModal() {
-    setNewCommandeFournisseurId(fournisseurs.length > 0 ? String(fournisseurs[0].id) : '')
-    setNumeroFacture('')
-    setCommandeProduits([])
-    setSearchProduitQuery('')
-    setHighlightedIndex(-1)
-    resetProductForm()
-    setIsAddModalOpen(true)
-  }
 
-  function openEditModal() {
-    if (!selectedCommande) return
-    setEditCommandeFournisseurId(String(selectedCommande.fournisseur))
-    setEditNumeroFacture(selectedCommande.numero_facture || '')
-    setIsEditModalOpen(true)
-  }
 
-  function closeEditModal() {
-    setIsEditModalOpen(false)
-    setEditCommandeFournisseurId('')
-    setEditNumeroFacture('')
-  }
 
-  function openAddProductsModal() {
-    if (!selectedCommande) return
-    setProductsToAdd([])
-    setSearchProduitQuery('')
-    setHighlightedIndex(-1)
-    resetProductForm()
-    setIsAddProductsModalOpen(true)
-  }
 
   // Fonctions de navigation au clavier pour la recherche
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -313,54 +226,103 @@ export default function Commandes() {
     }
   }
 
+  // Configuration des champs
+  const fieldsConfig = [
+    { name: 'quantity', editable: true },
+    { name: 'price', editable: true },
+    { name: 'tva', editable: true },
+    { name: 'marge', editable: true },
+    { name: 'selling_price', editable: true }, 
+    { name: 'lot', editable: true },
+    { name: 'date_expiration', editable: true },
+  ];
+
   // Navigation clavier dans le tableau
   function handleTableFieldKeyDown(
     e: React.KeyboardEvent,
     rowIndex: number,
     fieldIndex: number
   ) {
-    const fieldsPerRow = 5; // Quantité (0), Prix achat (1), Prix vente (2), Lot (3), Date exp (4)
     
+    const moveToNextField = () => {
+        let nextFieldIndex = fieldIndex + 1;
+        while (nextFieldIndex < fieldsConfig.length && !fieldsConfig[nextFieldIndex].editable) {
+            nextFieldIndex++;
+        }
+
+        if (nextFieldIndex < fieldsConfig.length) {
+            // Passer au champ suivant (editable)
+            setFocusedField({ row: rowIndex, field: nextFieldIndex });
+            setTimeout(() => {
+                const nextInput = document.querySelector(
+                    `input[data-row="${rowIndex}"][data-field="${nextFieldIndex}"]`
+                ) as HTMLInputElement;
+                nextInput?.focus();
+            }, 0);
+        } else {
+             // Fin de ligne : vérifier si ligne complète et passer à la suivante
+             const row = commandeProduits[rowIndex];
+             const isComplete = row && 
+               row.quantity > 0 && 
+               row.price && 
+               parseFloat(String(row.price)) > 0;
+               // Lot and Date are optional now
+
+             if (isComplete) {
+                if (rowIndex < commandeProduits.length - 1) {
+                     // Passer à la ligne suivante, premier champ editable
+                     let firstEditableField = 0;
+                     while (firstEditableField < fieldsConfig.length && !fieldsConfig[firstEditableField].editable) {
+                         firstEditableField++;
+                     }
+                     
+                     setFocusedField({ row: rowIndex + 1, field: firstEditableField });
+                     setTimeout(() => {
+                       const nextInput = document.querySelector(
+                         `input[data-row="${rowIndex + 1}"][data-field="${firstEditableField}"]`
+                       ) as HTMLInputElement;
+                       nextInput?.focus();
+                       nextInput?.select(); // Sélectionner le contenu
+                     }, 0);
+                } else {
+                    // Dernière ligne complète : retourner à la recherche pour ajouter une nouvelle ligne
+                    setFocusedField(null);
+                    setTimeout(() => {
+                        searchInputRef.current?.focus();
+                    }, 0);
+                }
+             }
+        }
+    };
+
+    const moveToPreviousField = () => {
+        let prevFieldIndex = fieldIndex - 1;
+        while (prevFieldIndex >= 0 && !fieldsConfig[prevFieldIndex].editable) {
+            prevFieldIndex--;
+        }
+
+        if (prevFieldIndex >= 0) {
+            setFocusedField({ row: rowIndex, field: prevFieldIndex });
+            setTimeout(() => {
+                const prevInput = document.querySelector(
+                    `input[data-row="${rowIndex}"][data-field="${prevFieldIndex}"]`
+                ) as HTMLInputElement;
+                prevInput?.focus();
+            }, 0);
+        }
+    };
+
     switch (e.key) {
       case 'Enter':
+        e.preventDefault();
+        moveToNextField();
+        break;
       case 'Tab':
         e.preventDefault();
-        if (fieldIndex < fieldsPerRow - 1) {
-          // Passer au champ suivant
-          setFocusedField({ row: rowIndex, field: fieldIndex + 1 });
-          // Focus sur le champ suivant après le rendu
-          setTimeout(() => {
-            const nextInput = document.querySelector(
-              `input[data-row="${rowIndex}"][data-field="${fieldIndex + 1}"]`
-            ) as HTMLInputElement;
-            nextInput?.focus();
-          }, 0);
+        if (e.shiftKey) {
+            moveToPreviousField();
         } else {
-          // Dernier champ : vérifier si ligne complète et passer à la suivante
-          const row = commandeProduits[rowIndex];
-          const isComplete = row && 
-            row.quantity > 0 && 
-            row.price && 
-            parseFloat(String(row.price)) > 0 &&
-            row.selling_price && 
-            parseFloat(String(row.selling_price)) > 0;
-          
-          if (isComplete && rowIndex < commandeProduits.length - 1) {
-            // Passer à la ligne suivante, premier champ
-            setFocusedField({ row: rowIndex + 1, field: 0 });
-            setTimeout(() => {
-              const nextInput = document.querySelector(
-                `input[data-row="${rowIndex + 1}"][data-field="0"]`
-              ) as HTMLInputElement;
-              nextInput?.focus();
-            }, 0);
-          } else if (isComplete) {
-            // Dernière ligne complète : retourner à la recherche
-            setFocusedField(null);
-            setTimeout(() => {
-              searchInputRef.current?.focus();
-            }, 0);
-          }
+            moveToNextField();
         }
         break;
       case 'ArrowDown':
@@ -388,87 +350,82 @@ export default function Commandes() {
         }
         break;
       case 'ArrowRight':
-        e.preventDefault();
-        if (fieldIndex < fieldsPerRow - 1) {
-          setFocusedField({ row: rowIndex, field: fieldIndex + 1 });
-          setTimeout(() => {
-            const nextInput = document.querySelector(
-              `input[data-row="${rowIndex}"][data-field="${fieldIndex + 1}"]`
-            ) as HTMLInputElement;
-            nextInput?.focus();
-          }, 0);
+        // Uniquement si curseur à la fin ou si on veut naviguer entre champs ? 
+        // Pour l'instant, garder comportement standard input sauf si Ctrl
+        if (e.ctrlKey) {
+             e.preventDefault();
+             moveToNextField();
         }
         break;
       case 'ArrowLeft':
-        e.preventDefault();
-        if (fieldIndex > 0) {
-          setFocusedField({ row: rowIndex, field: fieldIndex - 1 });
-          setTimeout(() => {
-            const nextInput = document.querySelector(
-              `input[data-row="${rowIndex}"][data-field="${fieldIndex - 1}"]`
-            ) as HTMLInputElement;
-            nextInput?.focus();
-          }, 0);
-        }
+         if (e.ctrlKey) {
+             e.preventDefault();
+             moveToPreviousField();
+         }
         break;
     }
   }
 
   function selectProduct(product: ProduitModel) {
-    // Ajouter directement au tableau avec valeurs par défaut
-    const newCommandeProduit: CommandeProduit = {
-      id: Date.now(), // ID temporaire
-      produit: product,
-      quantity: 1,
-      price: product.cost_price || '0',
-      selling_price: product.selling_price || '0',
-      lot: '',
-      date_expiration: '',
-    };
-    
-    setCommandeProduits(prev => [...prev, newCommandeProduit]);
-    
-    // Focus sur le champ quantité de la nouvelle ligne
-    const newRowIndex = commandeProduits.length;
-    setFocusedField({ row: newRowIndex, field: 0 }); // 0 = quantité
+    // Vérifier si le produit existe déjà
+    const existingIndex = commandeProduits.findIndex(
+      p => (typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id
+    );
+
+    if (existingIndex !== -1) {
+      // Produit existant : Focus sur cette ligne et incrémenter quantité ?
+      // Pour l'instant on met juste le focus
+      const newRowIndex = existingIndex;
+      setFocusedField({ row: newRowIndex, field: 0 });
+      
+      // Update quantity (+1)
+      const currentQty = parseInt(String(commandeProduits[existingIndex].quantity || 0));
+      updateCommandeProduitField(existingIndex, 'quantity', currentQty + 1);
+
+      // Indicateur visuel (scroll)
+      setTimeout(() => {
+        const row = document.querySelector(`input[data-row="${newRowIndex}"]`);
+        row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const quantityInput = document.querySelector(
+          `input[data-row="${newRowIndex}"][data-field="0"]`
+        ) as HTMLInputElement;
+        quantityInput?.focus();
+      }, 50);
+
+    } else {
+      // Nouveau produit
+      const newCommandeProduit: CommandeProduit = {
+        id: Date.now(), // ID temporaire
+        produit: product,
+        quantity: 1,
+        price: product.cost_price || '0',
+        tva: product.tva || '18',
+        marge: product.taux_marge || '1.3',
+        selling_price: product.selling_price || '0',
+        lot: '',
+        date_expiration: '',
+      };
+      
+      setCommandeProduits(prev => [...prev, newCommandeProduit]);
+      
+      const newRowIndex = commandeProduits.length;
+      setFocusedField({ row: newRowIndex, field: 0 });
+      
+      setTimeout(() => {
+         const quantityInput = document.querySelector(
+           `input[data-row="${newRowIndex}"][data-field="0"]`
+         ) as HTMLInputElement;
+         quantityInput?.focus();
+         quantityInput?.select();
+      }, 50);
+    }
     
     // Reset recherche
     setSearchProduitQuery('');
     setHighlightedIndex(-1);
-    setSelectedProduitToAdd(null);
-    
-    // Remettre focus sur recherche pour ajouter rapidement un autre produit
-    setTimeout(() => {
-      searchInputRef.current?.focus();
-    }, 50);
   }
 
-  async function addProductToCommande() {
-    if (!selectedProduitToAdd) {
-      setError("Aucun produit sélectionné.");
-      return;
-    }
 
-    // Validation des champs obligatoires
-    const validationError = validateProductFields(lineItem.quantity, lineItem.price, lineItem.selling_price);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
-    try {
-      // Créer un objet CommandeProduit temporaire pour l'affichage
-      const tempCommandeProduit = createCommandeProduit(selectedProduitToAdd, lineItem);
-
-      // Ajouter à la liste des produits de la commande
-      setCommandeProduits(prev => [...prev, tempCommandeProduit]);
-
-      // Reset form
-      resetProductForm();
-    } catch (err) {
-      handleApiError(err, "Erreur lors de l'ajout du produit.");
-    }
-  }
 
   function removeProductFromCommande(index: number) {
     setCommandeProduits(prev => prev.filter((_, i) => i !== index));
@@ -515,96 +472,180 @@ export default function Commandes() {
   // Fonction pour mettre à jour un champ dans une ligne
   function updateCommandeProduitField(
     index: number,
-    field: 'quantity' | 'price' | 'selling_price' | 'lot' | 'date_expiration',
+    field: 'quantity' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration',
     value: string | number
   ) {
     setCommandeProduits(prev => prev.map((item, i) => {
       if (i === index) {
-        return { ...item, [field]: value };
+        const newItem = { ...item, [field]: value };
+        
+        // Recalculer selling_price si price ou marge change
+        if (field === 'price' || field === 'marge') {
+             const price = parseFloat(String(newItem.price || 0));
+             const marge = parseFloat(String(newItem.marge || 1));
+             if (!isNaN(price) && !isNaN(marge) && price > 0) {
+                 newItem.selling_price = (price * marge).toString();
+             }
+        }
+        // Recalculer marge si selling_price change
+        if (field === 'selling_price') {
+             const price = parseFloat(String(newItem.price || 0));
+             const selling = parseFloat(String(newItem.selling_price || 0));
+             if (!isNaN(price) && !isNaN(selling) && price > 0) {
+                 newItem.marge = (selling / price).toString();
+             }
+        }
+        return newItem;
       }
       return item;
     }));
   }
 
-  function addProductToExistingCommande() {
-    if (!selectedProduitToAdd) {
-      setError("Aucun produit sélectionné.");
-      return;
-    }
 
-    // Validation des champs obligatoires
-    const validationError = validateProductFields(lineItem.quantity, lineItem.price, lineItem.selling_price);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
 
-    try {
-      // Créer un objet CommandeProduit temporaire pour l'affichage
-      const tempCommandeProduit = createCommandeProduit(selectedProduitToAdd, lineItem);
 
-      // Ajouter à la liste des produits à ajouter
-      setProductsToAdd(prev => [...prev, tempCommandeProduit]);
 
-      // Reset form
-      resetProductForm();
-    } catch (err) {
-      handleApiError(err, "Erreur lors de l'ajout du produit.");
-    }
-  }
+  const handleCsvImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  function removeProductFromProductsToAdd(index: number) {
-    setProductsToAdd(prev => prev.filter((_, i) => i !== index));
-  }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
 
-  async function handleAddProductsToCommande() {
-    if (!selectedCommande) {
-      setError('Aucune commande sélectionnée.');
-      return;
-    }
-    if (productsToAdd.length === 0) {
-      setError('Aucun produit à ajouter.');
-      return;
-    }
+      const lines = text.split(/\r\n|\n/);
+      let currentList = [...commandeProduits];
+      let productsFound = 0;
+      let productsNotFound = 0;
 
-    try {
-      const commandeProduitsEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
-        : '/api/commande-produits/'
+      lines.forEach(line => {
+        if (!line.trim()) return;
+        const [cip, qtyStr] = line.split(';');
+        if (!cip) return;
 
-      // Ajouter tous les produits à la commande
-      for (const produit of productsToAdd) {
-        const produitPayload = {
-          commande: selectedCommande.id,
-          produit: produit.produit.id,
-          quantity: produit.quantity,
-          price: produit.price,
-          price_cost: produit.price,
-          selling_price: produit.selling_price,
-          lot: produit.lot || null,
-          date_expiration: produit.date_expiration || null,
-        };
-        await axios.post(commandeProduitsEndpoint, produitPayload);
-      }
+        const qty = parseInt(qtyStr) || 1;
+        const cleanCip = cip.trim();
 
-      // Rafraîchir la liste des commandes
-      const { data: updatedCommandesData } = await axios.get(commandesEndpoint)
-      const updatedCommandes: any = updatedCommandesData;
-      const updatedCommandesArray = Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []);
-      setCommandes(updatedCommandesArray)
+        // Recherche par CIP (1, 2 ou 3)
+        const product = produitsList.find(p => 
+          p.cip1 === cleanCip || p.cip2 === cleanCip || p.cip3 === cleanCip
+        );
+
+        if (product) {
+            productsFound++;
+            // Check duplicates
+            const existingIndex = currentList.findIndex(
+               p => (typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id
+            );
+
+            if (existingIndex !== -1) {
+                // Update existing quantity
+                const currentQty = parseInt(String(currentList[existingIndex].quantity || 0));
+                currentList[existingIndex] = {
+                    ...currentList[existingIndex],
+                    quantity: currentQty + qty
+                };
+            } else {
+                // Add new line
+                const newCommandeProduit: CommandeProduit = {
+                  id: Date.now() + Math.random(), // Unique temp ID
+                  produit: product,
+                  quantity: qty,
+                  price: product.cost_price || '0',
+                  price_cost: product.cost_price || '0', // Required
+                  tva: product.tva || '18',
+                  marge: product.taux_marge || '1.3',
+                  selling_price: product.selling_price || '0',
+                  lot: '',
+                  date_expiration: '',
+                };
+                currentList.push(newCommandeProduit);
+            }
+        } else {
+            console.warn(`Produit avec CIP ${cleanCip} non trouvé.`);
+            productsNotFound++;
+        }
+      });
+
+      setCommandeProduits(currentList);
       
-      // Mettre à jour la commande sélectionnée
-      const updatedCommande = updatedCommandesArray.find((c: Commande) => c.id === selectedCommande.id)
-      setSelectedCommande(updatedCommande || null)
+      const message = productsNotFound > 0 
+        ? `${productsFound} produits ajoutés. ${productsNotFound} CIPs introuvables.`
+        : `${productsFound} produits importés avec succès.`;
       
-      // Fermer le modal
-      closeAddProductsModal()
-    } catch (err) {
-      handleApiError(err, 'Erreur lors de l\'ajout des produits')
-    }
-  }
+      alert(message);
+      
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
+  };
 
-  async function handleAddCommande(e: FormEvent<HTMLFormElement>) {
+
+
+
+
+  const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX') => {
+    if (commandeProduits.length === 0) {
+      alert("La commande est vide.");
+      return;
+    }
+
+    let csvContent = ""; // Pas d'en-tête, juste Code;Quantité
+    let exportedCount = 0;
+    let skippedCount = 0;
+
+    commandeProduits.forEach(item => {
+        const product = typeof item.produit === 'object' ? item.produit : produitsList.find(p => p.id === item.produit);
+        if (!product) {
+            skippedCount++;
+            return;
+        }
+
+        let code = '';
+        if (wholesaler === 'UBIPHARM') {
+            code = product.cip1 || '';
+        } else if (wholesaler === 'LABOREX') {
+            code = product.cip2 || '';
+        }
+
+        if (code) {
+            const qty = item.quantity || 0;
+            // Format: Code;Quantité
+            csvContent += `${code};${qty}\n`;
+            exportedCount++;
+        } else {
+            skippedCount++;
+        }
+    });
+
+    if (exportedCount === 0) {
+        alert(`Aucun produit n'a de code pour ${wholesaler}. (CIP manquants)`);
+        return;
+    }
+
+    // Créer et télécharger le fichier
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        const dateStr = new Date().toISOString().slice(0,10);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `commande_${wholesaler}_${dateStr}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    if (skippedCount > 0) {
+        alert(`${exportedCount} lignes exportées.\n${skippedCount} lignes ignorées (Code CIP manquant pour ${wholesaler}).`);
+    }
+  };
+
+
+  async function handleSaveCommande(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!newCommandeFournisseurId) {
       setError('Veuillez sélectionner un fournisseur.')
@@ -616,77 +657,108 @@ export default function Commandes() {
     }
     
     try {
-      // Créer la commande
-      const commandePayload = { 
-        fournisseur: parseInt(newCommandeFournisseurId, 10),
-        numero_facture: numeroFacture,
-      }
-      const { data: createdCommande } = await axios.post<Commande>(commandesEndpoint, commandePayload)
-      
-      // Ajouter tous les produits à la commande
-      const commandeProduitsEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
-        : '/api/commande-produits/'
+      let activeCommandeId: number;
 
-      for (const produit of commandeProduits) {
-        const produitPayload = {
-          commande: createdCommande.id,
-          produit: produit.produit.id,
-          quantity: produit.quantity,
-          price: produit.price,
-          price_cost: produit.price,
-          selling_price: produit.selling_price,
-          lot: produit.lot || null,
-          date_expiration: produit.date_expiration || null,
-        };
-        await axios.post(commandeProduitsEndpoint, produitPayload);
+      if (viewMode === 'EDIT' && selectedCommande) {
+          // --- MODE MODIFICATION ---
+          activeCommandeId = selectedCommande.id;
+          
+          // 1. Mise à jour de l'en-tête
+          await axios.patch<Commande>(`${commandesEndpoint}${activeCommandeId}/`, {
+             fournisseur: parseInt(newCommandeFournisseurId, 10),
+             numero_facture: numeroFacture,
+          });
+
+          // 2. Synchronisation des produits
+          const initialProducts = selectedCommande.produits;
+          const currentProducts = commandeProduits;
+          const commandeProduitsEndpointBase = apiBaseUrl
+             ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
+             : '/api/commande-produits/';
+
+          // A. Suppressions (Produits présents initialement mais absents de la liste actuelle)
+          // On compare par ID. Les nouveaux produits ont des ID temporels (grands) ou non trouvés.
+          const currentIds = new Set(currentProducts.map(p => p.id));
+          const toDelete = initialProducts.filter(initP => !currentIds.has(initP.id));
+          
+          for (const p of toDelete) {
+             await axios.delete(`${commandeProduitsEndpointBase}${p.id}/`);
+          }
+
+          // B. Ajouts et Modifications
+          for (const p of currentProducts) {
+             const payload = {
+                commande: activeCommandeId,
+                produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                quantity: parseInt(String(p.quantity || 1)),
+                price: parseFloat(String(p.price || 0)).toFixed(2),
+                price_cost: parseFloat(String(p.price || 0)).toFixed(2), // Required field
+                selling_price: parseFloat(String(p.selling_price || 0)).toFixed(2),
+                tva: parseFloat(String(p.tva || 18)).toFixed(2),
+                marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
+                lot: p.lot || null,
+                date_expiration: p.date_expiration || null,
+             };
+
+             // Si l'ID existe dans les produits initiaux, c'est une modification
+             if (initialProducts.find(initP => initP.id === p.id)) {
+                 await axios.patch(`${commandeProduitsEndpointBase}${p.id}/`, payload);
+             } else {
+                 // Sinon c'est un ajout (POST)
+                 await axios.post(commandeProduitsEndpointBase, payload);
+             }
+          }
+
+      } else {
+          // --- MODE CRÉATION ---
+          const commandePayload = { 
+            fournisseur: parseInt(newCommandeFournisseurId, 10),
+            numero_facture: numeroFacture,
+          }
+          const { data: createdCommande } = await axios.post<Commande>(commandesEndpoint, commandePayload)
+          activeCommandeId = createdCommande.id;
+          
+          const commandeProduitsEndpoint = apiBaseUrl
+            ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
+            : '/api/commande-produits/'
+
+          for (const produit of commandeProduits) {
+            const produitPayload = {
+              commande: activeCommandeId,
+              produit: typeof produit.produit === 'object' ? produit.produit.id : produit.produit,
+              quantity: parseInt(String(produit.quantity || 1)),
+              price: parseFloat(String(produit.price || 0)).toFixed(2),
+              price_cost: parseFloat(String(produit.price || 0)).toFixed(2), // Required field
+              selling_price: parseFloat(String(produit.selling_price || 0)).toFixed(2),
+              tva: parseFloat(String(produit.tva || 18)).toFixed(2),
+              marge: parseFloat(String(produit.marge || 1.3)).toFixed(4),
+              lot: produit.lot || null,
+              date_expiration: produit.date_expiration || null,
+            };
+            await axios.post(commandeProduitsEndpoint, produitPayload);
+          }
       }
 
-      // Rafraîchir la liste des commandes
+      // Rafraîchir
       const { data: updatedCommandesData } = await axios.get(commandesEndpoint)
       const updatedCommandes: any = updatedCommandesData;
       const updatedCommandesArray = Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []);
       setCommandes(updatedCommandesArray)
       
-      // Sélectionner la nouvelle commande
-      const newCommandeWithProducts = updatedCommandesArray.find((c: Commande) => c.id === createdCommande.id)
-      setSelectedCommande(newCommandeWithProducts || null)
+      // Sélectionner la commande (mise à jour ou nouvelle)
+      const finalCommande = updatedCommandesArray.find((c: Commande) => c.id === activeCommandeId);
+      setSelectedCommande(finalCommande || null);
       
-      // Fermer le modal
-      closeAddModal()
-    } catch (err) {
-      handleApiError(err, 'Erreur lors de la création de la commande')
+      // Transition vers DETAILS
+      setViewMode('DETAILS');
+
+    } catch (err: any) {
+      console.error("Erreur lors de l'enregistrement:", err.response?.data);
+      handleApiError(err, viewMode === 'EDIT' ? 'Erreur lors de la modification' : 'Erreur lors de la création')
     }
   }
 
-  async function handleEditCommande(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!selectedCommande) {
-      setError('Aucune commande sélectionnée.')
-      return
-    }
-    if (!editCommandeFournisseurId) {
-      setError('Veuillez sélectionner un fournisseur.')
-      return
-    }
-    try {
-      const payload = { 
-        fournisseur: parseInt(editCommandeFournisseurId, 10),
-        numero_facture: editNumeroFacture,
-      }
-      const { data: updatedCommande } = await axios.patch<Commande>(
-        `${commandesEndpoint}${selectedCommande.id}/`,
-        payload
-      )
-      setCommandes(prev => 
-        prev.map(c => (c.id === updatedCommande.id ? updatedCommande : c))
-      )
-      setSelectedCommande(updatedCommande)
-      closeEditModal()
-    } catch (err) {
-      handleApiError(err, 'Erreur lors de la modification de la commande')
-    }
-  }
+
 
   async function handleCloturerCommande() {
     if (!selectedCommande) {
@@ -812,14 +884,76 @@ export default function Commandes() {
 
 
   // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
+  // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
   function handleProduitCreated(produit: ProduitModel) {
     setProduitsList(prev => [...prev, produit]);
-    setSelectedProduitToAdd(produit);
+    selectProduct(produit); // Add directly to table
     setSearchProduitQuery('');
     setHighlightedIndex(-1);
     setIsCreateProduitModalOpen(false); // Fermer le modal après création
   }
 
+
+
+  // Remplacer openAddModal
+  function openCreateView() {
+    setNewCommandeFournisseurId(fournisseurs.length > 0 ? String(fournisseurs[0].id) : '')
+    setNumeroFacture('')
+    setCommandeProduits([])
+    setSearchProduitQuery('')
+    setHighlightedIndex(-1)
+
+    
+    // Switch view
+    setViewMode('CREATE');
+    setSelectedCommande(null);
+  }
+
+  function openEditView(commande: Commande) {
+    // Initialiser le formulaire avec les données de la commande
+    setNewCommandeFournisseurId(String(commande.fournisseur));
+    setNumeroFacture(commande.numero_facture || '');
+    
+    // Cloner les produits et enrichir les données manquantes
+    const enrichedProducts = commande.produits.map(p => {
+        const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+        const fullProduct = produitsList.find(prod => prod.id === produitId);
+
+        let marge = p.marge;
+        const cost = parseFloat(p.price);
+        const sell = parseFloat(p.selling_price || '0');
+        
+        if (!marge && cost > 0 && sell > 0) {
+            marge = (sell / cost).toFixed(2);
+        }
+
+        return {
+            ...p,
+            id: p.id,
+            produit: fullProduct || p.produit,
+            price: p.price || (fullProduct?.cost_price || '0'),
+            selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
+            tva: p.tva || (fullProduct?.tva || '18'),
+            marge: marge || (fullProduct?.taux_marge || '1.3'),
+            lot: p.lot || '',
+            date_expiration: p.date_expiration || ''
+        };
+    });
+    
+    setCommandeProduits(enrichedProducts); 
+    
+    setSearchProduitQuery('')
+    setHighlightedIndex(-1)
+
+    setViewMode('EDIT');
+    // setSelectedCommande restera la commande active
+  }
+
+  function handleBackToList() {
+    setViewMode('LIST');
+    setSelectedCommande(null);
+    setCommandeProduits([]); // Clear temp data
+  }
 
   return (
     <>
@@ -831,9 +965,8 @@ export default function Commandes() {
         </div>
       )}
 
-
-      {/* Vue conditionnelle: Liste OU Détails */}
-      {!selectedCommande ? (
+      {/* Vue conditionnelle basée sur viewMode */}
+      {viewMode === 'LIST' && (
         /* LISTE DES COMMANDES */
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
@@ -849,7 +982,7 @@ export default function Commandes() {
                   {loading && <span className="loading loading-spinner loading-sm" />}
                   Générer Réapprovisionnement
                 </button>
-                <button className="btn btn-primary btn-sm" onClick={openAddModal}>+ Créer</button>
+                <button className="btn btn-primary btn-sm" onClick={openCreateView}>+ Créer</button>
               </div>
             </div>
             
@@ -898,7 +1031,10 @@ export default function Commandes() {
                       <td>
                         <button 
                           className="btn btn-ghost btn-xs"
-                          onClick={() => setSelectedCommande(commande)}
+                          onClick={() => {
+                              setSelectedCommande(commande);
+                              setViewMode('DETAILS');
+                          }}
                         >
                           👁️ Voir détails
                         </button>
@@ -910,12 +1046,14 @@ export default function Commandes() {
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {viewMode === 'DETAILS' && selectedCommande && (
         /* DÉTAILS DE LA COMMANDE */
         <div className="space-y-4">
           {/* Bouton retour */}
           <button 
-            onClick={() => setSelectedCommande(null)}
+            onClick={handleBackToList}
             className="btn btn-outline btn-sm gap-2"
           >
             ⬅️ Retour à la liste
@@ -927,16 +1065,10 @@ export default function Commandes() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title">Détails de la commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
                 <div className="flex flex-wrap gap-2">
-                  <button 
-                    className="btn btn-info btn-sm"
-                    onClick={openAddProductsModal}
-                    disabled={selectedCommande.status === 'CLOT'}
-                  >
-                    ➕ Ajouter produits
-                  </button>
+
                   <button 
                     className="btn btn-secondary btn-sm"
-                    onClick={openEditModal}
+                    onClick={() => openEditView(selectedCommande)}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
                     ✏️ Modifier
@@ -950,7 +1082,9 @@ export default function Commandes() {
                   </button>
                   <button 
                     className="btn btn-error btn-sm"
-                    onClick={handleDeleteCommande}
+                    onClick={() => {
+                        handleDeleteCommande().then(() => setViewMode('LIST'));
+                    }}
                   >
                     🗑️ Supprimer
                   </button>
@@ -992,7 +1126,7 @@ export default function Commandes() {
                 </div>
               </div>
 
-              {/* Liste des produits */}
+              {/* Liste des produits (Read Only) */}
               <div>
                 <h3 className="font-semibold mb-3">Produits commandés</h3>
                 {selectedCommande.produits.length === 0 ? (
@@ -1083,29 +1217,41 @@ export default function Commandes() {
         </div>
       )}
 
-      {/* Modal d'ajout de commande */} 
-      <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-7xl max-h-[90vh] flex flex-col">
+      {(viewMode === 'CREATE' || viewMode === 'EDIT') && (
+        /* VUE CRÉATION (Full Page) */
+        <div className="flex flex-col h-[calc(100vh-100px)]">
           <div className="flex items-center justify-between mb-4 shrink-0">
-            <div>
-              <h3 className="font-bold text-xl">Créer une nouvelle commande</h3>
-              <div className="flex gap-4 text-xs text-base-content/50 mt-1">
-                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
-                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Fournisseur</span>
-                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Ctrl+A</kbd> Tout sélectionner</span>
-                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Suppr</kbd> Supprimer</span>
-              </div>
+             <div className="flex items-center gap-4">
+                <button 
+                  onClick={handleBackToList}
+                  className="btn btn-circle btn-ghost btn-sm"
+                  title="Retour à la liste"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                </button>
+                <div>
+                  <h3 className="font-bold text-xl">
+                      {viewMode === 'EDIT' && selectedCommande 
+                        ? `Modifier Commande #${selectedCommande.numero_facture || selectedCommande.id}` 
+                        : 'Nouvelle Commande'}
+                  </h3>
+                  <div className="flex gap-4 text-xs text-base-content/50 mt-1">
+                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
+                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Fournisseur</span>
+                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Ctrl+A</kbd> Select All</span>
+                  </div>
+                </div>
             </div>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeAddModal}
-            >
-              ✕
-            </button>
           </div>
           
-          <form className="flex-1 flex flex-col min-h-0" onSubmit={handleAddCommande}> 
+          
+          <form 
+            className="flex-1 flex flex-col min-h-0" 
+            onSubmit={handleSaveCommande}
+          > 
+ 
             {/* Section supérieure : Informations et Recherche */}
             <div className="shrink-0 space-y-4 mb-4">
               {/* Informations de la commande */}
@@ -1140,7 +1286,32 @@ export default function Commandes() {
                     />
                   </label>
 
-                  <div className="flex items-end justify-end">
+                  <div className="flex items-end justify-end gap-2">
+                    {/* Export Dropdown */}
+                    <div className="dropdown dropdown-end">
+                      <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border-base-300">
+                        📤 Exporter CSV
+                      </div>
+                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
+                        <li><a onClick={() => handleCsvExport('UBIPHARM')}>Ubipharm (CIP1)</a></li>
+                        <li><a onClick={() => handleCsvExport('LABOREX')}>Laborex (CIP2)</a></li>
+                      </ul>
+                    </div>
+
+                    <input 
+                        type="file" 
+                        accept=".csv"
+                        className="hidden"
+                        ref={fileInputRef}
+                        onChange={handleCsvImport}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      📂 Importer CSV
+                    </button>
                     <button
                       type="button"
                       className="btn btn-outline btn-sm"
@@ -1220,9 +1391,14 @@ export default function Commandes() {
             {/* Tableau des produits avec édition inline */}
             <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
               <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
-                <h2 className="font-bold text-lg text-base-content">
-                  Produits ({commandeProduits.length})
-                </h2>
+                <div className="flex items-center gap-4">
+                  <h2 className="font-bold text-lg text-base-content">
+                    Produits ({commandeProduits.length})
+                  </h2>
+                  <div className="text-xl md:text-2xl font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
+                    Total : {commandeProduits.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0).toLocaleString('fr-FR')} F
+                  </div>
+                </div>
                 {selectedRows.size > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-base-content/70">{selectedRows.size} sélectionné(s)</span>
@@ -1259,8 +1435,10 @@ export default function Commandes() {
                         </th>
                         <th className="bg-base-50 pl-4">Produit</th>
                         <th className="bg-base-50 text-right w-24">Qté</th>
-                        <th className="bg-base-50 text-right w-28">Prix Achat</th>
-                        <th className="bg-base-50 text-right w-28">Prix Vente</th>
+                        <th className="bg-base-50 text-right w-32">Prix Achat HT</th>
+                        <th className="bg-base-50 text-right w-24">TVA</th>
+                        <th className="bg-base-50 text-right w-24">Marge</th>
+                        <th className="bg-base-50 text-right w-32">Prix Vente</th>
                         <th className="bg-base-50 text-left w-32">Lot</th>
                         <th className="bg-base-50 text-left w-36">Date Exp</th>
                         <th className="bg-base-50 w-10"></th>
@@ -1281,70 +1459,112 @@ export default function Commandes() {
                             />
                           </td>
                           <td className="pl-4 py-2 md:py-3">
-                            <div className="font-medium text-xs md:text-sm">{p.produit.name}</div>
+                            <div className="font-medium text-base">{typeof p.produit === 'object' ? p.produit.name : `Produit #${p.produit}`}</div>
                           </td>
+                          {/* Quantity (0) */}
                           <td className="text-right py-2 md:py-3">
                             <input
-                              type="number"
-                              min="1"
+                              type="text"
                               data-row={index}
                               data-field={0}
                               value={p.quantity}
-                              onChange={(e) => updateCommandeProduitField(index, 'quantity', parseInt(e.target.value) || 1)}
+                              onChange={(e) => updateCommandeProduitField(index, 'quantity', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
-                              className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
+                              className={`input input-ghost input-sm text-base w-full text-right font-medium focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 0}
+                              readOnly={!fieldsConfig[0].editable}
+                              tabIndex={!fieldsConfig[0].editable ? -1 : 0}
                             />
                           </td>
+                          {/* Price (1) */}
                           <td className="text-right py-2 md:py-3">
                             <input
-                              type="number"
-                              step="0.01"
+                              type="text"
                               data-row={index}
                               data-field={1}
                               value={p.price}
                               onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
-                              className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 1}
+                              readOnly={!fieldsConfig[1].editable}
+                              tabIndex={!fieldsConfig[1].editable ? -1 : 0}
                             />
                           </td>
+                          {/* TVA (2) */}
                           <td className="text-right py-2 md:py-3">
                             <input
-                              type="number"
-                              step="0.01"
+                              type="text"
                               data-row={index}
                               data-field={2}
-                              value={p.selling_price}
-                              onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
+                              value={p.tva || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
-                              className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 2}
+                              readOnly={!fieldsConfig[2].editable}
+                              tabIndex={!fieldsConfig[2].editable ? -1 : 0}
                             />
                           </td>
-                          <td className="text-left py-2 md:py-3">
+                          {/* Marge (3) */}
+                          <td className="text-right py-2 md:py-3">
                             <input
                               type="text"
                               data-row={index}
                               data-field={3}
-                              value={p.lot || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
+                              value={p.marge || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 3)}
-                              className="input input-ghost input-xs w-full focus:bg-base-100 focus:text-primary"
-                              placeholder="Lot"
+                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 3}
+                              readOnly={!fieldsConfig[3].editable}
+                              tabIndex={!fieldsConfig[3].editable ? -1 : 0}
                             />
                           </td>
+                          {/* Selling Price (4) */}
+                          <td className="text-right py-2 md:py-3">
+                            <input
+                              type="text"
+                              data-row={index}
+                              data-field={4}
+                              value={p.selling_price}
+                              onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
+                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              autoFocus={focusedField?.row === index && focusedField?.field === 4}
+                              readOnly={!fieldsConfig[4].editable}
+                              tabIndex={!fieldsConfig[4].editable ? -1 : 0}
+                            />
+                          </td>
+                          {/* Lot (5) */}
+                          <td className="text-left py-2 md:py-3">
+                            <input
+                              type="text"
+                              data-row={index}
+                              data-field={5}
+                              value={p.lot || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 5)}
+                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              placeholder="Lot"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 5}
+                              readOnly={!fieldsConfig[5].editable}
+                              tabIndex={!fieldsConfig[5].editable ? -1 : 0}
+                            />
+                          </td>
+                          {/* Expiration (6) */}
                           <td className="text-left py-2 md:py-3">
                             <input
                               type="date"
                               data-row={index}
-                              data-field={4}
+                              data-field={6}
                               value={p.date_expiration || ''}
                               onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
-                              className="input input-ghost input-xs w-full focus:bg-base-100 focus:text-primary"
-                              autoFocus={focusedField?.row === index && focusedField?.field === 4}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
+                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              autoFocus={focusedField?.row === index && focusedField?.field === 6}
+                              readOnly={!fieldsConfig[6].editable}
+                              tabIndex={!fieldsConfig[6].editable ? -1 : 0}
                             />
                           </td>
                           <td className="text-center py-3">
@@ -1371,7 +1591,7 @@ export default function Commandes() {
               <button 
                 type="button" 
                 className="btn btn-ghost" 
-                onClick={closeAddModal}
+                onClick={handleBackToList}
               >
                 Annuler
               </button>
@@ -1383,401 +1603,14 @@ export default function Commandes() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Créer la commande
+                {viewMode === 'EDIT' ? 'Enregistrer les modifications' : 'Créer la commande'}
               </button>
             </div>
           </form>
         </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeAddModal}>
-          <button>close</button>
-        </form>
-      </dialog>
+      )}
 
-      {/* Modal de modification de commande */} 
-      <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Modifier la commande #{selectedCommande?.id}</h3>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeEditModal}
-            >
-              ✕
-            </button>
-          </div>
-          
-          <form className="space-y-6" onSubmit={handleEditCommande}> 
-            {/* Informations de la commande */} 
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Informations de la commande
-              </h4>
-              
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text font-medium">Fournisseur *</span>
-                </div>
-                <select
-                  className="select select-bordered w-full"
-                  value={editCommandeFournisseurId}
-                  onChange={(e) => setEditCommandeFournisseurId(e.target.value)}
-                  required
-                >
-                  <option value="" disabled>Sélectionnez un fournisseur</option>
-                  {fournisseurs.map(f => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
-                  ))}
-                </select>
-              </label>
-              
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text font-medium">Numéro de facture</span>
-                </div>
-                <input 
-                  type="text"
-                  placeholder="Ex: FAC-2024-001"
-                  className="input input-bordered w-full"
-                  value={editNumeroFacture}
-                  onChange={(e) => setEditNumeroFacture(e.target.value)}
-                />
-              </label>
-            </div>
 
-            {/* Informations de la commande actuelle */} 
-            {selectedCommande && (
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Informations actuelles
-                </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="form-control">
-                    <div className="label">
-                      <span className="label-text font-medium">Statut</span>
-                    </div>
-                    <div className="p-3 bg-base-200 rounded-lg">
-                      <span className="badge badge-ghost">{selectedCommande.status_display}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="form-control">
-                    <div className="label">
-                      <span className="label-text font-medium">Date de création</span>
-                    </div>
-                    <div className="p-3 bg-base-200 rounded-lg">
-                      {new Date(selectedCommande.date).toLocaleString('fr-FR')}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="form-control">
-                  <div className="label">
-                    <span className="label-text font-medium">Total actuel</span>
-                  </div>
-                  <div className="p-3 bg-base-200 rounded-lg font-bold">
-                    {selectedCommande.total} F
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */} 
-            <div className="modal-action pt-4">
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                onClick={closeEditModal}
-              >
-                Annuler
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Enregistrer les modifications
-              </button>
-            </div>
-          </form>
-        </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeEditModal}>
-          <button>close</button>
-        </form>
-      </dialog>
-
-      {/* Modal d'ajout de produits à une commande existante */} 
-      <dialog className={`modal ${isAddProductsModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-6xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Ajouter des produits à la commande #{selectedCommande?.id}</h3>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeAddProductsModal}
-            >
-              ✕
-            </button>
-          </div>
-          
-          <div className="space-y-6">
-            {/* Informations de la commande */} 
-            {selectedCommande && (
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Informations de la commande
-                </h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-control">
-                    <div className="label">
-                      <span className="label-text font-medium">Fournisseur</span>
-                    </div>
-                    <div className="p-3 bg-base-200 rounded-lg">
-                      {fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}
-                    </div>
-                  </div>
-                  
-                  <div className="form-control">
-                    <div className="label">
-                      <span className="label-text font-medium">Statut</span>
-                    </div>
-                    <div className="p-3 bg-base-200 rounded-lg">
-                      <span className="badge badge-ghost">{selectedCommande.status_display}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="form-control">
-                    <div className="label">
-                      <span className="label-text font-medium">Total actuel</span>
-                    </div>
-                    <div className="p-3 bg-base-200 rounded-lg font-bold">
-                      {selectedCommande.total} F
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Ajout de produits */} 
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Ajouter des produits
-              </h4>
-              {/* Bouton pour ouvrir le modal de création de produit */} 
-              <div className="flex justify-end mb-2">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setIsCreateProduitModalOpen(true)}
-                >
-                  + Créer un nouveau produit
-                </button>
-              </div>
-              
-              <div className="p-4 border rounded-lg bg-base-50">
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text font-medium">Rechercher un produit</span>
-                  </label>
-                  <input 
-                    ref={searchInputRef}
-                    type="text" 
-                    placeholder="Taper pour rechercher... (utilisez ↑↓ pour naviguer, Entrée pour sélectionner)"
-                    className="input input-bordered w-full"
-                    value={searchProduitQuery}
-                    onChange={(e) => {
-                      setSearchProduitQuery(e.target.value);
-                      setHighlightedIndex(-1);
-                    }}
-                    onKeyDown={handleSearchKeyDown}
-                  />
-                  {searchProduitQuery && filteredProduits.length > 0 && (
-                    <div className="relative">
-                      <ul className="menu bg-base-200 w-full rounded-box mt-1 max-h-60 overflow-y-auto">
-                        {filteredProduits.map((p, index) => (
-                          <li 
-                            key={p.id} 
-                            className={highlightedIndex === index ? 'bg-primary text-primary-content' : ''}
-                            onClick={() => selectProduct(p)}
-                          >
-                            <a className="cursor-pointer">
-                              <div>
-                                <div className="font-medium">{p.name}</div>
-                                <div className="text-sm opacity-70">
-                                  Stock: {p.stock} | Prix: {p.selling_price} F
-                                </div>
-                              </div>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {searchProduitQuery && filteredProduits.length === 0 && (
-                    <div className="text-center text-base-content/70 py-4">
-                      Aucun produit trouvé
-                    </div>
-                  )}
-                </div>
-
-                {selectedProduitToAdd && (
-                  <div className="space-y-4 p-4 bg-base-100 rounded-lg">
-                    <h5 className="font-bold text-base">Produit sélectionné: {selectedProduitToAdd.name}</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Quantité *</span>
-                        </div>
-                        <input 
-                          type="number" 
-                          min="1"
-                          value={lineItem.quantity} 
-                          onChange={e => setLineItem(p => ({...p, quantity: e.target.value}))} 
-                          className="input input-bordered" 
-                          required 
-                        />
-                      </label>
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Prix d\'achat *</span>
-                        </div>
-                        <input 
-                          type="number" 
-                          step="0.01" 
-                          value={lineItem.price} 
-                          onChange={e => setLineItem(p => ({...p, price: e.target.value}))} 
-                          className="input input-bordered" 
-                          required 
-                        />
-                      </label>
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Prix de vente *</span>
-                        </div>
-                        <input 
-                          type="number" 
-                          step="0.01" 
-                          value={lineItem.selling_price} 
-                          onChange={e => setLineItem(p => ({...p, selling_price: e.target.value}))} 
-                          className="input input-bordered" 
-                          required 
-                        />
-                      </label>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Lot</span>
-                        </div>
-                        <input 
-                          type="text" 
-                          value={lineItem.lot} 
-                          onChange={e => setLineItem(p => ({...p, lot: e.target.value}))} 
-                          className="input input-bordered" 
-                        />
-                      </label>
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Date d\'expiration</span>
-                        </div>
-                        <input 
-                          type="date" 
-                          value={lineItem.date_expiration} 
-                          onChange={e => setLineItem(p => ({...p, date_expiration: e.target.value}))} 
-                          className="input input-bordered" 
-                        />
-                      </label>
-                    </div>
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary"
-                      onClick={addProductToExistingCommande}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Ajouter le produit
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Liste des produits à ajouter */} 
-            {productsToAdd.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Produits à ajouter ({productsToAdd.length})
-                </h4>
-                
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra">
-                    <thead>
-                      <tr>
-                        <th>Produit</th>
-                        <th>Quantité</th>
-                        <th>Prix d\'achat</th>
-                        <th>Prix de vente</th>
-                        <th>Lot</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {productsToAdd.map((p, index) => (
-                        <tr key={p.id}>
-                          <td className="font-medium">{p.produit.name}</td>
-                          <td>{p.quantity}</td>
-                          <td>{p.price} F</td>
-                          <td>{p.selling_price} F</td>
-                          <td>{p.lot || '-'}</td>
-                          <td>
-                            <button 
-                              type="button"
-                              className="btn btn-error btn-xs"
-                              onClick={() => removeProductFromProductsToAdd(index)}
-                            >
-                              Supprimer
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Actions */} 
-            <div className="modal-action pt-4">
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                onClick={closeAddProductsModal}
-              >
-                Annuler
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-primary"
-                onClick={handleAddProductsToCommande}
-                disabled={productsToAdd.length === 0}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Ajouter les produits
-              </button>
-            </div>
-          </div>
-        </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeAddProductsModal}>
-          <button>close</button>
-        </form>
-      </dialog>
 
       {/* Modal de création de produit réutilisable */} 
       <ProduitFormModal

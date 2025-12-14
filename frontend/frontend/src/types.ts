@@ -40,6 +40,7 @@ export interface ProduitModel {
   rotation_moyenne?: string
   taux_marge?: string
   pourcentage_marge?: string
+  pmp?: string
   created_at?: string
   updated_at?: string
 }
@@ -84,6 +85,8 @@ export interface CommandeProduit {
   selling_price?: string
   lot?: string
   date_expiration?: string
+  tva?: string
+  marge?: string
 }
 
 export interface Commande {
