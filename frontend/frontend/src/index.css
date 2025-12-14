@@ -53,3 +53,15 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Global Table Zebra Striping Override */
+.table tbody tr:nth-child(even) {
+  --tw-bg-opacity: 1;
+  background-color: var(--color-base-200);
+}
+
+/* Ensure odd rows are white (or base-100) */
+.table tbody tr:nth-child(odd) {
+  --tw-bg-opacity: 1;
+  background-color: var(--color-base-100);
+}

@@ -262,6 +262,9 @@ sur une ligne de saisie la touche entrer permet de se deplacer sur chaque champ 
 
 permettre d'importer un fichier csv(sepaparation point virgule) cip+quantite et la recherche par cip remplira autmatiquement les autres champs
 
-ajouter un bouton export csv pour exporter les commandes en cours a cet effet cip1 represente les codes d'un grossiste specifique(ubipharm) et cip2(laborex) lors de l'export me proposer sur quel grossiste exporter
+ajouter un bouton export csv pour exporter les commandes en cours a cet effet cip1 represente les codes d'un grossiste specifique(ubipharm) et cip2(laborex) lors de l'export me proposer sur quel grossiste exporter  OK OK
+
+
+
 
                                                                                                                                                                                                                                                  
