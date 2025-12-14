@@ -133,8 +133,8 @@ export default function StatistiquesProduit() {
                         <th>Date</th>
                         <th>Type</th>
                         <th>Libellé</th>
-                        <th className="text-right">Quantité</th>
                         <th className="text-right">Stock Avant</th>
+                        <th className="text-right">Quantité</th>
                         <th className="text-right">Stock Après</th>
                       </tr>
                     </thead>
@@ -167,12 +167,12 @@ export default function StatistiquesProduit() {
                             <td className="max-w-xs truncate" title={item.libelle}>
                               {item.libelle}
                             </td>
+                            <td className="text-right font-mono">{item.stock_avant}</td>
                             <td className={`text-right font-bold ${
                               item.type === 'ENTREE' || item.type === 'RETOUR' ? 'text-success' : 'text-error'
                             }`}>
                               {item.type === 'SORTIE' ? '-' : '+'}{item.quantity}
                             </td>
-                            <td className="text-right font-mono">{item.stock_avant}</td>
                             <td className="text-right font-mono font-bold">{item.stock_apres}</td>
                           </tr>
                         ))

@@ -463,3 +463,34 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"{self.timestamp} - {self.user} - {self.action}"
+
+
+class Inventaire(models.Model):
+    class Status(models.TextChoices):
+        EN_COURS = 'EN_COURS', 'En cours'
+        VALIDEE = 'VALIDEE', 'Validée'
+
+    date = models.DateTimeField(default=timezone.now)
+    description = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.EN_COURS)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Inventaire du {self.date.strftime('%d/%m/%Y')}"
+
+class LigneInventaire(models.Model):
+    inventaire = models.ForeignKey(Inventaire, on_delete=models.CASCADE, related_name='lignes')
+    produit = models.ForeignKey(Produit, on_delete=models.PROTECT) # Protect to exclude deleted products from historical inventories
+    stock_theorique = models.IntegerField(help_text="Stock au moment de l'ajout dans l'inventaire")
+    quantite_physique = models.IntegerField(default=0)
+    ecart = models.IntegerField(default=0, editable=False)
+    pmp_snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    def save(self, *args, **kwargs):
+        self.ecart = self.quantite_physique - self.stock_theorique
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.produit.name} : {self.quantite_physique} (Th: {self.stock_theorique})"

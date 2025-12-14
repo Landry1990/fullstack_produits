@@ -265,6 +265,6 @@ permettre d'importer un fichier csv(sepaparation point virgule) cip+quantite et 
 ajouter un bouton export csv pour exporter les commandes en cours a cet effet cip1 represente les codes d'un grossiste specifique(ubipharm) et cip2(laborex) lors de l'export me proposer sur quel grossiste exporter  OK OK
 
 
-
+creer un etat qui liste touts les produits saisie dans une commande ou inventaire
 
                                                                                                                                                                                                                                                  

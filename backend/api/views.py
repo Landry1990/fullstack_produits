@@ -25,14 +25,15 @@ from django.contrib.auth.models import User
 from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
-    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement
+    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement,
+    Inventaire, LigneInventaire
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer, CaisseSerializer,
     UserSerializer, AyantDroitSerializer, ClotureCaisseSerializer, StockLotSerializer,
-    CreanceSerializer
+    CreanceSerializer, InventaireSerializer, LigneInventaireSerializer
 )
 from decimal import Decimal
 
@@ -69,8 +70,9 @@ class ProduitViewSet(viewsets.ModelViewSet):
     """
     queryset = Produit.objects.all().order_by('-created_at')
     serializer_class = ProduitSerializer
-    filter_backends = (DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_class = ProduitFilter
+    search_fields = ['name', 'cip1', 'cip2', 'cip3']
     permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['get'])
@@ -129,7 +131,27 @@ class ProduitViewSet(viewsets.ModelViewSet):
                 'prix_unitaire': retour.selling_price
             })
         
-        # 4. Combiner et trier par date décroissante (le plus récent en premier)
+
+        
+        # 4. Récupérer les ajustements d'inventaire
+        ajustements = LigneInventaire.objects.filter(
+            produit=produit,
+            inventaire__status=Inventaire.Status.VALIDEE
+        ).exclude(ecart=0).select_related('inventaire').order_by('-inventaire__date')
+
+        for ligne in ajustements:
+            is_gain = ligne.ecart > 0
+            qty = abs(ligne.ecart)
+            transactions.append({
+                'type': 'ENTREE' if is_gain else 'SORTIE',
+                'date': ligne.inventaire.updated_at,
+                'quantity': qty,
+                'libelle': f"Inventaire #{ligne.inventaire.id} - Ajustement {'+' if is_gain else ''}{ligne.ecart}",
+                'prix_unitaire': ligne.pmp_snapshot or 0,
+                'is_inventory_adjustment': True 
+            })
+        
+        # 5. Combiner et trier par date décroissante (le plus récent en premier)
         transactions.sort(key=lambda x: x['date'], reverse=True)
         
         # 5. Reconstruire l'historique du stock (en remontant le temps)
@@ -1236,6 +1258,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         except:
             return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
+
         # Paramètres optionnels de période
         date_debut = request.data.get('date_debut')
         date_fin = request.data.get('date_fin')
@@ -1951,3 +1974,43 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'total_paid': str(total_paid),
             'updated_ids': updated_factures
         })
+
+class InventaireViewSet(viewsets.ModelViewSet):
+    queryset = Inventaire.objects.all().order_by('-date')
+    serializer_class = InventaireSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def validate(self, request, pk=None):
+        inventaire = self.get_object()
+        if inventaire.status == Inventaire.Status.VALIDEE:
+             return Response({'detail': 'Cet inventaire est déjà validé.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Mettre à jour le stock pour chaque ligne
+        lignes = inventaire.lignes.select_related('produit').all()
+        for ligne in lignes:
+             produit = ligne.produit
+             # Update Stock
+             produit.stock = ligne.quantite_physique
+             produit.save(update_fields=['stock'])
+             
+             # Note: PMP is not updated here as there is no "Price" involved, just quantity adjustment.
+             # Ideally we should log this adjustment (StockMovement or similar)
+             
+        inventaire.status = Inventaire.Status.VALIDEE
+        inventaire.save()
+        
+        return Response({'status': 'Inventaire validé. Stocks mis à jour.'})
+
+class LigneInventaireViewSet(viewsets.ModelViewSet):
+    queryset = LigneInventaire.objects.all()
+    serializer_class = LigneInventaireSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['inventaire']
+    
+    def perform_create(self, serializer):
+        # Capture theoretical stock at time of creation
+        produit = serializer.validated_data['produit']
+        serializer.save(stock_theorique=produit.stock)

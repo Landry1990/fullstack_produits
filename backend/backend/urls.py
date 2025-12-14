@@ -6,7 +6,9 @@ from api.views import (
     ClientViewSet, CommandeViewSet, CommandeProduitViewSet,
     FactureViewSet, FactureProduitViewSet, DashboardViewSet,
     UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
-    CreanceViewSet
+    FactureViewSet, FactureProduitViewSet, DashboardViewSet,
+    UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
+    CreanceViewSet, InventaireViewSet, LigneInventaireViewSet
 )
 
 router = DefaultRouter()
@@ -23,6 +25,8 @@ router.register(r'facture-produits', FactureProduitViewSet)
 router.register(r'caisse', CaisseViewSet)
 router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 router.register(r'creances', CreanceViewSet, basename='creance')
+router.register(r'inventaires', InventaireViewSet)
+router.register(r'ligne-inventaires', LigneInventaireViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
