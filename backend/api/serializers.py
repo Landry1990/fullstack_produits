@@ -5,7 +5,8 @@ from decimal import Decimal
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
     CommandeProduit, Facture, FactureProduit, Caisse, Profile,
-    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse
+    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
+    Inventaire, LigneInventaire
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -300,3 +301,46 @@ class CreanceSerializer(serializers.ModelSerializer):
         """Calcule le reste à payer"""
         montant_paye = self.get_montant_paye(obj)
         return obj.total_ttc - montant_paye
+
+class LigneInventaireSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    produit_rayon = serializers.CharField(source='produit.rayon.name', read_only=True)
+    produit_description = serializers.CharField(source='produit.description', read_only=True)
+    produit_cost_price = serializers.DecimalField(source='produit.cost_price', max_digits=10, decimal_places=2, read_only=True)
+    produit_pmp = serializers.DecimalField(source='produit.pmp', max_digits=10, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = LigneInventaire
+        fields = '__all__'
+
+class InventaireSerializer(serializers.ModelSerializer):
+    lignes = LigneInventaireSerializer(many=True, read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    
+    total_valeur_theorique = serializers.SerializerMethodField()
+    total_valeur_physique = serializers.SerializerMethodField()
+    total_ecart_valeur = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Inventaire
+        fields = '__all__'
+
+    def get_total_valeur_theorique(self, obj):
+        return sum(
+            (ligne.stock_theorique * (ligne.pmp_snapshot or ligne.produit.cost_price or 0))
+            for ligne in obj.lignes.all()
+        )
+
+    def get_total_valeur_physique(self, obj):
+        return sum(
+            (ligne.quantite_physique * (ligne.pmp_snapshot or ligne.produit.cost_price or 0))
+            for ligne in obj.lignes.all()
+        )
+
+    def get_total_ecart_valeur(self, obj):
+        return sum(
+            (ligne.ecart * (ligne.pmp_snapshot or ligne.produit.cost_price or 0))
+            for ligne in obj.lignes.all()
+        )
+        fields = '__all__'

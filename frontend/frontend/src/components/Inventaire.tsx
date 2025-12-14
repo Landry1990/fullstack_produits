@@ -1,287 +1,561 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import type { ProduitModel } from '../types';
+import type { ProduitModel, Inventaire, LigneInventaire } from '../types';
 
-export default function Inventaire() {
-  const [produits, setProduits] = useState<ProduitModel[]>([]);
-  const [loading, setLoading] = useState(true);
+
+export default function InventaireComponent() {
+  // Modes: LIST, CREATE, EDIT
+  const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT'>('LIST');
+
+  // Data
+  const [inventaires, setInventaires] = useState<Inventaire[]>([]);
+  const [activeInventaire, setActiveInventaire] = useState<Inventaire | null>(null);
+  const [lignes, setLignes] = useState<LigneInventaire[]>([]);
+  
+  // Form Data (Header)
+  const [description, setDescription] = useState('');
+  const [dateInventaire, setDateInventaire] = useState(new Date().toISOString().split('T')[0]);
+
+  // Product Search
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterRayon, setFilterRayon] = useState('');
+  const [searchResults, setSearchResults] = useState<ProduitModel[]>([]);
+  const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-  const produitsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
-    : '/api/produits/';
+  // Loading states
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    const fetchProduits = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(produitsEndpoint);
-        // Handle both paginated and non-paginated responses
-        const data: any = response.data;
-        setProduits(Array.isArray(data) ? data : (data.results || []));
-      } catch (error) {
-        console.error('Erreur lors du chargement des produits:', error);
-      } finally {
-        setLoading(false);
+  // Focus management
+  const focusInput = (index: number) => {
+      setTimeout(() => {
+          const el = document.getElementById(`qty-input-${index}`);
+          if (el) {
+              (el as HTMLInputElement).focus();
+              (el as HTMLInputElement).select();
+          } else if (searchInputRef.current) {
+              searchInputRef.current.focus();
+          }
+      }, 50);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+      if (e.key === 'Enter') {
+          e.preventDefault();
+          // Always focus Search after Enter on Quantity (User Request)
+          searchInputRef.current?.focus();
+      } else if (e.key === 'ArrowDown') {
+          if (index < lignes.length - 1) focusInput(index + 1);
+      } else if (e.key === 'ArrowUp') {
+          if (index > 0) focusInput(index - 1);
+          else searchInputRef.current?.focus();
       }
-    };
-    fetchProduits();
-  }, [produitsEndpoint]);
-
-  const [sortConfig, setSortConfig] = useState<{ key: keyof ProduitModel | 'rayon_name' | null; direction: 'asc' | 'desc' }>({ key: null, direction: 'asc' });
-  const [valuationType, setValuationType] = useState<'achat' | 'vente'>('vente');
-  const [tvaRate, setTvaRate] = useState(18);
-
-  const filteredProduits = produits.filter(produit => {
-    const matchesSearch = produit.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRayon = !filterRayon || produit.rayon_name === filterRayon;
-    return matchesSearch && matchesRayon;
-  });
-
-  const sortedProduits = [...filteredProduits].sort((a, b) => {
-    if (!sortConfig.key) return 0;
-    
-    const aValue = a[sortConfig.key as keyof ProduitModel];
-    const bValue = b[sortConfig.key as keyof ProduitModel];
-
-    if (aValue === bValue) return 0;
-    
-    // Handle numeric values
-    if (['stock', 'stock_alert', 'cost_price', 'selling_price', 'pmp'].includes(sortConfig.key)) {
-      return sortConfig.direction === 'asc' 
-        ? Number(aValue) - Number(bValue) 
-        : Number(bValue) - Number(aValue);
-    }
-
-    // Handle string values
-    const aString = String(aValue || '').toLowerCase();
-    const bString = String(bValue || '').toLowerCase();
-
-    if (aString < bString) return sortConfig.direction === 'asc' ? -1 : 1;
-    if (aString > bString) return sortConfig.direction === 'asc' ? 1 : -1;
-    return 0;
-  });
-
-  const requestSort = (key: keyof ProduitModel | 'rayon_name') => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
   };
 
-  const getSortIcon = (key: string) => {
-    if (sortConfig.key !== key) return <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
-    return sortConfig.direction === 'asc' 
-      ? <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>
-      : <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" /></svg>;
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+      // Allow navigation even if no results? No.
+      if (searchResults.length === 0) return;
+
+      if (e.key === 'ArrowDown' || e.key === 'Down') {
+          e.preventDefault();
+          setSelectedSearchIndex(prev => {
+              const newIndex = prev < searchResults.length - 1 ? prev + 1 : prev;
+              // Smooth scroll to element?
+              const el = document.getElementById(`search-result-${newIndex}`);
+              el?.scrollIntoView({ block: 'nearest' });
+              return newIndex;
+          });
+      } else if (e.key === 'ArrowUp' || e.key === 'Up') {
+          e.preventDefault();
+          setSelectedSearchIndex(prev => {
+              const newIndex = prev > 0 ? prev - 1 : 0;
+               const el = document.getElementById(`search-result-${newIndex}`);
+              el?.scrollIntoView({ block: 'nearest' });
+              return newIndex;
+          });
+      } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
+              handleAddProduct(searchResults[selectedSearchIndex]);
+          } else if (searchResults.length > 0) {
+              handleAddProduct(searchResults[0]);
+          }
+      }
   };
 
-  const rayons = Array.from(new Set(produits.map(p => p.rayon_name).filter(Boolean)));
+  // API Base URL
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+  const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/inventaires/`;
+  const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/ligne-inventaires/`;
+  const produitsEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`;
 
-  const totalStock = filteredProduits.reduce((sum, p) => sum + (p.stock || 0), 0);
-  const lowStockCount = filteredProduits.filter(p => (p.stock || 0) <= (p.stock_alert || 0)).length;
+  // === FETCH LIST ===
+  useEffect(() => {
+    if (viewMode === 'LIST') {
+      fetchInventaires();
+    }
+  }, [viewMode]);
 
-  // Calculate Valuation
-  const totalValuationHT = filteredProduits.reduce((sum, p) => {
-    const price = valuationType === 'achat' ? Number(p.cost_price || 0) : Number(p.selling_price || 0);
-    return sum + (price * (p.stock || 0));
+  const fetchInventaires = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(inventairesEndpoint);
+      setInventaires(Array.isArray(res.data) ? res.data : res.data.results);
+    } catch (err) {
+      console.error("Erreur fetch inventaires", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // === SEARCH PRODUCTS ===
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        if (searchQuery.length >= 2) {
+            performSearch();
+        } else {
+            setSearchResults([]);
+        }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const performSearch = async () => {
+      setLoadingSearch(true);
+      try {
+          const res = await axios.get(`${produitsEndpoint}?search=${searchQuery}`);
+          setSearchResults(Array.isArray(res.data) ? res.data : res.data.results || []);
+          setSelectedSearchIndex(-1); // Reset selection on new search
+      } catch (err) {
+          console.error("Erreur recherche", err);
+      } finally {
+          setLoadingSearch(false);
+      }
+  };
+
+  // === ACTIONS ===
+
+  const handleCreate = () => {
+      setActiveInventaire(null);
+      setLignes([]);
+      setDescription('');
+      setDateInventaire(new Date().toISOString().split('T')[0]);
+      setViewMode('CREATE');
+  };
+
+  const handleEdit = async (inv: Inventaire) => {
+      setActiveInventaire(inv);
+      setDescription(inv.description);
+      setDateInventaire(inv.date.split('T')[0]);
+      setViewMode('EDIT');
+      
+      // Fetch lines
+      try {
+          const res = await axios.get(`${lignesEndpoint}?inventaire=${inv.id}`);
+          setLignes(res.data.results || res.data);
+      } catch(err) {
+          console.error("Erreur chargement lignes", err);
+      }
+  };
+
+  const handleDelete = async (id: number) => {
+      if (!confirm('Supprimer cet inventaire ?')) return;
+      try {
+          await axios.delete(`${inventairesEndpoint}${id}/`);
+          fetchInventaires();
+      } catch (err) {
+          alert("Erreur lors de la suppression");
+      }
+  };
+
+  const handleAddProduct = async (product: ProduitModel) => {
+      // Check if line exists locally
+      const exists = lignes.find(l => l.produit === ((typeof product === 'object') ? product.id as any : product) ||  (l.produit && l.produit.id === product.id));
+      
+      if (exists) {
+          alert("Ce produit est déjà dans l'inventaire.");
+          setSearchQuery('');
+          return;
+      }
+      
+      // CREATE MODE logic: If no ID, create draft.
+      let invId = activeInventaire?.id;
+      if (!invId) {
+          try {
+              const res = await axios.post(inventairesEndpoint, {
+                  date: dateInventaire,
+                  description: description || 'Nouvel Inventaire',
+                  status: 'EN_COURS'
+              });
+              invId = res.data.id;
+              setActiveInventaire(res.data);
+              // Update list 
+              setInventaires(prev => [res.data, ...prev]);
+          } catch(err) {
+              console.error("Erreur création inventaire", err);
+              alert("Impossible de créer l'inventaire automatiquement.");
+              return;
+          }
+      }
+
+      // Inject full product details for local display immediately (before re-fetch)
+      const cost = product.cost_price || '0';
+      const pmp = product.pmp || '0';
+
+      try {
+          const payload = {
+              inventaire: invId,
+              produit: product.id,
+              stock_theorique: product.stock, 
+              quantite_physique: product.stock, 
+          };
+          const res = await axios.post(lignesEndpoint, payload);
+          
+           const newLine: LigneInventaire = {
+               ...res.data,
+               produit: product, 
+               produit_nom: product.name,
+               produit_cip: product.cip1,
+               produit_rayon: product.rayon_name,
+               produit_description: product.description,
+               produit_cost_price: cost,
+               produit_pmp: pmp,
+           };
+           const newLignes = [...lignes, newLine];
+           setLignes(newLignes);
+           
+           setTimeout(() => focusInput(newLignes.length - 1), 100);
+
+      } catch (err) {
+          console.error("Erreur ajout ligne", err);
+      }
+      setSearchQuery('');
+  };
+
+  const handleUpdateQuantity = async (lineId: number, newQty: number) => {
+      // Optimistic update
+      const updatedLignes = lignes.map(l => l.id === lineId ? { ...l, quantite_physique: newQty, ecart: newQty - l.stock_theorique } : l);
+      setLignes(updatedLignes);
+
+      // Debounced save could be better, but direct save for now
+      try {
+          await axios.patch(`${lignesEndpoint}${lineId}/`, { quantite_physique: newQty });
+      } catch (err) {
+          console.error("Erreur update quantite", err);
+      }
+  };
+
+  const handleValidate = async () => {
+      if (!activeInventaire) return;
+      if (!confirm("Valider l'inventaire ? Cela mettra à jour le stock de tous les produits listés.")) return;
+
+      try {
+          setSaving(true);
+          await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`);
+          alert("Inventaire validé avec succès !");
+          setViewMode('LIST');
+          fetchInventaires();
+      } catch (err) {
+          alert("Erreur lors de la validation");
+          console.error(err);
+      } finally {
+          setSaving(false);
+      }
+  };
+
+  const handleSaveHeader = async () => {
+      // Just update description/date
+      if (!activeInventaire) return;
+      try {
+           await axios.patch(`${inventairesEndpoint}${activeInventaire.id}/`, {
+               date: dateInventaire,
+               description
+           });
+           alert("En-tête sauvegardé");
+      } catch(err) {
+          alert("Erreur sauvegarde");
+      }
+  };
+
+
+  // === RENDER ===
+
+  if (viewMode === 'LIST') {
+      return (
+          <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                  <h1 className="text-2xl font-bold">Inventaires</h1>
+                  <button className="btn btn-primary" onClick={handleCreate}>
+                      + Nouvel Inventaire
+                  </button>
+              </div>
+
+              <div className="card bg-base-100 shadow">
+                  <div className="overflow-x-auto">
+                      <table className="table">
+                          <thead>
+                              <tr>
+                                  <th>Date</th>
+                                  <th>Description</th>
+                                  <th className="text-right">Val. Théorique</th>
+                                  <th className="text-right">Val. Saisie</th>
+                                  <th className="text-right">Ecart Valeur</th>
+                                  <th>Statut</th>
+                                  <th>Crée par</th>
+                                  <th>Actions</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {loading ? (
+                                  <tr>
+                                      <td colSpan={8} className="text-center py-4">
+                                          <span className="loading loading-spinner"></span> Chargement...
+                                      </td>
+                                  </tr>
+                              ) : inventaires.map(inv => (
+                                  <tr key={inv.id} className="hover:bg-base-200 cursor-pointer" onClick={() => handleEdit(inv)}>
+                                      <td>{new Date(inv.date).toLocaleDateString()}</td>
+                                      <td>{inv.description || '-'}</td>
+                                      <td className="text-right font-mono">{(inv.total_valeur_theorique || 0).toLocaleString()} F</td>
+                                      <td className="text-right font-bold">{(inv.total_valeur_physique || 0).toLocaleString()} F</td>
+                                      <td className={`text-right font-bold ${(inv.total_ecart_valeur || 0) < 0 ? 'text-error' : (inv.total_ecart_valeur || 0) > 0 ? 'text-success' : ''}`}>
+                                          {(inv.total_ecart_valeur || 0).toLocaleString()} F
+                                      </td>
+                                      <td>
+                                          <span className={`badge ${inv.status === 'VALIDEE' ? 'badge-success' : 'badge-warning'}`}>
+                                              {inv.status}
+                                          </span>
+                                      </td>
+                                      <td>{inv.created_by_name || '-'}</td>
+                                      <td onClick={e => e.stopPropagation()}>
+                                          <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(inv.id)} disabled={inv.status === 'VALIDEE'}>
+                                              Supprimer
+                                          </button>
+                                      </td>
+                                  </tr>
+                              ))}
+                              {inventaires.length === 0 && (
+                                  <tr>
+                                      <td colSpan={5} className="text-center py-4 text-gray-500">Aucun inventaire</td>
+                                  </tr>
+                              )}
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
+  // Create / Edit View Variables
+  const isReadOnly = activeInventaire?.status === 'VALIDEE';
+  const totalEcartValeur = lignes.reduce((sum, l) => {
+      const price = parseFloat(l.produit_cost_price || l.pmp_snapshot || '0');
+      return sum + (l.ecart * price);
+  }, 0);
+  const totalValeurPhysique = lignes.reduce((sum, l) => {
+      const price = parseFloat(l.produit_cost_price || l.pmp_snapshot || '0');
+      return sum + (l.quantite_physique * price);
+  }, 0);
+  const totalValeurTheorique = lignes.reduce((sum, l) => {
+      const price = parseFloat(l.produit_cost_price || l.pmp_snapshot || '0');
+      return sum + (l.stock_theorique * price);
   }, 0);
 
-  const totalValuationTTC = totalValuationHT * (1 + tvaRate / 100);
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">Inventaire</h1>
-          <p className="text-sm text-base-content/80">Gestion de l'inventaire des produits</p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-base-content/70">Total Produits</p>
-                <h3 className="text-2xl font-bold text-base-content">{filteredProduits.length}</h3>
+      <div className="space-y-6">
+          <div className="flex justify-between items-center">
+              <div className="flex gap-4 items-center">
+                   <button className="btn btn-ghost" onClick={() => setViewMode('LIST')}>← Retour</button>
+                   <h1 className="text-2xl font-bold">
+                       {viewMode === 'CREATE' ? 'Nouvel Inventaire' : `Inventaire #${activeInventaire?.id}`}
+                   </h1>
+                   {isReadOnly && <span className="badge badge-success badge-lg">VALIDÉE</span>}
               </div>
-              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+              <div className="flex gap-2">
+                  {!isReadOnly && activeInventaire && (
+                       <>
+                           {/* Save Button (Implicitly saved via API calls but we can add a global 'Done' or similar if needed) 
+                               Actually, since we save line by line, this is mostly for the header or just status.
+                               User requested SEPARATE buttons. One for Validating.
+                           */}
+                           <button className="btn btn-warning" disabled>Enregistré auto.</button> {/* Feedback only */}
+                           
+                           <button className="btn btn-success text-white" onClick={handleValidate} disabled={saving}>
+                               {saving ? 'Validation...' : '✓ Valider et Mettre à jour Stock'}
+                           </button>
+                       </>
+                  )}
               </div>
-            </div>
           </div>
-        </div>
 
-        <div className="card bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-base-content/70">Stock Total</p>
-                <h3 className="text-2xl font-bold text-base-content">{totalStock.toLocaleString('fr-FR')}</h3>
+          {/* Header Form */}
+          <div className="card bg-base-100 shadow p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-control">
+                      <label className="label">Date</label>
+                      <input 
+                          type="date" 
+                          className="input input-bordered" 
+                          value={dateInventaire} 
+                          onChange={e => setDateInventaire(e.target.value)}
+                          disabled={isReadOnly}
+                          onBlur={handleSaveHeader}
+                      />
+                  </div>
+                  <div className="form-control md:col-span-2">
+                      <label className="label">Description</label>
+                      <input 
+                          type="text" 
+                          className="input input-bordered" 
+                          placeholder="Ex: Inventaire Annuel 2025..."
+                          value={description}
+                          onChange={e => setDescription(e.target.value)}
+                          disabled={isReadOnly}
+                          onBlur={handleSaveHeader}
+                      />
+                  </div>
               </div>
-              <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-              </div>
-            </div>
           </div>
-        </div>
 
-        <div className="card bg-base-100 shadow-sm border border-base-200">
-          <div className="card-body p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-base-content/70">Alertes Stock</p>
-                <h3 className="text-2xl font-bold text-error">{lowStockCount}</h3>
+          {/* Product Search */}
+          {!isReadOnly && (
+              <div className="card bg-base-100 shadow p-4 overflow-visible relative">
+                  <div className="form-control w-full">
+                       <label className="label font-bold">Ajouter un produit (Recherche par Nom ou CIP)</label>
+                       <input 
+                           ref={searchInputRef}
+                           type="text" 
+                           className="input input-bordered w-full" 
+                           placeholder="Scanner ou taper le nom..."
+                           value={searchQuery}
+                           onChange={e => setSearchQuery(e.target.value)}
+                           onKeyDown={handleSearchKeyDown}
+                           autoFocus
+                       />
+                       {loadingSearch && <span className="absolute right-4 top-12 loading loading-spinner"></span>}
+                  </div>
+                  {/* Dropdown Results */}
+                  {searchResults.length > 0 && (
+                      <ul className="menu bg-base-100 w-full shadow-xl rounded-box absolute top-24 z-50 border border-base-300 max-h-60 overflow-y-auto">
+                          {searchResults.map((p, idx) => (
+                              <li key={p.id} id={`search-result-${idx}`}>
+                                  <a 
+                                      onClick={() => handleAddProduct(p)} 
+                                      className={`flex justify-between ${idx === selectedSearchIndex ? 'active' : ''}`}
+                                  >
+                                      <span>{p.name} <span className="text-xs opacity-50">({p.cip1})</span></span>
+                                      <span className="badge badge-sm">Stock: {p.stock}</span>
+                                  </a>
+                              </li>
+                          ))}
+                      </ul>
+                  )}
               </div>
-              <div className="w-12 h-12 rounded-full bg-red-100 text-red-700 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          )}
+
+          {/* Lines Table */}
+          <div className="card bg-base-100 shadow">
+              <div className="overflow-x-auto">
+                  <table className="table table-zebra w-full">
+                      <thead>
+                          <tr>
+                              <th>Produit</th>
+                              <th>Forme</th>
+                              <th>Rayon</th>
+                              <th className="text-right">Prix Achat</th>
+                              <th className="text-center">Stock Théo.</th>
+                              <th className="text-center">Qté Saisie</th>
+                              <th className="text-center">Ecart Qté</th>
+                              <th className="text-right">Ecart Val.</th>
+                              {!isReadOnly && <th>Actions</th>}
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {lignes.map((ligne, index) => {
+                              const price = parseFloat(ligne.produit_cost_price || ligne.pmp_snapshot || '0');
+                              const ecartValeur = ligne.ecart * price;
+                              return (
+                              <tr key={ligne.id}>
+                                  <td>
+                                      <div className="font-bold">
+                                          {typeof ligne.produit === 'object' ? ligne.produit.name : ligne.produit_nom}
+                                      </div>
+                                      <div className="text-xs opacity-50">
+                                          {typeof ligne.produit === 'object' ? ligne.produit.cip1 : ligne.produit_cip}
+                                      </div>
+                                  </td>
+                                  <td>{typeof ligne.produit === 'object' ? ligne.produit.description : ligne.produit_description}</td>
+                                  <td>{typeof ligne.produit === 'object' ? ligne.produit.rayon_name : ligne.produit_rayon}</td>
+                                  <td className="text-right">{price.toLocaleString()} F</td>
+                                  <td className="text-center text-lg">{ligne.stock_theorique}</td>
+                                  
+                                  <td className="text-center">
+                                      {isReadOnly ? (
+                                          <span className="font-bold text-lg">{ligne.quantite_physique}</span>
+                                      ) : (
+                                          <input 
+                                              id={`qty-input-${lignes.indexOf(ligne)}`}
+                                              type="text" 
+                                              inputMode="numeric"
+                                              className="input input-bordered input-sm w-32 text-center font-bold"
+                                              value={ligne.quantite_physique}
+                                              onChange={(e) => {
+                                                  const val = e.target.value;
+                                                  if (/^\d*$/.test(val)) {
+                                                      handleUpdateQuantity(ligne.id, val === '' ? 0 : parseInt(val));
+                                                  }
+                                              }}
+                                              onFocus={(e) => e.target.select()}
+                                              onKeyDown={(e) => handleKeyDown(e, lignes.indexOf(ligne))}
+                                          />
+                                      )}
+                                  </td>
+                                  
+                                  <td className="text-center">
+                                      <span className={`badge ${ligne.ecart < 0 ? 'badge-error' : ligne.ecart > 0 ? 'badge-success' : 'badge-ghost'} badge-lg`}>
+                                          {ligne.ecart > 0 ? '+' : ''}{ligne.ecart}
+                                      </span>
+                                  </td>
+                                  <td className={`text-right font-bold ${ecartValeur < 0 ? 'text-error' : ecartValeur > 0 ? 'text-success' : ''}`}>
+                                      {ecartValeur.toLocaleString()} F
+                                  </td>
+                                  {!isReadOnly && (
+                                      <td>
+                                          {/* Delete line logic could be added here */}
+                                      </td>
+                                  )}
+                              </tr>
+                              );
+                          })}
+                          {lignes.length === 0 && (
+                              <tr>
+                                  <td colSpan={6} className="text-center py-8 opacity-50">
+                                      Scanner ou ajouter des produits pour commencer le comptage.
+                                  </td>
+                              </tr>
+                          )}
+                      </tbody>
+                  </table>
               </div>
-            </div>
+              <div className="p-4 bg-base-200 border-t flex justify-end gap-8">
+                  <div className="text-right">
+                      <div className="text-sm opacity-50">Valeur Théorique</div>
+                      <div className="text-xl font-bold">{totalValeurTheorique.toLocaleString()} F</div>
+                  </div>
+                  <div className="text-right">
+                      <div className="text-sm opacity-50">Valeur Saisie</div>
+                      <div className="text-xl font-bold">{totalValeurPhysique.toLocaleString()} F</div>
+                  </div>
+                  <div className="text-right">
+                      <div className="text-sm opacity-50">Ecart Valeur</div>
+                      <div className={`text-xl font-bold ${totalEcartValeur < 0 ? 'text-error' : totalEcartValeur > 0 ? 'text-success' : ''}`}>
+                          {totalEcartValeur > 0 ? '+' : ''}{totalEcartValeur.toLocaleString()} F
+                      </div>
+                  </div>
+              </div>
           </div>
-        </div>
       </div>
-
-      {/* Valuation Section */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body p-4">
-          <h2 className="card-title text-lg mb-4">Valorisation du Stock</h2>
-          <div className="flex flex-col md:flex-row gap-6 items-end">
-            <div className="form-control w-full md:w-auto">
-              <label className="label"><span className="label-text">Type de valorisation</span></label>
-              <select 
-                className="select select-bordered w-full md:w-64"
-                value={valuationType}
-                onChange={(e) => setValuationType(e.target.value as 'achat' | 'vente')}
-              >
-                <option value="achat">Prix d'Achat (Coût)</option>
-                <option value="vente">Prix de Vente (CA Potentiel)</option>
-              </select>
-            </div>
-            <div className="form-control w-full md:w-auto">
-              <label className="label"><span className="label-text">Taux TVA (%)</span></label>
-              <input 
-                type="number" 
-                className="input input-bordered w-full md:w-32"
-                value={tvaRate}
-                onChange={(e) => setTvaRate(Number(e.target.value))}
-                min="0"
-                max="100"
-              />
-            </div>
-            
-            <div className="flex-1 flex flex-col md:flex-row gap-4 justify-end items-center bg-base-200/50 p-4 rounded-lg">
-              <div className="text-center md:text-right">
-                <p className="text-sm text-base-content/70">Valeur HT</p>
-                <p className="text-2xl font-bold text-primary">{Math.round(totalValuationHT).toLocaleString('fr-FR')} F</p>
-              </div>
-              <div className="divider md:divider-horizontal"></div>
-              <div className="text-center md:text-right">
-                <p className="text-sm text-base-content/70">Valeur TTC</p>
-                <p className="text-2xl font-bold text-secondary">{Math.round(totalValuationTTC).toLocaleString('fr-FR')} F</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label"><span className="label-text">Rechercher</span></label>
-              <input
-                type="text"
-                placeholder="Nom du produit..."
-                className="input input-bordered"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <div className="form-control">
-              <label className="label"><span className="label-text">Filtrer par rayon</span></label>
-              <select
-                className="select select-bordered"
-                value={filterRayon}
-                onChange={(e) => setFilterRayon(e.target.value)}
-              >
-                <option value="">Tous les rayons</option>
-                {rayons.map(rayon => (
-                  <option key={rayon} value={rayon}>{rayon}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="overflow-x-auto">
-          <table className="table table-zebra">
-            <thead className="bg-base-200/50">
-              <tr>
-                <th className="cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('name')}>
-                  <div className="flex items-center gap-2">Produit {getSortIcon('name')}</div>
-                </th>
-                <th className="cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('rayon_name')}>
-                  <div className="flex items-center gap-2">Rayon {getSortIcon('rayon_name')}</div>
-                </th>
-                <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('stock')}>
-                  <div className="flex items-center justify-end gap-2">Stock {getSortIcon('stock')}</div>
-                </th>
-                <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('stock_alert')}>
-                  <div className="flex items-center justify-end gap-2">Alerte {getSortIcon('stock_alert')}</div>
-                </th>
-                <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('cost_price')}>
-                  <div className="flex items-center justify-end gap-2">Prix Achat {getSortIcon('cost_price')}</div>
-                </th>
-                <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('pmp')}>
-                  <div className="flex items-center justify-end gap-2 text-primary">PMP {getSortIcon('pmp')}</div>
-                </th>
-                <th className="text-right cursor-pointer hover:bg-base-300 transition-colors" onClick={() => requestSort('selling_price')}>
-                  <div className="flex items-center justify-end gap-2">Prix Vente {getSortIcon('selling_price')}</div>
-                </th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} className="text-center py-8"><span className="loading loading-spinner"></span></td></tr>
-              ) : sortedProduits.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-base-content/50">Aucun produit trouvé</td></tr>
-              ) : (
-                sortedProduits.map(produit => (
-                  <tr key={produit.id} className="hover:bg-base-200/30">
-                    <td className="font-medium">{produit.name}</td>
-                    <td>{produit.rayon_name || '-'}</td>
-                    <td className="text-right font-bold">{produit.stock}</td>
-                    <td className="text-right">{produit.stock_alert}</td>
-                    <td className="text-right">{Math.round(Number(produit.cost_price)).toLocaleString('fr-FR')} F</td>
-                    <td className="text-right font-medium text-primary">{Math.round(Number(produit.pmp || 0)).toLocaleString('fr-FR')} F</td>
-                    <td className="text-right">{Math.round(Number(produit.selling_price)).toLocaleString('fr-FR')} F</td>
-                    <td>
-                      {(produit.stock || 0) <= 0 ? (
-                        <span className="badge badge-error badge-sm">Rupture</span>
-                      ) : (produit.stock || 0) <= (produit.stock_alert || 0) ? (
-                        <span className="badge badge-warning badge-sm">Faible</span>
-                      ) : (
-                        <span className="badge badge-success badge-sm">OK</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   );
 }

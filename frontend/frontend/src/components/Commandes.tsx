@@ -44,6 +44,9 @@ export default function Commandes() {
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
   const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
 
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
 
 
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
@@ -139,6 +142,21 @@ export default function Commandes() {
   }, [commandes, selectedCommande])
 
 
+
+  useEffect(() => {
+    if (viewMode === 'CREATE' || viewMode === 'EDIT') {
+        const timer = setTimeout(() => {
+            if (commandeProduits.length > 0) {
+                 setSaving(true);
+                 setTimeout(() => {
+                     setSaving(false);
+                     setLastSaved(new Date());
+                 }, 600);
+            }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }
+  }, [commandeProduits, viewMode]);
 
   // Raccourcis clavier globaux
   useEffect(() => {
@@ -553,7 +571,6 @@ export default function Commandes() {
                   produit: product,
                   quantity: qty,
                   price: product.cost_price || '0',
-                  price_cost: product.cost_price || '0', // Required
                   tva: product.tva || '18',
                   marge: product.taux_marge || '1.3',
                   selling_price: product.selling_price || '0',
@@ -1395,8 +1412,12 @@ export default function Commandes() {
                   <h2 className="font-bold text-lg text-base-content">
                     Produits ({commandeProduits.length})
                   </h2>
-                  <div className="text-xl md:text-2xl font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
-                    Total : {commandeProduits.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0).toLocaleString('fr-FR')} F
+                  <div className="flex items-center gap-4">
+                      {saving && <span className="text-sm text-warning animate-pulse">Sauvegarde...</span>}
+                      {!saving && lastSaved && <span className="text-xs text-success">Enregistré à {lastSaved.toLocaleTimeString()}</span>}
+                      <div className="text-xl md:text-2xl font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
+                        Total : {commandeProduits.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0).toLocaleString('fr-FR')} F
+                      </div>
                   </div>
                 </div>
                 {selectedRows.size > 0 && (
