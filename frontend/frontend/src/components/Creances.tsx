@@ -23,6 +23,11 @@ export default function Creances() {
   const [montantPaiement, setMontantPaiement] = useState('')
   const [referencePaiement, setReferencePaiement] = useState('')
 
+  // Bulk / Historique
+  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false)
+
   // Tri
   const [sortConfig, setSortConfig] = useState<{ key: keyof Creance | 'client_name', direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
 
@@ -41,9 +46,11 @@ export default function Creances() {
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get<Client[]>(clientsEndpoint)
-      // Filtrer uniquement les clients professionnels
-      const professionnels = response.data.filter(c => c.client_type === 'PROFESSIONNEL')
+      const response = await axios.get(clientsEndpoint)
+      // Handle paginated response and filter professionals
+      const data: any = response.data;
+      const allClients = Array.isArray(data) ? data : (data.results || []);
+      const professionnels = allClients.filter((c: any) => c.client_type === 'PROFESSIONNEL')
       setClients(professionnels)
     } catch (err) {
       console.error('Erreur chargement clients:', err)
@@ -58,9 +65,12 @@ export default function Creances() {
       if (selectedClient) params.client_id = selectedClient
       if (dateDebut) params.date_debut = dateDebut
       if (dateFin) params.date_fin = dateFin
+      params.history = showHistory
 
-      const response = await axios.get<Creance[]>(creancesEndpoint, { params })
-      setCreances(response.data)
+      const response = await axios.get(creancesEndpoint, { params })
+      // Handle paginated response
+      const data: any = response.data;
+      setCreances(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
       setError('Erreur lors du chargement des créances')
       console.error('Erreur:', err)
@@ -78,6 +88,52 @@ export default function Creances() {
     setDateDebut('')
     setDateFin('')
     fetchCreances()
+  }
+
+  // --- Bulk Selection Handlers ---
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+        // Select all filtered invoices that have debt > 0
+        const ids = filteredCreances.filter(c => parseFloat(c.reste_a_payer) > 0).map(c => c.id)
+        setSelectedIds(ids)
+    } else {
+        setSelectedIds([])
+    }
+  }
+
+  const handleSelectOne = (id: number) => {
+    setSelectedIds(prev => 
+        prev.includes(id) 
+            ? prev.filter(item => item !== id)
+            : [...prev, id]
+    )
+  }
+
+  const handleBulkPayment = async () => {
+    if (selectedIds.length === 0) return
+    setIsBulkModalOpen(true)
+    setModePaiement('especes')
+    setReferencePaiement('')
+    setMontantPaiement('') // Not used for bulk, we pay full remainder
+  }
+  
+  const confirmBulkPayment = async () => {
+    try {
+        await axios.post(`${creancesEndpoint}bulk_paiement/`, {
+            facture_ids: selectedIds,
+            mode_paiement: modePaiement,
+            reference: referencePaiement
+        })
+        
+        setIsBulkModalOpen(false)
+        setSelectedIds([])
+        alert('Règlement groupé effectué avec succès !')
+        fetchCreances()
+    } catch (err: any) {
+        const errorMsg = err.response?.data?.detail || 'Erreur lors du règlement groupé'
+        alert(errorMsg)
+        console.error('Erreur:', err)
+    }
   }
 
   const handleOpenPaiementModal = (creance: Creance) => {
@@ -244,6 +300,17 @@ export default function Creances() {
     const groupes: { [key: number]: { client: Client, total: number, paye: number, reste: number, count: number } } = {}
     
     creances.forEach(creance => {
+      // Apply history filter logic to groups as well? 
+      // User likely wants to see clients who owe money in default view.
+      // And clients with history in history view.
+      const reste = parseFloat(creance.reste_a_payer)
+      const isPaid = reste <= 0
+      
+      // If filtering logic matches 'filteredCreances', apply it here too for consistency?
+      // Yes: if showHistory is false, ignore fully paid invoices in the count/sum.
+      if (!showHistory && isPaid) return 
+      if (showHistory && !isPaid) return
+
       if (!groupes[creance.client]) {
         // Trouver le client correspondant ou utiliser les données de la facture
         const clientObj = clients.find(c => c.id === creance.client) || {
@@ -271,12 +338,21 @@ export default function Creances() {
     })
 
     return Object.values(groupes).sort((a, b) => b.reste - a.reste)
-  }, [creances, clients])
+  }, [creances, clients, showHistory])
 
   // Filtrer et trier les créances pour le client sélectionné
   const filteredCreances = useMemo(() => {
     if (!selectedClient) return []
     let result = creances.filter(c => c.client.toString() === selectedClient.toString())
+    
+    // Filter by History vs Pending (Client-side)
+    if (showHistory) {
+        // Show only fully paid invoices (reste <= 0 or status PAYEE if user prefers, but debt logic is safer)
+        result = result.filter(c => parseFloat(c.reste_a_payer) <= 0)
+    } else {
+        // Show pending invoices (reste > 0)
+        result = result.filter(c => parseFloat(c.reste_a_payer) > 0)
+    }
     
     // Appliquer le tri
     if (sortConfig.key) {
@@ -301,7 +377,7 @@ export default function Creances() {
     }
     
     return result
-  }, [creances, selectedClient, sortConfig])
+  }, [creances, selectedClient, sortConfig, showHistory])
   
   const handleSort = (key: keyof Creance | 'client_name') => {
     let direction: 'asc' | 'desc' = 'asc'
@@ -330,14 +406,22 @@ export default function Creances() {
           <h1 className="text-2xl font-bold text-base-content">💳 Gestion des Créances</h1>
           <p className="text-sm text-base-content/60 mt-1">Suivi des ventes en compte - Clients professionnels</p>
         </div>
-        <button
-          onClick={fetchCreances}
-          className="btn btn-sm btn-ghost gap-2"
-          disabled={loading}
-        >
-          {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
-          Actualiser
-        </button>
+        <div className="flex gap-2">
+             <div className="form-control">
+                <label className="label cursor-pointer gap-2">
+                    <span className="label-text text-xs font-bold uppercase">Voir Historique</span> 
+                    <input type="checkbox" className="toggle toggle-sm" checked={showHistory} onChange={(e) => { setShowHistory(e.target.checked); setSelectedIds([]); }} />
+                </label>
+            </div>
+            <button
+            onClick={fetchCreances}
+            className="btn btn-sm btn-ghost gap-2"
+            disabled={loading}
+            >
+            {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
+            Actualiser
+            </button>
+        </div>
       </div>
 
       {/* Filtres */}
@@ -450,6 +534,32 @@ export default function Creances() {
         </div>
       )}
 
+
+        {/* Bulk Action Bar */}
+        {selectedClient && selectedIds.length > 0 && !showHistory && (
+            <div className="px-6 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
+                <div className="text-sm font-semibold text-primary">
+                    {selectedIds.length} facture(s) sélectionnée(s)
+                </div>
+                <button onClick={handleBulkPayment} className="btn btn-sm btn-primary">
+                    💰 Régler la sélection
+                </button>
+            </div>
+        )}
+
+
+        {/* Bulk Action Bar */}
+        {selectedClient && selectedIds.length > 0 && !showHistory && (
+            <div className="px-6 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between shrink-0">
+                <div className="text-sm font-semibold text-primary">
+                    {selectedIds.length} facture(s) sélectionnée(s)
+                </div>
+                <button onClick={handleBulkPayment} className="btn btn-sm btn-primary">
+                    💰 Régler la sélection
+                </button>
+            </div>
+        )}
+
       {/* Tableau */}
       <div className="flex-1 overflow-auto px-6 py-4">
         {loading ? (
@@ -508,10 +618,33 @@ export default function Creances() {
                     <button onClick={() => setSelectedClient('')} className="btn btn-link">Retour à la liste</button>
                 </div>
             ) : (
+                <>
+                {/* Bulk Action Bar */}
+                {selectedClient && selectedIds.length > 0 && !showHistory && (
+                    <div className="mb-4 px-6 py-2 bg-primary/10 border border-primary/20 rounded-lg flex items-center justify-between shadow-sm">
+                        <div className="text-sm font-semibold text-primary">
+                            {selectedIds.length} facture(s) sélectionnée(s)
+                        </div>
+                        <button onClick={handleBulkPayment} className="btn btn-sm btn-primary gap-2">
+                            💰 Régler la sélection
+                        </button>
+                    </div>
+                )}
                 <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
                     <table className="table table-zebra w-full">
                     <thead>
                         <tr className="bg-base-200 border-b border-base-300">
+                          {/* Checkbox Header */}
+                         {!showHistory && (
+                            <th className="py-2 px-3 w-10 text-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="checkbox checkbox-xs" 
+                                    onChange={handleSelectAll}
+                                    checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => parseFloat(c.reste_a_payer) > 0).length}
+                                />
+                            </th>
+                         )}
                         <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap cursor-pointer hover:bg-base-300 transition-colors w-32" onClick={() => handleSort('date')}>
                           <div className="flex items-center gap-1">
                             Date {sortConfig.key === 'date' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
@@ -544,7 +677,19 @@ export default function Creances() {
                     </thead>
                     <tbody>
                         {filteredCreances.map((creance) => (
-                        <tr key={creance.id} className="hover">
+                        <tr key={creance.id} className={`hover ${selectedIds.includes(creance.id) ? 'active' : ''}`}>
+                             {/* Checkbox Row */}
+                             {!showHistory && (
+                                <td className="text-center">
+                                    <input 
+                                        type="checkbox" 
+                                        className="checkbox checkbox-xs" 
+                                        checked={selectedIds.includes(creance.id)}
+                                        onChange={() => handleSelectOne(creance.id)}
+                                        disabled={parseFloat(creance.reste_a_payer) <= 0}
+                                    />
+                                </td>
+                             )}
                             <td className="font-mono text-sm">{formatDate(creance.date)}</td>
                             <td className="font-mono text-sm">{creance.numero_facture || '-'}</td>
                             <td className="text-sm">
@@ -587,6 +732,7 @@ export default function Creances() {
                     </tbody>
                     </table>
                 </div>
+                </>
             )
         )}
       </div>
@@ -597,6 +743,56 @@ export default function Creances() {
           {creances.length} créance{creances.length > 1 ? 's' : ''} affichée{creances.length > 1 ? 's' : ''}
         </p>
       </div>
+
+      {/* Modal Bulk Paiement */}
+      <dialog className={`modal ${isBulkModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">💰 Règlement Groupé</h3>
+            <div className="py-4">
+                <p>Vous êtes sur le point de régler <strong>{selectedIds.length}</strong> factures.</p>
+                <div className="alert alert-warning mt-2 text-sm">
+                    Ce règlement soldera le montant restant de toutes les factures sélectionnées.
+                    Une entrée sera créée dans le journal de caisse pour chaque facture.
+                </div>
+
+                <div className="form-control mt-4">
+                    <label className="label">
+                        <span className="label-text font-bold">Mode de Paiement</span>
+                    </label>
+                    <select
+                        value={modePaiement}
+                        onChange={(e) => setModePaiement(e.target.value)}
+                        className="select select-bordered"
+                    >
+                        <option value="especes">💵 Espèces</option>
+                        <option value="om">🟧 Orange Money</option>
+                        <option value="momo">📱 Mobile Money</option>
+                        <option value="cheque">📝 Chèque</option>
+                        <option value="carte">💳 Carte</option>
+                        <option value="virement">🏦 Virement</option>
+                    </select>
+                </div>
+                 <div className="form-control mt-2">
+                    <label className="label">
+                        <span className="label-text font-bold">Référence (optionnel)</span>
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="N° chèque, transaction..."
+                        value={referencePaiement}
+                        onChange={(e) => setReferencePaiement(e.target.value)}
+                        className="input input-bordered"
+                    />
+                </div>
+            </div>
+            <div className="modal-action">
+                <button className="btn btn-ghost" onClick={() => setIsBulkModalOpen(false)}>Annuler</button>
+                <button className="btn btn-primary" onClick={confirmBulkPayment}>Confirmer le Règlement</button>
+            </div>
+        </div>
+      </dialog>
+
+
 
       {/* Modal Ajouter Paiement */}
       <dialog className={`modal ${isPaiementModalOpen ? 'modal-open' : ''}`}>

@@ -57,11 +57,30 @@ export default function Produit() {
     setLoading(true)
     setError(null)
     try {
-      const { data } = await axios.get<ProduitModel[]>(produitsEndpoint)
-      setProduits(data)
+      const response = await axios.get(produitsEndpoint)
+      
+      // Robust pagination handling - always ensure we get an array
+      let produitsData: ProduitModel[] = [];
+      
+      if (response.data) {
+        if (Array.isArray(response.data)) {
+          // Direct array response (no pagination)
+          produitsData = response.data;
+        } else if (response.data.results && Array.isArray(response.data.results)) {
+          // Paginated response with results array
+          produitsData = response.data.results;
+        } else {
+          // Unexpected format - log and use empty array
+          console.warn('Unexpected API response format:', response.data);
+          produitsData = [];
+        }
+      }
+      
+      setProduits(produitsData)
     } catch (err) {
       setError('Erreur lors du chargement des produits')
       console.error('Erreur:', err)
+      setProduits([]) // Ensure state is always an array even on error
     } finally {
       setLoading(false)
     }
@@ -70,13 +89,37 @@ export default function Produit() {
   const fetchRayonsAndFournisseurs = async () => {
     try {
       const [rayonsRes, fournisseursRes] = await Promise.all([
-        axios.get<Rayon[]>(rayonsEndpoint),
-        axios.get<Fournisseur[]>(fournisseursEndpoint)
+        axios.get(rayonsEndpoint),
+        axios.get(fournisseursEndpoint)
       ])
-      setRayons(rayonsRes.data)
-      setFournisseurs(fournisseursRes.data)
+      
+      // Robust extraction of arrays
+      let rayonsData: Rayon[] = [];
+      let fournisseursData: Fournisseur[] = [];
+      
+      if (rayonsRes.data) {
+        if (Array.isArray(rayonsRes.data)) {
+          rayonsData = rayonsRes.data;
+        } else if (rayonsRes.data.results && Array.isArray(rayonsRes.data.results)) {
+          rayonsData = rayonsRes.data.results;
+        }
+      }
+      
+      if (fournisseursRes.data) {
+        if (Array.isArray(fournisseursRes.data)) {
+          fournisseursData = fournisseursRes.data;
+        } else if (fournisseursRes.data.results && Array.isArray(fournisseursRes.data.results)) {
+          fournisseursData = fournisseursRes.data.results;
+        }
+      }
+      
+      setRayons(rayonsData)
+      setFournisseurs(fournisseursData)
     } catch (err) {
       console.error('Erreur chargement rayons/fournisseurs:', err)
+      // Ensure arrays on error
+      setRayons([])
+      setFournisseurs([])
     }
   }
 
@@ -210,6 +253,9 @@ export default function Produit() {
 
   // Filtrer les produits
   const filteredProduits = useMemo(() => {
+    // Ensure produits is always an array
+    if (!Array.isArray(produits)) return [];
+    
     let list = produits
     
     if (searchQuery) {
@@ -233,9 +279,21 @@ export default function Produit() {
   }, [produits, searchQuery, filterRayon, filterFournisseur])
 
   // Stats
-  const totalProduits = produits.length
-  const lowStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= (p.stock_alert ?? 0) && (p.stock ?? 0) > 0).length, [produits])
-  const outOfStockCount = useMemo(() => produits.filter(p => (p.stock ?? 0) <= 0).length, [produits])
+  const totalProduits = Array.isArray(produits) ? produits.length : 0
+  const lowStockCount = useMemo(() => Array.isArray(produits) ? produits.filter(p => (p.stock ?? 0) <= (p.stock_alert ?? 0) && (p.stock ?? 0) > 0).length : 0, [produits])
+  const outOfStockCount = useMemo(() => Array.isArray(produits) ? produits.filter(p => (p.stock ?? 0) <= 0).length : 0, [produits])
+
+  // Safety check - if produits is somehow not an array, show loading
+  if (!Array.isArray(produits)) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <p className="mt-4 text-base-content/70">Chargement des produits...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-full flex flex-col bg-base-100 overflow-hidden">
@@ -783,7 +841,12 @@ export default function Produit() {
       <ProduitCreateModal
         open={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onProduitCreated={handleProduitCreated}
+        onCreated={handleProduitCreated}
+        produitsEndpoint={produitsEndpoint}
+        rayonsEndpoint={rayonsEndpoint}
+        fournisseursEndpoint={fournisseursEndpoint}
+        rayons={rayons}
+        fournisseurs={fournisseurs}
       />
     </div>
   )

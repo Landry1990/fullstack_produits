@@ -214,7 +214,7 @@
 
 ## 🛡️ Plan d'Action Prioritaire
 
-### Phase 1 : Sécurité Immédiate (1-2 semaines)
+### Phase 1 : Sécurité Immédiate (1-2 semaines) ok ok
 1. ✅ Implémenter rôles/permissions (Django Guardian)
 2. ✅ Ajouter audit log pour actions critiques
 3. ✅ Renforcer validations backend
@@ -255,3 +255,13 @@ Le projet **Pharma Stock** est déjà fonctionnel et démontre une bonne compré
 ---
 
 > 📝 Document vivant - À mettre à jour au fur et à mesure des améliorations
+
+maintenant pour la saisie des  nouvelles commandes. les commandes en pharmaice sont tres longues et le systeme actuels utilises trop la souris ce qui est fatiguant a la longue.
+permettre de saisir les produits avec le clavier et se deplacer avec les touches directionnelles ou entrer quand on fini une ligne
+sur une ligne de saisie la touche entrer permet de se deplacer sur chaque champ de la ligne et des que la ligne est complete on passe a la ligne certains champs seront modifiables et d'autres non
+
+permettre d'importer un fichier csv(sepaparation point virgule) cip+quantite et la recherche par cip remplira autmatiquement les autres champs
+
+ajouter un bouton export csv pour exporter les commandes en cours a cet effet cip1 represente les codes d'un grossiste specifique(ubipharm) et cip2(laborex) lors de l'export me proposer sur quel grossiste exporter
+
+                                                                                                                                                                                                                                                 

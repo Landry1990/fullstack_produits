@@ -111,14 +111,16 @@ export default function Dashboard() {
           axios.get(`${dashboardEndpoint}recent_transactions/`),
           axios.get(`${dashboardEndpoint}revenue_chart/`),
           axios.get(`${dashboardEndpoint}low_stock/`),
-          axios.get<ProduitModel[]>(produitsEndpoint)
+          axios.get(produitsEndpoint)
         ]);
 
         setStats(statsRes.data);
         setRecentTransactions(transactionsRes.data);
         setRevenueChart(chartRes.data);
         setLowStockItems(lowStockRes.data);
-        setProduits(produitsRes.data);
+        // Handle paginated response for products
+        const produitsData: any = produitsRes.data;
+        setProduits(Array.isArray(produitsData) ? produitsData : (produitsData.results || []));
       } catch (err) {
         console.error('Erreur lors du chargement du tableau de bord:', err);
         setError('Impossible de charger les données du tableau de bord.');

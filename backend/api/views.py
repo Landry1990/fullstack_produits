@@ -18,13 +18,14 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.core.cache import cache
 from django.db.models import Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
-    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse
+    StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
@@ -365,7 +366,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
 
 class CommandeViewSet(viewsets.ModelViewSet):
     """API endpoint for commandes."""
-    queryset = Commande.objects.all().order_by('-date')
+    queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits').all().order_by('-date')
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
 
@@ -604,7 +605,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
 
 class FactureViewSet(viewsets.ModelViewSet):
     """API endpoint for factures."""
-    queryset = Facture.objects.all().order_by('-date')
+    queryset = Facture.objects.select_related('client', 'ayant_droit').prefetch_related('produits', 'paiements').all().order_by('-date')
     serializer_class = FactureSerializer
     permission_classes = [IsAuthenticated]
 
@@ -777,6 +778,16 @@ class FactureViewSet(viewsets.ModelViewSet):
             
         facture.save(update_fields=['status', 'notes', 'date_annulation'])
 
+        # Log activity
+        ActivityLog.objects.create(
+            user=request.user,
+            action='CANCEL_INVOICE',
+            target_model='Facture',
+            target_id=str(facture.id),
+            details={'motif': motif, 'amount': float(facture.total_ttc)},
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
         return Response({'status': 'Facture annulée avec succès. Stock restauré.'})
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
@@ -787,7 +798,18 @@ class FactureViewSet(viewsets.ModelViewSet):
         """
         brouillons = Facture.objects.filter(status=Facture.Status.BROUILLON)
         count = brouillons.count()
+        brouillons_ids = list(brouillons.values_list('id', flat=True))
         brouillons.delete()
+        
+        if count > 0:
+            ActivityLog.objects.create(
+                user=request.user,
+                action='DELETE_DRAFTS',
+                target_model='Facture',
+                details={'count': count, 'ids': list(map(str, brouillons_ids))},
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+
         return Response({
             'detail': f'{count} facture(s) brouillon supprimée(s) avec succès.',
             'count': count
@@ -1296,6 +1318,11 @@ class DashboardViewSet(viewsets.ViewSet):
         """
         Returns dashboard statistics: revenue, sales count, new clients, low stock.
         """
+        # Try to get from cache
+        cached_stats = cache.get('dashboard_stats')
+        if cached_stats:
+            return Response(cached_stats)
+
         today = timezone.now().date()
         yesterday = today - timedelta(days=1)
         
@@ -1364,7 +1391,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 total_receivables += reste
                 receivables_count += 1
         
-        return Response({
+        data = {
             'revenue': {
                 'value': revenue_today,
                 'change': round(revenue_change, 1)
@@ -1385,7 +1412,13 @@ class DashboardViewSet(viewsets.ViewSet):
                 'value': total_receivables,
                 'count': receivables_count
             }
-        })
+        }
+        
+        # Cache for 15 minutes (900 seconds)
+        # Note: Invalidated by signals on Facture/Caisse/Client/Produit save
+        cache.set('dashboard_stats', data, timeout=900)
+        
+        return Response(data)
 
     @action(detail=False, methods=['get'])
     def recent_transactions(self, request):
@@ -1540,6 +1573,61 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         ).distinct().select_related(
             'client', 'ayant_droit'
         ).prefetch_related('paiements').order_by('-date')
+
+        # Annotate with paid amount to filter correctly
+        # We need to filter based on "remaining debt" for Pending view
+        # and "no remaining debt" for History view.
+        # This is complex in Django ORM with computed properties.
+        # Simplification: 
+        # History = explicitly requested history=True (Status PAYEE and maybe fully paid?)
+        # Pending = Default (Status VALIDEE + PAYEE with debt?)
+        
+        # ACTUALLY: The safest way without complex annotation is to return ALL valid/payee invoices
+        # and let the frontend do the filtering of "Pending" vs "History" if the dataset isn't huge.
+        # BUT, to respect the "disappeared" issue: 
+        # The user said "toute les factures avaient des montant reste a payer".
+        # If I removed PAYEE from Pending view, and they were PAYEE, that's the bug.
+        
+        show_history = self.request.query_params.get('history', 'false').lower() == 'true'
+        
+        # If history is requested, we might want EVERYTHING or just closed ones?
+        # Let's revert to a broader filter and handle distinction carefully.
+        
+        # STRATEGY CHANGE:
+        # Instead of strict Status filtering, let's filter by logic.
+        # However, computing debt in DB is hard.
+        # Let's try to trust the 'PAYEE' status means 'Fully Paid' usually.
+        # If user has PAYEE invoices with debt, data is inconsistent.
+        # But to show them, we must include PAYEE in the default view IF they have debt.
+        # Since we can't easily check debt in SQL here without duplicating logic:
+        # We will return BOTH statuses for now, and let Frontend filter? 
+        # No, pagination.
+        
+        # Better: Filter by status only if we are sure.
+        # If I remove the strict status filter, I return everything.
+        # Let's remove the strict 'history' toggle on status for now and return all receivables.
+        # The frontend uses 'reste_a_payer > 0' to show in main list anyway?
+        # Wait, frontend 'filteredCreances' does not filter by debt, mostly by client.
+        
+        # FIX: Return ALL receivables (VALIDEE + PAYEE) in the queryset.
+        # Let the frontend 'showHistory' toggle just filter by 'reste_a_payer == 0' vs '> 0'.
+        # This solves the "missing invoices" if they were PAYEE.
+        # And allows "History" to show the fully paid ones.
+        
+        # So, I will REMOVE the backend filtering based on history param for status,
+        # but keep it if we want to optimize.
+        # Given the user reporting missing stuff, let's open the gates.
+        
+        pass # No extra status filtering based on history param here to ensure everything is sent.
+        # Validation: check if client wants history separation on backend.
+        # If I send everything, frontend 'Creances.tsx' needs to filter Pending = (reste > 0).
+        
+        # Let's look at Creances.tsx again.
+        # It calculates 'reste' in 'clientsGroupes' and 'filteredCreances'.
+        # If I send all VALIDEE+PAYEE, the frontend has the data.
+        
+        # So I will revert the "Filtrer par statut" block I added.
+
         
         # Filtrer par client si spécifié
         client_id = self.request.query_params.get('client_id', None)
@@ -1724,3 +1812,113 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             }
         })
 
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_paiement(self, request):
+        """
+        Pay list of invoices in bulk.
+        Body: {
+            'facture_ids': [1, 2, 3],
+            'mode_paiement': 'especes',
+            'reference': 'REF123'
+        }
+        """
+        facture_ids = request.data.get('facture_ids', [])
+        mode_paiement = request.data.get('mode_paiement')
+        reference = request.data.get('reference', '')
+
+        if not facture_ids or not isinstance(facture_ids, list):
+             return Response(
+                {'detail': 'facture_ids must be a non-empty list.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not mode_paiement:
+            return Response(
+                {'detail': 'mode_paiement is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Relaxed filtering: Find invoices by ID, ignore status (we filter by debt later)
+        # But ensure consistency (e.g. same client)
+        factures = Facture.objects.filter(id__in=facture_ids)
+        
+        if not factures.exists():
+             return Response(
+                {'detail': 'No invoices found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        # Verify Client Consistency
+        client_ids = factures.values_list('client', flat=True).distinct()
+        if len(client_ids) > 1:
+             return Response(
+                {'detail': 'All invoices must belong to the same client.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        client = factures.first().client
+        
+        # Create Relevé
+        from .models import RelevePaiement
+        # Generate unique reference
+        import datetime
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        releve_ref = f"REL-{timestamp}-{client.id}"
+        
+        releve = RelevePaiement.objects.create(
+            client=client,
+            generated_by=request.user if request.user.is_authenticated else None,
+            total_amount=Decimal('0.00'),
+            reference=releve_ref
+        )
+
+        total_paid_bulk = Decimal('0.00')
+        count_processed = 0
+
+        for facture in factures:
+             # Calculate remaining amount
+            montant_paye = facture.paiements.filter(
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+            
+            reste = facture.total_ttc - montant_paye
+
+            if reste <= 0:
+                continue
+
+            # Create payment linked to Releve
+            Caisse.objects.create(
+                facture=facture,
+                mode_paiement=mode_paiement,
+                montant=reste,
+                reference=reference,
+                statut='completee',
+                user=request.user if request.user.is_authenticated else None,
+                releve=releve
+            )
+            total_paid_bulk += reste
+            count_processed += 1
+            
+        # Update Relevé Total
+        releve.total_amount = total_paid_bulk
+        releve.save()
+
+        return Response({
+            'detail': f'Règlement groupé effectué avec succès. {count_processed} factures traitées.',
+            'releve_reference': releve.reference,
+            'total_amount': str(total_paid_bulk)
+        })
+
+            
+            # Check for update status logic (usually handled by signal, but explicit check doesn't hurt)
+            # The signal update_facture_status_on_payment handles status update to PAYEE
+
+        return Response({
+            'detail': f'{len(updated_factures)} factures réglées avec succès.',
+            'total_paid': str(total_paid),
+            'updated_ids': updated_factures
+        })

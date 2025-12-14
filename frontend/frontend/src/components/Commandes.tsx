@@ -33,6 +33,7 @@ export default function Commandes() {
   const [selectedProduitToAdd, setSelectedProduitToAdd] = useState<ProduitModel | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
   const [lineItem, setLineItem] = useState({
     quantity: '1',
     price: '', // prix achat
@@ -41,8 +42,16 @@ export default function Commandes() {
     date_expiration: '',
   });
 
+  // States for table navigation and selection
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [focusedField, setFocusedField] = useState<{row: number, field: number} | null>(null);
+
   const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur'>('date');
   const [sortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Tri pour les produits dans la vue détails
+  const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
+  const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
 
@@ -134,15 +143,20 @@ export default function Commandes() {
       try {
         // On récupère les commandes et les fournisseurs en parallèle
         const [commandesResponse, fournisseursResponse, produitsResponse, rayonsResponse] = await Promise.all([
-          axios.get<Commande[]>(commandesEndpoint, { signal: controller.signal }),
-          axios.get<Fournisseur[]>(fournisseursEndpoint, { signal: controller.signal }),
-          axios.get<ProduitModel[]>(produitsEndpoint, { signal: controller.signal }),
-          axios.get<Rayon[]>(rayonsEndpoint, { signal: controller.signal }),
+          axios.get(commandesEndpoint, { signal: controller.signal }),
+          axios.get(fournisseursEndpoint, { signal: controller.signal }),
+          axios.get(produitsEndpoint, { signal: controller.signal }),
+          axios.get(rayonsEndpoint, { signal: controller.signal }),
         ])
-        setCommandes(commandesResponse.data)
-        setFournisseurs(fournisseursResponse.data)
-        setProduitsList(produitsResponse.data)
-        setRayons(rayonsResponse.data)
+        // Handle paginated responses
+        const commandesData: any = commandesResponse.data;
+        const fournisseursData: any = fournisseursResponse.data;
+        const produitsData: any = produitsResponse.data;
+        const rayonsData: any = rayonsResponse.data;
+        setCommandes(Array.isArray(commandesData) ? commandesData : (commandesData.results || []))
+        setFournisseurs(Array.isArray(fournisseursData) ? fournisseursData : (fournisseursData.results || []))
+        setProduitsList(Array.isArray(produitsData) ? produitsData : (produitsData.results || []))
+        setRayons(Array.isArray(rayonsData) ? rayonsData : (rayonsData.results || []))
       } catch (err: unknown) {
         if (axios.isCancel(err)) return
         if (axios.isAxiosError(err)) {
@@ -166,6 +180,78 @@ export default function Commandes() {
     }
   }, [commandes, selectedCommande])
 
+  // Définir les fonctions de fermeture avant le useEffect qui les utilise
+  const closeAddModal = useCallback(() => {
+    setIsAddModalOpen(false)
+    setSearchProduitQuery('')
+    setHighlightedIndex(-1)
+    setCommandeProduits([])
+    setSelectedRows(new Set())
+    setFocusedField(null)
+    resetProductForm()
+  }, [resetProductForm])
+
+  const closeAddProductsModal = useCallback(() => {
+    setIsAddProductsModalOpen(false)
+    setProductsToAdd([])
+    setSearchProduitQuery('')
+    setHighlightedIndex(-1)
+    resetProductForm()
+  }, [resetProductForm])
+
+  // Raccourcis clavier globaux
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Ignorer si on est dans un input/textarea ou si modal n'est pas ouvert
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
+      
+      if (!isAddModalOpen && !isAddProductsModalOpen) return;
+      
+      // F2 : Focus recherche produit
+      if (e.key === 'F2') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+      
+      // F4 : Focus fournisseur
+      if (e.key === 'F4') {
+        e.preventDefault();
+        fournisseurSelectRef.current?.focus();
+        return;
+      }
+      
+      // Ctrl+A : Sélectionner toutes les lignes
+      if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        setSelectedRows(new Set(commandeProduits.map((_, i) => i)));
+        return;
+      }
+      
+      // Delete : Supprimer lignes sélectionnées
+      if (e.key === 'Delete' && !isInput && selectedRows.size > 0) {
+        e.preventDefault();
+        setCommandeProduits(prev => prev.filter((_, i) => !selectedRows.has(i)));
+        setSelectedRows(new Set());
+        return;
+      }
+      
+      // Escape : Fermer modals
+      if (e.key === 'Escape' && !isInput) {
+        if (isAddModalOpen) {
+          closeAddModal();
+        } else if (isAddProductsModalOpen) {
+          closeAddProductsModal();
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isAddModalOpen, isAddProductsModalOpen, commandeProduits, selectedRows, closeAddModal, closeAddProductsModal])
+
   function openAddModal() {
     setNewCommandeFournisseurId(fournisseurs.length > 0 ? String(fournisseurs[0].id) : '')
     setNumeroFacture('')
@@ -174,14 +260,6 @@ export default function Commandes() {
     setHighlightedIndex(-1)
     resetProductForm()
     setIsAddModalOpen(true)
-  }
-
-  function closeAddModal() {
-    setIsAddModalOpen(false)
-    setSearchProduitQuery('')
-    setHighlightedIndex(-1)
-    setCommandeProduits([])
-    resetProductForm()
   }
 
   function openEditModal() {
@@ -206,16 +284,8 @@ export default function Commandes() {
     setIsAddProductsModalOpen(true)
   }
 
-  function closeAddProductsModal() {
-    setIsAddProductsModalOpen(false)
-    setProductsToAdd([])
-    setSearchProduitQuery('')
-    setHighlightedIndex(-1)
-    resetProductForm()
-  }
-
-  // Fonctions de navigation au clavier
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  // Fonctions de navigation au clavier pour la recherche
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!searchProduitQuery) return;
 
     switch (e.key) {
@@ -233,9 +303,7 @@ export default function Commandes() {
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < filteredProduits.length) {
           const selectedProduct = filteredProduits[highlightedIndex];
-          setSelectedProduitToAdd(selectedProduct);
-          setSearchProduitQuery('');
-          setHighlightedIndex(-1);
+          selectProduct(selectedProduct);
         }
         break;
       case 'Escape':
@@ -245,15 +313,134 @@ export default function Commandes() {
     }
   }
 
+  // Navigation clavier dans le tableau
+  function handleTableFieldKeyDown(
+    e: React.KeyboardEvent,
+    rowIndex: number,
+    fieldIndex: number
+  ) {
+    const fieldsPerRow = 5; // Quantité (0), Prix achat (1), Prix vente (2), Lot (3), Date exp (4)
+    
+    switch (e.key) {
+      case 'Enter':
+      case 'Tab':
+        e.preventDefault();
+        if (fieldIndex < fieldsPerRow - 1) {
+          // Passer au champ suivant
+          setFocusedField({ row: rowIndex, field: fieldIndex + 1 });
+          // Focus sur le champ suivant après le rendu
+          setTimeout(() => {
+            const nextInput = document.querySelector(
+              `input[data-row="${rowIndex}"][data-field="${fieldIndex + 1}"]`
+            ) as HTMLInputElement;
+            nextInput?.focus();
+          }, 0);
+        } else {
+          // Dernier champ : vérifier si ligne complète et passer à la suivante
+          const row = commandeProduits[rowIndex];
+          const isComplete = row && 
+            row.quantity > 0 && 
+            row.price && 
+            parseFloat(String(row.price)) > 0 &&
+            row.selling_price && 
+            parseFloat(String(row.selling_price)) > 0;
+          
+          if (isComplete && rowIndex < commandeProduits.length - 1) {
+            // Passer à la ligne suivante, premier champ
+            setFocusedField({ row: rowIndex + 1, field: 0 });
+            setTimeout(() => {
+              const nextInput = document.querySelector(
+                `input[data-row="${rowIndex + 1}"][data-field="0"]`
+              ) as HTMLInputElement;
+              nextInput?.focus();
+            }, 0);
+          } else if (isComplete) {
+            // Dernière ligne complète : retourner à la recherche
+            setFocusedField(null);
+            setTimeout(() => {
+              searchInputRef.current?.focus();
+            }, 0);
+          }
+        }
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (rowIndex < commandeProduits.length - 1) {
+          setFocusedField({ row: rowIndex + 1, field: fieldIndex });
+          setTimeout(() => {
+            const nextInput = document.querySelector(
+              `input[data-row="${rowIndex + 1}"][data-field="${fieldIndex}"]`
+            ) as HTMLInputElement;
+            nextInput?.focus();
+          }, 0);
+        }
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (rowIndex > 0) {
+          setFocusedField({ row: rowIndex - 1, field: fieldIndex });
+          setTimeout(() => {
+            const nextInput = document.querySelector(
+              `input[data-row="${rowIndex - 1}"][data-field="${fieldIndex}"]`
+            ) as HTMLInputElement;
+            nextInput?.focus();
+          }, 0);
+        }
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        if (fieldIndex < fieldsPerRow - 1) {
+          setFocusedField({ row: rowIndex, field: fieldIndex + 1 });
+          setTimeout(() => {
+            const nextInput = document.querySelector(
+              `input[data-row="${rowIndex}"][data-field="${fieldIndex + 1}"]`
+            ) as HTMLInputElement;
+            nextInput?.focus();
+          }, 0);
+        }
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        if (fieldIndex > 0) {
+          setFocusedField({ row: rowIndex, field: fieldIndex - 1 });
+          setTimeout(() => {
+            const nextInput = document.querySelector(
+              `input[data-row="${rowIndex}"][data-field="${fieldIndex - 1}"]`
+            ) as HTMLInputElement;
+            nextInput?.focus();
+          }, 0);
+        }
+        break;
+    }
+  }
+
   function selectProduct(product: ProduitModel) {
-    setSelectedProduitToAdd(product);
-    setLineItem(prev => ({
-      ...prev,
-      price: product.cost_price || '',
-      selling_price: product.selling_price || '',
-    }));
+    // Ajouter directement au tableau avec valeurs par défaut
+    const newCommandeProduit: CommandeProduit = {
+      id: Date.now(), // ID temporaire
+      produit: product,
+      quantity: 1,
+      price: product.cost_price || '0',
+      selling_price: product.selling_price || '0',
+      lot: '',
+      date_expiration: '',
+    };
+    
+    setCommandeProduits(prev => [...prev, newCommandeProduit]);
+    
+    // Focus sur le champ quantité de la nouvelle ligne
+    const newRowIndex = commandeProduits.length;
+    setFocusedField({ row: newRowIndex, field: 0 }); // 0 = quantité
+    
+    // Reset recherche
     setSearchProduitQuery('');
     setHighlightedIndex(-1);
+    setSelectedProduitToAdd(null);
+    
+    // Remettre focus sur recherche pour ajouter rapidement un autre produit
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 50);
   }
 
   async function addProductToCommande() {
@@ -285,6 +472,58 @@ export default function Commandes() {
 
   function removeProductFromCommande(index: number) {
     setCommandeProduits(prev => prev.filter((_, i) => i !== index));
+    // Retirer aussi de la sélection si présent
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      next.delete(index);
+      // Ajuster les indices des éléments suivants
+      const adjusted = new Set<number>();
+      next.forEach(idx => {
+        if (idx < index) adjusted.add(idx);
+        else if (idx > index) adjusted.add(idx - 1);
+      });
+      return adjusted;
+    });
+  }
+
+  // Gestion des checkboxes
+  function toggleRowSelection(index: number) {
+    setSelectedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllRows() {
+    if (selectedRows.size === commandeProduits.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(commandeProduits.map((_, i) => i)));
+    }
+  }
+
+  function deleteSelectedRows() {
+    setCommandeProduits(prev => prev.filter((_, i) => !selectedRows.has(i)));
+    setSelectedRows(new Set());
+  }
+
+  // Fonction pour mettre à jour un champ dans une ligne
+  function updateCommandeProduitField(
+    index: number,
+    field: 'quantity' | 'price' | 'selling_price' | 'lot' | 'date_expiration',
+    value: string | number
+  ) {
+    setCommandeProduits(prev => prev.map((item, i) => {
+      if (i === index) {
+        return { ...item, [field]: value };
+      }
+      return item;
+    }));
   }
 
   function addProductToExistingCommande() {
@@ -349,11 +588,13 @@ export default function Commandes() {
       }
 
       // Rafraîchir la liste des commandes
-      const { data: updatedCommandes } = await axios.get<Commande[]>(commandesEndpoint)
-      setCommandes(updatedCommandes)
+      const { data: updatedCommandesData } = await axios.get(commandesEndpoint)
+      const updatedCommandes: any = updatedCommandesData;
+      const updatedCommandesArray = Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []);
+      setCommandes(updatedCommandesArray)
       
       // Mettre à jour la commande sélectionnée
-      const updatedCommande = updatedCommandes.find(c => c.id === selectedCommande.id)
+      const updatedCommande = updatedCommandesArray.find((c: Commande) => c.id === selectedCommande.id)
       setSelectedCommande(updatedCommande || null)
       
       // Fermer le modal
@@ -402,11 +643,13 @@ export default function Commandes() {
       }
 
       // Rafraîchir la liste des commandes
-      const { data: updatedCommandes } = await axios.get<Commande[]>(commandesEndpoint)
-      setCommandes(updatedCommandes)
+      const { data: updatedCommandesData } = await axios.get(commandesEndpoint)
+      const updatedCommandes: any = updatedCommandesData;
+      const updatedCommandesArray = Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []);
+      setCommandes(updatedCommandesArray)
       
       // Sélectionner la nouvelle commande
-      const newCommandeWithProducts = updatedCommandes.find(c => c.id === createdCommande.id)
+      const newCommandeWithProducts = updatedCommandesArray.find((c: Commande) => c.id === createdCommande.id)
       setSelectedCommande(newCommandeWithProducts || null)
       
       // Fermer le modal
@@ -462,12 +705,17 @@ export default function Commandes() {
       // Refresh the data to get updated stock and status
       const controller = new AbortController()
       const [commandesResponse, produitsResponse] = await Promise.all([
-        axios.get<Commande[]>(commandesEndpoint, { signal: controller.signal }),
-        axios.get<ProduitModel[]>(produitsEndpoint, { signal: controller.signal }),
+        axios.get(commandesEndpoint, { signal: controller.signal }),
+        axios.get(produitsEndpoint, { signal: controller.signal }),
       ])
-      setCommandes(commandesResponse.data)
-      setProduitsList(produitsResponse.data)
-      setSelectedCommande(commandesResponse.data.find(c => c.id === selectedCommande.id) ?? null)
+      // Handle paginated responses
+      const commandesData: any = commandesResponse.data;
+      const produitsData: any = produitsResponse.data;
+      const commandesArray = Array.isArray(commandesData) ? commandesData : (commandesData.results || []);
+      const produitsArray = Array.isArray(produitsData) ? produitsData : (produitsData.results || []);
+      setCommandes(commandesArray)
+      setProduitsList(produitsArray)
+      setSelectedCommande(commandesArray.find((c: Commande) => c.id === selectedCommande.id) ?? null)
 
     } catch (err) {
       handleApiError(err, "Erreur lors de la clôture de la commande")
@@ -501,8 +749,9 @@ export default function Commandes() {
       if (response.data.commandes && response.data.commandes.length > 0) {
         alert(response.data.detail);
         // Refresh commandes
-        const { data: updatedCommandes } = await axios.get<Commande[]>(commandesEndpoint);
-        setCommandes(updatedCommandes);
+        const { data: updatedCommandesData } = await axios.get(commandesEndpoint);
+        const updatedCommandes: any = updatedCommandesData;
+        setCommandes(Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []));
       } else {
         alert(response.data.detail || "Aucune commande générée.");
       }
@@ -582,161 +831,271 @@ export default function Commandes() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="card bg-base-100 shadow-xl">
-        <div className="card-body">
-          <div className="flex items-center justify-between">
-            <h2 className="card-title">Liste des commandes</h2>
-            <div className="card-actions">
-              {loading && <span className="loading loading-spinner loading-sm" />}
-              <button 
-                className="btn btn-secondary mr-2" 
-                onClick={handleGenerateReplenishment}
-                disabled={loading}
-              >
-                {loading && <span className="loading loading-spinner loading-sm" />}
-                Générer Réapprovisionnement
-              </button>
-              <button className="btn btn-primary" onClick={openAddModal}>Créer</button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="table table-zebra">
-              <thead>
-                <tr>
-                  <th onClick={() => setSortKey('numero')}>N° Facture</th>
-                  <th onClick={() => setSortKey('date')}>Date</th>
-                  <th onClick={() => setSortKey('fournisseur')}>Fournisseur</th>
-                  <th>Statut</th>
-                  <th>Total (F)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedCommandes.map(commande => (
-                  <tr key={commande.id} className="hover" onClick={() => setSelectedCommande(commande)}>
-                    <td className={selectedCommande?.id === commande.id ? 'bg-base-300' : ''}>{commande.numero_facture || commande.id}</td>
-                    <td>{new Date(commande.date).toLocaleString('fr-FR')}</td>
-                    <td>{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
-                    <td><span className="badge badge-ghost">{commande.status_display}</span></td>
-                    <td>{commande.total}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
-        {/* Section des détails de la commande */} 
+      {/* Vue conditionnelle: Liste OU Détails */}
+      {!selectedCommande ? (
+        /* LISTE DES COMMANDES */
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
-                                    <div className="flex justify-between items-center">
-              <h2 className="card-title">Détails de la commande</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="card-title">Liste des commandes</h2>
               <div className="card-actions">
+                {loading && <span className="loading loading-spinner loading-sm" />}
                 <button 
-                  className="btn btn-info btn-sm"
-                  onClick={openAddProductsModal}
-                  disabled={!selectedCommande || selectedCommande.status === 'CLOT'}
+                  className="btn btn-secondary btn-sm" 
+                  onClick={handleGenerateReplenishment}
+                  disabled={loading}
                 >
-                  Ajouter des produits
+                  {loading && <span className="loading loading-spinner loading-sm" />}
+                  Générer Réapprovisionnement
                 </button>
-                <button 
-                  className="btn btn-secondary btn-sm"
-                  onClick={openEditModal}
-                  disabled={!selectedCommande || selectedCommande.status === 'CLOT'}
-                >
-                  Modifier
-                </button>
-                <button 
-                  className="btn btn-success btn-sm"
-                  onClick={handleCloturerCommande}
-                  disabled={!selectedCommande || selectedCommande.status === 'CLOT'}
-                >
-                  Clôturer
-                </button>
-                <button 
-                  className="btn btn-error btn-sm"
-                  onClick={handleDeleteCommande}
-                  disabled={!selectedCommande}
-                >
-                  Supprimer
-                </button>
-                <button 
-                  className="btn btn-primary btn-sm"
-                  onClick={handleImprimerReception}
-                  disabled={!selectedCommande || selectedCommande.status !== 'CLOT'}
-                >
-                  Imprimer le bon
-                </button>
+                <button className="btn btn-primary btn-sm" onClick={openAddModal}>+ Créer</button>
               </div>
             </div>
-            {!selectedCommande ? (
-              <p className="text-base-content/70">Sélectionnez une commande dans la liste.</p>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">ID Commande</span>
-                  <span className="col-span-2">{selectedCommande.id}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Fournisseur</span>
-                  <span className="col-span-2">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">N° Facture</span>
-                  <span className="col-span-2">{selectedCommande.numero_facture || 'N/A'}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Date</span>
-                  <span className="col-span-2">{new Date(selectedCommande.date).toLocaleString('fr-FR')}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Statut</span>
-                  <span className="col-span-2"><span className="badge badge-ghost">{selectedCommande.status_display}</span></span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Total</span>
-                  <span className="col-span-2 font-bold">{selectedCommande.total} F</span>
-                </div>
+            
+            {/* Tri */}
+            <div className="flex gap-2 mb-4">
+              <button 
+                className={`btn btn-xs ${sortKey === 'numero' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setSortKey('numero')}
+              >
+                Trier par N°
+              </button>
+              <button 
+                className={`btn btn-xs ${sortKey === 'date' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setSortKey('date')}
+              >
+                Trier par Date
+              </button>
+              <button 
+                className={`btn btn-xs ${sortKey === 'fournisseur' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setSortKey('fournisseur')}
+              >
+                Trier par Fournisseur
+              </button>
+            </div>
 
-                <div>
-                  <h3 className="font-semibold mt-4 mb-2">Produits commandés</h3>
-                  {selectedCommande.produits.length === 0 ? (
-                    <p className="text-base-content/70">Aucun produit dans cette commande.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="table table-sm">
-                        <thead>
-                          <tr>
-                            <th>Produit</th>
-                            <th>Quantité</th>
-                            <th>Prix Unitaire (F)</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedCommande.produits.map(p => (
-                            <tr key={p.id}>
-                              <td>{p.produit.name}</td>
-                              <td>{p.quantity}</td>
-                              <td>{p.price}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <div className="overflow-x-auto">
+              <table className="table table-zebra w-full">
+                <thead>
+                  <tr>
+                    <th>N° Facture</th>
+                    <th>Date</th>
+                    <th>Fournisseur</th>
+                    <th>Statut</th>
+                    <th>Total (F)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedCommandes.map(commande => (
+                    <tr key={commande.id} className="hover">
+                      <td>{commande.numero_facture || commande.id}</td>
+                      <td>{new Date(commande.date).toLocaleDateString('fr-FR')}</td>
+                      <td>{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
+                      <td><span className="badge badge-ghost">{commande.status_display}</span></td>
+                      <td className="font-semibold">{commande.total} F</td>
+                      <td>
+                        <button 
+                          className="btn btn-ghost btn-xs"
+                          onClick={() => setSelectedCommande(commande)}
+                        >
+                          👁️ Voir détails
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* DÉTAILS DE LA COMMANDE */
+        <div className="space-y-4">
+          {/* Bouton retour */}
+          <button 
+            onClick={() => setSelectedCommande(null)}
+            className="btn btn-outline btn-sm gap-2"
+          >
+            ⬅️ Retour à la liste
+          </button>
+
+          {/* Informations de la commande */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="card-title">Détails de la commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
+                <div className="flex flex-wrap gap-2">
+                  <button 
+                    className="btn btn-info btn-sm"
+                    onClick={openAddProductsModal}
+                    disabled={selectedCommande.status === 'CLOT'}
+                  >
+                    ➕ Ajouter produits
+                  </button>
+                  <button 
+                    className="btn btn-secondary btn-sm"
+                    onClick={openEditModal}
+                    disabled={selectedCommande.status === 'CLOT'}
+                  >
+                    ✏️ Modifier
+                  </button>
+                  <button 
+                    className="btn btn-success btn-sm"
+                    onClick={handleCloturerCommande}
+                    disabled={selectedCommande.status === 'CLOT'}
+                  >
+                    ✅ Clôturer
+                  </button>
+                  <button 
+                    className="btn btn-error btn-sm"
+                    onClick={handleDeleteCommande}
+                  >
+                    🗑️ Supprimer
+                  </button>
+                  <button 
+                    className="btn btn-primary btn-sm"
+                    onClick={handleImprimerReception}
+                    disabled={selectedCommande.status !== 'CLOT'}
+                  >
+                    🖨️ Imprimer
+                  </button>
+                </div>
+              </div>
+
+              {/* Informations générales */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-base-200 rounded-lg mb-4">
+                <div>
+                  <span className="font-semibold text-xs">ID Commande</span>
+                  <p className="text-lg">{selectedCommande.id}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-xs">N° Facture</span>
+                  <p className="text-lg">{selectedCommande.numero_facture || 'N/A'}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-xs">Fournisseur</span>
+                  <p className="text-lg">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-xs">Date</span>
+                  <p className="text-lg">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</p>
+                </div>
+                <div>
+                  <span className="font-semibold text-xs">Statut</span>
+                  <p className="text-lg"><span className="badge badge-ghost">{selectedCommande.status_display}</span></p>
+                </div>
+                <div>
+                  <span className="font-semibold text-xs">Total</span>
+                  <p className="text-2xl font-bold text-primary">{selectedCommande.total} F</p>
+                </div>
+              </div>
+
+              {/* Liste des produits */}
+              <div>
+                <h3 className="font-semibold mb-3">Produits commandés</h3>
+                {selectedCommande.produits.length === 0 ? (
+                  <p className="text-base-content/70 text-center py-8">Aucun produit dans cette commande.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="table table-sm">
+                      <thead>
+                        <tr>
+                          <th 
+                            className="cursor-pointer hover:bg-base-200"
+                            onClick={() => {
+                              if (detailSortKey === 'name') {
+                                setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setDetailSortKey('name');
+                                setDetailSortOrder('asc');
+                              }
+                            }}
+                          >
+                            Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th 
+                            className="cursor-pointer hover:bg-base-200"
+                            onClick={() => {
+                              if (detailSortKey === 'quantity') {
+                                setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setDetailSortKey('quantity');
+                                setDetailSortOrder('desc');
+                              }
+                            }}
+                          >
+                            Quantité {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th 
+                            className="cursor-pointer hover:bg-base-200"
+                            onClick={() => {
+                              if (detailSortKey === 'price') {
+                                setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setDetailSortKey('price');
+                                setDetailSortOrder('desc');
+                              }
+                            }}
+                          >
+                            Prix Unitaire {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                          </th>
+                          <th>Sous-total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...selectedCommande.produits]
+                          .map(p => {
+                            // Find product name from produitsList
+                            const produitName = typeof p.produit === 'object' 
+                              ? p.produit.name 
+                              : produitsList.find(prod => prod.id === p.produit)?.name || `Produit #${p.produit}`;
+                            return { ...p, produitName };
+                          })
+                          .sort((a, b) => {
+                            let comparison = 0;
+                            if (detailSortKey === 'name') {
+                              comparison = a.produitName.localeCompare(b.produitName);
+                            } else if (detailSortKey === 'quantity') {
+                              comparison = Number(a.quantity) - Number(b.quantity);
+                            } else if (detailSortKey === 'price') {
+                              comparison = Number(a.price) - Number(b.price);
+                            }
+                            return detailSortOrder === 'asc' ? comparison : -comparison;
+                          })
+                          .map(p => (
+                            <tr key={p.id}>
+                              <td>{p.produitName}</td>
+                              <td>{p.quantity}</td>
+                              <td>{p.price} F</td>
+                              <td className="font-semibold">{Number(p.quantity) * Number(p.price)} F</td>
+                            </tr>
+                          ))
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal d'ajout de commande */} 
       <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-6xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Créer une nouvelle commande</h3>
+        <div className="modal-box max-w-7xl max-h-[90vh] flex flex-col">
+          <div className="flex items-center justify-between mb-4 shrink-0">
+            <div>
+              <h3 className="font-bold text-xl">Créer une nouvelle commande</h3>
+              <div className="flex gap-4 text-xs text-base-content/50 mt-1">
+                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
+                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Fournisseur</span>
+                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Ctrl+A</kbd> Tout sélectionner</span>
+                <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Suppr</kbd> Supprimer</span>
+              </div>
+            </div>
             <button 
               type="button" 
               className="btn btn-sm btn-circle btn-ghost" 
@@ -746,232 +1105,266 @@ export default function Commandes() {
             </button>
           </div>
           
-          <form className="space-y-6" onSubmit={handleAddCommande}> 
-            {/* Informations de la commande */} 
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Informations de la commande
-              </h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">Fournisseur *</span>
-                  </div>
-                  <select
-                    className="select select-bordered w-full"
-                    value={newCommandeFournisseurId}
-                    onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
-                    required
-                  >
-                    <option value="" disabled>Sélectionnez un fournisseur</option>
-                    {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                  </select>
-                </label>
-                
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">Numéro de facture</span>
-                  </div>
-                  <input 
-                    type="text"
-                    placeholder="Ex: FAC-2024-001"
-                    className="input input-bordered w-full"
-                    value={numeroFacture}
-                    onChange={(e) => setNumeroFacture(e.target.value)}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Ajout de produits */} 
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Ajouter des produits
-              </h4>
-              {/* Bouton pour ouvrir le modal de création de produit */} 
-              <div className="flex justify-end mb-2">
-                <button
-                  type="button"
-                  className="btn btn-outline btn-sm"
-                  onClick={() => setIsCreateProduitModalOpen(true)}
-                >
-                  + Créer un nouveau produit
-                </button>
-              </div>
-              
-              <div className="p-4 border rounded-lg bg-base-50">
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text font-medium">Rechercher un produit</span>
+          <form className="flex-1 flex flex-col min-h-0" onSubmit={handleAddCommande}> 
+            {/* Section supérieure : Informations et Recherche */}
+            <div className="shrink-0 space-y-4 mb-4">
+              {/* Informations de la commande */}
+              <div className="bg-white rounded-xl p-4 shadow-sm border border-base-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <label className="form-control w-full">
+                    <div className="label py-1">
+                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Fournisseur (F4) *</span>
+                    </div>
+                    <select
+                      ref={fournisseurSelectRef}
+                      className="select select-bordered w-full select-sm bg-base-50 focus:bg-white"
+                      value={newCommandeFournisseurId}
+                      onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>Sélectionnez un fournisseur</option>
+                      {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
                   </label>
+                  
+                  <label className="form-control w-full">
+                    <div className="label py-1">
+                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Numéro de facture</span>
+                    </div>
+                    <input 
+                      type="text"
+                      placeholder="Ex: FAC-2024-001"
+                      className="input input-bordered w-full input-sm bg-base-50 focus:bg-white"
+                      value={numeroFacture}
+                      onChange={(e) => setNumeroFacture(e.target.value)}
+                    />
+                  </label>
+
+                  <div className="flex items-end justify-end">
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setIsCreateProduitModalOpen(true)}
+                    >
+                      + Nouveau produit
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recherche produit */}
+              <div className="bg-white rounded-xl shadow-sm border border-base-200 p-4 relative">
+                <label className="label py-1 mb-2">
+                  <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Rechercher un produit (F2)</span>
+                </label>
+                <div className="relative">
                   <input 
                     ref={searchInputRef}
                     type="text" 
-                    placeholder="Taper pour rechercher... (utilisez ↑↓ pour naviguer, Entrée pour sélectionner)"
-                    className="input input-bordered w-full"
+                    placeholder="Tapez pour rechercher par nom ou CIP..."
+                    className="input input-bordered w-full pl-12 text-base h-12 bg-base-50 focus:bg-white focus:ring-2 focus:ring-primary/20"
                     value={searchProduitQuery}
                     onChange={(e) => {
                       setSearchProduitQuery(e.target.value);
                       setHighlightedIndex(-1);
                     }}
-                    onKeyDown={handleKeyDown}
+                    onKeyDown={handleSearchKeyDown}
                   />
-                  {searchProduitQuery && filteredProduits.length > 0 && (
-                    <div className="relative">
-                      <ul className="menu bg-base-200 w-full rounded-box mt-1 max-h-60 overflow-y-auto">
-                        {filteredProduits.map((p, index) => (
-                          <li 
-                            key={p.id} 
-                            className={highlightedIndex === index ? 'bg-primary text-primary-content' : ''}
-                            onClick={() => selectProduct(p)}
-                          >
-                            <a className="cursor-pointer">
-                              <div>
-                                <div className="font-medium">{p.name}</div>
-                                <div className="text-sm opacity-70">
-                                  Stock: {p.stock} | Prix: {p.selling_price} F
-                                </div>
-                              </div>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {searchProduitQuery && filteredProduits.length === 0 && (
-                    <div className="text-center text-base-content/70 py-4">
-                      Aucun produit trouvé
-                    </div>
-                  )}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
                 </div>
-
-                {selectedProduitToAdd && (
-                  <div className="space-y-4 p-4 bg-base-100 rounded-lg">
-                    <h5 className="font-bold text-base">Produit sélectionné: {selectedProduitToAdd.name}</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Quantité *</span>
-                        </div>
-                        <input 
-                          type="number" 
-                          min="1"
-                          value={lineItem.quantity} 
-                          onChange={e => setLineItem(p => ({...p, quantity: e.target.value}))} 
-                          className="input input-bordered" 
-                          required 
-                        />
-                      </label>
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Prix d\'achat *</span>
-                        </div>
-                        <input 
-                          type="number" 
-                          step="0.01" 
-                          value={lineItem.price} 
-                          onChange={e => setLineItem(p => ({...p, price: e.target.value}))} 
-                          className="input input-bordered" 
-                          required 
-                        />
-                      </label>
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Prix de vente *</span>
-                        </div>
-                        <input 
-                          type="number" 
-                          step="0.01" 
-                          value={lineItem.selling_price} 
-                          onChange={e => setLineItem(p => ({...p, selling_price: e.target.value}))} 
-                          className="input input-bordered" 
-                          required 
-                        />
-                      </label>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Lot</span>
-                        </div>
-                        <input 
-                          type="text" 
-                          value={lineItem.lot} 
-                          onChange={e => setLineItem(p => ({...p, lot: e.target.value}))} 
-                          className="input input-bordered" 
-                        />
-                      </label>
-                      <label className="form-control w-full">
-                        <div className="label">
-                          <span className="label-text">Date d\'expiration</span>
-                        </div>
-                        <input 
-                          type="date" 
-                          value={lineItem.date_expiration} 
-                          onChange={e => setLineItem(p => ({...p, date_expiration: e.target.value}))} 
-                          className="input input-bordered" 
-                        />
-                      </label>
-                    </div>
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary"
-                      onClick={addProductToCommande}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      Ajouter le produit
-                    </button>
+                
+                {/* Dropdown résultats */}
+                {searchProduitQuery && (
+                  <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
+                    {filteredProduits.length === 0 ? (
+                      <div className="text-center py-8 text-base-content/40 text-sm">
+                        Aucun produit trouvé
+                      </div>
+                    ) : (
+                      <div className="p-2 space-y-1">
+                        {filteredProduits.map((p, idx) => (
+                          <div 
+                            key={p.id} 
+                            onClick={() => selectProduct(p)}
+                            className={`
+                              group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                              ${idx === highlightedIndex ? 'bg-primary text-primary-content shadow-md ring-2 ring-primary ring-offset-1' : 'hover:bg-base-100 text-base-content'}
+                            `}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate text-sm">{p.name}</div>
+                              <div className={`text-xs flex gap-3 mt-0.5 ${idx === highlightedIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                                <span>Stock: {p.stock}</span>
+                                <span>Prix: {p.selling_price} F</span>
+                                {(p.cip1 || p.cip2 || p.cip3) && (
+                                  <span>CIP: {p.cip1 || p.cip2 || p.cip3}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className={`opacity-0 group-hover:opacity-100 ${idx === highlightedIndex ? 'opacity-100' : ''}`}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                              </svg>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Liste des produits ajoutés */} 
-            {commandeProduits.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Produits dans cette commande ({commandeProduits.length})
-                </h4>
-                
-                <div className="overflow-x-auto">
-                  <table className="table table-zebra">
+            {/* Tableau des produits avec édition inline */}
+            <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
+              <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
+                <h2 className="font-bold text-lg text-base-content">
+                  Produits ({commandeProduits.length})
+                </h2>
+                {selectedRows.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-base-content/70">{selectedRows.size} sélectionné(s)</span>
+                    <button
+                      type="button"
+                      className="btn btn-error btn-xs"
+                      onClick={deleteSelectedRows}
+                    >
+                      Supprimer sélection
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-x-auto overflow-y-auto">
+                {commandeProduits.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-base-content/30 gap-4 py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <p className="font-light">Commencez par rechercher et ajouter des produits (F2)</p>
+                  </div>
+                ) : (
+                  <table className="table table-pin-rows w-full">
                     <thead>
-                      <tr>
-                        <th>Produit</th>
-                        <th>Quantité</th>
-                        <th>Prix d\'achat</th>
-                        <th>Prix de vente</th>
-                        <th>Lot</th>
-                        <th>Actions</th>
+                      <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
+                        <th className="bg-base-50 w-12">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-xs"
+                            checked={selectedRows.size === commandeProduits.length && commandeProduits.length > 0}
+                            onChange={toggleAllRows}
+                          />
+                        </th>
+                        <th className="bg-base-50 pl-4">Produit</th>
+                        <th className="bg-base-50 text-right w-24">Qté</th>
+                        <th className="bg-base-50 text-right w-28">Prix Achat</th>
+                        <th className="bg-base-50 text-right w-28">Prix Vente</th>
+                        <th className="bg-base-50 text-left w-32">Lot</th>
+                        <th className="bg-base-50 text-left w-36">Date Exp</th>
+                        <th className="bg-base-50 w-10"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {commandeProduits.map((p, index) => (
-                        <tr key={p.id}>
-                          <td className="font-medium">{p.produit.name}</td>
-                          <td>{p.quantity}</td>
-                          <td>{p.price} F</td>
-                          <td>{p.selling_price} F</td>
-                          <td>{p.lot || '-'}</td>
+                        <tr 
+                          key={p.id} 
+                          className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 ${selectedRows.has(index) ? 'bg-primary/5' : ''}`}
+                        >
                           <td>
-                            <button 
+                            <input
+                              type="checkbox"
+                              className="checkbox checkbox-xs"
+                              checked={selectedRows.has(index)}
+                              onChange={() => toggleRowSelection(index)}
+                            />
+                          </td>
+                          <td className="pl-4 py-2 md:py-3">
+                            <div className="font-medium text-xs md:text-sm">{p.produit.name}</div>
+                          </td>
+                          <td className="text-right py-2 md:py-3">
+                            <input
+                              type="number"
+                              min="1"
+                              data-row={index}
+                              data-field={0}
+                              value={p.quantity}
+                              onChange={(e) => updateCommandeProduitField(index, 'quantity', parseInt(e.target.value) || 1)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
+                              className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 0}
+                            />
+                          </td>
+                          <td className="text-right py-2 md:py-3">
+                            <input
+                              type="number"
+                              step="0.01"
+                              data-row={index}
+                              data-field={1}
+                              value={p.price}
+                              onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
+                              className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 1}
+                            />
+                          </td>
+                          <td className="text-right py-2 md:py-3">
+                            <input
+                              type="number"
+                              step="0.01"
+                              data-row={index}
+                              data-field={2}
+                              value={p.selling_price}
+                              onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
+                              className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 2}
+                            />
+                          </td>
+                          <td className="text-left py-2 md:py-3">
+                            <input
+                              type="text"
+                              data-row={index}
+                              data-field={3}
+                              value={p.lot || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 3)}
+                              className="input input-ghost input-xs w-full focus:bg-base-100 focus:text-primary"
+                              placeholder="Lot"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 3}
+                            />
+                          </td>
+                          <td className="text-left py-2 md:py-3">
+                            <input
+                              type="date"
+                              data-row={index}
+                              data-field={4}
+                              value={p.date_expiration || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
+                              className="input input-ghost input-xs w-full focus:bg-base-100 focus:text-primary"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 4}
+                            />
+                          </td>
+                          <td className="text-center py-3">
+                            <button
                               type="button"
-                              className="btn btn-error btn-xs"
                               onClick={() => removeProductFromCommande(index)}
+                              className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
                             >
-                              Supprimer
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Actions */} 
             <div className="modal-action pt-4">
@@ -1200,7 +1593,7 @@ export default function Commandes() {
                       setSearchProduitQuery(e.target.value);
                       setHighlightedIndex(-1);
                     }}
-                    onKeyDown={handleKeyDown}
+                    onKeyDown={handleSearchKeyDown}
                   />
                   {searchProduitQuery && filteredProduits.length > 0 && (
                     <div className="relative">
@@ -1398,8 +1791,6 @@ export default function Commandes() {
         fournisseurs={fournisseurs}
         title="Créer un nouveau produit"
       />
-
-      {/* ...existing code... */} 
     </>
   )
 }

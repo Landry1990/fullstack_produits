@@ -174,6 +174,9 @@ class CaisseSerializer(serializers.ModelSerializer):
     facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
     mode_paiement_display = serializers.CharField(source='get_mode_paiement_display', read_only=True)
     
+    releve_reference = serializers.CharField(source='releve.reference', read_only=True)
+    releve_id = serializers.IntegerField(source='releve.id', read_only=True)
+    
     class Meta:
         model = Caisse
         fields = '__all__'

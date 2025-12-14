@@ -297,6 +297,25 @@ class FactureProduit(models.Model):
         return f"Ligne de facture {self.id}"
 
 
+class RelevePaiement(models.Model):
+    """
+    Regroupe plusieurs paiements de factures effectués en une seule opération (bulk).
+    Permet d'afficher une ligne unique dans le journal de caisse tout en gardant le détail.
+    """
+    id = models.AutoField(primary_key=True)
+    client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name='releves')
+    generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    reference = models.CharField(max_length=50, unique=True, help_text="Ex: REL-20231212-001")
+
+    def __str__(self):
+        return f"Relevé {self.reference} - {self.client.name} ({self.total_amount})"
+
+    class Meta:
+        ordering = ['-created_at']
+
+
 class Caisse(models.Model):
     MODES_PAIEMENT = [
         ('especes', 'Espèces'),
@@ -320,7 +339,9 @@ class Caisse(models.Model):
     reference = models.CharField(max_length=100, blank=True, null=True)
     statut = models.CharField(max_length=20, choices=STATUTS, default='en_attente')
     date_paiement = models.DateTimeField(auto_now_add=True)
+    date_paiement = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions_caisse')
+    releve = models.ForeignKey(RelevePaiement, on_delete=models.SET_NULL, null=True, blank=True, related_name='paiements_caisse')
     
     def __str__(self):
         return f"Paiement {self.id} - {self.montant} F - {self.get_mode_paiement_display()}"
@@ -422,3 +443,22 @@ class ClotureCaisse(models.Model):
     
     def __str__(self):
         return f"Clôture du {self.date} par {self.user}"
+
+
+class ActivityLog(models.Model):
+    """
+    Log des actions critiques pour l'audit.
+    """
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50) # ex: 'CANCEL_INVOICE', 'DELETE_PRODUCT', 'UPDATE_PERMISSIONS'
+    target_model = models.CharField(max_length=50, blank=True, null=True)
+    target_id = models.CharField(max_length=50, blank=True, null=True) # CharField to be generic
+    details = models.JSONField(default=dict, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.timestamp} - {self.user} - {self.action}"

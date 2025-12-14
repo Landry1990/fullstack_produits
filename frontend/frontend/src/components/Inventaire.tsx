@@ -17,8 +17,10 @@ export default function Inventaire() {
     const fetchProduits = async () => {
       try {
         setLoading(true);
-        const response = await axios.get<ProduitModel[]>(produitsEndpoint);
-        setProduits(response.data);
+        const response = await axios.get(produitsEndpoint);
+        // Handle both paginated and non-paginated responses
+        const data: any = response.data;
+        setProduits(Array.isArray(data) ? data : (data.results || []));
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error);
       } finally {

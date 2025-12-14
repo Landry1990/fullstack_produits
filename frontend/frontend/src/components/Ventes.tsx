@@ -52,8 +52,10 @@ export default function Ventes() {
 
   const fetchFactures = async () => {
     try {
-      const response = await axios.get<Facture[]>(facturesEndpoint)
-      setFactures(response.data)
+      const response = await axios.get(facturesEndpoint)
+      // Handle both paginated and non-paginated responses
+      const data: any = response.data;
+      setFactures(Array.isArray(data) ? data : (data.results || []))
     } catch (error) {
       console.error('Erreur lors du chargement des factures:', error)
       setFactures([])

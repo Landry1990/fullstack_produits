@@ -27,8 +27,10 @@ export default function StatistiquesProduit() {
     const fetchProduits = async () => {
       setLoading(true)
       try {
-        const response = await axios.get<ProduitModel[]>(produitsEndpoint)
-        setProduits(response.data)
+        const response = await axios.get(produitsEndpoint)
+        // Handle paginated response
+        const data: any = response.data;
+        setProduits(Array.isArray(data) ? data : (data.results || []))
       } catch (error) {
         console.error('Erreur lors du chargement des produits:', error)
       } finally {
