@@ -116,14 +116,18 @@ export default function Facturation() {
       setLoading(true)
       try {
         const [produitsRes, clientsRes] = await Promise.all([
-          axios.get<ProduitModel[]>(produitsEndpoint),
-          axios.get<Client[]>(clientsEndpoint)
+          axios.get(produitsEndpoint),
+          axios.get(clientsEndpoint)
         ])
-        setProduits(produitsRes.data)
-        setClients(clientsRes.data)
+        // Handle paginated responses
+        const produitsData: any = produitsRes.data;
+        const clientsData: any = clientsRes.data;
+        setProduits(Array.isArray(produitsData) ? produitsData : (produitsData.results || []))
+        setClients(Array.isArray(clientsData) ? clientsData : (clientsData.results || []))
         
         // Sélectionner "Clients divers" par défaut
-        const defaultClient = clientsRes.data.find(c => c.name.toLowerCase() === 'clients divers')
+        const allClients = Array.isArray(clientsData) ? clientsData : (clientsData.results || []);
+        const defaultClient = allClients.find((c: Client) => c.name.toLowerCase() === 'clients divers')
         if (defaultClient) {
           setSelectedClient(defaultClient.id)
         }
@@ -169,12 +173,13 @@ export default function Facturation() {
 
   // Fonction pour calculer le total d'une ligne avec remise produit
   const calculateLigneTotal = (quantite: number, prixUnitaire: string, remiseProduit: string): number => {
-    const qty = Math.abs(quantite)
+    const qty = quantite
     const prix = normalizeNumberInput(prixUnitaire, { min: 0 })
     const remise = normalizeNumberInput(remiseProduit, { min: 0, max: 100 })
     const sousTotal = qty * prix
-    const montantRemise = sousTotal * (remise / 100)
-    return sousTotal - montantRemise
+    const montantRemise = Math.abs(sousTotal) * (remise / 100)
+    // Si la quantité est négative (retour), la remise doit aussi être soustraite pour un crédit net
+    return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise)
   }
 
   const addProduitToFacture = (produit: ProduitModel) => {
@@ -276,8 +281,11 @@ export default function Facturation() {
   }
 
   const totals = useMemo(() => {
-    // Sous-total après remises produits
-    const sousTotal = lignesFacture.reduce((total, ligne) => total + normalizeNumberInput(ligne.total_ligne, { min: 0 }), 0)
+    // Sous-total après remises produits (peut être négatif si retours > ventes)
+    const sousTotal = lignesFacture.reduce((total, ligne) => {
+      const valeurLigne = typeof ligne.total_ligne === 'number' ? ligne.total_ligne : Number(ligne.total_ligne)
+      return total + (Number.isFinite(valeurLigne) ? valeurLigne : 0)
+    }, 0)
     
     // Calculer la remise globale selon le mode
     let remiseMontant = 0

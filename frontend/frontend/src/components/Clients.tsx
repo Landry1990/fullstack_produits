@@ -72,8 +72,10 @@ export default function Clients() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get<ExtendedClient[]>(clientsEndpoint);
-      setClients(data);
+      const response = await axios.get(clientsEndpoint);
+      // Handle both paginated and non-paginated responses
+      const data: any = response.data;
+      setClients(Array.isArray(data) ? data : (data.results || []));
     } catch (err: unknown) {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {

@@ -10,6 +10,19 @@ export default function JournalCaisse() {
   const [filterMode, setFilterMode] = useState<string>('all')
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
+  const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
+
+  const toggleReleve = (releveId: number) => {
+    setExpandedReleves(prev => {
+        const next = new Set(prev)
+        if (next.has(releveId)) {
+            next.delete(releveId)
+        } else {
+            next.add(releveId)
+        }
+        return next
+    })
+  }
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -26,8 +39,10 @@ export default function JournalCaisse() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.get<CaisseTransaction[]>(caisseEndpoint)
-      setTransactions(response.data)
+      const response = await axios.get(caisseEndpoint)
+      // Handle paginated response
+      const data: any = response.data;
+      setTransactions(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
       setError('Erreur lors du chargement des transactions')
       console.error('Erreur:', err)
@@ -64,6 +79,41 @@ export default function JournalCaisse() {
       return matchesSearch && matchesMode && matchesDate
     })
   }, [transactions, searchQuery, filterMode, dateDebut, dateFin])
+
+  // Group transactions by Relevé
+  const groupedTransactions = useMemo(() => {
+     const groups: (CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] })[] = []
+     const processedReleves = new Set<number>()
+
+     filteredTransactions.forEach(t => {
+         if (t.releve_id) {
+             if (!processedReleves.has(t.releve_id)) {
+                 // Find all transactions for this Relevé in the current filtered list
+                 // (Must be in filtered list to respect date range etc, but usually Releve is same day)
+                 const releveItems = filteredTransactions.filter(rt => rt.releve_id === t.releve_id)
+                 
+                 // Create a summary entry
+                 const totalAmount = releveItems.reduce((sum, item) => sum + parseFloat(item.montant), 0)
+                 
+                 groups.push({
+                     ...t, // Inherit common props like date, client, user
+                     id: -t.releve_id, // Negative ID to avoid conflict
+                     releve_reference: t.releve_reference,
+                     montant: totalAmount.toString(),
+                     isReleveGroup: true,
+                     items: releveItems,
+                     facture_numero: `${releveItems.length} factures` // Override invoice number display
+                 })
+                 processedReleves.add(t.releve_id)
+             }
+         } else {
+             groups.push(t)
+         }
+     })
+     
+     // Re-sort by date descending
+     return groups.sort((a, b) => new Date(b.date_paiement).getTime() - new Date(a.date_paiement).getTime())
+  }, [filteredTransactions])
 
   // Calculer les totaux par mode de paiement
   const totauxParMode = useMemo(() => {
@@ -428,9 +478,21 @@ export default function JournalCaisse() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((transaction) => (
-                  <tr key={transaction.id} className="hover">
-                    <td className="font-mono text-sm">{formatDate(transaction.date_paiement)}</td>
+                {groupedTransactions.map((transaction) => (
+                  <>
+                  <tr 
+                    key={transaction.id} 
+                    className={`hover ${transaction.isReleveGroup ? 'bg-primary/5 cursor-pointer border-l-4 border-l-primary' : ''}`}
+                    onClick={() => transaction.isReleveGroup && transaction.releve_id && toggleReleve(transaction.releve_id)}
+                  >
+                    <td className="font-mono text-sm whitespace-nowrap">
+                        {formatDate(transaction.date_paiement)}
+                        {transaction.isReleveGroup && (
+                            <div className="text-[10px] font-bold text-primary uppercase mt-1 flex items-center gap-1">
+                                {expandedReleves.has(transaction.releve_id!) ? '▼' : '▶'} Relevé Groupé
+                            </div>
+                        )}
+                    </td>
                     <td>
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">
@@ -443,30 +505,65 @@ export default function JournalCaisse() {
                         )}
                       </div>
                     </td>
-                    <td className="font-medium">{transaction.client_name}</td>
-                    <td className="font-mono text-sm">{transaction.facture_numero || '-'}</td>
-                    <td className="text-right font-bold">{Math.round(parseFloat(transaction.montant))} F</td>
+                    <td className="font-medium">
+                        {transaction.client_name}
+                        {transaction.isReleveGroup && (
+                            <div className="badge badge-sm badge-primary badge-outline ml-2">Relevé {transaction.releve_reference?.split('-').pop()}</div>
+                        )}
+                    </td>
+                    <td className="font-mono text-sm">
+                        {transaction.isReleveGroup ? (
+                            <span className="italic opacity-70">{transaction.items?.length} factures</span>
+                        ) : (
+                            transaction.facture_numero || '-'
+                        )}
+                    </td>
+                    <td className="text-right font-bold text-lg">{Math.round(parseFloat(transaction.montant))} F</td>
                     <td>
                       <div className="badge badge-outline gap-2">
                         {getModeIcon(transaction.mode_paiement)}
                         {transaction.mode_paiement_display}
                       </div>
+                      {transaction.reference && (
+                          <div className="text-xs opacity-60 mt-1 truncate max-w-[150px]">{transaction.reference}</div>
+                      )}
                     </td>
-                    <td>
-                      <div className={`badge ${
-                        transaction.statut === 'completee' ? 'badge-success' :
-                        transaction.statut === 'annulee' ? 'badge-error' :
-                        'badge-warning'
-                      }`}>
-                        {transaction.statut}
-                      </div>
+                     <td>
+                        {transaction.statut === 'completee' ? (
+                        <div className="badge badge-xs badge-success gap-1 py-2 px-3">
+                            <span className="font-semibold">Complété</span>
+                        </div>
+                        ) : transaction.statut === 'annulee' ? (
+                        <div className="badge badge-xs badge-error gap-1 py-2 px-3">
+                            <span className="font-semibold">Annulé</span>
+                        </div>
+                        ) : (
+                        <div className="badge badge-xs badge-warning gap-1 py-2 px-3">
+                            <span className="font-semibold">En attente</span>
+                        </div>
+                        )}
                     </td>
                   </tr>
+                  
+                  {/* Expanded Rows for Releve Items */}
+                  {transaction.isReleveGroup && transaction.releve_id && expandedReleves.has(transaction.releve_id) && transaction.items?.map(item => (
+                    <tr key={item.id} className="bg-base-100/40 text-sm">
+                        <td className="pl-8 text-xs opacity-60">↳ {formatDate(item.date_paiement).split(' ')[1]}</td>
+                        <td className="opacity-50 text-xs">Same</td>
+                        <td className="opacity-50 text-xs">Same</td>
+                        <td className="font-mono text-xs">{item.facture_numero}</td>
+                        <td className="text-right text-xs opacity-80">{Math.round(parseFloat(item.montant))} F</td>
+                        <td className="text-xs opacity-60">{item.reference || '-'}</td>
+                        <td className="text-center opacity-50"><span className="text-[10px] uppercase">Détail</span></td>
+                    </tr>
+                   ))}
+                  </>
                 ))}
-              </tbody>
+            </tbody>
             </table>
           </div>
         )}
+
       </div>
 
       {/* Footer avec nombre de résultats */}

@@ -48,8 +48,10 @@ export default function Fournisseurs() {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await axios.get<Fournisseur[]>(fournisseursEndpoint);
-      setFournisseurs(data);
+      const response = await axios.get(fournisseursEndpoint);
+      // Handle paginated response
+      const data: any = response.data;
+      setFournisseurs(Array.isArray(data) ? data : (data.results || []));
     } catch (err: unknown) {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {

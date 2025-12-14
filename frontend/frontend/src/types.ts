@@ -182,6 +182,8 @@ export interface CaisseTransaction {
     full_name: string
   } | null
   client_name: string
+  releve_reference?: string
+  releve_id?: number
 }
 
 export interface StockLot {
