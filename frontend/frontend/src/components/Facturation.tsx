@@ -1,7 +1,12 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit } from '../types'
+import { useSearchNavigation } from '../hooks/useSearchNavigation'
+import { useProductSearch } from '../hooks/useProductSearch'
+
+// Lazy load barcode component
+const Barcode = lazy(() => import('react-barcode'))
 
 // Interface locale pour la gestion des lignes de facture dans le state
 type LigneFacture = {
@@ -19,6 +24,25 @@ type FactureProduitPayload = {
   selling_price: string
   lot: string | null
   date_expiration: string | null
+}
+
+type VenteEnAttente = {
+  id: number
+  timestamp: number
+  client: number | null
+  clientName: string | null
+  useManualClient: boolean
+  manualClientName: string
+  lignes: LigneFacture[]
+  remise: string
+  remiseMode: 'montant' | 'taux'
+  ayantDroit: {
+    id: number | null
+    nom: string
+    matricule: string
+    societe: string
+    showNew: boolean
+  } | null
 }
 
 const normalizeNumberInput = (value: string | number, options?: { min?: number; max?: number }) => {
@@ -41,7 +65,15 @@ const normalizeNumberInput = (value: string | number, options?: { min?: number; 
 
 export default function Facturation() {
   const { user } = useAuth()
-  const [produits, setProduits] = useState<ProduitModel[]>([])
+  
+  // Use product search hook
+  const { 
+    produits, 
+    loading: searchLoading, 
+    searchQuery, 
+    setSearchQuery 
+  } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
+  
   const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<number | null>(null)
   const [manualClientName, setManualClientName] = useState('') // Nom client saisi manuellement
@@ -50,7 +82,6 @@ export default function Facturation() {
   const [loading, setLoading] = useState(false)
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
-  const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
@@ -70,12 +101,16 @@ export default function Facturation() {
   const [ayantsDroitList, setAyantsDroitList] = useState<AyantDroit[]>([])
   const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
 
-  // Keyboard Navigation State
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  // Refs
   const searchInputRef = useRef<HTMLInputElement>(null)
   const clientSelectRef = useRef<HTMLSelectElement>(null)
   const productListRef = useRef<HTMLDivElement>(null)
   const paymentInputRef = useRef<HTMLInputElement>(null)
+  const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
+
+  // Pending Sales Management
+  const [ventesEnAttente, setVentesEnAttente] = useState<VenteEnAttente[]>([])
+  const [showPendingSales, setShowPendingSales] = useState(false)
 
   useEffect(() => {
     if (successInfo && successInfo.status !== 'PAY') {
@@ -87,9 +122,7 @@ export default function Facturation() {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
   }, [])
-  const produitsEndpoint = apiBaseUrl
-    ? `${apiBaseUrl}/api/produits/`
-    : '/api/produits/'
+  // produitsEndpoint removed - products are loaded via useProductSearch hook
   const clientsEndpoint = apiBaseUrl
     ? `${apiBaseUrl}/api/clients/`
     : '/api/clients/'
@@ -115,14 +148,9 @@ export default function Facturation() {
     const fetchData = async () => {
       setLoading(true)
       try {
-        const [produitsRes, clientsRes] = await Promise.all([
-          axios.get(produitsEndpoint),
-          axios.get(clientsEndpoint)
-        ])
-        // Handle paginated responses
-        const produitsData: any = produitsRes.data;
+        // Only load clients, not all products (too many!)
+        const clientsRes = await axios.get(clientsEndpoint)
         const clientsData: any = clientsRes.data;
-        setProduits(Array.isArray(produitsData) ? produitsData : (produitsData.results || []))
         setClients(Array.isArray(clientsData) ? clientsData : (clientsData.results || []))
         
         // Sélectionner "Clients divers" par défaut
@@ -138,7 +166,7 @@ export default function Facturation() {
       }
     }
     fetchData()
-  }, [produitsEndpoint, clientsEndpoint, handleApiError])
+  }, [clientsEndpoint, handleApiError])
 
   // Charger les ayants droit quand un client professionnel est sélectionné
   useEffect(() => {
@@ -156,8 +184,9 @@ export default function Facturation() {
           const ayantsDroitEndpoint = apiBaseUrl
             ? `${apiBaseUrl}/api/ayants-droit/?client=${selectedClient}`
             : `/api/ayants-droit/?client=${selectedClient}`
-          const response = await axios.get<AyantDroit[]>(ayantsDroitEndpoint)
-          setAyantsDroitList(response.data)
+          const response = await axios.get(ayantsDroitEndpoint)
+          const ayantsDroitData: any = response.data
+          setAyantsDroitList(Array.isArray(ayantsDroitData) ? ayantsDroitData : (ayantsDroitData.results || []))
         } catch (err) {
           console.error('Erreur lors du chargement des ayants droit:', err)
           setAyantsDroitList([])
@@ -211,38 +240,52 @@ export default function Facturation() {
         quantite: 1,
         prix_unitaire: produit.selling_price ?? '0',
         remise_produit: '0',
-        total_ligne: prixUnitaire,
+        total_ligne: prixUnitaire
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
+      // Focus on quantity field of the newly added product
+      setTimeout(() => {
+        const qtyInput = quantityInputsRef.current.get(produit.id)
+        if (qtyInput) {
+          qtyInput.focus()
+          qtyInput.select()
+        }
+      }, 50)
     }
     
     // Clear search after adding for better UX
     setSearchQuery('')
-    // Keep focus on search for quick consecutive additions
-    searchInputRef.current?.focus()
   }
+
+  // Produits are already filtered by the hook
+  const filteredProduits = produits
+
+
+  // Use search navigation hook (after addProduitToFacture is defined)
+  const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
+    filteredProduits,
+    addProduitToFacture,
+    { resetOnSelect: true, searchInputRef }
+  )
 
   const updateQuantite = (produitId: number, quantite: number) => {
     // Permettre les quantités négatives (retours) et positives (ventes)
     const normalizedQuantite = Math.floor(normalizeNumberInput(quantite))
 
-    if (normalizedQuantite === 0) {
-      // Supprimer la ligne si quantité = 0
-      setLignesFacture(lignesFacture.filter(ligne => ligne.produit.id !== produitId))
-      return
-    }
+    // Si vide ou 0, mettre 1 par défaut au lieu de supprimer
+    const finalQuantite = normalizedQuantite === 0 ? 1 : normalizedQuantite
 
     const ligne = lignesFacture.find(l => l.produit.id === produitId)
     
     // Vérifier les permissions pour les retours (quantité négative)
-    if (normalizedQuantite < 0 && !user?.can_do_returns) {
+    if (finalQuantite < 0 && !user?.can_do_returns) {
       setError("Vous n'avez pas la permission d'effectuer des retours (quantités négatives).")
       return
     }
 
     // Vérifier le stock seulement pour les quantités positives (ventes)
     // Les quantités négatives (retours) sont autorisées
-    if (ligne && normalizedQuantite > 0 && normalizedQuantite > (ligne.produit.stock ?? 0) && !user?.can_sell_negative_stock) {
+    if (ligne && finalQuantite > 0 && finalQuantite > (ligne.produit.stock ?? 0) && !user?.can_sell_negative_stock) {
       setError(`La quantité ne peut pas dépasser le stock disponible (${ligne.produit.stock})`)
       return
     }
@@ -250,8 +293,8 @@ export default function Facturation() {
       ligne.produit.id === produitId
         ? { 
             ...ligne, 
-            quantite: normalizedQuantite, 
-            total_ligne: calculateLigneTotal(normalizedQuantite, ligne.prix_unitaire, ligne.remise_produit)
+            quantite: finalQuantite, 
+            total_ligne: calculateLigneTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit)
           }
         : ligne
     )
@@ -275,6 +318,8 @@ export default function Facturation() {
     )
     setLignesFacture(updatedLignes)
   }
+
+
 
   const removeLigne = (produitId: number) => {
     setLignesFacture(lignesFacture.filter(ligne => ligne.produit.id !== produitId))
@@ -309,28 +354,6 @@ export default function Facturation() {
       totalTtc,
     }
   }, [lignesFacture, remise, remiseMode])
-
-  // Filtrer les produits selon la recherche
-  const filteredProduits = useMemo(() => {
-    return produits.filter(produit =>
-      produit.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [produits, searchQuery])
-
-  // Reset selected index when search changes
-  useEffect(() => {
-    setSelectedIndex(0)
-  }, [searchQuery])
-
-  // Scroll selected product into view
-  useEffect(() => {
-    if (productListRef.current) {
-      const selectedElement = productListRef.current.children[selectedIndex] as HTMLElement
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-      }
-    }
-  }, [selectedIndex])
 
   const [isNewSale, setIsNewSale] = useState(false)
 
@@ -391,24 +414,37 @@ export default function Facturation() {
           if (showNewAyantDroit || ayantsDroitList.length === 0) {
               if (ayantDroitNom && ayantDroitMatricule) {
                   try {
-                      const ayantsDroitEndpoint = apiBaseUrl 
-                        ? `${apiBaseUrl}/api/ayants-droit/` 
-                        : '/api/ayants-droit/'
+                      // Vérifier d'abord dans la liste locale si un ayant droit avec ce matricule existe
+                      const existingLocal = Array.isArray(ayantsDroitList) 
+                        ? ayantsDroitList.find(ad => ad.matricule === ayantDroitMatricule)
+                        : null
                       
-                      const ayantDroitPayload = {
-                        client: selectedClient,
-                        nom: ayantDroitNom,
-                        matricule: ayantDroitMatricule,
-                        societe: ayantDroitSociete || null
+                      if (existingLocal) {
+                        // Utiliser l'ayant droit existant
+                        ayantDroitId = existingLocal.id || null
+                        setSelectedAyantDroit(existingLocal.id || null)
+                        setShowNewAyantDroit(false)
+                      } else {
+                        // Créer un nouveau
+                        const ayantsDroitEndpoint = apiBaseUrl 
+                          ? `${apiBaseUrl}/api/ayants-droit/` 
+                          : '/api/ayants-droit/'
+                        
+                        const ayantDroitPayload = {
+                          client: selectedClient,
+                          nom: ayantDroitNom,
+                          matricule: ayantDroitMatricule,
+                          societe: ayantDroitSociete || null
+                        }
+                        
+                        const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
+                        ayantDroitId = createdAyantDroit.id || null
+                        
+                        // Mettre à jour la liste locale
+                        setAyantsDroitList(prev => Array.isArray(prev) ? [...prev, createdAyantDroit] : [createdAyantDroit])
+                        setSelectedAyantDroit(createdAyantDroit.id || null)
+                        setShowNewAyantDroit(false)
                       }
-                      
-                      const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
-                      ayantDroitId = createdAyantDroit.id || null
-                      
-                      // Mettre à jour la liste locale pour éviter de recréer si on refait une vente tout de suite
-                      setAyantsDroitList(prev => [...prev, createdAyantDroit])
-                      setSelectedAyantDroit(createdAyantDroit.id || null)
-                      setShowNewAyantDroit(false)
                   } catch (err) {
                       console.error('Erreur lors de la création de l\'ayant droit:', err)
                       throw new Error("Impossible de créer l'ayant droit. Veuillez réessayer.")
@@ -440,7 +476,7 @@ export default function Facturation() {
           quantity: Number(ligne.quantite),
           selling_price: prixNet.toString(), // Envoyer le prix net au backend
           lot: null,
-          date_expiration: null,
+          date_expiration: ligne.produit.expire_date || null,
         }
       })
 
@@ -514,13 +550,7 @@ export default function Facturation() {
       setShowNewAyantDroit(false)
       fermerModalPaiement()
       
-      // Rafraîchir les stocks
-      try {
-        const produitsResponse = await axios.get<ProduitModel[]>(produitsEndpoint)
-        setProduits(produitsResponse.data)
-      } catch (err) {
-        console.error('Erreur lors du rafraîchissement des produits:', err)
-      }
+      // Products are managed by search hook, will be updated on next search
 
     } catch (err) {
       // ROLLBACK STOCK IF NEEDED
@@ -689,6 +719,138 @@ export default function Facturation() {
     }, 100)
   }
 
+  // === PENDING SALES MANAGEMENT ===
+  
+  // Load pending sales from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('ventesEnAttente')
+    if (saved) {
+      try {
+        setVentesEnAttente(JSON.parse(saved))
+      } catch (err) {
+        console.error('Error loading pending sales:', err)
+      }
+    }
+  }, [])
+
+  // Save pending sales to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('ventesEnAttente', JSON.stringify(ventesEnAttente))
+  }, [ventesEnAttente])
+
+  const mettreEnAttente = () => {
+    // Validate
+    if (lignesFacture.length === 0) {
+      setError('Impossible de mettre en attente une vente vide')
+      return
+    }
+    if (ventesEnAttente.length >= 4) {
+      setError('Maximum 4 ventes en attente atteint')
+      return
+    }
+
+    // Get client name
+    const clientName = useManualClient 
+      ? manualClientName 
+      : clients.find(c => c.id === selectedClient)?.name || null
+
+    // Create pending sale
+    const vente: VenteEnAttente = {
+      id: Date.now(),
+      timestamp: Date.now(),
+      client: selectedClient,
+      clientName,
+      useManualClient,
+      manualClientName,
+      lignes: [...lignesFacture],
+      remise,
+      remiseMode,
+      ayantDroit: ayantsDroitList.length > 0 || showNewAyantDroit ? {
+        id: selectedAyantDroit,
+        nom: ayantDroitNom,
+        matricule: ayantDroitMatricule,
+        societe: ayantDroitSociete,
+        showNew: showNewAyantDroit
+      } : null
+    }
+
+    // Add to pending sales
+    setVentesEnAttente(prev => [...prev, vente])
+
+    // Clear current sale
+    setLignesFacture([])
+    setSelectedClient(null)
+    setUseManualClient(false)
+    setManualClientName ('')
+    setRemise('0')
+    setRemiseMode('montant')
+    setAyantDroitNom('')
+    setAyantDroitMatricule('')
+    setAyantDroitSociete('')
+    setSelectedAyantDroit(null)
+    setShowNewAyantDroit(false)
+    setSearchQuery('')
+
+    // Notification
+    setError(null)
+    searchInputRef.current?.focus()
+  }
+
+  const annulerVente = () => {
+    if (lignesFacture.length > 0) {
+      if (!confirm('Êtes-vous sûr de vouloir annuler cette vente ?')) {
+        return
+      }
+    }
+
+    // Clear everything
+    setLignesFacture([])
+    setSelectedClient(null)
+    setUseManualClient(false)
+    setManualClientName('')
+    setRemise('0')
+    setRemiseMode('montant')
+    setAyantDroitNom('')
+    setAyantDroitMatricule('')
+    setAyantDroitSociete('')
+    setSelectedAyantDroit(null)
+    setShowNewAyantDroit(false)
+    setSearchQuery('')
+    setError(null)
+    
+    searchInputRef.current?.focus()
+  }
+
+  const restaurerVente = (id: number) => {
+    const vente = ventesEnAttente.find(v => v.id === id)
+    if (!vente) return
+
+    // Restore sale
+    setLignesFacture(vente.lignes)
+    setSelectedClient(vente.client)
+    setUseManualClient(vente.useManualClient)
+    setManualClientName(vente.manualClientName)
+    setRemise(vente.remise)
+    setRemiseMode(vente.remiseMode)
+    
+    if (vente.ayantDroit) {
+      setSelectedAyantDroit(vente.ayantDroit.id)
+      setAyantDroitNom(vente.ayantDroit.nom)
+      setAyantDroitMatricule(vente.ayantDroit.matricule)
+      setAyantDroitSociete(vente.ayantDroit.societe)
+      setShowNewAyantDroit(vente.ayantDroit.showNew)
+    }
+
+    // Remove from pending
+    setVentesEnAttente(prev => prev.filter(v => v.id !== id))
+    setShowPendingSales(false)
+  }
+
+  const supprimerVenteEnAttente = (id: number) => {
+    if (!confirm('Supprimer cette vente en attente ?')) return
+    setVentesEnAttente(prev => prev.filter(v => v.id !== id))
+  }
+
   // Global Keyboard Listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -729,29 +891,16 @@ export default function Facturation() {
         return
       }
 
-      // Navigation dans la liste des produits (si focus sur recherche ou pas d'autre input focus)
-      if (!isPaymentModalOpen && !showTicketPreview && (!isInput || e.target === searchInputRef.current)) {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault()
-          setSelectedIndex(prev => Math.min(prev + 1, filteredProduits.length - 1))
-        }
-        if (e.key === 'ArrowUp') {
-          e.preventDefault()
-          setSelectedIndex(prev => Math.max(prev - 1, 0))
-        }
-        if (e.key === 'Enter') {
-           // Si on est dans le champ de recherche, Enter ajoute le produit sélectionné
-           if (e.target === searchInputRef.current && filteredProduits[selectedIndex]) {
-             e.preventDefault()
-             addProduitToFacture(filteredProduits[selectedIndex])
-           }
-        }
+      // Keyboard navigation in search (delegated to hook when search input is focused)
+      if (e.target === searchInputRef.current && !isPaymentModalOpen && !showTicketPreview) {
+        const keyboardEvent = e as unknown as React.KeyboardEvent
+        handleSearchKeyDown(keyboardEvent)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [filteredProduits, selectedIndex, lignesFacture, selectedClient, isPaymentModalOpen, showTicketPreview, successInfo])
+  }, [filteredProduits, lignesFacture, selectedClient, isPaymentModalOpen, showTicketPreview, successInfo, handleSearchKeyDown])
 
   return (
     <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
@@ -912,9 +1061,9 @@ export default function Facturation() {
                     className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
                   >
                     <option value="">Sélectionner un ayant droit...</option>
-                    {ayantsDroitList.map((ad) => (
-                      <option key={ad.id} value={ad.id}>
-                        {ad.nom} ({ad.matricule}){ad.societe ? ` - ${ad.societe}` : ''}
+                    {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (
+                      <option key={ad?.id || Math.random()} value={ad?.id || ''}>
+                        {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}
                       </option>
                     ))}
                   </select>
@@ -939,26 +1088,30 @@ export default function Facturation() {
                 
                 {/* Search Results Dropdown */}
                 {searchQuery && (
-                    <div className="absolute left-3 right-3 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50" ref={productListRef}>
+                    <div className="absolute left-3 right-3 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
                         {filteredProduits.length === 0 ? (
                             <div className="text-center py-8 text-base-content/40 text-sm">
-                                {loading ? <span className="loading loading-spinner loading-sm"></span> : 'Aucun produit trouvé'}
+                                {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? 'Tapez au moins 2 caractères' : 'Aucun produit trouvé'}
                             </div>
                         ) : (
-                            <div className="p-2 space-y-1">
-                                {filteredProduits.map((produit, idx) => (
+                            <div ref={productListRef} className="max-h-96 overflow-y-auto space-y-1 p-1">
+                                {filteredProduits.map((produit, idx) => {
+                                    const itemProps = getItemProps(idx);
+                                    return (
                                     <div 
-                                        key={produit.id} 
+                                        key={produit.id}
+                                        {...itemProps}
                                         onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}
+                                        style={itemProps.style}
                                         className={`
                                             group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                                            ${idx === selectedIndex ? 'bg-primary text-primary-content shadow-md ring-2 ring-primary ring-offset-1' : 'hover:bg-base-100 text-base-content'}
+                                            ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
                                             ${(produit.stock ?? 0) === 0 ? 'opacity-50 cursor-not-allowed' : ''}
                                         `}
                                     >
                                         <div className="flex-1 min-w-0">
                                             <div className="font-medium truncate text-sm">{produit.name}</div>
-                                            <div className={`text-xs flex gap-3 mt-0.5 ${idx === selectedIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                                            <div className="text-xs flex gap-3 mt-0.5 opacity-80">
                                                 <span className={(produit.stock ?? 0) === 0 ? 'text-error font-bold' : ''}>
                                                     Stock: {produit.stock}
                                                 </span>
@@ -966,12 +1119,12 @@ export default function Facturation() {
                                             </div>
                                         </div>
                                         {(produit.stock ?? 0) > 0 && (
-                                            <div className={`opacity-0 group-hover:opacity-100 ${idx === selectedIndex ? 'opacity-100' : ''}`}>
+                                            <div className={`opacity-0 group-hover:opacity-100 ${itemProps.className ? 'opacity-100' : ''}`}>
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                                             </div>
                                         )}
                                     </div>
-                                ))}
+                                )})}
                             </div>
                         )}
                     </div>
@@ -1001,6 +1154,7 @@ export default function Facturation() {
                                 <th className="bg-base-50 text-right w-20 md:w-24">Qté</th>
                                 <th className="bg-base-50 text-right w-24 md:w-28">Prix</th>
                                 <th className="bg-base-50 text-right w-16 md:w-20 hidden sm:table-cell">Remise</th>
+                                <th className="bg-base-50 text-center w-28 hidden md:table-cell">Péremption</th>
                                 <th className="bg-base-50 text-right w-24 md:w-32 pr-3 md:pr-6">Total</th>
                                 <th className="bg-base-50 w-10"></th>
                             </tr>
@@ -1013,28 +1167,43 @@ export default function Facturation() {
                                     </td>
                                     <td className="text-right py-2 md:py-3">
                                         <input
-                                            type="number"
+                                            ref={(el) => {
+                                              if (el) quantityInputsRef.current.set(ligne.produit.id, el)
+                                              else quantityInputsRef.current.delete(ligne.produit.id)
+                                            }}
+                                            type="text"
                                             value={ligne.quantite}
                                             onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
-                                            className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault()
+                                                searchInputRef.current?.focus()
+                                              }
+                                            }}
+                                            className="input input-ghost input-sm w-full text-right font-medium focus:bg-base-100 focus:text-primary"
                                         />
                                     </td>
                                     <td className="text-right py-2 md:py-3">
                                         <input
-                                            type="number"
+                                            type="text"
                                             value={ligne.prix_unitaire}
                                             onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                                            className="input input-ghost input-sm w-full text-right focus:bg-base-100 focus:text-primary"
                                         />
                                     </td>
                                     <td className="text-right py-2 md:py-3 hidden sm:table-cell">
                                         <input
-                                            type="number"
+                                            type="text"
                                             value={ligne.remise_produit}
                                             onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
-                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                                            className="input input-ghost input-sm w-full text-right focus:bg-base-100 focus:text-primary"
                                             placeholder="%"
                                         />
+                                    </td>
+                                    <td className="text-center py-2 md:py-3 hidden md:table-cell">
+                                        <div className="text-xs text-base-content/60">
+                                            {ligne.produit.expire_date ? new Date(ligne.produit.expire_date).toLocaleDateString('fr-FR') : '-'}
+                                        </div>
                                     </td>
                                     <td className="text-right font-medium text-base-content pr-3 md:pr-6 py-2 md:py-3 text-xs md:text-sm">
                                         {Math.round(ligne.total_ligne)}
@@ -1091,13 +1260,79 @@ export default function Facturation() {
                     </div>
                 </div>
                 
-                <button
-                    onClick={() => ouvrirModalPaiement()}
-                    disabled={loading || (!selectedClient && !useManualClient) || lignesFacture.length === 0 }
-                    className="btn btn-primary w-full shadow-lg shadow-primary/20 h-12 text-lg font-normal"
-                >
-                    {loading ? <span className="loading loading-spinner"></span> : <span>Encaisser <span className="opacity-70 text-sm ml-2">(F9)</span></span>}
-                </button>
+                {/* Pending Sales Indicator */}
+                {ventesEnAttente.length > 0 && (
+                    <div className="mb-3 flex justify-center">
+                        <button 
+                            onClick={() => setShowPendingSales(true)}
+                            className="badge badge-warning badge-lg cursor-pointer hover:badge-warning/80 transition-colors gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {ventesEnAttente.length} vente{ventesEnAttente.length > 1 ? 's' : ''} en attente
+                        </button>
+                    </div>
+                )}
+
+                {/* Action Buttons - Dropdown Menu */}
+                <div className="dropdown dropdown-top">
+                    <div tabIndex={0} role="button" className="btn btn-primary shadow-lg shadow-primary/20 btn-sm w-40">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                    </div>
+                    <ul tabIndex={0} className="dropdown-content z-[1] menu p-1 shadow-lg bg-base-100 rounded-box w-52 mb-2 border border-base-200 menu-sm">
+                        <li>
+                            <button
+                                onClick={() => {
+                                    ouvrirModalPaiement()
+                                    const elem = document.activeElement as HTMLElement
+                                    elem?.blur()
+                                }}
+                                disabled={loading || (!selectedClient && !useManualClient) || lignesFacture.length === 0}
+                                className="gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                Encaisser
+                                <kbd className="kbd kbd-xs ml-auto">F9</kbd>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={() => {
+                                    mettreEnAttente()
+                                    const elem = document.activeElement as HTMLElement
+                                    elem?.blur()
+                                }}
+                                disabled={lignesFacture.length === 0 || ventesEnAttente.length >= 4}
+                                className="gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                En attente
+                                <span className="badge badge-warning badge-xs ml-auto">{ventesEnAttente.length}/4</span>
+                            </button>
+                        </li>
+                        <div className="divider my-0 h-0"></div>
+                        <li>
+                            <button
+                                onClick={() => {
+                                    annulerVente()
+                                    const elem = document.activeElement as HTMLElement
+                                    elem?.blur()
+                                }}
+                                className="gap-2 text-error"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                Annuler
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
       </div>
@@ -1262,6 +1497,9 @@ export default function Facturation() {
               
               <div className="space-y-1 mb-4">
                 <div className="flex justify-between"><span>Ticket:</span><span>#{ticketCaisse.id}</span></div>
+                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
+                  <div className="flex justify-between"><span>Facture:</span><span>#{ticketCaisse.facture.numero_facture}</span></div>
+                )}
                 <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span></div>
                 <div className="flex justify-between"><span>Client:</span><span>{ticketCaisse.client_name || 'Passage'}</span></div>
               </div>
@@ -1327,6 +1565,15 @@ export default function Facturation() {
                 <p>Merci de votre visite !</p>
                 <p>À bientôt.</p>
               </div>
+              
+              {/* Barcode with invoice number at bottom */}
+              {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
+                <Suspense fallback={<div className="text-center py-2">Chargement...</div>}>
+                  <div className="flex justify-center mt-4 bg-white">
+                    <Barcode value={ticketCaisse.facture.numero_facture} height={50} width={1.5} fontSize={12} />
+                  </div>
+                </Suspense>
+              )}
             </div>
             
             <div className="p-4 bg-base-50 border-t border-base-200 flex justify-end gap-2">
@@ -1352,6 +1599,73 @@ export default function Facturation() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
+        </div>
+      )}
+
+      {/* Pending Sales Drawer */}
+      {showPendingSales && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">Ventes en Attente</h3>
+              <button onClick={() => setShowPendingSales(false)} className="btn btn-sm btn-circle btn-ghost">✕</button>
+            </div>
+
+            {ventesEnAttente.length === 0 ? (
+              <div className="text-center py-8 text-base-content/40">
+                Aucune vente en attente
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {ventesEnAttente.map((vente, idx) => {
+                  const total = vente.lignes.reduce((sum, ligne) => sum + ligne.total_ligne, 0)
+                  const remiseMontant = vente.remiseMode === 'montant' 
+                    ? parseFloat(vente.remise) 
+                    : total * (parseFloat(vente.remise) / 100)
+                  const totalNet = total - remiseMontant
+
+                  return (
+                    <div key={vente.id} className="card bg-base-100 border border-base-200 shadow-sm">
+                      <div className="card-body p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="badge badge-info badge-sm">#{idx + 1}</div>
+                              <span className="font-semibold">
+                                {vente.clientName || vente.manualClientName || 'Client non spécifié'}
+                              </span>
+                            </div>
+                            <div className="text-sm text-base-content/60 space-y-1">
+                              <div>{vente.lignes.length} article{vente.lignes.length > 1 ? 's' : ''}</div>
+                              <div className="font-medium text-primary">{Math.round(totalNet)} FCFA</div>
+                              <div className="text-xs opacity-50">
+                                {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <button 
+                              onClick={() => restaurerVente(vente.id)}
+                              className="btn btn-primary btn-sm"
+                            >
+                              Restaurer
+                            </button>
+                            <button 
+                              onClick={() => supprimerVenteEnAttente(vente.id)}
+                              className="btn btn-error btn-outline btn-sm"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowPendingSales(false)}></div>
         </div>
       )}
     </div>

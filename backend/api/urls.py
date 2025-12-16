@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     ProduitViewSet, RayonViewSet, FournisseurViewSet, ClientViewSet,
     CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
-    DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet
+    DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet,
+    MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet
 )
 
 # Create a router and register our viewsets with it.
@@ -22,6 +23,11 @@ router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 router.register(r'statistiques', StatistiquesViewSet, basename='statistiques')
 router.register(r'stock-lots', StockLotViewSet, basename='stocklot')
 router.register(r'creances', CreanceViewSet, basename='creance')
+router.register(r'mouvements-caisse', MouvementCaisseViewSet, basename='mouvementcaisse')
+router.register(r'inventaires', InventaireViewSet, basename='inventaire')
+router.register(r'lignes-inventaire', LigneInventaireViewSet, basename='ligneinventaire')
+router.register(r'avoirs', AvoirViewSet, basename='avoir')
+router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [

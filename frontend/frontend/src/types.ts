@@ -270,5 +270,48 @@ export interface Creance {
   notes?: string
 }
 
+export interface MouvementCaisse {
+  id: number;
+  type: 'ENTREE' | 'SORTIE';
+  montant: string;
+  motif: string;
+  description?: string;
+  date: string;
+  user: number;
+  user_nom?: string;
+}
 
 
+
+
+export interface Avoir {
+  id: number
+  numero: string
+  fournisseur: number | Fournisseur
+  fournisseur_name?: string
+  type_avoir: 'PERIME' | 'AVARIE' | 'NON_FACTURE' | 'ERREUR' | 'AUTRE'
+  type_avoir_display?: string
+  date: string
+  observations: string
+  status: 'BROUILLON' | 'VALIDEE'
+  status_display?: string
+  created_by?: number
+  created_by_name?: string
+  created_at: string
+  updated_at: string
+  total_ht: string
+  produits: LigneAvoir[]
+}
+
+export interface LigneAvoir {
+  id: number
+  avoir: number
+  produit: ProduitModel | number
+  produit_nom?: string
+  produit_cip?: string
+  quantity: number
+  price: string
+  lot: string
+  date_expiration: string
+  total: string
+}

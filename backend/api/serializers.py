@@ -6,7 +6,7 @@ from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
     CommandeProduit, Facture, FactureProduit, Caisse, Profile,
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
-    Inventaire, LigneInventaire
+    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -344,3 +344,39 @@ class InventaireSerializer(serializers.ModelSerializer):
             for ligne in obj.lignes.all()
         )
         fields = '__all__'
+
+class MouvementCaisseSerializer(serializers.ModelSerializer):
+    user_nom = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = MouvementCaisse
+        fields = '__all__'
+        read_only_fields = ['date']
+class LigneAvoirSerializer(serializers.ModelSerializer):
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = LigneAvoir
+        fields = '__all__'
+        read_only_fields = ['total']
+
+
+class AvoirSerializer(serializers.ModelSerializer):
+    produits = LigneAvoirSerializer(many=True, read_only=True)
+    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
+    total_ht = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    type_avoir_display = serializers.CharField(source='get_type_avoir_display', read_only=True)
+    
+    class Meta:
+        model = Avoir
+        fields = '__all__'
+        read_only_fields = ['numero', 'created_at', 'updated_at', 'total_ht']
+    
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return ''

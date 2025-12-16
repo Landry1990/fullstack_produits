@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } fro
 import axios from 'axios'
 import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
 import ProduitFormModal from './ProduitFormModal'
+import { useSearchNavigation } from '../hooks/useSearchNavigation'
+import { useProductSearch } from '../hooks/useProductSearch'
 
 export default function Commandes() {
   const [commandes, setCommandes] = useState<Commande[]>([])
@@ -23,11 +25,13 @@ export default function Commandes() {
   
 
   
-  // State for the product search/addition form
-  const [produitsList, setProduitsList] = useState<ProduitModel[]>([]); // To hold all products for searching
-  const [searchProduitQuery, setSearchProduitQuery] = useState('');
-
-  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  // Use product search hook for optimized searching
+  const { 
+    produits: produitsList, 
+    searchQuery: searchProduitQuery,
+    setSearchQuery: setSearchProduitQuery
+  } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref pour l'input file
   const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
@@ -84,16 +88,8 @@ export default function Commandes() {
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
     : '/api/produits/'
 
-  // Filtrer les produits selon la recherche
-  const filteredProduits = useMemo(() => {
-    if (!searchProduitQuery.trim()) return [];
-    
-    const query = searchProduitQuery.toLowerCase();
-    return produitsList.filter(p => 
-      p.name.toLowerCase().includes(query) ||
-      [p.cip1, p.cip2, p.cip3].some(cip => (cip || '').toLowerCase().includes(query))
-    );
-  }, [produitsList, searchProduitQuery]);
+  // Products are already filtered by the hook
+  const filteredProduits = produitsList
 
 
   useEffect(() => {
@@ -102,21 +98,18 @@ export default function Commandes() {
       setLoading(true)
       setError(null)
       try {
-        // On récupère les commandes et les fournisseurs en parallèle
-        const [commandesResponse, fournisseursResponse, produitsResponse, rayonsResponse] = await Promise.all([
+        // On récupère les commandes, fournisseurs et rayons (pas les produits - géré par le hook)
+        const [commandesResponse, fournisseursResponse, rayonsResponse] = await Promise.all([
           axios.get(commandesEndpoint, { signal: controller.signal }),
           axios.get(fournisseursEndpoint, { signal: controller.signal }),
-          axios.get(produitsEndpoint, { signal: controller.signal }),
           axios.get(rayonsEndpoint, { signal: controller.signal }),
         ])
         // Handle paginated responses
         const commandesData: any = commandesResponse.data;
         const fournisseursData: any = fournisseursResponse.data;
-        const produitsData: any = produitsResponse.data;
         const rayonsData: any = rayonsResponse.data;
         setCommandes(Array.isArray(commandesData) ? commandesData : (commandesData.results || []))
         setFournisseurs(Array.isArray(fournisseursData) ? fournisseursData : (fournisseursData.results || []))
-        setProduitsList(Array.isArray(produitsData) ? produitsData : (produitsData.results || []))
         setRayons(Array.isArray(rayonsData) ? rayonsData : (rayonsData.results || []))
       } catch (err: unknown) {
         if (axios.isCancel(err)) return
@@ -133,7 +126,7 @@ export default function Commandes() {
     fetchInitialData()
 
     return () => controller.abort()
-  }, [commandesEndpoint, fournisseursEndpoint, produitsEndpoint, rayonsEndpoint]) // Dépendances de l'effet
+  }, [commandesEndpoint, fournisseursEndpoint, rayonsEndpoint]) // Removed produitsEndpoint
 
   useEffect(() => {
     if (selectedCommande && !commandes.some(c => c.id === selectedCommande.id)) {
@@ -212,37 +205,12 @@ export default function Commandes() {
   }, [viewMode, commandeProduits, selectedRows])
 
 
-
-
-
-  // Fonctions de navigation au clavier pour la recherche
-  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!searchProduitQuery) return;
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setHighlightedIndex(prev => 
-          prev < filteredProduits.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (highlightedIndex >= 0 && highlightedIndex < filteredProduits.length) {
-          const selectedProduct = filteredProduits[highlightedIndex];
-          selectProduct(selectedProduct);
-        }
-        break;
-      case 'Escape':
-        setSearchProduitQuery('');
-        setHighlightedIndex(-1);
-        break;
-    }
-  }
+  // Use search navigation hook
+  const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
+    filteredProduits,
+    selectProduct,
+    { resetOnSelect: true, searchInputRef }
+  );
 
   // Configuration des champs
   const fieldsConfig = [
@@ -440,7 +408,6 @@ export default function Commandes() {
     
     // Reset recherche
     setSearchProduitQuery('');
-    setHighlightedIndex(-1);
   }
 
 
@@ -791,19 +758,13 @@ export default function Commandes() {
       const cloturerEndpoint = `${commandesEndpoint}${selectedCommande.id}/cloturer/`;
       await axios.post(cloturerEndpoint);
 
-      // Refresh the data to get updated stock and status
+      // Refresh commandes to get updated status (products are managed by search hook)
       const controller = new AbortController()
-      const [commandesResponse, produitsResponse] = await Promise.all([
-        axios.get(commandesEndpoint, { signal: controller.signal }),
-        axios.get(produitsEndpoint, { signal: controller.signal }),
-      ])
-      // Handle paginated responses
+      const commandesResponse = await axios.get(commandesEndpoint, { signal: controller.signal })
+      
       const commandesData: any = commandesResponse.data;
-      const produitsData: any = produitsResponse.data;
       const commandesArray = Array.isArray(commandesData) ? commandesData : (commandesData.results || []);
-      const produitsArray = Array.isArray(produitsData) ? produitsData : (produitsData.results || []);
       setCommandes(commandesArray)
-      setProduitsList(produitsArray)
       setSelectedCommande(commandesArray.find((c: Commande) => c.id === selectedCommande.id) ?? null)
 
     } catch (err) {
@@ -903,10 +864,9 @@ export default function Commandes() {
   // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
   // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
   function handleProduitCreated(produit: ProduitModel) {
-    setProduitsList(prev => [...prev, produit]);
+    // Products are managed by search hook, will appear automatically on next search
     selectProduct(produit); // Add directly to table
-    setSearchProduitQuery('');
-    setHighlightedIndex(-1);
+    setSearchProduitQuery(produit.name.substring(0, 3)); // Trigger search to show new product
     setIsCreateProduitModalOpen(false); // Fermer le modal après création
   }
 
@@ -918,7 +878,6 @@ export default function Commandes() {
     setNumeroFacture('')
     setCommandeProduits([])
     setSearchProduitQuery('')
-    setHighlightedIndex(-1)
 
     
     // Switch view
@@ -960,7 +919,6 @@ export default function Commandes() {
     setCommandeProduits(enrichedProducts); 
     
     setSearchProduitQuery('')
-    setHighlightedIndex(-1)
 
     setViewMode('EDIT');
     // setSelectedCommande restera la commande active
@@ -1352,10 +1310,7 @@ export default function Commandes() {
                     placeholder="Tapez pour rechercher par nom ou CIP..."
                     className="input input-bordered w-full pl-12 text-base h-12 bg-base-50 focus:bg-white focus:ring-2 focus:ring-primary/20"
                     value={searchProduitQuery}
-                    onChange={(e) => {
-                      setSearchProduitQuery(e.target.value);
-                      setHighlightedIndex(-1);
-                    }}
+                      onChange={(e) => setSearchProduitQuery(e.target.value)}
                     onKeyDown={handleSearchKeyDown}
                   />
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1372,18 +1327,22 @@ export default function Commandes() {
                       </div>
                     ) : (
                       <div className="p-2 space-y-1">
-                        {filteredProduits.map((p, idx) => (
+                        {filteredProduits.map((p, idx) => {
+                          const itemProps = getItemProps(idx);
+                          return (
                           <div 
-                            key={p.id} 
+                            key={p.id}
+                            {...itemProps}
                             onClick={() => selectProduct(p)}
+                            style={itemProps.style}
                             className={`
                               group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                              ${idx === highlightedIndex ? 'bg-primary text-primary-content shadow-md ring-2 ring-primary ring-offset-1' : 'hover:bg-base-100 text-base-content'}
+                              ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
                             `}
                           >
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate text-sm">{p.name}</div>
-                              <div className={`text-xs flex gap-3 mt-0.5 ${idx === highlightedIndex ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                              <div className="text-xs flex gap-3 mt-0.5 opacity-80">
                                 <span>Stock: {p.stock}</span>
                                 <span>Prix: {p.selling_price} F</span>
                                 {(p.cip1 || p.cip2 || p.cip3) && (
@@ -1391,13 +1350,13 @@ export default function Commandes() {
                                 )}
                               </div>
                             </div>
-                            <div className={`opacity-0 group-hover:opacity-100 ${idx === highlightedIndex ? 'opacity-100' : ''}`}>
+                            <div className={`opacity-0 group-hover:opacity-100 ${itemProps.className ? 'opacity-100' : ''}`}>
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                               </svg>
                             </div>
                           </div>
-                        ))}
+                        )})}
                       </div>
                     )}
                   </div>

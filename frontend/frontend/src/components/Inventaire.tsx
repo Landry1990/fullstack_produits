@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import type { ProduitModel, Inventaire, LigneInventaire } from '../types';
+import { useSearchNavigation } from '../hooks/useSearchNavigation';
+import { useProductSearch } from '../hooks/useProductSearch';
 
 
 export default function InventaireComponent() {
@@ -16,11 +18,14 @@ export default function InventaireComponent() {
   const [description, setDescription] = useState('');
   const [dateInventaire, setDateInventaire] = useState(new Date().toISOString().split('T')[0]);
 
-  // Product Search
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ProduitModel[]>([]);
-  const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
-  const [loadingSearch, setLoadingSearch] = useState(false);
+  // Product Search using hook
+  const { 
+    produits: searchResults, 
+    loading: loadingSearch,
+    searchQuery, 
+    setSearchQuery 
+  } = useProductSearch({ minSearchLength: 2, debounceMs: 300 })
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Loading states
@@ -53,42 +58,14 @@ export default function InventaireComponent() {
       }
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-      // Allow navigation even if no results? No.
-      if (searchResults.length === 0) return;
 
-      if (e.key === 'ArrowDown' || e.key === 'Down') {
-          e.preventDefault();
-          setSelectedSearchIndex(prev => {
-              const newIndex = prev < searchResults.length - 1 ? prev + 1 : prev;
-              // Smooth scroll to element?
-              const el = document.getElementById(`search-result-${newIndex}`);
-              el?.scrollIntoView({ block: 'nearest' });
-              return newIndex;
-          });
-      } else if (e.key === 'ArrowUp' || e.key === 'Up') {
-          e.preventDefault();
-          setSelectedSearchIndex(prev => {
-              const newIndex = prev > 0 ? prev - 1 : 0;
-               const el = document.getElementById(`search-result-${newIndex}`);
-              el?.scrollIntoView({ block: 'nearest' });
-              return newIndex;
-          });
-      } else if (e.key === 'Enter') {
-          e.preventDefault();
-          if (selectedSearchIndex >= 0 && selectedSearchIndex < searchResults.length) {
-              handleAddProduct(searchResults[selectedSearchIndex]);
-          } else if (searchResults.length > 0) {
-              handleAddProduct(searchResults[0]);
-          }
-      }
-  };
+
 
   // API Base URL
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
   const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/inventaires/`;
   const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/ligne-inventaires/`;
-  const produitsEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`;
+  // produitsEndpoint removed - products are loaded via useProductSearch hook
 
   // === FETCH LIST ===
   useEffect(() => {
@@ -109,30 +86,7 @@ export default function InventaireComponent() {
     }
   };
 
-  // === SEARCH PRODUCTS ===
-  useEffect(() => {
-    const timer = setTimeout(() => {
-        if (searchQuery.length >= 2) {
-            performSearch();
-        } else {
-            setSearchResults([]);
-        }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const performSearch = async () => {
-      setLoadingSearch(true);
-      try {
-          const res = await axios.get(`${produitsEndpoint}?search=${searchQuery}`);
-          setSearchResults(Array.isArray(res.data) ? res.data : res.data.results || []);
-          setSelectedSearchIndex(-1); // Reset selection on new search
-      } catch (err) {
-          console.error("Erreur recherche", err);
-      } finally {
-          setLoadingSearch(false);
-      }
-  };
+  // Search is now handled by useProductSearch hook
 
   // === ACTIONS ===
 
@@ -232,6 +186,13 @@ export default function InventaireComponent() {
       }
       setSearchQuery('');
   };
+
+  // Use search navigation hook (must be after handleAddProduct is declared)
+  const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
+    searchResults,
+    handleAddProduct,
+    { resetOnSelect: true, searchInputRef }
+  );
 
   const handleUpdateQuantity = async (lineId: number, newQty: number) => {
       // Optimistic update
@@ -437,13 +398,14 @@ export default function InventaireComponent() {
                        {loadingSearch && <span className="absolute right-4 top-12 loading loading-spinner"></span>}
                   </div>
                   {/* Dropdown Results */}
-                  {searchResults.length > 0 && (
+                   {searchResults.length > 0 && (
                       <ul className="menu bg-base-100 w-full shadow-xl rounded-box absolute top-24 z-50 border border-base-300 max-h-60 overflow-y-auto">
                           {searchResults.map((p, idx) => (
-                              <li key={p.id} id={`search-result-${idx}`}>
+                              <li key={p.id}>
                                   <a 
-                                      onClick={() => handleAddProduct(p)} 
-                                      className={`flex justify-between ${idx === selectedSearchIndex ? 'active' : ''}`}
+                                      {...getItemProps(idx)}
+                                      onClick={() => handleAddProduct(p)}
+                                      className={`flex justify-between ${getItemProps(idx).className}`}
                                   >
                                       <span>{p.name} <span className="text-xs opacity-50">({p.cip1})</span></span>
                                       <span className="badge badge-sm">Stock: {p.stock}</span>
@@ -473,7 +435,7 @@ export default function InventaireComponent() {
                           </tr>
                       </thead>
                       <tbody>
-                          {lignes.map((ligne, index) => {
+                          {lignes.map((ligne, _index) => {
                               const price = parseFloat(ligne.produit_cost_price || ligne.pmp_snapshot || '0');
                               const ecartValeur = ligne.ecart * price;
                               return (

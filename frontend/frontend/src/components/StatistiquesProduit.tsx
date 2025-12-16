@@ -3,7 +3,7 @@ import axios from 'axios'
 import type { ProduitModel } from '../types'
 
 type TransactionHistory = {
-  type: 'ENTREE' | 'SORTIE' | 'RETOUR'
+  type: 'ENTREE' | 'SORTIE' | 'RETOUR' | 'AVOIR'
   date: string
   quantity: number
   libelle: string
@@ -171,7 +171,7 @@ export default function StatistiquesProduit() {
                             <td className={`text-right font-bold ${
                               item.type === 'ENTREE' || item.type === 'RETOUR' ? 'text-success' : 'text-error'
                             }`}>
-                              {item.type === 'SORTIE' ? '-' : '+'}{item.quantity}
+                              {item.type === 'SORTIE' || item.type === 'AVOIR' ? '-' : '+'}{item.quantity}
                             </td>
                             <td className="text-right font-mono font-bold">{item.stock_apres}</td>
                           </tr>
