@@ -26,14 +26,15 @@ from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement,
-    Inventaire, LigneInventaire
+    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer, CaisseSerializer,
     UserSerializer, AyantDroitSerializer, ClotureCaisseSerializer, StockLotSerializer,
-    CreanceSerializer, InventaireSerializer, LigneInventaireSerializer
+    CreanceSerializer, InventaireSerializer, LigneInventaireSerializer, FactureProduitAllocationSerializer, MouvementCaisseSerializer,
+    AvoirSerializer, LigneAvoirSerializer
 )
 from decimal import Decimal
 
@@ -318,6 +319,8 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     queryset = Fournisseur.objects.all().order_by('name')
     serializer_class = FournisseurSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name', 'email', 'phone']
 
 class ClientViewSet(viewsets.ModelViewSet):
     """API endpoint for clients."""
@@ -1221,6 +1224,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
+        # 1. Transactions de vente (Caisse)
         transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
         
         if start_date:
@@ -1228,16 +1232,32 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
             
-        total = transactions.aggregate(Sum('montant'))['montant__sum'] or 0
+        total_ventes = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
         # Totaux par mode
         modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: item['total'] for item in modes}
+
+        # 2. Mouvements de caisse (Entrées/Sorties)
+        mouvements = MouvementCaisse.objects.all()
+        if start_date:
+            mouvements = mouvements.filter(date__gte=start_date)
+        if end_date:
+            mouvements = mouvements.filter(date__lte=end_date)
+            
+        total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        # Total Théorique Global
+        total_theorique = total_ventes + total_entrees - total_sorties
         
         return Response({
             'start_date': start_date,
             'end_date': end_date,
-            'total_theorique': total,
+            'total_theorique': total_theorique,
+            'total_ventes': total_ventes,
+            'total_entrees': total_entrees,
+            'total_sorties': total_sorties,
             'details': details
         })
 
@@ -1286,17 +1306,38 @@ class CaisseViewSet(viewsets.ModelViewSet):
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
+        # Transactions Ventes
         transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
         if start_date:
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
             
-        montant_theorique = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_ventes = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
-        # Détails
+        # Détails Ventes
         modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(item['total']) for item in modes}
+        
+        # Mouvements
+        mouvements = MouvementCaisse.objects.all()
+        if start_date:
+            mouvements = mouvements.filter(date__gte=start_date)
+        if end_date:
+            mouvements = mouvements.filter(date__lte=end_date)
+            
+        total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
+        # Total Théorique
+        montant_theorique = total_ventes + total_entrees - total_sorties
+        
+        # Ajout des infos mouvements dans les détails pour historique
+        details['__meta__'] = {
+            'total_ventes': float(total_ventes),
+            'total_entrees': float(total_entrees),
+            'total_sorties': float(total_sorties)
+        }
         
         ecart = montant_reel - montant_theorique
         
@@ -2009,8 +2050,78 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['inventaire']
+
+class MouvementCaisseViewSet(viewsets.ModelViewSet):
+    """API endpoint for cash movements."""
+    queryset = MouvementCaisse.objects.select_related('user').order_by('-date')
+    serializer_class = MouvementCaisseSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['type', 'user']
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
     
     def perform_create(self, serializer):
         # Capture theoretical stock at time of creation
         produit = serializer.validated_data['produit']
         serializer.save(stock_theorique=produit.stock)
+
+
+
+# Avoir ViewSet
+class AvoirViewSet(viewsets.ModelViewSet):
+    queryset = Avoir.objects.all().select_related('fournisseur', 'created_by').prefetch_related('produits__produit')
+    serializer_class = AvoirSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['numero', 'fournisseur__name', 'observations']
+    ordering_fields = ['date', 'created_at', 'numero']
+    ordering = ['-date', '-created_at']
+    
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def valider(self, request, pk=None):
+        '''Valider l avoir et retirer du stock'''
+        avoir = self.get_object()
+        
+        if avoir.status == 'VALIDEE':
+            return Response({'error': 'Avoir déjà validé'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            with transaction.atomic():
+                # Retirer du stock pour chaque ligne
+                for ligne in avoir.produits.all():
+                    produit = ligne.produit
+                    
+                    # Retirer du stock
+                    produit.stock -= ligne.quantity
+                    produit.save()
+                    
+                    # Créer historique de stock (NEGATIF pour sortie)
+                    ActivityLog.objects.create(
+                        user=request.user,
+                        action='AVOIR',
+                        details=f'Avoir {avoir.numero}: {ligne.produit_nom} x {ligne.quantity} (Type: {avoir.get_type_avoir_display()})'
+                    )
+                
+                # Marquer comme validé
+                avoir.status = 'VALIDEE'
+                avoir.save()
+                
+                return Response({
+                    'status': 'Avoir validé avec succès',
+                    'avoir': AvoirSerializer(avoir).data
+                })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LigneAvoirViewSet(viewsets.ModelViewSet):
+    queryset = LigneAvoir.objects.all().select_related('avoir', 'produit')
+    serializer_class = LigneAvoirSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['avoir']

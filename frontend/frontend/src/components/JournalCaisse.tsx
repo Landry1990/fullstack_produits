@@ -1,9 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import type { CaisseTransaction } from '../types'
+import type { CaisseTransaction, MouvementCaisse } from '../types'
+import CashMovementModal from './CashMovementModal'
 
 export default function JournalCaisse() {
   const [transactions, setTransactions] = useState<CaisseTransaction[]>([])
+  const [mouvements, setMouvements] = useState<MouvementCaisse[]>([])
+  const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -32,29 +35,59 @@ export default function JournalCaisse() {
   const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/'
 
   useEffect(() => {
-    fetchTransactions()
+    fetchData()
   }, [])
 
-  const fetchTransactions = async () => {
+  // Re-fetch totals when date filters change
+  useEffect(() => {
+    if (dateDebut || dateFin) {
+      fetchTotals()
+    }
+  }, [dateDebut, dateFin])
+
+  const fetchData = async () => {
     setLoading(true)
     setError(null)
+    try {
+      await Promise.all([
+        fetchTransactions(),
+        fetchMouvements(),
+        fetchTotals()
+      ])
+    } catch (err) {
+      setError('Erreur lors du chargement des données')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMouvements = async () => {
+      try {
+          const response = await axios.get(`${apiBaseUrl}/api/mouvements-caisse/`)
+          setMouvements(response.data)
+      } catch (err) {
+          console.error("Erreur chargement mouvements", err)
+      }
+  }
+
+  const fetchTransactions = async () => {
+    // setLoading(true) handled in fetchData
     try {
       const response = await axios.get(caisseEndpoint)
       // Handle paginated response
       const data: any = response.data;
       setTransactions(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
-      setError('Erreur lors du chargement des transactions')
+      // setError('Erreur lors du chargement des transactions') handled in fetchData
       console.error('Erreur:', err)
-    } finally {
-      setLoading(false)
+      throw err;
     }
   }
 
-  // Filtrer les transactions
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(transaction => {
-      // Filtre par recherche (client ou numéro facture)
+  // Filtrer les transactions et mouvements
+  const filteredItems = useMemo(() => {
+    const filteredTrans = transactions.filter(transaction => {
+      // Filtre par recherche
       const matchesSearch = searchQuery === '' || 
         transaction.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         transaction.facture_numero?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,50 +105,89 @@ export default function JournalCaisse() {
         const transactionDate = new Date(transaction.date_paiement)
         const debut = new Date(dateDebut)
         const fin = new Date(dateFin)
-        fin.setHours(23, 59, 59, 999) // Inclure toute la journée de fin
+        fin.setHours(23, 59, 59, 999) 
         matchesDate = transactionDate >= debut && transactionDate <= fin
       }
 
       return matchesSearch && matchesMode && matchesDate
     })
-  }, [transactions, searchQuery, filterMode, dateDebut, dateFin])
+
+    const filteredMouvs = mouvements.filter(mouv => {
+       const matchesSearch = searchQuery === '' || 
+        mouv.motif.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (mouv.description && mouv.description.toLowerCase().includes(searchQuery.toLowerCase()))
+
+       // Mode filter doesn't strictly apply to movements (they are usually Cash), but we could assume Cash.
+       // For now, if mode is Espèces or All, we show them.
+       const matchesMode = filterMode === 'all' || filterMode === 'especes'
+
+       let matchesDate = true
+       if (dateDebut && dateFin) {
+        const d = new Date(mouv.date)
+        const debut = new Date(dateDebut)
+        const fin = new Date(dateFin)
+        fin.setHours(23, 59, 59, 999) 
+        matchesDate = d >= debut && d <= fin
+      }
+      return matchesSearch && matchesMode && matchesDate
+    })
+
+    // Combine and mark types
+    const combined = [
+        ...filteredTrans.map(t => ({ ...t, _kind: 'transaction' as const })),
+        ...filteredMouvs.map(m => ({ ...m, _kind: 'mouvement' as const, date_paiement: m.date })) // map date for sort
+    ]
+    
+    // Sort by date desc
+    return combined.sort((a, b) => new Date(b.date_paiement).getTime() - new Date(a.date_paiement).getTime())
+
+  }, [transactions, mouvements, searchQuery, filterMode, dateDebut, dateFin])
 
   // Group transactions by Relevé
-  const groupedTransactions = useMemo(() => {
-     const groups: (CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] })[] = []
+  const groupedItems = useMemo(() => {
+     // Check if we need to group. Only transactions can be grouped.
+     // Movements are just added as is.
+     
+     const result: any[] = []
      const processedReleves = new Set<number>()
-
-     filteredTransactions.forEach(t => {
-         if (t.releve_id) {
-             if (!processedReleves.has(t.releve_id)) {
-                 // Find all transactions for this Relevé in the current filtered list
-                 // (Must be in filtered list to respect date range etc, but usually Releve is same day)
-                 const releveItems = filteredTransactions.filter(rt => rt.releve_id === t.releve_id)
-                 
-                 // Create a summary entry
-                 const totalAmount = releveItems.reduce((sum, item) => sum + parseFloat(item.montant), 0)
-                 
-                 groups.push({
-                     ...t, // Inherit common props like date, client, user
-                     id: -t.releve_id, // Negative ID to avoid conflict
-                     releve_reference: t.releve_reference,
-                     montant: totalAmount.toString(),
-                     isReleveGroup: true,
-                     items: releveItems,
-                     facture_numero: `${releveItems.length} factures` // Override invoice number display
-                 })
-                 processedReleves.add(t.releve_id)
-             }
+     
+     // Separate transactions and movements from the sorted list to handle grouping safely?
+     // Actually, since we want to keep date order, we should iterate the sorted list.
+     
+     filteredItems.forEach((item: any) => {
+         if (item._kind === 'mouvement') {
+             result.push(item)
          } else {
-             groups.push(t)
+             const t = item as CaisseTransaction
+             if (t.releve_id) {
+                 if (!processedReleves.has(t.releve_id)) {
+                     // Find all transactions for this Relevé in the current filtered list (excluding movements)
+                     const releveItems = filteredItems.filter((rt: any) => rt._kind === 'transaction' && rt.releve_id === t.releve_id) as CaisseTransaction[]
+                     
+                     const totalAmount = releveItems.reduce((sum, item) => sum + parseFloat(item.montant), 0)
+                     
+                     result.push({
+                         ...t, 
+                         id: -t.releve_id, 
+                         releve_reference: t.releve_reference,
+                         montant: totalAmount.toString(),
+                         isReleveGroup: true,
+                         items: releveItems,
+                         facture_numero: `${releveItems.length} factures`,
+                         _kind: 'transaction'
+                     })
+                     processedReleves.add(t.releve_id)
+                 }
+             } else {
+                 result.push(t)
+             }
          }
      })
      
-     // Re-sort by date descending
-     return groups.sort((a, b) => new Date(b.date_paiement).getTime() - new Date(a.date_paiement).getTime())
-  }, [filteredTransactions])
+     return result
+  }, [filteredItems])
 
-  // Calculer les totaux par mode de paiement
+  // Calculer les totaux
   const totauxParMode = useMemo(() => {
     const totaux: Record<string, number> = {
       especes: 0,
@@ -125,19 +197,32 @@ export default function JournalCaisse() {
       om: 0,
       momo: 0,
       en_compte: 0,
-      total: 0
+      total: 0,
+      entrees: 0,
+      sorties: 0
     }
 
-    filteredTransactions.forEach(transaction => {
-      if (transaction.statut === 'completee') {
-        const montant = parseFloat(transaction.montant)
-        totaux[transaction.mode_paiement] += montant
-        totaux.total += montant
-      }
+    filteredItems.forEach((item: any) => {
+       const montant = parseFloat(item.montant)
+       if (item._kind === 'mouvement') {
+           if (item.type === 'ENTREE') {
+               totaux.entrees += montant
+               totaux.total += montant // Assuming entries add to cash
+           } else {
+               totaux.sorties += montant
+               totaux.total -= montant // Assuming exits subtract from cash
+           }
+       } else {
+          // Transaction
+          if (item.statut === 'completee') {
+            totaux[item.mode_paiement] += montant
+            totaux.total += montant
+          }
+       }
     })
 
     return totaux
-  }, [filteredTransactions])
+  }, [filteredItems])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -151,29 +236,67 @@ export default function JournalCaisse() {
   }
 
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false)
+  const [globalTotals, setGlobalTotals] = useState<{
+    start_date: string | null,
+    end_date?: string | null,
+    total_theorique: number,
+    total_entrees: number,
+    total_sorties: number,
+    details: Record<string, number>,
+    user?: string
+  } | null>(null)
+
+
   const [closingTotals, setClosingTotals] = useState<{
     start_date: string | null,
     end_date?: string | null,
     total_theorique: number,
+    total_ventes?: number,
+    total_entrees: number,
+    total_sorties: number,
     details: Record<string, number>,
     user?: string
   } | null>(null)
   const [actualAmount, setActualAmount] = useState<string>('')
 
-  const fetchClosingTotals = async () => {
+  const fetchTotals = async () => {
     try {
       const params: any = {}
       if (dateDebut) params.date_debut = dateDebut
       if (dateFin) params.date_fin = dateFin
       
       const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
-      setClosingTotals(response.data)
-      setActualAmount(response.data.total_theorique.toString()) // Default to theoretical
-      setIsClosingModalOpen(true)
+      setGlobalTotals(response.data)
+      return response.data
     } catch (err) {
       console.error('Erreur chargement totaux:', err)
-      setError('Impossible de charger les totaux pour la clôture')
+      // Don't block UI, just log
     }
+  }
+  
+  
+  const openClosingModal = () => {
+      // Use the filtered totals (totauxParMode) to match the displayed "Solde Théorique"
+      const modalTotals = {
+          start_date: dateDebut || null,
+          end_date: dateFin || null,
+          total_theorique: totauxParMode.total,
+          total_ventes: totauxParMode.total - totauxParMode.entrees + totauxParMode.sorties, // Sales only
+          total_entrees: totauxParMode.entrees,
+          total_sorties: totauxParMode.sorties,
+          details: {
+              especes: totauxParMode.especes,
+              cheque: totauxParMode.cheque,
+              carte: totauxParMode.carte,
+              virement: totauxParMode.virement,
+              om: totauxParMode.om,
+              momo: totauxParMode.momo
+          }
+      }
+      
+      setClosingTotals(modalTotals)
+      setActualAmount('') // Leave empty for manual entry
+      setIsClosingModalOpen(true)
   }
 
   const handleCloseCaisse = async () => {
@@ -241,13 +364,24 @@ export default function JournalCaisse() {
             </div>
 
             <div style="margin-bottom: 15px;">
-                <div style="font-weight: bold; margin-bottom: 5px; border-bottom: 1px dashed black; padding-bottom: 2px;">DÉTAILS ENCAISSEMENTS</div>
+                <div style="font-weight: bold; margin-bottom: 5px; border-bottom: 1px dashed black; padding-bottom: 2px;">DÉTAILS ENCAISSEMENTS VENTES</div>
                 ${Object.entries(closingTotals.details).map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
                         <span>${getModeIcon(mode)} ${mode.toUpperCase()}</span>
                         <span>${Math.round(montant)} F</span>
                     </div>
                 `).join('')}
+            </div>
+
+            <div style="margin-bottom: 15px; border-top: 1px dashed black; padding-top: 5px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
+                    <span>📥 AUTRES ENTRÉES</span>
+                    <span>${Math.round(closingTotals.total_entrees)} F</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
+                    <span>📤 SORTIES DIVERSES</span>
+                    <span>-${Math.round(closingTotals.total_sorties)} F</span>
+                </div>
             </div>
 
             <div style="border-top: 2px solid black; padding-top: 10px; margin-top: 10px;">
@@ -312,7 +446,7 @@ export default function JournalCaisse() {
           <p className="text-sm text-base-content/60 mt-1">Historique de toutes les transactions</p>
         </div>
         <button
-          onClick={fetchTransactions}
+          onClick={fetchData}
           className="btn btn-sm btn-ghost gap-2"
           disabled={loading}
         >
@@ -320,7 +454,13 @@ export default function JournalCaisse() {
           Actualiser
         </button>
         <button
-          onClick={fetchClosingTotals}
+            onClick={() => setIsMovementModalOpen(true)}
+            className="btn btn-sm btn-outline gap-2 ml-2"
+        >
+            ➕ Opération
+        </button>
+        <button
+          onClick={openClosingModal}
           className="btn btn-sm btn-primary gap-2 ml-2"
           disabled={loading}
         >
@@ -433,7 +573,16 @@ export default function JournalCaisse() {
           </div>
 
           <div className="badge badge-lg badge-primary gap-2">
-            💰 TOTAL: <span className="font-bold">{Math.round(totauxParMode.total)} F</span>
+            💰 SOLDE THÉORIQUE: <span className="font-bold">{Math.round(totauxParMode.total)} F</span>
+          </div>
+          
+          <div className="ml-4 flex gap-2">
+               <div className="badge badge-md badge-success gap-1">
+                📥 Entrées: {Math.round(totauxParMode.entrees)} F
+               </div>
+               <div className="badge badge-md badge-error gap-1 text-white">
+                📤 Sorties: {Math.round(totauxParMode.sorties)} F
+               </div>
           </div>
         </div>
       </div>
@@ -456,7 +605,7 @@ export default function JournalCaisse() {
           <div className="flex items-center justify-center h-full">
             <span className="loading loading-spinner loading-lg"></span>
           </div>
-        ) : filteredTransactions.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-base-content/40">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -478,7 +627,41 @@ export default function JournalCaisse() {
                 </tr>
               </thead>
               <tbody>
-                {groupedTransactions.map((transaction) => (
+                {groupedItems.map((item: any) => {
+                  if (item._kind === 'mouvement') {
+                      // Rendering Mouvement Row
+                      const mouv = item as MouvementCaisse
+                      return (
+                        <tr key={`mouv-${mouv.id}`} className={mouv.type === 'ENTREE' ? 'bg-success/5' : 'bg-error/5'}>
+                            <td className="font-mono text-sm whitespace-nowrap">{formatDate(mouv.date)}</td>
+                            <td>
+                                <div className="flex flex-col">
+                                    <span className="font-medium text-sm">{mouv.user_nom || 'Utilisateur'}</span>
+                                    <span className="text-xs text-base-content/60">Opération Spéciale</span>
+                                </div>
+                            </td>
+                            <td className="font-medium">{mouv.motif}</td>
+                            <td className="text-xs italic opacity-70">{mouv.description || '-'}</td>
+                            <td className={`text-right font-bold text-lg ${mouv.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
+                                {mouv.type === 'ENTREE' ? '+' : '-'}{Math.round(parseFloat(mouv.montant))} F
+                            </td>
+                            <td>
+                                <div className={`badge badge-outline gap-2 ${mouv.type === 'ENTREE' ? 'badge-success' : 'badge-error'}`}>
+                                    {mouv.type === 'ENTREE' ? '📥 Entrée' : '📤 Sortie'}
+                                </div>
+                            </td>
+                            <td>
+                                <div className="badge badge-xs badge-success gap-1 py-2 px-3">
+                                    <span className="font-semibold">Validé</span>
+                                </div>
+                            </td>
+                        </tr>
+                      )
+                  }
+                  
+                  // Rendering Transaction Row
+                  const transaction = item as CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] }
+                  return (
                   <>
                   <tr 
                     key={transaction.id} 
@@ -558,7 +741,7 @@ export default function JournalCaisse() {
                     </tr>
                    ))}
                   </>
-                ))}
+                )})}
             </tbody>
             </table>
           </div>
@@ -569,8 +752,8 @@ export default function JournalCaisse() {
       {/* Footer avec nombre de résultats */}
       <div className="px-6 py-3 border-t border-base-200 bg-base-50 shrink-0">
         <p className="text-sm text-base-content/60">
-          {filteredTransactions.length} transaction{filteredTransactions.length > 1 ? 's' : ''} affichée{filteredTransactions.length > 1 ? 's' : ''}
-          {filteredTransactions.length !== transactions.length && ` sur ${transactions.length} au total`}
+          {filteredItems.length} ligne{filteredItems.length > 1 ? 's' : ''} affichée{filteredItems.length > 1 ? 's' : ''}
+          {filteredItems.length !== (transactions.length + mouvements.length) && ` sur ${transactions.length + mouvements.length} au total`}
         </p>
       </div>
 
@@ -639,6 +822,12 @@ export default function JournalCaisse() {
           </div>
         </div>
       </dialog>
+      
+      <CashMovementModal 
+        isOpen={isMovementModalOpen}
+        onClose={() => setIsMovementModalOpen(false)}
+        onSuccess={fetchData}
+      />
     </div>
   )
 }
