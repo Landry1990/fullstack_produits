@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -26,15 +26,20 @@ from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement,
-    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir
+    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
+    RelationTransformation, HistoriqueTransformation, MouvementStock,
+    InvoiceSettings, AuditLog
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
-    FactureSerializer, FactureProduitSerializer, CaisseSerializer,
-    UserSerializer, AyantDroitSerializer, ClotureCaisseSerializer, StockLotSerializer,
-    CreanceSerializer, InventaireSerializer, LigneInventaireSerializer, FactureProduitAllocationSerializer, MouvementCaisseSerializer,
-    AvoirSerializer, LigneAvoirSerializer
+    FactureSerializer, FactureProduitSerializer, StockLotSerializer,
+    AvoirSerializer, HistoriqueTransformationSerializer, MouvementStockSerializer,
+    InvoiceSettingsSerializer, AuditLogSerializer,
+    InventaireSerializer, LigneInventaireSerializer, CreanceSerializer,
+    ClotureCaisseSerializer, FactureProduitAllocationSerializer, MouvementCaisseSerializer,
+    UserSerializer, AyantDroitSerializer, LigneAvoirSerializer, CaisseSerializer,
+    RelationTransformationSerializer
 )
 from decimal import Decimal
 
@@ -147,8 +152,23 @@ class ProduitViewSet(viewsets.ModelViewSet):
                 'prix_unitaire': ligne_avoir.price
             })
 
-        
-        # 5. Récupérer les ajustements d'inventaire
+        # 5. Récupérer les transformations (depuis MouvementStock)
+        transformations = MouvementStock.objects.filter(
+            produit=produit,
+            type_mouvement__in=['TRANSFORMATION_ENTREE', 'TRANSFORMATION_SORTIE']
+        ).select_related('user').order_by('-date')
+
+        for trans in transformations:
+            transactions.append({
+                'type': trans.type_mouvement,
+                'date': trans.date,
+                'quantity': abs(trans.quantite),
+                'libelle': trans.description or ("Transformation" if trans.type_mouvement == 'TRANSFORMATION_ENTREE' else "Déconditionnement"),
+                'prix_unitaire': 0, # Pas de prix unitaire pertinent pour l'instant
+                'is_transformation': True
+            })
+
+        # 6. Récupérer les ajustements d'inventaire
         ajustements = LigneInventaire.objects.filter(
             produit=produit,
             inventaire__status=Inventaire.Status.VALIDEE
@@ -166,10 +186,10 @@ class ProduitViewSet(viewsets.ModelViewSet):
                 'is_inventory_adjustment': True 
             })
         
-        # 5. Combiner et trier par date décroissante (le plus récent en premier)
+        # 7. Combiner et trier par date décroissante (le plus récent en premier)
         transactions.sort(key=lambda x: x['date'], reverse=True)
         
-        # 5. Reconstruire l'historique du stock (en remontant le temps)
+        # 8. Reconstruire l'historique du stock (en remontant le temps)
         current_stock = produit.stock
         history = []
         
@@ -178,11 +198,11 @@ class ProduitViewSet(viewsets.ModelViewSet):
         for trans in transactions:
             stock_after = running_stock
             
-            if trans['type'] == 'ENTREE' or trans['type'] == 'RETOUR':
-                # Si c'était une entrée ou un retour, on avait MOINS avant
+            if trans['type'] in ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE']:
+                # Si c'était une entrée, on avait MOINS avant
                 stock_before = running_stock - trans['quantity']
-            else: # SORTIE ou AVOIR
-                # Si c'était une sortie ou un avoir, on avait PLUS avant
+            else: # SORTIE, AVOIR, TRANSFORMATION_SORTIE
+                # Si c'était une sortie, on avait PLUS avant
                 stock_before = running_stock + trans['quantity']
                 
             history.append({
@@ -195,6 +215,16 @@ class ProduitViewSet(viewsets.ModelViewSet):
             running_stock = stock_before
             
         return Response(history)
+
+    @action(detail=False, methods=['get'])
+    def stock_alerts(self, request):
+        """
+        Retourne les produits dont le stock est inférieur ou égal au stock minimum.
+        """
+        produits = Produit.objects.filter(stock__lte=F('stock_minimum')).order_by('name')
+        serializer = self.get_serializer(produits, many=True)
+        return Response(serializer.data)
+
 
 
     @action(detail=False, methods=['post'])
@@ -322,11 +352,11 @@ class ProduitViewSet(viewsets.ModelViewSet):
         response.write(pdf)
         return response
 
-class RayonViewSet(viewsets.ModelViewSet):
-    """API endpoint for rayons."""
+class CategorieViewSet(viewsets.ModelViewSet):
+    """API endpoint for categories (rayons) - Fresh implementation."""
     queryset = Rayon.objects.all().order_by('name')
     serializer_class = RayonSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
 class FournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for fournisseurs."""
@@ -894,6 +924,173 @@ class FactureViewSet(viewsets.ModelViewSet):
             'detail': f'{count} facture(s) brouillon supprimée(s) avec succès.',
             'count': count
         }, status=status.HTTP_200_OK)
+
+
+    @action(detail=True, methods=['get'])
+    def imprimer_facture(self, request, pk=None):
+        """
+        Génère un PDF pour la facture.
+        Utilise InvoiceSettings pour la personnalisation.
+        """
+        facture = self.get_object()
+        
+        # Récupérer les paramètres
+        settings, created = InvoiceSettings.objects.get_or_create(pk=1)
+        
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"facture_{facture.numero_facture or facture.id}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        # Marges standard
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Styles personnalisés basés sur la config
+        style_company = ParagraphStyle('Company', parent=styles['Heading2'], fontSize=16, spaceAfter=6, textColor=HexColor(settings.primary_color))
+        style_normal = styles['Normal']
+        style_title = ParagraphStyle('Title', parent=styles['Heading3'], fontSize=12, alignment=1) # Center
+        style_right = ParagraphStyle('Right', parent=styles['Normal'], alignment=2) # 2 = RIGHT
+        style_center = ParagraphStyle('Center', parent=styles['Normal'], alignment=1) # 1 = CENTER
+        style_left = ParagraphStyle('Left', parent=styles['Normal'], alignment=0) # 0 = LEFT
+
+        # === 1. DONNÉES EN-TÊTE ===
+        # Formatter l'adresse pour HTML (newlines -> <br/>)
+        company_address_fmt = settings.company_address.replace('\n', '<br/>')
+        
+        company_block = [
+            Paragraph(f"<b>{settings.company_name}</b>", style_company),
+            Paragraph(company_address_fmt, style_normal)
+        ]
+        
+        invoice_date = facture.date.strftime('%d/%m/%Y à %H:%M')
+        client_name = facture.client_name_override or (facture.client.name if facture.client else "Client de passage")
+        
+        invoice_details_text = f"""
+        <b>N° Facture: {facture.numero_facture or facture.id}</b><br/>
+        Date: {invoice_date}<br/>
+        Client: {client_name}
+        """
+        if facture.client and facture.client.phone:
+            invoice_details_text += f"<br/>Tel: {facture.client.phone}"
+            
+        # === 2. APPLICATION DU LAYOUT ===
+        layout = settings.header_layout # split, left, center, right
+        
+        if layout == 'split':
+            # Logo/Company Gauche, Info Droite
+            invoice_block = [Paragraph(invoice_details_text, style_right)]
+            header_data = [[company_block, invoice_block]]
+            header_table = Table(header_data, colWidths=[9*cm, 8*cm])
+            header_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+            ]))
+            story.append(header_table)
+            
+        elif layout == 'left':
+            # Tout à gauche
+            story.extend(company_block)
+            story.append(Spacer(1, 0.5*cm))
+            story.append(Paragraph(invoice_details_text, style_left))
+            
+        elif layout == 'center':
+            # Tout centré
+            style_company_center = ParagraphStyle('CompanyCenter', parent=style_company, alignment=1)
+            story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company_center))
+            story.append(Paragraph(company_address_fmt, style_center))
+            story.append(Spacer(1, 0.5*cm))
+            story.append(Paragraph(invoice_details_text, style_center))
+            
+        elif layout == 'right':
+            # Tout à droite
+            style_company_right = ParagraphStyle('CompanyRight', parent=style_company, alignment=2)
+            style_normal_right = ParagraphStyle('NormalRight', parent=style_normal, alignment=2)
+            story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company_right))
+            story.append(Paragraph(company_address_fmt, style_normal_right))
+            story.append(Spacer(1, 0.5*cm))
+            story.append(Paragraph(invoice_details_text, style_right))
+
+        story.append(Spacer(1, 1.5*cm))
+        
+        # === 3. TABLEAU DES PRODUITS ===
+        table_header = [
+            Paragraph('<b>Désignation</b>', style_normal),
+            Paragraph('<b>Qté</b>', style_center),
+            Paragraph('<b>P.U</b>', style_right),
+            Paragraph('<b>Total</b>', style_right)
+        ]
+        data = [table_header]
+        
+        for item in facture.produits.all():
+            total_line = item.quantity * item.selling_price
+            row = [
+                Paragraph(item.produit.name, style_normal),
+                Paragraph(str(item.quantity), style_center),
+                Paragraph(f"{item.selling_price:,.0f}", style_right),
+                Paragraph(f"{total_line:,.0f}", style_right)
+            ]
+            data.append(row)
+            
+        table = Table(data, colWidths=[9*cm, 2.5*cm, 2.5*cm, 3*cm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), HexColor(settings.primary_color)), # Use user color
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white), # White text on colored header
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        story.append(table)
+        story.append(Spacer(1, 1*cm))
+        
+        # === 4. TOTAUX ===
+        total_ht = facture.total_ht
+        total_tva = facture.total_tva
+        remise = facture.remise
+        total_ttc = facture.total_ttc
+        
+        totals_data = [
+            ['Sous-total :', f"{total_ht:,.0f} F"],
+            ['TVA :', f"{total_tva:,.0f} F"],
+            ['Remise :', f"{remise:,.0f} F"],
+            ['TOTAL À PAYER :', f"{total_ttc:,.0f} F"]
+        ]
+        
+        totals_table = Table(totals_data, colWidths=[4*cm, 4*cm])
+        totals_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
+            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('LINEABOVE', (0, -1), (-1, -1), 1.5, colors.black),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.whitesmoke),
+        ]))
+        
+        # Positionnement des totaux (Fixe à droite pour l'instant car standard comptable)
+        container_table = Table([[None, totals_table]], colWidths=[9*cm, 8*cm])
+        container_table.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ]))
+        story.append(container_table)
+        
+        # === FOOTER ===
+        story.append(Spacer(1, 2*cm))
+        if settings.footer_text:
+            footer = Paragraph(f"<i>{settings.footer_text}</i>", style_center)
+            story.append(footer)
+        
+        doc.build(story)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
+        
+
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def caisse_par_tranche_horaire(self, request):
@@ -1510,6 +1707,11 @@ class DashboardViewSet(viewsets.ViewSet):
                 total_receivables += reste
                 receivables_count += 1
         
+        # Valorisation du stock (Prix d'achat * Quantité)
+        stock_valuation = Produit.objects.aggregate(
+            total=Sum(F('stock') * F('cost_price'), output_field=DecimalField())
+        )['total'] or 0
+
         data = {
             'revenue': {
                 'value': revenue_today,
@@ -1530,6 +1732,10 @@ class DashboardViewSet(viewsets.ViewSet):
             'receivables': {
                 'value': total_receivables,
                 'count': receivables_count
+            },
+            'stock_value': {
+                'value': stock_valuation,
+                'change': 0
             }
         }
         
@@ -1596,7 +1802,8 @@ class DashboardViewSet(viewsets.ViewSet):
         Returns products with low stock.
         """
         limit = int(request.query_params.get('limit', 5))
-        low_stock_products = Produit.objects.filter(stock__lte=5).order_by('stock')[:limit]
+        # Use F() to compare against the stock_minimum field of each product
+        low_stock_products = Produit.objects.filter(stock__lte=F('stock_minimum')).order_by('stock')[:limit]
         
         data = []
         for product in low_stock_products:
@@ -2157,3 +2364,405 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['avoir']
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.db.models import Sum, F, Q, DecimalField, Count
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+from .models import StockLot, Fournisseur, CommandeProduit, Commande
+from .serializers import FournisseurSerializer
+
+
+class StatsUGViewSet(viewsets.GenericViewSet):
+    """
+    ViewSet pour les statistiques des unités gratuites (UG).
+    """
+    queryset = StockLot.objects.all()
+    
+    @action(detail=False, methods=['get'])
+    def par_fournisseur(self, request):
+        """
+        Statistiques UG par fournisseur:
+        - Total UG reçues
+        - Total UG vendues (via allocations)
+        - Total UG restantes en stock
+        - Valeur économisée (prix moyen * UG reçues)
+        
+        QueryParams:
+        - fournisseur_id: Filter by specific supplier (optional)
+        - date_debut: Start date filter (optional)
+        - date_fin: End date filter (optional)
+        """
+        fournisseur_id = request.query_params.get('fournisseur_id')
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        # Base query
+        lots_query = StockLot.objects.all()
+        
+        # Apply filters
+        if fournisseur_id:
+            lots_query = lots_query.filter(fournisseur_id=fournisseur_id)
+        
+        if date_debut:
+            lots_query = lots_query.filter(date_reception__gte=date_debut)
+        
+        if date_fin:
+            lots_query = lots_query.filter(date_reception__lte=date_fin)
+        
+        # Aggregate by supplier
+        stats = lots_query.values(
+            'fournisseur_id',
+            'fournisseur__name'
+        ).annotate(
+            ug_recues=Sum('quantity_free'),
+            ug_restantes=Sum(F('quantity_remaining') * F('quantity_free') / F('quantity_initial'), 
+                           output_field=DecimalField()),
+            valeur_acquise=Sum(F('quantity_free') * F('price_cost'), 
+                                output_field=DecimalField()),
+            valeur_restante=Sum(
+                (F('quantity_remaining') * F('quantity_free') / F('quantity_initial')) * F('price_cost'),
+                output_field=DecimalField()
+            )
+        ).order_by('-ug_recues')
+        
+        # Calculate derived values
+        results = []
+        for stat in stats:
+            ug_recues = int(stat['ug_recues'] or 0)
+            # Skip if no UG received
+            if ug_recues <= 0:
+                continue
+                
+            ug_restantes = int(stat['ug_restantes'] or 0)
+            ug_vendues = ug_recues - ug_restantes
+            
+            valeur_acquise = float(stat['valeur_acquise'] or 0)
+            valeur_restante = float(stat['valeur_restante'] or 0)
+            valeur_vendue = valeur_acquise - valeur_restante
+
+            results.append({
+                'fournisseur_id': stat['fournisseur_id'],
+                'fournisseur_nom': stat['fournisseur__name'],
+                'ug_recues': ug_recues,
+                'ug_vendues': ug_vendues,
+                'ug_restantes': ug_restantes,
+                'valeur_acquise': valeur_acquise,
+                'valeur_vendue': valeur_vendue,
+                'valeur_restante': valeur_restante
+            })
+        
+        return Response({
+            'results': results,
+            'total': {
+                'ug_recues': sum(r['ug_recues'] for r in results),
+                'ug_vendues': sum(r['ug_vendues'] for r in results),
+                'ug_restantes': sum(r['ug_restantes'] for r in results),
+                'valeur_acquise': sum(r['valeur_acquise'] for r in results),
+                'valeur_vendue': sum(r['valeur_vendue'] for r in results),
+                'valeur_restante': sum(r['valeur_restante'] for r in results)
+            }
+        })
+    
+    @action(detail=False, methods=['get'])
+    def par_produit(self, request):
+        """
+        Statistiques UG pour un produit spécifique:
+        - Historique des UG reçues par commande
+        - UG actuellement en stock (via StockLot)
+        
+        QueryParams:
+        - produit_id: Product ID (required)
+        """
+        produit_id = request.query_params.get('produit_id')
+        
+        if not produit_id:
+            return Response(
+                {'error': 'produit_id est requis'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get all stock lots for this product with free units
+        lots = StockLot.objects.filter(
+            produit_id=produit_id,
+            quantity_free__gt=0
+        ).select_related(
+            'fournisseur',
+            'commande_produit__commande'
+        ).order_by('-date_reception')
+        
+        historique = []
+        ug_en_stock = 0
+        
+        for lot in lots:
+            # Calculate how many UG are still in this lot
+            if lot.quantity_remaining > 0:
+                ug_remaining_in_lot = int(
+                    (lot.quantity_remaining / lot.quantity_initial) * lot.quantity_free
+                )
+                ug_en_stock += ug_remaining_in_lot
+            else:
+                ug_remaining_in_lot = 0
+            
+            historique.append({
+                'commande_id': lot.commande_produit.commande.id,
+                'fournisseur': lot.fournisseur.name,
+                'date_reception': lot.date_reception,
+                'ug_recues': lot.quantity_free,
+                'ug_restantes': ug_remaining_in_lot,
+                'lot_numero': lot.lot,
+                'date_expiration': lot.date_expiration
+            })
+        
+        total_ug_recues = lots.aggregate(
+            total=Sum('quantity_free')
+        )['total'] or 0
+        
+        return Response({
+            'produit_id': produit_id,
+            'total_ug_recues': int(total_ug_recues),
+            'ug_en_stock': ug_en_stock,
+            'ug_vendues': int(total_ug_recues) - ug_en_stock,
+            'historique': historique
+        })
+    
+    @action(detail=False, methods=['get'])
+    def dashboard_summary(self, request):
+        """
+        Résumé rapide pour le dashboard:
+        - Total UG en stock
+        - Total UG reçues ce mois
+        - Valeur totale économisée
+        """
+        from datetime import datetime, timedelta
+        from django.utils import timezone
+        
+        # Current month
+        now = timezone.now()
+        debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Total UG en stock (approximation)
+        total_ug_stock = StockLot.objects.filter(
+            quantity_remaining__gt=0
+        ).aggregate(
+            total=Sum(
+                F('quantity_remaining') * F('quantity_free') / F('quantity_initial'),
+                output_field=DecimalField()
+            )
+        )['total'] or 0
+        
+        # UG reçues ce mois
+        ug_mois = CommandeProduit.objects.filter(
+            created_at__gte=debut_mois,
+            unites_gratuites__gt=0
+        ).aggregate(
+            total=Sum('unites_gratuites')
+        )['total'] or 0
+        
+        # Valeur économisée (total)
+        valeur_economisee = StockLot.objects.aggregate(
+            total=Sum(
+                F('quantity_free') * F('price_cost'),
+                output_field=DecimalField()
+            )
+        )['total'] or 0
+        
+        return Response({
+            'ug_en_stock': int(total_ug_stock),
+            'ug_recues_mois': int(ug_mois),
+            'valeur_economisee': float(valeur_economisee),
+            'periode': {
+                'debut': debut_mois.isoformat(),
+                'fin': now.isoformat()
+            }
+        })
+
+
+class RelationTransformationViewSet(viewsets.ModelViewSet):
+    queryset = RelationTransformation.objects.all()
+    serializer_class = RelationTransformationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            print("❌ RelationTransformation Validation Errors:", serializer.errors)
+            print("❌ Request Data:", request.data)
+        return super().create(request, *args, **kwargs)
+    
+    @action(detail=True, methods=['post'])
+    def transformer(self, request, pk=None):
+        """
+        Effectue une transformation.
+        Body: {"quantite": 5}
+        """
+        relation = self.get_object()
+        quantite = int(request.data.get('quantite', 1))
+        
+        if quantite <= 0:
+            return Response(
+                {'error': 'La quantité doit être positive'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        with transaction.atomic():
+            # 1. Vérifier stock source
+            if relation.produit_source.stock < quantite:
+                return Response(
+                    {'error': f'Stock insuffisant pour {relation.produit_source.name}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # 2. Calculer quantité destination
+            quantite_dest = int(quantite * relation.ratio)
+            
+            # 3. Ajuster stocks
+            # LOCK rows for update
+            source = Produit.objects.select_for_update().get(pk=relation.produit_source.pk)
+            destination = Produit.objects.select_for_update().get(pk=relation.produit_destination.pk)
+
+            source.stock -= quantite
+            source.save()
+            
+            destination.stock += quantite_dest
+            destination.save()
+            
+            # 4. Créer historique
+            HistoriqueTransformation.objects.create(
+                relation=relation,
+                produit_source=relation.produit_source,
+                produit_destination=relation.produit_destination,
+                quantite_source=quantite,
+                quantite_destination=quantite_dest,
+                user=request.user,
+                notes=request.data.get('notes', '')
+            )
+            
+            # 5. Créer mouvements stock pour statistiques
+            MouvementStock.objects.create(
+                produit=relation.produit_source,
+                type_mouvement='TRANSFORMATION_SORTIE',
+                quantite=-quantite,
+                stock_apres=source.stock,
+                user=request.user,
+                description=f"Transformation vers {relation.produit_destination.name}"
+            )
+            
+            MouvementStock.objects.create(
+                produit=relation.produit_destination,
+                type_mouvement='TRANSFORMATION_ENTREE',
+                quantite=quantite_dest,
+                stock_apres=destination.stock,
+                user=request.user,
+                description=f"Transformation depuis {relation.produit_source.name}"
+            )
+        
+        return Response({
+            'success': True,
+            'stock_source': source.stock,
+            'stock_destination': destination.stock,
+            'message': f"Transformation réussie : {quantite} {source.name} -> {quantite_dest} {destination.name}"
+        })
+
+
+class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = HistoriqueTransformation.objects.all()
+    serializer_class = HistoriqueTransformationSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['produit_source', 'produit_destination']
+    ordering_fields = ['date_transformation']
+    ordering = ['-date_transformation']
+
+
+from rest_framework.views import APIView
+
+class InvoiceConfigurationView(APIView):
+    """
+    API View simplifiée pour gérer la configuration unique de la facture.
+    GET: Récupère la config (en crée une par défaut si inexistante)
+    PUT: Met à jour la config
+    """
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        settings, created = InvoiceSettings.objects.get_or_create(pk=1)
+        serializer = InvoiceSettingsSerializer(settings)
+        return Response(serializer.data)
+
+    def put(self, request):
+        settings, created = InvoiceSettings.objects.get_or_create(pk=1)
+        serializer = InvoiceSettingsSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoriesListView(APIView):
+    """Simple API View for categories without authentication."""
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        rayons = Rayon.objects.all().order_by('name')
+        serializer = RayonSerializer(rayons, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = RayonSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoriesDetailView(APIView):
+    """Simple API View for category detail operations."""
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def get_object(self, pk):
+        try:
+            return Rayon.objects.get(pk=pk)
+        except Rayon.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        rayon = self.get_object(pk)
+        if not rayon:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = RayonSerializer(rayon)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        rayon = self.get_object(pk)
+        if not rayon:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = RayonSerializer(rayon, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        rayon = self.get_object(pk)
+        if not rayon:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        rayon.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for viewing audit logs.
+    Restricted to Admin users only.
+    """
+    queryset = AuditLog.objects.all()
+    serializer_class = AuditLogSerializer
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['action', 'model_name', 'user']
+    search_fields = ['details', 'object_id', 'model_name']
+    ordering_fields = ['timestamp']
+

@@ -36,7 +36,9 @@ export default function Produit() {
     stock_alert: '',
     stock_minimum: '',
     stock_maximum: '',
-    tva: '19.25'
+    tva: '19.25',
+    rayon: '',
+    fournisseur: ''
   })
   
   // Données complémentaires
@@ -46,7 +48,7 @@ export default function Produit() {
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
   const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-  const rayonsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/rayons/` : '/api/rayons/'
+  const rayonsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/categories/` : '/api/categories/'
   const fournisseursEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/fournisseurs/` : '/api/fournisseurs/'
 
   useEffect(() => {
@@ -211,7 +213,9 @@ export default function Produit() {
       stock_alert: String(produit.stock_alert ?? '0'),
       stock_minimum: String(produit.stock_minimum ?? '0'),
       stock_maximum: String(produit.stock_maximum ?? '0'),
-      tva: produit.tva || '19.25'
+      tva: produit.tva || '19.25',
+      rayon: produit.rayon ? String(produit.rayon) : '',
+      fournisseur: produit.fournisseur ? String(produit.fournisseur) : ''
     })
     setIsEditModalOpen(true)
   }
@@ -234,7 +238,9 @@ export default function Produit() {
         stock_alert: parseInt(editForm.stock_alert || '0', 10),
         stock_minimum: parseInt(editForm.stock_minimum || '0', 10),
         stock_maximum: parseInt(editForm.stock_maximum || '0', 10),
-        tva: editForm.tva || '19.25'
+        tva: editForm.tva || '19.25',
+        rayon: editForm.rayon ? parseInt(editForm.rayon, 10) : undefined,
+        fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : undefined
       }
       
       const { data } = await axios.patch<ProduitModel>(`${produitsEndpoint}${selectedProduit.id}/`, payload)
@@ -891,6 +897,59 @@ export default function Produit() {
                 value={editForm.description}
                 onChange={(e) => setEditForm({...editForm, description: e.target.value})}
               />
+            </div>
+
+            {/* Rayon et Fournisseur */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="form-control">
+                <label className="label"><span className="label-text font-semibold">Rayon</span></label>
+                <select
+                  className="select select-bordered w-full"
+                  value={editForm.rayon}
+                  onChange={(e) => setEditForm({...editForm, rayon: e.target.value})}
+                >
+                  <option value="">Sélectionner un rayon</option>
+                  {rayons
+                    .filter(r => !r.parent) // Parents only first
+                    .map(parent => (
+                      <optgroup key={parent.id} label={parent.name}>
+                        <option value={parent.id}>{parent.name}</option>
+                        {rayons
+                          .filter(child => child.parent === parent.id)
+                          .map(child => (
+                            <option key={child.id} value={child.id}>
+                              &nbsp;&nbsp;&nbsp;↳ {child.name}
+                            </option>
+                          ))
+                        }
+                      </optgroup>
+                    ))
+                  }
+                  {/* Orphelins (au cas où) */}
+                  {rayons.some(r => r.parent && !rayons.find(p => p.id === r.parent)) && (
+                     <optgroup label="Autres">
+                       {rayons
+                         .filter(r => r.parent && !rayons.find(p => p.id === r.parent))
+                         .map(r => <option key={r.id} value={r.id}>{r.name}</option>)
+                       }
+                     </optgroup>
+                  )}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label"><span className="label-text font-semibold">Fournisseur</span></label>
+                <select
+                  className="select select-bordered w-full"
+                  value={editForm.fournisseur}
+                  onChange={(e) => setEditForm({...editForm, fournisseur: e.target.value})}
+                >
+                  <option value="">Sélectionner un fournisseur</option>
+                  {fournisseurs.map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="modal-action">

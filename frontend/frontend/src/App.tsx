@@ -20,7 +20,14 @@ import Perimes from './components/Perimes'
 import Creances from './components/Creances'
 import Avoirs from './components/Avoirs'
 import RapportMensuel from './components/RapportMensuel'
+import Transformations from './components/Transformations'
+import InvoiceSettings from './components/InvoiceSettings'
+import JournalAudit from './components/JournalAudit'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { Toaster } from 'react-hot-toast'
+
+// ... (existing code)
+
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -96,8 +103,18 @@ const router = createBrowserRouter([
           { path: 'perimes', element: <Perimes /> },
           { path: 'creances', element: <Creances /> },
           { path: 'avoirs', element: <Avoirs /> },
+          { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
+          { path: 'invoice-settings', element: <InvoiceSettings /> },
+          { 
+            path: 'journal-audit', 
+            element: (
+              <AdminRoute>
+                <JournalAudit />
+              </AdminRoute>
+            ) 
+          },
         ],
       },
     ],
@@ -107,6 +124,7 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <RouterProvider router={router} />
     </AuthProvider>
   )

@@ -33,7 +33,8 @@ class Rayon(models.Model):
     """Model representing a product category."""
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
-   
+    parent = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='sub_rayons', verbose_name="Rayon Parent")
+
     def __str__(self):
         return self.name
 
@@ -645,3 +646,156 @@ class LigneAvoir(models.Model):
     @property
     def produit_cip(self):
         return self.produit.cip1 if self.produit else ''
+
+
+class MouvementStock(models.Model):
+    """
+    Historique de tous les mouvements de stock (Entrées, Sorties, Ajustements, Transformations)
+    Permet de reconstruire l'état du stock à une date donnée et d'analyser les flux.
+    """
+    class TypeMouvement(models.TextChoices):
+        ENTREE = 'ENTREE', 'Entrée (Commande)'
+        SORTIE = 'SORTIE', 'Sortie (Vente)'
+        RETOUR = 'RETOUR', 'Retour (Annulation)'
+        AJUSTEMENT = 'AJUSTEMENT', 'Ajustement Inventaire'
+        TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entrée)'
+        TRANSFORMATION_SORTIE = 'TRANSFORMATION_SORTIE', 'Transformation (Sortie)'
+
+    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='mouvements_stock')
+    type_mouvement = models.CharField(max_length=30, choices=TypeMouvement.choices)
+    quantite = models.IntegerField(help_text="Quantité mouvementée (positive ou négative)")
+    stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock après mouvement (snapshot)")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['produit', 'date']),
+        ]
+
+    def __str__(self):
+        return f"{self.date} - {self.produit.name} - {self.type_mouvement} ({self.quantite})"
+
+
+class RelationTransformation(models.Model):
+    """
+    Définit la relation de transformation entre deux produits.
+    Exemple: 1 boîte PARACETAMOL (produit_source) = 20 détails PARACETAMOL (produit_destination)
+    """
+    produit_source = models.ForeignKey(
+        'Produit', 
+        on_delete=models.CASCADE, 
+        related_name='transformations_source',
+        help_text="Produit à transformer (ex: BOITE)"
+    )
+    produit_destination = models.ForeignKey(
+        'Produit', 
+        on_delete=models.CASCADE, 
+        related_name='transformations_destination',
+        help_text="Produit résultant (ex: DETAIL)"
+    )
+    ratio = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        help_text="Ratio de conversion (ex: 20.00 si 1 boîte = 20 détails)"
+    )
+    actif = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['produit_source', 'produit_destination']
+        verbose_name = "Relation de transformation"
+        verbose_name_plural = "Relations de transformation"
+    
+    def __str__(self):
+        return f"{self.produit_source.name} -> {self.produit_destination.name} (x{self.ratio})"
+
+
+class HistoriqueTransformation(models.Model):
+    """
+    Historique des transformations effectuées.
+    Trace chaque opération de déconditionnement/reconditionnement.
+    """
+    relation = models.ForeignKey(
+        RelationTransformation, 
+        on_delete=models.CASCADE,
+        related_name='historique'
+    )
+    produit_source = models.ForeignKey(
+        'Produit', 
+        on_delete=models.CASCADE, 
+        related_name='hist_trans_source'
+    )
+    produit_destination = models.ForeignKey(
+        'Produit', 
+        on_delete=models.CASCADE, 
+        related_name='hist_trans_dest'
+    )
+    quantite_source = models.IntegerField(help_text="Quantité transformée (source)")
+    quantite_destination = models.IntegerField(help_text="Quantité obtenue (destination)")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date_transformation = models.DateTimeField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-date_transformation']
+        verbose_name = "Historique de transformation"
+        verbose_name_plural = "Historiques de transformations"
+    
+    def __str__(self):
+        return f"{self.quantite_source} {self.produit_source.name} -> {self.quantite_destination} {self.produit_destination.name}"
+class InvoiceSettings(models.Model):
+    """
+    Singleton model to store invoice configuration.
+    """
+    HEADER_LAYOUT_CHOICES = [
+        ('split', 'Séparé (Logo Gauche / Info Droite)'),
+        ('left', 'Tout à Gauche'),
+        ('center', 'Tout Centré'),
+        ('right', 'Tout à Droite'),
+    ]
+
+    company_name = models.CharField(max_length=255, default="Ma Société")
+    company_address = models.TextField(default="Adresse de l'entreprise\nTéléphone: 00 00 00 00 00")
+    footer_text = models.TextField(default="Merci de votre confiance.", blank=True)
+    
+    header_layout = models.CharField(max_length=20, choices=HEADER_LAYOUT_CHOICES, default='split')
+    primary_color = models.CharField(max_length=7, default="#000000") # Hex code
+
+    def save(self, *args, **kwargs):
+        # Singleton logic: ensure only one instance exists
+        if not self.pk and InvoiceSettings.objects.exists():
+            # If trying to create a new one, update the existing one instead
+            return InvoiceSettings.objects.first()
+        return super(InvoiceSettings, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return "Invoice Configuration"
+
+class AuditLog(models.Model):
+    """Model representing an audit log entry for tracking detailed user actions."""
+    class Action(models.TextChoices):
+        create = 'CREATE', 'Création'
+        update = 'UPDATE', 'Modification'
+        delete = 'DELETE', 'Suppression'
+        login = 'LOGIN', 'Connexion'
+        export = 'EXPORT', 'Export'
+        other = 'OTHER', 'Autre'
+
+    id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=10, choices=Action.choices)
+    model_name = models.CharField(max_length=100)
+    object_id = models.CharField(max_length=100, blank=True, null=True)
+    details = models.JSONField(blank=True, null=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.user} - {self.action} {self.model_name} at {self.timestamp}"
