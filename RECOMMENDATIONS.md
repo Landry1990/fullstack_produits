@@ -298,7 +298,28 @@ Tableau de bord enrichi avec graphiques
 Code-barres/Scanner
 Long terme :
 
-Application mobile pour inventaires
+Application mobile pour inventaires (à installer dans un terminal PDA)
 API REST publique pour intégrations
 Intelligence artificielle pour prévision de stock
+
+
+✅ Solution Immédiate (Temporaire)
+Utilisez systématiquement les filtres de date pour limiter la charge :
+
+Par défaut : afficher uniquement aujourd'hui ou les 7 derniers jours
+Le système actuel fonctionnera bien sur des périodes courtes
+
+🚀 Solution Définitive (À implémenter)
+Pagination côté backend - Je peux l'implémenter pour vous :
+
+Avantages :
+
+Charger seulement 50-100 transactions à la fois
+Navigation par pages (Page 1, 2, 3...)
+Performance constante même avec 100,000+ transactions
+Tri et recherche gérés côté serveur (plus rapide)
+Changements nécessaires :
+
+Backend : Modifier l'API pour retourner des résultats paginés
+Frontend : Ajouter des boutons de pagination (← Page 1/10 →)
                                                                                                                                                                                                                                                  

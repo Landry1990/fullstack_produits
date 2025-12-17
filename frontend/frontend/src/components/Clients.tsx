@@ -14,6 +14,7 @@ interface AyantDroit {
 interface ExtendedClient extends Client {
   client_type: 'PARTICULIER' | 'PROFESSIONNEL';
   plafond: string;
+  taux_couverture?: string;
   ayants_droit?: AyantDroit[];
   current_debt?: string;
 }
@@ -25,6 +26,7 @@ const emptyForm: Omit<ExtendedClient, 'id'> = {
   email: '',
   client_type: 'PARTICULIER',
   plafond: '0',
+  taux_couverture: '0',
   ayants_droit: []
 };
 
@@ -245,7 +247,7 @@ export default function Clients() {
     if (!editingClient) return;
     setIsSubmitting(true);
     try {
-      // Send Update including nested ayants_droit
+      // Send Update including nested ayants_droit and taux_couverture
       await axios.patch<ExtendedClient>(
         `${clientsEndpoint}${editingClient.id}/`,
         {
@@ -255,6 +257,7 @@ export default function Clients() {
             email: editingClient.email,
             client_type: editingClient.client_type,
             plafond: editingClient.plafond,
+            taux_couverture: editingClient.taux_couverture,
             ayants_droit: editingClient.ayants_droit // Send the full list for synchronization
         }
       );
@@ -437,6 +440,15 @@ export default function Clients() {
                                 {Number(selectedClient.current_debt).toLocaleString()} F
                             </span>
                         </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <span className="font-semibold col-span-1">Taux Couverture</span>
+                            <span className="col-span-2">
+                                <span className="badge badge-info">{Number(selectedClient.taux_couverture || 0)}%</span>
+                                {Number(selectedClient.taux_couverture || 0) > 0 && (
+                                    <span className="text-xs text-base-content/70 ml-2">(Tiers payant actif)</span>
+                                )}
+                            </span>
+                        </div>
                         
                         <div className="mt-4">
                             <h4 className="font-semibold mb-2">Ayants Droit</h4>
@@ -525,6 +537,25 @@ export default function Clients() {
                     <label className="form-control w-full">
                         <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
                         <input type="number" value={newClient.plafond} onChange={e => setNewClient({...newClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                    </label>
+                    
+                    <label className="form-control w-full">
+                        <div className="label">
+                            <span className="label-text font-medium">Taux de couverture assurance (%)</span>
+                            <span className="label-text-alt text-info">Pour tiers payant</span>
+                        </div>
+                        <input 
+                            type="number" 
+                            value={newClient.taux_couverture || '0'} 
+                            onChange={e => setNewClient({...newClient, taux_couverture: e.target.value})} 
+                            className="input input-bordered w-full" 
+                            min="0" 
+                            max="100"
+                            step="0.01"
+                        />
+                        <div className="label">
+                            <span className="label-text-alt">Ex: 80 = Assurance paie 80%, patient paie 20%</span>
+                        </div>
                     </label>
 
                     <div className="divider">Ayants Droit</div>
@@ -636,6 +667,25 @@ export default function Clients() {
                         <label className="form-control w-full">
                             <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
                             <input type="number" value={editingClient.plafond} onChange={e => setEditingClient({...editingClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                        </label>
+                        
+                        <label className="form-control w-full">
+                            <div className="label">
+                                <span className="label-text font-medium">Taux de couverture assurance (%)</span>
+                                <span className="label-text-alt text-info">Pour tiers payant</span>
+                            </div>
+                            <input 
+                                type="number" 
+                                value={editingClient.taux_couverture || '0'} 
+                                onChange={e => setEditingClient({...editingClient, taux_couverture: e.target.value})} 
+                                className="input input-bordered w-full" 
+                                min="0" 
+                                max="100"
+                                step="0.01"
+                            />
+                            <div className="label">
+                                <span className="label-text-alt">Ex: 80 = Assurance paie 80%, patient paie 20%</span>
+                            </div>
                         </label>
 
                         <div className="divider">Ayants Droit</div>
