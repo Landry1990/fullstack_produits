@@ -38,7 +38,8 @@ export default function Perimes() {
         }
       })
       
-      let fetchedLots = response.data
+      const data: any = response.data
+      let fetchedLots: StockLot[] = Array.isArray(data) ? data : (data.results || [])
       
       if (showExpiredOnly) {
          const todayStr = new Date().toISOString().split('T')[0]

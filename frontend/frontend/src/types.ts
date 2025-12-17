@@ -1,6 +1,8 @@
 export interface Rayon {
   id: number;
   name: string;
+  parent?: number | null;
+  parent_name?: string | null;
 }
 
 export interface Fournisseur {
@@ -34,7 +36,9 @@ export interface ProduitModel {
   stock_alert: number
   stock_minimum: number
   stock_maximum: number
+  rayon?: number | null
   rayon_name: string
+  fournisseur?: number | null
   fournisseur_name: string
   tva?: string
   rotation_moyenne?: string

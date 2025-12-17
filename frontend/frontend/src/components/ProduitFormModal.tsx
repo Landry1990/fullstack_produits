@@ -103,8 +103,14 @@ export default function ProduitFormModal({
   useEffect(() => {
     if (open) {
       // Assurez-vous que les endpoints sont passés en props ou définis ici
-      axios.get(rayonsEndpoint).then(res => setRayons(res.data));
-      axios.get(fournisseursEndpoint).then(res => setFournisseurs(res.data));
+      axios.get(rayonsEndpoint).then(res => {
+        const data = res.data;
+        setRayons(Array.isArray(data) ? data : (data.results || []));
+      });
+      axios.get(fournisseursEndpoint).then(res => {
+         const data = res.data;
+         setFournisseurs(Array.isArray(data) ? data : (data.results || []));
+      });
     }
   }, [open, rayonsEndpoint, fournisseursEndpoint]);
 

@@ -4,9 +4,11 @@ from .views import (
     ProduitViewSet, RayonViewSet, FournisseurViewSet, ClientViewSet,
     CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
     DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet,
-    MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet
+    MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
+    StatsUGViewSet,
+    RelationTransformationViewSet, HistoriqueTransformationViewSet,
+    InvoiceConfigurationView
 )
-from .stats_ug_view import StatsUGViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -30,8 +32,13 @@ router.register(r'lignes-inventaire', LigneInventaireViewSet, basename='ligneinv
 router.register(r'avoirs', AvoirViewSet, basename='avoir')
 router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
+router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')
+router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
+# router.register(r'invoice-settings', InvoiceSettingsViewSet, basename='invoice-settings')
+# Removed router registration for invoice-settings as it is now an APIView
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('', include(router.urls)),
+    path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),
 ]

@@ -1,8 +1,291 @@
+import { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+interface Rayon {
+  id: number;
+  name: string;
+  parent: number | null;
+  parent_name: string | null;
+}
+
 export default function Rayons() {
+  const [rayons, setRayons] = useState<Rayon[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingRayon, setEditingRayon] = useState<Rayon | null>(null);
+  const [formData, setFormData] = useState({ name: '', parent: '' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const apiBaseUrl = useMemo(
+    () => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
+    []
+  );
+
+  const fetchRayons = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${apiBaseUrl}/api/categories/`, {
+        headers: { Authorization: `Token ${token}` }
+      });
+      setRayons(res.data.results || res.data);
+    } catch (err) {
+      console.error("Error fetching rayons:", err);
+      toast.error("Erreur lors du chargement des rayons");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRayons();
+  }, [apiBaseUrl]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem('token');
+    
+    // Prepare payload
+    const payload: any = {
+      name: formData.name,
+      parent: formData.parent ? parseInt(formData.parent) : null
+    };
+
+    try {
+      if (editingRayon) {
+        await axios.put(`${apiBaseUrl}/api/categories/${editingRayon.id}/`, payload, {
+          headers: { Authorization: `Token ${token}` }
+        });
+        toast.success("Rayon modifié avec succès");
+      } else {
+        await axios.post(`${apiBaseUrl}/api/categories/`, payload, {
+          headers: { Authorization: `Token ${token}` }
+        });
+        toast.success("Rayon créé avec succès");
+      }
+      closeModal();
+      fetchRayons();
+    } catch (err) {
+      console.error("Error saving rayon:", err);
+      toast.error("Erreur lors de l'enregistrement");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce rayon ?")) return;
+    
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`${apiBaseUrl}/api/categories/${id}/`, {
+        headers: { Authorization: `Token ${token}` }
+      });
+      toast.success("Rayon supprimé");
+      fetchRayons();
+    } catch (err) {
+      console.error("Error deleting rayon:", err);
+      toast.error("Erreur lors de la suppression");
+    }
+  };
+
+  const openModal = (rayon?: Rayon) => {
+    if (rayon) {
+      setEditingRayon(rayon);
+      setFormData({ 
+        name: rayon.name, 
+        parent: rayon.parent ? rayon.parent.toString() : '' 
+      });
+    } else {
+      setEditingRayon(null);
+      setFormData({ name: '', parent: '' });
+    }
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingRayon(null);
+    setFormData({ name: '', parent: '' });
+  };
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; // Adjust as needed
+
+  // Organize rayons into hierarchy
+  const hierarchy = useMemo(() => {
+    const parents = rayons.filter(r => !r.parent);
+    const children = rayons.filter(r => r.parent);
+    
+    return parents.map(parent => ({
+      ...parent,
+      subRayons: children.filter(c => c.parent === parent.id)
+    }));
+  }, [rayons]);
+
+  // Paginate hierarchy
+  const totalPages = Math.ceil(hierarchy.length / itemsPerPage);
+  const paginatedHierarchy = hierarchy.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Filter potential parents: avoid self and children (simplified check: avoid self)
+  const availableParents = rayons.filter(r => !editingRayon || r.id !== editingRayon.id);
+
+  if (loading) return <div className="p-8 text-center"><span className="loading loading-spinner loading-lg"></span></div>;
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-4 text-center">Gestion des Catégories (Rayons)</h1>
-      <p className="text-center">Cette page est en cours de construction.</p>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Gestion des Rayons</h1>
+        <button onClick={() => openModal()} className="btn btn-primary gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+          Nouveau Rayon Principal
+        </button>
+      </div>
+
+      <div className="bg-base-100 rounded-lg shadow overflow-hidden flex flex-col h-[600px]">
+        <div className="flex-1 overflow-auto">
+          <table className="table w-full relative">
+            <thead className="sticky top-0 bg-base-200 z-10">
+              <tr>
+                <th className="w-20">ID</th>
+                <th>Nom du Rayon</th>
+                <th>Type</th>
+                <th className="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {hierarchy.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="text-center py-8 text-base-content/60">Aucun rayon trouvé</td>
+                </tr>
+              ) : (
+                paginatedHierarchy.map((parent) => (
+                  <>
+                    {/* Parent Row */}
+                    <tr key={parent.id} className="bg-base-100 font-bold hover:bg-base-50">
+                      <td>{parent.id}</td>
+                      <td className="text-lg text-primary">{parent.name}</td>
+                      <td><span className="badge badge-primary badge-outline">Rayon Principal</span></td>
+                      <td className="text-right">
+                        <button 
+                          onClick={() => {
+                            setEditingRayon(null);
+                            setFormData({ name: '', parent: parent.id.toString() });
+                            setIsModalOpen(true);
+                          }} 
+                          className="btn btn-xs btn-outline btn-success mr-2 gap-1"
+                        >
+                           + Sous-rayon
+                        </button>
+                        <button onClick={() => openModal(parent)} className="btn btn-ghost btn-xs mr-2">Modifier</button>
+                        <button onClick={() => handleDelete(parent.id)} className="btn btn-ghost btn-xs text-error">Supprimer</button>
+                      </td>
+                    </tr>
+                    
+                    {/* Children Rows */}
+                    {parent.subRayons.map(child => (
+                      <tr key={child.id} className="hover:bg-base-50">
+                        <td className="opacity-50 text-right pr-4">↳ {child.id}</td>
+                        <td className="pl-8">
+                           <span className="border-l-2 border-base-300 pl-3">{child.name}</span>
+                        </td>
+                        <td><span className="badge badge-ghost badge-sm">Sous-rayon</span></td>
+                        <td className="text-right">
+                          <button onClick={() => openModal(child)} className="btn btn-ghost btn-xs mr-2">Modifier</button>
+                          <button onClick={() => handleDelete(child.id)} className="btn btn-ghost btn-xs text-error">Supprimer</button>
+                        </td>
+                      </tr>
+                    ))}
+                    
+                    {/* Empty State for Parent with no children */}
+                    {parent.subRayons.length === 0 && (
+                      <tr className="text-xs text-base-content/40 italic">
+                        <td></td>
+                        <td className="pl-8">Aucun sous-rayon</td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    )}
+                  </>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination Controls */}
+        {hierarchy.length > itemsPerPage && (
+          <div className="p-4 border-t border-base-200 flex justify-center sticky bottom-0 bg-base-100">
+            <div className="join">
+              <button 
+                className="join-item btn btn-sm" 
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                «
+              </button>
+              <button className="join-item btn btn-sm no-animation cursor-default">
+                Page {currentPage} / {totalPages}
+              </button>
+              <button 
+                className="join-item btn btn-sm" 
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                »
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">{editingRayon ? 'Modifier le Rayon' : 'Nouveau Rayon'}</h3>
+            <form onSubmit={handleSubmit}>
+              <div className="form-control w-full mb-4">
+                <label className="label"><span className="label-text">Nom du rayon</span></label>
+                <input 
+                  type="text" 
+                  className="input input-bordered w-full" 
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div className="form-control w-full mb-6">
+                <label className="label"><span className="label-text">Rayon Parent (Optionnel)</span></label>
+                <select 
+                  className="select select-bordered w-full"
+                  value={formData.parent}
+                  onChange={e => setFormData({...formData, parent: e.target.value})}
+                >
+                  <option value="">Aucun (Racine)</option>
+                  {availableParents.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="modal-action">
+                <button type="button" className="btn btn-ghost" onClick={closeModal}>Annuler</button>
+                <button type="submit" className="btn btn-primary">Enregistrer</button>
+              </div>
+            </form>
+          </div>
+          <div className="modal-backdrop" onClick={closeModal}></div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

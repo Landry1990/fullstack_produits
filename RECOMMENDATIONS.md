@@ -262,7 +262,7 @@ Bien sûr ! Voici quelques propositions d'améliorations pour votre système de 
 
 📊 Rapports et Exports
 Export Excel/PDF - Permettre l'export des statistiques, factures et inventaires
-Rapport de clôture mensuelle - Synthèse automatique du CA, marges et mouvements
+Rapport de clôture mensuelle - Synthèse automatique du CA, marges et mouvements ok
 Tableau de bord amélioré - Graphiques des ventes par période, top produits, alertes visuelles
 🔔 Alertes et Notifications
 Alertes de péremption - Notification 3 mois avant expiration avec suggestion d'avoirs
@@ -278,7 +278,7 @@ Promotions/Réductions - Système de prix promotionnels temporaires
 Programme de fidélité - Points clients et remises automatiques
 Analyse ABC - Classification automatique des produits (A=80% CA, B=15%, C=5%)
 🔐 Sécurité et Conformité
-Journal d'audit complet - Traçabilité de toutes les opérations sensibles
+Journal d'audit complet - Traçabilité de toutes les opérations sensibles ok
 Sauvegarde automatique - Backup quotidien de la base de données
 Rôles utilisateurs avancés - Permissions granulaires par module
 📱 Expérience Utilisateur
@@ -289,8 +289,8 @@ Impression de tickets - Format thermique 80mm pour tous les documents
 Court terme (urgent) :
 
 ✅ Module Avoirs (Terminé aujourd'hui!)
-🔄 Alertes de stock minimum
-🔄 Export PDF des factures
+✅ Alertes de stock minimum
+✅ Export PDF des factures
 Moyen terme :
 
 Module de gestion des périmés avec workflow d'avoirs automatique

@@ -3,7 +3,7 @@ import axios from 'axios'
 import type { ProduitModel } from '../types'
 
 type TransactionHistory = {
-  type: 'ENTREE' | 'SORTIE' | 'RETOUR' | 'AVOIR'
+  type: 'ENTREE' | 'SORTIE' | 'RETOUR' | 'AVOIR' | 'TRANSFORMATION_ENTREE' | 'TRANSFORMATION_SORTIE'
   date: string
   quantity: number
   libelle: string
@@ -152,30 +152,33 @@ export default function StatistiquesProduit() {
                           </td>
                         </tr>
                       ) : (
-                        history.map((item, index) => (
-                          <tr key={index} className="hover:bg-base-200/30">
-                            <td className="whitespace-nowrap text-sm">
-                              {new Date(item.date).toLocaleString('fr-FR')}
-                            </td>
-                            <td>
-                              <span className={`badge badge-sm font-medium ${
-                                item.type === 'ENTREE' || item.type === 'RETOUR' ? 'badge-success text-white' : 'badge-error text-white'
+                        history.map((item, index) => {
+                          const isPositive = ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                          return (
+                            <tr key={index} className="hover:bg-base-200/30">
+                              <td className="whitespace-nowrap text-sm">
+                                {new Date(item.date).toLocaleString('fr-FR')}
+                              </td>
+                              <td>
+                                <span className={`badge badge-sm font-medium ${
+                                  isPositive ? 'badge-success text-white' : 'badge-error text-white'
+                                }`}>
+                                  {item.type}
+                                </span>
+                              </td>
+                              <td className="max-w-xs truncate" title={item.libelle}>
+                                {item.libelle}
+                              </td>
+                              <td className="text-right font-mono">{item.stock_avant}</td>
+                              <td className={`text-right font-bold ${
+                                isPositive ? 'text-success' : 'text-error'
                               }`}>
-                                {item.type}
-                              </span>
-                            </td>
-                            <td className="max-w-xs truncate" title={item.libelle}>
-                              {item.libelle}
-                            </td>
-                            <td className="text-right font-mono">{item.stock_avant}</td>
-                            <td className={`text-right font-bold ${
-                              item.type === 'ENTREE' || item.type === 'RETOUR' ? 'text-success' : 'text-error'
-                            }`}>
-                              {item.type === 'SORTIE' || item.type === 'AVOIR' ? '-' : '+'}{item.quantity}
-                            </td>
-                            <td className="text-right font-mono font-bold">{item.stock_apres}</td>
-                          </tr>
-                        ))
+                                {isPositive ? '+' : '-'}{Math.abs(item.quantity)}
+                              </td>
+                              <td className="text-right font-mono font-bold">{item.stock_apres}</td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>

@@ -6,13 +6,20 @@ from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
     CommandeProduit, Facture, FactureProduit, Caisse, Profile,
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
-    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir
+    Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
+    RelationTransformation, HistoriqueTransformation, MouvementStock,
+    InvoiceSettings, AuditLog
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['allowed_menus', 'can_do_returns', 'can_sell_negative_stock']
+
+class InvoiceSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InvoiceSettings
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(required=False)
@@ -63,6 +70,8 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 class RayonSerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.name', read_only=True)
+
     class Meta:
         model = Rayon
         fields = '__all__'
@@ -133,8 +142,8 @@ class ClientSerializer(serializers.ModelSerializer):
         return instance
 
 class ProduitSerializer(serializers.ModelSerializer):
-    rayon_nom = serializers.CharField(source='rayon.name', read_only=True)
-    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
+    rayon_name = serializers.CharField(source='rayon.name', read_only=True)
+    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
 
     class Meta:
         model = Produit
@@ -382,3 +391,36 @@ class AvoirSerializer(serializers.ModelSerializer):
         if obj.created_by:
             return obj.created_by.get_full_name() or obj.created_by.username
         return ''
+
+
+class RelationTransformationSerializer(serializers.ModelSerializer):
+    produit_source_nom = serializers.CharField(source='produit_source.name', read_only=True)
+    produit_destination_nom = serializers.CharField(source='produit_destination.name', read_only=True)
+    
+    class Meta:
+        model = RelationTransformation
+        fields = '__all__'
+
+class MouvementStockSerializer(serializers.ModelSerializer):
+    user_nom = serializers.CharField(source='user.username', read_only=True)
+    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+
+    class Meta:
+        model = MouvementStock
+        fields = '__all__'
+
+class HistoriqueTransformationSerializer(serializers.ModelSerializer):
+    user_nom = serializers.CharField(source='user.username', read_only=True)
+    produit_source_nom = serializers.CharField(source='produit_source.name', read_only=True)
+    produit_destination_nom = serializers.CharField(source='produit_destination.name', read_only=True)
+    
+    class Meta:
+        model = HistoriqueTransformation
+        fields = '__all__'
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = AuditLog
+        fields = '__all__'

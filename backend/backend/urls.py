@@ -1,15 +1,19 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework.routers import DefaultRouter
 from api.views import (
-    ProduitViewSet, RayonViewSet, FournisseurViewSet, 
+    ProduitViewSet, CategorieViewSet, FournisseurViewSet, 
     ClientViewSet, CommandeViewSet, CommandeProduitViewSet,
     FactureViewSet, FactureProduitViewSet, DashboardViewSet,
     UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
     FactureViewSet, FactureProduitViewSet, DashboardViewSet,
     UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
     CreanceViewSet, InventaireViewSet, LigneInventaireViewSet,
-    AvoirViewSet, LigneAvoirViewSet, StatistiquesViewSet
+    AvoirViewSet, LigneAvoirViewSet, StatistiquesViewSet,
+    RelationTransformationViewSet, HistoriqueTransformationViewSet,
+    StatsUGViewSet, StockLotViewSet, InvoiceConfigurationView,
+    CategoriesListView, CategoriesDetailView, AuditLogViewSet
 )
 from api.rapport_view import RapportViewSet
 from api.produit_import_view import ProduitImportViewSet
@@ -17,7 +21,6 @@ from api.produit_import_view import ProduitImportViewSet
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'produits', ProduitViewSet)
-router.register(r'rayons', RayonViewSet)
 router.register(r'fournisseurs', FournisseurViewSet)
 router.register(r'clients', ClientViewSet)
 router.register(r'ayants-droit', AyantDroitViewSet, basename='ayantdroit')
@@ -27,6 +30,8 @@ router.register(r'factures', FactureViewSet)
 router.register(r'facture-produits', FactureProduitViewSet)
 router.register(r'caisse', CaisseViewSet)
 router.register(r'dashboard', DashboardViewSet, basename='dashboard')
+router.register(r'categories', CategorieViewSet, basename='categorie')
+router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
 router.register(r'creances', CreanceViewSet, basename='creance')
 router.register(r'inventaires', InventaireViewSet)
 router.register(r'ligne-inventaires', LigneInventaireViewSet)
@@ -35,9 +40,19 @@ router.register(r'ligne-avoirs', LigneAvoirViewSet)
 router.register(r'statistiques', StatistiquesViewSet, basename='statistiques')
 router.register(r'rapports', RapportViewSet, basename='rapports')
 router.register(r'produits-import', ProduitImportViewSet, basename='produits-import')
+router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')
+router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
+router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
+router.register(r'stock-lots', StockLotViewSet, basename='stocklot')
 
 urlpatterns = [
+    # Manual paths MUST be before 'api/' router include to avoid being masked
+    path('api/categories/', CategoriesListView.as_view()),
+    path('api/categories/<int:pk>/', CategoriesDetailView.as_view()),
+    path('api/invoice-settings/', InvoiceConfigurationView.as_view()),
+    path('api/test-auth/', lambda request: JsonResponse({"message": "OK - Pas d'auth requise!"})),
+    path('api-token-auth/', CustomAuthToken.as_view()),
+    
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    path('api-token-auth/', CustomAuthToken.as_view()),
 ]
