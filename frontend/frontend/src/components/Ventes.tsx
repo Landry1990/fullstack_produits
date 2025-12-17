@@ -84,6 +84,29 @@ export default function Ventes() {
       // Sinon, charger les détails complets
       await fetchFactureDetails(facture.id)
     }
+    
+    // Si la facture est payée, charger aussi les détails de paiement
+    if (facture.status === 'PAY') {
+      try {
+        const { data } = await axios.get<any[]>(`${caisseEndpoint}?facture=${facture.id}`)
+        if (data && data.length > 0) {
+          // Créer un ticket agrégé avec tous les paiements
+          const paiementsDetails = data.map(p => ({
+            mode: p.mode_paiement,
+            montant: Number(p.montant),
+            part_patient: p.part_patient ? Number(p.part_patient) : null,
+            part_assurance: p.part_assurance ? Number(p.part_assurance) : null
+          }))
+          
+          setTicketCaisse({
+            ...data[0],
+            paiements_details: paiementsDetails
+          } as TicketCaisse)
+        }
+      } catch (err) {
+        console.error('Erreur lors du chargement des paiements:', err)
+      }
+    }
   }
 
   const handleOpenTicketPreview = async () => {
@@ -635,7 +658,7 @@ export default function Ventes() {
                         </tr>
                         <tr className="text-lg">
                           <td colSpan={3} className="text-right pt-2 border-t border-base-300">Total TTC:</td>
-                          <td className="text-right pt-2 border-t border-base-300 text-primary">{Math.round(Number(selectedFacture.total_ttc)).toLocaleString('fr-FR')} F</td>
+                  <td className="text-right pt-2 border-t border-base-300 text-primary">{Math.round(Number(selectedFacture.total_ttc)).toLocaleString('fr-FR')} F</td>
                         </tr>
                       </tfoot>
                     </table>
@@ -643,6 +666,46 @@ export default function Ventes() {
                 ) : (
                   <div className="py-8 text-center text-base-content/50">
                     Aucune ligne de produit pour cette facture.
+                  </div>
+                )}
+                
+                {/* Payment Details Section - Show for all paid invoices */}
+                {selectedFacture.status === 'PAY' && ticketCaisse && ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-bold text-base mb-3 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                      Détails du règlement
+                    </h4>
+                    <div className="bg-base-200/30 rounded-lg p-4 space-y-2">
+                      {ticketCaisse.paiements_details.map((paiement: any, idx: number) => {
+                        const getModeLabel = (mode: string) => {
+                          const labels: { [key: string]: string } = {
+                            'especes': 'Espèces',
+                            'carte': 'Carte',
+                            'cheque': 'Chèque',
+                            'virement': 'Virement',
+                            'om': 'Orange Money',
+                            'momo': 'Mobile Money',
+                            'en_compte': 'En compte'
+                          }
+                          return labels[mode] || mode.toUpperCase()
+                        }
+                        
+                        const isPartPatient = paiement.part_patient && paiement.part_patient > 0
+                        const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
+                        
+                        return (
+                          <div key={idx} className="flex justify-between items-center py-2 px-3 bg-white rounded border border-base-300">
+                            <span className="font-medium">
+                              {getModeLabel(paiement.mode)}
+                              {isPartPatient && <span className="ml-2 badge badge-success badge-sm">Part Patient</span>}
+                              {isPartAssurance && <span className="ml-2 badge badge-info badge-sm">Part Assurance</span>}
+                            </span>
+                            <span className="font-bold">{Math.round(paiement.montant).toLocaleString('fr-FR')} F</span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )}
               </>

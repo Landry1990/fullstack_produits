@@ -73,6 +73,12 @@ class Client(models.Model):
     ]
     client_type = models.CharField(max_length=20, choices=CLIENT_TYPE_CHOICES, default='PARTICULIER')
     plafond = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    taux_couverture = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="Taux de couverture assurance en % (0-100) pour tiers payant"
+    )
     
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -119,7 +125,7 @@ class AyantDroit(models.Model):
     matricule = models.CharField(max_length=100)
     nom = models.CharField(max_length=100)
     societe = models.CharField(max_length=200, blank=True, null=True)
-    date_creation = models.DateField(default=timezone.now)
+    date_creation = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.nom} ({self.matricule})"
@@ -358,6 +364,9 @@ class Caisse(models.Model):
     date_paiement = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions_caisse')
     releve = models.ForeignKey(RelevePaiement, on_delete=models.SET_NULL, null=True, blank=True, related_name='paiements_caisse')
+    # Champs pour tiers payant
+    part_patient = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Part payée par le patient (tiers payant)")
+    part_assurance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Part prise en charge par l'assurance")
     
     def __str__(self):
         return f"Paiement {self.id} - {self.montant} F - {self.get_mode_paiement_display()}"

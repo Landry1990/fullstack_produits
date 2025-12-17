@@ -347,13 +347,32 @@ export default function Facturation() {
     const montantTva = Math.round(baseHT * (tvaRate / 100))
     const totalTtc = baseHT + montantTva
 
+    // Calcul tiers payant
+    let tauxCouverture = 0
+    let partAssurance = 0
+    let partPatient = totalTtc
+    
+    if (!useManualClient && selectedClient) {
+      const client = clients.find(c => c.id === selectedClient)
+      if (client?.client_type === 'PROFESSIONNEL' && client.taux_couverture) {
+        tauxCouverture = normalizeNumberInput(client.taux_couverture, { min: 0, max: 100 })
+        if (tauxCouverture > 0) {
+          partAssurance = Math.round(totalTtc * (tauxCouverture / 100))
+          partPatient = totalTtc - partAssurance
+        }
+      }
+    }
+
     return {
       sousTotal,
       remiseMontant,
       montantTva,
       totalTtc,
+      tauxCouverture,
+      partAssurance,
+      partPatient,
     }
-  }, [lignesFacture, remise, remiseMode])
+  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients])
 
   const [isNewSale, setIsNewSale] = useState(false)
 
@@ -491,21 +510,61 @@ export default function Facturation() {
       validatedFactureForRollback = validatedFacture
 
       // 4. Enregistrer les paiements
-      const paiementsList = paiements.length > 0 
-        ? paiements 
-        : [{ mode: modePaiement, montant: Number(montantPaye) }] // Si liste vide, utiliser la saisie courante
+      // Déterminer si on utilise le tiers payant
+      const useTiersPayant = totals.tauxCouverture > 0 && totals.partAssurance > 0
+      
+      let paiementsList = []
+      
+      if (useTiersPayant) {
+        // Tiers payant: créer 2 paiements automatiquement
+        paiementsList = []
+        
+        // Part patient (paiement immédiat selon le mode sélectionné)
+        if (totals.partPatient > 0) {
+          paiementsList.push({
+            mode: modePaiement,
+            montant: totals.partPatient,
+            part_patient: totals.partPatient,
+            part_assurance: null
+          })
+        }
+        
+        // Part assurance (toujours en compte)
+        if (totals.partAssurance > 0) {
+          paiementsList.push({
+            mode: 'en_compte',
+            montant: totals.partAssurance,
+            part_patient: null,
+            part_assurance: totals.partAssurance
+          })
+        }
+      } else {
+        // Pas de tiers payant: utiliser la liste normale
+        paiementsList = paiements.length > 0 
+          ? paiements.map(p => ({ ...p, part_patient: null, part_assurance: null }))
+          : [{ mode: modePaiement, montant: Number(montantPaye), part_patient: null, part_assurance: null }]
+      }
 
       let totalVerse = 0
       
       // Promesse séquentielle ou parallèle pour les paiements
       await Promise.all(paiementsList.map(async (paiement) => {
-          const paiementPayload = {
+          const paiementPayload: any = {
             facture: validatedFacture.id,
             mode_paiement: paiement.mode,
-            montant: paiement.montant, // Montant spécifique du paiement
+            montant: paiement.montant,
             reference: reference || null,
             statut: 'completee',
           }
+          
+          // Ajouter les champs tiers payant s'ils existent
+          if (paiement.part_patient !== null && paiement.part_patient !== undefined) {
+            paiementPayload.part_patient = paiement.part_patient
+          }
+          if (paiement.part_assurance !== null && paiement.part_assurance !== undefined) {
+            paiementPayload.part_assurance = paiement.part_assurance
+          }
+          
           await axios.post(caisseEndpoint, paiementPayload)
           totalVerse += paiement.montant
       }))
@@ -522,6 +581,11 @@ export default function Facturation() {
 
       setSuccessInfo(finalFacture)
       
+      // Get client name for ticket
+      const clientName = useManualClient 
+        ? manualClientName 
+        : clients.find(c => c.id === selectedClient)?.name || 'Client'
+      
       // Pour le ticket, on prend le premier paiement comme référence principale ou on adapte le ticket
       // Note: Le backend renvoie un TicketCaisse par paiement, ici on en a plusieurs.
       // On va simuler un objet TicketCaisse agrégé pour l'affichage
@@ -536,6 +600,7 @@ export default function Facturation() {
         updated_at: new Date().toISOString(),
         statut: 'completee',
         date_paiement: new Date().toISOString(),
+        client_name: clientName,
         paiements_details: paiementsList
       } as TicketCaisse)
       
@@ -1257,6 +1322,25 @@ export default function Facturation() {
                         <div className="text-3xl font-light text-primary mt-2">
                             {Math.round(totals.totalTtc)} <span className="text-lg font-normal text-primary/60">FCFA</span>
                         </div>
+                        
+                        {/* Tiers Payant Section */}
+                        {totals.tauxCouverture > 0 && totals.partAssurance > 0 && (
+                            <div className="mt-3 pt-3 border-t border-base-200">
+                                <div className="flex items-center justify-end gap-2 mb-2">
+                                    <span className="badge badge-info badge-sm">Tiers Payant {totals.tauxCouverture}%</span>
+                                </div>
+                                <div className="text-xs text-base-content/60 space-y-1">
+                                    <div className="flex justify-between items-center">
+                                        <span>Part Assurance ({totals.tauxCouverture}%):</span>
+                                        <span className="font-medium text-info">{Math.round(totals.partAssurance)} F (En compte)</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span>Part Patient ({100 - totals.tauxCouverture}%):</span>
+                                        <span className="font-medium text-success">{Math.round(totals.partPatient)} F (À payer)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
                 
@@ -1364,87 +1448,141 @@ export default function Facturation() {
                 </div>
               </div>
 
-                <div className="form-control w-full">
-                  <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
-                  <select
-                      value={modePaiement}
-                      onChange={(e) => setModePaiement(e.target.value as any)}
-                      className="select select-bordered w-full"
-                  >
-                      <option value="especes">Espèces</option>
-                      <option value="cheque">Chèque</option>
-                      <option value="carte">Carte</option>
-                      <option value="virement">Virement</option>
-                      <option value="om">Orange Money</option>
-                      <option value="momo">Mobile Money</option>
-                      <option value="en_compte" disabled={selectedClient === null || useManualClient}>
-                          En compte {selectedClient === null || useManualClient ? '(Client requis)' : ''}
-                      </option>
-                  </select>
-                </div>
 
-              {/* Liste des paiements multiples */}
-              {paiements.length > 0 && (
-                <div className="bg-base-50 rounded-lg p-2 space-y-1">
-                    {paiements.map((p, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
-                            <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'virement' ? 'Virement' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'En compte'}</span>
-                            <div className="flex items-center gap-2">
-                                <span className="font-mono">{p.montant} F</span>
-                                <button 
-                                    type="button"
-                                    onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
-                                    className="btn btn-ghost btn-xs text-error btn-square"
-                                >✕</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-              )}
-
-              <div className="flex items-end gap-2">
-                  <div className="form-control flex-1">
-                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant</span></label>
-                    <input
-                      ref={paymentInputRef}
-                      type="number"
-                      step="0.01"
-                      value={montantPaye}
-                      onChange={(e) => setMontantPaye(e.target.value)}
-                      onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                              e.preventDefault()
-                              if (montantPaye && Number(montantPaye) > 0) {
-                                  setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                                  // Calculer le reste à payer pour la prochaine entrée
-                                  const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                                  const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                  const reste = Math.max(0, totalAPayer - dejaVerse)
-                                  setMontantPaye(reste > 0 ? reste.toString() : '')
-                              }
-                          }
-                      }}
-                      className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      placeholder="Saisir montant..."
-                    />
+              {/* Tiers Payant Display - Show breakdown if applicable */}
+              {isNewSale && totals.tauxCouverture > 0 && totals.partAssurance > 0 ? (
+                <div className="space-y-4">
+                  <div className="alert alert-info">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span className="text-sm">Tiers Payant {totals.tauxCouverture}% actif - Paiement automatiquement réparti</span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-primary h-[3rem]" // Match input height roughly
-                    disabled={!montantPaye || Number(montantPaye) <= 0}
-                    onClick={() => {
-                        if (montantPaye && Number(montantPaye) > 0) {
-                            setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                            const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                            const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                            const reste = Math.max(0, totalAPayer - dejaVerse)
-                            setMontantPaye(reste > 0 ? reste.toString() : '')
-                        }
-                    }}
-                  >
-                    Ajouter
-                  </button>
-              </div>
+                  
+                  <div className="bg-base-50 rounded-lg p-4 space-y-3">
+                    <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">Détail du paiement</h4>
+                    
+                    {/* Part Patient */}
+                    <div className="bg-white rounded-lg p-3 border border-success/20">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium text-success">Part Patient ({100 - totals.tauxCouverture}%)</span>
+                        <span className="text-lg font-bold text-success">{Math.round(totals.partPatient)} F</span>
+                      </div>
+                      <div className="form-control w-full">
+                        <label className="label py-0">
+                          <span className="label-text text-xs">Mode de paiement</span>
+                        </label>
+                        <select
+                          value={modePaiement}
+                          onChange={(e) => setModePaiement(e.target.value as any)}
+                          className="select select-bordered select-sm w-full"
+                        >
+                          <option value="especes">Espèces</option>
+                          <option value="cheque">Chèque</option>
+                          <option value="carte">Carte</option>
+                          <option value="virement">Virement</option>
+                          <option value="om">Orange Money</option>
+                          <option value="momo">Mobile Money</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {/* Part Assurance */}
+                    <div className="bg-white rounded-lg p-3 border border-info/20">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-info">Part Assurance ({totals.tauxCouverture}%)</span>
+                        <span className="text-lg font-bold text-info">{Math.round(totals.partAssurance)} F</span>
+                      </div>
+                      <div className="text-xs text-base-content/60 mt-1">
+                        <span className="badge badge-ghost badge-xs">En compte (automatique)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Standard payment mode for non-tiers payant */}
+                  <div className="form-control w-full">
+                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
+                    <select
+                        value={modePaiement}
+                        onChange={(e) => setModePaiement(e.target.value as any)}
+                        className="select select-bordered w-full"
+                    >
+                        <option value="especes">Espèces</option>
+                        <option value="cheque">Chèque</option>
+                        <option value="carte">Carte</option>
+                        <option value="virement">Virement</option>
+                        <option value="om">Orange Money</option>
+                        <option value="momo">Mobile Money</option>
+                        <option value="en_compte" disabled={selectedClient === null || useManualClient}>
+                            En compte {selectedClient === null || useManualClient ? '(Client requis)' : ''}
+                        </option>
+                    </select>
+                  </div>
+
+                  {/* Liste des paiements multiples */}
+                  {paiements.length > 0 && (
+                    <div className="bg-base-50 rounded-lg p-2 space-y-1">
+                        {paiements.map((p, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
+                                <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'virement' ? 'Virement' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'En compte'}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-mono">{p.montant} F</span>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
+                                        className="btn btn-ghost btn-xs text-error btn-square"
+                                    >✕</button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-end gap-2">
+                      <div className="form-control flex-1">
+                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant</span></label>
+                        <input
+                          ref={paymentInputRef}
+                          type="number"
+                          step="0.01"
+                          value={montantPaye}
+                          onChange={(e) => setMontantPaye(e.target.value)}
+                          onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  if (montantPaye && Number(montantPaye) > 0) {
+                                      setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
+                                      // Calculer le reste à payer pour la prochaine entrée
+                                      const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                      const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
+                                      const reste = Math.max(0, totalAPayer - dejaVerse)
+                                      setMontantPaye(reste > 0 ? reste.toString() : '')
+                                  }
+                              }
+                          }}
+                          className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
+                          placeholder="Saisir montant..."
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-primary h-[3rem]" // Match input height roughly
+                        disabled={!montantPaye || Number(montantPaye) <= 0}
+                        onClick={() => {
+                            if (montantPaye && Number(montantPaye) > 0) {
+                                setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
+                                const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
+                                const reste = Math.max(0, totalAPayer - dejaVerse)
+                                setMontantPaye(reste > 0 ? reste.toString() : '')
+                            }
+                        }}
+                      >
+                        Ajouter
+                      </button>
+                  </div>
+                </>
+              )}
 
               {(() => {
                 const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
@@ -1547,12 +1685,35 @@ export default function Facturation() {
                 {ticketCaisse.paiements_details ? (
                   <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
                       <div className="font-bold mb-1">Règlements:</div>
-                      {ticketCaisse.paiements_details.map((paiement, idx) => (
+                      {ticketCaisse.paiements_details.map((paiement, idx) => {
+                        const getModeLabel = (mode: string) => {
+                          const labels: { [key: string]: string } = {
+                            'especes': 'Espèces',
+                            'carte': 'Carte',
+                            'cheque': 'Chèque',
+                            'virement': 'Virement',
+                            'om': 'Orange Money',
+                            'momo': 'Mobile Money',
+                            'en_compte': 'En compte'
+                          }
+                          return labels[mode] || mode.toUpperCase()
+                        }
+                        
+                        // Check if it's tiers payant payment
+                        const isPartPatient = paiement.part_patient && paiement.part_patient > 0
+                        const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
+                        
+                        return (
                           <div key={idx} className="flex justify-between">
-                              <span>{paiement.mode.toUpperCase()}</span>
-                              <span>{Math.round(paiement.montant)} F</span>
+                            <span>
+                              {getModeLabel(paiement.mode)}
+                              {isPartPatient && <span className="text-success"> (Part Patient)</span>}
+                              {isPartAssurance && <span className="text-info"> (Part Assurance)</span>}
+                            </span>
+                            <span>{Math.round(paiement.montant)} F</span>
                           </div>
-                      ))}
+                        )
+                      })}
                   </div>
                 ) : (
                   <div className="text-xs font-normal mt-2 text-center">

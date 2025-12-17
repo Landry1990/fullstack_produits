@@ -143,6 +143,7 @@ export interface Client {
   email: string;
   client_type?: 'PARTICULIER' | 'PROFESSIONNEL';
   plafond?: string;
+  taux_couverture?: string;
   ayants_droit?: AyantDroit[];
   current_debt?: string;
 }
