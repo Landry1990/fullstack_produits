@@ -256,6 +256,24 @@ export default function Avoirs() {
     }
   }
 
+  // Delete
+  const handleDelete = async (avoir: Avoir) => {
+    if (!confirm(`Voulez-vous vraiment supprimer l'avoir brouillon ${avoir.numero} ?`)) return
+    
+    try {
+        setLoading(true)
+        await axios.delete(`${avoirsEndpoint}${avoir.id}/`)
+        alert('Avoir supprimé avec succès')
+        fetchAvoirs()
+        if (viewMode === 'DETAILS') setViewMode('LIST')
+    } catch (err: any) {
+        alert('Erreur: ' + (err.response?.data?.error || err.message))
+        console.error(err)
+    } finally {
+        setLoading(false)
+    }
+  }
+
   // Validate
   const handleValidate = async (avoir: Avoir) => {
     if (!confirm(`Confirmer la validation de l'avoir ${avoir.numero} ? \nCela retirera les produits du stock.`)) return
@@ -362,12 +380,20 @@ export default function Avoirs() {
                                             Voir
                                         </button>
                                         {avoir.status === 'BROUILLON' && (
-                                            <button 
-                                                className="btn btn-sm btn-success btn-outline join-item"
-                                                onClick={() => handleValidate(avoir)}
-                                            >
-                                                Valider
-                                            </button>
+                                            <>
+                                                <button 
+                                                    className="btn btn-sm btn-success btn-outline join-item"
+                                                    onClick={() => handleValidate(avoir)}
+                                                >
+                                                    Valider
+                                                </button>
+                                                <button 
+                                                    className="btn btn-sm btn-error btn-outline join-item"
+                                                    onClick={() => handleDelete(avoir)}
+                                                >
+                                                    Supprimer
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </td>
@@ -681,7 +707,13 @@ export default function Avoirs() {
             </div>
             
             {selectedAvoir.status === 'BROUILLON' && (
-                <div className="flex justify-end p-4">
+                <div className="flex justify-end p-4 gap-2">
+                    <button 
+                        className="btn btn-error btn-outline"
+                        onClick={() => handleDelete(selectedAvoir)}
+                    >
+                        Supprimer Brouillon
+                    </button>
                     <button 
                         className="btn btn-success text-white"
                         onClick={() => handleValidate(selectedAvoir)}

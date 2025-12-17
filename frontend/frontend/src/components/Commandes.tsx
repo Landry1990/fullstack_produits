@@ -215,6 +215,7 @@ export default function Commandes() {
   // Configuration des champs
   const fieldsConfig = [
     { name: 'quantity', editable: true },
+    { name: 'unites_gratuites', editable: true }, // NEW
     { name: 'price', editable: true },
     { name: 'tva', editable: true },
     { name: 'marge', editable: true },
@@ -384,6 +385,7 @@ export default function Commandes() {
         id: Date.now(), // ID temporaire
         produit: product,
         quantity: 1,
+        unites_gratuites: 0,  // NEW: Initialize UG
         price: product.cost_price || '0',
         tva: product.tva || '18',
         marge: product.taux_marge || '1.3',
@@ -457,7 +459,7 @@ export default function Commandes() {
   // Fonction pour mettre à jour un champ dans une ligne
   function updateCommandeProduitField(
     index: number,
-    field: 'quantity' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration',
+    field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration',
     value: string | number
   ) {
     setCommandeProduits(prev => prev.map((item, i) => {
@@ -675,6 +677,7 @@ export default function Commandes() {
                 commande: activeCommandeId,
                 produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
                 quantity: parseInt(String(p.quantity || 1)),
+                unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
                 price: parseFloat(String(p.price || 0)).toFixed(2),
                 price_cost: parseFloat(String(p.price || 0)).toFixed(2), // Required field
                 selling_price: parseFloat(String(p.selling_price || 0)).toFixed(2),
@@ -711,6 +714,7 @@ export default function Commandes() {
               commande: activeCommandeId,
               produit: typeof produit.produit === 'object' ? produit.produit.id : produit.produit,
               quantity: parseInt(String(produit.quantity || 1)),
+              unites_gratuites: parseInt(String(produit.unites_gratuites || 0)),
               price: parseFloat(String(produit.price || 0)).toFixed(2),
               price_cost: parseFloat(String(produit.price || 0)).toFixed(2), // Required field
               selling_price: parseFloat(String(produit.selling_price || 0)).toFixed(2),
@@ -907,6 +911,8 @@ export default function Commandes() {
             ...p,
             id: p.id,
             produit: fullProduct || p.produit,
+            quantity: p.quantity,
+            unites_gratuites: p.unites_gratuites || 0,  // NEW: Preserve UG
             price: p.price || (fullProduct?.cost_price || '0'),
             selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
             tva: p.tva || (fullProduct?.tva || '18'),
@@ -1101,6 +1107,31 @@ export default function Commandes() {
                 </div>
               </div>
 
+              {/* Récapitulatif UG */}
+              {(() => {
+                const totalUG = selectedCommande.produits.reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
+                if (totalUG > 0) {
+                  return (
+                    <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-success">Unités Gratuites (UG)</h4>
+                          <p className="text-sm text-base-content/70">
+                            Cette commande contient <span className="font-bold text-success">{totalUG}</span> unité{totalUG > 1 ? 's' : ''} gratuite{totalUG > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+
               {/* Liste des produits (Read Only) */}
               <div>
                 <h3 className="font-semibold mb-3">Produits commandés</h3>
@@ -1137,6 +1168,7 @@ export default function Commandes() {
                           >
                             Quantité {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                           </th>
+                          <th className="bg-success/10 text-center">UG</th>
                           <th 
                             className="cursor-pointer hover:bg-base-200"
                             onClick={() => {
@@ -1156,10 +1188,10 @@ export default function Commandes() {
                       <tbody>
                         {[...selectedCommande.produits]
                           .map(p => {
-                            // Find product name from produitsList
-                            const produitName = typeof p.produit === 'object' 
+                            // Use produit_nom from backend if available, otherwise fallback to resolving from produitsList
+                            const produitName = (p as any).produit_nom || (typeof p.produit === 'object' 
                               ? p.produit.name 
-                              : produitsList.find(prod => prod.id === p.produit)?.name || `Produit #${p.produit}`;
+                              : produitsList.find(prod => prod.id === p.produit)?.name || `Produit #${p.produit}`);
                             return { ...p, produitName };
                           })
                           .sort((a, b) => {
@@ -1177,6 +1209,11 @@ export default function Commandes() {
                             <tr key={p.id}>
                               <td>{p.produitName}</td>
                               <td>{p.quantity}</td>
+                              <td className="text-center bg-success/5">
+                                <span className={`font-semibold ${(p.unites_gratuites || 0) > 0 ? 'text-success' : 'text-base-content/40'}`}>
+                                  {p.unites_gratuites || 0}
+                                </span>
+                              </td>
                               <td>{p.price} F</td>
                               <td className="font-semibold">{Number(p.quantity) * Number(p.price)} F</td>
                             </tr>
@@ -1415,6 +1452,7 @@ export default function Commandes() {
                         </th>
                         <th className="bg-base-50 pl-4">Produit</th>
                         <th className="bg-base-50 text-right w-24">Qté</th>
+                        <th className="bg-base-50 text-center w-20 bg-success/10">UG</th>
                         <th className="bg-base-50 text-right w-32">Prix Achat HT</th>
                         <th className="bg-base-50 text-right w-24">TVA</th>
                         <th className="bg-base-50 text-right w-24">Marge</th>
@@ -1439,7 +1477,26 @@ export default function Commandes() {
                             />
                           </td>
                           <td className="pl-4 py-2 md:py-3">
-                            <div className="font-medium text-base">{typeof p.produit === 'object' ? p.produit.name : `Produit #${p.produit}`}</div>
+                            <div className="font-medium text-base">
+                              {(() => {
+                                // Try to get product name from different sources
+                                if (typeof p.produit === 'object' && p.produit.name) {
+                                  return p.produit.name;
+                                }
+                                // Check if there's a produit_nom field from API
+                                if ((p as any).produit_nom) {
+                                  return (p as any).produit_nom;
+                                }
+                                // Try to find in produitsList
+                                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                                const found = produitsList.find(prod => prod.id === produitId);
+                                if (found) {
+                                  return found.name;
+                                }
+                                // Last resort: show ID
+                                return `Produit #${produitId}`;
+                              })()}
+                            </div>
                           </td>
                           {/* Quantity (0) */}
                           <td className="text-right py-2 md:py-3">
@@ -1456,29 +1513,36 @@ export default function Commandes() {
                               tabIndex={!fieldsConfig[0].editable ? -1 : 0}
                             />
                           </td>
-                          {/* Price (1) */}
-                          <td className="text-right py-2 md:py-3">
+                          {/* Unites Gratuites (1) - NEW */}
+                          <td className="text-center py-2 md:py-3">
                             <input
                               type="text"
+                              inputMode="numeric"
                               data-row={index}
                               data-field={1}
-                              value={p.price}
-                              onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
+                              value={p.unites_gratuites || 0}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (/^\d*$/.test(val)) {
+                                  updateCommandeProduitField(index, 'unites_gratuites', val === '' ? 0 : parseInt(val));
+                                }
+                              }}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
-                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              className={`input input-ghost input-sm text-sm w-full text-center font-medium bg-success/10 focus:bg-success/20 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              placeholder="0"
                               autoFocus={focusedField?.row === index && focusedField?.field === 1}
                               readOnly={!fieldsConfig[1].editable}
                               tabIndex={!fieldsConfig[1].editable ? -1 : 0}
                             />
                           </td>
-                          {/* TVA (2) */}
+                          {/* Price (2) - Index updated */}
                           <td className="text-right py-2 md:py-3">
                             <input
                               type="text"
                               data-row={index}
                               data-field={2}
-                              value={p.tva || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
+                              value={p.price}
+                              onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
                               className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 2}
@@ -1486,14 +1550,14 @@ export default function Commandes() {
                               tabIndex={!fieldsConfig[2].editable ? -1 : 0}
                             />
                           </td>
-                          {/* Marge (3) */}
+                          {/* TVA (3) - Index updated */}
                           <td className="text-right py-2 md:py-3">
                             <input
                               type="text"
                               data-row={index}
                               data-field={3}
-                              value={p.marge || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
+                              value={p.tva || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 3)}
                               className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 3}
@@ -1501,14 +1565,14 @@ export default function Commandes() {
                               tabIndex={!fieldsConfig[3].editable ? -1 : 0}
                             />
                           </td>
-                          {/* Selling Price (4) */}
+                          {/* Marge (4) - Index updated */}
                           <td className="text-right py-2 md:py-3">
                             <input
                               type="text"
                               data-row={index}
                               data-field={4}
-                              value={p.selling_price}
-                              onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
+                              value={p.marge || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
                               className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 4}
@@ -1516,35 +1580,50 @@ export default function Commandes() {
                               tabIndex={!fieldsConfig[4].editable ? -1 : 0}
                             />
                           </td>
-                          {/* Lot (5) */}
-                          <td className="text-left py-2 md:py-3">
+                          {/* Selling Price (5) - Index updated */}
+                          <td className="text-right py-2 md:py-3">
                             <input
                               type="text"
                               data-row={index}
                               data-field={5}
-                              value={p.lot || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
+                              value={p.selling_price}
+                              onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
                               onKeyDown={(e) => handleTableFieldKeyDown(e, index, 5)}
-                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              placeholder="Lot"
+                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                               autoFocus={focusedField?.row === index && focusedField?.field === 5}
                               readOnly={!fieldsConfig[5].editable}
                               tabIndex={!fieldsConfig[5].editable ? -1 : 0}
                             />
                           </td>
-                          {/* Expiration (6) */}
+                          {/* Lot (6) - Index updated */}
+                          <td className="text-left py-2 md:py-3">
+                            <input
+                              type="text"
+                              data-row={index}
+                              data-field={6}
+                              value={p.lot || ''}
+                              onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
+                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              placeholder="Lot"
+                              autoFocus={focusedField?.row === index && focusedField?.field === 6}
+                              readOnly={!fieldsConfig[6].editable}
+                              tabIndex={!fieldsConfig[6].editable ? -1 : 0}
+                            />
+                          </td>
+                          {/* Expiration (7) - Index updated */}
                           <td className="text-left py-2 md:py-3">
                             <input
                               type="date"
                               data-row={index}
-                              data-field={6}
+                              data-field={7}
                               value={p.date_expiration || ''}
                               onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
-                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 6}
-                              readOnly={!fieldsConfig[6].editable}
-                              tabIndex={!fieldsConfig[6].editable ? -1 : 0}
+                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 7)}
+                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
+                              autoFocus={focusedField?.row === index && focusedField?.field === 7}
+                              readOnly={!fieldsConfig[7].editable}
+                              tabIndex={!fieldsConfig[7].editable ? -1 : 0}
                             />
                           </td>
                           <td className="text-center py-3">

@@ -63,7 +63,8 @@ export default function Sidebar() {
       ),
       submenus: [
         { path: '/app/statistiques', label: 'Produits', key: 'statistiques' },
-        { path: '/app/statistiques-fournisseurs', label: 'Fournisseurs', key: 'statistiques' }
+        { path: '/app/statistiques-fournisseurs', label: 'Fournisseurs', key: 'statistiques' },
+        { path: '/app/rapports-mensuels', label: 'Rapport Mensuel', key: 'statistiques' }
       ]
     },
   ];

@@ -115,6 +115,20 @@ export default function StatistiquesFournisseur() {
         </div>
       </div>
 
+      {/* Info Box - FIFO Explanation */}
+      <div className="alert alert-info shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <h3 className="font-bold">Méthode de calcul : FIFO (Premier Entré, Premier Sorti)</h3>
+          <div className="text-sm">
+            Les statistiques affichent uniquement les fournisseurs dont les produits ont été <strong>effectivement vendus</strong> durant la période. 
+            Si un fournisseur n'apparaît pas, cela signifie que ses produits sont encore en stock ou que d'autres lots plus anciens ont été vendus en priorité.
+          </div>
+        </div>
+      </div>
+
       {/* Cartes Résumé */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card bg-base-100 shadow-sm border border-base-200">

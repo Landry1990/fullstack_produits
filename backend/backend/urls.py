@@ -9,8 +9,10 @@ from api.views import (
     FactureViewSet, FactureProduitViewSet, DashboardViewSet,
     UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
     CreanceViewSet, InventaireViewSet, LigneInventaireViewSet,
-    AvoirViewSet, LigneAvoirViewSet
+    AvoirViewSet, LigneAvoirViewSet, StatistiquesViewSet
 )
+from api.rapport_view import RapportViewSet
+from api.produit_import_view import ProduitImportViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -30,6 +32,9 @@ router.register(r'inventaires', InventaireViewSet)
 router.register(r'ligne-inventaires', LigneInventaireViewSet)
 router.register(r'avoirs', AvoirViewSet)
 router.register(r'ligne-avoirs', LigneAvoirViewSet)
+router.register(r'statistiques', StatistiquesViewSet, basename='statistiques')
+router.register(r'rapports', RapportViewSet, basename='rapports')
+router.register(r'produits-import', ProduitImportViewSet, basename='produits-import')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

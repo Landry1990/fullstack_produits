@@ -20,6 +20,7 @@ export default function Produit() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
   const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats'>('general')
+  const [isImporting, setIsImporting] = useState(false)
   
   // Formulaire d'édition
   const [editForm, setEditForm] = useState({
@@ -251,6 +252,55 @@ export default function Produit() {
     setIsCreateModalOpen(false)
   }
 
+  const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setIsImporting(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const importEndpoint = apiBaseUrl 
+        ? `${apiBaseUrl}/api/produits-import/import_csv/` 
+        : '/api/produits-import/import_csv/'
+
+      const response = await axios.post(importEndpoint, formData,  {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      const { created, updated, errors, message } = response.data
+
+      let resultMessage = message
+      if (errors && errors.length > 0) {
+        resultMessage += `\n\nErreurs (${errors.length}):\n` + errors.slice(0, 5).join('\n')
+        if (errors.length > 5) {
+          resultMessage += `\n... et ${errors.length - 5} autres erreurs`
+        }
+      }
+
+      alert(resultMessage)
+      
+      // Rafraîchir la liste
+      if (created > 0 || updated > 0) {
+        fetchProduits()
+      }
+    } catch (err: any) {
+      console.error('Erreur import CSV:', err)
+      let errorMsg = 'Erreur lors de l\'import CSV'
+      if (err.response?.data?.error) {
+        errorMsg = err.response.data.error
+      }
+      setError(errorMsg)
+    } finally {
+      setIsImporting(false)
+      // Reset input
+      event.target.value = ''
+    }
+  }
+
   // Filtrer les produits
   const filteredProduits = useMemo(() => {
     // Ensure produits is always an array
@@ -373,9 +423,23 @@ export default function Produit() {
         
         {/* Boutons d'action */}
         <div className="flex justify-between items-center mt-3">
-          <button className="btn btn-sm btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-            ➕ Créer Produit
-          </button>
+          <div className="flex gap-2">
+            <button className="btn btn-sm btn-primary" onClick={() => setIsCreateModalOpen(true)}>
+              ➕ Créer Produit
+            </button>
+            <label className="btn btn-sm btn-secondary" htmlFor="csv-import-input">
+              {isImporting ? <span className="loading loading-spinner loading-xs"></span> : '📄'}
+              Import CSV
+            </label>
+            <input
+              id="csv-import-input"
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleCsvImport}
+              disabled={isImporting}
+            />
+          </div>
           {(searchQuery || filterRayon || filterFournisseur) && (
             <button
               className="btn btn-xs btn-ghost"
