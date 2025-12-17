@@ -159,7 +159,8 @@ class CommandeProduit(models.Model):
     id = models.AutoField(primary_key=True)
     produit = models.ForeignKey('Produit', on_delete=models.CASCADE)
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits')
-    quantity = models.IntegerField()
+    quantity = models.IntegerField(help_text="Quantité commandée et payée")
+    unites_gratuites = models.IntegerField(default=0, help_text="Unités gratuites reçues (ex: promotion 3+1)")
     price = models.DecimalField(max_digits=10, decimal_places=2)
     price_cost = models.DecimalField(max_digits=10, decimal_places=2)
     lot = models.CharField(max_length=20, blank=True, null=True)
@@ -169,6 +170,19 @@ class CommandeProduit(models.Model):
 
     def __str__(self):
         return f"Ligne de commande {self.id}"
+    
+    @property
+    def total_quantity(self):
+        """Quantité totale reçue (payée + gratuites)"""
+        return self.quantity + self.unites_gratuites
+    
+    @property
+    def effective_cost(self):
+        """Coût unitaire effectif incluant les UG"""
+        total_qty = self.total_quantity
+        if total_qty > 0:
+            return (self.quantity * self.price_cost) / total_qty
+        return self.price_cost
     
 
 
@@ -385,9 +399,11 @@ class StockLot(models.Model):
     produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='stock_lots')
     commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot')
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT)
-    quantity_initial = models.IntegerField(help_text="Quantité initiale du lot")
+    quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
+    quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
+    quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
     quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
-    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire")
+    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire effectif (ajusté avec UG)")
     lot = models.CharField(max_length=20, blank=True, null=True)
     date_expiration = models.DateField(blank=True, null=True)
     date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
@@ -402,7 +418,8 @@ class StockLot(models.Model):
         ]
 
     def __str__(self):
-        return f"Lot {self.id} - {self.produit.name} ({self.quantity_remaining}/{self.quantity_initial})"
+        ug_info = f" dont {self.quantity_free} UG" if self.quantity_free > 0 else ""
+        return f"Lot {self.id} - {self.produit.name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
 
 
 class FactureProduitAllocation(models.Model):
@@ -550,7 +567,7 @@ class Avoir(models.Model):
     numero = models.CharField(max_length=50, unique=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT, related_name='avoirs')
     type_avoir = models.CharField(max_length=20, choices=TYPE_CHOICES, default='AUTRE')
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=date.today)
     observations = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='BROUILLON')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_created')

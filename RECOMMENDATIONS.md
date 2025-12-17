@@ -256,18 +256,49 @@ Le projet **Pharma Stock** est déjà fonctionnel et démontre une bonne compré
 
 > 📝 Document vivant - À mettre à jour au fur et à mesure des améliorations
 
-maintenant pour la saisie des  nouvelles commandes. les commandes en pharmaice sont tres longues et le systeme actuels utilises trop la souris ce qui est fatiguant a la longue.
-permettre de saisir les produits avec le clavier et se deplacer avec les touches directionnelles ou entrer quand on fini une ligne
-sur une ligne de saisie la touche entrer permet de se deplacer sur chaque champ de la ligne et des que la ligne est complete on passe a la ligne certains champs seront modifiables et d'autres non
-
-permettre d'importer un fichier csv(sepaparation point virgule) cip+quantite et la recherche par cip remplira autmatiquement les autres champs
-
-ajouter un bouton export csv pour exporter les commandes en cours a cet effet cip1 represente les codes d'un grossiste specifique(ubipharm) et cip2(laborex) lors de l'export me proposer sur quel grossiste exporter  OK OK
 
 
-creer un etat qui liste touts les produits saisie dans une commande ou inventaire A la suite de chaque inventaire
+Bien sûr ! Voici quelques propositions d'améliorations pour votre système de gestion de pharmacie :
 
-prevoir des entrees et sortie particulieres a la caisse comme (paiement electricité paiement de facture ou carburant)
+📊 Rapports et Exports
+Export Excel/PDF - Permettre l'export des statistiques, factures et inventaires
+Rapport de clôture mensuelle - Synthèse automatique du CA, marges et mouvements
+Tableau de bord amélioré - Graphiques des ventes par période, top produits, alertes visuelles
+🔔 Alertes et Notifications
+Alertes de péremption - Notification 3 mois avant expiration avec suggestion d'avoirs
+Alertes de stock minimum - Notifications push quand stock < seuil
+Alertes de créances - Rappels automatiques pour les clients dépassant le plafond
+🏷️ Gestion des Produits
+Import CSV de produits - Mise à jour en masse depuis fichiers fournisseurs
+Code-barres/Scanner - Intégration d'un scanner pour entrées/sorties rapides
+Historique des prix - Traçabilité des variations de prix d'achat/vente
+Photos produits - Upload d'images pour meilleure identification
+💰 Optimisation Commerciale
+Promotions/Réductions - Système de prix promotionnels temporaires
+Programme de fidélité - Points clients et remises automatiques
+Analyse ABC - Classification automatique des produits (A=80% CA, B=15%, C=5%)
+🔐 Sécurité et Conformité
+Journal d'audit complet - Traçabilité de toutes les opérations sensibles
+Sauvegarde automatique - Backup quotidien de la base de données
+Rôles utilisateurs avancés - Permissions granulaires par module
+📱 Expérience Utilisateur
+Mode hors-ligne - Fonctionnement en local avec sync ultérieure
+Raccourcis clavier avancés - Navigation rapide entre modules (Ctrl+1, Ctrl+2, etc.)
+Impression de tickets - Format thermique 80mm pour tous les documents
+🎯 Prochaines étapes recommandées
+Court terme (urgent) :
 
+✅ Module Avoirs (Terminé aujourd'hui!)
+🔄 Alertes de stock minimum
+🔄 Export PDF des factures
+Moyen terme :
 
+Module de gestion des périmés avec workflow d'avoirs automatique
+Tableau de bord enrichi avec graphiques
+Code-barres/Scanner
+Long terme :
+
+Application mobile pour inventaires
+API REST publique pour intégrations
+Intelligence artificielle pour prévision de stock
                                                                                                                                                                                                                                                  

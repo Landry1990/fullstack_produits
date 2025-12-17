@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [produits, setProduits] = useState<ProduitModel[]>([]);
   const [expirationMonths, setExpirationMonths] = useState(6); // Délai par défaut: 6 mois
+  const [ugStats, setUgStats] = useState<{ug_en_stock: number; ug_recues_mois: number; valeur_economisee: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +65,9 @@ export default function Dashboard() {
   const produitsEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
     : '/api/produits/'
+  const ugStatsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stats-ug/dashboard_summary/`
+    : '/api/stats-ug/dashboard_summary/'
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -106,12 +110,13 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, transactionsRes, chartRes, lowStockRes, produitsRes] = await Promise.all([
+        const [statsRes, transactionsRes, chartRes, lowStockRes, produitsRes, ugStatsRes] = await Promise.all([
           axios.get(`${dashboardEndpoint}stats/`),
           axios.get(`${dashboardEndpoint}recent_transactions/`),
           axios.get(`${dashboardEndpoint}revenue_chart/`),
           axios.get(`${dashboardEndpoint}low_stock/`),
-          axios.get(produitsEndpoint)
+          axios.get(produitsEndpoint),
+          axios.get(ugStatsEndpoint).catch(() => ({ data: null })) // Ne pas bloquer si l'endpoint UG échoue
         ]);
 
         setStats(statsRes.data);
@@ -121,6 +126,10 @@ export default function Dashboard() {
         // Handle paginated response for products
         const produitsData: any = produitsRes.data;
         setProduits(Array.isArray(produitsData) ? produitsData : (produitsData.results || []));
+        // Set UG stats if available
+        if (ugStatsRes.data) {
+          setUgStats(ugStatsRes.data);
+        }
       } catch (err) {
         console.error('Erreur lors du chargement du tableau de bord:', err);
         setError('Impossible de charger les données du tableau de bord.');
@@ -130,7 +139,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [dashboardEndpoint, produitsEndpoint]);
+  }, [dashboardEndpoint, produitsEndpoint, ugStatsEndpoint]);
 
   if (loading) {
     return (
@@ -215,6 +224,88 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      {/* Section Unités Gratuites (UG) */}
+      {ugStats && (
+        <div className="card bg-base-100 shadow-sm border border-base-200">
+          <div className="card-body p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="card-title text-lg font-bold text-base-content">Statistiques Unités Gratuites (UG)</h2>
+                <p className="text-xs text-base-content/60 mt-1">Suivi des unités gratuites reçues et valorisation</p>
+              </div>
+              <div className="badge badge-primary badge-lg gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                UG
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* UG en stock */}
+              <div className="p-4 rounded-lg bg-blue-50 border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">UG en Stock</p>
+                    <h3 className="text-3xl font-bold text-blue-900 mt-2">{ugStats.ug_en_stock.toLocaleString('fr-FR')}</h3>
+                    <p className="text-xs text-blue-600 mt-1">Unités disponibles</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* UG reçues ce mois */}
+              <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-700">UG Reçues ce Mois</p>
+                    <h3 className="text-3xl font-bold text-green-900 mt-2">{ugStats.ug_recues_mois.toLocaleString('fr-FR')}</h3>
+                    <p className="text-xs text-green-600 mt-1">Nouvelles unités</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Valeur économisée */}
+              <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-purple-700">Valeur Économisée</p>
+                    <h3 className="text-2xl font-bold text-purple-900 mt-2">{Math.round(ugStats.valeur_economisee).toLocaleString('fr-FR')} F</h3>
+                    <p className="text-xs text-purple-600 mt-1">Total économies UG</p>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3 rounded-lg bg-info/10 border border-info/20">
+              <div className="flex items-start gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="text-sm text-base-content/80">
+                  <p className="font-medium">Unités Gratuites (UG)</p>
+                  <p className="text-xs mt-1">Les unités gratuites sont automatiquement gérées lors de la clôture des commandes. La valeur économisée représente le coût total des UG reçues gratuitement.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Charts & Transactions */}

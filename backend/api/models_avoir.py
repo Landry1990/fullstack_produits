@@ -31,7 +31,7 @@ class Avoir(models.Model):
     numero = models.CharField(max_length=50, unique=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT, related_name='avoirs')
     type_avoir = models.CharField(max_length=20, choices=TYPE_CHOICES, default='AUTRE')
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=date.today)
     observations = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='BROUILLON')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_created')

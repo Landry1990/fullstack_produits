@@ -145,11 +145,13 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
     fournisseur_name = serializers.CharField(source='commande.fournisseur.name', read_only=True)
+    total_quantity = serializers.IntegerField(read_only=True)
+    effective_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     
     class Meta:
         model = CommandeProduit
         fields = '__all__'
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost']
 
 class CommandeSerializer(serializers.ModelSerializer):
     fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
@@ -374,7 +376,7 @@ class AvoirSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avoir
         fields = '__all__'
-        read_only_fields = ['numero', 'created_at', 'updated_at', 'total_ht']
+        read_only_fields = ['numero', 'date', 'created_at', 'updated_at', 'total_ht']
     
     def get_created_by_name(self, obj):
         if obj.created_by:

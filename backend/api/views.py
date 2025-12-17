@@ -61,7 +61,7 @@ class CustomAuthToken(ObtainAuthToken):
         })
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('username')
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser] # Only admin can manage users
 
@@ -132,9 +132,23 @@ class ProduitViewSet(viewsets.ModelViewSet):
                 'prix_unitaire': retour.selling_price
             })
         
+        # 4. Récupérer les avoirs (Retours fournisseur validés)
+        avoirs = LigneAvoir.objects.filter(
+            produit=produit,
+            avoir__status='VALIDEE'
+        ).select_related('avoir', 'avoir__fournisseur').order_by('-avoir__created_at')
+        
+        for ligne_avoir in avoirs:
+            transactions.append({
+                'type': 'AVOIR',
+                'date': ligne_avoir.avoir.created_at,
+                'quantity': ligne_avoir.quantity,
+                'libelle': f"Avoir {ligne_avoir.avoir.numero} - {ligne_avoir.avoir.fournisseur.name} ({ligne_avoir.avoir.get_type_avoir_display()})",
+                'prix_unitaire': ligne_avoir.price
+            })
 
         
-        # 4. Récupérer les ajustements d'inventaire
+        # 5. Récupérer les ajustements d'inventaire
         ajustements = LigneInventaire.objects.filter(
             produit=produit,
             inventaire__status=Inventaire.Status.VALIDEE
@@ -167,8 +181,8 @@ class ProduitViewSet(viewsets.ModelViewSet):
             if trans['type'] == 'ENTREE' or trans['type'] == 'RETOUR':
                 # Si c'était une entrée ou un retour, on avait MOINS avant
                 stock_before = running_stock - trans['quantity']
-            else: # SORTIE
-                # Si c'était une sortie, on avait PLUS avant
+            else: # SORTIE ou AVOIR
+                # Si c'était une sortie ou un avoir, on avait PLUS avant
                 stock_before = running_stock + trans['quantity']
                 
             history.append({
@@ -500,6 +514,7 @@ class CommandeViewSet(viewsets.ModelViewSet):
     def cloturer(self, request, pk=None):
         """
         Clôture une commande, met à jour le stock des produits et crée les lots de stock (FIFO).
+        Prend en compte les unités gratuites (UG) pour le calcul du PMP et la valorisation.
         """
         commande = self.get_object()
         if commande.status == Commande.Status.CLOTUREE:
@@ -507,14 +522,27 @@ class CommandeViewSet(viewsets.ModelViewSet):
 
         # Mettre à jour le stock pour chaque produit dans la commande
         for item in commande.produits.all():
+            # Calcul des quantités
+            quantity_paid = item.quantity
+            quantity_free = item.unites_gratuites
+            total_qty = quantity_paid + quantity_free
+            
+            # Calcul du coût effectif (le coût payé réparti sur toutes les unités)
+            if total_qty > 0:
+                effective_cost = (quantity_paid * item.price_cost) / total_qty
+            else:
+                effective_cost = item.price_cost
+            
             # 1. Créer un lot de stock pour la traçabilité
             StockLot.objects.create(
                 produit=item.produit,
                 commande_produit=item,
                 fournisseur=commande.fournisseur,
-                quantity_initial=item.quantity,
-                quantity_remaining=item.quantity,
-                price_cost=item.price_cost,
+                quantity_initial=total_qty,
+                quantity_paid=quantity_paid,
+                quantity_free=quantity_free,
+                quantity_remaining=total_qty,
+                price_cost=effective_cost,  # Coût effectif ajusté avec les UG
                 lot=item.lot,
                 date_expiration=item.date_expiration,
                 date_reception=commande.date
@@ -523,36 +551,34 @@ class CommandeViewSet(viewsets.ModelViewSet):
             # 2. Mettre à jour le stock global et le PMP
             produit = item.produit
             
-            # Calcul PMP
-            # Formule: (AncienStock * AncienPMP + QteReçue * PrixAchat) / (AncienStock + QteReçue)
-            old_stock = Decimal(produit.stock)
+            # Calcul PMP avec les UG
+            # Formule: (AncienStock * AncienPMP + CoutTotal) / (AncienStock + QteRecue)
+            # Où CoutTotal = quantity_paid * price_cost (on ne paie pas les UG)
+            old_stock = Decimal(produit. stock)
             old_pmp = Decimal(produit.pmp)
-            qty_received = Decimal(item.quantity)
-            cost_price = Decimal(item.price_cost) # On utilise le prix d'achat réel (coût)
+            qty_received = Decimal(total_qty)  # Total reçu (payé + gratuit)
+            cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)  # Coût total payé
             
             new_total_qty = old_stock + qty_received
             
             if new_total_qty > 0:
-                # Si le stock était négatif, le calcul peut être faussé. 
-                # On assume que la valorisation suit le stock physique positif.
-                # Si old_stock < 0, on peut considérer qu'on remet à zéro ou on continue.
-                # Approche simple : Somme des valeurs / Somme des quantités
-                
-                # Note: Si stock négatif, old_stock * old_pmp peut être négatif (dette de stock).
+                # Valorisation actuelle + coût de la nouvelle réception
                 current_val = old_stock * old_pmp
-                incoming_val = qty_received * cost_price
+                incoming_val = cout_total  # Seulement le coût payé
                 
+                # Nouveau PMP = Valeur totale / Quantité totale
                 new_pmp = (current_val + incoming_val) / new_total_qty
                 produit.pmp = new_pmp
             
-            produit.stock = F('stock') + item.quantity
+            # Augmentation du stock par le total reçu (payé + gratuit)
+            produit.stock = F('stock') + total_qty
             produit.save(update_fields=['stock', 'pmp'])
 
         # Changer le statut de la commande
         commande.status = Commande.Status.CLOTUREE
         commande.save(update_fields=['status'])
 
-        return Response({'status': 'Commande clôturée, stock mis à jour et lots créés.'})
+        return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
 
     @action(detail=True, methods=['get'])
     def imprimer_reception(self, request, pk=None):
@@ -2081,6 +2107,12 @@ class AvoirViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+    
+    def perform_destroy(self, instance):
+        if instance.status == 'VALIDEE':
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Impossible de supprimer un avoir validé.")
+        super().perform_destroy(instance)
     
     @action(detail=True, methods=['post'])
     def valider(self, request, pk=None):

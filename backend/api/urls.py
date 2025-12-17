@@ -6,6 +6,7 @@ from .views import (
     DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet,
     MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet
 )
+from .stats_ug_view import StatsUGViewSet
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -28,6 +29,7 @@ router.register(r'inventaires', InventaireViewSet, basename='inventaire')
 router.register(r'lignes-inventaire', LigneInventaireViewSet, basename='ligneinventaire')
 router.register(r'avoirs', AvoirViewSet, basename='avoir')
 router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
+router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [

@@ -81,6 +81,7 @@ export interface CommandeProduit {
   produit: number | ProduitModel
   produit_nom?: string
   quantity: number
+  unites_gratuites?: number  // NEW: Unités gratuites reçues
   price: string
   selling_price?: string
   lot?: string
