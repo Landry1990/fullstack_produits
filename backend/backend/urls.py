@@ -13,7 +13,8 @@ from api.views import (
     AvoirViewSet, LigneAvoirViewSet, StatistiquesViewSet,
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
     StatsUGViewSet, StockLotViewSet, InvoiceConfigurationView,
-    CategoriesListView, CategoriesDetailView, AuditLogViewSet
+    CategoriesListView, CategoriesDetailView, AuditLogViewSet,
+    generer_suggestions_commande
 )
 from api.rapport_view import RapportViewSet
 from api.produit_import_view import ProduitImportViewSet
@@ -31,6 +32,7 @@ router.register(r'facture-produits', FactureProduitViewSet)
 router.register(r'caisse', CaisseViewSet)
 router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 router.register(r'categories', CategorieViewSet, basename='categorie')
+router.register(r'rayons', CategorieViewSet, basename='rayon')
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
 router.register(r'creances', CreanceViewSet, basename='creance')
 router.register(r'inventaires', InventaireViewSet)
@@ -50,6 +52,7 @@ urlpatterns = [
     path('api/categories/', CategoriesListView.as_view()),
     path('api/categories/<int:pk>/', CategoriesDetailView.as_view()),
     path('api/invoice-settings/', InvoiceConfigurationView.as_view()),
+    path('api/generer-suggestions/', generer_suggestions_commande),
     path('api/test-auth/', lambda request: JsonResponse({"message": "OK - Pas d'auth requise!"})),
     path('api-token-auth/', CustomAuthToken.as_view()),
     

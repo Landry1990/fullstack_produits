@@ -133,10 +133,14 @@ export default function Produit() {
     
     // Charger l'historique d'achats
     try {
-      const { data } = await axios.get<AchatProduit[]>(
+      const response = await axios.get(
         `${apiBaseUrl ? `${apiBaseUrl}/api/commande-produits/` : '/api/commande-produits/'}?produit=${produit.id}`
       )
-      setAchats(data)
+      // Handle paginated response
+      const achatsData: AchatProduit[] = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.results ?? []);
+      setAchats(achatsData)
     } catch {
       setAchats([])
     }

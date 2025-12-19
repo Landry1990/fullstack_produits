@@ -108,8 +108,15 @@ export default function Facturation() {
   const paymentInputRef = useRef<HTMLInputElement>(null)
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
 
-  // Pending Sales Management
-  const [ventesEnAttente, setVentesEnAttente] = useState<VenteEnAttente[]>([])
+  // Pending Sales Management - Initialize from localStorage to prevent data loss on navigation
+  const [ventesEnAttente, setVentesEnAttente] = useState<VenteEnAttente[]>(() => {
+    try {
+      const saved = localStorage.getItem('ventesEnAttente')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
   const [showPendingSales, setShowPendingSales] = useState(false)
 
   useEffect(() => {
@@ -786,18 +793,6 @@ export default function Facturation() {
 
   // === PENDING SALES MANAGEMENT ===
   
-  // Load pending sales from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem('ventesEnAttente')
-    if (saved) {
-      try {
-        setVentesEnAttente(JSON.parse(saved))
-      } catch (err) {
-        console.error('Error loading pending sales:', err)
-      }
-    }
-  }, [])
-
   // Save pending sales to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('ventesEnAttente', JSON.stringify(ventesEnAttente))

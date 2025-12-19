@@ -41,8 +41,9 @@ export default function Commandes() {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [focusedField, setFocusedField] = useState<{row: number, field: number} | null>(null);
 
-  const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur'>('date');
-  const [sortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur' | 'status'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
   // Tri pour les produits dans la vue détails
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
@@ -840,8 +841,32 @@ export default function Commandes() {
   }
 
 
+  // Fonction pour obtenir la classe CSS du badge de statut
+  function getStatusBadgeClass(status: string): string {
+    switch (status) {
+      case 'PREP':
+        return 'badge badge-info'; // Bleu - En préparation
+      case 'ATT':
+        return 'badge badge-warning'; // Orange - En attente
+      case 'CLOT':
+        return 'badge badge-success'; // Vert - Clôturée
+      default:
+        return 'badge badge-ghost';
+    }
+  }
+
+  // Ordre de priorité pour le tri par statut
+  const statusOrder: Record<string, number> = { 'PREP': 1, 'ATT': 2, 'CLOT': 3 };
+
   const sortedCommandes = useMemo(() => {
-    const sorted = [...commandes].sort((a, b) => {
+    // D'abord filtrer par statut si nécessaire
+    let filtered = [...commandes];
+    if (filterStatus !== 'ALL') {
+      filtered = filtered.filter(c => c.status === filterStatus);
+    }
+    
+    // Ensuite trier
+    const sorted = filtered.sort((a, b) => {
       let valA, valB;
       if (sortKey === 'numero') {
         // Tri par numéro de facture (ou id si vide)
@@ -856,13 +881,17 @@ export default function Commandes() {
         const fB = fournisseurs.find(f => f.id === b.fournisseur)?.name || '';
         valA = fA.toLowerCase();
         valB = fB.toLowerCase();
+      } else if (sortKey === 'status') {
+        valA = statusOrder[a.status] || 99;
+        valB = statusOrder[b.status] || 99;
       }
       if (valA! < valB!) return sortOrder === 'asc' ? -1 : 1;
       if (valA! > valB!) return sortOrder === 'asc' ? 1 : -1;
       return 0;
     });
     return sorted;
-  }, [commandes, sortKey, sortOrder, fournisseurs]);
+  }, [commandes, sortKey, sortOrder, fournisseurs, filterStatus]);
+
 
 
   // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
@@ -968,24 +997,62 @@ export default function Commandes() {
             </div>
             
             {/* Tri */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="text-sm font-medium text-base-content/60">Trier par:</span>
               <button 
                 className={`btn btn-xs ${sortKey === 'numero' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setSortKey('numero')}
+                onClick={() => { setSortKey('numero'); setSortOrder(prev => sortKey === 'numero' ? (prev === 'asc' ? 'desc' : 'asc') : 'desc'); }}
               >
-                Trier par N°
+                N° {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
               </button>
               <button 
                 className={`btn btn-xs ${sortKey === 'date' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setSortKey('date')}
+                onClick={() => { setSortKey('date'); setSortOrder(prev => sortKey === 'date' ? (prev === 'asc' ? 'desc' : 'asc') : 'desc'); }}
               >
-                Trier par Date
+                Date {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
               </button>
               <button 
                 className={`btn btn-xs ${sortKey === 'fournisseur' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => setSortKey('fournisseur')}
+                onClick={() => { setSortKey('fournisseur'); setSortOrder(prev => sortKey === 'fournisseur' ? (prev === 'asc' ? 'desc' : 'asc') : 'asc'); }}
               >
-                Trier par Fournisseur
+                Fournisseur {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </button>
+              <button 
+                className={`btn btn-xs ${sortKey === 'status' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => { setSortKey('status'); setSortOrder(prev => sortKey === 'status' ? (prev === 'asc' ? 'desc' : 'asc') : 'asc'); }}
+              >
+                Statut {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </button>
+              
+              <div className="divider divider-horizontal mx-2"></div>
+              
+              <span className="text-sm font-medium text-base-content/60">Filtrer:</span>
+              <button 
+                className={`btn btn-xs ${filterStatus === 'ALL' ? 'btn-neutral' : 'btn-ghost'}`}
+                onClick={() => setFilterStatus('ALL')}
+              >
+                Tous ({commandes.length})
+              </button>
+              <button 
+                className={`btn btn-xs gap-1 ${filterStatus === 'PREP' ? 'btn-info' : 'btn-ghost'}`}
+                onClick={() => setFilterStatus('PREP')}
+              >
+                <span className="w-2 h-2 rounded-full bg-info"></span>
+                En préparation ({commandes.filter(c => c.status === 'PREP').length})
+              </button>
+              <button 
+                className={`btn btn-xs gap-1 ${filterStatus === 'ATT' ? 'btn-warning' : 'btn-ghost'}`}
+                onClick={() => setFilterStatus('ATT')}
+              >
+                <span className="w-2 h-2 rounded-full bg-warning"></span>
+                En attente ({commandes.filter(c => c.status === 'ATT').length})
+              </button>
+              <button 
+                className={`btn btn-xs gap-1 ${filterStatus === 'CLOT' ? 'btn-success' : 'btn-ghost'}`}
+                onClick={() => setFilterStatus('CLOT')}
+              >
+                <span className="w-2 h-2 rounded-full bg-success"></span>
+                Clôturées ({commandes.filter(c => c.status === 'CLOT').length})
               </button>
             </div>
 
@@ -1007,7 +1074,7 @@ export default function Commandes() {
                       <td>{commande.numero_facture || commande.id}</td>
                       <td>{new Date(commande.date).toLocaleDateString('fr-FR')}</td>
                       <td>{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
-                      <td><span className="badge badge-ghost">{commande.status_display}</span></td>
+                      <td><span className={getStatusBadgeClass(commande.status)}>{commande.status_display}</span></td>
                       <td className="font-semibold">{commande.total} F</td>
                       <td>
                         <button 
@@ -1099,7 +1166,7 @@ export default function Commandes() {
                 </div>
                 <div>
                   <span className="font-semibold text-xs">Statut</span>
-                  <p className="text-lg"><span className="badge badge-ghost">{selectedCommande.status_display}</span></p>
+                  <p className="text-lg"><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></p>
                 </div>
                 <div>
                   <span className="font-semibold text-xs">Total</span>
