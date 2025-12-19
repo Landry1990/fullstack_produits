@@ -21,19 +21,27 @@ const JournalAudit: React.FC = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+
   const fetchLogs = async (pageNum: number) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await axios.get(`http://localhost:8000/api/audit-logs/?page=${pageNum}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      const endpoint = apiBaseUrl 
+        ? `${apiBaseUrl}/api/audit-logs/?page=${pageNum}`
+        : `/api/audit-logs/?page=${pageNum}`;
+      const response = await axios.get(endpoint, {
+        headers: { Authorization: `Token ${token}` }
       });
-      setLogs(response.data.results);
-      setTotalPages(Math.ceil(response.data.count / 20)); // Assuming default page size 20 but explicit is better
+      const data = response.data;
+      const results = Array.isArray(data) ? data : (data.results || []);
+      const count = data.count || results.length;
+      setLogs(results);
+      setTotalPages(Math.ceil(count / 50)); // Page size is 50 from settings
       setLoading(false);
     } catch (err) {
       console.error(err);
-      setError('Erreur lors du chargement des logs. Assurez-vous d\'être administrateur.');
+      setError("Erreur lors du chargement des logs. Assurez-vous d'être administrateur.");
       setLoading(false);
     }
   };

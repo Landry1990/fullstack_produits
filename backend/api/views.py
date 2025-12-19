@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status, filters, permissions
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes  # For order generation
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.throttling import ScopedRateThrottle
@@ -2752,12 +2752,216 @@ class CategoriesDetailView(APIView):
         rayon.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generer_suggestions_commande(request):
+    """
+    Génère des suggestions de commandes selon le mode choisi.
+    
+    POST /api/generer-suggestions/
+    Body: {
+        "mode": "simple" | "optimise",
+        "periode": 30,  # jours
+        "fournisseur_id": null | int,
+    }
+    """
+    mode = request.data.get('mode', 'simple')
+    periode = int(request.data.get('periode', 30))
+    fournisseur_id = request.data.get('fournisseur_id')
+    
+    if mode == 'simple':
+        suggestions = calculer_reapprovisionnement_simple(
+            periode=periode,
+            fournisseur_id=fournisseur_id
+        )
+    else:
+        suggestions = calculer_optimisation_intelligente(
+            periode=periode,
+            fournisseur_id=fournisseur_id
+        )
+    
+    return Response({
+        'mode': mode,
+        'periode': periode,
+        'suggestions': suggestions,
+        'total_produits': len(suggestions)
+    })
+
+
+def calculer_reapprovisionnement_simple(periode, fournisseur_id=None):
+    """
+    Calcul simple : Qté = Ventes sur période - Stock actuel
+    """
+    date_debut = timezone.now() - timedelta(days=periode)
+    print(f"DEBUG: Calcul simple. Période: {periode} jours. Depuis: {date_debut}")
+    
+    # Récupérer tous les produits
+    produits = Produit.objects.all()
+    if fournisseur_id:
+        produits = produits.filter(fournisseur_id=fournisseur_id)
+    
+    suggestions = []
+    
+    for produit in produits:
+        # Calculer les ventes sur la période
+        ventes = FactureProduit.objects.filter(
+            produit=produit,
+            facture__date__gte=date_debut,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        stock_actuel = produit.stock or 0
+        
+        # DEBUG pour voir quelques produits
+        if ventes > 0:
+            print(f"DEBUG: Produit {produit.name} - Ventes: {ventes}, Stock: {stock_actuel}")
+        
+        # Calcul simple
+        qte_a_commander = max(0, int(ventes) - stock_actuel)
+        
+        # Afficher TOUS les produits qui ont des ventes (même si qté suggérée = 0)
+        if ventes > 0:
+            suggestions.append({
+                'produit_id': produit.id,
+                'produit_nom': produit.name,
+                'produit_ref': produit.cip1 or '',
+                'fournisseur_id': produit.fournisseur.id if produit.fournisseur else None,
+                'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
+                'stock_actuel': int(stock_actuel),
+                'ventes_periode': int(ventes),
+                'quantite_suggeree': int(qte_a_commander),
+                'prix_achat': float(produit.cost_price or 0),
+                'rotation': 'N/A',
+                'tendance': 'N/A',
+                'urgence': 'urgent' if stock_actuel < ventes else 'normal',
+                'couverture_jours': 0
+            })
+    
+    # Trier par quantité suggérée (décroissant)
+    suggestions.sort(key=lambda x: x['quantite_suggeree'], reverse=True)
+    print(f"DEBUG: {len(suggestions)} suggestions trouvées")
+    
+    return suggestions
+
+
+def calculer_optimisation_intelligente(periode, fournisseur_id=None):
+    """
+    Calcul optimisé avec rotation, tendances, stock
+    """
+    date_debut = timezone.now() - timedelta(days=periode)
+    date_mi_periode = timezone.now() - timedelta(days=periode // 2)
+    print(f"DEBUG: Calcul optimisé. Période: {periode} jours.")
+    
+    produits = Produit.objects.all()
+    if fournisseur_id:
+        produits = produits.filter(fournisseur_id=fournisseur_id)
+    
+    suggestions = []
+    
+    for produit in produits:
+        # 1. Ventes totales
+        ventes_total = FactureProduit.objects.filter(
+            produit=produit,
+            facture__date__gte=date_debut,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        # DEBUG
+        if ventes_total > 0:
+             print(f"DEBUG OPTIM: {produit.name} - Ventes: {ventes_total}")
+
+        if ventes_total == 0:
+            continue  # Skip produits non vendus
+        
+        # 2. Consommation journalière
+        conso_jour = float(ventes_total) / periode
+        
+        # 3. Stock actuel
+        stock_actuel = int(produit.stock or 0)
+        
+        # 4. Couverture en jours
+        if conso_jour > 0:
+            couverture_jours = stock_actuel / conso_jour
+        else:
+            couverture_jours = 999
+        
+        # 5. Rotation (ventes / stock moyen)
+        stock_moyen = max(stock_actuel, 1)  # Simplification
+        rotation = float(ventes_total) / stock_moyen
+        
+        # 6. Tendance (période récente vs ancienne)
+        ventes_recentes = FactureProduit.objects.filter(
+            produit=produit,
+            facture__date__gte=date_mi_periode,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+       ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        ventes_anciennes = ventes_total - ventes_recentes
+        if ventes_anciennes > 0:
+            tendance = ventes_recentes / ventes_anciennes
+        else:
+            tendance = 1.0 if ventes_recentes > 0 else 0
+        
+        # 7. Calcul quantité optimale
+        # Stock cible = 30 jours
+        stock_cible = conso_jour * 30
+        qte_base = max(0, stock_cible - stock_actuel)
+        
+        # Ajustement selon rotation
+        if rotation > 3:  # Haute rotation
+            qte_base *= 1.2
+            niveau_rotation = 'haute'
+        elif rotation < 1:  # Faible rotation
+            qte_base *= 0.8
+            niveau_rotation = 'faible'
+        else:
+            niveau_rotation = 'normale'
+        
+        # Ajustement selon tendance
+        qte_base *= tendance
+        
+        # Arrondir
+        qte_finale = int(round(qte_base))
+        
+        # Déterminer urgence
+        if couverture_jours < 7:
+            urgence = 'urgent'
+        elif couverture_jours < 15:
+            urgence = 'bientot'
+        else:
+            urgence = 'normal'
+        
+        # Toujours ajouter les produits vendus (pas de seuil minimum)
+        suggestions.append({
+            'produit_id': produit.id,
+            'produit_nom': produit.name,
+            'produit_ref': produit.cip1 or '',
+            'fournisseur_id': produit.fournisseur.id if produit.fournisseur else None,
+            'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
+            'stock_actuel': stock_actuel,
+            'ventes_periode': int(ventes_total),
+            'quantite_suggeree': max(qte_finale, 0),
+            'prix_achat': float(produit.cost_price or 0),
+            'rotation': niveau_rotation,
+            'tendance': round(tendance, 2),
+            'urgence': urgence,
+            'couverture_jours': int(couverture_jours)
+        })
+    
+    # Trier par urgence puis quantité
+    ordre_urgence = {'urgent': 0, 'bientot': 1, 'normal': 2}
+    suggestions.sort(key=lambda x: (ordre_urgence.get(x['urgence'], 3), -x['quantite_suggeree']))
+    print(f"DEBUG: {len(suggestions)} suggestions optimisées trouvées")
+    
+    return suggestions
+
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for viewing audit logs.
     Restricted to Admin users only.
     """
-    queryset = AuditLog.objects.all()
+    queryset = AuditLog.objects.all().order_by('-timestamp')
     serializer_class = AuditLogSerializer
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
@@ -2765,4 +2969,5 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_fields = ['action', 'model_name', 'user']
     search_fields = ['details', 'object_id', 'model_name']
     ordering_fields = ['timestamp']
+    ordering = ['-timestamp']  # Default ordering for pagination
 

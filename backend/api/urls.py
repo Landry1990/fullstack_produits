@@ -7,7 +7,8 @@ from .views import (
     MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
     StatsUGViewSet,
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
-    InvoiceConfigurationView
+    InvoiceConfigurationView,
+    generer_suggestions_commande
 )
 
 # Create a router and register our viewsets with it.
@@ -41,4 +42,5 @@ router.register(r'historique-transformation', HistoriqueTransformationViewSet, b
 urlpatterns = [
     path('', include(router.urls)),
     path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),
+    path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
 ]
