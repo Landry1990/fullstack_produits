@@ -483,17 +483,17 @@ class CommandeViewSet(viewsets.ModelViewSet):
             fournisseur = data['fournisseur']
             produits = data['produits']
             
-            # Vérifier s'il existe déjà une commande brouillon pour ce fournisseur
+            # Vérifier s'il existe déjà une commande en préparation pour ce fournisseur
             commande = Commande.objects.filter(
                 fournisseur=fournisseur, 
-                status=Commande.Status.BROUILLON
+                status=Commande.Status.EN_PREPARATION
             ).first()
             
             created = False
             if not commande:
                 commande = Commande.objects.create(
                     fournisseur=fournisseur,
-                    status=Commande.Status.BROUILLON
+                    status=Commande.Status.EN_PREPARATION
                 )
                 created = True
                 count_commandes += 1
