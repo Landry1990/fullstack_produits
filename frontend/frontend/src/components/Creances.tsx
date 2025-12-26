@@ -31,6 +31,16 @@ export default function Creances() {
   // Tri
   const [sortConfig, setSortConfig] = useState<{ key: keyof Creance | 'client_name', direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
 
+  // Notification System
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+
+  useEffect(() => {
+      if (notification) {
+          const timer = setTimeout(() => setNotification(null), 5000)
+          return () => clearTimeout(timer)
+      }
+  }, [notification])
+
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
@@ -127,11 +137,11 @@ export default function Creances() {
         
         setIsBulkModalOpen(false)
         setSelectedIds([])
-        alert('Règlement groupé effectué avec succès !')
         fetchCreances()
+        setNotification({ type: 'success', message: 'Règlement groupé effectué avec succès !' })
     } catch (err: any) {
         const errorMsg = err.response?.data?.detail || 'Erreur lors du règlement groupé'
-        alert(errorMsg)
+        setNotification({ type: 'error', message: errorMsg })
         console.error('Erreur:', err)
     }
   }
@@ -160,18 +170,18 @@ export default function Creances() {
       })
       
       setIsPaiementModalOpen(false)
-      alert('Paiement enregistré avec succès !')
       fetchCreances()
+      setNotification({ type: 'success', message: 'Paiement enregistré avec succès !' })
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || 'Erreur lors de l\'enregistrement du paiement'
-      alert(errorMsg)
+      setNotification({ type: 'error', message: errorMsg })
       console.error('Erreur:', err)
     }
   }
 
   const handleImprimerReleve = async () => {
     if (!selectedClient) {
-      alert('Veuillez sélectionner un client')
+      setNotification({ type: 'error', message: 'Veuillez sélectionner un client' })
       return
     }
 
@@ -210,35 +220,35 @@ export default function Creances() {
               </div>
             ` : ''}
 
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 10px;">
               <thead>
                 <tr style="background-color: #f0f0f0;">
-                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Date</th>
-                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">N° Facture</th>
-                  <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Ayant Droit</th>
-                  <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Montant Total</th>
-                  <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Payé</th>
-                  <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Reste</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">Date</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">N° Facture</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: left;">Ayant Droit</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">Montant Total</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">Payé</th>
+                  <th style="border: 1px solid #ddd; padding: 4px; text-align: right;">Reste</th>
                 </tr>
               </thead>
               <tbody>
                 ${data.creances.map((c: any) => `
                   <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${new Date(c.date).toLocaleDateString('fr-FR')}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${c.numero_facture || '-'}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px;">${c.ayant_droit || '-'}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.round(parseFloat(c.montant_total))} F</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.round(parseFloat(c.montant_paye))} F</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.round(parseFloat(c.reste_a_payer))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px;">${new Date(c.date).toLocaleDateString('fr-FR')}</td>
+                    <td style="border: 1px solid #ddd; padding: 4px;">${c.numero_facture || '-'}</td>
+                    <td style="border: 1px solid #ddd; padding: 4px;">${c.ayant_droit || '-'}</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(c.montant_total))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(c.montant_paye))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(c.reste_a_payer))} F</td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
                 <tr style="background-color: #f0f0f0; font-weight: bold;">
-                  <td colspan="3" style="border: 1px solid #ddd; padding: 8px; text-align: right;">TOTAUX:</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.round(parseFloat(data.totaux.total_factures))} F</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.round(parseFloat(data.totaux.total_paye))} F</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.round(parseFloat(data.totaux.total_reste))} F</td>
+                  <td colspan="3" style="border: 1px solid #ddd; padding: 4px; text-align: right;">TOTAUX:</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(data.totaux.total_factures))} F</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(data.totaux.total_paye))} F</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(data.totaux.total_reste))} F</td>
                 </tr>
               </tfoot>
             </table>
@@ -270,7 +280,7 @@ export default function Creances() {
       }
     } catch (err) {
       console.error('Erreur impression relevé:', err)
-      alert('Erreur lors de la génération du relevé')
+      setNotification({ type: 'error', message: 'Erreur lors de la génération du relevé' })
     }
   }
 
@@ -424,6 +434,15 @@ export default function Creances() {
         </div>
       </div>
 
+      {/* Notification Toast */}
+      {notification && (
+        <div className="toast toast-top toast-center z-50">
+          <div className={`alert ${notification.type === 'success' ? 'alert-success' : 'alert-error'} shadow-lg`}>
+            <span>{notification.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* Filtres */}
       <div className="px-6 py-4 bg-base-50 border-b border-base-200 shrink-0">
         <div className="flex flex-wrap items-end gap-3">
@@ -574,15 +593,15 @@ export default function Creances() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                <table className="table table-zebra w-full">
+                <table className="table table-zebra table-xs w-full">
                     <thead>
                     <tr className="bg-base-200">
-                        <th className="text-xs uppercase">Client</th>
-                        <th className="text-xs uppercase text-right">Nb Factures</th>
-                        <th className="text-xs uppercase text-right">Montant Total</th>
-                        <th className="text-xs uppercase text-right">Déjà Payé</th>
-                        <th className="text-xs uppercase text-right">Reste à Payer</th>
-                        <th className="text-xs uppercase text-center">Actions</th>
+                        <th className="uppercase">Client</th>
+                        <th className="uppercase text-right">Nb Factures</th>
+                        <th className="uppercase text-right">Montant Total</th>
+                        <th className="uppercase text-right">Déjà Payé</th>
+                        <th className="uppercase text-right">Reste à Payer</th>
+                        <th className="uppercase text-center">Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -856,6 +875,19 @@ export default function Creances() {
             </div>
           )}
 
+
+          {/* Modal Bulk Content - Show Total */}
+          {isBulkModalOpen && (
+              <div className="alert alert-info py-2 mb-4">
+                  <span className="text-sm font-semibold">
+                      Montant Total à Régler : {Math.round(selectedIds.reduce((sum, id) => {
+                          const f = creances.find(c => c.id === id);
+                          return sum + (f ? parseFloat(f.reste_a_payer) : 0);
+                      }, 0))} F
+                  </span>
+              </div>
+          )}
+          
           <div className="modal-action">
             <button className="btn" onClick={() => setIsPaiementModalOpen(false)}>Annuler</button>
             <button className="btn btn-primary" onClick={handleAjouterPaiement}>Enregistrer le Paiement</button>
@@ -866,6 +898,7 @@ export default function Creances() {
       {/* Modal Détails Paiements */}
       <dialog className={`modal ${isDetailsModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-2xl">
+
           <h3 className="font-bold text-lg mb-4">👁️ Détails des Paiements</h3>
           
           {selectedCreance && (

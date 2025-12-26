@@ -6,7 +6,8 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from django.db import transaction
-from django.db.models import F, Sum, Count, Q
+from django.db.models import F, Sum, Count, Q, Case, When, Value, DecimalField, OuterRef, Subquery
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse
 import io
 from reportlab.pdfgen import canvas
@@ -15,20 +16,23 @@ from reportlab.lib import colors
 from reportlab.lib.units import inch, cm
 from reportlab.platypus import BaseDocTemplate, Frame, Paragraph, PageBreak, PageTemplate, Table, TableStyle, SimpleDocTemplate, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
+from reportlab.lib.enums import TA_CENTER
+from reportlab.graphics.barcode import code128
+from reportlab.graphics.shapes import Drawing
 from datetime import datetime, timedelta
 from django.utils import timezone
-from django.core.cache import cache
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, Sum, Subquery, OuterRef, Value, DecimalField, Case, When
+from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from .filters import ProduitFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement,
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog, Promis
+    InvoiceSettings, AuditLog, Promis, LoyaltySetting
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
@@ -39,7 +43,7 @@ from .serializers import (
     InventaireSerializer, LigneInventaireSerializer, CreanceSerializer,
     ClotureCaisseSerializer, FactureProduitAllocationSerializer, MouvementCaisseSerializer,
     UserSerializer, AyantDroitSerializer, LigneAvoirSerializer, CaisseSerializer,
-    RelationTransformationSerializer
+    RelationTransformationSerializer, LoyaltySettingSerializer
 )
 from decimal import Decimal
 
@@ -552,7 +556,42 @@ class FournisseurViewSet(viewsets.ModelViewSet):
 
 class ClientViewSet(viewsets.ModelViewSet):
     """API endpoint for clients."""
-    queryset = Client.objects.all().order_by('name')
+    # Subquery pour sommer les paiements valides par facture (évite l'error 'aggregate of aggregate')
+    # On importe Caisse dynamiquement ou on suppose qu'il est disponible via le modèle
+    # Pour éviter les imports circulaires ou complexes, on utilise le string reference si possible ou import local?
+    # ViewSet a accès aux modèles via imports en haut.
+    
+    queryset = Client.objects.annotate(
+        current_debt_annotated=Subquery(
+            Facture.objects.filter(
+                client=OuterRef('pk'), 
+                status='VAL'
+            ).annotate(
+                # 1. Calcul des paiements via Subquery pour obtenir un SCALAIRE
+                paid_amount=Coalesce(
+                    Subquery(
+                        Caisse.objects.filter(
+                            facture=OuterRef('pk'),
+                            statut='completee'
+                        ).exclude(
+                            mode_paiement='en_compte'
+                        ).values('facture').annotate(
+                            total_paid=Sum('montant')
+                        ).values('total_paid')
+                    ),
+                    Value(0, output_field=DecimalField())
+                ),
+                # 2. Maintenant 'paid_amount' est une valeur, donc 'remainder' est une expression simple
+                remainder=F('total_ttc') - F('paid_amount')
+            ).filter(
+                remainder__gt=0 
+            ).values('client').annotate(
+                # 3. On peut enfin sommer les remainders
+                total_debt=Sum('remainder')
+            ).values('total_debt')[:1],
+            output_field=DecimalField()
+        )
+    ).order_by('name')
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
 
@@ -619,7 +658,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
 
 class CommandeViewSet(viewsets.ModelViewSet):
     """API endpoint for commandes."""
-    queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits').all().order_by('-date')
+    queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits__produit', 'produits__commande__fournisseur').order_by('-date')
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
 
@@ -660,7 +699,7 @@ class CommandeViewSet(viewsets.ModelViewSet):
                 StockLot.objects.create(
                     produit=produit,
                     commande_produit=item,
-                    fournisseur=commande.fournisseur,
+                    fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
                     quantity_initial=total_qty,
                     quantity_paid=quantity_paid,
                     quantity_free=quantity_free,
@@ -793,6 +832,290 @@ class CommandeViewSet(viewsets.ModelViewSet):
         buffer.close()
         response.write(pdf)
 
+        return response
+
+    @action(detail=True, methods=['get'])
+    def imprimer_etiquettes(self, request, pk=None):
+        """
+        Génère un PDF d'étiquettes pour les produits d'une commande.
+        Format: 40x20mm ou 30x15mm (paramètre 'format' dans query)
+        Contenu: nom produit, lot, fournisseur, code-barres (CIP), date d'entrée, prix de vente
+        """
+        commande = self.get_object()
+        
+        # Paramètres (renamed from 'format' to 'label_format' to avoid DRF conflict)
+        label_format = request.query_params.get('label_format', '40x20')  # '40x20' ou '30x15'
+        
+        # Dimensions en mm convertis en points (1mm = 2.83465 points)
+        mm_to_points = 2.83465
+        if label_format == '30x15':
+            label_width = 30 * mm_to_points  # ~85 points
+            label_height = 15 * mm_to_points  # ~42 points
+        else:  # 40x20 par défaut
+            label_width = 40 * mm_to_points  # ~113 points
+            label_height = 20 * mm_to_points  # ~57 points
+        
+        buffer = io.BytesIO()
+        
+        # Créer le PDF avec une page par étiquette (format rouleau)
+        # Liste pour stocker toutes les étiquettes
+        labels_data = []
+        
+        # Récupérer tous les produits de la commande
+        for item in commande.produits.all():
+            produit = item.produit
+            quantity = item.quantity + item.unites_gratuites  # Total reçu
+            
+            # Récupérer le lot de la commande (priorité) ou générer un par défaut
+            lot_info = item.lot if item.lot else f"LOT-{commande.id}-{produit.id}"
+            date_entree = commande.date.strftime('%d/%m/%Y') if commande.date else ""
+            fournisseur_name = commande.fournisseur.name if commande.fournisseur else ""
+            invoice_ref = commande.numero_facture if commande.numero_facture else ""
+            
+            # Déterminer quel CIP utiliser pour le code-barres
+            barcode_value = produit.cip1 or produit.cip2 or produit.cip3 or str(produit.id).zfill(8)
+            
+            # Utiliser le prix de vente au moment de la commande (item.selling_price)
+            # Si non disponible, utiliser le prix actuel du produit
+            selling_price = float(item.selling_price) if item.selling_price else float(produit.selling_price)
+            
+            # Créer une étiquette pour chaque unité
+            for _ in range(quantity):
+                labels_data.append({
+                    'product_name': produit.name,
+                    'lot': lot_info,
+                    'fournisseur': fournisseur_name,
+                    'barcode': barcode_value,
+                    'date_entree': date_entree,
+                    'selling_price': selling_price,
+                    'invoice_ref': invoice_ref
+                })
+        
+        # Mode debug pour tester les positions (optionnel)
+        debug_mode = request.data.get('debug_mode', False)
+        
+        # Créer le PDF avec SimpleDocTemplate - marges NULLES
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=(label_width, label_height),
+            topMargin=0,  # Pas de marge
+            bottomMargin=0,
+            leftMargin=0,
+            rightMargin=0
+        )
+        
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Style personnalisé ultra-compact
+        style_small = ParagraphStyle(
+            'SmallLeft',
+            parent=styles['Normal'],
+            fontSize=5 if label_format == '30x15' else 6,
+            alignment=0,
+            leading=5.5 if label_format == '30x15' else 6.5,
+            spaceAfter=0,
+            spaceBefore=0,
+            leftIndent=0,
+            rightIndent=1
+        )
+        
+        style_tiny = ParagraphStyle(
+            'TinyLeft',
+            parent=styles['Normal'],
+            fontSize=4 if label_format == '30x15' else 5,
+            alignment=0,
+            leading=4.5 if label_format == '30x15' else 5.5,
+            spaceAfter=0,
+            spaceBefore=0,
+            leftIndent=1,
+            rightIndent=1
+        )
+        
+        # Générer chaque étiquette
+        for label_data in labels_data:
+            # Mode debug : dessiner bordure d'étiquette
+            if debug_mode:
+                from reportlab.platypus import Flowable
+                from reportlab.lib.colors import red, blue, green
+                
+                class DebugBorder(Flowable):
+                    def __init__(self, width, height):
+                        Flowable.__init__(self)
+                        self.width = width
+                        self.height = 0.1
+                    
+                    def draw(self):
+                        self.canv.setStrokeColor(red)
+                        self.canv.setLineWidth(0.5)
+                        self.canv.rect(0, 0, label_width, label_height)
+                        # Grille
+                        self.canv.setStrokeColor(blue)
+                        self.canv.setLineWidth(0.2)
+                        for i in range(0, int(label_height), 10):
+                            self.canv.line(0, i, label_width, i)
+                
+                story.append(DebugBorder(label_width, label_height))
+            
+            # Nom du produit (tronqué pour tenir sur UNE SEULE ligne)
+            max_chars = 20 if label_format == '30x15' else 30
+            product_name = label_data['product_name']
+            if len(product_name) > max_chars:
+                product_name = product_name[:max_chars-3] + '...'
+            
+            story.append(Paragraph(f"<b>{product_name}</b>", style_small))
+            
+            # Espace plus grand AVANT le code-barres (1.9)
+            from reportlab.platypus import Spacer, Table, TableStyle
+            story.append(Spacer(1, 1.9))
+            
+            # Code-barres - TRÈS compact
+            if label_data['barcode']:
+                try:
+                    from reportlab.platypus import Flowable
+                    
+                    class BarcodeFlowable(Flowable):
+                        def __init__(self, barcode_value, barcode_height_mm, barcode_width_factor, debug=False):
+                            Flowable.__init__(self)
+                            self.barcode_value = barcode_value
+                            self.barcode_height_mm = barcode_height_mm
+                            self.barcode_width_factor = barcode_width_factor
+                            self.debug = debug
+                            self.width = label_width - 2
+                            self.height = barcode_height_mm * mm_to_points
+                        
+                        def draw(self):
+                            barcode_obj = code128.Code128(
+                                str(self.barcode_value),
+                                barHeight=self.barcode_height_mm * mm_to_points,
+                                barWidth=self.barcode_width_factor
+                            )
+                            barcode_obj.drawOn(self.canv, 0, 0)
+                            
+                            # Debug : bordure autour du code-barres
+                            if self.debug:
+                                from reportlab.lib.colors import green
+                                self.canv.setStrokeColor(green)
+                                self.canv.setLineWidth(0.5)
+                                self.canv.rect(0, 0, self.width, self.height)
+                    
+                    # Barcode ultra-compact
+                    barcode_height_mm = 4 if label_format == '30x15' else 5
+                    barcode_width_factor = 0.5 if label_format == '30x15' else 0.7
+                    
+                    barcode_flowable = BarcodeFlowable(
+                        label_data['barcode'],
+                        barcode_height_mm,
+                        barcode_width_factor,
+                        debug=debug_mode
+                    )
+                    story.append(barcode_flowable)
+                    
+                except Exception as e:
+                    import traceback
+                    print(f"Erreur génération code-barres: {e}")
+                    print(traceback.format_exc())
+                    story.append(Paragraph(f"<b>{label_data['barcode']}</b>", style_tiny))
+            
+            # Espace plus grand après le code-barres
+            story.append(Spacer(1, 1.9))
+            
+            # Informations sur 2 lignes avec Table pour alignement
+            
+            # Styles spécifiques pour la Table
+            style_price = ParagraphStyle(
+                'PriceRight',
+                parent=styles['Normal'],
+                fontSize=8 if label_format == '30x15' else 9,  # Police plus grosse
+                alignment=2,  # Alignement DROITE
+                leading=8 if label_format == '30x15' else 9,
+                spaceAfter=0,
+                spaceBefore=0,
+                rightIndent=1
+            )
+            
+            style_center = ParagraphStyle(
+                'CenterTiny',
+                parent=style_tiny,
+                alignment=1,  # Alignement CENTRE
+            )
+            
+            # Ligne 1: Lot (Gauche) + Date (Milieu) + Prix (Droite)
+            lot_text = f"L:{label_data['lot'][:8]}" if label_data['lot'] else ""
+            
+            # La date est déjà formatée en DD/MM/YYYY lors de la préparation des données
+            date_text = str(label_data['date_entree']) if label_data['date_entree'] else ""
+            
+            price_text = f"<b>{label_data['selling_price']:.0f}F</b>"
+            
+            # Table 3 colonnes : 30% Lot, 35% Date, 35% Prix
+            data = [[
+                Paragraph(lot_text, style_tiny),
+                Paragraph(date_text, style_center),
+                Paragraph(price_text, style_price)
+            ]]
+            
+            # Ajuster largeurs pour 3 colonnes (plus de place pour la date)
+            col1 = label_width * 0.30
+            col2 = label_width * 0.35
+            col3 = label_width * 0.35
+            
+            t = Table(data, colWidths=[col1, col2, col3])
+            t.setStyle(TableStyle([
+                ('LEFTPADDING', (0,0), (-1,-1), 0),
+                ('RIGHTPADDING', (0,0), (-1,-1), 0),
+                ('TOPPADDING', (0,0), (-1,-1), 0),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+                ('ALIGN', (0,0), (0,0), 'LEFT'),   # Lot à gauche
+                ('ALIGN', (1,0), (1,0), 'CENTER'), # Date au milieu
+                ('ALIGN', (2,0), (2,0), 'RIGHT'),  # Prix à droite
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ]))
+            story.append(t)
+            
+            # Espace verticla avant la ligne fournisseur (1.9mm)
+            story.append(Spacer(1, 1.9 * mm_to_points))
+            
+            # Ligne 2: Fournisseur (Gauche) + Facture (Droite)
+            if label_data['fournisseur'] or label_data.get('invoice_ref'):
+                # Tronquer Fournisseur si trop long
+                fourn_text = label_data['fournisseur'][:15]
+                inv_text = f"Fact:{label_data['invoice_ref'][:8]}" if label_data.get('invoice_ref') else ""
+                
+                # Style aligné droite pour facture (définition AVANT usage)
+                style_tiny_right = ParagraphStyle(
+                    'TinyRight',
+                    parent=style_tiny,
+                    alignment=2,  # Alignement DROITE
+                )
+                
+                # Table 2 colonnes : 60% Fournisseur, 40% Facture
+                data_bottom = [[
+                    Paragraph(fourn_text, style_tiny),
+                    Paragraph(inv_text, style_tiny_right)
+                ]]
+                
+                t_bottom = Table(data_bottom, colWidths=[label_width*0.55, label_width*0.45])
+                t_bottom.setStyle(TableStyle([
+                    ('LEFTPADDING', (0,0), (-1,-1), 0),
+                    ('RIGHTPADDING', (0,0), (-1,-1), 0),
+                    ('TOPPADDING', (0,0), (-1,-1), 0),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 0),
+                    ('ALIGN', (0,0), (0,0), 'LEFT'),   # Fournisseur à gauche
+                    ('ALIGN', (1,0), (1,0), 'RIGHT'),  # Facture à droite
+                    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ]))
+                story.append(t_bottom)
+            
+            # Saut de page pour la prochaine étiquette
+            story.append(PageBreak())
+        
+        # Construire le PDF
+        doc.build(story)
+        
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="etiquettes_commande_{commande.id}.pdf"'
         return response
 
 class CommandeProduitViewSet(viewsets.ModelViewSet):
@@ -969,6 +1292,58 @@ class FactureViewSet(viewsets.ModelViewSet):
                         lot.save()
                         
                         quantity_to_allocate -= quantity_from_lot
+
+        # --- GESTION FIDELITE ---
+        # Uniquement pour les PARTICULIERS (pas les PROS)
+        if facture.client and facture.client.client_type != 'PROFESSIONNEL' and facture.client.is_loyalty_member:
+            loyalty_conf = LoyaltySetting.objects.first()
+            if loyalty_conf:
+                client = facture.client
+                save_client = False
+                
+                # A. Utilisation de la remise en attente
+                use_pending = request.data.get('use_pending_discount', False)
+                # Le frontend envoie le booléen, parfois sous forme de string "true" dans certains frameworks, mais ici DRF gère le JSON
+                # Par sécurité :
+                if str(use_pending).lower() == 'true':
+                    use_pending = True
+                
+                if use_pending and client.pending_discount > 0:
+                    client.pending_discount = 0
+                    save_client = True
+                    
+                # B. Utilisation de points manuelle
+                try:
+                    points_to_use = int(request.data.get('points_to_use', 0))
+                except (ValueError, TypeError):
+                    points_to_use = 0
+                    
+                if points_to_use > 0:
+                    if client.points_fidelite >= points_to_use:
+                        client.points_fidelite -= points_to_use
+                        facture.points_fidelite_utilises = points_to_use
+                        valeur_monetaire = points_to_use * loyalty_conf.point_value
+                        facture.montant_fidelite = valeur_monetaire
+                        save_client = True
+
+                # C. Gain de points
+                montant_base = facture.total_ttc
+                if montant_base > 0 and loyalty_conf.amount_per_point > 0:
+                    points_gagnes = int(montant_base // loyalty_conf.amount_per_point)
+                    facture.points_fidelite_gagnes = points_gagnes
+                    client.points_fidelite += points_gagnes
+                    save_client = True
+                
+                # D. Déclenchement Récompense Auto
+                if loyalty_conf.auto_reward_threshold > 0:
+                    if client.points_fidelite >= loyalty_conf.auto_reward_threshold:
+                        client.points_fidelite -= loyalty_conf.auto_reward_threshold
+                        if loyalty_conf.auto_reward_percent > client.pending_discount:
+                            client.pending_discount = loyalty_conf.auto_reward_percent
+                        save_client = True
+                
+                if save_client:
+                    client.save()
 
         # Changer le statut de la facture et générer un numéro si besoin
         facture.status = Facture.Status.VALIDEE
@@ -1588,13 +1963,98 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
             
+        # 1. Détails Ventes (Totaux par mode)
+        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        
+        # Total Ventes (Calculé en Python pour économiser une requête)
+        total_ventes = Decimal(sum(details.values()))
+
+        # 2. Mouvements de caisse (Entrées/Sorties) - Optimisé en 1 requête
+        mouvements = MouvementCaisse.objects.all()
+        if start_date:
+            mouvements = mouvements.filter(date__gte=start_date)
+        if end_date:
+            mouvements = mouvements.filter(date__lte=end_date)
+            
+        moves_aggregated = mouvements.aggregate(
+            entrees=Coalesce(Sum('montant', filter=Q(type='ENTREE')), Value(0, output_field=DecimalField())),
+            sorties=Coalesce(Sum('montant', filter=Q(type='SORTIE')), Value(0, output_field=DecimalField()))
+        )
+        total_entrees = moves_aggregated['entrees']
+        total_sorties = moves_aggregated['sorties']
+        
+        # Total Théorique Global
+        total_theorique = total_ventes + total_entrees - total_sorties
+        
+        return Response({
+            'start_date': start_date,
+            'end_date': end_date,
+            'total_theorique': total_theorique,
+            'total_ventes': total_ventes,
+            'total_entrees': total_entrees,
+            'total_sorties': total_sorties,
+            'details': details
+        })
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def cloturer(self, request):
+        """
+        Effectue la clôture de caisse.
+        Body: { 'montant_reel': 150000 }
+        """
+        montant_reel = request.data.get('montant_reel')
+        if montant_reel is None:
+            return Response({'detail': 'Le montant réel est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            montant_reel = Decimal(str(montant_reel))
+        except:
+            return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        # Paramètres optionnels de période
+        date_debut = request.data.get('date_debut')
+        date_fin = request.data.get('date_fin')
+        
+        start_date = None
+        end_date = None
+        
+        if date_debut:
+            try:
+                start_date = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+                
+        if date_fin:
+            try:
+                if len(date_fin) == 10:
+                    end_date = datetime.fromisoformat(f"{date_fin}T23:59:59")
+                else:
+                    end_date = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+
+        # Calculer le théorique
+        if not start_date:
+            last_cloture = ClotureCaisse.objects.order_by('-date').first()
+            start_date = last_cloture.date if last_cloture else None
+        
+        # Transactions Ventes
+        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
+        if start_date:
+            transactions = transactions.filter(date_paiement__gte=start_date)
+        if end_date:
+            transactions = transactions.filter(date_paiement__lte=end_date)
+            
         total_ventes = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
-        # Totaux par mode
+        # Détails Ventes
         modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
-        details = {item['mode_paiement']: item['total'] for item in modes}
-
-        # 2. Mouvements de caisse (Entrées/Sorties)
+        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        
+        # Mouvements
         mouvements = MouvementCaisse.objects.all()
         if start_date:
             mouvements = mouvements.filter(date__gte=start_date)
@@ -1603,6 +2063,104 @@ class CaisseViewSet(viewsets.ModelViewSet):
             
         total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        total_theorique = total_ventes + total_entrees - total_sorties
+        ecart = montant_reel - total_theorique
+        
+        cloture = ClotureCaisse.objects.create(
+            montant_reel=montant_reel,
+            montant_theorique=total_theorique,
+            ecart_caisse=ecart,
+            user=request.user
+        )
+        
+        return Response({
+            'status': 'success',
+            'cloture_id': cloture.id,
+            'ecart': ecart
+        })
+
+class LoyaltySettingViewSet(viewsets.ModelViewSet):
+    """
+    Gestion de la configuration fidélité (Singleton).
+    """
+    queryset = LoyaltySetting.objects.all()
+    serializer_class = LoyaltySettingSerializer
+    permission_classes = [IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        setting, _ = LoyaltySetting.objects.get_or_create(pk=1)
+        serializer = self.get_serializer(setting)
+        return Response(serializer.data)
+
+    def create(self, request, *args, **kwargs):
+        setting, _ = LoyaltySetting.objects.get_or_create(pk=1)
+        serializer = self.get_serializer(setting, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def get_totals(self, request):
+        """
+        Retourne les totaux.
+        Si date_debut/date_fin fournis, utilise cette période.
+        Sinon, calcule depuis la dernière clôture.
+        """
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        start_date = None
+        end_date = None
+        
+        if date_debut:
+            try:
+                start_date = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+                
+        if date_fin:
+            try:
+                # Si c'est juste une date YYYY-MM-DD, ajouter 23:59:59
+                if len(date_fin) == 10:
+                    end_date = datetime.fromisoformat(f"{date_fin}T23:59:59")
+                else:
+                    end_date = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+
+        if not start_date:
+            last_cloture = ClotureCaisse.objects.order_by('-date').first()
+            start_date = last_cloture.date if last_cloture else None
+        
+        # 1. Transactions de vente (Caisse)
+        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
+        
+        if start_date:
+            transactions = transactions.filter(date_paiement__gte=start_date)
+        if end_date:
+            transactions = transactions.filter(date_paiement__lte=end_date)
+            
+        # 1. Détails Ventes (Totaux par mode)
+        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        details = {item['mode_paiement']: float(item['total']) for item in modes}
+        
+        # Total Ventes (Calculé en Python pour économiser une requête)
+        total_ventes = Decimal(sum(details.values()))
+
+        # 2. Mouvements de caisse (Entrées/Sorties) - Optimisé en 1 requête
+        mouvements = MouvementCaisse.objects.all()
+        if start_date:
+            mouvements = mouvements.filter(date__gte=start_date)
+        if end_date:
+            mouvements = mouvements.filter(date__lte=end_date)
+            
+        moves_aggregated = mouvements.aggregate(
+            entrees=Coalesce(Sum('montant', filter=Q(type='ENTREE')), Value(0, output_field=DecimalField())),
+            sorties=Coalesce(Sum('montant', filter=Q(type='SORTIE')), Value(0, output_field=DecimalField()))
+        )
+        total_entrees = moves_aggregated['entrees']
+        total_sorties = moves_aggregated['sorties']
         
         # Total Théorique Global
         total_theorique = total_ventes + total_entrees - total_sorties
@@ -1775,37 +2333,85 @@ class DashboardViewSet(viewsets.ViewSet):
         today = timezone.now().date()
         yesterday = today - timedelta(days=1)
         
-        # Chiffre d'affaires du jour (Total TTC des factures payées ou validées aujourd'hui)
-        factures_today = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related('produits')
+        # --- Préparation des sous-requêtes pour éviter les produits cartésiens ---
         
-        revenue_today = sum(f.total_ttc for f in factures_today)
+        # 1. Sous-requête pour le Total HT d'une facture (somme des produits)
+        produits_subquery = FactureProduit.objects.filter(
+            facture=OuterRef('pk')
+        ).values('facture').annotate(
+            total_ht_calc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
+        ).values('total_ht_calc')
+
+        # 2. Sous-requête pour le Total Réglé (paiements validés hors 'en_compte')
+        paiements_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'),
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture').annotate(
+            total_paye_calc=Sum('montant')
+        ).values('total_paye_calc')
+
+        # Expression pour le Total TTC calculé: (Total HT - Remise) * (1 + TVA/100)
+        # Note: On cast 100 en Decimal pour éviter les calculs float imprécis
+        # Note 2: COALESCE(..., 0) est crucial si pas de produits/paiements
         
-        factures_yesterday = Facture.objects.filter(
-            date__date=yesterday,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related('produits')
+        from decimal import Decimal
         
-        revenue_yesterday = sum(f.total_ttc for f in factures_yesterday)
+        factures_annotated = Facture.objects.annotate(
+            annotated_total_ht=Coalesce(Subquery(produits_subquery), Value(Decimal('0.00'))),
+            annotated_total_paye=Coalesce(Subquery(paiements_subquery), Value(Decimal('0.00')))
+        ).annotate(
+            annotated_total_ttc=(
+                F('annotated_total_ht') - F('remise')
+            ) * (Value(Decimal('1.00')) + (F('tva') / Value(Decimal('100.00'))))
+        )
+
         
-        # Calculer la variation en pourcentage
+        # --- 1. Chiffre d'affaires & Ventes ---
+        
+        daily_stats = factures_annotated.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__date__in=[today, yesterday]
+        ).values('date__date').annotate(
+            revenue=Sum('annotated_total_ttc'),
+            count=Count('id'),
+            discount=Sum('remise')
+        )
+        
+        stats_dict = {
+            item['date__date']: {'revenue': item['revenue'], 'count': item['count'], 'discount': item['discount']} 
+            for item in daily_stats
+        }
+
+        # Stats Aujourd'hui
+        revenue_today = stats_dict.get(today, {}).get('revenue', Decimal('0.00')) or Decimal('0.00')
+        sales_count_today = stats_dict.get(today, {}).get('count', 0)
+        discount_today = stats_dict.get(today, {}).get('discount', Decimal('0.00')) or Decimal('0.00')
+        
+        # Stats Hier
+        revenue_yesterday = stats_dict.get(yesterday, {}).get('revenue', Decimal('0.00')) or Decimal('0.00')
+        sales_count_yesterday = stats_dict.get(yesterday, {}).get('count', 0)
+        discount_yesterday = stats_dict.get(yesterday, {}).get('discount', Decimal('0.00')) or Decimal('0.00')
+        
+        # Variations
         if revenue_yesterday > 0:
             revenue_change = ((revenue_today - revenue_yesterday) / revenue_yesterday) * 100
         else:
             revenue_change = 100 if revenue_today > 0 else 0
             
-        # Ventes du jour (Nombre de factures)
-        sales_count_today = factures_today.count()
-        sales_count_yesterday = factures_yesterday.count()
-        
         if sales_count_yesterday > 0:
             sales_change = ((sales_count_today - sales_count_yesterday) / sales_count_yesterday) * 100
         else:
             sales_change = 100 if sales_count_today > 0 else 0
             
-        # Nouveaux Clients
+        if discount_yesterday > 0:
+            discount_change = ((discount_today - discount_yesterday) / discount_yesterday) * 100
+        else:
+            discount_change = 100 if discount_today > 0 else 0
+
+
+        # --- 2. Nouveaux Clients ---
         new_clients_today = Client.objects.filter(created_at__date=today).count()
         new_clients_yesterday = Client.objects.filter(created_at__date=yesterday).count()
         
@@ -1813,34 +2419,32 @@ class DashboardViewSet(viewsets.ViewSet):
             clients_change = ((new_clients_today - new_clients_yesterday) / new_clients_yesterday) * 100
         else:
             clients_change = 100 if new_clients_today > 0 else 0
-            
 
-            
-        # Alertes Stock (Produits avec stock <= 5)
+
+        # --- 3. Alertes Stock ---
         low_stock_count = Produit.objects.filter(stock__lte=5).count()
-        # Pour la variation, c'est plus compliqué sans historique de stock, on met 0 pour l'instant
-        stock_change = 0
-        
-        # Créances Clients (Total des dettes)
-        # On ne prend que les factures ayant un paiement 'en_compte' (crédit accordé)
-        # et qui sont validées OU payées (certaines anciennes peuvent être marquées payées tout en ayant du crédit)
-        factures_validees = Facture.objects.filter(
+        stock_change = 0 
+
+
+        # --- 4. Créances Clients ---
+        # Calcul du reste à payer sur la base annotée
+        receivables_aggs = factures_annotated.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             paiements__mode_paiement='en_compte'
-        ).distinct().prefetch_related('produits', 'paiements')
-        
-        total_receivables = Decimal('0.00')
-        receivables_count = 0
-        
-        for f in factures_validees:
-            # Calculer le montant déjà payé (hors en_compte)
-            paiements_reels = sum(p.montant for p in f.paiements.all() if p.statut == 'completee' and p.mode_paiement != 'en_compte')
-            reste = f.total_ttc - paiements_reels
-            if reste > 0:
-                total_receivables += reste
-                receivables_count += 1
-        
-        # Valorisation du stock (Prix d'achat * Quantité)
+        ).annotate(
+            reste_a_payer=F('annotated_total_ttc') - F('annotated_total_paye')
+        ).filter(
+            reste_a_payer__gt=Decimal('0.1') # Tolérance centimes
+        ).aggregate(
+            total_receivables=Sum('reste_a_payer'),
+            receivables_count=Count('id')
+        )
+
+        total_receivables = receivables_aggs['total_receivables'] or Decimal('0.00')
+        receivables_count = receivables_aggs['receivables_count'] or 0
+
+
+        # --- 5. Valorisation du stock ---
         stock_valuation = Produit.objects.aggregate(
             total=Sum(F('stock') * F('cost_price'), output_field=DecimalField())
         )['total'] or 0
@@ -1860,7 +2464,7 @@ class DashboardViewSet(viewsets.ViewSet):
             },
             'low_stock': {
                 'value': low_stock_count,
-                'change': stock_change
+                'change': 0
             },
             'receivables': {
                 'value': total_receivables,
@@ -1869,14 +2473,14 @@ class DashboardViewSet(viewsets.ViewSet):
             'stock_value': {
                 'value': stock_valuation,
                 'change': 0
+            },
+            'discount': {
+                'value': discount_today,
+                'change': round(discount_change, 1)
             }
         }
-        
-        # Cache for 15 minutes (900 seconds)
-        # Note: Invalidated by signals on Facture/Caisse/Client/Produit save
-        cache.set('dashboard_stats', data, timeout=900)
-        
         return Response(data)
+
 
     @action(detail=False, methods=['get'])
     def recent_transactions(self, request):
@@ -1946,6 +2550,32 @@ class DashboardViewSet(viewsets.ViewSet):
                 'stock': product.stock
             })
             
+        return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def clients_depassement(self, request):
+        """
+        Returns clients who have exceeded their credit limit (plafond).
+        """
+        # Get all clients with plafond > 0
+        clients_with_plafond = Client.objects.filter(plafond__gt=0)
+        
+        data = []
+        for client in clients_with_plafond:
+            debt = client.current_debt  # Uses the property which handles annotation
+            if debt > client.plafond:
+                excess = debt - client.plafond
+                data.append({
+                    'id': client.id,
+                    'name': client.name,
+                    'plafond': client.plafond,
+                    'dette': debt,
+                    'depassement': excess
+                })
+        
+        # Sort by excess amount descending
+        data.sort(key=lambda x: x['depassement'], reverse=True)
+        
         return Response(data)
 
 
@@ -2372,15 +3002,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'total_amount': str(total_paid_bulk)
         })
 
-            
-            # Check for update status logic (usually handled by signal, but explicit check doesn't hurt)
-            # The signal update_facture_status_on_payment handles status update to PAYEE
 
-        return Response({
-            'detail': f'{len(updated_factures)} factures réglées avec succès.',
-            'total_paid': str(total_paid),
-            'updated_ids': updated_factures
-        })
 
 class InventaireViewSet(viewsets.ModelViewSet):
     queryset = Inventaire.objects.all().order_by('-date')

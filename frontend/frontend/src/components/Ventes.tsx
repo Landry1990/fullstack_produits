@@ -509,7 +509,7 @@ export default function Ventes() {
       {/* Liste des factures */}
       <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table table-zebra w-full">
+          <table className="table table-zebra w-full table-xs">
             <thead className="bg-base-200/50 text-base-content/70">
               <tr>
                 <th>N° Facture</th>
@@ -517,6 +517,7 @@ export default function Ventes() {
                 <th>Date</th>
                 <th>Statut</th>
                 {filterStatus === 'cancelled' && <th>Motif Annulation</th>}
+                <th className="text-right">Remise</th>
                 <th className="text-right">Montant TTC</th>
                 <th className="text-center">Actions</th>
               </tr>
@@ -563,6 +564,22 @@ export default function Ventes() {
                         {facture.notes ? facture.notes.split('\n').pop()?.replace(/.*Motif: /, '') : '-'}
                       </td>
                     )}
+                    <td className="text-right">
+                      {Number(facture.remise) > 0 ? (
+                        <div className="flex items-center justify-end gap-1">
+                          <span className="text-error font-medium">
+                            -{Math.round(Number(facture.remise)).toLocaleString('fr-FR')} F
+                          </span>
+                          {facture.is_remise_auto && (
+                            <span className="badge badge-xs badge-success gap-1" title="Remise automatique appliquée">
+                              🤖 Auto
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-base-content/40">-</span>
+                      )}
+                    </td>
                     <td className="text-right font-bold text-base-content">
                       {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
                     </td>
@@ -619,7 +636,7 @@ export default function Ventes() {
 
                 {selectedFacture.produits && selectedFacture.produits.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
+                    <table className="table table-zebra w-full table-xs">
                       <thead>
                         <tr>
                           <th>Produit</th>

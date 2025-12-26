@@ -110,6 +110,12 @@ export default function Facturation() {
   const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
   const [promisPhone, setPromisPhone] = useState('')
 
+  // Loyalty State
+  const [pointsToUse, setPointsToUse] = useState(0)
+  const [usePendingDiscount, setUsePendingDiscount] = useState(false)
+
+
+
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null)
   const clientSelectRef = useRef<HTMLSelectElement>(null)
@@ -127,6 +133,13 @@ export default function Facturation() {
     }
   })
   const [showPendingSales, setShowPendingSales] = useState(false)
+  
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   useEffect(() => {
     if (successInfo && successInfo.status !== 'PAY') {
@@ -215,6 +228,19 @@ export default function Facturation() {
     }
     fetchAyantsDroit()
   }, [selectedClient, clients, apiBaseUrl, useManualClient])
+
+  // Appliquer automatiquement la remise du client quand il est sélectionné
+  useEffect(() => {
+    if (!selectedClient || useManualClient) {
+      return
+    }
+
+    const client = clients.find(c => c.id === selectedClient)
+    if (client?.remise_automatique && Number(client.remise_automatique) > 0) {
+      setRemise(client.remise_automatique)
+      setRemiseMode('taux') // La remise automatique est toujours en pourcentage
+    }
+  }, [selectedClient, clients, useManualClient])
 
   // Fonction pour calculer le total d'une ligne avec remise produit
   const calculateLigneTotal = (quantite: number, prixUnitaire: string, remiseProduit: string): number => {
@@ -426,36 +452,65 @@ export default function Facturation() {
     const tvaRate = 0
     const baseHT = sousTotal - remiseMontant
     const montantTva = Math.round(baseHT * (tvaRate / 100))
-    const totalTtc = baseHT + montantTva
+    const totalTtcBase = baseHT + montantTva
 
     // Calcul tiers payant
     let tauxCouverture = 0
     let partAssurance = 0
-    let partPatient = totalTtc
+    let partPatient = totalTtcBase
+    
+    let currentPoints = 0
+    let pendingDiscountVal = 0
     
     if (!useManualClient && selectedClient) {
       const client = clients.find(c => c.id === selectedClient)
       if (client?.client_type === 'PROFESSIONNEL' && client.taux_couverture) {
         tauxCouverture = normalizeNumberInput(client.taux_couverture, { min: 0, max: 100 })
         if (tauxCouverture > 0) {
-          partAssurance = Math.round(totalTtc * (tauxCouverture / 100))
-          partPatient = totalTtc - partAssurance
+          partAssurance = Math.round(totalTtcBase * (tauxCouverture / 100))
+          partPatient = totalTtcBase - partAssurance
         }
       }
+      // Loyalty Data
+      if (client && client.client_type !== 'PROFESSIONNEL' && (client as any).is_loyalty_member) {
+          currentPoints = (client as any).points_fidelite || 0
+          pendingDiscountVal = Number((client as any).pending_discount || 0)
+      }
     }
+    
+    // Loyalty Calculations
+    let loyaltyDeduction = 0
+    const pointsValue = pointsToUse * 10 // Est. 10F/point
+    if (usePendingDiscount && pendingDiscountVal > 0) {
+        loyaltyDeduction += totalTtcBase * (pendingDiscountVal / 100)
+    }
+    loyaltyDeduction += pointsValue
+    
+    const finalTotalTtc = Math.max(0, totalTtcBase - loyaltyDeduction)
+    const finalPartPatient = Math.max(0, partPatient - loyaltyDeduction)
 
     return {
       sousTotal,
       remiseMontant,
       montantTva,
-      totalTtc,
+      totalTtc: finalTotalTtc,
+      originalTotalTtc: totalTtcBase,
+      loyaltyDeduction,
       tauxCouverture,
       partAssurance,
-      partPatient,
+      partPatient: finalPartPatient,
+      currentPoints,
+      pendingDiscountVal
     }
-  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients])
+  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients, pointsToUse, usePendingDiscount])
 
   const [isNewSale, setIsNewSale] = useState(false)
+
+  // Reset loyalty when client changes or new sale starts
+  useEffect(() => {
+    setPointsToUse(0)
+    setUsePendingDiscount(false)
+  }, [selectedClient, isNewSale])
 
   const handleCompleteSale = async () => {
     if (!selectedClient) {
@@ -466,9 +521,28 @@ export default function Facturation() {
       setError('Veuillez ajouter au moins un produit')
       return
     }
-    if (!montantPaye || Number(montantPaye) <= 0) {
-      setError('Veuillez entrer un montant valide')
-      return
+    // Validation du montant
+    const isTiersPayant = totals.tauxCouverture > 0 && totals.partAssurance > 0;
+    const montantAttendu = isTiersPayant ? totals.partPatient : totals.totalTtc;
+
+    if (montantAttendu > 0) {
+        // On doit avoir soit un montant saisi positif, soit une liste de paiements (split) valide
+        const montantSaisi = Number(montantPaye);
+        const totalSplit = paiements.reduce((acc, p) => acc + p.montant, 0);
+        
+        if (paiements.length === 0 && (!montantPaye || montantSaisi <= 0)) {
+             setError('Veuillez entrer un montant valide')
+             return
+        }
+
+        // Si paiement partagé, vérifier le total
+        if (paiements.length > 0) {
+            // Tolérance de 1F pour les arrondis
+            if (Math.abs(totalSplit - montantAttendu) > 1 && Math.abs(totalSplit + montantSaisi - montantAttendu) > 1) {
+                 setError(`Le total des paiements (${totalSplit + montantSaisi} F) ne correspond pas au montant à payer (${montantAttendu} F)`)
+                 return
+            }
+        }
     }
 
     // Validation pour les clients professionnels : ayant droit obligatoire
@@ -586,8 +660,12 @@ export default function Facturation() {
 
 
       // 3. Valider la facture
+      // 3. Valider la facture
       const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
-      const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint)
+      const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
+          use_pending_discount: usePendingDiscount,
+          points_to_use: pointsToUse
+      })
       validatedFactureForRollback = validatedFacture
 
       // 4. Enregistrer les paiements
@@ -597,17 +675,40 @@ export default function Facturation() {
       let paiementsList = []
       
       if (useTiersPayant) {
-        // Tiers payant: créer 2 paiements automatiquement
+        // Tiers payant: créer paiements
         paiementsList = []
         
-        // Part patient (paiement immédiat selon le mode sélectionné)
+        // Part patient
         if (totals.partPatient > 0) {
-          paiementsList.push({
-            mode: modePaiement,
-            montant: totals.partPatient,
-            part_patient: totals.partPatient,
-            part_assurance: null
-          })
+            // Si des paiements multiples ont été définis (split payment)
+            if (paiements.length > 0) {
+                paiements.forEach(p => {
+                    paiementsList.push({
+                        mode: p.mode,
+                        montant: p.montant,
+                        part_patient: p.montant, // Tout ce qui est payé ici est pour la part patient
+                        part_assurance: null
+                    });
+                });
+                
+                // Ajouter aussi le montant courant s'il reste quelque chose dans l'input
+                if (montantPaye && Number(montantPaye) > 0) {
+                     paiementsList.push({
+                        mode: modePaiement,
+                        montant: Number(montantPaye),
+                        part_patient: Number(montantPaye),
+                        part_assurance: null
+                    });
+                }
+            } else {
+                // Paiement unique classique
+                paiementsList.push({
+                    mode: modePaiement,
+                    montant: totals.partPatient,
+                    part_patient: totals.partPatient,
+                    part_assurance: null
+                })
+            }
         }
         
         // Part assurance (toujours en compte)
@@ -620,13 +721,19 @@ export default function Facturation() {
           })
         }
       } else {
-        // Pas de tiers payant: utiliser la liste normale
-        paiementsList = paiements.length > 0 
-          ? paiements.map(p => ({ ...p, part_patient: null, part_assurance: null }))
-          : [{ mode: modePaiement, montant: Number(montantPaye), part_patient: null, part_assurance: null }]
+        // Pas de tiers payant: utiliser la liste normale + montant courant
+        if (paiements.length > 0) {
+            paiementsList = paiements.map(p => ({ ...p, part_patient: null, part_assurance: null }));
+            if (montantPaye && Number(montantPaye) > 0) {
+                paiementsList.push({ mode: modePaiement, montant: Number(montantPaye), part_patient: null, part_assurance: null });
+            }
+        } else {
+             paiementsList = [{ mode: modePaiement, montant: Number(montantPaye), part_patient: null, part_assurance: null }];
+        }
       }
 
       let totalVerse = 0
+      const failedPayments: any[] = []
       
       // Promesse séquentielle ou parallèle pour les paiements
       await Promise.all(paiementsList.map(async (paiement) => {
@@ -646,9 +753,22 @@ export default function Facturation() {
             paiementPayload.part_assurance = paiement.part_assurance
           }
           
-          await axios.post(caisseEndpoint, paiementPayload)
-          totalVerse += paiement.montant
+          try {
+            await axios.post(caisseEndpoint, paiementPayload)
+            totalVerse += paiement.montant
+          } catch (paymentError) {
+            console.error('ERREUR CRITIQUE: Échec création paiement:', paymentError)
+            console.error('Payload:', paiementPayload)
+            failedPayments.push({ paiement, error: paymentError })
+            // Re-throw pour déclencher le rollback
+            throw new Error(`Échec enregistrement paiement ${paiement.mode}: ${paymentError}`)
+          }
       }))
+      
+      // Vérifier qu'aucun paiement n'a échoué
+      if (failedPayments.length > 0) {
+        throw new Error(`${failedPayments.length} paiement(s) non enregistré(s)`)
+      }
 
       // 5. Mettre à jour le statut de la facture à "PAYEE"
       const factureUpdateEndpoint = `${facturesEndpoint}${validatedFacture.id}/`
@@ -979,10 +1099,17 @@ export default function Facturation() {
 
   const annulerVente = () => {
     if (lignesFacture.length > 0) {
-      if (!confirm('Êtes-vous sûr de vouloir annuler cette vente ?')) {
-        return
-      }
+      setConfirmModal({
+          isOpen: true,
+          message: 'Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.',
+          onConfirm: () => _resetSale()
+      })
+      return
     }
+    _resetSale()
+  }
+
+  const _resetSale = () => {
 
     // Clear everything
     setLignesFacture([])
@@ -1028,8 +1155,11 @@ export default function Facturation() {
   }
 
   const supprimerVenteEnAttente = (id: number) => {
-    if (!confirm('Supprimer cette vente en attente ?')) return
-    setVentesEnAttente(prev => prev.filter(v => v.id !== id))
+    setConfirmModal({
+        isOpen: true,
+        message: 'Voulez-vous vraiment supprimer cette vente en attente ? Cette action est irréversible.',
+        onConfirm: () => setVentesEnAttente(prev => prev.filter(v => v.id !== id))
+    })
   }
 
   // Global Keyboard Listeners
@@ -1327,25 +1457,25 @@ export default function Facturation() {
                         <p className="font-light">Commencez par ajouter des produits (F2)</p>
                     </div>
                 ) : (
-                    <table className="table table-pin-rows w-full">
+                    <table className="table table-pin-rows table-xs w-full">
                         <thead>
-                            <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-                                <th className="bg-base-50 pl-3 md:pl-6">Produit</th>
-                                <th className="bg-base-50 text-right w-20 md:w-24">Qté</th>
-                                <th className="bg-base-50 text-right w-24 md:w-28">Prix</th>
-                                <th className="bg-base-50 text-right w-16 md:w-20 hidden sm:table-cell">Remise</th>
-                                <th className="bg-base-50 text-center w-28 hidden md:table-cell">Péremption</th>
-                                <th className="bg-base-50 text-right w-24 md:w-32 pr-3 md:pr-6">Total</th>
-                                <th className="bg-base-50 w-10"></th>
+                            <tr className="bg-base-50 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
+                                <th className="bg-base-50 pl-2 md:pl-4">Produit</th>
+                                <th className="bg-base-50 text-right w-16 md:w-20">Qté</th>
+                                <th className="bg-base-50 text-right w-20 md:w-24">Prix</th>
+                                <th className="bg-base-50 text-right w-14 md:w-16 hidden sm:table-cell">Remise</th>
+                                <th className="bg-base-50 text-center w-24 hidden md:table-cell">Péremption</th>
+                                <th className="bg-base-50 text-right w-20 md:w-28 pr-2 md:pr-4">Total</th>
+                                <th className="bg-base-50 w-8"></th>
                             </tr>
                         </thead>
                         <tbody>
                             {lignesFacture.map((ligne) => (
                                 <tr key={ligne.produit.id} className="hover:bg-base-50/50 group border-b border-base-100 last:border-0">
-                                    <td className="pl-3 md:pl-6 py-2 md:py-3">
-                                        <div className="font-medium text-xs md:text-sm">{ligne.produit.name}</div>
+                                    <td className="pl-2 md:pl-4 py-1">
+                                        <div className="font-medium">{ligne.produit.name}</div>
                                     </td>
-                                    <td className="text-right py-2 md:py-3">
+                                    <td className="text-right py-1">
                                         <input
                                             ref={(el) => {
                                               if (el) quantityInputsRef.current.set(ligne.produit.id, el)
@@ -1360,40 +1490,40 @@ export default function Facturation() {
                                                 searchInputRef.current?.focus()
                                               }
                                             }}
-                                            className="input input-ghost input-sm w-full text-right font-medium focus:bg-base-100 focus:text-primary"
+                                            className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
                                         />
                                     </td>
-                                    <td className="text-right py-2 md:py-3">
+                                    <td className="text-right py-1">
                                         <input
                                             type="text"
                                             value={ligne.prix_unitaire}
                                             onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                                            className="input input-ghost input-sm w-full text-right focus:bg-base-100 focus:text-primary"
+                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
                                         />
                                     </td>
-                                    <td className="text-right py-2 md:py-3 hidden sm:table-cell">
+                                    <td className="text-right py-1 hidden sm:table-cell">
                                         <input
                                             type="text"
                                             value={ligne.remise_produit}
                                             onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
-                                            className="input input-ghost input-sm w-full text-right focus:bg-base-100 focus:text-primary"
+                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
                                             placeholder="%"
                                         />
                                     </td>
-                                    <td className="text-center py-2 md:py-3 hidden md:table-cell">
+                                    <td className="text-center py-1 hidden md:table-cell">
                                         <div className="text-xs text-base-content/60">
                                             {ligne.produit.expire_date ? new Date(ligne.produit.expire_date).toLocaleDateString('fr-FR') : '-'}
                                         </div>
                                     </td>
-                                    <td className="text-right font-medium text-base-content pr-3 md:pr-6 py-2 md:py-3 text-xs md:text-sm">
+                                    <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
                                         {Math.round(ligne.total_ligne)}
                                     </td>
-                                    <td className="text-center py-3">
+                                    <td className="text-center py-1">
                                         <button
                                             onClick={() => removeLigne(ligne.produit.id)}
                                             className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                         </button>
                                     </td>
                                 </tr>
@@ -1407,6 +1537,40 @@ export default function Facturation() {
             <div className="p-3 md:p-4 lg:p-6 bg-base-50 border-t border-base-200 shrink-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-6">
                     <div className="space-y-3">
+                        {/* Loyalty Controls */}
+                        {selectedClient && !useManualClient && totals.currentPoints > 0 && (
+                            <div className="bg-amber-50 p-2 rounded text-xs space-y-2 border border-amber-100">
+                                <div className="font-bold text-amber-800 flex justify-between">
+                                    <span>💎 Fidélité (Solde: {totals.currentPoints})</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="whitespace-nowrap">Utiliser pts:</span>
+                                    <input 
+                                        type="number" 
+                                        className="input input-xs input-bordered w-full"
+                                        min="0"
+                                        max={totals.currentPoints}
+                                        value={pointsToUse}
+                                        onChange={e => setPointsToUse(Math.min(totals.currentPoints, Math.max(0, parseInt(e.target.value)||0)))}
+                                    />
+                                </div>
+                                <div className="text-right text-amber-700 font-medium">-{pointsToUse * 10} F</div>
+                            </div>
+                        )}
+                        {selectedClient && !useManualClient && totals.pendingDiscountVal > 0 && (
+                            <div className="form-control bg-purple-50 p-2 rounded border border-purple-100">
+                                <label className="label cursor-pointer py-0">
+                                    <span className="label-text text-xs font-bold text-purple-800">Utiliser Remise Acquise ({totals.pendingDiscountVal}%)</span>
+                                    <input 
+                                        type="checkbox" 
+                                        className="checkbox checkbox-xs checkbox-primary"
+                                        checked={usePendingDiscount}
+                                        onChange={e => setUsePendingDiscount(e.target.checked)}
+                                    />
+                                </label>
+                            </div>
+                        )}
+                    
                         <div className="flex items-center gap-2">
                              <select
                                 value={remiseMode}
@@ -1434,6 +1598,11 @@ export default function Facturation() {
                         <div className="text-sm text-base-content/60">
                             Remise: <span className="font-medium text-error">-{Math.round(totals.remiseMontant)} F</span>
                         </div>
+                        {totals.loyaltyDeduction > 0 && (
+                            <div className="text-sm text-base-content/60">
+                                Fidélité: <span className="font-medium text-amber-600">-{Math.round(totals.loyaltyDeduction)} F</span>
+                            </div>
+                        )}
                         <div className="text-3xl font-light text-primary mt-2">
                             {Math.round(totals.totalTtc)} <span className="text-lg font-normal text-primary/60">FCFA</span>
                         </div>
@@ -1581,22 +1750,84 @@ export default function Facturation() {
                         <span className="text-sm font-medium text-success">Part Patient ({100 - totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-success">{Math.round(totals.partPatient)} F</span>
                       </div>
-                      <div className="form-control w-full">
-                        <label className="label py-0">
-                          <span className="label-text text-xs">Mode de paiement</span>
-                        </label>
-                        <select
-                          value={modePaiement}
-                          onChange={(e) => setModePaiement(e.target.value as any)}
-                          className="select select-bordered select-sm w-full"
-                        >
-                          <option value="especes">Espèces</option>
-                          <option value="cheque">Chèque</option>
-                          <option value="carte">Carte</option>
-                          <option value="virement">Virement</option>
-                          <option value="om">Orange Money</option>
-                          <option value="momo">Mobile Money</option>
-                        </select>
+                      <div className="form-control w-full space-y-2">
+                            {/* Liste des paiements déjà ajoutés pour la part patient */}
+                            {paiements.length > 0 && (
+                                <div className="bg-base-50 rounded p-2 space-y-1 mb-2">
+                                    {paiements.map((p, idx) => (
+                                        <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-base-200">
+                                            <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'Autre'}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono font-bold">{p.montant} F</span>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
+                                                    className="btn btn-ghost btn-xs text-error btn-square h-5 w-5 min-h-0"
+                                                >✕</button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="text-right text-xs text-base-content/60 pt-1 border-t border-base-200">
+                                        Reste à allouer: <span className="font-bold text-error">{Math.max(0, totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0))} F</span>
+                                    </div>
+                                </div>
+                            )}
+
+                        <div className="flex gap-2 items-end">
+                            <div className="flex-1">
+                                <label className="label py-0"> <span className="label-text text-xs">Mode</span> </label>
+                                <select
+                                value={modePaiement}
+                                onChange={(e) => setModePaiement(e.target.value as any)}
+                                className="select select-bordered select-sm w-full"
+                                >
+                                <option value="especes">Espèces</option>
+                                <option value="cheque">Chèque</option>
+                                <option value="carte">Carte</option>
+                                <option value="virement">Virement</option>
+                                <option value="om">Orange Money</option>
+                                <option value="momo">Mobile Money</option>
+                                </select>
+                            </div>
+                            <div className="flex-1">
+                                <label className="label py-0"> <span className="label-text text-xs">Montant</span> </label>
+                                <input 
+                                    type="number" 
+                                    className="input input-sm input-bordered w-full" 
+                                    value={montantPaye}
+                                    placeholder={paiements.length === 0 ? totals.partPatient.toString() : ''}
+                                    onChange={(e) => setMontantPaye(e.target.value)}
+                                    // Auto-add on enter
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault()
+                                            if (montantPaye && Number(montantPaye) > 0) {
+                                                setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
+                                                // Calc rest
+                                                const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
+                                                const reste = Math.max(0, totals.partPatient - dejaAlloue)
+                                                setMontantPaye(reste > 0 ? reste.toString() : '')
+                                            }
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <button 
+                                type="button"
+                                className="btn btn-sm btn-square btn-ghost border border-base-300"
+                                onClick={() => {
+                                    if (montantPaye && Number(montantPaye) > 0) {
+                                        setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
+                                        const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
+                                        const reste = Math.max(0, totals.partPatient - dejaAlloue)
+                                        setMontantPaye(reste > 0 ? reste.toString() : '')
+                                    }
+                                }}
+                                title="Ajouter ce paiement"
+                            >
+                                ＋
+                            </button>
+                        </div>
                       </div>
                     </div>
                     
@@ -2026,6 +2257,27 @@ export default function Facturation() {
           <div className="modal-backdrop" onClick={() => setShowPendingSales(false)}></div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <dialog className={`modal ${confirmModal?.isOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box">
+          <h3 className="font-bold text-lg text-warning">⚠️ Confirmation</h3>
+          <p className="py-4">{confirmModal?.message}</p>
+          <div className="modal-action">
+            <button className="btn" onClick={() => setConfirmModal(null)}>Annuler</button>
+            <button 
+                className="btn btn-error" 
+                onClick={() => { 
+                    if (confirmModal?.onConfirm) confirmModal.onConfirm(); 
+                    setConfirmModal(null); 
+                }}
+            >
+                Confirmer
+            </button>
+          </div>
+        </div>
+        <form method="dialog" className="modal-backdrop" onClick={() => setConfirmModal(null)}><button>close</button></form>
+      </dialog>
     </div>
   )
 }

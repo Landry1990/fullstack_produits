@@ -1,7 +1,8 @@
 from django.db import models
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from django.db.models import Sum, F, DecimalField
+from django.core.cache import cache
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
@@ -33,6 +34,24 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
 
 
+
+class LoyaltySetting(models.Model):
+    """Configuration du système de fidélité (Singleton)"""
+    amount_per_point = models.DecimalField(max_digits=10, decimal_places=0, default=1000, help_text="Montant en FCFA pour gagner 1 point")
+    point_value = models.DecimalField(max_digits=10, decimal_places=0, default=10, help_text="Valeur d'un point en FCFA")
+    auto_reward_threshold = models.IntegerField(default=0, help_text="Nombre de points pour déclencher la récompense auto (0=désactivé)")
+    auto_reward_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Pourcentage de remise auto")
+
+    class Meta:
+        verbose_name = "Configuration Fidélité"
+        verbose_name_plural = "Configuration Fidélité"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1 # Singleton
+        super(LoyaltySetting, self).save(*args, **kwargs)
+        
+    def __str__(self):
+        return "Configuration Fidélité"
 
 class Rayon(models.Model):
     """Model representing a product category."""
@@ -85,6 +104,19 @@ class Client(models.Model):
         help_text="Taux de couverture assurance en % (0-100) pour tiers payant"
     )
     
+    remise_automatique = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0.00,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Pourcentage de remise automatique (0-100%) appliqué à chaque vente",
+        verbose_name="Remise automatique (%)"
+    )
+    
+    points_fidelite = models.IntegerField(default=0)
+    pending_discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Remise en % acquise pour la prochaine vente")
+    is_loyalty_member = models.BooleanField(default=True, help_text="Si activé, ce client participe au programme de fidélité")
+
     created_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
@@ -95,32 +127,36 @@ class Client(models.Model):
         """
         Calcule la dette actuelle du client.
         Somme des restes à payer sur les factures VALIDEE.
+        Optimisé pour utiliser l'annotation du ViewSet ou une agrégation unique.
         """
-        total_dette = Decimal('0.00')
+        # 1. Check if annotated by ViewSet (Zero SQL queries)
+        if hasattr(self, 'current_debt_annotated'):
+            return self.current_debt_annotated or Decimal('0.00')
+
+        # 2. Fallback: Aggregate in database (One SQL query instead of loop)
+        from django.db.models import Sum, F, Q, Value, DecimalField
+        from django.db.models.functions import Coalesce
         
-        # On ne prend que les factures VALIDEE. 
-        # Si une facture est PAYEE, la dette est nulle.
-        # Si elle est BROUILLON ou ANNULEE, pas de dette.
-        factures = self.facture_set.filter(status='VAL')
+        # On calcule la dette pour chaque facture et on somme
+        # Note: L'agrégation directe sur self.facture_set est complexe car il faut faire la différence (TTC - Paiements)
+        # Et ne garder que les positifs.
         
-        for facture in factures:
-             # Somme des paiements réels (excluant 'en_compte')
-             # On utilise l'attribut factice 'paiements' via related_name
-             paiements_reels = facture.paiements.filter(
-                 statut='completee'
-             ).exclude(
-                 mode_paiement='en_compte'
-             ).aggregate(
-                 total=Sum('montant')
-             )['total'] or Decimal('0.00')
-             
-             reste = facture.total_ttc - paiements_reels
-             
-             # On ne compte que si le reste est positif (éviter négatifs bizarres)
-             if reste > 0:
-                 total_dette += reste
-                 
-        return total_dette
+        # On replique la logique du ViewSet mais pour une instance unique
+        # C'est moins grave de faire une requête ici car c'est pour un seul client
+        
+        factures_with_debt = self.facture_set.filter(status='VAL').annotate(
+            paid_amount=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
+                Value(0, output_field=DecimalField())
+            ),
+            remainder=F('total_ttc') - F('paid_amount')
+        ).filter(
+            remainder__gt=0
+        ).aggregate(
+            total_debt=Sum('remainder')
+        )
+        
+        return factures_with_debt['total_debt'] or Decimal('0.00')
 
 
 class AyantDroit(models.Model):
@@ -145,7 +181,8 @@ class Commande(models.Model):
 
     id = models.AutoField(primary_key=True)
     # On utilise PROTECT pour éviter de supprimer des commandes si un fournisseur est effacé.
-    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.PROTECT)
+    # Nullable pour permettre les commandes de réassort global (sans fournisseur initial)
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.PROTECT, null=True, blank=True)
     numero_facture = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
@@ -301,41 +338,52 @@ class Facture(models.Model):
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
     notes = models.TextField(blank=True, null=True)
     date_annulation = models.DateTimeField(null=True, blank=True)
+    
+    points_fidelite_gagnes = models.IntegerField(default=0)
+    points_fidelite_utilises = models.IntegerField(default=0)
+    montant_fidelite = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
     
-    @property
-    def total_ht(self):
-        """Calcule le total hors taxes."""
-        total_value = self.produits.aggregate(
-            total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
-        )['total']
-        return total_value or Decimal('0.00')
+    total_ht = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_tva = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    total_ttc = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"Facture {self.numero_facture or self.id}"
     
-    @property
-    def total_tva(self):
-        """Calcule le montant de la TVA."""
+    def calculate_totals(self, save=True):
+        """
+        Calcule les totaux HT, TVA et TTC based sur les lignes de produits et met à jour les champs.
+        """
+        # Calcul Total HT
+        # On utilise une agrégation DB si possible pour la perf, mais ici on est souvent dans un contexte
+        # où on vient de changer une ligne, donc l'agrégation est fiable.
+        from django.db.models import Sum, F, DecimalField
+        
+        aggregated = self.produits.aggregate(
+            total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
+        )
+        self.total_ht = aggregated['total'] or Decimal('0.00')
+        
+        # Calcul TVA et TTC
         try:
             total_ht = Decimal(str(self.total_ht))
             remise = Decimal(str(self.remise))
             tva_rate = Decimal(str(self.tva))
-            result = (total_ht - remise) * (tva_rate / 100)
-            return result.quantize(Decimal('0.01'))
+            
+            self.total_tva = ((total_ht - remise) * (tva_rate / 100)).quantize(Decimal('0.01'))
+            self.total_ttc = (total_ht - remise + self.total_tva).quantize(Decimal('0.01'))
         except (ValueError, TypeError, AttributeError):
-            return Decimal('0.00')
-    
-    @property
-    def total_ttc(self):
-        """Calcule le total toutes taxes comprises."""
-        try:
-            total_ht = Decimal(str(self.total_ht))
-            remise = Decimal(str(self.remise))
-            tva = self.total_tva
-            result = total_ht - remise + tva
-            return result.quantize(Decimal('0.01'))
-        except (ValueError, TypeError, AttributeError):
-            return Decimal('0.00')
+            self.total_tva = Decimal('0.00')
+            self.total_ttc = Decimal('0.00')
+            
+        if save:
+            # On update uniquement les champs de totaux pour éviter de déclencher des signaux récursifs inutiles
+            # ou d'écraser d'autres changements concurrents
+            self.save(update_fields=['total_ht', 'total_tva', 'total_ttc'])
+
 
     class Meta:
         indexes = [
@@ -367,24 +415,47 @@ class LotSequence(models.Model):
 def generate_lot_number():
     """
     Génère un numéro de lot unique au format L01
-    Utilise une séquence atomique pour éviter les doublons en cas de création concurrente.
-    Résout le problème de comparaison lexicographique avec Max() sur les strings.
+    Utilise Redis (cache) pour éviter le verrouillage global de la base de données (select_for_update).
+    Si le cache est vide (redémarrage), il s'initialise depuis la dernière entrée StockLot.
     """
-    from django.db import transaction
+    CACHE_KEY = 'lot_sequence'
     
-    with transaction.atomic():
-        # Créer ou récupérer la séquence (singleton)
-        sequence_obj, created = LotSequence.objects.select_for_update().get_or_create(
-            id=1,
-            defaults={'last_number': 0}
-        )
+    try:
+        # Essayer d'incrémenter atomiquement via Redis
+        sequence = cache.incr(CACHE_KEY)
+    except ValueError:
+        # La clé n'existe pas, initialisation depuis la DB (Recovery)
+        # On cherche le dernier lot créé dans StockLot
+        last_number = 0
         
-        # Incrémenter de manière atomique
-        sequence_obj.last_number += 1
-        sequence_obj.save(update_fields=['last_number'])
+        # 1. Vérifier StockLot (Source de vérité principale)
+        # On utilise 'created_at' car l'ID peut être désynchronisé (ex: import données)
+        last_stock = StockLot.objects.order_by('-created_at', '-id').first()
         
-        sequence = sequence_obj.last_number
-    
+        if last_stock and last_stock.lot and last_stock.lot.startswith('L'):
+            try:
+                last_number = int(last_stock.lot[1:])
+            except ValueError:
+                pass
+                
+        # 2. Vérifier LotSequence (Fallback historique)
+        try:
+            seq_obj = LotSequence.objects.get(id=1)
+            if seq_obj.last_number > last_number:
+                last_number = seq_obj.last_number
+        except LotSequence.DoesNotExist:
+            pass
+            
+        # 3. Initialiser le cache
+        cache.set(CACHE_KEY, last_number, timeout=None)
+        
+        # 4. Incrémenter
+        sequence = cache.incr(CACHE_KEY)
+        
+        # On met à jour LotSequence uniquement lors de la récupération pour garder une trace approximative
+        # mais PAS à chaque génération pour éviter le lock
+        LotSequence.objects.update_or_create(id=1, defaults={'last_number': sequence})
+
     return f'L{sequence:02d}'
 
 
@@ -588,7 +659,8 @@ def update_facture_status_on_payment(sender, instance, created, **kwargs):
         # Ne pas marquer comme payée si le mode de paiement est 'en_compte'
         if instance.mode_paiement != 'en_compte':
             facture = instance.facture
-            if facture.status == Facture.Status.VALIDEE:
+            # Permettre la mise à jour pour toutes les factures non-annulées et non-payées
+            if facture.status not in [Facture.Status.ANNULEE, Facture.Status.PAYEE]:
                 # Calculer le total des paiements complétés (hors 'en_compte')
                 total_paiements = facture.paiements.filter(
                     statut='completee'
@@ -710,7 +782,7 @@ class MouvementCaisse(models.Model):
     motif = models.CharField(max_length=200, help_text="Ex: Electricité, Carburant, etc.")
     description = models.TextField(blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name='mouvements_caisse')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_caisse')
     
     class Meta:
         ordering = ['-date']
@@ -772,6 +844,9 @@ class Avoir(models.Model):
         else:
             seq = 1
         return f"{prefix}-{seq:04d}"
+
+
+
     
     @property
     def total_ht(self):
@@ -1023,34 +1098,22 @@ class Promis(models.Model):
         return self.produit.name if self.produit else ''
 
 
-class MouvementCaisse(models.Model):
-    """
-    Model representing cash register movements (entries and exits).
-    Used to track additional cash operations beyond sales.
-    """
-    TYPE_CHOICES = [
-        ('ENTREE', 'Entrée'),
-        ('SORTIE', 'Sortie'),
-    ]
-    
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    montant = models.DecimalField(max_digits=10, decimal_places=2)
-    motif = models.CharField(max_length=200)
-    description = models.TextField(blank=True, null=True)
-    date = models.DateTimeField(default=timezone.now)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_caisse')
-    
-    class Meta:
-        ordering = ['-date']
-        verbose_name = 'Mouvement de Caisse'
-        verbose_name_plural = 'Mouvements de Caisse'
-    
-    def __str__(self):
-        return f"{self.get_type_display()} - {self.montant} F - {self.motif}"
-    
-    @property
-    def user_nom(self):
-        """Returns the user's full name or username."""
-        if self.user:
-            return self.user.get_full_name() or self.user.username
-        return 'Utilisateur inconnu'
+
+
+# Signaux pour mise à jour automatique des totaux de Facture
+# Placés ici car FactureProduit doit être défini
+@receiver(post_save, sender=FactureProduit)
+@receiver(post_delete, sender=FactureProduit)
+def update_facture_totals_on_line_change(sender, instance, **kwargs):
+    if instance.facture:
+        instance.facture.calculate_totals()
+
+@receiver(post_save, sender=Facture)
+def update_facture_totals_on_change(sender, instance, created, **kwargs):
+    # Eviter récursion infinie si le save vient de calculate_totals
+    update_fields = kwargs.get('update_fields')
+    if update_fields and ('total_ht' in update_fields or 'total_ttc' in update_fields):
+        return
+
+    if not created:
+         instance.calculate_totals(save=True)

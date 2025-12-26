@@ -8,7 +8,7 @@ from .models import (
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog, Promis
+    InvoiceSettings, AuditLog, Promis, LoyaltySetting
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -19,6 +19,11 @@ class ProfileSerializer(serializers.ModelSerializer):
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = InvoiceSettings
+        fields = '__all__'
+
+class LoyaltySettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LoyaltySetting
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
@@ -194,6 +199,7 @@ class CaisseSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
     facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
     mode_paiement_display = serializers.CharField(source='get_mode_paiement_display', read_only=True)
+    is_creance_settlement = serializers.SerializerMethodField()
     
     releve_reference = serializers.CharField(source='releve.reference', read_only=True)
     releve_id = serializers.IntegerField(source='releve.id', read_only=True)
@@ -219,6 +225,16 @@ class CaisseSerializer(serializers.ModelSerializer):
         elif obj.facture.client_name_override:
             return obj.facture.client_name_override
         return "Client de passage"
+    
+    def get_is_creance_settlement(self, obj):
+        """
+        Détermine si ce paiement est un règlement de créance.
+        Un règlement de créance = paiement sur une facture qui a un paiement initial 'en_compte'
+        et le paiement actuel n'est pas 'en_compte' lui-même.
+        """
+        if obj.mode_paiement == 'en_compte':
+            return False
+        return obj.facture.paiements.filter(mode_paiement='en_compte').exists()
 
 class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.SerializerMethodField()
@@ -229,6 +245,7 @@ class FactureSerializer(serializers.ModelSerializer):
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    is_remise_auto = serializers.SerializerMethodField()
 
     def get_client_nom(self, obj):
         if obj.client:
@@ -239,6 +256,26 @@ class FactureSerializer(serializers.ModelSerializer):
         if obj.client:
             return obj.client.name
         return obj.client_name_override or "Client de passage"
+    
+    def get_is_remise_auto(self, obj):
+        """Indique si la facture a potentiellement bénéficié d'une remise automatique"""
+        # Vérifier si le client existe
+        if not obj.client:
+            return False
+        
+        # Vérifier si le client a une remise automatique configurée
+        try:
+            remise_auto = getattr(obj.client, 'remise_automatique', 0) or 0
+        except AttributeError:
+            return False
+        
+        # Si le client n'a pas de remise automatique configurée, retourner False
+        if remise_auto == 0:
+            return False
+        
+        # Si la facture a une remise > 0, on considère que c'est une remise automatique
+        # (simplifié - on pourrait vérifier le pourcentage exact mais avec les arrondis c'est complexe)
+        return obj.remise and obj.remise > 0
 
     class Meta:
         model = Facture
@@ -246,7 +283,9 @@ class FactureSerializer(serializers.ModelSerializer):
             'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
             'ayant_droit', 'ayant_droit_details',
             'date', 'status', 'status_display', 'produits', 
-            'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes'
+            'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
+            'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
+            'is_remise_auto'
         ]
 
 class StockLotSerializer(serializers.ModelSerializer):
@@ -455,11 +494,4 @@ class PromisSerializer(serializers.ModelSerializer):
         read_only_fields = ['date_promis', 'date_livraison', 'created_by']
 
 
-class MouvementCaisseSerializer(serializers.ModelSerializer):
-    user_nom = serializers.CharField(read_only=True)
-    type_display = serializers.CharField(source='get_type_display', read_only=True)
-    
-    class Meta:
-        model = MouvementCaisse
-        fields = ['id', 'type', 'type_display', 'montant', 'motif', 'description', 'date', 'user', 'user_nom']
-        read_only_fields = ['user', 'user_nom']
+

@@ -104,7 +104,27 @@ class RapportViewSet(viewsets.ViewSet):
             mode_paiement='en_compte'
         ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
         
-        # 5. CA par taux de TVA
+        # 6. Créances (soldes impayés) - Calcul des factures avec reste à payer
+        from django.db.models.functions import Coalesce
+        
+        creances_data = factures.annotate(
+            paid_amount=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee')),
+                Decimal('0.00'),
+                output_field=DecimalField()
+            ),
+            remainder=F('total_ttc') - F('paid_amount')
+        ).filter(
+            remainder__gt=0
+        ).aggregate(
+            total_creances=Sum('remainder'),
+            nb_factures_impayees=Sum(1)
+        )
+        
+        total_creances = creances_data['total_creances'] or Decimal('0.00')
+        nb_factures_impayees = creances_data['nb_factures_impayees'] or 0
+        
+        # 7. CA par taux de TVA
         # Grouper  par taux de TVA unique de chaque facture
         tva_groups = factures.values('tva').annotate(
             ca_ht_total=Sum(F('produits__quantity') * F('produits__selling_price'), output_field=DecimalField()),
@@ -142,5 +162,9 @@ class RapportViewSet(viewsets.ViewSet):
             },
             'encaissements': encaissements_data,
             'ventes_en_compte': ventes_en_compte,
+            'creances': {
+                'total': total_creances,
+                'nb_factures': nb_factures_impayees
+            },
             'ca_par_tva': ca_par_tva
         })
