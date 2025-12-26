@@ -14,7 +14,8 @@ from api.views import (
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
     StatsUGViewSet, StockLotViewSet, InvoiceConfigurationView,
     CategoriesListView, CategoriesDetailView, AuditLogViewSet,
-    generer_suggestions_commande
+    generer_suggestions_commande, PromisViewSet, MouvementCaisseViewSet,
+    StockAnalysisUnsoldView, StockAnalysisOverstockView
 )
 from api.rapport_view import RapportViewSet
 from api.produit_import_view import ProduitImportViewSet
@@ -34,6 +35,7 @@ router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 router.register(r'categories', CategorieViewSet, basename='categorie')
 router.register(r'rayons', CategorieViewSet, basename='rayon')
 router.register(r'audit-logs', AuditLogViewSet, basename='audit-log')
+router.register(r'promis', PromisViewSet, basename='promis')
 router.register(r'creances', CreanceViewSet, basename='creance')
 router.register(r'inventaires', InventaireViewSet)
 router.register(r'ligne-inventaires', LigneInventaireViewSet)
@@ -46,6 +48,7 @@ router.register(r'relations-transformation', RelationTransformationViewSet, base
 router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 router.register(r'stock-lots', StockLotViewSet, basename='stocklot')
+router.register(r'mouvements-caisse', MouvementCaisseViewSet, basename='mouvementcaisse')
 
 urlpatterns = [
     # Manual paths MUST be before 'api/' router include to avoid being masked
@@ -55,6 +58,10 @@ urlpatterns = [
     path('api/generer-suggestions/', generer_suggestions_commande),
     path('api/test-auth/', lambda request: JsonResponse({"message": "OK - Pas d'auth requise!"})),
     path('api-token-auth/', CustomAuthToken.as_view()),
+    
+    # Stock Analysis Explicit Paths
+    path('api/stock-analysis/unsold/', StockAnalysisUnsoldView.as_view()),
+    path('api/stock-analysis/overstock/', StockAnalysisOverstockView.as_view()),
     
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),

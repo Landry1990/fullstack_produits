@@ -47,6 +47,7 @@ export interface ProduitModel {
   pmp?: string
   created_at?: string
   updated_at?: string
+  use_lot_management?: boolean
 }
 
 export interface ProduitForm {
@@ -189,7 +190,7 @@ export interface TicketCaisse {
   date_paiement: string
   montant_verse?: string
   rendu?: string
-  paiements_details?: { mode: string; montant: number }[]
+  paiements_details?: { mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
 }
 
 export interface CaisseParTranche {
@@ -234,6 +235,7 @@ export interface StockLot {
   quantity_initial: number
   quantity_remaining: number
   price_cost: string
+  selling_price?: string // Added
   lot: string | null
   date_expiration: string | null
   date_reception: string
@@ -320,4 +322,19 @@ export interface LigneAvoir {
   lot: string
   date_expiration: string
   total: string
+}
+
+export interface Promis {
+  id: number
+  facture: number
+  client?: number
+  client_name?: string
+  client_phone?: string
+  produit: number
+  produit_name?: string
+  quantite: number
+  status: 'ATT' | 'DEL' | 'ANN'
+  date_promis: string
+  date_livraison?: string
+  notes?: string
 }

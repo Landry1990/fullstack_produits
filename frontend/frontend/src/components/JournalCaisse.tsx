@@ -64,7 +64,9 @@ export default function JournalCaisse() {
   const fetchMouvements = async () => {
       try {
           const response = await axios.get(`${apiBaseUrl}/api/mouvements-caisse/`)
-          setMouvements(response.data)
+          // Handle both array and paginated responses
+          const data: any = response.data
+          setMouvements(Array.isArray(data) ? data : (data.results || []))
       } catch (err) {
           console.error("Erreur chargement mouvements", err)
       }

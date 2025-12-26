@@ -5,7 +5,7 @@ from .views import (
     CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
     DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet,
     MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
-    StatsUGViewSet,
+    StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView,
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
     InvoiceConfigurationView,
     generer_suggestions_commande
@@ -35,12 +35,12 @@ router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')
 router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
-# router.register(r'invoice-settings', InvoiceSettingsViewSet, basename='invoice-settings')
-# Removed router registration for invoice-settings as it is now an APIView
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
-    path('', include(router.urls)),
+    path('stock-analysis/unsold/', StockAnalysisUnsoldView.as_view(), name='stock-analysis-unsold'),
+    path('stock-analysis/overstock/', StockAnalysisOverstockView.as_view(), name='stock-analysis-overstock'),
     path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
+    path('', include(router.urls)),
 ]

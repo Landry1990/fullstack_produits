@@ -24,7 +24,7 @@ export default function InventaireComponent() {
     loading: loadingSearch,
     searchQuery, 
     setSearchQuery 
-  } = useProductSearch({ minSearchLength: 2, debounceMs: 300 })
+  } = useProductSearch({ minSearchLength: 1, debounceMs: 300 })
   
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -207,6 +207,17 @@ export default function InventaireComponent() {
       }
   };
 
+  const handleDeleteLine = async (lineId: number) => {
+      if (!confirm("Retirer ce produit de l'inventaire ?")) return;
+      try {
+          await axios.delete(`${lignesEndpoint}${lineId}/`);
+          setLignes(prev => prev.filter(l => l.id !== lineId));
+      } catch (err) {
+          console.error("Erreur suppression ligne", err);
+          alert("Impossible de supprimer la ligne.");
+      }
+  };
+
   const handleValidate = async () => {
       if (!activeInventaire) return;
       if (!confirm("Valider l'inventaire ? Cela mettra à jour le stock de tous les produits listés.")) return;
@@ -237,6 +248,13 @@ export default function InventaireComponent() {
       } catch(err) {
           alert("Erreur sauvegarde");
       }
+  };
+
+  const handlePrintEtat = () => {
+      if (!activeInventaire) return;
+      // Open PDF in new tab
+      const url = `${inventairesEndpoint}${activeInventaire.id}/imprimer_etat/`;
+      window.open(url, '_blank');
   };
 
 
@@ -335,6 +353,14 @@ export default function InventaireComponent() {
                    {isReadOnly && <span className="badge badge-success badge-lg">VALIDÉE</span>}
               </div>
               <div className="flex gap-2">
+                       <button 
+                         className="btn btn-primary" 
+                         onClick={handlePrintEtat}
+                         disabled={!activeInventaire?.id}
+                       >
+                           🖨️ Imprimer Etat
+                       </button>
+
                   {!isReadOnly && activeInventaire && (
                        <>
                            {/* Save Button (Implicitly saved via API calls but we can add a global 'Done' or similar if needed) 
@@ -342,7 +368,7 @@ export default function InventaireComponent() {
                                User requested SEPARATE buttons. One for Validating.
                            */}
                            <button className="btn btn-warning" disabled>Enregistré auto.</button> {/* Feedback only */}
-                           
+
                            <button className="btn btn-success text-white" onClick={handleValidate} disabled={saving}>
                                {saving ? 'Validation...' : '✓ Valider et Mettre à jour Stock'}
                            </button>
@@ -420,11 +446,10 @@ export default function InventaireComponent() {
           {/* Lines Table */}
           <div className="card bg-base-100 shadow">
               <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
+                  <table className="table table-zebra w-full table-sm">
                       <thead>
                           <tr>
                               <th>Produit</th>
-                              <th>Forme</th>
                               <th>Rayon</th>
                               <th className="text-right">Prix Achat</th>
                               <th className="text-center">Stock Théo.</th>
@@ -448,20 +473,19 @@ export default function InventaireComponent() {
                                           {typeof ligne.produit === 'object' ? ligne.produit.cip1 : ligne.produit_cip}
                                       </div>
                                   </td>
-                                  <td>{typeof ligne.produit === 'object' ? ligne.produit.description : ligne.produit_description}</td>
-                                  <td>{typeof ligne.produit === 'object' ? ligne.produit.rayon_name : ligne.produit_rayon}</td>
-                                  <td className="text-right">{price.toLocaleString()} F</td>
-                                  <td className="text-center text-lg">{ligne.stock_theorique}</td>
+                                  <td className="text-xs">{typeof ligne.produit === 'object' ? ligne.produit.rayon_name : ligne.produit_rayon}</td>
+                                  <td className="text-right text-xs">{price.toLocaleString()} F</td>
+                                  <td className="text-center font-bold opacity-70">{ligne.stock_theorique}</td>
                                   
-                                  <td className="text-center">
+                                  <td className="text-center p-1">
                                       {isReadOnly ? (
-                                          <span className="font-bold text-lg">{ligne.quantite_physique}</span>
+                                          <span className="font-bold">{ligne.quantite_physique}</span>
                                       ) : (
                                           <input 
                                               id={`qty-input-${lignes.indexOf(ligne)}`}
                                               type="text" 
                                               inputMode="numeric"
-                                              className="input input-bordered input-sm w-32 text-center font-bold"
+                                              className="input input-bordered input-xs w-24 text-center font-bold"
                                               value={ligne.quantite_physique}
                                               onChange={(e) => {
                                                   const val = e.target.value;
@@ -476,16 +500,22 @@ export default function InventaireComponent() {
                                   </td>
                                   
                                   <td className="text-center">
-                                      <span className={`badge ${ligne.ecart < 0 ? 'badge-error' : ligne.ecart > 0 ? 'badge-success' : 'badge-ghost'} badge-lg`}>
+                                      <span className={`badge ${ligne.ecart < 0 ? 'badge-error' : ligne.ecart > 0 ? 'badge-success' : 'badge-ghost'} badge-sm`}>
                                           {ligne.ecart > 0 ? '+' : ''}{ligne.ecart}
                                       </span>
                                   </td>
-                                  <td className={`text-right font-bold ${ecartValeur < 0 ? 'text-error' : ecartValeur > 0 ? 'text-success' : ''}`}>
+                                  <td className={`text-right font-bold text-xs ${ecartValeur < 0 ? 'text-error' : ecartValeur > 0 ? 'text-success' : ''}`}>
                                       {ecartValeur.toLocaleString()} F
                                   </td>
                                   {!isReadOnly && (
                                       <td>
-                                          {/* Delete line logic could be added here */}
+                                          <button 
+                                            className="btn btn-ghost btn-xs text-error h-6 min-h-0"
+                                            onClick={() => handleDeleteLine(ligne.id)}
+                                            tabIndex={-1}
+                                          >
+                                            🗑️
+                                          </button>
                                       </td>
                                   )}
                               </tr>

@@ -8,7 +8,7 @@ from .models import (
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog
+    InvoiceSettings, AuditLog, Promis
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -152,6 +152,8 @@ class ProduitSerializer(serializers.ModelSerializer):
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_stock = serializers.IntegerField(source='produit.stock', read_only=True)
+    produit_rotation_moyenne = serializers.CharField(source='produit.rotation_moyenne', read_only=True)
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
     fournisseur_name = serializers.CharField(source='commande.fournisseur.name', read_only=True)
     total_quantity = serializers.IntegerField(read_only=True)
@@ -174,6 +176,13 @@ class CommandeSerializer(serializers.ModelSerializer):
 
 class FactureProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    # Champ pour l'écriture : on envoie stock_lot_id depuis le frontend
+    # Le source='stock_lot' permet d'écrire dans le champ stock_lot du modèle
+    stock_lot_id = serializers.PrimaryKeyRelatedField(
+        queryset=StockLot.objects.all(), source='stock_lot', write_only=True, required=False, allow_null=True
+    )
+    # Champ pour la lecture : retourner l'ID du lot dans les réponses
+    stock_lot = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = FactureProduit
@@ -424,3 +433,33 @@ class AuditLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = AuditLog
         fields = '__all__'
+
+
+class PromisSerializer(serializers.ModelSerializer):
+    client_display = serializers.CharField(read_only=True)
+    client_phone_display = serializers.CharField(read_only=True)
+    produit_name = serializers.CharField(read_only=True)
+    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = Promis
+        fields = [
+            'id', 'facture', 'facture_numero', 'client', 'client_name', 'client_phone',
+            'client_display', 'client_phone_display', 'produit', 'produit_name', 'produit_cip',
+            'quantite', 'status', 'status_display', 'date_promis', 'date_livraison',
+            'notes', 'created_by', 'created_by_name'
+        ]
+        read_only_fields = ['date_promis', 'date_livraison', 'created_by']
+
+
+class MouvementCaisseSerializer(serializers.ModelSerializer):
+    user_nom = serializers.CharField(read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    
+    class Meta:
+        model = MouvementCaisse
+        fields = ['id', 'type', 'type_display', 'montant', 'motif', 'description', 'date', 'user', 'user_nom']
+        read_only_fields = ['user', 'user_nom']

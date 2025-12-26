@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
-import type { Fournisseur, Rayon, ProduitModel, AchatProduit } from '../types'
+import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
 
 export default function Produit() {
@@ -13,13 +13,13 @@ export default function Produit() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterRayon, setFilterRayon] = useState('')
   const [filterFournisseur, setFilterFournisseur] = useState('')
-  
+
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
-  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots'>('general')
   const [isImporting, setIsImporting] = useState(false)
   
   // Formulaire d'édition
@@ -38,13 +38,15 @@ export default function Produit() {
     stock_maximum: '',
     tva: '19.25',
     rayon: '',
-    fournisseur: ''
+    fournisseur: '',
+    use_lot_management: true  // Default to true
   })
   
   // Données complémentaires
   const [rayons, setRayons] = useState<Rayon[]>([])
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [achats, setAchats] = useState<AchatProduit[]>([])
+  const [lots, setLots] = useState<StockLot[]>([])
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
   const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
@@ -144,6 +146,20 @@ export default function Produit() {
     } catch {
       setAchats([])
     }
+
+    // Charger les lots de stock
+    try {
+      const stockLotsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-lots/` : '/api/stock-lots/'
+      const response = await axios.get(
+        `${stockLotsEndpoint}?produit=${produit.id}&ordering=date_expiration`
+      )
+      const lotsData: StockLot[] = Array.isArray(response.data) 
+        ? response.data 
+        : (response.data?.results ?? []);
+      setLots(lotsData)
+    } catch {
+      setLots([])
+    }
   }
 
   const handleGenerateLabels = async (produit: ProduitModel) => {
@@ -219,7 +235,8 @@ export default function Produit() {
       stock_maximum: String(produit.stock_maximum ?? '0'),
       tva: produit.tva || '19.25',
       rayon: produit.rayon ? String(produit.rayon) : '',
-      fournisseur: produit.fournisseur ? String(produit.fournisseur) : ''
+      fournisseur: produit.fournisseur ? String(produit.fournisseur) : '',
+      use_lot_management: produit.use_lot_management ?? true
     })
     setIsEditModalOpen(true)
   }
@@ -244,7 +261,8 @@ export default function Produit() {
         stock_maximum: parseInt(editForm.stock_maximum || '0', 10),
         tva: editForm.tva || '19.25',
         rayon: editForm.rayon ? parseInt(editForm.rayon, 10) : undefined,
-        fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : undefined
+        fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : undefined,
+        use_lot_management: editForm.use_lot_management
       }
       
       const { data } = await axios.patch<ProduitModel>(`${produitsEndpoint}${selectedProduit.id}/`, payload)
@@ -384,10 +402,11 @@ export default function Produit() {
       </div>
 
       {/* Filtres */}
+      {/* Filtres & Actions */}
       <div className="px-6 py-4 bg-base-50 border-b border-base-200 shrink-0">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-end">
           {/* Recherche */}
-          <div className="md:col-span-2 form-control">
+          <div className="form-control flex-1 w-full">
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Rechercher</span>
             </label>
@@ -396,19 +415,19 @@ export default function Produit() {
               placeholder="Nom ou CIP..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input input-bordered input-sm"
+              className="input input-bordered input-sm w-full"
             />
           </div>
           
           {/* Filtre Rayon */}
-          <div className="form-control">
+          <div className="form-control w-full lg:w-48">
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Rayon</span>
             </label>
             <select
               value={filterRayon}
               onChange={(e) => setFilterRayon(e.target.value)}
-              className="select select-bordered select-sm"
+              className="select select-bordered select-sm w-full"
             >
               <option value="">Tous</option>
               {rayons.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
@@ -416,30 +435,43 @@ export default function Produit() {
           </div>
           
           {/* Filtre Fournisseur */}
-          <div className="form-control">
+          <div className="form-control w-full lg:w-48">
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Fournisseur</span>
             </label>
             <select
               value={filterFournisseur}
               onChange={(e) => setFilterFournisseur(e.target.value)}
-              className="select select-bordered select-sm"
+              className="select select-bordered select-sm w-full"
             >
               <option value="">Tous</option>
               {fournisseurs.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
             </select>
           </div>
-        </div>
-        
-        {/* Boutons d'action */}
-        <div className="flex justify-between items-center mt-3">
-          <div className="flex gap-2">
-            <button className="btn btn-sm btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-              ➕ Créer Produit
+          
+          {/* Reset Button */}
+           {(searchQuery || filterRayon || filterFournisseur) && (
+            <button
+              className="btn btn-sm btn-ghost btn-square"
+              onClick={() => {
+                setSearchQuery('')
+                setFilterRayon('')
+                setFilterFournisseur('')
+              }}
+              title="Réinitialiser filtres"
+            >
+              ✕
             </button>
+          )}
+
+          {/* Spacer for desktop */}
+          <div className="hidden lg:block w-4"></div>
+
+          {/* Boutons d'action */}
+          <div className="flex gap-2">
             <label className="btn btn-sm btn-secondary" htmlFor="csv-import-input">
               {isImporting ? <span className="loading loading-spinner loading-xs"></span> : '📄'}
-              Import CSV
+              Import
             </label>
             <input
               id="csv-import-input"
@@ -449,32 +481,23 @@ export default function Produit() {
               onChange={handleCsvImport}
               disabled={isImporting}
             />
-          </div>
-          {(searchQuery || filterRayon || filterFournisseur) && (
-            <button
-              className="btn btn-xs btn-ghost"
-              onClick={() => {
-                setSearchQuery('')
-                setFilterRayon('')
-                setFilterFournisseur('')
-              }}
-            >
-              ✕ Réinitialiser
+            <button className="btn btn-sm btn-primary whitespace-nowrap" onClick={() => setIsCreateModalOpen(true)}>
+              ➕ Créer
             </button>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Badges Stats */}
-      <div className="px-6 py-3 bg-white border-b border-base-200 shrink-0">
-        <div className="flex flex-wrap gap-4 text-sm">
-          <div className="badge badge-lg badge-ghost gap-2">
+      <div className="px-6 py-3 bg-white border-b border-base-200 shrink-0 overflow-x-auto">
+        <div className="flex flex-nowrap gap-4 text-sm">
+          <div className="badge badge-lg badge-ghost gap-2 whitespace-nowrap">
             📦 Total: <span className="font-bold">{totalProduits}</span>
           </div>
-          <div className="badge badge-lg badge-warning gap-2">
-            ⚠️ Stock Faible: <span className="font-bold">{lowStockCount}</span>
+          <div className="badge badge-lg badge-warning gap-2 whitespace-nowrap">
+            ⚠️ Faible: <span className="font-bold">{lowStockCount}</span>
           </div>
-          <div className="badge badge-lg badge-error gap-2">
+          <div className="badge badge-lg badge-error gap-2 whitespace-nowrap">
             🚫 Rupture: <span className="font-bold">{outOfStockCount}</span>
           </div>
         </div>
@@ -516,24 +539,29 @@ export default function Produit() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProduits.map((produit) => (
+                {filteredProduits.map((produit) => {
+                  const stock = produit.stock ?? 0;
+                  
+                  const rowClass = stock < 0 
+                    ? 'hover cursor-pointer text-error' // Stock négatif : rouge
+                    : stock > 0 
+                    ? 'hover cursor-pointer font-bold' // Stock positif : gras
+                    : 'hover cursor-pointer'; // Stock zero : normal
+                  
+                  return (
                   <tr
                     key={produit.id}
-                    className="hover cursor-pointer"
+                    className={rowClass}
                     onClick={() => handleViewDetails(produit)}
                   >
-                    <td className="font-bold uppercase">{produit.name}</td>
+                    <td className="uppercase">{produit.name}</td>
                     <td className="font-mono text-sm">{produit.cip1 || '-'}</td>
-                    <td className="text-right font-bold">
+                    <td className="text-right">
                       {Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
                     </td>
                     <td className="text-center">
-                      <span className={`badge badge-sm ${
-                        (produit.stock ?? 0) <= 0 ? 'badge-error' :
-                        (produit.stock ?? 0) <= (produit.stock_alert ?? 0) ? 'badge-warning' :
-                        'badge-success'
-                      }`}>
-                        {produit.stock ?? 0}
+                      <span className="font-semibold">
+                        {stock}
                       </span>
                     </td>
                     <td>
@@ -564,7 +592,8 @@ export default function Produit() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -623,6 +652,13 @@ export default function Produit() {
                 >
                   Achats
                 </a>
+                <a
+                  role="tab"
+                  className={`tab ${activeTab === 'lots' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('lots')}
+                >
+                  Lots de stock
+                </a>
               </div>
 
               {/* Contenu des tabs */}
@@ -656,7 +692,10 @@ export default function Produit() {
                       </tr>
                       <tr>
                         <td className="font-semibold">Date expiration</td>
-                        <td>{selectedProduit.expire_date || '-'}</td>
+                        <td>{selectedProduit.expire_date ? (() => {
+                          const d = new Date(selectedProduit.expire_date);
+                          return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                        })() : '-'}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -716,9 +755,71 @@ export default function Produit() {
                             <td className="text-right font-bold">{a.quantity}</td>
                             <td className="text-right">{a.price} F</td>
                             <td className="font-mono text-xs">{a.lot || '-'}</td>
-                            <td className="font-mono text-xs">{a.date_expiration || '-'}</td>
+                            <td className="font-mono text-xs">{a.date_expiration ? (() => {
+                              const d = new Date(a.date_expiration);
+                              return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                            })() : '-'}</td>
                           </tr>
                         ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {activeTab === 'lots' && (
+                <div className="overflow-x-auto">
+                  <table className="table table-sm">
+                    <thead>
+                      <tr>
+                        <th>Numéro de lot</th>
+                        <th>Date d'expiration</th>
+                        <th className="text-right">Stock restant</th>
+                        <th className="text-right">Prix de vente</th>
+                        <th>Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lots.length === 0 ? (
+                        <tr><td colSpan={5} className="text-center text-base-content/50">Aucun lot disponible</td></tr>
+                      ) : (
+                        lots.map(lot => {
+                          const expirationDate = lot.date_expiration ? new Date(lot.date_expiration) : null
+                          const today = new Date()
+                          const isExpired = expirationDate ? expirationDate < today : false
+                          const monthsDiff = expirationDate 
+                            ? (expirationDate.getFullYear() - today.getFullYear()) * 12 + expirationDate.getMonth() - today.getMonth()
+                            : 999
+                          const isExpiringSoon = monthsDiff <= 3 && monthsDiff >= 0
+                          
+                          return (
+                            <tr key={lot.id} className={lot.quantity_remaining === 0 ? 'opacity-50' : ''}>
+                              <td className="font-mono font-bold">{lot.lot || 'N/A'}</td>
+                              <td>
+                                {expirationDate ? (
+                                  <span className={isExpired ? 'text-error font-bold' : isExpiringSoon ? 'text-warning font-semibold' : ''}>
+                                    {`${(expirationDate.getMonth() + 1).toString().padStart(2, '0')}/${expirationDate.getFullYear().toString().slice(-2)}`}
+                                    {isExpired && ' ⚠️ Expiré'}
+                                    {isExpiringSoon && !isExpired && ' ⏰'}
+                                  </span>
+                                ) : 'N/A'}
+                              </td>
+                              <td className="text-right font-bold">
+                                <span className={lot.quantity_remaining === 0 ? 'text-error' : 'text-success'}>
+                                  {lot.quantity_remaining}
+                                </span>
+                              </td>
+                              <td className="text-right">{lot.selling_price} F</td>
+                              <td>
+                                {lot.quantity_remaining === 0 ? (
+                                  <span className="badge badge-error badge-sm">Épuisé</span>
+                                ) : (
+                                  <span className="badge badge-success badge-sm">Disponible</span>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })
                       )}
                     </tbody>
                   </table>
@@ -901,6 +1002,24 @@ export default function Produit() {
                 value={editForm.description}
                 onChange={(e) => setEditForm({...editForm, description: e.target.value})}
               />
+            </div>
+
+            {/* Gestion par lots */}
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-4">
+                <input
+                  type="checkbox"
+                  checked={editForm.use_lot_management}
+                  onChange={(e) => setEditForm({...editForm, use_lot_management: e.target.checked})}
+                  className="checkbox checkbox-primary"
+                />
+                <div>
+                  <span className="label-text font-semibold">Gestion par lots FIFO</span>
+                  <p className="text-xs text-base-content/60 mt-1">
+                    Activer la traçabilité par lots (recommandé pour médicaments, produits périssables)
+                  </p>
+                </div>
+              </label>
             </div>
 
             {/* Rayon et Fournisseur */}
