@@ -35,8 +35,10 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<ExtendedClient | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  
+  // View/Navigation State
+  const [viewMode, setViewMode] = useState<'LIST' | 'DETAILS' | 'CREATE' | 'EDIT'>('LIST');
+
   const [newClient, setNewClient] = useState(emptyForm);
   const [editingClient, setEditingClient] = useState<ExtendedClient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -94,22 +96,26 @@ export default function Clients() {
     fetchClients();
   }, [clientsEndpoint]);
 
+  // Si le client sélectionné disparaît de la liste (ex: suppression), retour liste
   useEffect(() => {
     if (selectedClient && !clients.some(c => c.id === selectedClient.id)) {
       setSelectedClient(null);
+      if (viewMode === 'DETAILS' || viewMode === 'EDIT') {
+          setViewMode('LIST');
+      }
     }
-  }, [clients, selectedClient]);
+  }, [clients, selectedClient, viewMode]);
 
-  function openAddModal() {
+  function openCreateView() {
     setNewClient(emptyForm);
     setTempAyantDroit({ matricule: '', nom: '' });
-    setIsAddModalOpen(true);
+    setViewMode('CREATE');
   }
 
-  function closeAddModal() {
-    setIsAddModalOpen(false);
+  function handleBackToList() {
+    setViewMode('LIST');
+    setSelectedClient(null);
     setError(null);
-    setNewClient(emptyForm);
   }
 
   // Fonctions de navigation au clavier
@@ -130,8 +136,9 @@ export default function Clients() {
       case 'Enter':
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < filteredClients.length) {
-          const selectedClient = filteredClients[highlightedIndex];
-          setSelectedClient(selectedClient);
+          const client = filteredClients[highlightedIndex];
+          setSelectedClient(client);
+          setViewMode('DETAILS');
           setSearchTerm('');
           setHighlightedIndex(-1);
         }
@@ -145,19 +152,16 @@ export default function Clients() {
 
   function selectClient(client: ExtendedClient) {
     setSelectedClient(client);
+    setViewMode('DETAILS');
     setSearchTerm('');
     setHighlightedIndex(-1);
   }
 
-  function openEditModal() {
+  function openEditView() {
     if (!selectedClient) return;
     setEditingClient(JSON.parse(JSON.stringify(selectedClient))); // Deep copy
     setTempAyantDroit({ matricule: '', nom: '' });
-    setIsEditModalOpen(true);
-  }
-
-  function closeEditModal() {
-    setIsEditModalOpen(false);
+    setViewMode('EDIT');
   }
 
   function formatBackendErrors(data: unknown): string {
@@ -221,14 +225,13 @@ export default function Clients() {
         ayants_droit: newClient.ayants_droit || []
       });
 
-      // Refresh to get full data (though addedClient should have it now with the new serializer)
-      // We'll trust the response from create first, but a refresh ensures calculating fields like debt are correct
+      // Refresh to get full data
       const { data: refreshedClient } = await axios.get<ExtendedClient>(`${clientsEndpoint}${addedClient.id}/`);
       
       setClients(prev => [refreshedClient, ...prev].sort((a, b) => a.name.localeCompare(b.name)));
       setSelectedClient(refreshedClient);
       setNewClient(emptyForm);
-      closeAddModal();
+      setViewMode('DETAILS'); // Go to details of created client
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data ?? err.message
@@ -269,7 +272,7 @@ export default function Clients() {
         prev.map(c => (c.id === updatedClient.id ? updatedClient : c))
       );
       setSelectedClient(updatedClient);
-      closeEditModal();
+      setViewMode('DETAILS'); // Return to details
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data ?? err.message
@@ -290,6 +293,7 @@ export default function Clients() {
         await axios.delete(`${clientsEndpoint}${selectedClient.id}/`);
         setClients(prev => prev.filter(c => c.id !== selectedClient.id));
         setSelectedClient(null);
+        setViewMode('LIST');
       } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
           setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau')
@@ -311,14 +315,15 @@ export default function Clients() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* VUE LISTE */}
+      {viewMode === 'LIST' && (
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">
               <h2 className="card-title">Liste des clients</h2>
               <div className="card-actions">
                 {loading && <span className="loading loading-spinner loading-sm" />}
-                <button className="btn btn-primary" onClick={openAddModal}>Ajouter</button>
+                <button className="btn btn-primary" onClick={openCreateView}>+ Ajouter</button>
               </div>
             </div>
             
@@ -336,6 +341,7 @@ export default function Clients() {
                     setHighlightedIndex(-1);
                   }}
                   onKeyDown={handleKeyDown}
+                  autoFocus
                 />
                 <button className="btn btn-square" type="button">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -345,12 +351,14 @@ export default function Clients() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="table table-zebra">
+              <table className="table table-zebra table-hover">
                 <thead>
                   <tr>
                     <th>Nom</th>
                     <th>Type</th>
                     <th>Téléphone</th>
+                    <th>Dette</th>
+                    <th className="text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -359,8 +367,6 @@ export default function Clients() {
                       <tr 
                         key={client.id} 
                         className={`hover cursor-pointer ${
-                          selectedClient?.id === client.id ? 'active' : ''
-                        } ${
                           searchTerm && highlightedIndex === index ? 'bg-primary text-primary-content' : ''
                         }`}
                         onClick={() => selectClient(client)}
@@ -372,11 +378,19 @@ export default function Clients() {
                             </span>
                         </td>
                         <td>{client.phone}</td>
+                        <td>
+                            {Number(client.current_debt || 0) > 0 && (
+                                <span className="text-error font-bold">{Number(client.current_debt).toLocaleString()} F</span>
+                            )}
+                        </td>
+                        <td className="text-right">
+                            <button className="btn btn-ghost btn-xs">Voir</button>
+                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={3} className="text-center text-base-content/70 py-8">
+                      <td colSpan={5} className="text-center text-base-content/70 py-8">
                         {searchTerm ? 'Aucun client trouvé pour cette recherche' : 'Aucun client enregistré'}
                       </td>
                     </tr>
@@ -386,351 +400,348 @@ export default function Clients() {
             </div>
           </div>
         </div>
+      )}
 
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex justify-between items-center">
-              <h2 className="card-title">Détails du client</h2>
-              {selectedClient && (
-                <div className="card-actions">
-                  <button className="btn btn-secondary btn-sm" onClick={openEditModal}>Modifier</button>
-                  <button className="btn btn-error btn-sm" onClick={handleDeleteClient}>Supprimer</button>
-                </div>
-              )}
-            </div>
-            {!selectedClient ? (
-              <p className="text-base-content/70">Sélectionnez un client dans la liste.</p>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Type</span>
-                  <span className="col-span-2">
-                    <span className={`badge ${selectedClient.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
+      {/* VUE DETAILS */}
+      {viewMode === 'DETAILS' && selectedClient && (
+         <div className="space-y-4">
+             <button onClick={handleBackToList} className="btn btn-outline btn-sm gap-2">
+                 ⬅️ Retour à la liste
+             </button>
+
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <div className="flex justify-between items-center border-b pb-4 mb-4">
+                  <div>
+                      <h2 className="card-title text-2xl">{selectedClient.name}</h2>
+                      <div className="badge badge-lg mt-1 gap-2">
                         {selectedClient.client_type}
-                    </span>
-                  </span>
+                        {selectedClient.client_type === 'PROFESSIONNEL' && selectedClient.plafond && (
+                            <span className="badge badge-neutral text-xs">Plafond: {Number(selectedClient.plafond).toLocaleString()}</span>
+                        )}
+                      </div>
+                  </div>
+                  <div className="card-actions flex-col sm:flex-row">
+                    <button className="btn btn-secondary btn-sm" onClick={openEditView}>✏️ Modifier</button>
+                    <button className="btn btn-error btn-sm" onClick={handleDeleteClient}>🗑️ Supprimer</button>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Nom</span>
-                  <span className="col-span-2">{selectedClient.name}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Adresse</span>
-                  <span className="col-span-2 whitespace-pre-wrap">{selectedClient.address}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Téléphone</span>
-                  <span className="col-span-2">{selectedClient.phone}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Email</span>
-                  <span className="col-span-2">{selectedClient.email}</span>
-                </div>
-                
-                {selectedClient.client_type === 'PROFESSIONNEL' && (
-                    <>
-                        <div className="divider">Informations Pro</div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <span className="font-semibold col-span-1">Plafond</span>
-                            <span className="col-span-2">{Number(selectedClient.plafond).toLocaleString()} F</span>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Informations Contact */}
+                    <div className="space-y-4">
+                        <h3 className="font-bold text-lg opacity-70">Coordonnées</h3>
+                        <div className="grid grid-cols-[100px_1fr] gap-2">
+                            <span className="font-semibold">Adresse:</span>
+                            <span className="whitespace-pre-wrap">{selectedClient.address}</span>
+                            
+                            <span className="font-semibold">Téléphone:</span>
+                            <span>{selectedClient.phone}</span>
+                            
+                            <span className="font-semibold">Email:</span>
+                            <span>{selectedClient.email}</span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <span className="font-semibold col-span-1">Dette Actuelle</span>
-                            <span className={`col-span-2 font-bold ${Number(selectedClient.current_debt) > Number(selectedClient.plafond) ? 'text-error' : 'text-success'}`}>
-                                {Number(selectedClient.current_debt).toLocaleString()} F
-                            </span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <span className="font-semibold col-span-1">Taux Couverture</span>
-                            <span className="col-span-2">
-                                <span className="badge badge-info">{Number(selectedClient.taux_couverture || 0)}%</span>
-                                {Number(selectedClient.taux_couverture || 0) > 0 && (
-                                    <span className="text-xs text-base-content/70 ml-2">(Tiers payant actif)</span>
+                    </div>
+
+                    {/* Informations Professionnelles */}
+                    {selectedClient.client_type === 'PROFESSIONNEL' && (
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-lg opacity-70">Finance & Assurance</h3>
+                            <div className="stats shadow w-full">
+                                <div className="stat place-items-center">
+                                    <div className="stat-title">Dette Actuelle</div>
+                                    <div className={`stat-value text-2xl ${Number(selectedClient.current_debt) > Number(selectedClient.plafond) ? 'text-error' : 'text-success'}`}>
+                                        {Number(selectedClient.current_debt).toLocaleString()} F
+                                    </div>
+                                    <div className="stat-desc">Plafond: {Number(selectedClient.plafond).toLocaleString()} F</div>
+                                </div>
+                                
+                                <div className="stat place-items-center">
+                                    <div className="stat-title">Couverture</div>
+                                    <div className="stat-value text-2xl text-info">{Number(selectedClient.taux_couverture || 0)}%</div>
+                                    <div className="stat-desc">Part assurance</div>
+                                </div>
+                            </div>
+
+                            <div className="bg-base-200 p-4 rounded-lg mt-4">
+                                <h4 className="font-bold mb-2">Ayants Droit ({selectedClient.ayants_droit?.length || 0})</h4>
+                                {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
+                                    <ul className="list-disc list-inside text-sm space-y-1">
+                                        {selectedClient.ayants_droit.map(ad => (
+                                            <li key={ad.id}>
+                                                <span className="font-bold">{ad.nom}</span> 
+                                                <span className="opacity-70 mx-2">|</span> 
+                                                Mat: <span className="font-mono bg-base-100 px-1 rounded">{ad.matricule}</span>
+                                                {ad.societe && <span className="ml-2 text-xs italic">({ad.societe})</span>}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-sm text-base-content/70">Aucun ayant droit enregistré.</p>
                                 )}
-                            </span>
+                            </div>
                         </div>
-                        
-                        <div className="mt-4">
-                            <h4 className="font-semibold mb-2">Ayants Droit</h4>
-                            {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
-                                <ul className="list-disc list-inside text-sm">
-                                    {selectedClient.ayants_droit.map(ad => (
-                                        <li key={ad.id}>{ad.nom} (Mat: {ad.matricule}){ad.societe ? ` - ${ad.societe}` : ''}</li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-sm text-base-content/70">Aucun ayant droit enregistré.</p>
-                            )}
-                        </div>
-                    </>
-                )}
+                    )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Add Modal */} 
-      <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-3xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Ajouter un nouveau client</h3>
-            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={closeAddModal} disabled={isSubmitting}>✕</button>
-          </div>
-          
-          <form className="space-y-6" onSubmit={handleAddClient}>
-            {/* Type de Client */}
-            <div className="form-control">
-                <label className="label cursor-pointer justify-start gap-4">
-                    <span className="label-text font-semibold">Type de Client:</span>
-                    <label className="label cursor-pointer gap-2">
-                        <input 
-                            type="radio" 
-                            name="client_type" 
-                            className="radio radio-primary" 
-                            checked={newClient.client_type === 'PARTICULIER'}
-                            onChange={() => setNewClient({...newClient, client_type: 'PARTICULIER'})} 
-                        />
-                        <span className="label-text">Particulier</span>
-                    </label>
-                    <label className="label cursor-pointer gap-2">
-                        <input 
-                            type="radio" 
-                            name="client_type" 
-                            className="radio radio-secondary" 
-                            checked={newClient.client_type === 'PROFESSIONNEL'}
-                            onChange={() => setNewClient({...newClient, client_type: 'PROFESSIONNEL'})} 
-                        />
-                        <span className="label-text">Professionnel</span>
-                    </label>
-                </label>
             </div>
+         </div>
+      )}
 
-            {/* Informations personnelles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-medium">Nom complet *</span></div>
-                  <input type="text" placeholder="Ex: Jean Dupont" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
-                </label>
-                
-                <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-medium">Téléphone *</span></div>
-                  <input type="tel" placeholder="Ex: 0123456789" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
-                </label>
-            </div>
-              
-            <label className="form-control w-full">
-                <div className="label"><span className="label-text font-medium">Adresse email *</span></div>
-                <input type="email" placeholder="Ex: jean.dupont@email.com" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
-            </label>
-
-            <label className="form-control w-full">
-                <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
-                <textarea placeholder="Ex: 123 Rue de la Paix" value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required disabled={isSubmitting}/>
-            </label>
-
-            {/* Champs Professionnels */}
-            {newClient.client_type === 'PROFESSIONNEL' && (
-                <div className="bg-base-200 p-4 rounded-lg space-y-4">
-                    <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
-                    
-                    <label className="form-control w-full">
-                        <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
-                        <input type="number" value={newClient.plafond} onChange={e => setNewClient({...newClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
-                    </label>
-                    
-                    <label className="form-control w-full">
-                        <div className="label">
-                            <span className="label-text font-medium">Taux de couverture assurance (%)</span>
-                            <span className="label-text-alt text-info">Pour tiers payant</span>
-                        </div>
-                        <input 
-                            type="number" 
-                            value={newClient.taux_couverture || '0'} 
-                            onChange={e => setNewClient({...newClient, taux_couverture: e.target.value})} 
-                            className="input input-bordered w-full" 
-                            min="0" 
-                            max="100"
-                            step="0.01"
-                        />
-                        <div className="label">
-                            <span className="label-text-alt">Ex: 80 = Assurance paie 80%, patient paie 20%</span>
-                        </div>
-                    </label>
-
-                    <div className="divider">Ayants Droit</div>
-                    
-                    <div className="flex gap-2 items-end">
-                        <label className="form-control flex-1">
-                            <span className="label-text text-xs">Nom</span>
-                            <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
-                        </label>
-                        <label className="form-control flex-1">
-                            <span className="label-text text-xs">Matricule</span>
-                            <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
-                        </label>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(false)}>Ajouter</button>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <table className="table table-xs bg-base-100">
-                            <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
-                            <tbody>
-                                {newClient.ayants_droit?.map((ad, idx) => (
-                                    <tr key={idx}>
-                                        <td>{ad.nom}</td>
-                                        <td>{ad.matricule}</td>
-                                        <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, false)}>Supprimer</button></td>
-                                    </tr>
-                                ))}
-                                {(!newClient.ayants_droit || newClient.ayants_droit.length === 0) && (
-                                    <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            <div className="modal-action pt-4">
-              <button type="button" className="btn btn-ghost" onClick={closeAddModal} disabled={isSubmitting}>Annuler</button>
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : 'Ajouter le client'}
-              </button>
-            </div>
-          </form>
-        </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeAddModal}><button>close</button></form>
-      </dialog>
-
-      {/* Edit Modal */} 
-      <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-3xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Modifier le client</h3>
-            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={closeEditModal}>✕</button>
-          </div>
-          
-          {editingClient && (
-            <form className="space-y-6" onSubmit={handleEditClient}>
-                <div className="form-control">
-                    <label className="label cursor-pointer justify-start gap-4">
-                        <span className="label-text font-semibold">Type de Client:</span>
-                        <label className="label cursor-pointer gap-2">
-                            <input 
-                                type="radio" 
-                                name="edit_client_type" 
-                                className="radio radio-primary" 
-                                checked={editingClient.client_type === 'PARTICULIER'}
-                                onChange={() => setEditingClient({...editingClient, client_type: 'PARTICULIER'})} 
-                            />
-                            <span className="label-text">Particulier</span>
-                        </label>
-                        <label className="label cursor-pointer gap-2">
-                            <input 
-                                type="radio" 
-                                name="edit_client_type" 
-                                className="radio radio-secondary" 
-                                checked={editingClient.client_type === 'PROFESSIONNEL'}
-                                onChange={() => setEditingClient({...editingClient, client_type: 'PROFESSIONNEL'})} 
-                            />
-                            <span className="label-text">Professionnel</span>
-                        </label>
-                    </label>
+      {/* VUE CREATION */}
+      {viewMode === 'CREATE' && (
+        <div className="card bg-base-100 shadow-xl max-w-3xl mx-auto">
+            <div className="card-body">
+                <div className="flex items-center justify-between mb-6 border-b pb-4">
+                    <h2 className="card-title text-xl">Ajouter un nouveau client</h2>
+                    <button onClick={handleBackToList} className="btn btn-sm btn-ghost">Annuler ✕</button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label className="form-control w-full">
+                <form className="space-y-6" onSubmit={handleAddClient}>
+                    {/* ... Form Content (Reused from previous modal) ... */}
+                    {/* Copié adapté pour CREATE */}
+                    <div className="form-control">
+                        <label className="label cursor-pointer justify-start gap-4">
+                            <span className="label-text font-semibold">Type de Client:</span>
+                            <label className="label cursor-pointer gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="client_type" 
+                                    className="radio radio-primary" 
+                                    checked={newClient.client_type === 'PARTICULIER'}
+                                    onChange={() => setNewClient({...newClient, client_type: 'PARTICULIER'})} 
+                                />
+                                <span className="label-text">Particulier</span>
+                            </label>
+                            <label className="label cursor-pointer gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="client_type" 
+                                    className="radio radio-secondary" 
+                                    checked={newClient.client_type === 'PROFESSIONNEL'}
+                                    onChange={() => setNewClient({...newClient, client_type: 'PROFESSIONNEL'})} 
+                                />
+                                <span className="label-text">Professionnel</span>
+                            </label>
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="form-control w-full">
                         <div className="label"><span className="label-text font-medium">Nom complet *</span></div>
-                        <input type="text" value={editingClient.name} onChange={e => setEditingClient({...editingClient, name: e.target.value})} className="input input-bordered w-full" required/>
-                    </label>
-                    <label className="form-control w-full">
+                        <input type="text" placeholder="Ex: Jean Dupont" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
+                        </label>
+                        
+                        <label className="form-control w-full">
                         <div className="label"><span className="label-text font-medium">Téléphone *</span></div>
-                        <input type="tel" value={editingClient.phone} onChange={e => setEditingClient({...editingClient, phone: e.target.value})} className="input input-bordered w-full" required/>
-                    </label>
-                </div>
-                
-                <label className="form-control w-full">
-                    <div className="label"><span className="label-text font-medium">Adresse email *</span></div>
-                    <input type="email" value={editingClient.email} onChange={e => setEditingClient({...editingClient, email: e.target.value})} className="input input-bordered w-full" required/>
-                </label>
-
-                <label className="form-control w-full">
-                    <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
-                    <textarea value={editingClient.address} onChange={e => setEditingClient({...editingClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required/>
-                </label>
-
-                {editingClient.client_type === 'PROFESSIONNEL' && (
-                    <div className="bg-base-200 p-4 rounded-lg space-y-4">
-                        <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
-                        
-                        <label className="form-control w-full">
-                            <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
-                            <input type="number" value={editingClient.plafond} onChange={e => setEditingClient({...editingClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                        <input type="tel" placeholder="Ex: 0123456789" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
                         </label>
-                        
-                        <label className="form-control w-full">
-                            <div className="label">
-                                <span className="label-text font-medium">Taux de couverture assurance (%)</span>
-                                <span className="label-text-alt text-info">Pour tiers payant</span>
-                            </div>
-                            <input 
-                                type="number" 
-                                value={editingClient.taux_couverture || '0'} 
-                                onChange={e => setEditingClient({...editingClient, taux_couverture: e.target.value})} 
-                                className="input input-bordered w-full" 
-                                min="0" 
-                                max="100"
-                                step="0.01"
-                            />
-                            <div className="label">
-                                <span className="label-text-alt">Ex: 80 = Assurance paie 80%, patient paie 20%</span>
-                            </div>
-                        </label>
-
-                        <div className="divider">Ayants Droit</div>
-                        
-                        <div className="flex gap-2 items-end">
-                            <label className="form-control flex-1">
-                                <span className="label-text text-xs">Nom</span>
-                                <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
-                            </label>
-                            <label className="form-control flex-1">
-                                <span className="label-text text-xs">Matricule</span>
-                                <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
-                            </label>
-                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(true)}>Ajouter</button>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                            <table className="table table-xs bg-base-100">
-                                <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
-                                <tbody>
-                                    {editingClient.ayants_droit?.map((ad, idx) => (
-                                        <tr key={idx}>
-                                            <td>{ad.nom}</td>
-                                            <td>{ad.matricule}</td>
-                                            <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, true)}>Supprimer</button></td>
-                                        </tr>
-                                    ))}
-                                    {(!editingClient.ayants_droit || editingClient.ayants_droit.length === 0) && (
-                                        <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
-                )}
+                    
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Adresse email *</span></div>
+                        <input type="email" placeholder="Ex: jean.dupont@email.com" value={newClient.email} onChange={e => setNewClient({...newClient, email: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
+                    </label>
 
-              <div className="modal-action pt-4">
-                <button type="button" className="btn btn-ghost" onClick={closeEditModal}>Annuler</button>
-                <button type="submit" className="btn btn-primary">Enregistrer les modifications</button>
-              </div>
-            </form>
-          )}
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
+                        <textarea placeholder="Ex: 123 Rue de la Paix" value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required disabled={isSubmitting}/>
+                    </label>
+
+                    {newClient.client_type === 'PROFESSIONNEL' && (
+                        <div className="bg-base-200 p-4 rounded-lg space-y-4">
+                            <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
+                            
+                            <label className="form-control w-full">
+                                <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
+                                <input type="number" value={newClient.plafond} onChange={e => setNewClient({...newClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                            </label>
+                            
+                            <label className="form-control w-full">
+                                <div className="label">
+                                    <span className="label-text font-medium">Taux de couverture assurance (%)</span>
+                                    <span className="label-text-alt text-info">Pour tiers payant</span>
+                                </div>
+                                <input 
+                                    type="number" 
+                                    value={newClient.taux_couverture || '0'} 
+                                    onChange={e => setNewClient({...newClient, taux_couverture: e.target.value})} 
+                                    className="input input-bordered w-full" 
+                                    min="0" 
+                                    max="100"
+                                    step="0.01"
+                                />
+                            </label>
+
+                            <div className="divider">Ayants Droit</div>
+                            
+                            <div className="flex gap-2 items-end">
+                                <label className="form-control flex-1">
+                                    <span className="label-text text-xs">Nom</span>
+                                    <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
+                                </label>
+                                <label className="form-control flex-1">
+                                    <span className="label-text text-xs">Matricule</span>
+                                    <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
+                                </label>
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(false)}>Ajouter</button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="table table-xs bg-base-100">
+                                    <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        {newClient.ayants_droit?.map((ad, idx) => (
+                                            <tr key={idx}>
+                                                <td>{ad.nom}</td>
+                                                <td>{ad.matricule}</td>
+                                                <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, false)}>Supprimer</button></td>
+                                            </tr>
+                                        ))}
+                                        {(!newClient.ayants_droit || newClient.ayants_droit.length === 0) && (
+                                            <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="card-actions justify-end pt-4">
+                        <button type="button" className="btn btn-ghost" onClick={handleBackToList} disabled={isSubmitting}>Annuler</button>
+                        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : 'Ajouter le client'}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeEditModal}><button>close</button></form>
-      </dialog>
+      )}
+
+      {/* VUE VISUALISATION */}
+      {viewMode === 'EDIT' && editingClient && (
+        <div className="card bg-base-100 shadow-xl max-w-3xl mx-auto">
+            <div className="card-body">
+                <div className="flex items-center justify-between mb-6 border-b pb-4">
+                    <h2 className="card-title text-xl">Modifier le client</h2>
+                    <button onClick={() => setViewMode('DETAILS')} className="btn btn-sm btn-ghost">Annuler ✕</button>
+                </div>
+            
+                <form className="space-y-6" onSubmit={handleEditClient}>
+                    <div className="form-control">
+                        <label className="label cursor-pointer justify-start gap-4">
+                            <span className="label-text font-semibold">Type de Client:</span>
+                            <label className="label cursor-pointer gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="edit_client_type" 
+                                    className="radio radio-primary" 
+                                    checked={editingClient.client_type === 'PARTICULIER'}
+                                    onChange={() => setEditingClient({...editingClient, client_type: 'PARTICULIER'})} 
+                                />
+                                <span className="label-text">Particulier</span>
+                            </label>
+                            <label className="label cursor-pointer gap-2">
+                                <input 
+                                    type="radio" 
+                                    name="edit_client_type" 
+                                    className="radio radio-secondary" 
+                                    checked={editingClient.client_type === 'PROFESSIONNEL'}
+                                    onChange={() => setEditingClient({...editingClient, client_type: 'PROFESSIONNEL'})} 
+                                />
+                                <span className="label-text">Professionnel</span>
+                            </label>
+                        </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label className="form-control w-full">
+                            <div className="label"><span className="label-text font-medium">Nom complet *</span></div>
+                            <input type="text" value={editingClient.name} onChange={e => setEditingClient({...editingClient, name: e.target.value})} className="input input-bordered w-full" required/>
+                        </label>
+                        <label className="form-control w-full">
+                            <div className="label"><span className="label-text font-medium">Téléphone *</span></div>
+                            <input type="tel" value={editingClient.phone} onChange={e => setEditingClient({...editingClient, phone: e.target.value})} className="input input-bordered w-full" required/>
+                        </label>
+                    </div>
+                    
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Adresse email *</span></div>
+                        <input type="email" value={editingClient.email} onChange={e => setEditingClient({...editingClient, email: e.target.value})} className="input input-bordered w-full" required/>
+                    </label>
+
+                    <label className="form-control w-full">
+                        <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
+                        <textarea value={editingClient.address} onChange={e => setEditingClient({...editingClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required/>
+                    </label>
+
+                    {editingClient.client_type === 'PROFESSIONNEL' && (
+                        <div className="bg-base-200 p-4 rounded-lg space-y-4">
+                            <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
+                            
+                            <label className="form-control w-full">
+                                <div className="label"><span className="label-text font-medium">Plafond de crédit (F)</span></div>
+                                <input type="number" value={editingClient.plafond} onChange={e => setEditingClient({...editingClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
+                            </label>
+                            
+                            <label className="form-control w-full">
+                                <div className="label">
+                                    <span className="label-text font-medium">Taux de couverture assurance (%)</span>
+                                    <span className="label-text-alt text-info">Pour tiers payant</span>
+                                </div>
+                                <input 
+                                    type="number" 
+                                    value={editingClient.taux_couverture || '0'} 
+                                    onChange={e => setEditingClient({...editingClient, taux_couverture: e.target.value})} 
+                                    className="input input-bordered w-full" 
+                                    min="0" 
+                                    max="100"
+                                    step="0.01"
+                                />
+                            </label>
+
+                            <div className="divider">Ayants Droit</div>
+                            
+                            <div className="flex gap-2 items-end">
+                                <label className="form-control flex-1">
+                                    <span className="label-text text-xs">Nom</span>
+                                    <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
+                                </label>
+                                <label className="form-control flex-1">
+                                    <span className="label-text text-xs">Matricule</span>
+                                    <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
+                                </label>
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(true)}>Ajouter</button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="table table-xs bg-base-100">
+                                    <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        {editingClient.ayants_droit?.map((ad, idx) => (
+                                            <tr key={idx}>
+                                                <td>{ad.nom}</td>
+                                                <td>{ad.matricule}</td>
+                                                <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, true)}>Supprimer</button></td>
+                                            </tr>
+                                        ))}
+                                        {(!editingClient.ayants_droit || editingClient.ayants_droit.length === 0) && (
+                                            <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="card-actions justify-end pt-4">
+                        <button type="button" className="btn btn-ghost" onClick={() => setViewMode('DETAILS')}>Annuler</button>
+                        <button type="submit" className="btn btn-primary">Enregistrer les modifications</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
     </>
   );
 }

@@ -57,6 +57,18 @@ export default function Commandes() {
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
 
+  // Etats pour le modal de suggestion de commande
+  const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
+  const [suggestionParams, setSuggestionParams] = useState({
+      periode: 30,
+      fournisseurId: '',
+      mode: 'optimise' // 'simple' | 'optimise'
+  });
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [stepSuggestion, setStepSuggestion] = useState<1 | 2>(1); // 1 = Config, 2 = Résultats
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set()); // Indices sélectionnés
+
 
 
 
@@ -632,6 +644,106 @@ export default function Commandes() {
   };
 
 
+  // --- Logique de suggestion ---
+  
+  async function fetchSuggestions() {
+      setLoadingSuggestions(true);
+      setError(null);
+      try {
+          const payload = {
+              mode: suggestionParams.mode,
+              periode: Number(suggestionParams.periode),
+              fournisseur_id: suggestionParams.fournisseurId ? parseInt(suggestionParams.fournisseurId) : null
+          };
+          
+          const response = await axios.post(`${apiBaseUrl ? apiBaseUrl.replace(/\/$/, '') : ''}/api/generer-suggestions/`, payload);
+          setSuggestions(response.data.suggestions || []);
+          
+          // Par défaut, tout sélectionner
+          const allIndices = new Set(response.data.suggestions.map((_: any, i: number) => i));
+          setSelectedSuggestions(allIndices as Set<number>);
+          
+          setStepSuggestion(2); // Passer à l'étape résultats
+      } catch (err) {
+          handleApiError(err, "Erreur lors de la génération des suggestions");
+      } finally {
+          setLoadingSuggestions(false);
+      }
+  }
+
+  function handleApplySuggestions() {
+      // 1. Filtrer les suggestions sélectionnées
+      const selectedItems = suggestions.filter((_, i) => selectedSuggestions.has(i));
+      
+      if (selectedItems.length === 0) {
+          alert("Aucun produit sélectionné.");
+          return;
+      }
+
+      // 2. Convertir en lignes de commande
+      const newLines: CommandeProduit[] = selectedItems.map((item: any, index) => {
+           // Retrouver l'objet produit complet via la liste chargée (optimisation) ou créer un stub
+           // Idéalement on utilise le produit de la liste produitsList si dispo pour avoir toutes les infos (TVA etc)
+           const realProduct = produitsList.find(p => p.id === item.produit_id);
+           
+           let productStub: ProduitModel;
+           
+           if (realProduct) {
+               productStub = realProduct;
+           } else {
+               productStub = {
+                  id: item.produit_id,
+                  name: item.produit_nom,
+                  cip1: item.produit_ref,
+                  stock: item.stock_actuel,
+                  cost_price: String(item.prix_achat),
+                  selling_price: String(item.prix_achat * 1.3),
+                  tva: '18',
+                  taux_marge: '1.3'
+              } as any;
+           }
+
+          return {
+              id: Date.now() + index, // Temp ID
+              produit: productStub,
+              quantity: item.quantite_suggeree,
+              unites_gratuites: 0,
+              price: String(item.prix_achat || productStub.cost_price || 0),
+              tva: productStub.tva || '18',
+              marge: productStub.taux_marge || '1.3',
+              selling_price: productStub.selling_price || String((item.prix_achat || 0) * 1.3),
+              lot: '',
+              date_expiration: ''
+          };
+      });
+
+      // 3. Configurer le mode CREATE
+      setCommandeProduits(newLines);
+      
+      // Si un fournisseur était filtré, le sélectionner pour la commande
+      if (suggestionParams.fournisseurId) {
+          setNewCommandeFournisseurId(suggestionParams.fournisseurId);
+      } else if (selectedItems.length > 0 && selectedItems[0].fournisseur_id) {
+          setNewCommandeFournisseurId(String(selectedItems[0].fournisseur_id));
+      } else {
+        setNewCommandeFournisseurId('');
+      }
+      
+      setNumeroFacture(''); 
+      setIsSuggestionModalOpen(false);
+      setViewMode('CREATE');
+  }
+
+  function toggleSuggestionSelection(index: number) {
+      setSelectedSuggestions(prev => {
+          const next = new Set(prev);
+          if (next.has(index)) next.delete(index);
+          else next.add(index);
+          return next;
+      });
+  }
+
+
   async function handleSaveCommande(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!newCommandeFournisseurId) {
@@ -749,6 +861,24 @@ export default function Commandes() {
 
 
 
+  async function handleMettreEnAttente() {
+      if (!selectedCommande) return;
+      try {
+          // Mise à jour partielle (PATCH) pour changer le statut
+          await axios.patch(`${commandesEndpoint}${selectedCommande.id}/`, { status: selectedCommande.status === 'ATT' ? 'PREP' : 'ATT' });
+          
+          // Refresh
+          const updated = { ...selectedCommande, status: selectedCommande.status === 'ATT' ? 'PREP' : 'ATT', status_display: selectedCommande.status === 'ATT' ? 'En préparation' : 'En attente' };
+          
+          // Mise à jour optimiste locale
+          setCommandes(prev => prev.map(c => c.id === updated.id ? updated as any : c));
+          setSelectedCommande(updated as any);
+          
+      } catch (err) {
+          handleApiError(err, "Erreur lors de la mise en attente");
+      }
+  }
+
   async function handleCloturerCommande() {
     if (!selectedCommande) {
       setError("Aucune commande sélectionnée.");
@@ -791,29 +921,6 @@ export default function Commandes() {
       } catch (err) {
         handleApiError(err, "Erreur lors de la suppression de la commande")
       }
-    }
-  }
-
-  async function handleGenerateReplenishment() {
-    setLoading(true);
-    setError(null);
-    try {
-      const replenishmentEndpoint = `${commandesEndpoint}generate_replenishment/`;
-      const response = await axios.post(replenishmentEndpoint);
-      
-      if (response.data.commandes && response.data.commandes.length > 0) {
-        alert(response.data.detail);
-        // Refresh commandes
-        const { data: updatedCommandesData } = await axios.get(commandesEndpoint);
-        const updatedCommandes: any = updatedCommandesData;
-        setCommandes(Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []));
-      } else {
-        alert(response.data.detail || "Aucune commande générée.");
-      }
-    } catch (err) {
-      handleApiError(err, "Erreur lors de la génération du réapprovisionnement");
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -985,12 +1092,15 @@ export default function Commandes() {
               <div className="card-actions">
                 {loading && <span className="loading loading-spinner loading-sm" />}
                 <button 
-                  className="btn btn-secondary btn-sm" 
-                  onClick={handleGenerateReplenishment}
-                  disabled={loading}
+                    className="btn btn-secondary btn-sm mr-2" 
+                    onClick={() => { 
+                        setIsSuggestionModalOpen(true); 
+                        setStepSuggestion(1); 
+                        setSuggestions([]);
+                        setSelectedSuggestions(new Set());
+                    }}
                 >
-                  {loading && <span className="loading loading-spinner loading-sm" />}
-                  Générer Réapprovisionnement
+                    ✨ Suggestions
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={openCreateView}>+ Créer</button>
               </div>
@@ -1060,6 +1170,7 @@ export default function Commandes() {
               <table className="table table-zebra w-full">
                 <thead>
                   <tr>
+                    <th>ID</th>
                     <th>N° Facture</th>
                     <th>Date</th>
                     <th>Fournisseur</th>
@@ -1071,7 +1182,8 @@ export default function Commandes() {
                 <tbody>
                   {sortedCommandes.map(commande => (
                     <tr key={commande.id} className="hover">
-                      <td>{commande.numero_facture || commande.id}</td>
+                      <td className="font-mono text-xs opacity-50">#{commande.id}</td>
+                      <td>{commande.numero_facture || '-'}</td>
                       <td>{new Date(commande.date).toLocaleDateString('fr-FR')}</td>
                       <td>{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
                       <td><span className={getStatusBadgeClass(commande.status)}>{commande.status_display}</span></td>
@@ -1122,6 +1234,13 @@ export default function Commandes() {
                     ✏️ Modifier
                   </button>
                   <button 
+                    className={`btn btn-sm ${selectedCommande.status === 'ATT' ? 'btn-info' : 'btn-warning'}`}
+                    onClick={handleMettreEnAttente}
+                    disabled={selectedCommande.status === 'CLOT'}
+                  >
+                    {selectedCommande.status === 'ATT' ? '▶️ Reprendre' : '⏸️ Mettre en attente'}
+                  </button>
+                  <button 
                     className="btn btn-success btn-sm"
                     onClick={handleCloturerCommande}
                     disabled={selectedCommande.status === 'CLOT'}
@@ -1170,7 +1289,9 @@ export default function Commandes() {
                 </div>
                 <div>
                   <span className="font-semibold text-xs">Total</span>
-                  <p className="text-2xl font-bold text-primary">{selectedCommande.total} F</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {selectedCommande.produits.reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0)} F
+                  </p>
                 </div>
               </div>
 
@@ -1222,6 +1343,8 @@ export default function Commandes() {
                           >
                             Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                           </th>
+                          <th className="text-center text-xs">Stock</th>
+                          <th className="text-center text-xs">Rotation</th>
                           <th 
                             className="cursor-pointer hover:bg-base-200"
                             onClick={() => {
@@ -1249,6 +1372,8 @@ export default function Commandes() {
                           >
                             Prix Unitaire {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                           </th>
+                          <th>Lot</th>
+                          <th>Expiration</th>
                           <th>Sous-total</th>
                         </tr>
                       </thead>
@@ -1272,9 +1397,30 @@ export default function Commandes() {
                             }
                             return detailSortOrder === 'asc' ? comparison : -comparison;
                           })
-                          .map(p => (
+                          .map(p => {
+                            // First check if produit is already an object from backend
+                            let produitData: ProduitModel | undefined;
+                            if (typeof p.produit === 'object') {
+                              produitData = p.produit;
+                            } else {
+                              produitData = produitsList.find(prod => prod.id === p.produit);
+                            }
+                            
+                            // Fallback: try to get data from (p as any) in case backend sends flat structure
+                            const stock = produitData?.stock ?? ((p as any).produit_stock ?? '-');
+                            const stockNum = typeof stock === 'number' ? stock : 0;
+                            const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
+                            const rotationDisplay = rotation ? parseFloat(String(rotation)).toFixed(1) : '-';
+                            
+                            return (
                             <tr key={p.id}>
                               <td>{p.produitName}</td>
+                              <td className="text-center text-sm">
+                                <span className={`font-mono ${stockNum === 0 ? 'text-error font-bold' : stockNum < 0 ? 'text-error' : 'text-success'}`}>
+                                  {stock}
+                                </span>
+                              </td>
+                              <td className="text-center text-sm font-mono opacity-70">{rotationDisplay}</td>
                               <td>{p.quantity}</td>
                               <td className="text-center bg-success/5">
                                 <span className={`font-semibold ${(p.unites_gratuites || 0) > 0 ? 'text-success' : 'text-base-content/40'}`}>
@@ -1282,10 +1428,17 @@ export default function Commandes() {
                                 </span>
                               </td>
                               <td>{p.price} F</td>
+                              <td className="font-mono text-xs text-center">{p.lot || '-'}</td>
+                              <td className="font-mono text-xs text-center">
+                                {p.date_expiration ? (() => {
+                                  const d = new Date(p.date_expiration);
+                                  return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                                })() : '-'}
+                              </td>
                               <td className="font-semibold">{Number(p.quantity) * Number(p.price)} F</td>
                             </tr>
-                          ))
-                        }
+                           );
+                         })}
                       </tbody>
                     </table>
                   </div>
@@ -1738,7 +1891,204 @@ export default function Commandes() {
 
 
 
-      {/* Modal de création de produit réutilisable */} 
+      {/* Modal de Suggestion de Commande */}
+      {isSuggestionModalOpen && (
+          <div className="modal modal-open">
+              <div className="modal-box w-11/12 max-w-5xl h-[80vh] flex flex-col p-0 overflow-hidden">
+                  <div className="p-4 border-b bg-base-100 shrink-0 flex justify-between items-center">
+                      <h3 className="font-bold text-lg">Générateur de commande intelligent</h3>
+                      <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setIsSuggestionModalOpen(false)}>✕</button>
+                  </div>
+                  
+                  <div className="flex-1 overflow-y-auto p-6 bg-base-200/50">
+                      {stepSuggestion === 1 ? (
+                          <div className="card bg-base-100 shadow-sm max-w-2xl mx-auto">
+                              <div className="card-body">
+                                  <h4 className="card-title text-base mb-4">Paramètres de l'analyse</h4>
+                                  
+                                  <div className="form-control mb-4">
+                                      <label className="label font-medium">Fournisseur</label>
+                                      <select 
+                                          className="select select-bordered w-full"
+                                          value={suggestionParams.fournisseurId}
+                                          onChange={(e) => setSuggestionParams(prev => ({ ...prev, fournisseurId: e.target.value }))}
+                                      >
+                                          <option value="">Tous les fournisseurs</option>
+                                          {fournisseurs.map(f => (
+                                              <option key={f.id} value={f.id}>{f.name}</option>
+                                          ))}
+                                      </select>
+                                      <label className="label text-xs text-base-content/60">
+                                          Si sélectionné, seuls les produits de ce fournisseur seront analysés.
+                                      </label>
+                                  </div>
+
+                                  <div className="form-control mb-4">
+                                      <label className="label font-medium">Période d'analyse (jours)</label>
+                                      <input 
+                                          type="number" 
+                                          className="input input-bordered w-full"
+                                          value={suggestionParams.periode}
+                                          onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 30 }))}
+                                      />
+                                      <label className="label text-xs text-base-content/60">
+                                          Base de calcul pour la moyenne des ventes (ex: 30 derniers jours).
+                                      </label>
+                                  </div>
+
+                                  <div className="form-control mb-6">
+                                      <label className="label font-medium">Mode de calcul</label>
+                                      <div className="flex gap-4">
+                                          <label className="label cursor-pointer justify-start gap-3 border p-3 rounded-lg flex-1 bg-base-50 hover:bg-base-100 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                              <input 
+                                                  type="radio" 
+                                                  name="mode" 
+                                                  className="radio radio-primary" 
+                                                  checked={suggestionParams.mode === 'simple'}
+                                                  onChange={() => setSuggestionParams(prev => ({ ...prev, mode: 'simple' }))}
+                                              />
+                                              <div>
+                                                  <span className="font-semibold block">Réassort Simple</span>
+                                                  <span className="text-xs opacity-75">Commande ce qui a été vendu (Ventes - Stock)</span>
+                                              </div>
+                                          </label>
+                                          <label className="label cursor-pointer justify-start gap-3 border p-3 rounded-lg flex-1 bg-base-50 hover:bg-base-100 transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                              <input 
+                                                  type="radio" 
+                                                  name="mode" 
+                                                  className="radio radio-primary" 
+                                                  checked={suggestionParams.mode === 'optimise'}
+                                                  onChange={() => setSuggestionParams(prev => ({ ...prev, mode: 'optimise' }))}
+                                              />
+                                              <div>
+                                                  <span className="font-semibold block">Analyse Intelligente</span>
+                                                  <span className="text-xs opacity-75">Basé sur rotation, couverture et stock de sécurité.</span>
+                                              </div>
+                                          </label>
+                                      </div>
+                                  </div>
+
+                                  <div className="card-actions justify-end mt-4">
+                                      <button 
+                                          className="btn btn-primary w-full md:w-auto"
+                                          onClick={fetchSuggestions}
+                                          disabled={loadingSuggestions}
+                                      >
+                                          {loadingSuggestions ? <span className="loading loading-spinner"></span> : '🔍 Lancer l\'analyse'}
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+                      ) : (
+                          /* STEP 2 : RÉSULTATS */
+                          <div className="flex flex-col h-full gap-4">
+                              <div className="alert alert-info shadow-sm text-sm py-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                  <div>
+                                      <span className="font-bold">{suggestions.length} produits suggérés.</span> 
+                                      {suggestions.length === 0 ? " Aucun produit à commander selon les critères." : " Vérifiez les quantités avant de valider."}
+                                  </div>
+                              </div>
+
+                              {suggestions.length > 0 && (
+                                  <div className="flex-1 overflow-auto border rounded-box bg-base-100">
+                                      <table className="table table-pin-rows">
+                                          <thead>
+                                              <tr>
+                                                  <th>
+                                                      <label>
+                                                          <input 
+                                                              type="checkbox" 
+                                                              className="checkbox" 
+                                                              checked={selectedSuggestions.size === suggestions.length && suggestions.length > 0}
+                                                              onChange={() => {
+                                                                  if (selectedSuggestions.size === suggestions.length) {
+                                                                      setSelectedSuggestions(new Set());
+                                                                  } else {
+                                                                      const all = new Set(suggestions.map((_, i) => i));
+                                                                      setSelectedSuggestions(all);
+                                                                  }
+                                                              }}
+                                                          />
+                                                      </label>
+                                                  </th>
+                                                  <th>Produit</th>
+                                                  <th className="text-center">Stock</th>
+                                                  <th className="text-center">Ventes (Période)</th>
+                                                  {suggestionParams.mode === 'optimise' && <th className="text-center">Note</th>}
+                                                  <th className="text-right">Proposition</th>
+                                                  <th className="text-right">Prix Achat</th>
+                                                  <th>Raison</th>
+                                              </tr>
+                                          </thead>
+                                          <tbody>
+                                              {suggestions.map((item, index) => (
+                                                  <tr key={index} className="hover:bg-base-50" onClick={() => toggleSuggestionSelection(index)}>
+                                                      <td>
+                                                          <label>
+                                                              <input 
+                                                                  type="checkbox" 
+                                                                  className="checkbox" 
+                                                                  checked={selectedSuggestions.has(index)}
+                                                                  onChange={() => toggleSuggestionSelection(index)}
+                                                              />
+                                                          </label>
+                                                      </td>
+                                                      <td>
+                                                          <div className="font-bold">{item.produit_nom}</div>
+                                                          <div className="text-xs opacity-50">{item.produit_ref}</div>
+                                                      </td>
+                                                      <td className="text-center font-mono">{item.stock_actuel}</td>
+                                                      <td className="text-center font-mono">{item.ventes_periode}</td>
+                                                      {suggestionParams.mode === 'optimise' && (
+                                                          <td className="text-center">
+                                                              {item.score_urgence > 50 && <span className="badge badge-error badge-xs">Critique</span>}
+                                                          </td>
+                                                      )}
+                                                      <td className="text-right font-bold text-primary text-lg">
+                                                          {item.quantite_suggeree}
+                                                      </td>
+                                                      <td className="text-right opacity-70">
+                                                          {item.prix_achat} F
+                                                      </td>
+                                                      <td className="text-xs max-w-xs truncate" title={item.raison}>
+                                                          {item.raison}
+                                                      </td>
+                                                  </tr>
+                                              ))}
+                                          </tbody>
+                                      </table>
+                                  </div>
+                              )}
+                          </div>
+                      )}
+                  </div>
+
+                  <div className="p-4 border-t bg-base-100 shrink-0 flex justify-between">
+                      {stepSuggestion === 2 ? (
+                          <button className="btn btn-ghost" onClick={() => setStepSuggestion(1)}>⬅️ Paramètres</button>
+                      ) : (
+                         <div></div>
+                      )}
+                      
+                      {stepSuggestion === 2 && (
+                          <div className="flex gap-2">
+                              <button className="btn btn-ghost" onClick={() => setIsSuggestionModalOpen(false)}>Annuler</button>
+                              <button 
+                                  className="btn btn-primary" 
+                                  onClick={handleApplySuggestions}
+                                  disabled={selectedSuggestions.size === 0}
+                              >
+                                  Créer Commande ({selectedSuggestions.size})
+                              </button>
+                          </div>
+                      )}
+                  </div>
+              </div>
+          </div>
+      )}
+
+
       <ProduitFormModal
         open={isCreateProduitModalOpen}
         onClose={() => setIsCreateProduitModalOpen(false)}

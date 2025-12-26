@@ -135,8 +135,40 @@ export default function Rayons() {
     }
   };
 
-  // Filter potential parents: avoid self and children (simplified check: avoid self)
   const availableParents = rayons.filter(r => !editingRayon || r.id !== editingRayon.id);
+
+  // Print Modal State
+  const [printTarget, setPrintTarget] = useState<Rayon | null>(null);
+  const [excludeZeroStock, setExcludeZeroStock] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+
+  const handlePrintRayonStock = (rayonId: number) => {
+      const r = rayons.find(x => x.id === rayonId);
+      if (r) {
+          setPrintTarget(r);
+          setExcludeZeroStock(false);
+          setIsPrintModalOpen(true);
+      }
+  };
+
+  const openPrintSansRayon = () => {
+      // Sentinel object for "No Rayon"
+      setPrintTarget({ id: -1, name: "PRODUITS SANS RAYON", parent: null, parent_name: null }); 
+      setExcludeZeroStock(false);
+      setIsPrintModalOpen(true);
+  };
+
+  const handleConfirmPrint = () => {
+      if (!printTarget) return;
+      let url = "";
+      if (printTarget.id === -1) {
+           url = `${apiBaseUrl}/api/categories/imprimer_sans_rayon/?exclude_zero=${excludeZeroStock}`;
+      } else {
+           url = `${apiBaseUrl}/api/categories/${printTarget.id}/imprimer_etat_stock/?exclude_zero=${excludeZeroStock}`;
+      }
+      window.open(url, '_blank');
+      setIsPrintModalOpen(false);
+  };
 
   if (loading) return <div className="p-8 text-center"><span className="loading loading-spinner loading-lg"></span></div>;
 
@@ -144,10 +176,15 @@ export default function Rayons() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gestion des Rayons</h1>
-        <button onClick={() => openModal()} className="btn btn-primary gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-          Nouveau Rayon Principal
-        </button>
+        <div className="flex gap-2">
+            <button onClick={openPrintSansRayon} className="btn btn-secondary btn-outline gap-2">
+              🖨️ Sans Rayon
+            </button>
+            <button onClick={() => openModal()} className="btn btn-primary gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+              Nouveau Rayon Principal
+            </button>
+        </div>
       </div>
 
       <div className="bg-base-100 rounded-lg shadow overflow-hidden flex flex-col h-[600px]">
@@ -185,6 +222,7 @@ export default function Rayons() {
                         >
                            + Sous-rayon
                         </button>
+                        <button onClick={() => handlePrintRayonStock(parent.id)} className="btn btn-info btn-outline btn-xs mr-2" title="Imprimer Etat Stock">🖨️ Stock</button>
                         <button onClick={() => openModal(parent)} className="btn btn-ghost btn-xs mr-2">Modifier</button>
                         <button onClick={() => handleDelete(parent.id)} className="btn btn-ghost btn-xs text-error">Supprimer</button>
                       </td>
@@ -199,6 +237,7 @@ export default function Rayons() {
                         </td>
                         <td><span className="badge badge-ghost badge-sm">Sous-rayon</span></td>
                         <td className="text-right">
+                          <button onClick={() => handlePrintRayonStock(child.id)} className="btn btn-info btn-outline btn-xs mr-2" title="Imprimer Etat Stock">🖨️ Stock</button>
                           <button onClick={() => openModal(child)} className="btn btn-ghost btn-xs mr-2">Modifier</button>
                           <button onClick={() => handleDelete(child.id)} className="btn btn-ghost btn-xs text-error">Supprimer</button>
                         </td>
@@ -284,6 +323,38 @@ export default function Rayons() {
             </form>
           </div>
           <div className="modal-backdrop" onClick={closeModal}></div>
+        </div>
+      )}
+
+      {/* Print Options Modal */}
+      {isPrintModalOpen && printTarget && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+             <h3 className="font-bold text-lg mb-4">Imprimer Etat de Stock</h3>
+             <p className="mb-4">
+               Rayon : <span className="font-bold text-primary">{printTarget.name}</span>
+             </p>
+
+             <div className="form-control">
+               <label className="label cursor-pointer justify-start gap-4">
+                 <input 
+                   type="checkbox" 
+                   className="checkbox checkbox-primary"
+                   checked={excludeZeroStock}
+                   onChange={e => setExcludeZeroStock(e.target.checked)}
+                 />
+                 <span className="label-text">Ne pas inclure les stocks nuls (0)</span>
+               </label>
+             </div>
+
+             <div className="modal-action">
+               <button className="btn btn-ghost" onClick={() => setIsPrintModalOpen(false)}>Annuler</button>
+               <button className="btn btn-primary" onClick={handleConfirmPrint}>
+                 <span className="mr-2">🖨️</span> Valider et Imprimer
+               </button>
+             </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setIsPrintModalOpen(false)}></div>
         </div>
       )}
     </div>

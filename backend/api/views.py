@@ -28,14 +28,14 @@ from .models import (
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement,
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog
+    InvoiceSettings, AuditLog, Promis
 )
 from .serializers import (
     ProduitSerializer, RayonSerializer, FournisseurSerializer,
     ClientSerializer, CommandeSerializer, CommandeProduitSerializer,
     FactureSerializer, FactureProduitSerializer, StockLotSerializer,
     AvoirSerializer, HistoriqueTransformationSerializer, MouvementStockSerializer,
-    InvoiceSettingsSerializer, AuditLogSerializer,
+    InvoiceSettingsSerializer, AuditLogSerializer, PromisSerializer,
     InventaireSerializer, LigneInventaireSerializer, CreanceSerializer,
     ClotureCaisseSerializer, FactureProduitAllocationSerializer, MouvementCaisseSerializer,
     UserSerializer, AyantDroitSerializer, LigneAvoirSerializer, CaisseSerializer,
@@ -74,12 +74,15 @@ class ProduitViewSet(viewsets.ModelViewSet):
     """
     API endpoint for products.
     """
-    queryset = Produit.objects.all().order_by('-created_at')
+    # Optimisation: select_related pour éviter les requêtes N+1 sur rayon et fournisseur
+    queryset = Produit.objects.select_related('rayon', 'fournisseur').order_by('-created_at')
     serializer_class = ProduitSerializer
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     filterset_class = ProduitFilter
-    search_fields = ['name', 'cip1', 'cip2', 'cip3']
+    search_fields = ['name', 'cip1', 'cip2', 'cip3', '=id']
     permission_classes = [IsAuthenticated]
+    # Pagination explicite pour limiter la taille des réponses (8000 produits → pages de 50)
+    pagination_class = None  # Utilise la pagination globale définie dans settings (PAGE_SIZE=50)
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -166,6 +169,23 @@ class ProduitViewSet(viewsets.ModelViewSet):
                 'libelle': trans.description or ("Transformation" if trans.type_mouvement == 'TRANSFORMATION_ENTREE' else "Déconditionnement"),
                 'prix_unitaire': 0, # Pas de prix unitaire pertinent pour l'instant
                 'is_transformation': True
+            })
+
+        # 5b. Récupérer les retours manuels (ex: Annulation Promis) via MouvementStock
+        # Ces mouvements sont spécifiques et ne sont pas liés aux factures annulées
+        mouvements_retour = MouvementStock.objects.filter(
+            produit=produit,
+            type_mouvement='RETOUR'
+        ).select_related('user').order_by('-date')
+
+        for mouv in mouvements_retour:
+            transactions.append({
+                'type': 'RETOUR',
+                'date': mouv.date,
+                'quantity': abs(mouv.quantite),
+                'libelle': mouv.description or "Retour stock (Manuel)",
+                'prix_unitaire': 0,
+                'is_manual_return': True
             })
 
         # 6. Récupérer les ajustements d'inventaire
@@ -293,7 +313,7 @@ class ProduitViewSet(viewsets.ModelViewSet):
         # Prepare data for table
         # 4 colonnes par page
         col_width = 4.8 * cm
-        row_height = 3 * cm
+        row_height = 3.5 * cm
         
         cells = []
         
@@ -314,11 +334,24 @@ class ProduitViewSet(viewsets.ModelViewSet):
                     d = Drawing(3.5*cm, 1.2*cm)
                     d.add(barcode)
                     
+                    # Récupérer le lot le plus récent pour ce produit (FIFO)
+                    latest_lot = product.stock_lots.filter(
+                        quantity_remaining__gt=0
+                    ).order_by('date_reception').first()
+                    
+                    lot_info = f"Lot: {latest_lot.lot}" if latest_lot and latest_lot.lot else ""
+                    
+                    # Style pour le lot
+                    style_lot = styles['Normal']
+                    style_lot.fontSize = 7
+                    style_lot.alignment = 1
+                    
                     # Cell content
                     cell_content = [
                         Paragraph(product.name[:30], style_normal),
                         d,
-                        Paragraph(f"{product.selling_price} F", style_normal)
+                        Paragraph(f"{product.selling_price} F", style_normal),
+                        Paragraph(lot_info, style_lot) if lot_info else Paragraph("", style_lot)
                     ]
                     cells.append(cell_content)
                     
@@ -357,6 +390,157 @@ class CategorieViewSet(viewsets.ModelViewSet):
     queryset = Rayon.objects.all().order_by('name')
     serializer_class = RayonSerializer
     permission_classes = [permissions.AllowAny]
+
+    @action(detail=True, methods=['get'])
+    def imprimer_etat_stock(self, request, pk=None):
+        """
+        Génère un PDF de l'état de stock actuel pour ce rayon.
+        Inclut les produits des sous-rayons si applicable.
+        Paramètre optionnel: exclude_zero=true pour masquer les stocks à 0.
+        """
+        rayon = self.get_object()
+        exclude_zero = request.query_params.get('exclude_zero', 'false').lower() == 'true'
+        
+        # Récupérer les produits du rayon ou de ses sous-rayons
+        produits = Produit.objects.filter(
+            Q(rayon=rayon) | Q(rayon__parent=rayon)
+        ).select_related('rayon').order_by('rayon__name', 'name')
+        
+        if exclude_zero:
+            produits = produits.exclude(stock=0)
+        
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"stock_rayon_{rayon.name}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        buffer = io.BytesIO()
+        doc = BaseDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
+        
+        frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')
+        template = PageTemplate(id='main', frames=[frame])
+        doc.addPageTemplates([template])
+        
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Header
+        title_text = f"ETAT DE STOCK - RAYON: {rayon.name.upper()}"
+        if exclude_zero:
+            title_text += " (Non-Nuls)"
+        story.append(Paragraph(title_text, styles['Title']))
+        story.append(Paragraph(f"Date: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Content
+        data = [['ID', 'Produit', 'CIP', 'Stock', 'PMP', 'Valeur', 'Rayon']]
+        total_valeur = 0
+        total_items = 0
+        
+        for p in produits:
+            valeur = p.stock * p.pmp
+            total_valeur += valeur
+            total_items += p.stock
+            rayon_name = p.rayon.name if p.rayon else "-"
+            
+            data.append([
+                str(p.id),
+                Paragraph(p.name[:35], styles['Normal']),
+                p.cip1 or "",
+                str(p.stock),
+                f"{p.pmp:.0f}",
+                f"{valeur:.0f}",
+                rayon_name
+            ])
+            
+        data.append(['', '', '', f"Tot: {total_items}", 'TOTAL', f"{total_valeur:.0f} F", ''])
+        
+        t = Table(data, colWidths=[0.4*inch, 2.6*inch, 0.9*inch, 0.6*inch, 0.8*inch, 0.9*inch, 1.3*inch])
+        t.setStyle(TableStyle([
+            ('GRID', (0,0), (-1,-2), 1, colors.black),
+            ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+            ('ALIGN', (3,0), (5,-1), 'CENTER'), # Align Stock, PMP, Valeur
+            ('LINEBELOW', (0,-2), (-1,-2), 1, colors.black),
+            ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold')
+        ]))
+        
+        story.append(t)
+        doc.build(story)
+        
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
+
+    @action(detail=False, methods=['get'])
+    def imprimer_sans_rayon(self, request):
+        """
+        Génère un PDF pour les produits sans rayon assigné.
+        """
+        exclude_zero = request.query_params.get('exclude_zero', 'false').lower() == 'true'
+        
+        produits = Produit.objects.filter(rayon__isnull=True).order_by('name')
+        
+        if exclude_zero:
+            produits = produits.exclude(stock=0)
+            
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"stock_sans_rayon_{datetime.now().strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        buffer = io.BytesIO()
+        doc = BaseDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch, leftMargin=0.5*inch, rightMargin=0.5*inch)
+        
+        frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')
+        template = PageTemplate(id='main', frames=[frame])
+        doc.addPageTemplates([template])
+        
+        story = []
+        styles = getSampleStyleSheet()
+        
+        title_text = "ETAT DE STOCK - SANS RAYON"
+        if exclude_zero:
+             title_text += " (Non-Nuls)"
+        story.append(Paragraph(title_text, styles['Title']))
+        story.append(Paragraph(f"Date: {datetime.now().strftime('%d/%m/%Y %H:%M')}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        data = [['ID', 'Produit', 'CIP', 'Stock', 'PMP', 'Valeur', 'Rayon']]
+        total_valeur = 0
+        total_items = 0
+        
+        for p in produits:
+            valeur = p.stock * p.pmp
+            total_valeur += valeur
+            total_items += p.stock
+            
+            data.append([
+                str(p.id),
+                Paragraph(p.name[:35], styles['Normal']),
+                p.cip1 or "",
+                str(p.stock),
+                f"{p.pmp:.0f}",
+                f"{valeur:.0f}",
+                "" # Sans rayon obviously
+            ])
+            
+        data.append(['', '', '', f"Tot: {total_items}", 'TOTAL', f"{total_valeur:.0f} F", ''])
+        
+        t = Table(data, colWidths=[0.4*inch, 2.6*inch, 0.9*inch, 0.6*inch, 0.8*inch, 0.9*inch, 1.3*inch])
+        t.setStyle(TableStyle([
+            ('GRID', (0,0), (-1,-2), 1, colors.black),
+            ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+            ('ALIGN', (3,0), (5,-1), 'CENTER'),
+            ('LINEBELOW', (0,-2), (-1,-2), 1, colors.black),
+            ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold')
+        ]))
+        
+        story.append(t)
+        doc.build(story)
+        
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
 
 class FournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for fournisseurs."""
@@ -445,99 +629,6 @@ class CommandeViewSet(viewsets.ModelViewSet):
              raise ValidationError("Impossible de supprimer une commande clôturée.")
         super().perform_destroy(instance)
 
-    @action(detail=False, methods=['post'])
-    @transaction.atomic
-    def generate_replenishment(self, request):
-        """
-        Génère automatiquement des commandes brouillon pour les produits en rupture de stock.
-        Règle : Si stock <= stock_minimum, commander (stock_maximum - stock).
-        Si pas de stock_maximum, commander (stock_minimum * 2).
-        """
-        # 1. Identifier les produits à commander
-        produits_a_commander = Produit.objects.filter(stock__lte=F('stock_minimum'))
-        
-        if not produits_a_commander.exists():
-            return Response({'detail': 'Aucun produit ne nécessite un réapprovisionnement.'}, status=status.HTTP_200_OK)
-
-        commandes_creees = []
-        produits_par_fournisseur = {}
-
-        # 2. Grouper par fournisseur
-        for produit in produits_a_commander:
-            if not produit.fournisseur:
-                continue # On ignore les produits sans fournisseur
-            
-            if produit.fournisseur.id not in produits_par_fournisseur:
-                produits_par_fournisseur[produit.fournisseur.id] = {
-                    'fournisseur': produit.fournisseur,
-                    'produits': []
-                }
-            
-            produits_par_fournisseur[produit.fournisseur.id]['produits'].append(produit)
-
-        # 3. Créer les commandes
-        count_commandes = 0
-        count_produits = 0
-
-        for fournisseur_id, data in produits_par_fournisseur.items():
-            fournisseur = data['fournisseur']
-            produits = data['produits']
-            
-            # Vérifier s'il existe déjà une commande en préparation pour ce fournisseur
-            commande = Commande.objects.filter(
-                fournisseur=fournisseur, 
-                status=Commande.Status.EN_PREPARATION
-            ).first()
-            
-            created = False
-            if not commande:
-                commande = Commande.objects.create(
-                    fournisseur=fournisseur,
-                    status=Commande.Status.EN_PREPARATION
-                )
-                created = True
-                count_commandes += 1
-            
-            # Ajouter les produits à la commande
-            for produit in produits:
-                # Calculer la quantité à commander
-                if produit.stock_maximum > 0:
-                    qte_a_commander = produit.stock_maximum - produit.stock
-                else:
-                    qte_a_commander = produit.stock_minimum * 2
-                
-                # S'assurer que la quantité est positive et au moins 1
-                qte_a_commander = max(qte_a_commander, 1)
-                
-                # Vérifier si le produit est déjà dans la commande
-                commande_produit, cp_created = CommandeProduit.objects.get_or_create(
-                    commande=commande,
-                    produit=produit,
-                    defaults={
-                        'quantity': qte_a_commander,
-                        'price': produit.cost_price
-                    }
-                )
-                
-                if not cp_created:
-                    # Si déjà présent, on met à jour la quantité pour atteindre le stock cible
-                    # On prend le max entre ce qui était prévu et le nouveau calcul
-                    commande_produit.quantity = max(commande_produit.quantity, qte_a_commander)
-                    commande_produit.price = produit.cost_price # Mise à jour du prix coûtant au cas où
-                    commande_produit.save()
-                
-                count_produits += 1
-
-            commandes_creees.append({
-                'fournisseur': fournisseur.name,
-                'commande_id': commande.id,
-                'nouveau': created
-            })
-
-        return Response({
-            'detail': f'{count_commandes} commande(s) générée(s) ou mise(s) à jour pour {count_produits} produits.',
-            'commandes': commandes_creees
-        })
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -563,28 +654,30 @@ class CommandeViewSet(viewsets.ModelViewSet):
             else:
                 effective_cost = item.price_cost
             
-            # 1. Créer un lot de stock pour la traçabilité
-            StockLot.objects.create(
-                produit=item.produit,
-                commande_produit=item,
-                fournisseur=commande.fournisseur,
-                quantity_initial=total_qty,
-                quantity_paid=quantity_paid,
-                quantity_free=quantity_free,
-                quantity_remaining=total_qty,
-                price_cost=effective_cost,  # Coût effectif ajusté avec les UG
-                lot=item.lot,
-                date_expiration=item.date_expiration,
-                date_reception=commande.date
-            )
+            # 1. Créer un lot de stock pour la traçabilité (uniquement si use_lot_management=True)
+            produit = item.produit
+            if produit.use_lot_management:
+                StockLot.objects.create(
+                    produit=produit,
+                    commande_produit=item,
+                    fournisseur=commande.fournisseur,
+                    quantity_initial=total_qty,
+                    quantity_paid=quantity_paid,
+                    quantity_free=quantity_free,
+                    quantity_remaining=total_qty,
+                    price_cost=effective_cost,
+                    selling_price=produit.selling_price,
+                    lot=item.lot,
+                    date_expiration=item.date_expiration,
+                    date_reception=commande.date
+                )
 
             # 2. Mettre à jour le stock global et le PMP
-            produit = item.produit
             
             # Calcul PMP avec les UG
             # Formule: (AncienStock * AncienPMP + CoutTotal) / (AncienStock + QteRecue)
             # Où CoutTotal = quantity_paid * price_cost (on ne paie pas les UG)
-            old_stock = Decimal(produit. stock)
+            old_stock = Decimal(produit.stock)
             old_pmp = Decimal(produit.pmp)
             qty_received = Decimal(total_qty)  # Total reçu (payé + gratuit)
             cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)  # Coût total payé
@@ -600,9 +693,15 @@ class CommandeViewSet(viewsets.ModelViewSet):
                 new_pmp = (current_val + incoming_val) / new_total_qty
                 produit.pmp = new_pmp
             
-            # Augmentation du stock par le total reçu (payé + gratuit)
-            produit.stock = F('stock') + total_qty
-            produit.save(update_fields=['stock', 'pmp'])
+            # Gestion du stock selon le mode du produit
+            if produit.use_lot_management:
+                # MODE LOTS : Le signal post_save de StockLot met à jour le stock automatiquement
+                # Ne pas incrémenter manuellement pour éviter la double comptabilisation
+                produit.save(update_fields=['pmp'])
+            else:
+                # MODE STOCK GLOBAL : Incrémentation directe du stock
+                produit.stock = F('stock') + total_qty
+                produit.save(update_fields=['stock', 'pmp'])
 
         # Changer le statut de la commande
         commande.status = Commande.Status.CLOTUREE
@@ -777,8 +876,10 @@ class FactureViewSet(viewsets.ModelViewSet):
 
             if qty > 0:
                 # Vérifier si l'utilisateur a le droit de vendre avec stock négatif
-                can_sell_negative = False
-                if hasattr(request.user, 'profile'):
+                # Les superusers ont toujours le droit
+                can_sell_negative = request.user.is_superuser
+                
+                if not can_sell_negative and hasattr(request.user, 'profile'):
                     can_sell_negative = request.user.profile.can_sell_negative_stock
                 
                 if stock < qty and not can_sell_negative:
@@ -798,7 +899,7 @@ class FactureViewSet(viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
-        # Mettre à jour le stock et appliquer FIFO
+        # Mettre à jour le stock
         for item in items:
             produit = product_map.get(item.produit_id)
             
@@ -806,38 +907,68 @@ class FactureViewSet(viewsets.ModelViewSet):
             produit.stock = F('stock') - item.quantity
             produit.save(update_fields=['stock'])
             
-            # 2. Logique FIFO pour les VENTES (qty > 0)
+            # 2. Gestion des lots pour les VENTES (qty > 0)
             if item.quantity > 0:
                 quantity_to_allocate = item.quantity
                 
-                # Récupérer les lots disponibles par ordre FIFO (plus anciens en premier)
-                # Note: On pourrait aussi verrouiller les lots, mais c'est moins critique si le stock global est bon
-                available_lots = StockLot.objects.select_for_update().filter(
-                    produit=produit,
-                    quantity_remaining__gt=0
-                ).order_by('date_reception')
-                
-                for lot in available_lots:
-                    if quantity_to_allocate <= 0:
-                        break
-                        
-                    # On prend le max possible du lot
-                    quantity_from_lot = min(lot.quantity_remaining, quantity_to_allocate)
+                # CAS 1: Un lot spécifique est ciblé
+                if item.stock_lot:
+                    # On verrouille le lot spécifique
+                    target_lot = StockLot.objects.select_for_update().get(id=item.stock_lot.id)
                     
-                    # Créer l'allocation
+                    # Vérifier que le lot a suffisamment de stock disponible
+                    if target_lot.quantity_remaining < quantity_to_allocate:
+                        return Response(
+                            {
+                                'detail': f'Stock insuffisant dans le lot {target_lot.lot}. '
+                                          f'Stock disponible: {target_lot.quantity_remaining}, '
+                                          f'Quantité demandée: {quantity_to_allocate}'
+                            },
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    # Créer l'allocation liée à ce lot précis
                     FactureProduitAllocation.objects.create(
                         facture_produit=item,
-                        stock_lot=lot,
-                        quantity=quantity_from_lot,
-                        cost_price=lot.price_cost,
+                        stock_lot=target_lot,
+                        quantity=quantity_to_allocate, # Tout sur ce lot
+                        cost_price=target_lot.price_cost,
                         selling_price=item.selling_price
                     )
                     
                     # Mettre à jour le lot
-                    lot.quantity_remaining -= quantity_from_lot
-                    lot.save()
+                    target_lot.quantity_remaining -= quantity_to_allocate
+                    target_lot.save()
+
+                # CAS 2: Pas de lot spécifique -> Logique FIFO standard
+                else:
+                    # Récupérer les lots disponibles par ordre FIFO (plus anciens en premier)
+                    available_lots = StockLot.objects.select_for_update().filter(
+                        produit=produit,
+                        quantity_remaining__gt=0
+                    ).order_by('date_reception')
                     
-                    quantity_to_allocate -= quantity_from_lot
+                    for lot in available_lots:
+                        if quantity_to_allocate <= 0:
+                            break
+                            
+                        # On prend le max possible du lot
+                        quantity_from_lot = min(lot.quantity_remaining, quantity_to_allocate)
+                        
+                        # Créer l'allocation
+                        FactureProduitAllocation.objects.create(
+                            facture_produit=item,
+                            stock_lot=lot,
+                            quantity=quantity_from_lot,
+                            cost_price=lot.price_cost,
+                            selling_price=item.selling_price
+                        )
+                        
+                        # Mettre à jour le lot
+                        lot.quantity_remaining -= quantity_from_lot
+                        lot.save()
+                        
+                        quantity_to_allocate -= quantity_from_lot
 
         # Changer le statut de la facture et générer un numéro si besoin
         facture.status = Facture.Status.VALIDEE
@@ -864,10 +995,12 @@ class FactureViewSet(viewsets.ModelViewSet):
         motif = request.data.get('motif', '')
 
         # 1. Restaurer le stock des produits
-        for ligne in facture.produits.all():
-            produit = ligne.produit
-            produit.stock += ligne.quantity
-            produit.save(update_fields=['stock'])
+        # DÉSORMAIS GÉRÉ PAR LES LOTS: La suppression des allocations FIFO ci-dessous
+        # libère les quantités dans les lots, et le signal recalcule automatiquement le stock
+        # for ligne in facture.produits.all():
+        #     produit = ligne.produit
+        #     produit.stock += ligne.quantity
+        #     produit.save(update_fields=['stock'])
 
         # 2. Libérer les allocations FIFO
         FactureProduitAllocation.objects.filter(
@@ -2254,6 +2387,11 @@ class InventaireViewSet(viewsets.ModelViewSet):
     serializer_class = InventaireSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == 'imprimer_etat':
+            return [permissions.AllowAny()]
+        return super().get_permissions()
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def validate(self, request, pk=None):
@@ -2276,6 +2414,78 @@ class InventaireViewSet(viewsets.ModelViewSet):
         inventaire.save()
         
         return Response({'status': 'Inventaire validé. Stocks mis à jour.'})
+
+    @action(detail=True, methods=['get'])
+    def imprimer_etat(self, request, pk=None):
+        """
+        Génère un PDF de l'état d'inventaire groupé par rayon.
+        """
+        inventaire = self.get_object()
+        
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"inventaire_{inventaire.id}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        buffer = io.BytesIO()
+        doc = BaseDocTemplate(buffer, pagesize=letter, topMargin=1*inch, bottomMargin=1*inch)
+        
+        # Simple frame
+        frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')
+        template = PageTemplate(id='main', frames=[frame])
+        doc.addPageTemplates([template])
+        
+        story = []
+        styles = getSampleStyleSheet()
+        
+        # Titles
+        story.append(Paragraph(f"ETAT D'INVENTAIRE #{inventaire.id}", styles['Title']))
+        story.append(Paragraph(f"Date: {inventaire.date.strftime('%d/%m/%Y')}", styles['Normal']))
+        if inventaire.description:
+            story.append(Paragraph(f"Description: {inventaire.description}", styles['Normal']))
+        story.append(Spacer(1, 20))
+        
+        # Data
+        lignes = inventaire.lignes.select_related('produit', 'produit__rayon').order_by('produit__rayon__name', 'produit__name')
+        grouped = {}
+        for l in lignes:
+            r = l.produit.rayon.name if l.produit and l.produit.rayon else "AUTRES"
+            if r not in grouped: grouped[r] = []
+            grouped[r].append(l)
+            
+        for rayon in sorted(grouped.keys()):
+            story.append(Paragraph(f"<b>RAYON: {rayon}</b>", styles['Heading3']))
+            
+            data = [['Produit', 'Theo.', 'Phys.', 'Ecart', 'Val.']]
+            total_val = 0
+            for l in grouped[rayon]:
+                price = l.produit.pmp if l.produit else 0
+                val = l.ecart * price
+                total_val += val
+                data.append([
+                    Paragraph(l.produit.name[:35], styles['Normal']),
+                    str(l.stock_theorique),
+                    str(l.quantite_physique),
+                    str(l.ecart),
+                    f"{val:.0f}"
+                ])
+            data.append(['', '', '', 'TOTAL', f"{total_val:.0f}"])
+            
+            t = Table(data, colWidths=[3*inch, 0.8*inch, 0.8*inch, 0.6*inch, 1*inch])
+            t.setStyle(TableStyle([
+                ('GRID', (0,0), (-1,-2), 1, colors.black),
+                ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+                ('ALIGN', (1,0), (-1,-1), 'CENTER'),
+                ('LINEBELOW', (0,-2), (-1,-2), 1, colors.black),
+                ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold')
+            ]))
+            story.append(t)
+            story.append(Spacer(1, 15))
+            
+        doc.build(story)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
 
 class LigneInventaireViewSet(viewsets.ModelViewSet):
     queryset = LigneInventaire.objects.all()
@@ -2971,3 +3181,391 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['timestamp']
     ordering = ['-timestamp']  # Default ordering for pagination
 
+
+class PromisViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing Promis (products promised to clients).
+    """
+    queryset = Promis.objects.select_related('client', 'produit', 'facture', 'created_by').all()
+    serializer_class = PromisSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'client', 'produit']
+    search_fields = ['client_name', 'client_phone', 'produit__name', 'notes']
+    ordering_fields = ['date_promis', 'status']
+    ordering = ['-date_promis']
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def delivrer(self, request, pk=None):
+        """
+        Marquer un promis comme délivré.
+        """
+        promis = self.get_object()
+        
+        if promis.status == Promis.Status.DELIVRE:
+            return Response({'detail': 'Ce promis est déjà marqué comme délivré.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if promis.status == Promis.Status.ANNULE:
+            return Response({'detail': 'Impossible de délivrer un promis annulé.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        promis.status = Promis.Status.DELIVRE
+        promis.date_livraison = timezone.now()
+        promis.save()
+        
+        return Response({
+            'detail': f'Promis #{promis.id} marqué comme délivré.',
+            'promis': PromisSerializer(promis).data
+        })
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def annuler_et_reintegrer(self, request, pk=None):
+        """
+        Annuler un promis et réintégrer le stock.
+        Crée un mouvement de stock de type RETOUR (affiché en vert dans les stats).
+        """
+        promis = self.get_object()
+        
+        if promis.status == Promis.Status.ANNULE:
+            return Response({'detail': 'Ce promis est déjà annulé.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if promis.status == Promis.Status.DELIVRE:
+            return Response({'detail': 'Impossible d\'annuler un promis déjà délivré.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 1. Réintégrer le stock
+        produit = promis.produit
+        
+        # Pour les produits avec gestion par lots, le stock est géré automatiquement par les signaux
+        # On ne doit pas mettre à jour directement produit.stock
+        if not produit.use_lot_management:
+            produit.stock += promis.quantite
+            produit.save(update_fields=['stock'])
+        # Note: Pour les produits avec use_lot_management=True, le stock sera recalculé
+        # automatiquement par les signaux lors de la création/modification des lots.
+        # Si un promis est annulé, il n'y a généralement pas de lot à réintégrer car
+        # le promis était créé en l'absence de stock disponible.
+        
+        # 2. Créer le mouvement de stock (type RETOUR = affiché en vert)
+        final_stock = produit.stock if not produit.use_lot_management else produit.stock
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+            quantite=promis.quantite,
+            stock_apres=final_stock,
+            user=request.user,
+            description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
+        )
+        
+        # 3. Mettre à jour le statut du promis
+        promis.status = Promis.Status.ANNULE
+        promis.notes = f"{promis.notes}\n[Annulé le {timezone.now().strftime('%d/%m/%Y %H:%M')} par {request.user.username}]".strip()
+        promis.save()
+        
+        return Response({
+            'detail': f'Promis #{promis.id} annulé. {promis.quantite} unité(s) réintégrée(s) au stock de {produit.name}.',
+            'promis': PromisSerializer(promis).data,
+            'nouveau_stock': produit.stock
+        })
+
+    @action(detail=True, methods=['get'])
+    def imprimer_ticket(self, request, pk=None):
+        """
+        Génère un ticket PDF 80mm x 80mm en double (pharmacie + client).
+        """
+        promis = self.get_object()
+        
+        # Taille ticket 80mm x 80mm (environ 227 x 227 points)
+        ticket_width = 227
+        ticket_height = 227
+        
+        buffer = io.BytesIO()
+        # Double hauteur pour les 2 tickets
+        c = canvas.Canvas(buffer, pagesize=(ticket_width, ticket_height * 2 + 20))
+        
+        def draw_ticket(y_offset, title):
+            # Titre
+            c.setFont("Helvetica-Bold", 10)
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 15, "TICKET PROMIS")
+            c.setFont("Helvetica", 8)
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 28, f"({title})")
+            
+            # Ligne séparatrice
+            c.line(10, y_offset + ticket_height - 35, ticket_width - 10, y_offset + ticket_height - 35)
+            
+            # Date
+            c.setFont("Helvetica", 8)
+            date_str = promis.date_promis.strftime('%d/%m/%Y %H:%M')
+            c.drawString(10, y_offset + ticket_height - 50, f"Date: {date_str}")
+            c.drawRightString(ticket_width - 10, y_offset + ticket_height - 50, f"N° {promis.id}")
+            
+            # Client
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(10, y_offset + ticket_height - 70, "CLIENT:")
+            c.setFont("Helvetica", 9)
+            client_name = promis.client_display[:25] if len(promis.client_display) > 25 else promis.client_display
+            c.drawString(50, y_offset + ticket_height - 70, client_name)
+            
+            # Téléphone
+            c.setFont("Helvetica", 8)
+            phone = promis.client_phone_display or "N/A"
+            c.drawString(10, y_offset + ticket_height - 85, f"Tél: {phone}")
+            
+            # Ligne séparatrice
+            c.line(10, y_offset + ticket_height - 95, ticket_width - 10, y_offset + ticket_height - 95)
+            
+            # Produit
+            c.setFont("Helvetica-Bold", 9)
+            c.drawString(10, y_offset + ticket_height - 110, "PRODUIT PROMIS:")
+            
+            c.setFont("Helvetica", 9)
+            produit_name = promis.produit.name[:30] if len(promis.produit.name) > 30 else promis.produit.name
+            c.drawString(10, y_offset + ticket_height - 125, produit_name)
+            
+            # Quantité
+            c.setFont("Helvetica-Bold", 12)
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 150, f"Quantité: {promis.quantite}")
+            
+            # Ligne séparatrice
+            c.line(10, y_offset + ticket_height - 165, ticket_width - 10, y_offset + ticket_height - 165)
+            
+            # Message
+            c.setFont("Helvetica-Oblique", 7)
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 180, "Conservez ce ticket comme preuve")
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 190, "de votre réservation.")
+            
+            # Statut
+            c.setFont("Helvetica-Bold", 8)
+            c.drawCentredString(ticket_width / 2, y_offset + ticket_height - 210, f"Statut: {promis.get_status_display()}")
+            
+            # Cadre
+            c.rect(5, y_offset + 5, ticket_width - 10, ticket_height - 10)
+        
+        # Dessiner le ticket pharmacie (en haut)
+        draw_ticket(ticket_height + 10, "EXEMPLAIRE PHARMACIE")
+        
+        # Ligne de découpe
+        c.setDash(3, 3)
+        c.line(0, ticket_height + 5, ticket_width, ticket_height + 5)
+        c.setDash()
+        c.setFont("Helvetica", 6)
+        c.drawCentredString(ticket_width / 2, ticket_height + 7, "✂ DECOUPER ICI ✂")
+        
+        # Dessiner le ticket client (en bas)
+        draw_ticket(0, "EXEMPLAIRE CLIENT")
+        
+        c.showPage()
+        c.save()
+        
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="ticket_promis_{promis.id}.pdf"'
+        return response
+
+    @action(detail=False, methods=['post'], url_path='print-group')
+    def imprimer_ticket_groupe(self, request):
+        """
+        Génère un ticket unique pour une liste de Promis.
+        Attend un payload JSON: { "ids": [1, 2, 3] }
+        """
+        promis_ids = request.data.get('ids', [])
+        if not promis_ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        promis_list = Promis.objects.filter(id__in=promis_ids).select_related('client', 'produit', 'facture')
+        if not promis_list.exists():
+            return Response({'detail': 'Aucun Promis trouvé.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # On suppose que tous les promis sont pour le même client, 
+        # mais sinon on prend le premier pour les infos d'en-tête.
+        first_promis = promis_list.first()
+        client = first_promis.client
+        client_name = first_promis.client_name or (client.name if client else "Client Inconnu")
+        client_phone = first_promis.client_phone or (client.phone if client else "")
+
+        # Génération du PDF (Ticket 80mm)
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import mm
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        
+        # Dimensions 80mm
+        ticket_width = 80 * mm
+        # Hauteur dynamique, on met grand pour éviter coupure, le printer coupera
+        ticket_height = 200 * mm 
+        
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="ticket_promis_groupe_{first_promis.facture.numero_facture}.pdf"'
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=(ticket_width, ticket_height),
+                                rightMargin=2*mm, leftMargin=2*mm,
+                                topMargin=2*mm, bottomMargin=2*mm)
+
+        styles = getSampleStyleSheet()
+        style_normal = styles["Normal"]
+        style_center = ParagraphStyle('Center', parent=styles['Normal'], alignment=1) # 1=Center
+
+        elements = []
+
+        # En-tête
+        elements.append(Paragraph("<b>Djadeu Pharmacy</b>", style_center))
+        elements.append(Paragraph("TICKET PROMIS (RELIQUAT)", style_center))
+        elements.append(Spacer(1, 2*mm))
+        
+        elements.append(Paragraph(f"Client: {client_name}", style_normal))
+        if client_phone:
+            elements.append(Paragraph(f"Tel: {client_phone}", style_normal))
+        
+        elements.append(Paragraph(f"Date: {first_promis.date_promis.strftime('%d/%m/%Y %H:%M')}", style_normal))
+        elements.append(Spacer(1, 2*mm))
+
+        # Tableau des produits promis
+        data = [['Produit', 'Qté']]
+        for promis in promis_list:
+            data.append([
+                Paragraph(promis.produit.name, style_normal),
+                str(promis.quantite)
+            ])
+
+        table = Table(data, colWidths=[55*mm, 15*mm])
+        table.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 2),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+        ]))
+        elements.append(table)
+
+        elements.append(Spacer(1, 5*mm))
+        elements.append(Paragraph("Veuillez conserver ce ticket pour récupérer vos produits.", style_center))
+        
+        doc.build(elements)
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        return response
+
+
+class StockAnalysisUnsoldView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        '''
+        Retourne la liste des produits invendus (Stock > 0 et Rotation Moyenne = 0)
+        Paramètres:
+        - fournisseur: ID du fournisseur (optionnel)
+        '''
+        fournisseur_id = request.query_params.get('fournisseur', None)
+        
+        produits = Produit.objects.filter(
+            stock__gt=0, 
+            rotation_moyenne=0
+        ).select_related('fournisseur')
+        
+        if fournisseur_id:
+            produits = produits.filter(fournisseur_id=fournisseur_id)
+        
+        results = []
+        total_value = Decimal('0.00')
+        
+        for produit in produits:
+            value = Decimal(str(produit.stock)) * Decimal(str(produit.cost_price))
+            
+            results.append({
+                'id': produit.id,
+                'name': produit.name,
+                'stock': produit.stock,
+                'stock_maximum': produit.stock_maximum,
+                'cost_price': float(produit.cost_price or 0),
+                'selling_price': float(produit.selling_price or 0),
+                'value': float(value),
+                'created_at': produit.created_at.date(),
+                'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A'
+            })
+            total_value += value
+        
+        return Response({
+            'type': 'invendus',
+            'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
+            'total_items': len(results),
+            'total_value': float(total_value),
+            'items': results
+        })
+
+class StockAnalysisOverstockView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        '''
+        Retourne la liste des produits en surstock (Stock > 1.7 * Rotation Moyenne)
+        Paramètres:
+        - fournisseur: ID du fournisseur (optionnel)
+        '''
+        fournisseur_id = request.query_params.get('fournisseur', None)
+        
+        produits = Produit.objects.filter(
+            stock__gt=0,
+            rotation_moyenne__gt=0
+        ).select_related('fournisseur')
+        
+        if fournisseur_id:
+            produits = produits.filter(fournisseur_id=fournisseur_id)
+        
+        results = []
+        total_value = Decimal('0.00')
+        
+        for produit in produits:
+            rotation = float(produit.rotation_moyenne)
+            threshold = rotation * 1.7
+            
+            if produit.stock > threshold:
+                excess_qty = produit.stock - int(threshold)
+                # Valeur du surstock = quantité en excès * prix achat
+                excess_value = Decimal(excess_qty) * Decimal(str(produit.cost_price))
+                
+                results.append({
+                    'id': produit.id,
+                    'name': produit.name,
+                    'stock': produit.stock,
+                    'rotation': rotation,
+                    'threshold': round(threshold, 2),
+                    'excess_qty': excess_qty,
+                    'cost_price': float(produit.cost_price or 0),
+                    'selling_price': float(produit.selling_price or 0),
+                    'value': float(excess_value), # Valeur de l'excès seulement
+                    'total_value_stock': float(Decimal(produit.stock) * Decimal(str(produit.cost_price))),
+                    'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A'
+                })
+                total_value += excess_value
+        
+        return Response({
+            'type': 'surstock',
+            'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
+            'total_items': len(results),
+            'total_value': float(total_value),
+            'items': results
+        })
+
+
+class MouvementCaisseViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing cash register movements (entries and exits).
+    """
+    queryset = MouvementCaisse.objects.select_related('user').all()
+    serializer_class = MouvementCaisseSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['type', 'user']
+    search_fields = ['motif', 'description']
+    ordering_fields = ['date', 'montant']
+    ordering = ['-date']
+    
+    def perform_create(self, serializer):
+        """Automatically set the user to the currently authenticated user."""
+        serializer.save(user=self.request.user)

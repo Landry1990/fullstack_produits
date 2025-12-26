@@ -23,6 +23,8 @@ import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 import InvoiceSettings from './components/InvoiceSettings'
 import JournalAudit from './components/JournalAudit'
+import Promis from './components/Promis'
+import StockAnalysis from './components/StockAnalysis'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { Toaster } from 'react-hot-toast'
 
@@ -103,6 +105,8 @@ const router = createBrowserRouter([
           { path: 'perimes', element: <Perimes /> },
           { path: 'creances', element: <Creances /> },
           { path: 'avoirs', element: <Avoirs /> },
+          { path: 'promis', element: <Promis /> },
+          { path: 'stock-analysis', element: <StockAnalysis /> },
           { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },

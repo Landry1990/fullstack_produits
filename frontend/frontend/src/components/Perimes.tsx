@@ -83,7 +83,10 @@ export default function Perimes() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '-'
-    return new Date(dateString).toLocaleDateString('fr-FR')
+    const date = new Date(dateString)
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const year = date.getFullYear().toString().slice(-2)
+    return `${month}/${year}`
   }
 
   const isExpired = (dateString: string) => {

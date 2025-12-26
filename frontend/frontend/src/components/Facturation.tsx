@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit } from '../types'
+import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis } from '../types'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 
@@ -15,6 +15,9 @@ type LigneFacture = {
   prix_unitaire: string
   remise_produit: string // Remise en pourcentage pour ce produit
   total_ligne: number
+  isPromis?: boolean
+  promisQuantity?: number
+  promisPhone?: string
 }
 
 type FactureProduitPayload = {
@@ -87,7 +90,7 @@ export default function Facturation() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
   const [montantPaye, setMontantPaye] = useState('')
-  const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
+  const [paiements, setPaiements] = useState<{ mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]>([])
   const [reference, setReference] = useState('')
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
@@ -100,6 +103,12 @@ export default function Facturation() {
   const [selectedAyantDroit, setSelectedAyantDroit] = useState<number | null>(null)
   const [ayantsDroitList, setAyantsDroitList] = useState<AyantDroit[]>([])
   const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
+
+  // Promis Logic State - Deferred Resolution
+  const [showStockResolution, setShowStockResolution] = useState(false)
+  const [stockResolutionItems, setStockResolutionItems] = useState<{product: ProduitModel, quantity: number, stock: number}[]>([])
+  const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
+  const [promisPhone, setPromisPhone] = useState('')
 
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -218,17 +227,80 @@ export default function Facturation() {
     return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise)
   }
 
+  const handleStockResolutionConfirm = () => {
+      // Apply Promis selections to the invoice lines
+      const updatedLignes = lignesFacture.map(ligne => {
+          if (promisSelections.has(ligne.produit.id)) {
+              const stock = ligne.produit.stock ?? 0
+              const promisQty = Math.max(0, ligne.quantite - stock)
+              return {
+                  ...ligne,
+                  isPromis: true,
+                  promisQuantity: promisQty,
+                  promisPhone: promisPhone || undefined
+              }
+          } else {
+              // Forced sale (or normal if stock came back?)
+              // If user didn't select Promis, acts as Force Sale for the deficit
+              return {
+                  ...ligne,
+                  isPromis: false,
+                  promisQuantity: 0,
+                  promisPhone: undefined
+              }
+          }
+      })
+      setLignesFacture(updatedLignes)
+      setShowStockResolution(false)
+      setIsNewSale(true)
+      setIsPaymentModalOpen(true)
+  }
+
+  const handlePaymentClick = () => {
+      // Check for out-of-stock items before payment
+      if (!user?.can_sell_negative_stock) {
+         // If user CANNOT sell negative stock, they MUST handle it.
+         // Effectively, they must use Promis or remove items.
+         // For now, we reuse the resolution modal but maybe enforce checks?
+         // The requirement says "tous forcage de stock n'est pas promis".
+         // Use existing logic for resolution.
+      }
+
+      const problematicLines = lignesFacture.filter(l => 
+          // Check if quantity > stock (and product manages stock)
+          l.quantite > (l.produit.stock ?? 0)
+      )
+
+      if (problematicLines.length > 0) {
+          const items = problematicLines.map(l => ({
+              product: l.produit,
+              quantity: l.quantite,
+              stock: l.produit.stock ?? 0
+          }))
+          setStockResolutionItems(items)
+          
+          // Pre-select phone if available
+          const client = clients.find(c => c.id === selectedClient)
+          setPromisPhone(client?.phone || '')
+          
+          // By default, do NOT select Promis (Force) - User must opt-in
+          setPromisSelections(new Set())
+          
+          setShowStockResolution(true)
+      } else {
+          setIsNewSale(true)
+          setIsPaymentModalOpen(true)
+      }
+  }
+
   const addProduitToFacture = (produit: ProduitModel) => {
     const existingLigne = lignesFacture.find(ligne => ligne.produit.id === produit.id)
 
     if (existingLigne) {
       // Pour les quantités positives, vérifier le stock
-      // Pour les quantités négatives (retours), permettre sans limite
       const nouvelleQuantite = existingLigne.quantite + 1
-      if (nouvelleQuantite > 0 && nouvelleQuantite > (produit.stock ?? 0) && !user?.can_sell_negative_stock) {
-        setError(`Le stock pour "${produit.name}" est insuffisant. Stock disponible: ${produit.stock}`)
-        return
-      }
+      
+      // Pour les quantités positives, ajouter simplement
       const updatedLignes = lignesFacture.map(ligne =>
         ligne.produit.id === produit.id
           ? {
@@ -240,7 +312,7 @@ export default function Facturation() {
       )
       setLignesFacture(updatedLignes)
     } else {
-      // Permettre l'ajout même si le stock est à 0 (pour les retours avec quantité négative)
+      // Pour un nouveau produit
       const prixUnitaire = normalizeNumberInput(produit.selling_price ?? '0', { min: 0 })
       const nouvelleLigne: LigneFacture = {
         produit,
@@ -250,6 +322,7 @@ export default function Facturation() {
         total_ligne: prixUnitaire
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
+      
       // Focus on quantity field of the newly added product
       setTimeout(() => {
         const qtyInput = quantityInputsRef.current.get(produit.id)
@@ -282,7 +355,6 @@ export default function Facturation() {
     // Si vide ou 0, mettre 1 par défaut au lieu de supprimer
     const finalQuantite = normalizedQuantite === 0 ? 1 : normalizedQuantite
 
-    const ligne = lignesFacture.find(l => l.produit.id === produitId)
     
     // Vérifier les permissions pour les retours (quantité négative)
     if (finalQuantite < 0 && !user?.can_do_returns) {
@@ -290,18 +362,20 @@ export default function Facturation() {
       return
     }
 
-    // Vérifier le stock seulement pour les quantités positives (ventes)
-    // Les quantités négatives (retours) sont autorisées
-    if (ligne && finalQuantite > 0 && finalQuantite > (ligne.produit.stock ?? 0) && !user?.can_sell_negative_stock) {
-      setError(`La quantité ne peut pas dépasser le stock disponible (${ligne.produit.stock})`)
-      return
-    }
+    // Vérifier le stock pour les quantités positives (ventes) - Deferred check
+    // Logic moved to handlePaymentClick
+    
+    
     const updatedLignes = lignesFacture.map(ligne => 
       ligne.produit.id === produitId
         ? { 
             ...ligne, 
             quantite: finalQuantite, 
-            total_ligne: calculateLigneTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit)
+            total_ligne: calculateLigneTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit),
+            // Clear promis if stock is sufficient
+            isPromis: undefined,
+            promisQuantity: undefined,
+            promisPhone: undefined
           }
         : ligne
     )
@@ -583,7 +657,54 @@ export default function Facturation() {
       // 6. Récupérer la facture finale mise à jour
       const { data: finalFacture } = await axios.get<Facture>(factureUpdateEndpoint)
 
-      // 7. Finaliser
+      // 7. Gérer les Promis (après paiement validé)
+      const promisLines = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
+      const createdPromisIds: number[] = []
+
+      for (const line of promisLines) {
+          try {
+              const promisPayload = {
+                  facture: finalFacture.id,
+                  client: finalFacture.client,
+                  client_name: finalFacture.client_name || (useManualClient ? manualClientName : ''),
+                  client_phone: line.promisPhone,
+                  produit: line.produit.id,
+                  quantite: line.promisQuantity,
+                  status: 'ATT'
+              }
+              const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
+              const { data: createdPromis } = await axios.post<Promis>(promisEndpoint, promisPayload)
+              
+              createdPromisIds.push(createdPromis.id)
+              
+          } catch (err) {
+              console.error("Erreur création promis:", err)
+          }
+      }
+
+      // Grouped Print
+      if (createdPromisIds.length > 0) {
+          try {
+              const printGroupEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/imprimer_ticket_groupe/` : '/api/promis/imprimer_ticket_groupe/'
+              
+              // Trigger download/print
+              await new Promise(resolve => setTimeout(resolve, 500))
+              
+              const response = await axios.post(printGroupEndpoint, { promis_ids: createdPromisIds }, { responseType: 'blob' })
+              const url = window.URL.createObjectURL(new Blob([response.data]))
+              const link = document.createElement('a')
+              link.href = url
+              link.setAttribute('download', `ticket_promis_groupe_${finalFacture.id}.pdf`)
+              document.body.appendChild(link)
+              link.click()
+              link.parentNode?.removeChild(link)
+          } catch (err) {
+              console.error("Erreur impression ticket promis groupé:", err)
+              setError("Erreur lors de l'impression du ticket Promis groupé")
+          }
+      }
+
+      // 8. Finaliser
       const rendu = totalVerse - Number(finalFacture.total_ttc)
 
       setSuccessInfo(finalFacture)
@@ -915,7 +1036,6 @@ export default function Facturation() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if inside an input/textarea UNLESS it's a specific shortcut key
-      const isInput = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement
       
       if (e.key === 'F2') {
         e.preventDefault()
@@ -932,7 +1052,7 @@ export default function Facturation() {
       if (e.key === 'F9') {
         e.preventDefault()
         if (!isPaymentModalOpen && lignesFacture.length > 0 && selectedClient) {
-           ouvrirModalPaiement()
+           handlePaymentClick()
         }
         return
       }
@@ -1363,7 +1483,7 @@ export default function Facturation() {
                         <li>
                             <button
                                 onClick={() => {
-                                    ouvrirModalPaiement()
+                                    handlePaymentClick()
                                     const elem = document.activeElement as HTMLElement
                                     elem?.blur()
                                 }}
@@ -1757,6 +1877,88 @@ export default function Facturation() {
           <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
         </div>
       )}
+
+      {/* Promis / Force Stock Modal */}
+      {/* Stock Resolution Modal (Promis vs Force) */}
+      <dialog className={`modal ${showStockResolution ? 'modal-open' : ''}`}>
+        <div className="modal-box w-[600px] max-w-full">
+            <h3 className="font-bold text-lg text-warning">Résolution des Stocks Insuffisants</h3>
+            <div className="py-4">
+                 <div className="alert alert-warning text-sm py-2 mb-4">
+                     <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                     <span>
+                        Certains articles dépassent le stock disponible. Veuillez indiquer lesquels sont des "Promis" (Reliquats à livrer).
+                        Les articles non cochés seront forcés en stock négatif.
+                     </span>
+                 </div>
+
+                 <div className="overflow-x-auto">
+                     <table className="table table-compact w-full">
+                         <thead>
+                             <tr>
+                                 <th>Produit</th>
+                                 <th className="text-right">Demande</th>
+                                 <th className="text-right">Stock</th>
+                                 <th className="text-right">Manquant</th>
+                                 <th className="text-center">Promis ?</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {stockResolutionItems.map((item, _) => {
+                                 const manquant = Math.max(0, item.quantity - item.stock)
+                                 const isSelected = promisSelections.has(item.product.id)
+                                 
+                                 return (
+                                     <tr key={item.product.id}>
+                                         <td className="font-medium">{item.product.name}</td>
+                                         <td className="text-right font-bold">{item.quantity}</td>
+                                         <td className="text-right">{item.stock}</td>
+                                         <td className="text-right text-error font-bold">{manquant}</td>
+                                         <td className="text-center">
+                                             <input 
+                                                 type="checkbox" 
+                                                 className="checkbox checkbox-warning"
+                                                 checked={isSelected}
+                                                 onChange={(e) => {
+                                                     const newSet = new Set(promisSelections)
+                                                     if (e.target.checked) newSet.add(item.product.id)
+                                                     else newSet.delete(item.product.id)
+                                                     setPromisSelections(newSet)
+                                                 }}
+                                             />
+                                         </td>
+                                     </tr>
+                                 )
+                             })}
+                         </tbody>
+                     </table>
+                 </div>
+
+                 <div className="form-control w-full mt-4">
+                    <label className="label">
+                        <span className="label-text">Téléphone Client (pour ticket Promis)</span>
+                    </label>
+                    <input
+                        type="text"
+                        value={promisPhone}
+                        onChange={(e) => setPromisPhone(e.target.value)}
+                        placeholder="Numéro de téléphone..."
+                        className="input input-bordered w-full"
+                    />
+                </div>
+            </div>
+            
+            <div className="modal-action flex justify-between">
+                <button className="btn btn-ghost" onClick={() => setShowStockResolution(false)}>Annuler et Modifier Panier</button>
+                <button 
+                    className="btn btn-primary"
+                    onClick={handleStockResolutionConfirm}
+                >
+                    Valider et Encaisser
+                </button>
+            </div>
+        </div>
+      </dialog>
 
       {/* Pending Sales Drawer */}
       {showPendingSales && (

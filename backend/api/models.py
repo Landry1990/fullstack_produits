@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from datetime import date
 
 # Create your models here
 
@@ -25,7 +26,11 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
+    # Create profile if it doesn't exist (for users created before Profile model was added)
+    if not hasattr(instance, 'profile') or instance.profile is None:
+        Profile.objects.get_or_create(user=instance)
+    else:
+        instance.profile.save()
 
 
 
@@ -171,6 +176,7 @@ class CommandeProduit(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     price_cost = models.DecimalField(max_digits=10, decimal_places=2)
     lot = models.CharField(max_length=20, blank=True, null=True)
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) # Added to track potential selling price
     date_expiration = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -201,6 +207,10 @@ class Produit(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     stock = models.IntegerField()
+    use_lot_management = models.BooleanField(
+        default=True,
+        help_text="Activer la gestion par lots FIFO pour ce produit (recommandé pour traçabilité)"
+    )
     cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True)
     cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True)
     cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True)
@@ -241,6 +251,31 @@ class Produit(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def calculate_stock_from_lots(self):
+        """
+        Calcule et met à jour le stock du produit basé sur la somme
+        des quantités restantes de tous ses lots.
+        """
+        from django.db.models import Sum
+        total = self.stock_lots.aggregate(
+            total=Sum('quantity_remaining')
+        )['total'] or 0
+        self.stock = total
+        self.save(update_fields=['stock'])
+        return total
+
+    class Meta:
+        indexes = [
+            # Index sur stock pour les requêtes stock__lte, stock__gte, etc.
+            models.Index(fields=['stock']),
+            # Index composite pour les recherches par rayon et stock
+            models.Index(fields=['rayon', 'stock']),
+            # Index pour les recherches par fournisseur
+            models.Index(fields=['fournisseur']),
+            # Index pour les recherches de produits à faible stock
+            models.Index(fields=['stock', 'stock_minimum']),
+        ]
 
 
 class Facture(models.Model):
@@ -302,6 +337,157 @@ class Facture(models.Model):
         except (ValueError, TypeError, AttributeError):
             return Decimal('0.00')
 
+    class Meta:
+        indexes = [
+            # Index sur status pour les filtres fréquents (dashboard, listes)
+            models.Index(fields=['status']),
+            # Index composite pour les requêtes par client et status
+            models.Index(fields=['client', 'status']),
+            # Index sur date pour les tris et filtres par date
+            models.Index(fields=['-date']),  # Descending pour les listes récentes
+        ]
+
+
+class LotSequence(models.Model):
+    """
+    Modèle pour gérer la séquence atomique des numéros de lot.
+    Singleton : une seule instance (id=1) stocke le dernier numéro utilisé.
+    Utilisé par generate_lot_number() pour générer des numéros de lot uniques de manière atomique.
+    """
+    id = models.IntegerField(primary_key=True, default=1)
+    last_number = models.IntegerField(default=0, help_text="Dernier numéro de séquence utilisé")
+    
+    class Meta:
+        db_table = 'lot_sequence'
+    
+    def __str__(self):
+        return f"Lot Sequence: {self.last_number}"
+
+
+def generate_lot_number():
+    """
+    Génère un numéro de lot unique au format L01
+    Utilise une séquence atomique pour éviter les doublons en cas de création concurrente.
+    Résout le problème de comparaison lexicographique avec Max() sur les strings.
+    """
+    from django.db import transaction
+    
+    with transaction.atomic():
+        # Créer ou récupérer la séquence (singleton)
+        sequence_obj, created = LotSequence.objects.select_for_update().get_or_create(
+            id=1,
+            defaults={'last_number': 0}
+        )
+        
+        # Incrémenter de manière atomique
+        sequence_obj.last_number += 1
+        sequence_obj.save(update_fields=['last_number'])
+        
+        sequence = sequence_obj.last_number
+    
+    return f'L{sequence:02d}'
+
+
+class StockLot(models.Model):
+    """
+    Représente un lot de stock reçu d'un fournisseur.
+    Permet la traçabilité FIFO et le calcul du CA par fournisseur.
+    """
+    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='stock_lots')
+    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot')
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT)
+    quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
+    quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
+    quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
+    quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
+    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire effectif (ajusté avec UG)")
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix de vente lors de la réception") # NEW
+    lot = models.CharField(max_length=20, blank=True, null=True, db_index=True, help_text="Numéro de lot auto-généré ou manuel")
+    date_expiration = models.DateField(blank=True, null=True)
+    date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date_reception']  # FIFO: Premier arrivé, premier servi
+        indexes = [
+            models.Index(fields=['produit', 'date_reception']),
+            models.Index(fields=['produit', 'quantity_remaining']),
+        ]
+        # Contrainte unique sur la combinaison (produit, lot) pour permettre le même lot sur différents produits
+        constraints = [
+            models.UniqueConstraint(
+                fields=['produit', 'lot'],
+                condition=models.Q(lot__isnull=False),
+                name='unique_produit_lot'
+            )
+        ]
+
+    def __str__(self):
+        ug_info = f" dont {self.quantity_free} UG" if self.quantity_free > 0 else ""
+        return f"Lot {self.id} - {self.produit.name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
+
+
+# Signal pour auto-génération de numéro de lot
+from django.db.models.signals import pre_save, post_save, post_delete
+from django.dispatch import receiver
+
+@receiver(pre_save, sender=StockLot)
+def auto_generate_lot_number(sender, instance, **kwargs):
+    """
+    Génère automatiquement un numéro de lot si non fourni.
+    """
+    if not instance.lot:
+        instance.lot = generate_lot_number()
+
+
+@receiver(post_save, sender=StockLot)
+def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
+    """
+    Synchronise le stock du produit quand un lot est créé ou modifié.
+    Uniquement pour les produits avec use_lot_management=True.
+    
+    OPTIMISATION: Pour les modifications, on calcule le delta au lieu de tout recalculer.
+    Pour les créations, on doit recalculer car on ne connaît pas l'ancien état.
+    """
+    if instance.produit and instance.produit.use_lot_management:
+        # Pour les créations, on doit recalculer car on n'a pas l'ancienne valeur
+        if created:
+            from django.db.models import Sum
+            total = instance.produit.stock_lots.aggregate(
+                Sum('quantity_remaining')
+            )['quantity_remaining__sum'] or 0
+            
+            if instance.produit.stock != total:
+                Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
+        else:
+            # Pour les modifications, utiliser le delta si possible
+            # Note: Django ne fournit pas toujours l'ancienne instance dans post_save
+            # On recalcule pour être sûr de la cohérence (trade-off performance vs exactitude)
+            # TODO: Utiliser pre_save pour capturer l'ancienne valeur et calculer le delta
+            from django.db.models import Sum
+            total = instance.produit.stock_lots.aggregate(
+                Sum('quantity_remaining')
+            )['quantity_remaining__sum'] or 0
+            
+            if instance.produit.stock != total:
+                Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
+
+
+@receiver(post_delete, sender=StockLot)
+def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
+    """
+    Synchronise le stock du produit quand un lot est supprimé.
+    Uniquement pour les produits avec use_lot_management=True.
+    """
+    if instance.produit and instance.produit.use_lot_management:
+        from django.db.models import Sum
+        total = instance.produit.stock_lots.aggregate(
+            Sum('quantity_remaining')
+        )['quantity_remaining__sum'] or 0
+        
+        Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
+
 
 class FactureProduit(models.Model):
     """Model representing a product in an invoice."""
@@ -311,12 +497,21 @@ class FactureProduit(models.Model):
     quantity = models.IntegerField()
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     lot = models.CharField(max_length=20, blank=True, null=True)
+    stock_lot = models.ForeignKey(StockLot, on_delete=models.SET_NULL, null=True, blank=True, help_text="Lot spécifique choisi manuellement") # NEW
     date_expiration = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Ligne de facture {self.id}"
+
+    class Meta:
+        indexes = [
+            # Index sur produit pour les joins fréquents (history, stats)
+            models.Index(fields=['produit']),
+            # Index composite pour les requêtes par facture et produit
+            models.Index(fields=['facture', 'produit']),
+        ]
 
 
 class RelevePaiement(models.Model):
@@ -373,6 +568,14 @@ class Caisse(models.Model):
     
     class Meta:
         ordering = ['-date_paiement']
+        indexes = [
+            # Index sur statut pour les filtres fréquents (get_totals, cloturer)
+            models.Index(fields=['statut']),
+            # Index composite pour les filtres par facture et statut
+            models.Index(fields=['facture', 'statut']),
+            # Index sur date_paiement pour les tris
+            models.Index(fields=['-date_paiement']),
+        ]
 
 @receiver(post_save, sender=Caisse)
 def update_facture_status_on_payment(sender, instance, created, **kwargs):
@@ -400,36 +603,6 @@ def update_facture_status_on_payment(sender, instance, created, **kwargs):
                     facture.status = Facture.Status.PAYEE
                     facture.save(update_fields=['status'])
 
-
-class StockLot(models.Model):
-    """
-    Représente un lot de stock reçu d'un fournisseur.
-    Permet la traçabilité FIFO et le calcul du CA par fournisseur.
-    """
-    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='stock_lots')
-    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot')
-    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT)
-    quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
-    quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
-    quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
-    quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
-    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire effectif (ajusté avec UG)")
-    lot = models.CharField(max_length=20, blank=True, null=True)
-    date_expiration = models.DateField(blank=True, null=True)
-    date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['date_reception']  # FIFO: Premier arrivé, premier servi
-        indexes = [
-            models.Index(fields=['produit', 'date_reception']),
-            models.Index(fields=['produit', 'quantity_remaining']),
-        ]
-
-    def __str__(self):
-        ug_info = f" dont {self.quantity_free} UG" if self.quantity_free > 0 else ""
-        return f"Lot {self.id} - {self.produit.name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
 
 
 class FactureProduitAllocation(models.Model):
@@ -544,17 +717,6 @@ class MouvementCaisse(models.Model):
         
     def __str__(self):
         return f"{self.type} - {self.montant} ({self.motif})"
-from django.db import models
-from django.core.validators import RegexValidator
-from django.utils import timezone
-from django.db.models import Sum, F, DecimalField
-from decimal import Decimal
-from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from datetime import date
-
-# ... (existing models above)
 
 class Avoir(models.Model):
     """
@@ -808,3 +970,87 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action} {self.model_name} at {self.timestamp}"
+
+
+class Promis(models.Model):
+    """
+    Model representing a product promised to a client.
+    Used when a client pays for a product that is not in stock or has insufficient stock.
+    The product will be delivered later when available.
+    """
+    class Status(models.TextChoices):
+        EN_ATTENTE = 'ATT', 'En attente'
+        DELIVRE = 'DEL', 'Délivré'
+        ANNULE = 'ANN', 'Annulé'
+
+    facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, related_name='promis', null=True, blank=True)
+    client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='promis')
+    client_name = models.CharField(max_length=100, blank=True, help_text="Nom du client (pour clients de passage)")
+    client_phone = models.CharField(max_length=20, blank=True, help_text="Téléphone du client")
+    produit = models.ForeignKey('Produit', on_delete=models.PROTECT, related_name='promis')
+    quantite = models.IntegerField(help_text="Quantité promise au client")
+    status = models.CharField(max_length=4, choices=Status.choices, default=Status.EN_ATTENTE)
+    date_promis = models.DateTimeField(auto_now_add=True, help_text="Date de la promesse")
+    date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
+    notes = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date_promis']
+        verbose_name = 'Promis'
+        verbose_name_plural = 'Promis'
+
+    def __str__(self):
+        client_display = self.client.name if self.client else self.client_name or 'Client inconnu'
+        return f"Promis #{self.id} - {self.produit.name} x{self.quantite} pour {client_display}"
+
+    @property
+    def client_display(self):
+        """Returns the client name from either the linked client or the manual entry."""
+        if self.client:
+            return self.client.name
+        return self.client_name or 'Client de passage'
+
+    @property
+    def client_phone_display(self):
+        """Returns the client phone from either the linked client or the manual entry."""
+        if self.client:
+            return self.client.phone
+        return self.client_phone or ''
+
+    @property
+    def produit_name(self):
+        return self.produit.name if self.produit else ''
+
+
+class MouvementCaisse(models.Model):
+    """
+    Model representing cash register movements (entries and exits).
+    Used to track additional cash operations beyond sales.
+    """
+    TYPE_CHOICES = [
+        ('ENTREE', 'Entrée'),
+        ('SORTIE', 'Sortie'),
+    ]
+    
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    montant = models.DecimalField(max_digits=10, decimal_places=2)
+    motif = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    date = models.DateTimeField(default=timezone.now)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_caisse')
+    
+    class Meta:
+        ordering = ['-date']
+        verbose_name = 'Mouvement de Caisse'
+        verbose_name_plural = 'Mouvements de Caisse'
+    
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.montant} F - {self.motif}"
+    
+    @property
+    def user_nom(self):
+        """Returns the user's full name or username."""
+        if self.user:
+            return self.user.get_full_name() or self.user.username
+        return 'Utilisateur inconnu'
