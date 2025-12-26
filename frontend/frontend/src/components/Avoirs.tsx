@@ -339,7 +339,7 @@ export default function Avoirs() {
             <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>
         ) : (
             <div className="overflow-x-auto bg-white rounded-lg shadow">
-                <table className="table">
+                <table className="table table-xs">
                     <thead className="bg-base-200">
                         <tr>
                             <th>Numéro</th>
@@ -537,7 +537,7 @@ export default function Avoirs() {
             {/* Lines Table */}
             <div className="flex-1 bg-white rounded-lg shadow-sm overflow-hidden flex flex-col">
                 <div className="overflow-x-auto">
-                    <table className="table table-pin-rows">
+                    <table className="table table-pin-rows table-xs">
                         <thead className="bg-base-200">
                             <tr>
                                 <th>Produit</th>
@@ -673,7 +673,7 @@ export default function Avoirs() {
             </div>
             
             <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="table">
+                <table className="table table-xs">
                     <thead className="bg-base-200">
                         <tr>
                             <th>Produit</th>

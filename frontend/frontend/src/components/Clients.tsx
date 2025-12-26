@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, type FormEvent, useRef } from 'react';
 import axios from 'axios';
 
 import type { Client } from '../types';
+import LoyaltyConfigModal from './LoyaltyConfigModal';
 
 interface AyantDroit {
   id?: number;
@@ -15,8 +16,12 @@ interface ExtendedClient extends Client {
   client_type: 'PARTICULIER' | 'PROFESSIONNEL';
   plafond: string;
   taux_couverture?: string;
+  remise_automatique?: string;
   ayants_droit?: AyantDroit[];
   current_debt?: string;
+  points_fidelite?: number;
+  pending_discount?: string;
+  is_loyalty_member?: boolean;
 }
 
 const emptyForm: Omit<ExtendedClient, 'id'> = {
@@ -27,7 +32,9 @@ const emptyForm: Omit<ExtendedClient, 'id'> = {
   client_type: 'PARTICULIER',
   plafond: '0',
   taux_couverture: '0',
-  ayants_droit: []
+  remise_automatique: '0',
+  ayants_droit: [],
+  is_loyalty_member: true
 };
 
 export default function Clients() {
@@ -45,6 +52,7 @@ export default function Clients() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
 
   // State for managing Ayants Droit in forms
   const [tempAyantDroit, setTempAyantDroit] = useState<AyantDroit>({ matricule: '', nom: '' });
@@ -261,7 +269,9 @@ export default function Clients() {
             client_type: editingClient.client_type,
             plafond: editingClient.plafond,
             taux_couverture: editingClient.taux_couverture,
-            ayants_droit: editingClient.ayants_droit // Send the full list for synchronization
+            remise_automatique: editingClient.remise_automatique,
+            ayants_droit: editingClient.ayants_droit,
+            is_loyalty_member: editingClient.is_loyalty_member
         }
       );
 
@@ -323,6 +333,9 @@ export default function Clients() {
               <h2 className="card-title">Liste des clients</h2>
               <div className="card-actions">
                 {loading && <span className="loading loading-spinner loading-sm" />}
+                <button className="btn btn-ghost btn-sm text-secondary gap-2 mr-2" onClick={() => setIsLoyaltyConfigOpen(true)}>
+                    <span className="text-lg">💎</span> Config.
+                </button>
                 <button className="btn btn-primary" onClick={openCreateView}>+ Ajouter</button>
               </div>
             </div>
@@ -351,12 +364,13 @@ export default function Clients() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="table table-zebra table-hover">
+              <table className="table table-zebra table-hover table-xs">
                 <thead>
                   <tr>
                     <th>Nom</th>
                     <th>Type</th>
                     <th>Téléphone</th>
+                    <th>Points</th>
                     <th>Dette</th>
                     <th className="text-right">Action</th>
                   </tr>
@@ -378,6 +392,16 @@ export default function Clients() {
                             </span>
                         </td>
                         <td>{client.phone}</td>
+                        <td className="font-bold text-accent">
+                          {client.client_type !== 'PROFESSIONNEL' && (
+                            <>
+                              {client.points_fidelite || 0}
+                              {Number(client.pending_discount) > 0 && (
+                                <span className="badge badge-sm badge-warning ml-2" title="Remise en attente">-{Number(client.pending_discount)}%</span>
+                              )}
+                            </>
+                          )}
+                        </td>
                         <td>
                             {Number(client.current_debt || 0) > 0 && (
                                 <span className="text-error font-bold">{Number(client.current_debt).toLocaleString()} F</span>
@@ -428,6 +452,23 @@ export default function Clients() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Informations Fidélité (Particuliers) */}
+                    {selectedClient.client_type !== 'PROFESSIONNEL' && (
+                        <div className="stats shadow w-full md:col-span-2">
+                            <div className="stat place-items-center">
+                                <div className="stat-title">Points Fidélité</div>
+                                <div className="stat-value text-accent">{selectedClient.points_fidelite || 0}</div>
+                                <div className="stat-desc">💎 Points cumulés</div>
+                            </div>
+                            {Number(selectedClient.pending_discount) > 0 && (
+                                <div className="stat place-items-center bg-warning/10">
+                                    <div className="stat-title text-warning-content">Remise acquise</div>
+                                    <div className="stat-value text-warning">-{Number(selectedClient.pending_discount)}%</div>
+                                    <div className="stat-desc text-warning-content font-bold">À valider au prochain achat</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {/* Informations Contact */}
                     <div className="space-y-4">
                         <h3 className="font-bold text-lg opacity-70">Coordonnées</h3>
@@ -546,6 +587,47 @@ export default function Clients() {
                     <label className="form-control w-full">
                         <div className="label"><span className="label-text font-medium">Adresse complète *</span></div>
                         <textarea placeholder="Ex: 123 Rue de la Paix" value={newClient.address} onChange={e => setNewClient({...newClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required disabled={isSubmitting}/>
+                    </label>
+
+                    {newClient.client_type === 'PARTICULIER' && (
+                        <div className="form-control bg-base-200 rounded-lg p-3">
+                            <label className="label cursor-pointer justify-between">
+                                <div>
+                                    <span className="label-text font-bold text-secondary flex items-center gap-2">💎 Programme de Fidélité</span>
+                                    <div className="text-xs opacity-60 mt-1">Permet le cumul de points et les remises.</div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="label-text text-xs">{newClient.is_loyalty_member !== false ? 'Activé' : 'Désactivé'}</span>
+                                    <input 
+                                        type="checkbox" 
+                                        className="toggle toggle-secondary" 
+                                        checked={newClient.is_loyalty_member ?? true}
+                                        onChange={e => setNewClient({...newClient, is_loyalty_member: e.target.checked})} 
+                                    />
+                                </div>
+                            </label>
+                        </div>
+                    )}
+
+                    {/* Remise automatique - disponible pour tous les clients */}
+                    <label className="form-control w-full">
+                        <div className="label">
+                            <span className="label-text font-medium">Remise automatique (%)</span>
+                            <span className="label-text-alt text-success">Appliquée sur toutes les ventes</span>
+                        </div>
+                        <input 
+                            type="number" 
+                            value={newClient.remise_automatique || '0'} 
+                            onChange={e => setNewClient({...newClient, remise_automatique: e.target.value})} 
+                            className="input input-bordered w-full" 
+                            min="0" 
+                            max="100"
+                            step="0.01"
+                            placeholder="0"
+                        />
+                        <div className="label">
+                            <span className="label-text-alt">Pourcentage de remise appliqué automatiquement lors de la facturation</span>
+                        </div>
                     </label>
 
                     {newClient.client_type === 'PROFESSIONNEL' && (
@@ -675,6 +757,47 @@ export default function Clients() {
                         <textarea value={editingClient.address} onChange={e => setEditingClient({...editingClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required/>
                     </label>
 
+                    {editingClient.client_type === 'PARTICULIER' && (
+                        <div className="form-control bg-base-200 rounded-lg p-3">
+                            <label className="label cursor-pointer justify-between">
+                                <div>
+                                    <span className="label-text font-bold text-secondary flex items-center gap-2">💎 Programme de Fidélité</span>
+                                    <div className="text-xs opacity-60 mt-1">Permet le cumul de points et les remises.</div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="label-text text-xs">{editingClient.is_loyalty_member !== false ? 'Activé' : 'Désactivé'}</span>
+                                    <input 
+                                        type="checkbox" 
+                                        className="toggle toggle-secondary" 
+                                        checked={editingClient.is_loyalty_member ?? true}
+                                        onChange={e => setEditingClient({...editingClient, is_loyalty_member: e.target.checked})} 
+                                    />
+                                </div>
+                            </label>
+                        </div>
+                    )}
+
+                    {/* Remise automatique - disponible pour tous les clients */}
+                    <label className="form-control w-full">
+                        <div className="label">
+                            <span className="label-text font-medium">Remise automatique (%)</span>
+                            <span className="label-text-alt text-success">Appliquée sur toutes les ventes</span>
+                        </div>
+                        <input 
+                            type="number" 
+                            value={editingClient.remise_automatique || '0'} 
+                            onChange={e => setEditingClient({...editingClient, remise_automatique: e.target.value})} 
+                            className="input input-bordered w-full" 
+                            min="0" 
+                            max="100"
+                            step="0.01"
+                            placeholder="0"
+                        />
+                        <div className="label">
+                            <span className="label-text-alt">Pourcentage de remise appliqué automatiquement lors de la facturation</span>
+                        </div>
+                    </label>
+
                     {editingClient.client_type === 'PROFESSIONNEL' && (
                         <div className="bg-base-200 p-4 rounded-lg space-y-4">
                             <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
@@ -742,6 +865,7 @@ export default function Clients() {
             </div>
         </div>
       )}
+      <LoyaltyConfigModal isOpen={isLoyaltyConfigOpen} onClose={() => setIsLoyaltyConfigOpen(false)} />
     </>
   );
 }

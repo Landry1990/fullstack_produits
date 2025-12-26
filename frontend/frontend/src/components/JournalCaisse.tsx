@@ -692,6 +692,11 @@ export default function JournalCaisse() {
                     </td>
                     <td className="font-medium">
                         {transaction.client_name}
+                        {transaction.is_creance_settlement && (
+                            <div className="badge badge-sm badge-info badge-outline ml-2 gap-1" title="Règlement de créance">
+                                💳 Créance
+                            </div>
+                        )}
                         {transaction.isReleveGroup && (
                             <div className="badge badge-sm badge-primary badge-outline ml-2">Relevé {transaction.releve_reference?.split('-').pop()}</div>
                         )}

@@ -272,7 +272,7 @@ export default function InventaireComponent() {
 
               <div className="card bg-base-100 shadow">
                   <div className="overflow-x-auto">
-                      <table className="table">
+                      <table className="table table-xs">
                           <thead>
                               <tr>
                                   <th>Date</th>
@@ -446,7 +446,7 @@ export default function InventaireComponent() {
           {/* Lines Table */}
           <div className="card bg-base-100 shadow">
               <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full table-sm">
+                  <table className="table table-zebra w-full table-xs">
                       <thead>
                           <tr>
                               <th>Produit</th>

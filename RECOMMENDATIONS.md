@@ -275,7 +275,7 @@ Historique des prix - Traçabilité des variations de prix d'achat/vente
 Photos produits - Upload d'images pour meilleure identification
 💰 Optimisation Commerciale
 Promotions/Réductions - Système de prix promotionnels temporaires
-Programme de fidélité - Points clients et remises automatiques
+Programme de fidélité - Points clients et remises automatiques ok
 Analyse ABC - Classification automatique des produits (A=80% CA, B=15%, C=5%)
 🔐 Sécurité et Conformité
 Journal d'audit complet - Traçabilité de toutes les opérations sensibles ok

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\check_urls.py", line 9, in <module>
+    from api.urls import router
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\urls.py", line 3, in <module>
+    from .views import (
+    ...<8 lines>...
+    )
+ImportError: cannot import name 'RayonViewSet' from 'api.views' (C:\Projet Fullstack\fullstack_produits\backend\api\views.py)

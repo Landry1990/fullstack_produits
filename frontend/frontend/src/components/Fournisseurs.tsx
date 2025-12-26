@@ -260,7 +260,7 @@ export default function Fournisseurs() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="table table-zebra">
+              <table className="table table-zebra table-xs">
                 <thead>
                   <tr>
                     <th>Nom</th>

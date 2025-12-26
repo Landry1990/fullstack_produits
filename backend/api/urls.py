@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    ProduitViewSet, RayonViewSet, FournisseurViewSet, ClientViewSet,
+    ProduitViewSet, CategorieViewSet, FournisseurViewSet, ClientViewSet,
     CommandeViewSet, CommandeProduitViewSet, FactureViewSet, FactureProduitViewSet, CaisseViewSet,
     DashboardViewSet, StatistiquesViewSet, AyantDroitViewSet, StockLotViewSet, CreanceViewSet,
     MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
@@ -13,8 +13,10 @@ from .views import (
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
+
+
 router.register(r'produits', ProduitViewSet, basename='produit')
-router.register(r'rayons', RayonViewSet, basename='rayon')
+router.register(r'rayons', CategorieViewSet, basename='rayon')
 router.register(r'fournisseurs', FournisseurViewSet, basename='fournisseur')
 router.register(r'clients', ClientViewSet, basename='client')
 router.register(r'ayants-droit', AyantDroitViewSet, basename='ayantdroit')
@@ -35,6 +37,7 @@ router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')
 router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
+
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [

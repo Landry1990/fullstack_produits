@@ -145,6 +145,7 @@ export interface Client {
   client_type?: 'PARTICULIER' | 'PROFESSIONNEL';
   plafond?: string;
   taux_couverture?: string;
+  remise_automatique?: string;
   ayants_droit?: AyantDroit[];
   current_debt?: string;
 }
@@ -176,6 +177,7 @@ export interface Facture {
   total_tva: string
   total_ttc: string
   produits: FactureProduit[]
+  is_remise_auto?: boolean
 }
 
 export interface TicketCaisse {
@@ -224,6 +226,7 @@ export interface CaisseTransaction {
   client_name: string
   releve_reference?: string
   releve_id?: number
+  is_creance_settlement?: boolean
 }
 
 export interface StockLot {

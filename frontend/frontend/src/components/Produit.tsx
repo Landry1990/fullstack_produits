@@ -47,6 +47,9 @@ export default function Produit() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [achats, setAchats] = useState<AchatProduit[]>([])
   const [lots, setLots] = useState<StockLot[]>([])
+  
+  // Sélection pour suppression groupée
+  const [selectedProductIds, setSelectedProductIds] = useState<number[]>([])
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
   const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
@@ -329,6 +332,47 @@ export default function Produit() {
     }
   }
 
+  // Gestion de la sélection pour suppression groupée
+  const handleSelectProduct = (id: number) => {
+    setSelectedProductIds(prev =>
+      prev.includes(id)
+        ? prev.filter(pid => pid !== id)
+        : [...prev, id]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedProductIds.length === filteredProduits.length) {
+      setSelectedProductIds([])
+    } else {
+      setSelectedProductIds(filteredProduits.map(p => p.id))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Supprimer ${selectedProductIds.length} produit(s) sélectionné(s) ?\n\nCette action est irréversible.`)) return
+    
+    setLoading(true)
+    try {
+      // Supprimer tous les produits sélectionnés
+      await Promise.all(
+        selectedProductIds.map(id =>
+          axios.delete(`${produitsEndpoint}${id}/`)
+        )
+      )
+      
+      // Retirer les produits supprimés de la liste
+      setProduits(prev => prev.filter(p => !selectedProductIds.includes(p.id)))
+      setSelectedProductIds([])
+      alert(`${selectedProductIds.length} produit(s) supprimé(s) avec succès`)
+    } catch (err) {
+      alert('Erreur lors de la suppression groupée')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Filtrer les produits
   const filteredProduits = useMemo(() => {
     // Ensure produits is always an array
@@ -484,6 +528,15 @@ export default function Produit() {
             <button className="btn btn-sm btn-primary whitespace-nowrap" onClick={() => setIsCreateModalOpen(true)}>
               ➕ Créer
             </button>
+            {selectedProductIds.length > 0 && (
+              <button 
+                className="btn btn-sm btn-error gap-2 whitespace-nowrap" 
+                onClick={handleBulkDelete}
+                disabled={loading}
+              >
+                🗑️ Supprimer ({selectedProductIds.length})
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -527,9 +580,19 @@ export default function Produit() {
           </div>
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <table className="table table-zebra w-full">
+            <table className="table table-zebra w-full table-xs">
               <thead>
                 <tr className="bg-base-200">
+                  <th className="w-12">
+                    <label>
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={selectedProductIds.length === filteredProduits.length && filteredProduits.length > 0}
+                        onChange={handleSelectAll}
+                      />
+                    </label>
+                  </th>
                   <th className="text-xs uppercase">Produit</th>
                   <th className="text-xs uppercase">CIP</th>
                   <th className="text-xs uppercase text-right">Prix Vente</th>
@@ -552,19 +615,28 @@ export default function Produit() {
                   <tr
                     key={produit.id}
                     className={rowClass}
-                    onClick={() => handleViewDetails(produit)}
                   >
-                    <td className="uppercase">{produit.name}</td>
-                    <td className="font-mono text-sm">{produit.cip1 || '-'}</td>
-                    <td className="text-right">
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          checked={selectedProductIds.includes(produit.id)}
+                          onChange={() => handleSelectProduct(produit.id)}
+                        />
+                      </label>
+                    </td>
+                    <td className="uppercase" onClick={() => handleViewDetails(produit)}>{produit.name}</td>
+                    <td className="font-mono text-sm" onClick={() => handleViewDetails(produit)}>{produit.cip1 || '-'}</td>
+                    <td className="text-right" onClick={() => handleViewDetails(produit)}>
                       {Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
                     </td>
-                    <td className="text-center">
+                    <td className="text-center" onClick={() => handleViewDetails(produit)}>
                       <span className="font-semibold">
                         {stock}
                       </span>
                     </td>
-                    <td>
+                    <td onClick={() => handleViewDetails(produit)}>
                       <span className="badge badge-outline badge-sm">{produit.rayon_name || '-'}</span>
                     </td>
                     <td className="text-center">
@@ -664,7 +736,7 @@ export default function Produit() {
               {/* Contenu des tabs */}
               {activeTab === 'general' && (
                 <div className="overflow-x-auto">
-                  <table className="table table-sm">
+                  <table className="table table-xs">
                     <tbody>
                       <tr>
                         <td className="font-semibold w-1/3">Description</td>
@@ -733,7 +805,7 @@ export default function Produit() {
 
               {activeTab === 'achats' && (
 <div className="overflow-x-auto">
-                  <table className="table table-sm">
+                  <table className="table table-xs">
                     <thead>
                       <tr>
                         <th>Date</th>
@@ -769,7 +841,7 @@ export default function Produit() {
 
               {activeTab === 'lots' && (
                 <div className="overflow-x-auto">
-                  <table className="table table-sm">
+                  <table className="table table-xs">
                     <thead>
                       <tr>
                         <th>Numéro de lot</th>

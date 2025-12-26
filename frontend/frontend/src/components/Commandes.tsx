@@ -1,10 +1,11 @@
-
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
 import axios from 'axios'
 import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
 import ProduitFormModal from './ProduitFormModal'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
+import SimplePrintLabelsModal from './SimplePrintLabelsModal'
+
 
 export default function Commandes() {
   const [commandes, setCommandes] = useState<Commande[]>([])
@@ -43,6 +44,7 @@ export default function Commandes() {
 
   const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur' | 'status'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
   // Tri pour les produits dans la vue détails
@@ -746,10 +748,11 @@ export default function Commandes() {
 
   async function handleSaveCommande(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!newCommandeFournisseurId) {
-      setError('Veuillez sélectionner un fournisseur.')
-      return
-    }
+    // Allow empty fournisseur for REASSORT_AUTO orders
+    // if (!newCommandeFournisseurId) {
+    //   setError('Veuillez sélectionner un fournisseur.')
+    //   return
+    // }
     if (commandeProduits.length === 0) {
       setError('Veuillez ajouter au moins un produit à la commande.')
       return
@@ -764,7 +767,7 @@ export default function Commandes() {
           
           // 1. Mise à jour de l'en-tête
           await axios.patch<Commande>(`${commandesEndpoint}${activeCommandeId}/`, {
-             fournisseur: parseInt(newCommandeFournisseurId, 10),
+             fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : null,
              numero_facture: numeroFacture,
           });
 
@@ -812,7 +815,7 @@ export default function Commandes() {
       } else {
           // --- MODE CRÉATION ---
           const commandePayload = { 
-            fournisseur: parseInt(newCommandeFournisseurId, 10),
+            fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : null,
             numero_facture: numeroFacture,
           }
           const { data: createdCommande } = await axios.post<Commande>(commandesEndpoint, commandePayload)
@@ -1053,8 +1056,8 @@ export default function Commandes() {
             selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
             tva: p.tva || (fullProduct?.tva || '18'),
             marge: marge || (fullProduct?.taux_marge || '1.3'),
-            lot: p.lot || '',
-            date_expiration: p.date_expiration || ''
+            lot: '',
+            date_expiration: ''
         };
     });
     
@@ -1167,7 +1170,7 @@ export default function Commandes() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="table table-zebra w-full">
+              <table className="table table-zebra w-full table-xs">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -1247,6 +1250,16 @@ export default function Commandes() {
                   >
                     ✅ Clôturer
                   </button>
+                  <button
+                    onClick={() => setShowPrintLabelsModal(true)}
+                    className="btn btn-primary btn-sm gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    Imprimer Étiquettes
+                  </button>
+                  
                   <button 
                     className="btn btn-error btn-sm"
                     onClick={() => {
@@ -1327,7 +1340,7 @@ export default function Commandes() {
                   <p className="text-base-content/70 text-center py-8">Aucun produit dans cette commande.</p>
                 ) : (
                   <div className="overflow-x-auto">
-                    <table className="table table-sm">
+                    <table className="table table-xs">
                       <thead>
                         <tr>
                           <th 
@@ -1659,7 +1672,7 @@ export default function Commandes() {
                     <p className="font-light">Commencez par rechercher et ajouter des produits (F2)</p>
                   </div>
                 ) : (
-                  <table className="table table-pin-rows w-full">
+                  <table className="table table-pin-rows w-full table-xs">
                     <thead>
                       <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
                         <th className="bg-base-50 w-12">
@@ -2100,6 +2113,15 @@ export default function Commandes() {
         fournisseurs={fournisseurs}
         title="Créer un nouveau produit"
       />
+
+      {/* Print Labels Modal */}
+      {showPrintLabelsModal && selectedCommande && (
+        <SimplePrintLabelsModal
+          commandeId={selectedCommande.id}
+          commandeNumero={selectedCommande.numero_facture || `#${selectedCommande.id}`}
+          onClose={() => setShowPrintLabelsModal(false)}
+        />
+      )}
     </>
   )
 }

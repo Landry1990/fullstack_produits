@@ -1,0 +1,43 @@
+============================================================
+FACTURES VALIDÉES/PAYÉES (Recent Transactions)
+============================================================
+Total factures VAL/PAY: 1
+
+ID:   14 | Client: Djadeu Odessa        | Total TTC:   13665.00 F | Status: PAY | Date: 2025-12-23 20:33:34.068396+00:00
+
+============================================================
+ENTRÉES CAISSE (Cash Journal)
+============================================================
+Total entrées caisse: 9
+
+Facture: F#14   | Mode: especes    | Montant:   13665.00 F | Date: 2025-12-23 20:33:34.581815+00:00
+Facture: F#11   | Mode: especes    | Montant:    -200.00 F | Date: 2025-12-23 20:05:37.237355+00:00
+Facture: F#12   | Mode: especes    | Montant:       0.00 F | Date: 2025-12-23 20:01:43.121623+00:00
+Facture: F#13   | Mode: especes    | Montant:       0.00 F | Date: 2025-12-23 20:01:28.981360+00:00
+Facture: F#13   | Mode: carte      | Montant:     100.00 F | Date: 2025-12-23 19:35:13.288549+00:00
+Facture: F#13   | Mode: carte      | Montant:     100.00 F | Date: 2025-12-23 19:35:13.287644+00:00
+Facture: F#13   | Mode: especes    | Montant:     100.00 F | Date: 2025-12-23 19:35:13.286527+00:00
+Facture: F#13   | Mode: especes    | Montant:     100.00 F | Date: 2025-12-23 19:35:13.285201+00:00
+Facture: F#13   | Mode: especes    | Montant:     100.00 F | Date: 2025-12-23 19:35:13.277543+00:00
+
+============================================================
+STATISTIQUES PAR MODE DE PAIEMENT
+============================================================
+especes        :   7 transactions, Total:     13765.00 F
+carte          :   2 transactions, Total:       200.00 F
+
+============================================================
+CRÉANCES (Factures avec paiement en_compte)
+============================================================
+Factures avec en_compte: 0
+
+
+============================================================
+COMPARAISON TOTAUX
+============================================================
+Total Factures VAL/PAY (Dashboard CA):        13665.00 F
+Total Caisse (TOUS modes):                     13965.00 F
+Total Caisse (SANS en_compte):                 13965.00 F
+
+Différence (Dashboard - Caisse):                -300.00 F
+(Cette différence devrait être la part assurance)

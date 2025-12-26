@@ -15,7 +15,7 @@ queryset = Produit.objects.select_related('rayon', 'fournisseur').order_by('-cre
 ```
 **Status:** ✅ Corrigé - select_related ajouté + pagination explicite
 
-#### 2. **Propriétés @property coûteuses dans Facture** ⚠️ CRITIQUE
+#### 2. **Propriétés @property coûteuses dans Facture** ✅ CORRIGÉ (Persistance DB)
 **Fichier:** `backend/api/models.py:296-326`
 ```python
 @property
@@ -31,7 +31,7 @@ def total_ht(self):
 - Ou utiliser `prefetch_related` avec `Prefetch` et calculer en Python
 - Ou utiliser `annotate()` pour précalculer dans la requête
 
-#### 3. **Client.current_debt avec boucle sur factures** ⚠️ CRITIQUE
+#### 3. **Client.current_debt avec boucle sur factures** ✅ CORRIGÉ (Annotation SQL)
 **Fichier:** `backend/api/models.py:93-123`
 ```python
 @property
@@ -108,7 +108,7 @@ for produit in produits:  # Boucle sur 8000 produits
 - ✅ Index ajoutés sur `Caisse` (statut, facture+statut, date_paiement)
 **Status:** ✅ Corrigé - Index critiques ajoutés
 
-#### 8. **CommandeSerializer avec produits non optimisés**
+#### 8. **CommandeSerializer avec produits non optimisés** ✅ CORRIGÉ
 **Fichier:** `backend/api/views.py:468`
 ```python
 queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits')
@@ -122,7 +122,7 @@ queryset = Commande.objects.select_related('fournisseur').prefetch_related(
 )
 ```
 
-#### 9. **generate_lot_number() avec transaction lock global**
+#### 9. **generate_lot_number() avec transaction lock global** ✅ CORRIGÉ
 **Fichier:** `backend/api/models.py:352-365`
 **Problème:** Utilise `select_for_update()` sur `LotSequence`, créant un verrou global. Avec 10 postes simultanés créant des lots, cela crée un goulot d'étranglement séquentiel.
 
@@ -133,7 +133,7 @@ queryset = Commande.objects.select_related('fournisseur').prefetch_related(
 - Ou utiliser un cache Redis avec incrément atomique
 - Ou utiliser `F()` expressions avec retry logic
 
-#### 10. **Dashboard stats avec multiples requêtes non optimisées**
+#### 10. **Dashboard stats avec multiples requêtes non optimisées** ✅ CORRIGÉ (Agrégation SQL)
 **Fichier:** `backend/api/views.py:1625+`
 **Problème:** Plusieurs requêtes séparées pour les stats du dashboard, certaines recalculant les mêmes données.
 

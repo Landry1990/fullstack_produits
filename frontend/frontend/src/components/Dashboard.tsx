@@ -20,6 +20,7 @@ interface DashboardStats {
   clients: { value: number; change: number };
   low_stock: { value: number; change: number };
   receivables: { value: number; count: number };
+  discount: { value: number; change: number };
 }
 
 
@@ -44,11 +45,20 @@ interface LowStockItem {
   stock: number;
 }
 
+interface ClientDepassement {
+  id: number;
+  name: string;
+  plafond: number;
+  dette: number;
+  depassement: number;
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [revenueChart, setRevenueChart] = useState<RevenueChartData | null>(null);
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+  const [clientsDepassement, setClientsDepassement] = useState<ClientDepassement[]>([]);
   const [produits, setProduits] = useState<ProduitModel[]>([]);
   const [expirationMonths, setExpirationMonths] = useState(6); // Délai par défaut: 6 mois
   const [ugStats, setUgStats] = useState<{ug_en_stock: number; ug_recues_mois: number; valeur_economisee: number} | null>(null);
@@ -104,13 +114,14 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, transactionsRes, chartRes, lowStockRes, produitsRes, ugStatsRes] = await Promise.all([
+        const [statsRes, transactionsRes, chartRes, lowStockRes, produitsRes, ugStatsRes, clientsDepassementRes] = await Promise.all([
           axios.get(`${dashboardEndpoint}stats/`),
           axios.get(`${dashboardEndpoint}recent_transactions/`),
           axios.get(`${dashboardEndpoint}revenue_chart/`),
           axios.get(`${dashboardEndpoint}low_stock/`),
           axios.get(produitsEndpoint),
-          axios.get(ugStatsEndpoint).catch(() => ({ data: null })) // Ne pas bloquer si l'endpoint UG échoue
+          axios.get(ugStatsEndpoint).catch(() => ({ data: null })), // Ne pas bloquer si l'endpoint UG échoue
+          axios.get(`${dashboardEndpoint}clients_depassement/`).catch(() => ({ data: [] })) // Ne pas bloquer si erreur
         ]);
 
         setStats(statsRes.data);
@@ -124,6 +135,8 @@ export default function Dashboard() {
         if (ugStatsRes.data) {
           setUgStats(ugStatsRes.data);
         }
+        // Set clients depassement
+        setClientsDepassement(clientsDepassementRes.data || []);
       } catch (err) {
         console.error('Erreur lors du chargement du tableau de bord:', err);
         setError('Impossible de charger les données du tableau de bord.');
@@ -170,7 +183,15 @@ export default function Dashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats && [
-          { title: "Chiffre d'affaires", value: `${Math.round(stats.revenue.value).toLocaleString('fr-FR')} F`, change: `${stats.revenue.change > 0 ? '+' : ''}${stats.revenue.change}%`, icon: "💰", color: "bg-emerald-100 text-emerald-700", isPositive: stats.revenue.change >= 0 },
+          { 
+            title: "Chiffre d'affaires", 
+            value: `${Math.round(stats.revenue.value).toLocaleString('fr-FR')} F`, 
+            change: `${stats.revenue.change > 0 ? '+' : ''}${stats.revenue.change}%`, 
+            icon: "💰", 
+            color: "bg-emerald-100 text-emerald-700", 
+            isPositive: stats.revenue.change >= 0,
+            details: `Dont ${Math.round(stats.discount.value).toLocaleString('fr-FR')} F de remises`
+          },
           { title: "Créances Clients", value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
           { title: "Valeur Stock", value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
           { title: "Alertes Stock", value: stats.low_stock.value, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false },
@@ -183,6 +204,11 @@ export default function Dashboard() {
                 <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === 'Valeur Stock' ? 'text-base-content/60' : stat.title === 'Créances Clients' ? 'text-orange-600' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
                   {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : stat.title === 'Créances Clients' ? 'en attente' : 'vs hier'}</span>
                 </span>
+                {stat.details && (
+                  <div className="text-xs text-base-content/50 mt-1 font-medium">
+                    {stat.details}
+                  </div>
+                )}
               </div>
               <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${stat.color}`}>
                 {stat.icon === 'shopping_cart' && (
@@ -201,6 +227,7 @@ export default function Dashboard() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                 )}
                 {stat.icon === '💰' && <span className="text-2xl">💰</span>}
+                {stat.icon === '🏷️' && <span className="text-2xl">🏷️</span>}
               </div>
             </div>
           );
@@ -484,6 +511,39 @@ export default function Dashboard() {
               </Link>
             </div>
           </div>
+
+          {/* Credit Alerts - Clients Exceeding Plafond */}
+          {clientsDepassement.length > 0 && (
+            <div className="card bg-base-100 shadow-sm border border-warning/30">
+              <div className="card-body p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="card-title text-lg font-bold text-base-content">⚠️ Alertes Créances</h2>
+                  <span className="badge badge-warning text-white badge-sm">{clientsDepassement.length}</span>
+                </div>
+                <div className="space-y-3">
+                  {clientsDepassement.slice(0, 5).map((client, i) => (
+                    <div key={i} className="flex flex-col p-2 rounded-lg bg-warning/5 border border-warning/20">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-warning"></div>
+                          <span className="text-sm font-medium text-base-content">{client.name}</span>
+                        </div>
+                        <span className="text-xs font-bold text-warning">
+                          +{Math.round(client.depassement).toLocaleString('fr-FR')} F
+                        </span>
+                      </div>
+                      <div className="text-xs text-base-content/60 mt-1 ml-4">
+                        Dette: {Math.round(client.dette).toLocaleString('fr-FR')} F / Plafond: {Math.round(client.plafond).toLocaleString('fr-FR')} F
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Link to="/creances" className="btn btn-ghost btn-sm w-full mt-2 text-warning hover:bg-warning/10">
+                  Voir toutes les créances
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Expiring Products */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
