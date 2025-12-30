@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis } from '../types'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
+import LotSelectionModal from './LotSelectionModal'
 
 // Lazy load barcode component
 const Barcode = lazy(() => import('react-barcode'))
@@ -18,6 +19,8 @@ type LigneFacture = {
   isPromis?: boolean
   promisQuantity?: number
   promisPhone?: string
+  lotId?: string | null // Specific lot ID or null for Auto/FEFO
+  lotText?: string | null // For display
 }
 
 type FactureProduitPayload = {
@@ -25,7 +28,7 @@ type FactureProduitPayload = {
   produit: number
   quantity: number
   selling_price: string
-  lot: string | null
+  lot?: string | null
   date_expiration: string | null
 }
 
@@ -49,7 +52,14 @@ type VenteEnAttente = {
 }
 
 const normalizeNumberInput = (value: string | number, options?: { min?: number; max?: number }) => {
-  let parsedValue = typeof value === 'number' ? value : Number(value)
+  let parsedValue: number
+  
+  if (typeof value === 'number') {
+    parsedValue = value
+  } else {
+    // Remplacer la virgule par un point pour le format décimal
+    parsedValue = Number(value.toString().replace(',', '.'))
+  }
 
   if (!Number.isFinite(parsedValue)) {
     parsedValue = 0
@@ -103,6 +113,17 @@ export default function Facturation() {
   const [selectedAyantDroit, setSelectedAyantDroit] = useState<number | null>(null)
   const [ayantsDroitList, setAyantsDroitList] = useState<AyantDroit[]>([])
   const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
+
+  // Lot Selection Modal State
+  const [lotModal, setLotModal] = useState<{
+    isOpen: boolean
+    product: ProduitModel | null
+    currentLotId: string | null
+  }>({
+    isOpen: false,
+    product: null,
+    currentLotId: null
+  })
 
   // Promis Logic State - Deferred Resolution
   const [showStockResolution, setShowStockResolution] = useState(false)
@@ -343,9 +364,11 @@ export default function Facturation() {
       const nouvelleLigne: LigneFacture = {
         produit,
         quantite: 1,
-        prix_unitaire: produit.selling_price ?? '0',
+        prix_unitaire: prixUnitaire.toString(),
         remise_produit: '0',
-        total_ligne: prixUnitaire
+        total_ligne: prixUnitaire,
+        lotId: null, // Default to Auto/FEFO
+        lotText: null
       }
       setLignesFacture([...lignesFacture, nouvelleLigne])
       
@@ -427,6 +450,27 @@ export default function Facturation() {
   }
 
 
+
+
+  const handleLotSelect = (lot: any | null) => {
+      // Update the line with the selected lot
+      if (!lotModal.product) return
+
+      const updatedLignes = lignesFacture.map(ligne => 
+        ligne.produit.id === lotModal.product!.id
+          ? { 
+              ...ligne, 
+              lotId: lot ? String(lot.id) : null,
+              lotText: lot ? lot.lot : null,
+            }
+          : ligne
+      )
+      setLignesFacture(updatedLignes)
+      setLotModal({ isOpen: false, product: null, currentLotId: null })
+      
+      // Return focus to search
+      setTimeout(() => searchInputRef.current?.focus(), 100)
+  }
 
   const removeLigne = (produitId: number) => {
     setLignesFacture(lignesFacture.filter(ligne => ligne.produit.id !== produitId))
@@ -649,7 +693,8 @@ export default function Facturation() {
           produit: ligne.produit.id,
           quantity: Number(ligne.quantite),
           selling_price: prixNet.toString(), // Envoyer le prix net au backend
-          lot: null,
+          stock_lot: ligne.lotId ? Number(ligne.lotId) : null, // New field for specific lot
+          lot: null, // Legacy field
           date_expiration: ligne.produit.expire_date || null,
         }
       })
@@ -1231,36 +1276,57 @@ export default function Facturation() {
       </div>
       
       {/* Notifications */}
-      {error && (
-        <div className="px-6 pt-4 shrink-0">
-            <div role="alert" className="alert alert-error shadow-sm rounded-lg py-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span>{error}</span>
-            <button className="btn btn-sm btn-ghost btn-square" onClick={() => setError(null)}>✕</button>
+      {/* Notifications (Toasts) */}
+      {(error || successInfo) && (
+        <div className="toast toast-top toast-end z-[100] mt-16 mr-4">
+          {error && (
+            <div role="alert" className="alert alert-error shadow-lg max-w-md animate-in fade-in slide-in-from-right-5 duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div>
+                <h3 className="font-bold">Erreur</h3>
+                <div className="text-xs">{error}</div>
+              </div>
+              <button className="btn btn-sm btn-ghost btn-circle" onClick={() => setError(null)}>✕</button>
             </div>
-        </div>
-      )}
+          )}
 
-      {successInfo && (
-        <div className="px-6 pt-4 shrink-0">
-            <div role="alert" className="alert alert-success shadow-sm rounded-lg py-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <div className="flex-1 flex items-center justify-between">
-                <div className="text-sm">
-                    <span className="font-bold">Succès !</span> Facture <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F
+          {successInfo && (
+            <div role="alert" className="alert alert-success shadow-lg max-w-lg flex-col items-start gap-2 animate-in fade-in slide-in-from-right-5 duration-300">
+              <div className="flex items-center gap-2 w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div className="flex-1">
+                  <h3 className="font-bold">Vente enregistrée !</h3>
+                  <div className="text-xs">Facture <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F</div>
                 </div>
-                <div className="flex gap-2">
-                    {successInfo.status !== 'PAY' && (
-                        <button className="btn btn-xs btn-primary" onClick={() => ouvrirModalPaiement(successInfo)}>Payer</button>
-                    )}
-                    {successInfo.status === 'PAY' && ticketCaisse && (
-                        <button className="btn btn-xs btn-info" onClick={() => setShowTicketPreview(true)}>Ticket</button>
-                    )}
-                    <button className="btn btn-xs btn-outline" onClick={() => handleImprimerFacture(successInfo)}>Imprimer</button>
-                    <button className="btn btn-xs btn-ghost" onClick={() => setSuccessInfo(null)}>Fermer</button>
-                </div>
+                <button className="btn btn-sm btn-ghost btn-circle self-start" onClick={() => setSuccessInfo(null)}>✕</button>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 w-full justify-end mt-1">
+                  {successInfo.status !== 'PAY' && (
+                      <button className="btn btn-sm btn-primary" onClick={() => ouvrirModalPaiement(successInfo)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                        </svg>
+                        Payer
+                      </button>
+                  )}
+                  {successInfo.status === 'PAY' && ticketCaisse && (
+                      <button className="btn btn-sm btn-info text-white" onClick={() => setShowTicketPreview(true)}>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v4.072c.421.424.688 1.006.688 1.653 0 .647-.267 1.23-.688 1.653v4.072c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-4.072c-.421-.424-.688-1.006-.688-1.653 0-.647.267-1.23.688-1.653V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                        </svg>
+                        Ticket
+                      </button>
+                  )}
+                  <button className="btn btn-sm btn-outline" onClick={() => handleImprimerFacture(successInfo)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                    </svg>
+                    A4
+                  </button>
+              </div>
             </div>
-            </div>
+          )}
         </div>
       )}
 
@@ -1514,6 +1580,19 @@ export default function Facturation() {
                                         <div className="text-xs text-base-content/60">
                                             {ligne.produit.expire_date ? new Date(ligne.produit.expire_date).toLocaleDateString('fr-FR') : '-'}
                                         </div>
+                                    </td>
+                                    <td className="text-center py-1">
+                                        <button 
+                                            className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
+                                            onClick={() => setLotModal({
+                                                isOpen: true,
+                                                product: ligne.produit,
+                                                currentLotId: ligne.lotId || null
+                                            })}
+                                            title={ligne.lotId ? `Lot: ${ligne.lotText}` : "Lot: Automatique (FEFO)"}
+                                        >
+                                            {ligne.lotId ? ligne.lotText : 'Auto'}
+                                        </button>
                                     </td>
                                     <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
                                         {Math.round(ligne.total_ligne)}
@@ -2278,6 +2357,16 @@ export default function Facturation() {
         </div>
         <form method="dialog" className="modal-backdrop" onClick={() => setConfirmModal(null)}><button>close</button></form>
       </dialog>
+      {/* Lot Selection Modal */}
+      {lotModal.isOpen && (
+        <LotSelectionModal 
+            isOpen={lotModal.isOpen}
+            onClose={() => setLotModal({ ...lotModal, isOpen: false })}
+            produit={lotModal.product}
+            onSelectLot={handleLotSelect}
+            currentLotId={lotModal.currentLotId}
+        />
+      )}
     </div>
   )
 }

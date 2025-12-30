@@ -663,10 +663,22 @@ class CommandeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_destroy(self, instance):
-        if instance.status == Commande.Status.CLOTUREE:
-             from rest_framework.exceptions import ValidationError
-             raise ValidationError("Impossible de supprimer une commande clôturée.")
-        super().perform_destroy(instance)
+        # Allow deleting closed commands, but handle protected error if lots are used
+        # if instance.status == Commande.Status.CLOTUREE:
+        #      from rest_framework.exceptions import ValidationError
+        #      raise ValidationError("Impossible de supprimer une commande clôturée.")
+        
+        try:
+            super().perform_destroy(instance)
+        except Exception as e:
+            # Check for ProtectedError manually or via type if imported
+            # Django's ProtectedError is often wrapped or bubbling up
+            from django.db.models import ProtectedError
+            from rest_framework.exceptions import ValidationError
+            
+            if isinstance(e, ProtectedError) or "ProtectedError" in str(type(e)):
+                 raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
+            raise e
 
 
     @action(detail=True, methods=['post'])
@@ -1265,11 +1277,14 @@ class FactureViewSet(viewsets.ModelViewSet):
 
                 # CAS 2: Pas de lot spécifique -> Logique FIFO standard
                 else:
-                    # Récupérer les lots disponibles par ordre FIFO (plus anciens en premier)
+                    # Récupérer les lots disponibles par ordre FEFO (First Expired First Out)
+                    # On trie d'abord par date d'expiration (les plus proches en premier), 
+                    # puis par date de réception pour le FIFO standard si expiration identique ou nulle
+
                     available_lots = StockLot.objects.select_for_update().filter(
                         produit=produit,
                         quantity_remaining__gt=0
-                    ).order_by('date_reception')
+                    ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
                     
                     for lot in available_lots:
                         if quantity_to_allocate <= 0:
@@ -3987,7 +4002,7 @@ class PromisViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'inline; filename="ticket_promis_{promis.id}.pdf"'
         return response
 
-    @action(detail=False, methods=['post'], url_path='print-group')
+    @action(detail=False, methods=['post'])
     def imprimer_ticket_groupe(self, request):
         """
         Génère un ticket unique pour une liste de Promis.
