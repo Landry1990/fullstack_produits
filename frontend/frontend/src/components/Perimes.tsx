@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
+import { useConfirm } from '../hooks/useConfirm'
 import type { StockLot } from '../types'
 
 export default function Perimes() {
+  const confirm = useConfirm()
   const [lots, setLots] = useState<StockLot[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -62,22 +65,28 @@ export default function Perimes() {
     
     const qty = parseInt(quantity, 10)
     if (isNaN(qty) || qty <= 0 || qty > lot.quantity_remaining) {
-      alert('Quantité invalide.')
+      toast.error('Quantité invalide.')
       return
     }
     
-    if (!confirm(`Confirmer la sortie de ${qty} unités du produit ${lot.produit_nom} ?`)) return
+    const confirmed = await confirm({
+      title: 'Confirmer la sortie',
+      message: `Confirmer la sortie de ${qty} unités du produit ${lot.produit_nom} ?`,
+      variant: 'warning',
+      confirmText: 'Confirmer'
+    })
+    if (!confirmed) return
 
     try {
       await axios.post(`${stockLotsEndpoint}${lot.id}/sortir_perimes/`, {
         quantity: qty,
         reason: 'Périmé / Avarie'
       })
-      alert('Sortie de stock effectuée.')
+      toast.success('Sortie de stock effectuée.')
       fetchLots()
     } catch (err) {
       console.error('Erreur sortie stock:', err)
-      alert('Erreur lors de la sortie de stock.')
+      toast.error('Erreur lors de la sortie de stock.')
     }
   }
 

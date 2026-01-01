@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, type FormEvent, useRef } from 'react';
 import axios from 'axios';
+import { useConfirm } from '../hooks/useConfirm';
 import type { Fournisseur } from '../types';
 
 const emptyForm: Omit<Fournisseur, 'id'> = {
@@ -10,6 +11,7 @@ const emptyForm: Omit<Fournisseur, 'id'> = {
 };
 
 export default function Fournisseurs() {
+  const confirm = useConfirm()
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [selectedFournisseur, setSelectedFournisseur] = useState<Fournisseur | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -200,7 +202,14 @@ export default function Fournisseurs() {
 
   async function handleDeleteFournisseur() {
     if (!selectedFournisseur) return;
-    if (window.confirm(`Supprimer le fournisseur "${selectedFournisseur.name}" ?`)) {
+    
+    const confirmed = await confirm({
+      title: 'Supprimer le fournisseur',
+      message: `Supprimer le fournisseur "${selectedFournisseur.name}" ?`,
+      variant: 'danger',
+      confirmText: 'Supprimer'
+    })
+    if (confirmed) {
       try {
         await axios.delete(`${fournisseursEndpoint}${selectedFournisseur.id}/`);
         setFournisseurs(prev => prev.filter(f => f.id !== selectedFournisseur.id));

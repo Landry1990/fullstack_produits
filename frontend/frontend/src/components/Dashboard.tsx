@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import type { ProduitModel } from '../types';
+import type { ProduitModel, StockLot } from '../types';
 import {
   LineChart,
   Line,
@@ -59,8 +59,8 @@ export default function Dashboard() {
   const [revenueChart, setRevenueChart] = useState<RevenueChartData | null>(null);
   const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
   const [clientsDepassement, setClientsDepassement] = useState<ClientDepassement[]>([]);
-  const [produits, setProduits] = useState<ProduitModel[]>([]);
-  const [expirationMonths, setExpirationMonths] = useState(6); // Délai par défaut: 6 mois
+  const [expiringLots, setExpiringLots] = useState<StockLot[]>([]);
+  const [expirationMonths, setExpirationMonths] = useState(1); // Délai par défaut: 1 mois
   const [ugStats, setUgStats] = useState<{ug_en_stock: number; ug_recues_mois: number; valeur_economisee: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +78,10 @@ export default function Dashboard() {
   const ugStatsEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stats-ug/par_fournisseur/`
     : '/api/stats-ug/par_fournisseur/'
+  const stockLotsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stock-lots/`
+    : '/api/stock-lots/'
+
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -88,38 +92,47 @@ export default function Dashboard() {
     }));
   }, [revenueChart]);
 
-  // Stock value is now handled by backend
-
-  // Calculate expiring products
-  const expiringProducts = useMemo(() => {
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setMonth(today.getMonth() + expirationMonths);
-
-    return produits
-      .filter(p => {
-        if (!p.expire_date) return false;
-        const expireDate = new Date(p.expire_date);
-        return expireDate > today && expireDate <= futureDate;
-      })
-      .sort((a, b) => {
-        const dateA = new Date(a.expire_date!).getTime();
-        const dateB = new Date(b.expire_date!).getTime();
-        return dateA - dateB; // Trier du plus proche au plus éloigné
-      })
-      .slice(0, 10); // Limiter à 10 produits
-  }, [produits, expirationMonths]);
+  // Fetch expiring lots based on selected period
+  useEffect(() => {
+    const fetchExpiringLots = async () => {
+      try {
+        const today = new Date();
+        const futureDate = new Date();
+        futureDate.setMonth(today.getMonth() + expirationMonths);
+        
+        const params = new URLSearchParams({
+          date_expiration_lte: futureDate.toISOString().split('T')[0],
+          ordering: 'date_expiration'
+        });
+        
+        const response = await axios.get(`${stockLotsEndpoint}?${params}`);
+        const lots: StockLot[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
+        
+        // Filter out lots that have already expired
+        const validLots = lots.filter(lot => {
+          if (!lot.date_expiration) return false;
+          const expDate = new Date(lot.date_expiration);
+          return expDate > today;
+        }).slice(0, 10); // Limit to 10 lots
+        
+        setExpiringLots(validLots);
+      } catch (err) {
+        console.error('Error fetching expiring lots:', err);
+      }
+    };
+    
+    fetchExpiringLots();
+  }, [stockLotsEndpoint, expirationMonths]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, transactionsRes, chartRes, lowStockRes, produitsRes, ugStatsRes, clientsDepassementRes] = await Promise.all([
+        const [statsRes, transactionsRes, chartRes, lowStockRes, ugStatsRes, clientsDepassementRes] = await Promise.all([
           axios.get(`${dashboardEndpoint}stats/`),
           axios.get(`${dashboardEndpoint}recent_transactions/`),
           axios.get(`${dashboardEndpoint}revenue_chart/`),
           axios.get(`${dashboardEndpoint}low_stock/`),
-          axios.get(produitsEndpoint),
           axios.get(ugStatsEndpoint).catch(() => ({ data: null })), // Ne pas bloquer si l'endpoint UG échoue
           axios.get(`${dashboardEndpoint}clients_depassement/`).catch(() => ({ data: [] })) // Ne pas bloquer si erreur
         ]);
@@ -128,9 +141,6 @@ export default function Dashboard() {
         setRecentTransactions(transactionsRes.data);
         setRevenueChart(chartRes.data);
         setLowStockItems(lowStockRes.data);
-        // Handle paginated response for products
-        const produitsData: any = produitsRes.data;
-        setProduits(Array.isArray(produitsData) ? produitsData : (produitsData.results || []));
         // Set UG stats if available
         if (ugStatsRes.data) {
           setUgStats(ugStatsRes.data);
@@ -146,7 +156,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [dashboardEndpoint, produitsEndpoint, ugStatsEndpoint]);
+  }, [dashboardEndpoint, ugStatsEndpoint]);
 
   if (loading) {
     return (
@@ -545,13 +555,13 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Expiring Products */}
+          {/* Expiring Lots */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-lg font-bold text-base-content">Péremption Proche</h2>
-                {expiringProducts.length > 0 && (
-                  <span className="badge badge-error text-white badge-sm">{expiringProducts.length}</span>
+                {expiringLots.length > 0 && (
+                  <span className="badge badge-error text-white badge-sm">{expiringLots.length}</span>
                 )}
               </div>
               
@@ -565,6 +575,7 @@ export default function Dashboard() {
                   value={expirationMonths}
                   onChange={(e) => setExpirationMonths(Number(e.target.value))}
                 >
+                  <option value={1}>1 mois</option>
                   <option value={2}>2 mois</option>
                   <option value={3}>3 mois</option>
                   <option value={6}>6 mois</option>
@@ -573,21 +584,27 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-3 max-h-80 overflow-y-auto">
-                {expiringProducts.length === 0 ? (
-                  <div className="text-sm text-base-content/60 text-center py-2">Aucun produit proche de la péremption</div>
+                {expiringLots.length === 0 ? (
+                  <div className="text-sm text-base-content/60 text-center py-2">Aucun lot proche de la péremption</div>
                 ) : (
-                  expiringProducts.map((item, i) => {
-                    const daysUntilExpiry = Math.floor((new Date(item.expire_date!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  expiringLots.map((lot, i) => {
+                    const daysUntilExpiry = lot.date_expiration 
+                      ? Math.floor((new Date(lot.date_expiration).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                      : 0;
                     
                     return (
-                      <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
+                      <div key={lot.id} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="w-2 h-2 rounded-full bg-error"></div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium text-base-content block truncate">{item.name}</span>
-                            <span className="text-xs text-base-content/60">
-                              {new Date(item.expire_date!).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                            </span>
+                            <span className="text-sm font-medium text-base-content block truncate">{lot.produit_nom}</span>
+                            <div className="flex gap-2 text-xs text-base-content/60">
+                              <span>Lot: {lot.lot || 'N/A'}</span>
+                              <span>•</span>
+                              <span>
+                                {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                              </span>
+                            </div>
                           </div>
                         </div>
                         <span className="text-xs font-bold whitespace-nowrap ml-2 text-error">

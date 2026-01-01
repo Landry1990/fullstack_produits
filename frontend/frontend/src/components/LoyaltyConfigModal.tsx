@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
 
 interface LoyaltySetting {
     id: number
@@ -52,9 +53,9 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
         try {
             await axios.post(`${apiBaseUrl}/api/loyalty-settings/`, settings)
             onClose()
-            alert('Configuration enregistrée !')
+            toast.success('Configuration enregistrée !')
         } catch (err) {
-            alert('Erreur enregistrement')
+            toast.error('Erreur enregistrement')
             console.error(err)
         } finally {
             setSaving(false)

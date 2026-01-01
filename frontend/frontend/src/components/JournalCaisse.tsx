@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
 import type { CaisseTransaction, MouvementCaisse } from '../types'
 import CashMovementModal from './CashMovementModal'
 
@@ -311,7 +312,7 @@ export default function JournalCaisse() {
         date_fin: dateFin || undefined
       })
       setIsClosingModalOpen(false)
-      alert('Caisse clôturée avec succès !')
+      toast.success('Caisse clôturée avec succès !')
       fetchTransactions() // Refresh list
     } catch (err) {
       console.error('Erreur clôture:', err)

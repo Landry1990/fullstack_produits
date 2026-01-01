@@ -64,7 +64,8 @@ class RapportViewSet(viewsets.ViewSet):
         
         for facture in factures:
             ca_ttc += facture.total_ttc
-            ca_ht += facture.total_ht
+            # Soustraire la remise du HT pour être cohérent avec le TTC
+            ca_ht += (facture.total_ht - facture.remise)
         
         # 3. Calculer marge via allocations FIFO
         allocations = FactureProduitAllocation.objects.filter(
@@ -97,32 +98,33 @@ class RapportViewSet(viewsets.ViewSet):
             for enc in encaissements
         ]
         
-        # 5. Ventes à crédit (en compte)
-        ventes_en_compte = Caisse.objects.filter(
-            facture__in=factures,
-            statut='completee',
-            mode_paiement='en_compte'
-        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+        # 5. Créances à percevoir (TOUTES les factures à crédit avec reste à payer)
+        # Important: On calcule le total de TOUTES les créances en cours,
+        # pas seulement celles du mois, pour correspondre au module Créances
         
-        # 6. Créances (soldes impayés) - Calcul des factures avec reste à payer
-        from django.db.models.functions import Coalesce
+        toutes_factures_credit = Facture.objects.filter(
+            paiements__mode_paiement='en_compte',
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).distinct().prefetch_related('paiements')
         
-        creances_data = factures.annotate(
-            paid_amount=Coalesce(
-                Sum('paiements__montant', filter=Q(paiements__statut='completee')),
-                Decimal('0.00'),
-                output_field=DecimalField()
-            ),
-            remainder=F('total_ttc') - F('paid_amount')
-        ).filter(
-            remainder__gt=0
-        ).aggregate(
-            total_creances=Sum('remainder'),
-            nb_factures_impayees=Sum(1)
-        )
+        # Calcul en Python car le filtre complexe dans l'annotation ne fonctionne pas
+        total_creances = Decimal('0.00')
+        nb_factures_impayees = 0
         
-        total_creances = creances_data['total_creances'] or Decimal('0.00')
-        nb_factures_impayees = creances_data['nb_factures_impayees'] or 0
+        for facture in toutes_factures_credit:
+            # Calculer le montant payé (hors "en_compte")
+            montant_paye = facture.paiements.filter(
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+            
+            # Calculer le reste à payer
+            reste = facture.total_ttc - montant_paye
+            
+            if reste > 0:
+                total_creances += reste
+                nb_factures_impayees += 1
         
         # 7. CA par taux de TVA
         # Grouper  par taux de TVA unique de chaque facture
@@ -161,7 +163,7 @@ class RapportViewSet(viewsets.ViewSet):
                 'marge_pct': round(marge_pct, 2)
             },
             'encaissements': encaissements_data,
-            'ventes_en_compte': ventes_en_compte,
+            'creances_a_percevoir': total_creances,
             'creances': {
                 'total': total_creances,
                 'nb_factures': nb_factures_impayees

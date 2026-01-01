@@ -1,0 +1,21 @@
+Creating test database for alias 'default'...
+
+F
+======================================================================
+FAIL: test_dashboard_discount_calculation (test_dashboard_discount.DashboardDiscountTest.test_dashboard_discount_calculation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\test_dashboard_discount.py", line 94, in test_dashboard_discount_calculation
+    self.assertIn(today_str, data)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+AssertionError: '2025-12-30' not found in {'revenue': {'value': 0.0, 'change': 0}, 'sales': {'value': 0, 'change': 0}, 'clients': {'value': 0, 'change': 0}, 'low_stock': {'value': 0, 'change': 0}, 'receivables': {'value': 0.0, 'count': 0}, 'stock_value': {'value': 500.0, 'change': 0}, 'discount': {'value': 0.0, 'change': 0}}
+
+----------------------------------------------------------------------
+Ran 1 test in 0.880s
+
+FAILED (failures=1)
+Destroying test database for alias 'default'...
+
+Found 1 test(s).
+System check identified no issues (0 silenced).
+Stats Data: {'revenue': {'value': 0.0, 'change': 0}, 'sales': {'value': 0, 'change': 0}, 'clients': {'value': 0, 'change': 0}, 'low_stock': {'value': 0, 'change': 0}, 'receivables': {'value': 0.0, 'count': 0}, 'stock_value': {'value': 500.0, 'change': 0}, 'discount': {'value': 0.0, 'change': 0}}

@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { useConfirm } from '../hooks/useConfirm';
 import type { ProduitModel, Inventaire, LigneInventaire } from '../types';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import { useProductSearch } from '../hooks/useProductSearch';
 
 
 export default function InventaireComponent() {
+  const confirm = useConfirm()
   // Modes: LIST, CREATE, EDIT
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT'>('LIST');
 
@@ -114,12 +117,18 @@ export default function InventaireComponent() {
   };
 
   const handleDelete = async (id: number) => {
-      if (!confirm('Supprimer cet inventaire ?')) return;
+      const confirmed = await confirm({
+        title: 'Supprimer l\'inventaire',
+        message: 'Supprimer cet inventaire ?',
+        variant: 'danger',
+        confirmText: 'Supprimer'
+      })
+      if (!confirmed) return;
       try {
           await axios.delete(`${inventairesEndpoint}${id}/`);
           fetchInventaires();
       } catch (err) {
-          alert("Erreur lors de la suppression");
+          toast.error("Erreur lors de la suppression");
       }
   };
 
@@ -128,7 +137,7 @@ export default function InventaireComponent() {
       const exists = lignes.find(l => l.produit === ((typeof product === 'object') ? product.id as any : product) ||  (l.produit && l.produit.id === product.id));
       
       if (exists) {
-          alert("Ce produit est déjà dans l'inventaire.");
+          toast('Ce produit est déjà dans l\'inventaire.', { icon: '⚠️' });
           setSearchQuery('');
           return;
       }
@@ -148,7 +157,7 @@ export default function InventaireComponent() {
               setInventaires(prev => [res.data, ...prev]);
           } catch(err) {
               console.error("Erreur création inventaire", err);
-              alert("Impossible de créer l'inventaire automatiquement.");
+              toast.error("Impossible de créer l'inventaire automatiquement.");
               return;
           }
       }
@@ -208,28 +217,40 @@ export default function InventaireComponent() {
   };
 
   const handleDeleteLine = async (lineId: number) => {
-      if (!confirm("Retirer ce produit de l'inventaire ?")) return;
+      const confirmed = await confirm({
+        title: 'Retirer le produit',
+        message: 'Retirer ce produit de l\'inventaire ?',
+        variant: 'warning',
+        confirmText: 'Retirer'
+      })
+      if (!confirmed) return;
       try {
           await axios.delete(`${lignesEndpoint}${lineId}/`);
           setLignes(prev => prev.filter(l => l.id !== lineId));
       } catch (err) {
           console.error("Erreur suppression ligne", err);
-          alert("Impossible de supprimer la ligne.");
+          toast.error("Impossible de supprimer la ligne.");
       }
   };
 
   const handleValidate = async () => {
       if (!activeInventaire) return;
-      if (!confirm("Valider l'inventaire ? Cela mettra à jour le stock de tous les produits listés.")) return;
+      const confirmed = await confirm({
+        title: 'Valider l\'inventaire',
+        message: 'Valider l\'inventaire ?\n\nCela mettra à jour le stock de tous les produits listés.',
+        variant: 'info',
+        confirmText: 'Valider'
+      })
+      if (!confirmed) return;
 
       try {
           setSaving(true);
           await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`);
-          alert("Inventaire validé avec succès !");
+          toast.success("Inventaire validé avec succès !");
           setViewMode('LIST');
           fetchInventaires();
       } catch (err) {
-          alert("Erreur lors de la validation");
+          toast.error("Erreur lors de la validation");
           console.error(err);
       } finally {
           setSaving(false);
@@ -244,9 +265,9 @@ export default function InventaireComponent() {
                date: dateInventaire,
                description
            });
-           alert("En-tête sauvegardé");
+           toast.success("En-tête sauvegardé");
       } catch(err) {
-          alert("Erreur sauvegarde");
+          toast.error("Erreur sauvegarde");
       }
   };
 

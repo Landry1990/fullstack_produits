@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import  axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 interface RapportData {
   mois: string;
@@ -18,7 +19,7 @@ interface RapportData {
     mode_label: string;
     montant: number;
   }>;
-  ventes_en_compte: number;
+  creances_a_percevoir: number;
   ca_par_tva: Array<{
     taux: number;
     ca_ht: number;
@@ -46,7 +47,7 @@ export default function RapportMensuel() {
       setRapport(response.data);
     } catch (error) {
       console.error("Erreur lors du chargement du rapport", error);
-      alert("Erreur lors du chargement du rapport");
+      toast.error("Erreur lors du chargement du rapport");
     } finally {
       setLoading(false);
     }
@@ -151,15 +152,15 @@ export default function RapportMensuel() {
             {/* Ventes à crédit (En Compte) */}
             <div className="card bg-base-100 shadow-sm border border-base-200">
               <div className="card-body p-4">
-                <h2 className="card-title text-lg font-bold mb-2">Ventes à Crédit (En Compte)</h2>
+                <h2 className="card-title text-lg font-bold mb-2">Créances à Percevoir</h2>
                 <div className="flex items-center justify-between p-4 bg-warning/10 rounded-lg border border-warning/20">
                   <div>
-                    <p className="text-sm text-base-content/70">Total des ventes à crédit</p>
-                    <p className="text-xs text-base-content/60 mt-1">Créances à recouvrer</p>
+                    <p className="text-sm text-base-content/70">Montant restant à recouvrer</p>
+                    <p className="text-xs text-base-content/60 mt-1">Sur les ventes à crédit du mois</p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-warning">
-                      {Math.round(Number(rapport.ventes_en_compte || 0)).toLocaleString('fr-FR')} F
+                      {Math.round(Number(rapport.creances_a_percevoir || 0)).toLocaleString('fr-FR')} F
                     </p>
                   </div>
                 </div>

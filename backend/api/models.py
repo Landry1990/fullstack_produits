@@ -355,30 +355,52 @@ class Facture(models.Model):
     
     def calculate_totals(self, save=True):
         """
-        Calcule les totaux HT, TVA et TTC based sur les lignes de produits et met à jour les champs.
+        Calcule les totaux HT, TVA et TTC ligne par ligne.
+        IMPORTANT: Les prix de vente sont TTC (TVA incluse).
+        On calcule donc HT = TTC / (1 + TVA%) et TVA = TTC - HT.
         """
-        # Calcul Total HT
-        # On utilise une agrégation DB si possible pour la perf, mais ici on est souvent dans un contexte
-        # où on vient de changer une ligne, donc l'agrégation est fiable.
         from django.db.models import Sum, F, DecimalField
         
+        # Calcul Total TTC (somme des prix de vente qui incluent déjà la TVA)
         aggregated = self.produits.aggregate(
             total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
         )
-        self.total_ht = aggregated['total'] or Decimal('0.00')
+        total_ttc_brut = aggregated['total'] or Decimal('0.00')
         
-        # Calcul TVA et TTC
-        try:
-            total_ht = Decimal(str(self.total_ht))
-            remise = Decimal(str(self.remise))
-            tva_rate = Decimal(str(self.tva))
+        # Calcul HT et TVA ligne par ligne (extraction de la TVA depuis le TTC)
+        total_ht = Decimal('0.00')
+        total_tva = Decimal('0.00')
+        
+        for ligne in self.produits.all():
+            # TTC de la ligne (prix de vente qui inclut déjà la TVA)
+            ttc_ligne = ligne.quantity * ligne.selling_price
             
-            self.total_tva = ((total_ht - remise) * (tva_rate / 100)).quantize(Decimal('0.01'))
-            self.total_ttc = (total_ht - remise + self.total_tva).quantize(Decimal('0.01'))
-        except (ValueError, TypeError, AttributeError):
-            self.total_tva = Decimal('0.00')
-            self.total_ttc = Decimal('0.00')
+            # Calculer HT à partir du TTC : HT = TTC / (1 + TVA%)
+            if ligne.tva > 0:
+                ht_ligne = (ttc_ligne / (1 + ligne.tva / 100)).quantize(Decimal('0.01'))
+                tva_ligne = (ttc_ligne - ht_ligne).quantize(Decimal('0.01'))
+            else:
+                ht_ligne = ttc_ligne
+                tva_ligne = Decimal('0.00')
             
+            total_ht += ht_ligne
+            total_tva += tva_ligne
+        
+        # Appliquer la remise sur le TTC
+        remise = Decimal(str(self.remise))
+        total_ttc_apres_remise = total_ttc_brut - remise
+        
+        # Recalculer HT et TVA proportionnellement après remise
+        if total_ttc_brut > 0:
+            ratio_remise = total_ttc_apres_remise / total_ttc_brut
+            total_ht = (total_ht * ratio_remise).quantize(Decimal('0.01'))
+            total_tva = (total_tva * ratio_remise).quantize(Decimal('0.01'))
+        
+        # Totaux finaux
+        self.total_ht = total_ht
+        self.total_tva = total_tva
+        self.total_ttc = total_ttc_apres_remise
+        
         if save:
             # On update uniquement les champs de totaux pour éviter de déclencher des signaux récursifs inutiles
             # ou d'écraser d'autres changements concurrents
@@ -567,6 +589,13 @@ class FactureProduit(models.Model):
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='produits')
     quantity = models.IntegerField()
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Montant de la remise unitaire") # NEW
+    tva = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0.00,
+        help_text="TVA applicable à cette ligne (copiée du produit lors de la création)"
+    )
     lot = models.CharField(max_length=20, blank=True, null=True)
     stock_lot = models.ForeignKey(StockLot, on_delete=models.SET_NULL, null=True, blank=True, help_text="Lot spécifique choisi manuellement") # NEW
     date_expiration = models.DateField(blank=True, null=True)
@@ -583,6 +612,18 @@ class FactureProduit(models.Model):
             # Index composite pour les requêtes par facture et produit
             models.Index(fields=['facture', 'produit']),
         ]
+
+
+# Signal pour copier automatiquement la TVA du produit vers la ligne de facture
+@receiver(pre_save, sender=FactureProduit)
+def copy_tva_from_product(sender, instance, **kwargs):
+    """
+    Copie automatiquement la TVA du produit vers la ligne de facture lors de la création.
+    Si la TVA de la ligne est 0 et que le produit a une TVA, on la copie.
+    """
+    if instance.produit and instance.tva == Decimal('0.00'):
+        instance.tva = instance.produit.tva
+
 
 
 class RelevePaiement(models.Model):
@@ -868,6 +909,14 @@ class LigneAvoir(models.Model):
     """Ligne d'un avoir fournisseur"""
     avoir = models.ForeignKey(Avoir, related_name='produits', on_delete=models.CASCADE)
     produit = models.ForeignKey('Produit', on_delete=models.PROTECT)
+    stock_lot = models.ForeignKey(
+        'StockLot', 
+        on_delete=models.PROTECT, 
+        null=True, 
+        blank=True,
+        related_name='avoirs',
+        help_text="Lot spécifique retourné (si applicable)"
+    )
     quantity = models.IntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de retour")
     lot = models.CharField(max_length=100, blank=True)
