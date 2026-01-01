@@ -1,0 +1,28 @@
+Creating test database for alias 'default'...
+
+F
+======================================================================
+FAIL: test_dashboard_discount_calculation (test_dashboard_discount.DashboardDiscountTest.test_dashboard_discount_calculation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\test_dashboard_discount.py", line 118, in test_dashboard_discount_calculation
+    self.assertEqual(float(discount_data['value']), 25.0)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0.0 != 25.0
+
+----------------------------------------------------------------------
+Ran 1 test in 0.836s
+
+FAILED (failures=1)
+Destroying test database for alias 'default'...
+
+Found 1 test(s).
+System check identified no issues (0 silenced).
+Test Invoice Date: 2025-12-30 23:41:39.022934+00:00
+Test Invoice Status: VAL
+Timezone Now Date: 2025-12-30
+Factures in DB: 1
+Factures with status VAL: 1
+Factures with date 2025-12-30: 0
+View Query Count: 0
+Stats Data: {'revenue': {'value': 0.0, 'change': 0}, 'sales': {'value': 0, 'change': 0}, 'clients': {'value': 0, 'change': 0}, 'low_stock': {'value': 0, 'change': 0}, 'receivables': {'value': 0.0, 'count': 0}, 'stock_value': {'value': 500.0, 'change': 0}, 'discount': {'value': 0.0, 'change': 0}}

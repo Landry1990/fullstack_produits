@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '../hooks/useConfirm';
 
 // Interfaces
 interface Produit {
@@ -33,6 +34,7 @@ interface HistoriqueTransformation {
 }
 
 const Transformations: React.FC = () => {
+  const confirm = useConfirm();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'relations' | 'historique'>('relations');
   const [relations, setRelations] = useState<RelationTransformation[]>([]);
@@ -163,7 +165,13 @@ const Transformations: React.FC = () => {
   };
 
   const handleDeleteRelation = async (id: number) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette relation ?")) return;
+    const confirmed = await confirm({
+      title: 'Supprimer la relation',
+      message: 'Êtes-vous sûr de vouloir supprimer cette relation de transformation ?',
+      variant: 'danger',
+      confirmText: 'Supprimer'
+    })
+    if (!confirmed) return;
     try {
       await axios.delete(`http://localhost:8000/api/relations-transformation/${id}/`);
       toast.success("Relation supprimée");

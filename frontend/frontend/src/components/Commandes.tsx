@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
+import { useConfirm } from '../hooks/useConfirm'
 import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
 import ProduitFormModal from './ProduitFormModal'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
@@ -8,6 +10,7 @@ import SimplePrintLabelsModal from './SimplePrintLabelsModal'
 
 
 export default function Commandes() {
+  const confirm = useConfirm()
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -575,7 +578,7 @@ export default function Commandes() {
         ? `${productsFound} produits ajoutés. ${productsNotFound} CIPs introuvables.`
         : `${productsFound} produits importés avec succès.`;
       
-      alert(message);
+      toast.success(message);
       
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -589,7 +592,7 @@ export default function Commandes() {
 
   const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX') => {
     if (commandeProduits.length === 0) {
-      alert("La commande est vide.");
+      toast('La commande est vide.', { icon: '⚠️' });
       return;
     }
 
@@ -622,7 +625,7 @@ export default function Commandes() {
     });
 
     if (exportedCount === 0) {
-        alert(`Aucun produit n'a de code pour ${wholesaler}. (CIP manquants)`);
+        toast.error(`Aucun produit n'a de code pour ${wholesaler}. (CIP manquants)`);
         return;
     }
 
@@ -678,7 +681,7 @@ export default function Commandes() {
       const selectedItems = suggestions.filter((_, i) => selectedSuggestions.has(i));
       
       if (selectedItems.length === 0) {
-          alert("Aucun produit sélectionné.");
+          toast('Aucun produit sélectionné.', { icon: '⚠️' });
           return;
       }
 
@@ -916,7 +919,13 @@ export default function Commandes() {
       return;
     }
 
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer la commande #${selectedCommande.id} ?`)) {
+    const confirmed = await confirm({
+      title: 'Supprimer la commande',
+      message: `Êtes-vous sûr de vouloir supprimer la commande #${selectedCommande.id} ?`,
+      variant: 'danger',
+      confirmText: 'Supprimer'
+    })
+    if (confirmed) {
       try {
         await axios.delete(`${commandesEndpoint}${selectedCommande.id}/`);
         setCommandes(prev => prev.filter(c => c.id !== selectedCommande.id));

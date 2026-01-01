@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
+import { useConfirm } from '../hooks/useConfirm'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import type { Promis, ProduitModel, Client } from '../types'
 
 export default function PromisPage() {
+  const confirm = useConfirm()
   const [promisList, setPromisList] = useState<Promis[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -76,10 +79,10 @@ export default function PromisPage() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       filtered = filtered.filter(p => 
-        p.client_display.toLowerCase().includes(q) ||
-        p.client_phone_display.toLowerCase().includes(q) ||
-        p.produit_name.toLowerCase().includes(q) ||
-        (p.produit_cip && p.produit_cip.toLowerCase().includes(q))
+        (p.client_display || '').toLowerCase().includes(q) ||
+        (p.client_phone_display || '').toLowerCase().includes(q) ||
+        (p.produit_name || '').toLowerCase().includes(q) ||
+        (p.produit_cip || '').toLowerCase().includes(q)
       )
     }
     
@@ -96,24 +99,36 @@ export default function PromisPage() {
 
   // Actions
   const handleDelivrer = async (id: number) => {
-    if (!confirm('Marquer ce promis comme délivré ?')) return
+    const confirmed = await confirm({
+      title: 'Marquer comme délivré',
+      message: 'Marquer ce promis comme délivré ?',
+      variant: 'success',
+      confirmText: 'Délivrer'
+    })
+    if (!confirmed) return
     try {
       await axios.post(`${promisEndpoint}${id}/delivrer/`)
       fetchPromis()
     } catch (err) {
-      alert('Erreur lors de la livraison')
+      toast.error('Erreur lors de la livraison')
       console.error(err)
     }
   }
 
   const handleAnnuler = async (id: number) => {
-    if (!confirm('Annuler ce promis et réintégrer le stock ? Cette action créera une entrée dans l\'historique du produit.')) return
+    const confirmed = await confirm({
+      title: 'Annuler le promis',
+      message: 'Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l\'historique du produit.',
+      variant: 'warning',
+      confirmText: 'Annuler'
+    })
+    if (!confirmed) return
     try {
       const { data } = await axios.post(`${promisEndpoint}${id}/annuler_et_reintegrer/`)
-      alert(data.detail)
+      toast.success(data.detail)
       fetchPromis()
     } catch (err) {
-      alert('Erreur lors de l\'annulation')
+      toast.error('Erreur lors de l\'annulation')
       console.error(err)
     }
   }
@@ -131,7 +146,7 @@ export default function PromisPage() {
       setTimeout(() => window.URL.revokeObjectURL(url), 10000)
     } catch (err) {
       console.error('Erreur impression ticket:', err)
-      alert('Erreur lors de l\'impression du ticket')
+      toast.error('Erreur lors de l\'impression du ticket')
     }
   }
 
@@ -139,11 +154,11 @@ export default function PromisPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.produit) {
-      alert('Veuillez sélectionner un produit')
+      toast('Veuillez sélectionner un produit', { icon: '⚠️' })
       return
     }
     if (!formData.client && !formData.client_name.trim()) {
-      alert('Veuillez sélectionner un client ou entrer un nom')
+      toast('Veuillez sélectionner un client ou entrer un nom', { icon: '⚠️' })
       return
     }
 
@@ -166,7 +181,7 @@ export default function PromisPage() {
       setClientSearch('')
       fetchPromis()
     } catch (err) {
-      alert('Erreur lors de la création du promis')
+      toast.error('Erreur lors de la création du promis')
       console.error(err)
     } finally {
       setSaving(false)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useConfirm } from '../hooks/useConfirm';
 
 interface Rayon {
   id: number;
@@ -10,6 +11,7 @@ interface Rayon {
 }
 
 export default function Rayons() {
+  const confirm = useConfirm()
   const [rayons, setRayons] = useState<Rayon[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRayon, setEditingRayon] = useState<Rayon | null>(null);
@@ -72,7 +74,13 @@ export default function Rayons() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce rayon ?")) return;
+    const confirmed = await confirm({
+      title: 'Supprimer le rayon',
+      message: 'Êtes-vous sûr de vouloir supprimer ce rayon ?',
+      variant: 'danger',
+      confirmText: 'Supprimer'
+    })
+    if (!confirmed) return;
     
     const token = localStorage.getItem('token');
     try {

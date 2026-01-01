@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { useDebounce } from 'use-debounce'
-import type { Fournisseur, ProduitModel, Avoir, LigneAvoir } from '../types'
+import { toast } from 'react-hot-toast'
+import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot } from '../types'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 
@@ -23,6 +24,11 @@ export default function Avoirs() {
   const [observations, setObservations] = useState<string>('')
   const [lignes, setLignes] = useState<LigneAvoir[]>([])
   
+  // Lot Selection Modal
+  const [lotModal, setLotModal] = useState<{ open: boolean; lineIndex: number | null; produitId: number | null }>({ open: false, lineIndex: null, produitId: null })
+  const [availableLots, setAvailableLots] = useState<StockLot[]>([])
+  const [loadingLots, setLoadingLots] = useState(false)
+  
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null)
   const fournisseurSelectRef = useRef<HTMLInputElement>(null)
@@ -43,6 +49,7 @@ export default function Avoirs() {
   const avoirsEndpoint = `${apiBaseUrl.replace(/\/$/, '')}/api/avoirs/`
   const fournisseursEndpoint = `${apiBaseUrl.replace(/\/$/, '')}/api/fournisseurs/`
   const ligneAvoirsEndpoint = `${apiBaseUrl.replace(/\/$/, '')}/api/ligne-avoirs/`
+  const stockLotsEndpoint = `${apiBaseUrl.replace(/\/$/, '')}/api/stock-lots/`
 
 
   
@@ -148,7 +155,7 @@ export default function Avoirs() {
     )
     
     if (existing) {
-        alert('Ce produit est déjà dans la liste')
+        toast.error('Ce produit est déjà dans la liste')
         return
     }
     
@@ -183,6 +190,50 @@ export default function Avoirs() {
     }
   }
 
+  // Open Lot Selection Modal
+  const handleOpenLotModal = async (lineIndex: number) => {
+    const line = lignes[lineIndex]
+    const produitId = typeof line.produit === 'object' ? line.produit.id : line.produit
+    
+    setLotModal({ open: true, lineIndex, produitId })
+    setLoadingLots(true)
+    
+    try {
+      const params = new URLSearchParams({ produit: produitId.toString(), ordering: 'date_expiration' })
+      const response = await axios.get(`${stockLotsEndpoint}?${params}`)
+      const lots: StockLot[] = Array.isArray(response.data) ? response.data : (response.data.results || [])
+      setAvailableLots(lots.filter(l => l.quantity_remaining > 0))
+    } catch (err) {
+      console.error('Error fetching lots:', err)
+      toast.error('Erreur lors du chargement des lots')
+    } finally {
+      setLoadingLots(false)
+    }
+  }
+  
+  // Select Lot from Modal
+  const handleSelectLot = (lot: StockLot) => {
+    if (lotModal.lineIndex === null) return
+    
+    setLignes(prev => {
+      const newLignes = [...prev]
+      const line = { ...newLignes[lotModal.lineIndex!] }
+      
+      line.stock_lot = lot.id
+      line.lot = lot.lot || ''
+      line.date_expiration = lot.date_expiration || ''
+      line.price = lot.price_cost?.toString() || line.price
+      
+      // Recalculate total with new price
+      line.total = (Number(line.quantity) * Number(line.price)).toString()
+      
+      newLignes[lotModal.lineIndex!] = line
+      return newLignes
+    })
+    
+    setLotModal({ open: false, lineIndex: null, produitId: null })
+  }
+  
   // Update Line
   const updateLine = (index: number, field: keyof LigneAvoir, value: any) => {
     setLignes(prev => {
@@ -209,12 +260,12 @@ export default function Avoirs() {
     e.preventDefault()
     
     if (!selectedFournisseurId) {
-        alert('Veuillez sélectionner un fournisseur')
+        toast('Veuillez sélectionner un fournisseur', { icon: '⚠️' })
         return
     }
     
     if (lignes.length === 0) {
-        alert('Veuillez ajouter au moins un produit')
+        toast('Veuillez ajouter au moins un produit', { icon: '⚠️' })
         return
     }
     
@@ -236,6 +287,7 @@ export default function Avoirs() {
              return axios.post(ligneAvoirsEndpoint, {
                  avoir: newAvoir.id,
                  produit: produitId,
+                 stock_lot: ligne.stock_lot || null,
                  quantity: ligne.quantity,
                  price: ligne.price,
                  lot: ligne.lot,
@@ -245,12 +297,12 @@ export default function Avoirs() {
         
         await Promise.all(linePromises)
         
-        alert('Avoir créé avec succès (Brouillon)')
+        toast.success('Avoir créé avec succès (Brouillon)')
         setViewMode('LIST')
         fetchAvoirs()
     } catch (err: any) {
         console.error(err)
-        alert('Erreur lors de la création: ' + (err.response?.data?.message || err.message))
+        toast.error('Erreur lors de la création: ' + (err.response?.data?.message || err.message))
     } finally {
         setLoading(false)
     }
@@ -263,11 +315,11 @@ export default function Avoirs() {
     try {
         setLoading(true)
         await axios.delete(`${avoirsEndpoint}${avoir.id}/`)
-        alert('Avoir supprimé avec succès')
+        toast.success('Avoir supprimé avec succès')
         fetchAvoirs()
         if (viewMode === 'DETAILS') setViewMode('LIST')
     } catch (err: any) {
-        alert('Erreur: ' + (err.response?.data?.error || err.message))
+        toast.error('Erreur: ' + (err.response?.data?.error || err.message))
         console.error(err)
     } finally {
         setLoading(false)
@@ -281,11 +333,11 @@ export default function Avoirs() {
     try {
         setLoading(true)
         await axios.post(`${avoirsEndpoint}${avoir.id}/valider/`)
-        alert('Avoir validé et stock mis à jour')
+        toast.success('Avoir validé et stock mis à jour')
         fetchAvoirs()
         if (viewMode === 'DETAILS') setViewMode('LIST')
     } catch (err: any) {
-        alert('Erreur: ' + (err.response?.data?.error || err.message))
+        toast.error('Erreur: ' + (err.response?.data?.error || err.message))
     } finally {
         setLoading(false)
     }
@@ -575,13 +627,29 @@ export default function Avoirs() {
                                         />
                                     </td>
                                     <td>
-                                        <input 
-                                            type="text" 
-                                            className="input input-sm input-bordered w-full"
-                                            value={line.lot}
-                                            onChange={e => updateLine(idx, 'lot', e.target.value)}
-                                            placeholder="N° Lot"
-                                        />
+                                        <div className="flex gap-1">
+                                            <input 
+                                                type="text" 
+                                                className="input input-sm input-bordered flex-1"
+                                                value={line.lot}
+                                                onChange={e => updateLine(idx, 'lot', e.target.value)}
+                                                placeholder="N° Lot"
+                                                readOnly={!!line.stock_lot}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => handleOpenLotModal(idx)}
+                                                title="Sélectionner un lot existant"
+                                            >
+                                                LOT
+                                            </button>
+                                        </div>
+                                        {line.stock_lot && (
+                                            <div className="text-xs text-success mt-1">
+                                                ✓ Lot #{line.stock_lot} sélectionné
+                                            </div>
+                                        )}
                                     </td>
                                     <td>
                                         <input 
@@ -589,6 +657,7 @@ export default function Avoirs() {
                                             className="input input-sm input-bordered w-full"
                                             value={line.date_expiration}
                                             onChange={e => updateLine(idx, 'date_expiration', e.target.value)}
+                                            readOnly={!!line.stock_lot}
                                         />
                                     </td>
                                     <td className="text-right text-error font-bold">
@@ -633,6 +702,57 @@ export default function Avoirs() {
                 </button>
             </div>
         </form>
+        
+        {/* Lot Selection Modal */}
+        {lotModal.open && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold">Sélectionner un Lot</h3>
+                        <button 
+                            className="btn btn-sm btn-circle btn-ghost"
+                            onClick={() => setLotModal({ open: false, lineIndex: null, produitId: null })}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    
+                    {loadingLots ? (
+                        <div className="flex justify-center p-8">
+                            <span className="loading loading-spinner"></span>
+                        </div>
+                    ) : availableLots.length === 0 ? (
+                        <div className="text-center p-8 text-gray-500">
+                            Aucun lot disponible pour ce produit
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {availableLots.map(lot => (
+                                <div
+                                    key={lot.id}
+                                    className="border rounded-lg p-4 hover:bg-base-100 cursor-pointer flex justify-between items-center"
+                                    onClick={() => handleSelectLot(lot)}
+                                >
+                                    <div>
+                                        <div className="font-bold">Lot: {lot.lot || 'N/A'}</div>
+                                        <div className="text-sm text-gray-600">
+                                            Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString() : 'N/A'}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                            Fournisseur: {lot.fournisseur_nom || 'N/A'}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold">{lot.quantity_remaining} unités</div>
+                                        <div className="text-sm">{lot.price_cost} F</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        )}
     </div>
   )
 

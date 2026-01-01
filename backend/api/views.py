@@ -2391,7 +2391,19 @@ class DashboardViewSet(viewsets.ViewSet):
         ).values('date__date').annotate(
             revenue=Sum('annotated_total_ttc'),
             count=Count('id'),
-            discount=Sum('remise')
+            # Calcul Remise Totale = Remise Globale (Facture) + Somme des Remises Lignes (FactureProduit)
+            discount=Sum(
+                F('remise') + Coalesce(
+                    Subquery(
+                         FactureProduit.objects.filter(
+                            facture=OuterRef('pk')
+                        ).values('facture').annotate(
+                            line_discount_sum=Sum(F('quantity') * F('discount'), output_field=DecimalField())
+                        ).values('line_discount_sum')
+                    ), 
+                    Value(Decimal('0.00'))
+                )
+            )
         )
         
         stats_dict = {
@@ -3182,15 +3194,37 @@ class AvoirViewSet(viewsets.ModelViewSet):
                 for ligne in avoir.produits.all():
                     produit = ligne.produit
                     
-                    # Retirer du stock
+                    # If specific lot is selected, destock from that lot
+                    if ligne.stock_lot:
+                        lot = ligne.stock_lot
+                        
+                        # Validate lot has sufficient quantity
+                        if lot.quantity_remaining < ligne.quantity:
+                            return Response({
+                                'error': f'Lot {lot.lot} ne contient que {lot.quantity_remaining} unités, impossible de retourner {ligne.quantity} unités'
+                            }, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        # Destock from specific lot
+                        lot.quantity_remaining -= ligne.quantity
+                        lot.save()
+                        
+                        # Also update text fields for reference
+                        if not ligne.lot:
+                            ligne.lot = lot.lot
+                        if not ligne.date_expiration:
+                            ligne.date_expiration = lot.date_expiration
+                        ligne.save()
+                    
+                    # Always update general product stock
                     produit.stock -= ligne.quantity
                     produit.save()
                     
                     # Créer historique de stock (NEGATIF pour sortie)
+                    lot_info = f" - Lot: {ligne.stock_lot.lot}" if ligne.stock_lot else ""
                     ActivityLog.objects.create(
                         user=request.user,
                         action='AVOIR',
-                        details=f'Avoir {avoir.numero}: {ligne.produit_nom} x {ligne.quantity} (Type: {avoir.get_type_avoir_display()})'
+                        details=f'Avoir {avoir.numero}: {ligne.produit_nom} x {ligne.quantity}{lot_info} (Type: {avoir.get_type_avoir_display()})'
                     )
                 
                 # Marquer comme validé

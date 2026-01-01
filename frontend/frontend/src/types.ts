@@ -320,6 +320,10 @@ export interface LigneAvoir {
   produit: ProduitModel | number
   produit_nom?: string
   produit_cip?: string
+  stock_lot?: number | null
+  lot_numero?: string | null
+  lot_expiration?: string | null
+  lot_quantity_remaining?: number | null
   quantity: number
   price: string
   lot: string
@@ -332,11 +336,15 @@ export interface Promis {
   facture: number
   client?: number
   client_name?: string
+  client_display?: string
   client_phone?: string
+  client_phone_display?: string
   produit: number
   produit_name?: string
+  produit_cip?: string
   quantite: number
   status: 'ATT' | 'DEL' | 'ANN'
+  status_display?: string
   date_promis: string
   date_livraison?: string
   notes?: string

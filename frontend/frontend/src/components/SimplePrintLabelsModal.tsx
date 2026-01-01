@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
 
 interface SimplePrintLabelsModalProps {
   commandeId: number
@@ -38,7 +39,7 @@ export default function SimplePrintLabelsModal({
       onClose()
     } catch (err: any) {
       console.error('Erreur impression étiquettes:', err)
-      alert('Erreur lors de l\'impression des étiquettes')
+      toast.error('Erreur lors de l\'impression des étiquettes')
     } finally {
       setPrinting(false)
     }

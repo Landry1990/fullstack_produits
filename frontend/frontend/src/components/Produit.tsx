@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
+import { useConfirm } from '../hooks/useConfirm'
 import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
 
 export default function Produit() {
+  // Hook de confirmation
+  const confirm = useConfirm()
+  
   // État principal
   const [produits, setProduits] = useState<ProduitModel[]>([])
   const [loading, setLoading] = useState(false)
@@ -171,7 +176,7 @@ export default function Produit() {
     
     const quantity = parseInt(quantityStr, 10)
     if (isNaN(quantity) || quantity <= 0) {
-      alert("Quantité invalide")
+      toast.error("Quantité invalide")
       return
     }
 
@@ -189,33 +194,45 @@ export default function Produit() {
       link.remove()
     } catch (err) {
       console.error('Erreur génération étiquettes:', err)
-      alert('Erreur lors de la génération des étiquettes')
+      toast.error('Erreur lors de la génération des étiquettes')
     }
   }
 
   const handleDeleteProduit = async (produit: ProduitModel) => {
-    if (!confirm(`Supprimer le produit "${produit.name}" ?`)) return
+    const confirmed = await confirm({
+      title: 'Supprimer le produit',
+      message: `Voulez-vous vraiment supprimer le produit "${produit.name}" ?\n\nCette action est irréversible.`,
+      variant: 'danger',
+      confirmText: 'Supprimer'
+    })
+    if (!confirmed) return
     
     try {
       await axios.delete(`${produitsEndpoint}${produit.id}/`)
       setProduits(prev => prev.filter(p => p.id !== produit.id))
       setIsDetailsModalOpen(false)
     } catch (err) {
-      alert('Erreur lors de la suppression')
+      toast.error('Erreur lors de la suppression')
       console.error(err)
     }
   }
 
   const handleRecalculateRotation = async () => {
-    if (!confirm("Voulez-vous recalculer la rotation moyenne pour TOUS les produits ? Cela peut prendre quelques secondes.")) return
+    const confirmed = await confirm({
+      title: 'Recalculer les rotations',
+      message: 'Voulez-vous recalculer la rotation moyenne pour TOUS les produits ?\n\nCela peut prendre quelques secondes.',
+      variant: 'info',
+      confirmText: 'Recalculer'
+    })
+    if (!confirmed) return
     
     setLoading(true)
     try {
       const { data } = await axios.post<{message: string}>(`${produitsEndpoint}recalculate_rotation/`)
-      alert(data.message)
+      toast.success(data.message)
       fetchProduits() // Rafraîchir la liste pour voir les nouvelles valeurs
     } catch (err) {
-      alert('Erreur lors du recalcul')
+      toast.error('Erreur lors du recalcul')
       console.error(err)
     } finally {
       setLoading(false)
@@ -273,7 +290,7 @@ export default function Produit() {
       setSelectedProduit(data)
       setIsEditModalOpen(false)
     } catch (err) {
-      alert('Erreur lors de la mise à jour')
+      toast.error('Erreur lors de la mise à jour')
       console.error(err)
     }
   }
@@ -312,7 +329,7 @@ export default function Produit() {
         }
       }
 
-      alert(resultMessage)
+      toast.success(resultMessage)
       
       // Rafraîchir la liste
       if (created > 0 || updated > 0) {
@@ -350,23 +367,57 @@ export default function Produit() {
   }
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Supprimer ${selectedProductIds.length} produit(s) sélectionné(s) ?\n\nCette action est irréversible.`)) return
+    const confirmed = await confirm({
+      title: 'Suppression groupée',
+      message: `Supprimer ${selectedProductIds.length} produit(s) sélectionné(s) ?\n\nCette action est irréversible.`,
+      variant: 'danger',
+      confirmText: `Supprimer ${selectedProductIds.length} produit(s)`
+    })
+    if (!confirmed) return
     
     setLoading(true)
+    let successCount = 0
+    let errorCount = 0
+    const errors: string[] = []
+    
     try {
-      // Supprimer tous les produits sélectionnés
-      await Promise.all(
-        selectedProductIds.map(id =>
-          axios.delete(`${produitsEndpoint}${id}/`)
-        )
-      )
+      // Supprimer tous les produits sélectionnés un par un pour capturer les erreurs individuelles
+      for (const id of selectedProductIds) {
+        try {
+          await axios.delete(`${produitsEndpoint}${id}/`)
+          successCount++
+        } catch (err: any) {
+          errorCount++
+          const produit = produits.find(p => p.id === id)
+          const produitName = produit?.name || `#${id}`
+          
+          // Vérifier si c'est une erreur de contrainte de clé étrangère
+          if (err.response?.status === 500 || err.response?.data?.detail?.includes('protected') || err.response?.data?.detail?.includes('referenced')) {
+            errors.push(`${produitName}: utilisé dans des commandes ou factures`)
+          } else {
+            errors.push(`${produitName}: ${err.response?.data?.detail || 'erreur inconnue'}`)
+          }
+        }
+      }
       
       // Retirer les produits supprimés de la liste
-      setProduits(prev => prev.filter(p => !selectedProductIds.includes(p.id)))
-      setSelectedProductIds([])
-      alert(`${selectedProductIds.length} produit(s) supprimé(s) avec succès`)
+      if (successCount > 0) {
+        fetchProduits()
+        setSelectedProductIds([])
+      }
+      
+      // Afficher les résultats
+      if (successCount > 0 && errorCount === 0) {
+        toast.success(`${successCount} produit(s) supprimé(s) avec succès`)
+      } else if (successCount > 0 && errorCount > 0) {
+        toast(`${successCount} supprimé(s), ${errorCount} échec(s)`, { icon: '⚠️', duration: 5000 })
+        errors.forEach(err => toast.error(err, { duration: 6000 }))
+      } else {
+        toast.error('Aucun produit n\'a pu être supprimé')
+        errors.forEach(err => toast.error(err, { duration: 6000 }))
+      }
     } catch (err) {
-      alert('Erreur lors de la suppression groupée')
+      toast.error('Erreur lors de la suppression groupée')
       console.error(err)
     } finally {
       setLoading(false)

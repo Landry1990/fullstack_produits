@@ -346,7 +346,7 @@ class CreanceSerializer(serializers.ModelSerializer):
         return obj.client_name_override or "Client de passage"
     
     def get_montant_paye(self, obj):
-        """Calcule le montant total payé (tous modes sauf en_compte)"""
+        """Calcule le montant total payé (paiements réels uniquement, hors 'en_compte')"""
         total = obj.paiements.filter(
             statut='completee'
         ).exclude(
@@ -415,6 +415,9 @@ class LigneAvoirSerializer(serializers.ModelSerializer):
     produit_nom = serializers.CharField(source='produit.name', read_only=True)
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    lot_numero = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    lot_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
+    lot_quantity_remaining = serializers.IntegerField(source='stock_lot.quantity_remaining', read_only=True, allow_null=True)
     
     class Meta:
         model = LigneAvoir

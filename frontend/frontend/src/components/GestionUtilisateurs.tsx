@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 
 interface User {
@@ -128,7 +129,7 @@ export default function GestionUtilisateurs() {
       fetchUsers();
     } catch (error) {
       console.error('Error saving user:', error);
-      alert('Erreur lors de l\'enregistrement');
+      toast.error('Erreur lors de l\'enregistrement');
     }
   };
 

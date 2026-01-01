@@ -26,6 +26,7 @@ import JournalAudit from './components/JournalAudit'
 import Promis from './components/Promis'
 import StockAnalysis from './components/StockAnalysis'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
 
 // ... (existing code)
@@ -128,8 +129,10 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
-      <Toaster position="top-right" />
-      <RouterProvider router={router} />
+      <ConfirmProvider>
+        <Toaster position="top-right" />
+        <RouterProvider router={router} />
+      </ConfirmProvider>
     </AuthProvider>
   )
 }
