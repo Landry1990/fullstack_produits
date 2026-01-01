@@ -1587,7 +1587,7 @@ class FactureViewSet(viewsets.ModelViewSet):
         totals_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
             ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTNAME', (0, -1), (-1,  -1), 'Helvetica-Bold'),
             ('LINEABOVE', (0, -1), (-1, -1), 1.5, colors.black),
             ('TOPPADDING', (0, 0), (-1, -1), 6),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
@@ -3044,25 +3044,44 @@ class InventaireViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def validate(self, request, pk=None):
+        """
+        Validation de l'inventaire avec support des lots.
+        - Si une ligne a un stock_lot: met à jour la quantité du lot spécifique
+        - Sinon: met à jour le stock global du produit (backward compatibility)
+        """
         inventaire = self.get_object()
         if inventaire.status == Inventaire.Status.VALIDEE:
              return Response({'detail': 'Cet inventaire est déjà validé.'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Mettre à jour le stock pour chaque ligne
-        lignes = inventaire.lignes.select_related('produit').all()
+        lignes = inventaire.lignes.select_related('produit', 'stock_lot').all()
         for ligne in lignes:
-             produit = ligne.produit
-             # Update Stock
-             produit.stock = ligne.quantite_physique
-             produit.save(update_fields=['stock'])
-             
-             # Note: PMP is not updated here as there is no "Price" involved, just quantity adjustment.
-             # Ideally we should log this adjustment (StockMovement or similar)
+            produit = ligne.produit
+            
+            if ligne.stock_lot:
+                # Mode LOT: Mettre à jour la quantité du lot spécifique
+                lot = ligne.stock_lot
+                lot.quantity_remaining = ligne.quantite_physique
+                lot.save()
+                
+                # Recalculer le stock global du produit (somme des lots)
+                if produit.use_lot_management:
+                    produit.calculate_stock_from_lots()
+                else:
+                    # Si le produit n'utilise pas la gestion par lot mais qu'un lot existe,
+                    # on met à jour quand même le stock global
+                    produit.stock = ligne.quantite_physique
+                    produit.save(update_fields=['stock'])
+            else:
+                # Mode PRODUIT GLOBAL: Ancien comportement (backward compatibility)
+                produit.stock = ligne.quantite_physique
+                produit.save(update_fields=['stock'])
              
         inventaire.status = Inventaire.Status.VALIDEE
         inventaire.save()
         
         return Response({'status': 'Inventaire validé. Stocks mis à jour.'})
+
 
     @action(detail=True, methods=['get'])
     def imprimer_etat(self, request, pk=None):
@@ -3142,6 +3161,51 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['inventaire']
+    
+    def create(self, request, *args, **kwargs):
+        """
+        Gestion de la création de ligne d'inventaire.
+        Si stock_lot est fourni, utilise la quantité du lot comme stock_theorique.
+        Sinon, utilise le stock global du produit (backward compatibility).
+        """
+        data = request.data.copy()
+        
+        if 'stock_lot' in data and data['stock_lot']:
+            # Mode LOT: Utiliser la quantité du lot
+            try:
+                lot = StockLot.objects.get(id=data['stock_lot'])
+                # Auto-remplir stock_theorique avec la quantité du lot
+                data['stock_theorique'] = lot.quantity_remaining
+                # Auto-remplir quantite_physique si non fourni
+                if 'quantite_physique' not in data:
+                    data['quantite_physique'] = lot.quantity_remaining
+            except StockLot.DoesNotExist:
+                return Response({'error': 'Lot non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Mode PRODUIT GLOBAL: Utiliser le stock total (ancien comportement)
+            try:
+                produit = Produit.objects.get(id=data['produit'])
+                if 'stock_theorique' not in data:
+                    data['stock_theorique'] = produit.stock
+                if 'quantite_physique' not in data:
+                    data['quantite_physique'] = produit.stock
+            except Produit.DoesNotExist:
+                return Response({'error': 'Produit non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def perform_create(self, serializer):
+        # Capture theoretical stock at time of creation
+        produit = serializer.validated_data['produit']
+        # Check if we already have stock_theorique from the create method
+        if 'stock_theorique' not in serializer.validated_data:
+            serializer.save(stock_theorique=produit.stock)
+        else:
+            serializer.save()
 
 class MouvementCaisseViewSet(viewsets.ModelViewSet):
     """API endpoint for cash movements."""

@@ -796,10 +796,27 @@ class Inventaire(models.Model):
 class LigneInventaire(models.Model):
     inventaire = models.ForeignKey(Inventaire, on_delete=models.CASCADE, related_name='lignes')
     produit = models.ForeignKey(Produit, on_delete=models.PROTECT) # Protect to exclude deleted products from historical inventories
+    stock_lot = models.ForeignKey(
+        'StockLot',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='inventaires',
+        help_text="Lot spécifique compté (si inventaire par lot)"
+    )
     stock_theorique = models.IntegerField(help_text="Stock au moment de l'ajout dans l'inventaire")
     quantite_physique = models.IntegerField(default=0)
     ecart = models.IntegerField(default=0, editable=False)
     pmp_snapshot = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['inventaire', 'stock_lot'],
+                condition=models.Q(stock_lot__isnull=False),
+                name='unique_inventaire_lot'
+            )
+        ]
     
     def save(self, *args, **kwargs):
         self.ecart = self.quantite_physique - self.stock_theorique
@@ -807,6 +824,16 @@ class LigneInventaire(models.Model):
 
     def __str__(self):
         return f"{self.produit.name} : {self.quantite_physique} (Th: {self.stock_theorique})"
+    
+    @property
+    def lot_numero(self):
+        """Retourne le numéro du lot si disponible"""
+        return self.stock_lot.lot if self.stock_lot else None
+    
+    @property
+    def lot_expiration(self):
+        """Retourne la date d'expiration du lot si disponible"""
+        return self.stock_lot.date_expiration if self.stock_lot else None
 
 class MouvementCaisse(models.Model):
     """
