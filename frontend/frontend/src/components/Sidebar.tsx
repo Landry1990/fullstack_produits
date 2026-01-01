@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSidebar } from '../context/SidebarContext';
+import PharmaCrossLogo from './PharmaCrossLogo';
 
 export default function Sidebar() {
   const { user, logout } = useAuth();
@@ -148,19 +149,17 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside 
         className={`
-          w-64 bg-base-100 border-r border-base-300 flex flex-col h-screen
+          w-64 pharma-sidebar flex flex-col h-screen
           fixed lg:sticky top-0 z-50
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-      <div className="p-6 border-b border-base-300 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-content font-bold text-xl">
-          P
-        </div>
+      <div className="pharma-sidebar-header p-6 flex items-center gap-3">
+        <PharmaCrossLogo size={48} />
         <div>
-          <h1 className="text-xl font-bold text-primary">PharmaStock</h1>
-          <p className="text-xs text-base-content/80">Gestion Pro</p>
+          <h1 className="text-xl font-bold text-white">PharmaStock</h1>
+          <p className="text-xs text-green-400">Gestion Professionnelle</p>
         </div>
       </div>
       
@@ -170,7 +169,7 @@ export default function Sidebar() {
             <li key={item.key}>
               {item.submenus ? (
                 <details className="group">
-                  <summary className="flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-base-content/80 hover:bg-base-200 hover:text-base-content cursor-pointer marker:content-none">
+                  <summary className="pharma-menu-item flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white cursor-pointer marker:content-none">
                     {item.icon}
                     <span className="flex-1">{item.label}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -183,7 +182,7 @@ export default function Sidebar() {
                           to={sub.path}
                           onClick={closeSidebar}
                           className={({ isActive }) => 
-                            `rounded-lg ${isActive ? 'bg-primary/10 text-primary font-medium' : 'text-base-content/70'}`
+                            `rounded-lg text-sm ${isActive ? 'bg-green-500/10 text-green-400 font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'}`
                           }
                         >
                           {sub.label}
@@ -196,12 +195,13 @@ export default function Sidebar() {
               ) : (
                 <NavLink 
                   to={item.path}
+                  end={item.path === '/app'} // Only exact match for dashboard
                   onClick={closeSidebar}
                   className={({ isActive }) => 
-                    `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    `pharma-menu-item flex items-center gap-3 px-4 py-3 rounded-lg ${
                       isActive 
-                        ? 'bg-primary/10 text-primary font-medium' 
-                        : 'text-base-content/80 hover:bg-base-200 hover:text-base-content'
+                        ? 'active text-green-400 font-medium' 
+                        : 'text-white/70 hover:text-white'
                     }`
                   }
                 >
@@ -214,19 +214,19 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-base-300">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-base-200/50 mb-2">
-          <div className="w-8 h-8 rounded-full bg-neutral text-neutral-content flex items-center justify-center text-sm uppercase">
+      <div className="p-4 border-t border-white/10">
+        <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 mb-2">
+          <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold">
             {user?.username.charAt(0) || 'A'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{user?.username || 'Admin'}</p>
-            <p className="text-xs text-base-content/80 truncate">Pharmacien</p>
+            <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
+            <p className="text-xs text-white/60 truncate">Pharmacien</p>
           </div>
         </div>
         <button 
           onClick={logout}
-          className="btn btn-sm btn-ghost w-full text-error hover:bg-error/10 gap-2"
+          className="btn btn-sm btn-ghost w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
           Déconnexion

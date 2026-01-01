@@ -1,4 +1,3 @@
-import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
 import Produit from './components/Produit'
@@ -28,9 +27,6 @@ import StockAnalysis from './components/StockAnalysis'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
-
-// ... (existing code)
-
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();

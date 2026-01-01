@@ -369,6 +369,11 @@ class LigneInventaireSerializer(serializers.ModelSerializer):
     produit_cost_price = serializers.DecimalField(source='produit.cost_price', max_digits=10, decimal_places=2, read_only=True)
     produit_pmp = serializers.DecimalField(source='produit.pmp', max_digits=10, decimal_places=2, read_only=True)
     
+    # Champs pour la gestion des lots
+    lot_numero = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    lot_expiration = serializers.DateField(source='stock_lot.date_expiration', read_only=True, allow_null=True)
+    lot_quantity_remaining = serializers.IntegerField(source='stock_lot.quantity_remaining', read_only=True, allow_null=True)
+    
     class Meta:
         model = LigneInventaire
         fields = '__all__'

@@ -120,6 +120,11 @@ export interface LigneInventaire {
   quantite_physique: number;
   ecart: number;
   pmp_snapshot: string;
+  // Lot fields
+  stock_lot?: number | null;
+  lot_numero?: string | null;
+  lot_expiration?: string | null;
+  lot_quantity_remaining?: number | null;
 }
 
 export interface Inventaire {

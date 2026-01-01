@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
-import type { ProduitModel, Inventaire, LigneInventaire } from '../types';
+import type { ProduitModel, Inventaire, LigneInventaire, StockLot } from '../types';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import { useProductSearch } from '../hooks/useProductSearch';
 
@@ -34,6 +34,12 @@ export default function InventaireComponent() {
   // Loading states
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Lot Selection State
+  const [showLotModal, setShowLotModal] = useState(false);
+  const [selectedProductForLot, setSelectedProductForLot] = useState<ProduitModel | null>(null);
+  const [availableLots, setAvailableLots] = useState<StockLot[]>([]);
+  const [loadingLots, setLoadingLots] = useState(false);
 
   // Focus management
   const focusInput = (index: number) => {
@@ -132,12 +138,69 @@ export default function InventaireComponent() {
       }
   };
 
-  const handleAddProduct = async (product: ProduitModel) => {
+  const fetchAvailableLots = async (productId: number) => {
+      setLoadingLots(true);
+      try {
+          // Include empty lots to see all history if needed, but for inventory we usually want what exists. 
+          // However, for counting, we might tap into an empty lot to refill it if we find stock?
+          // Let's stick to include_empty=true just in case they find a lost item.
+          const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/stock-lots/?produit=${productId}&include_empty=true`);
+          setAvailableLots(res.data.results || res.data);
+      } catch (err) {
+          console.error("Error fetching lots", err);
+          toast.error("Impossible de charger les lots");
+      } finally {
+          setLoadingLots(false);
+      }
+  };
+
+  const handleProductSelect = (product: ProduitModel) => {
+      // Wrapper to check for lot management
+      if (product.use_lot_management) {
+          setSelectedProductForLot(product);
+          setAvailableLots([]);
+          setShowLotModal(true);
+          fetchAvailableLots(product.id);
+      } else {
+          handleAddProduct(product);
+      }
+  };
+
+  const handleLotSelection = (lotId: number) => {
+      if (selectedProductForLot) {
+          handleAddProduct(selectedProductForLot, lotId);
+          setShowLotModal(false);
+          setSelectedProductForLot(null);
+      }
+  };
+
+  const handleAddProduct = async (product: ProduitModel, stockLotId?: number) => {
       // Check if line exists locally
-      const exists = lignes.find(l => l.produit === ((typeof product === 'object') ? product.id as any : product) ||  (l.produit && l.produit.id === product.id));
+      // If adding a specific lot, check if THAT lot is already added.
+      // If adding generic product, check if generic product is added.
+      
+      const exists = lignes.find(l => {
+          const sameProduct = (l.produit === ((typeof product === 'object') ? product.id as any : product) ||  (l.produit && l.produit.id === product.id));
+          if (!sameProduct) return false;
+          
+          if (stockLotId) {
+             // We need to know the lot ID of the existing line. 
+             // The current local state 'lignes' might strictly be LigneInventaire interface which doesn't explicitly show 'stock_lot' ID at top level easily unless we check how backend returns it.
+             // Backend serializer has `stock_lot` as ID? No, checking serializer...
+             // LigneInventaireSerializer fields: `stock_lot` is PK. 
+             // In `lignes` state (which comes from API), l.stock_lot is number (FK).
+             return l.stock_lot === stockLotId;
+          } else {
+             // Generic add: check if any line with this product exists AND has NO lot? 
+             // Or just if any line exists? 
+             // If I have Lot A added, can I add "Generic" product too? Probably yes, for "Loose items".
+             // So check strict equality on stock_lot being null/undefined.
+             return !l.stock_lot; // Only clash if existing line has NO lot.
+          }
+      });
       
       if (exists) {
-          toast('Ce produit est déjà dans l\'inventaire.', { icon: '⚠️' });
+          toast('Ce produit (ou ce lot) est déjà dans l\'inventaire.', { icon: '⚠️' });
           setSearchQuery('');
           return;
       }
@@ -167,12 +230,25 @@ export default function InventaireComponent() {
       const pmp = product.pmp || '0';
 
       try {
-          const payload = {
+          const payload: any = {
               inventaire: invId,
               produit: product.id,
               stock_theorique: product.stock, 
               quantite_physique: product.stock, 
           };
+          
+          if (stockLotId) {
+              payload.stock_lot = stockLotId;
+              // If lot provided, backend handles theorical stock from lot (via our `create` view modification? 
+              // Wait, I didn't modify `create` in backend yet?
+              // The plan said "Backend is already compatible".
+              // Let's re-verify ViewSet logic for `create`.
+              // ViewSet LigneInventaireViewSet.create does check `stock_lot` and sets `stock_theorique` from it!
+              // YES, I saw it in `views.py` lines 3165+. perfect.
+          } else {
+              // Backward compat logic
+          }
+
           const res = await axios.post(lignesEndpoint, payload);
           
            const newLine: LigneInventaire = {
@@ -199,7 +275,7 @@ export default function InventaireComponent() {
   // Use search navigation hook (must be after handleAddProduct is declared)
   const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
     searchResults,
-    handleAddProduct,
+    handleProductSelect, // Changed from handleAddProduct to handleProductSelect
     { resetOnSelect: true, searchInputRef }
   );
 
@@ -451,11 +527,11 @@ export default function InventaireComponent() {
                               <li key={p.id}>
                                   <a 
                                       {...getItemProps(idx)}
-                                      onClick={() => handleAddProduct(p)}
+                                      onClick={() => handleProductSelect(p)}
                                       className={`flex justify-between ${getItemProps(idx).className}`}
                                   >
                                       <span>{p.name} <span className="text-xs opacity-50">({p.cip1})</span></span>
-                                      <span className="badge badge-sm">Stock: {p.stock}</span>
+                                      <span className="badge badge-sm">Stock: {p.stock} {p.use_lot_management ? '(Lots)' : ''}</span>
                                   </a>
                               </li>
                           ))}
@@ -493,6 +569,11 @@ export default function InventaireComponent() {
                                       <div className="text-xs opacity-50">
                                           {typeof ligne.produit === 'object' ? ligne.produit.cip1 : ligne.produit_cip}
                                       </div>
+                                      {ligne.lot_numero && (
+                                           <div className="text-xs text-blue-600 font-mono mt-1">
+                                               LOT: {ligne.lot_numero} (Exp: {ligne.lot_expiration})
+                                           </div>
+                                      )}
                                   </td>
                                   <td className="text-xs">{typeof ligne.produit === 'object' ? ligne.produit.rayon_name : ligne.produit_rayon}</td>
                                   <td className="text-right text-xs">{price.toLocaleString()} F</td>
@@ -569,6 +650,69 @@ export default function InventaireComponent() {
                   </div>
               </div>
           </div>
+
+          {/* Lot Selection Modal */}
+          {showLotModal && (
+              <dialog className="modal modal-open">
+                  <div className="modal-box">
+                      <h3 className="font-bold text-lg">Sélectionner un Lot</h3>
+                      <p className="py-2 text-sm text-gray-500">Pour: {selectedProductForLot?.name}</p>
+                      
+                      <div className="py-4">
+                          {loadingLots ? (
+                              <div className="flex justify-center"><span className="loading loading-spinner"></span></div>
+                          ) : availableLots.length === 0 ? (
+                              <div className="text-center text-gray-500">
+                                  Aucun lot trouvé. 
+                                  <br/>
+                                  <button 
+                                      className="btn btn-sm btn-outline mt-2" 
+                                      onClick={() => handleAddProduct(selectedProductForLot!)}
+                                  >
+                                      Ajouter sans lot (Stock global)
+                                  </button>
+                              </div>
+                          ) : (
+                              <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                                  {availableLots.map(lot => (
+                                      <button 
+                                          key={lot.id} 
+                                          className="btn btn-outline justify-between h-auto py-2"
+                                          onClick={() => handleLotSelection(lot.id)}
+                                      >
+                                          <div className="text-left">
+                                              <div className="font-bold">Lot: {lot.lot || 'N/A'}</div>
+                                              <div className="text-xs">Exp: {lot.date_expiration || 'N/A'}</div>
+                                          </div>
+                                          <div className="text-right">
+                                              <div className="badge badge-ghost">Reste: {lot.quantity_remaining}</div>
+                                          </div>
+                                      </button>
+                                  ))}
+                              </div>
+                          )}
+                      </div>
+
+                      <div className="modal-action justify-between">
+                          <button 
+                              className="btn btn-ghost" 
+                              onClick={() => { setShowLotModal(false); setSelectedProductForLot(null); }}
+                          >
+                              Annuler
+                          </button>
+                          {availableLots.length > 0 && (
+                             <button 
+                                 className="btn btn-ghost btn-xs"
+                                 onClick={() => handleAddProduct(selectedProductForLot!)}
+                             >
+                                 Ajouter sans lot (Hors lots)
+                             </button>
+                          )}
+                      </div>
+                  </div>
+              </dialog>
+          )}
+
       </div>
   );
 }

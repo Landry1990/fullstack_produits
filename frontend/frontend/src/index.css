@@ -4,29 +4,30 @@
 @theme {
   --font-sans: "Inter", "Roboto", "Segoe UI", sans-serif;
 
-  --color-primary: #10b981;
-  /* Emerald 500 */
+  /* Pharmacy Green (Croix verte) */
+  --color-primary: #22c55e;
   --color-primary-content: #ffffff;
-  --color-secondary: #0f766e;
-  /* Teal 700 */
+
+  /* Medical Blue */
+  --color-secondary: #3b82f6;
   --color-secondary-content: #ffffff;
-  --color-accent: #38bdf8;
-  /* Sky 400 */
-  --color-accent-content: #0f172a;
+
+  /* Alert Red */
+  --color-accent: #ef4444;
+  --color-accent-content: #ffffff;
+
+  /* Dark Sidebar */
   --color-neutral: #1e293b;
-  /* Slate 800 - Darker */
   --color-neutral-content: #ffffff;
 
+  /* Base Colors */
   --color-base-100: #ffffff;
   --color-base-200: #f8fafc;
-  /* Slate 50 - Lighter background */
   --color-base-300: #e2e8f0;
-  /* Slate 200 */
-  --color-base-content: #020617;
-  /* Slate 950 - Almost Black for text */
+  --color-base-content: #0f172a;
 
-  --radius-box: 0.5rem;
-  --radius-btn: 0.3rem;
+  --radius-box: 0.75rem;
+  --radius-btn: 0.5rem;
 }
 
 :root {
@@ -64,4 +65,61 @@
 .table tbody tr:nth-child(odd) {
   --tw-bg-opacity: 1;
   background-color: var(--color-base-100);
+}
+
+/* Pharmacy Theme Custom Styles */
+.pharma-sidebar {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+.pharma-sidebar-header {
+  background: rgba(34, 197, 94, 0.05);
+  border-bottom: 1px solid rgba(34, 197, 94, 0.1);
+}
+
+.pharma-menu-item {
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.pharma-menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pharma-menu-item.active {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.pharma-menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #22c55e;
+  border-radius: 0 4px 4px 0;
+}
+
+.pharma-card {
+  background: white;
+  border-radius: 12px;
+  border-left: 4px solid #22c55e;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.pharma-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.badge-pharma {
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
 }
