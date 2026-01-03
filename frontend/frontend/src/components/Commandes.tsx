@@ -1097,14 +1097,12 @@ export default function Commandes() {
       {/* Vue conditionnelle basée sur viewMode */}
       {viewMode === 'LIST' && (
         /* LISTE DES COMMANDES */
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="card-title">Liste des commandes</h2>
-              <div className="card-actions">
-                {loading && <span className="loading loading-spinner loading-sm" />}
+        <div className="flex flex-col h-full p-4 space-y-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 className="text-2xl font-bold">Liste des Commandes</h1>
+            <div className="flex gap-2 w-full md:w-auto">
                 <button 
-                    className="btn btn-secondary btn-sm mr-2" 
+                    className="btn btn-secondary btn-sm" 
                     onClick={() => { 
                         setIsSuggestionModalOpen(true); 
                         setStepSuggestion(1); 
@@ -1115,12 +1113,12 @@ export default function Commandes() {
                     ✨ Suggestions
                 </button>
                 <button className="btn btn-primary btn-sm" onClick={openCreateView}>+ Créer</button>
-              </div>
             </div>
+          </div>
             
-            {/* Tri */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="text-sm font-medium text-base-content/60">Trier par:</span>
+            {/* Tri et Filtres */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trier par:</span>
               <button 
                 className={`btn btn-xs ${sortKey === 'numero' ? 'btn-primary' : 'btn-ghost'}`}
                 onClick={() => { setSortKey('numero'); setSortOrder(prev => sortKey === 'numero' ? (prev === 'asc' ? 'desc' : 'asc') : 'desc'); }}
@@ -1148,7 +1146,7 @@ export default function Commandes() {
               
               <div className="divider divider-horizontal mx-2"></div>
               
-              <span className="text-sm font-medium text-base-content/60">Filtrer:</span>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtrer:</span>
               <button 
                 className={`btn btn-xs ${filterStatus === 'ALL' ? 'btn-neutral' : 'btn-ghost'}`}
                 onClick={() => setFilterStatus('ALL')}
@@ -1160,7 +1158,7 @@ export default function Commandes() {
                 onClick={() => setFilterStatus('PREP')}
               >
                 <span className="w-2 h-2 rounded-full bg-info"></span>
-                En préparation ({commandes.filter(c => c.status === 'PREP').length})
+                En prép. ({commandes.filter(c => c.status === 'PREP').length})
               </button>
               <button 
                 className={`btn btn-xs gap-1 ${filterStatus === 'ATT' ? 'btn-warning' : 'btn-ghost'}`}
@@ -1178,29 +1176,32 @@ export default function Commandes() {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="table table-zebra w-full table-xs">
-                <thead>
+            {loading && <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>}
+
+            <div className="overflow-x-auto bg-white rounded-lg shadow">
+              <table className="table table-xs w-full">
+                <thead className="bg-base-200">
                   <tr>
                     <th>ID</th>
                     <th>N° Facture</th>
                     <th>Date</th>
                     <th>Fournisseur</th>
                     <th>Statut</th>
-                    <th>Total (F)</th>
-                    <th>Actions</th>
+                    <th className="text-right">Total (F)</th>
+                    <th className="text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedCommandes.map(commande => (
                     <tr key={commande.id} className="hover">
-                      <td className="font-mono text-xs opacity-50">#{commande.id}</td>
-                      <td>{commande.numero_facture || '-'}</td>
+                      <td className="font-mono font-bold text-xs opacity-50">#{commande.id}</td>
+                      <td className="font-mono">{commande.numero_facture || '-'}</td>
                       <td>{new Date(commande.date).toLocaleDateString('fr-FR')}</td>
-                      <td>{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
+                      <td className="font-bold">{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
                       <td><span className={getStatusBadgeClass(commande.status)}>{commande.status_display}</span></td>
-                      <td className="font-semibold">{commande.total} F</td>
-                      <td>
+                      <td className="font-bold text-right text-primary">{commande.total} F</td>
+                      <td className="text-center">
+                        {/* Actions groupées si nécessaire ou simple bouton voir */}
                         <button 
                           className="btn btn-ghost btn-xs"
                           onClick={() => {
@@ -1208,265 +1209,216 @@ export default function Commandes() {
                               setViewMode('DETAILS');
                           }}
                         >
-                          👁️ Voir détails
+                          Voir Détails
                         </button>
                       </td>
                     </tr>
                   ))}
+                  {sortedCommandes.length === 0 && (
+                      <tr>
+                          <td colSpan={7} className="text-center py-8 text-gray-400">Aucune commande trouvée</td>
+                      </tr>
+                  )}
                 </tbody>
               </table>
             </div>
-          </div>
         </div>
       )}
 
       {viewMode === 'DETAILS' && selectedCommande && (
         /* DÉTAILS DE LA COMMANDE */
-        <div className="space-y-4">
-          {/* Bouton retour */}
-          <button 
-            onClick={handleBackToList}
-            className="btn btn-outline btn-sm gap-2"
-          >
-            ⬅️ Retour à la liste
-          </button>
-
-          {/* Informations de la commande */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="card-title">Détails de la commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
-                <div className="flex flex-wrap gap-2">
-
+        <div className="flex flex-col h-full p-4 space-y-4">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+             <button onClick={handleBackToList} className="btn btn-circle btn-sm btn-ghost">←</button>
+             <h2 className="text-xl font-bold">Commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
+             <div className="ml-auto flex flex-wrap gap-2">
                   <button 
                     className="btn btn-secondary btn-sm"
                     onClick={() => openEditView(selectedCommande)}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
-                    ✏️ Modifier
+                    Modifier
                   </button>
                   <button 
                     className={`btn btn-sm ${selectedCommande.status === 'ATT' ? 'btn-info' : 'btn-warning'}`}
                     onClick={handleMettreEnAttente}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
-                    {selectedCommande.status === 'ATT' ? '▶️ Reprendre' : '⏸️ Mettre en attente'}
+                    {selectedCommande.status === 'ATT' ? 'Reprendre' : 'Mettre en attente'}
                   </button>
                   <button 
-                    className="btn btn-success btn-sm"
+                    className="btn btn-success btn-sm text-white"
                     onClick={handleCloturerCommande}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
-                    ✅ Clôturer
+                    Clôturer
                   </button>
                   <button
                     onClick={() => setShowPrintLabelsModal(true)}
-                    className="btn btn-primary btn-sm gap-2"
+                    className="btn btn-primary btn-sm"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    Imprimer Étiquettes
+                    Étiquettes
                   </button>
                   
                   <button 
-                    className="btn btn-error btn-sm"
+                    className="btn btn-error btn-outline btn-sm"
                     onClick={() => {
                         handleDeleteCommande().then(() => setViewMode('LIST'));
                     }}
                   >
-                    🗑️ Supprimer
+                    Supprimer
                   </button>
                   <button 
-                    className="btn btn-primary btn-sm"
+                    className="btn btn-primary btn-outline btn-sm"
                     onClick={handleImprimerReception}
                     disabled={selectedCommande.status !== 'CLOT'}
                   >
-                    🖨️ Imprimer
+                    Imprimer Bon
                   </button>
-                </div>
-              </div>
+             </div>
+          </div>
 
-              {/* Informations générales */}
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 bg-base-200 rounded-lg mb-4">
-                <div>
-                  <span className="font-semibold text-xs">ID Commande</span>
-                  <p className="text-lg">{selectedCommande.id}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-xs">N° Facture</span>
-                  <p className="text-lg">{selectedCommande.numero_facture || 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-xs">Fournisseur</span>
-                  <p className="text-lg">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-xs">Date</span>
-                  <p className="text-lg">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</p>
-                </div>
-                <div>
-                  <span className="font-semibold text-xs">Statut</span>
-                  <p className="text-lg"><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></p>
-                </div>
-                <div>
-                  <span className="font-semibold text-xs">Total</span>
-                  <p className="text-2xl font-bold text-primary">
-                    {selectedCommande.produits.reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0)} F
-                  </p>
-                </div>
-              </div>
-
-              {/* Récapitulatif UG */}
-              {(() => {
-                const totalUG = selectedCommande.produits.reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
-                if (totalUG > 0) {
-                  return (
-                    <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-success">Unités Gratuites (UG)</h4>
-                          <p className="text-sm text-base-content/70">
-                            Cette commande contient <span className="font-bold text-success">{totalUG}</span> unité{totalUG > 1 ? 's' : ''} gratuite{totalUG > 1 ? 's' : ''}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-
-              {/* Liste des produits (Read Only) */}
-              <div>
-                <h3 className="font-semibold mb-3">Produits commandés</h3>
-                {selectedCommande.produits.length === 0 ? (
-                  <p className="text-base-content/70 text-center py-8">Aucun produit dans cette commande.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="table table-xs">
-                      <thead>
-                        <tr>
-                          <th 
-                            className="cursor-pointer hover:bg-base-200"
-                            onClick={() => {
-                              if (detailSortKey === 'name') {
-                                setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setDetailSortKey('name');
-                                setDetailSortOrder('asc');
-                              }
-                            }}
-                          >
-                            Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                          </th>
-                          <th className="text-center text-xs">Stock</th>
-                          <th className="text-center text-xs">Rotation</th>
-                          <th 
-                            className="cursor-pointer hover:bg-base-200"
-                            onClick={() => {
-                              if (detailSortKey === 'quantity') {
-                                setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setDetailSortKey('quantity');
-                                setDetailSortOrder('desc');
-                              }
-                            }}
-                          >
-                            Quantité {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                          </th>
-                          <th className="bg-success/10 text-center">UG</th>
-                          <th 
-                            className="cursor-pointer hover:bg-base-200"
-                            onClick={() => {
-                              if (detailSortKey === 'price') {
-                                setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setDetailSortKey('price');
-                                setDetailSortOrder('desc');
-                              }
-                            }}
-                          >
-                            Prix Unitaire {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                          </th>
-                          <th>Lot</th>
-                          <th>Expiration</th>
-                          <th>Sous-total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...selectedCommande.produits]
-                          .map(p => {
-                            // Use produit_nom from backend if available, otherwise fallback to resolving from produitsList
-                            const produitName = (p as any).produit_nom || (typeof p.produit === 'object' 
-                              ? p.produit.name 
-                              : produitsList.find(prod => prod.id === p.produit)?.name || `Produit #${p.produit}`);
-                            return { ...p, produitName };
-                          })
-                          .sort((a, b) => {
-                            let comparison = 0;
-                            if (detailSortKey === 'name') {
-                              comparison = a.produitName.localeCompare(b.produitName);
-                            } else if (detailSortKey === 'quantity') {
-                              comparison = Number(a.quantity) - Number(b.quantity);
-                            } else if (detailSortKey === 'price') {
-                              comparison = Number(a.price) - Number(b.price);
-                            }
-                            return detailSortOrder === 'asc' ? comparison : -comparison;
-                          })
-                          .map(p => {
-                            // First check if produit is already an object from backend
-                            let produitData: ProduitModel | undefined;
-                            if (typeof p.produit === 'object') {
-                              produitData = p.produit;
-                            } else {
-                              produitData = produitsList.find(prod => prod.id === p.produit);
-                            }
-                            
-                            // Fallback: try to get data from (p as any) in case backend sends flat structure
-                            const stock = produitData?.stock ?? ((p as any).produit_stock ?? '-');
-                            const stockNum = typeof stock === 'number' ? stock : 0;
-                            const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
-                            const rotationDisplay = rotation ? parseFloat(String(rotation)).toFixed(1) : '-';
-                            
-                            return (
-                            <tr key={p.id}>
-                              <td>{p.produitName}</td>
-                              <td className="text-center text-sm">
-                                <span className={`font-mono ${stockNum === 0 ? 'text-error font-bold' : stockNum < 0 ? 'text-error' : 'text-success'}`}>
-                                  {stock}
-                                </span>
-                              </td>
-                              <td className="text-center text-sm font-mono opacity-70">{rotationDisplay}</td>
-                              <td>{p.quantity}</td>
-                              <td className="text-center bg-success/5">
-                                <span className={`font-semibold ${(p.unites_gratuites || 0) > 0 ? 'text-success' : 'text-base-content/40'}`}>
-                                  {p.unites_gratuites || 0}
-                                </span>
-                              </td>
-                              <td>{p.price} F</td>
-                              <td className="font-mono text-xs text-center">{p.lot || '-'}</td>
-                              <td className="font-mono text-xs text-center">
-                                {p.date_expiration ? (() => {
-                                  const d = new Date(p.date_expiration);
-                                  return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
-                                })() : '-'}
-                              </td>
-                              <td className="font-semibold">{Number(p.quantity) * Number(p.price)} F</td>
-                            </tr>
-                           );
-                         })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
+          {/* Grid Info */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
+            <div>
+                <div className="text-xs text-gray-500 uppercase">ID Commande</div>
+                <div className="font-bold">{selectedCommande.id}</div>
             </div>
+            <div>
+                <div className="text-xs text-gray-500 uppercase">N° Facture</div>
+                <div className="font-bold">{selectedCommande.numero_facture || 'N/A'}</div>
+            </div>
+            <div>
+                <div className="text-xs text-gray-500 uppercase">Fournisseur</div>
+                <div className="font-bold">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
+            </div>
+            <div>
+                 <div className="text-xs text-gray-500 uppercase">Date</div>
+                 <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</div>
+            </div>
+            <div>
+                 <div className="text-xs text-gray-500 uppercase">Statut</div>
+                 <div><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></div>
+            </div>
+            <div>
+                 <div className="text-xs text-gray-500 uppercase">Total</div>
+                 <div className="font-bold text-lg text-primary">
+                    {selectedCommande.produits.reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0).toLocaleString()} F
+                 </div>
+            </div>
+          </div>
+
+          {/* Récapitulatif UG */}
+          {(() => {
+            const totalUG = selectedCommande.produits.reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
+            if (totalUG > 0) {
+              return (
+                <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
+                       <span className="text-success font-bold">UG</span>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-success text-sm">Unités Gratuites (UG)</h4>
+                      <p className="text-xs text-base-content/70">
+                        Cette commande contient <span className="font-bold text-success">{totalUG}</span> unité{totalUG > 1 ? 's' : ''} gratuite{totalUG > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+
+
+          {/* Liste des produits (Read Only) */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            {selectedCommande.produits.length === 0 ? (
+              <p className="text-base-content/70 text-center py-8 text-sm">Aucun produit dans cette commande.</p>
+            ) : (
+                <table className="table table-xs">
+                  <thead className="bg-base-200">
+                    <tr>
+                      <th className="cursor-pointer" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
+                        Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th className="text-center">Stock</th>
+                      <th className="text-center">Rot.</th>
+                      <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
+                        Qté {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th className="text-center bg-success/5">UG</th>
+                      <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
+                        P.U. {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                      </th>
+                      <th>Lot/Exp</th>
+                      <th className="text-right">Sous-total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...selectedCommande.produits]
+                      .map(p => {
+                        // Use produit_nom from backend if available, otherwise fallback to resolving from produitsList
+                        const produitName = (p as any).produit_nom || (typeof p.produit === 'object' 
+                          ? p.produit.name 
+                          : produitsList.find(prod => prod.id === p.produit)?.name || `Produit #${p.produit}`);
+                        return { ...p, produitName };
+                      })
+                      .sort((a, b) => {
+                        let comparison = 0;
+                        if (detailSortKey === 'name') {
+                          comparison = a.produitName.localeCompare(b.produitName);
+                        } else if (detailSortKey === 'quantity') {
+                          comparison = Number(a.quantity) - Number(b.quantity);
+                        } else if (detailSortKey === 'price') {
+                          comparison = Number(a.price) - Number(b.price);
+                        }
+                        return detailSortOrder === 'asc' ? comparison : -comparison;
+                      })
+                      .map(p => {
+                        // First check if produit is already an object from backend
+                        let produitData: ProduitModel | undefined;
+                        if (typeof p.produit === 'object') {
+                          produitData = p.produit;
+                        } else {
+                          produitData = produitsList.find(prod => prod.id === p.produit);
+                        }
+                        
+                        const stock = produitData?.stock ?? ((p as any).produit_stock ?? '-');
+                        const stockNum = typeof stock === 'number' ? stock : 0;
+                        const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
+                        const rotationDisplay = rotation ? parseFloat(String(rotation)).toFixed(1) : '-';
+                        
+                        return (
+                        <tr key={p.id} className="hover">
+                          <td className="font-bold">{p.produitName}</td>
+                          <td className="text-center">
+                            <span className={`font-mono ${stockNum === 0 ? 'text-error font-bold' : stockNum < 0 ? 'text-error' : 'text-success'}`}>
+                              {stock}
+                            </span>
+                          </td>
+                          <td className="text-center font-mono opacity-70">{rotationDisplay}</td>
+                          <td className="text-right font-bold">{p.quantity}</td>
+                          <td className="text-center bg-success/5">
+                            <span className={`font-bold ${(p.unites_gratuites || 0) > 0 ? 'text-success' : 'text-base-content/20'}`}>
+                              {p.unites_gratuites || 0}
+                            </span>
+                          </td>
+                          <td className="text-right font-mono">{Number(p.price).toLocaleString()} F</td>
+                          <td className="text-xs">
+                             <div className="font-mono">{p.lot || '-'}</div>
+                             <div className="text-gray-400">{p.date_expiration ? new Date(p.date_expiration).toLocaleDateString() : ''}</div>
+                          </td>
+                          <td className="text-right font-bold text-primary">{(Number(p.quantity) * Number(p.price)).toLocaleString()} F</td>
+                        </tr>
+                       );
+                     })}
+                  </tbody>
+                </table>
+            )}
           </div>
         </div>
       )}
@@ -1692,16 +1644,16 @@ export default function Commandes() {
                             onChange={toggleAllRows}
                           />
                         </th>
-                        <th className="bg-base-50 pl-4">Produit</th>
-                        <th className="bg-base-50 text-right w-24">Qté</th>
-                        <th className="bg-base-50 text-center w-20 bg-success/10">UG</th>
-                        <th className="bg-base-50 text-right w-32">Prix Achat HT</th>
-                        <th className="bg-base-50 text-right w-24">TVA</th>
-                        <th className="bg-base-50 text-right w-24">Marge</th>
-                        <th className="bg-base-50 text-right w-32">Prix Vente</th>
-                        <th className="bg-base-50 text-left w-32">Lot</th>
-                        <th className="bg-base-50 text-left w-36">Date Exp</th>
-                        <th className="bg-base-50 w-10"></th>
+                        <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">Produit</th>
+                        <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Qté</th>
+                        <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">UG</th>
+                        <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Achat HT</th>
+                        <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">TVA</th>
+                        <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Marge</th>
+                        <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Vente</th>
+                        <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">Lot</th>
+                        <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">Date Exp</th>
+                        <th className="bg-base-200 w-10"></th>
                       </tr>
                     </thead>
                     <tbody>

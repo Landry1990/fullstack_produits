@@ -335,24 +335,24 @@ export default function Ventes() {
   }
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
+    <div className="flex flex-col h-full p-4 space-y-4 animate-fade-in">
       {/* Header & Stats */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
           <h1 className="text-2xl font-bold text-base-content">Historique des Ventes</h1>
-          <p className="text-base-content/70">Consultez et gérez l'historique de toutes les factures</p>
+          <p className="text-base-content/70 text-sm">Consultez et gérez l'historique de toutes les factures</p>
         </div>
         
-        <div className="stats shadow bg-base-100 border border-base-200">
-          <div className="stat place-items-center py-2 px-4">
-            <div className="stat-title text-xs uppercase tracking-wider">Total Factures</div>
-            <div className="stat-value text-primary text-2xl">{factures.length}</div>
+        <div className="bg-white rounded-lg shadow-sm border border-base-200 px-4 py-2 flex items-center gap-6">
+          <div className="flex flex-col items-center">
+            <span className="text-xs uppercase tracking-wider font-bold opacity-50">Total Factures</span>
+            <span className="text-xl font-bold text-primary">{factures.length}</span>
           </div>
           
           {brouillonsCount > 0 && (
-            <div className="stat place-items-center py-2 px-4 border-l border-base-200">
-              <div className="stat-title text-xs uppercase tracking-wider text-warning">Brouillons</div>
-              <div className="stat-value text-warning text-2xl">{brouillonsCount}</div>
+            <div className="flex flex-col items-center border-l pl-6 border-base-200">
+              <span className="text-xs uppercase tracking-wider font-bold text-warning">Brouillons</span>
+              <span className="text-xl font-bold text-warning">{brouillonsCount}</span>
             </div>
           )}
         </div>
@@ -360,7 +360,7 @@ export default function Ventes() {
 
       {/* Alerts */}
       {error && (
-        <div role="alert" className="alert alert-error shadow-sm">
+        <div role="alert" className="alert alert-error shrink-0 shadow-sm">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span>{error}</span>
           <button className="btn btn-sm btn-ghost" onClick={() => setError(null)}>✕</button>
@@ -368,7 +368,7 @@ export default function Ventes() {
       )}
 
       {successMessage && (
-        <div role="alert" className="alert alert-success shadow-sm text-white">
+        <div role="alert" className="alert alert-success shrink-0 shadow-sm text-white">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
           <span>{successMessage}</span>
           <button className="btn btn-sm btn-ghost" onClick={() => setSuccessMessage(null)}>✕</button>
@@ -376,11 +376,10 @@ export default function Ventes() {
       )}
 
       {/* Control Bar */}
-      <div className="card bg-base-100 shadow-sm border border-base-200">
-        <div className="card-body p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
+      <div className="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row gap-4 justify-between items-center shrink-0">
           <div className="relative w-full md:w-96">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -389,26 +388,26 @@ export default function Ventes() {
               placeholder="Rechercher client, n° facture..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="input input-bordered pl-10 w-full focus:outline-none focus:border-primary"
+              className="input input-sm input-bordered pl-9 w-full focus:outline-none focus:border-primary"
             />
           </div>
           
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto justify-end">
             <div className="join">
               <button 
-                className={`join-item btn btn-sm ${filterStatus === 'all' ? 'btn-active' : ''}`}
+                className={`join-item btn btn-sm ${filterStatus === 'all' ? 'btn-active font-bold' : ''}`}
                 onClick={() => setFilterStatus('all')}
               >
                 Toutes
               </button>
               <button 
-                className={`join-item btn btn-sm ${filterStatus === 'validated' ? 'btn-active btn-success text-white' : ''}`}
+                className={`join-item btn btn-sm ${filterStatus === 'validated' ? 'btn-success text-white' : ''}`}
                 onClick={() => setFilterStatus('validated')}
               >
                 Validées
               </button>
               <button 
-                className={`join-item btn btn-sm ${filterStatus === 'cancelled' ? 'btn-active btn-error text-white' : ''}`}
+                className={`join-item btn btn-sm ${filterStatus === 'cancelled' ? 'btn-error text-white' : ''}`}
                 onClick={() => setFilterStatus('cancelled')}
               >
                 Annulées
@@ -417,7 +416,7 @@ export default function Ventes() {
 
             <button
               onClick={() => setShowCaisseTranches(!showCaisseTranches)}
-              className={`btn btn-sm flex-1 md:flex-none gap-2 ${showCaisseTranches ? 'btn-primary' : 'btn-outline'}`}
+              className={`btn btn-sm gap-2 ${showCaisseTranches ? 'btn-primary' : 'btn-outline'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               {showCaisseTranches ? 'Masquer Rapport' : 'Rapport Caisse'}
@@ -427,58 +426,57 @@ export default function Ventes() {
               <button
                 onClick={handleDeleteBrouillons}
                 disabled={deletingBrouillons}
-                className="btn btn-sm btn-error text-white flex-1 md:flex-none gap-2"
+                className="btn btn-sm btn-error text-white gap-2"
               >
                 {deletingBrouillons ? <span className="loading loading-spinner loading-xs"></span> : <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
-                Supprimer Brouillons
+                Vider Brouillons
               </button>
             )}
           </div>
-        </div>
       </div>
 
       {/* Section Caisse par tranche horaire */}
       {showCaisseTranches && (
-        <div className="card bg-base-100 shadow-md border border-base-200 overflow-hidden">
-          <div className="bg-base-200/50 px-6 py-3 border-b border-base-200 flex justify-between items-center">
+        <div className="bg-white rounded-lg shadow border border-base-200 overflow-hidden shrink-0">
+          <div className="bg-base-50 px-6 py-3 border-b flex justify-between items-center">
             <h2 className="font-bold text-base-content flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Rapport de Caisse
             </h2>
           </div>
-          <div className="card-body p-6">
+          <div className="p-6">
             <div className="flex flex-col md:flex-row gap-6 items-end">
               <div className="form-control flex-1">
-                <label className="label"><span className="label-text font-medium">Début</span></label>
+                <label className="label"><span className="label-text font-medium text-xs uppercase">Début</span></label>
                 <input
                   type="datetime-local"
                   value={dateDebut}
                   onChange={(e) => setDateDebut(e.target.value)}
-                  className="input input-bordered w-full"
+                  className="input input-sm input-bordered w-full"
                   step="60"
                 />
               </div>
               <div className="form-control flex-1">
-                <label className="label"><span className="label-text font-medium">Fin</span></label>
+                <label className="label"><span className="label-text font-medium text-xs uppercase">Fin</span></label>
                 <input
                   type="datetime-local"
                   value={dateFin}
                   onChange={(e) => setDateFin(e.target.value)}
-                  className="input input-bordered w-full"
+                  className="input input-bordered input-sm w-full"
                   step="60"
                 />
               </div>
               <button
                 onClick={fetchCaisseParTranche}
                 disabled={loadingCaisse || new Date(dateDebut) >= new Date(dateFin)}
-                className="btn btn-primary w-full md:w-auto"
+                className="btn btn-primary btn-sm w-full md:w-auto"
               >
                 {loadingCaisse ? <span className="loading loading-spinner"></span> : 'Générer le rapport'}
               </button>
             </div>
 
             {new Date(dateDebut) >= new Date(dateFin) && (
-              <div className="alert alert-warning mt-4 text-sm py-2">
+              <div className="alert alert-warning mt-4 text-sm py-2 rounded-lg">
                 <span>La date de début doit être antérieure à la date de fin.</span>
               </div>
             )}
@@ -486,18 +484,18 @@ export default function Ventes() {
             {caisseData && !loadingCaisse && (
               <div className="mt-6 animate-fade-in">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                    <div className="stat-title text-xs uppercase tracking-wider">Total HT</div>
-                    <div className="stat-value text-xl">{Math.round(Number(caisseData.total_ht || 0)).toLocaleString('fr-FR')} F</div>
+                  <div className="bg-base-50 rounded-lg p-4 text-center border">
+                    <div className="text-xs uppercase tracking-wider opacity-60">Total HT</div>
+                    <div className="text-xl font-bold">{Math.round(Number(caisseData.total_ht || 0)).toLocaleString('fr-FR')} F</div>
                   </div>
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                    <div className="stat-title text-xs uppercase tracking-wider">Total TVA</div>
-                    <div className="stat-value text-xl">{Math.round(Number(caisseData.total_tva || 0)).toLocaleString('fr-FR')} F</div>
+                  <div className="bg-base-50 rounded-lg p-4 text-center border">
+                    <div className="text-xs uppercase tracking-wider opacity-60">Total TVA</div>
+                    <div className="text-xl font-bold">{Math.round(Number(caisseData.total_tva || 0)).toLocaleString('fr-FR')} F</div>
                   </div>
-                  <div className="stat bg-primary text-primary-content rounded-xl shadow-lg p-4">
-                    <div className="stat-title text-primary-content/80 text-xs uppercase tracking-wider">Total TTC</div>
-                    <div className="stat-value text-2xl">{Math.round(Number(caisseData.total_ttc || 0)).toLocaleString('fr-FR')} F</div>
-                    <div className="stat-desc text-primary-content/60 mt-1">{caisseData.nombre_factures} facture(s)</div>
+                  <div className="bg-primary text-primary-content rounded-lg shadow p-4 text-center">
+                    <div className="text-xs uppercase tracking-wider opacity-80">Total TTC</div>
+                    <div className="text-2xl font-bold">{Math.round(Number(caisseData.total_ttc || 0)).toLocaleString('fr-FR')} F</div>
+                    <div className="text-xs opacity-70 mt-1">{caisseData.nombre_factures} facture(s)</div>
                   </div>
                 </div>
               </div>
@@ -507,10 +505,10 @@ export default function Ventes() {
       )}
 
       {/* Liste des factures */}
-      <div className="card bg-base-100 shadow-sm border border-base-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full table-xs">
-            <thead className="bg-base-200/50 text-base-content/70">
+      <div className="flex-1 bg-white rounded-lg shadow overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 overflow-auto">
+          <table className="table table-xs w-full table-pin-rows">
+            <thead className="bg-base-100/80 backdrop-blur text-base-content/70 z-10">
               <tr>
                 <th>N° Facture</th>
                 <th>Client</th>
@@ -525,24 +523,27 @@ export default function Ventes() {
             <tbody>
               {filteredFactures.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-base-content/50">
-                    {searchQuery ? 'Aucune facture trouvée pour cette recherche' : 'Aucune facture enregistrée'}
+                  <td colSpan={filterStatus === 'cancelled' ? 8 : 7} className="text-center py-12 text-base-content/50">
+                    <div className="flex flex-col items-center gap-2">
+                        <span className="text-3xl">📭</span>
+                        <span>{searchQuery ? 'Aucune facture trouvée' : 'Aucune facture enregistrée'}</span>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 filteredFactures.map((facture) => (
                   <tr 
                     key={facture.id} 
-                    className="hover:bg-base-200/30 transition-colors cursor-pointer"
+                    className="hover:bg-base-50 transition-colors cursor-pointer border-b border-base-100 last:border-0"
                     onClick={() => handleViewProducts(facture)}
                   >
-                    <td className="font-medium">
+                    <td className="font-medium font-mono">
                       {facture.numero_facture || <span className="italic text-base-content/50">Brouillon #{facture.id}</span>}
                     </td>
                     <td>
-                      <div className="font-medium">{facture.client_name || 'Client de passage'}</div>
+                      <div className="font-bold text-sm">{facture.client_name || 'Client de passage'}</div>
                     </td>
-                    <td className="text-sm text-base-content/70">
+                    <td className="text-xs text-base-content/70">
                       {new Date(facture.date).toLocaleString('fr-FR', {
                         day: '2-digit', month: '2-digit', year: 'numeric',
                         hour: '2-digit', minute: '2-digit'
@@ -560,7 +561,7 @@ export default function Ventes() {
                       </span>
                     </td>
                     {filterStatus === 'cancelled' && (
-                      <td className="text-sm text-error italic max-w-xs truncate" title={facture.notes || ''}>
+                      <td className="text-xs text-error italic max-w-xs truncate" title={facture.notes || ''}>
                         {facture.notes ? facture.notes.split('\n').pop()?.replace(/.*Motif: /, '') : '-'}
                       </td>
                     )}
@@ -571,34 +572,34 @@ export default function Ventes() {
                             -{Math.round(Number(facture.remise)).toLocaleString('fr-FR')} F
                           </span>
                           {facture.is_remise_auto && (
-                            <span className="badge badge-xs badge-success gap-1" title="Remise automatique appliquée">
+                            <span className="badge badge-xs badge-ghost gap-1" title="Remise automatique appliquée">
                               🤖 Auto
                             </span>
                           )}
                         </div>
                       ) : (
-                        <span className="text-base-content/40">-</span>
+                        <span className="text-base-content/30 text-xs">-</span>
                       )}
                     </td>
                     <td className="text-right font-bold text-base-content">
                       {Math.round(Number(facture.total_ttc || 0)).toLocaleString('fr-FR')} F
                     </td>
                     <td className="text-center">
-                      <div className="flex justify-center gap-2">
+                      <div className="flex justify-center gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); handleViewProducts(facture); }}
-                          className="btn btn-sm btn-ghost btn-square text-primary hover:bg-primary/10"
+                          className="btn btn-xs btn-ghost btn-square text-primary"
                           title="Voir détails"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                          👁️
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); handleOpenRefundModal(facture); }}
-                          className={`btn btn-sm btn-ghost btn-square ${facture.status === 'ANN' ? 'text-base-content/20 cursor-not-allowed' : 'text-error hover:bg-error/10'}`}
+                          className={`btn btn-xs btn-ghost btn-square ${facture.status === 'ANN' ? 'opacity-0 cursor-default' : 'text-error'}`}
                           title={facture.status === 'ANN' ? 'Déjà annulée' : "Annuler / Rembourser"}
                           disabled={facture.status === 'ANN'}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          {facture.status !== 'ANN' && '↩️'}
                         </button>
                       </div>
                     </td>
@@ -607,6 +608,11 @@ export default function Ventes() {
               )}
             </tbody>
           </table>
+        </div>
+        
+        {/* Footer info */}
+        <div className="p-2 border-t bg-base-50/50 text-xs text-center text-base-content/50">
+            {filteredFactures.length} facture{filteredFactures.length > 1 ? 's' : ''} affichée{filteredFactures.length > 1 ? 's' : ''}
         </div>
       </div>
 
@@ -671,7 +677,7 @@ export default function Ventes() {
                             </tr>
                         )}
                         <tr>
-                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 py-1">TVA ({Math.round(Number(selectedFacture.total_tva) / (Number(selectedFacture.total_ht) - Number(selectedFacture.remise || 0)) * 100) || 0}%):</td>
+                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 py-1">TVA:</td>
                             <td className="text-right border-b-0 py-1">{Math.round(Number(selectedFacture.total_tva)).toLocaleString('fr-FR')} F</td>
                         </tr>
                         <tr className="text-lg">
@@ -839,7 +845,7 @@ export default function Ventes() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>TVA ({selectedFacture.tva}%):</span>
+                  <span>TVA:</span>
                   <span>{Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2">

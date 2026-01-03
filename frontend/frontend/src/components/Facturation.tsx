@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis } from '../types'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
@@ -137,6 +138,9 @@ export default function Facturation() {
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
 
+  // Settings State - Mode Caisse Centralisée
+  const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
+
 
 
   // Refs
@@ -211,6 +215,17 @@ export default function Facturation() {
         if (defaultClient) {
           setSelectedClient(defaultClient.id)
         }
+
+        // Charger les paramètres de facturation (mode caisse centralisée)
+        try {
+          const settingsEndpoint = apiBaseUrl
+            ? `${apiBaseUrl}/api/invoice-settings/`
+            : '/api/invoice-settings/'
+          const settingsRes = await axios.get(settingsEndpoint)
+          setCentralizedCashRegister(settingsRes.data?.centralized_cash_register ?? true)
+        } catch (settingsErr) {
+          console.warn('Impossible de charger les paramètres de facturation, mode caisse centralisée activé par défaut')
+        }
       } catch (err) {
         handleApiError(err, 'Erreur lors du chargement des données.')
       } finally {
@@ -218,7 +233,7 @@ export default function Facturation() {
       }
     }
     fetchData()
-  }, [clientsEndpoint, handleApiError])
+  }, [clientsEndpoint, apiBaseUrl, handleApiError])
 
   // Charger les ayants droit quand un client professionnel est sélectionné
   useEffect(() => {
@@ -338,6 +353,8 @@ export default function Facturation() {
           setShowStockResolution(true)
       } else {
           setIsNewSale(true)
+          // Auto-fill montant with total to pay
+          setMontantPaye(Math.round(totals.totalTtc).toString())
           setIsPaymentModalOpen(true)
       }
   }
@@ -712,7 +729,8 @@ export default function Facturation() {
         client_name_override: useManualClient ? manualClientName : null,
         remise: totals.remiseMontant.toString(),
         tva: '0',
-        ayant_droit: ayantDroitId // Lier directement à la création
+        ayant_droit: ayantDroitId, // Lier directement à la création
+        part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
       }
       const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
 
@@ -739,6 +757,68 @@ export default function Facturation() {
         produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
       )
 
+
+      // NOUVELLE LOGIQUE DE PAIEMENT
+      // Vérifier si c'est un client professionnel avec 100% de couverture (tiers payant)
+      const clientIsPro100 = clientObj?.client_type === 'PROFESSIONNEL' && totals.partPatient === 0 && totals.partAssurance > 0
+      
+      if (clientIsPro100) {
+        // Client professionnel à 100% : Validation + Paiement automatique "en_compte"
+        toast('Client professionnel 100% - Validation automatique', { icon: 'ℹ️' })
+        
+        // 1. Valider la facture
+        const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
+        const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
+          use_pending_discount: usePendingDiscount,
+          points_to_use: pointsToUse
+        })
+        
+        // 2. Enregistrer le paiement "en_compte" (100% assurance)
+        await axios.post(caisseEndpoint, {
+          facture: validatedFacture.id,
+          mode_paiement: 'en_compte',
+          montant: totals.partAssurance,
+          reference: null,
+          statut: 'completee',
+          part_patient: 0,
+          part_assurance: totals.partAssurance
+        })
+        
+        // 3. Succès
+        toast.success(`Facture ${validatedFacture.numero_facture} validée (Tiers payant 100%)`)
+        
+        // Clear cart
+        setLignesFacture([])
+        setSelectedClient(null)
+        setUseManualClient(false)
+        setManualClientName('')
+        setRemise('0')
+        setRemiseMode('montant')
+        setMontantPaye('')
+        setPaiements([])
+        setLoading(false)
+        
+        return // Fin du traitement
+      } else if (centralizedCashRegister) {
+        // Mode Caisse Centralisée ACTIVE : Envoi en Caisse Centralisée (BROUILLON)
+        toast.success(`Vente envoyée à la Caisse Centralisée (Ticket #${createdFacture.id})`)
+        setSuccessInfo({ ...createdFacture, status: 'BROUILLON' })
+        
+        // Clear cart and state without validating
+        setLignesFacture([])
+        setSelectedClient(null)
+        setUseManualClient(false)
+        setManualClientName('')
+        setRemise('0')
+        setRemiseMode('montant')
+        setMontantPaye('')
+        setPaiements([])
+        setLoading(false)
+        setIsPaymentModalOpen(false)
+        
+        return // Stop execution (Do NOT validate)
+      }
+      // Mode Caisse Centralisée DÉSACTIVÉE : Continuer vers le paiement direct
 
       // 3. Valider la facture
       // 3. Valider la facture
@@ -1371,7 +1451,7 @@ export default function Facturation() {
         {/* Top Section: Client & Search */}
         <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
             {/* Client Selection */}
-            <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-80 shrink-0">
+            <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
                 <div className="flex items-center justify-between mb-2">
                     <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">Client (F4)</label>
                     <button
@@ -1417,7 +1497,7 @@ export default function Facturation() {
 
             {/* Ayant Droit Section - Only for Professional Clients */}
             {!useManualClient && selectedClient && clients.find(c => c.id === selectedClient)?.client_type === 'PROFESSIONNEL' && (
-              <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-80 shrink-0">
+              <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
                 <div className="flex items-center justify-between mb-2">
                   <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
                     Ayant Droit <span className="text-error">*</span>
@@ -1500,7 +1580,7 @@ export default function Facturation() {
                 
                 {/* Search Results Dropdown */}
                 {searchQuery && (
-                    <div className="absolute left-3 right-3 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
                         {filteredProduits.length === 0 ? (
                             <div className="text-center py-8 text-base-content/40 text-sm">
                                 {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? 'Tapez au moins 2 caractères' : 'Aucun produit trouvé'}
@@ -1892,7 +1972,7 @@ export default function Facturation() {
                             )}
 
                         <div className="flex gap-2 items-end">
-                            <div className="flex-1">
+                            <div className="flex-1 hidden">
                                 <label className="label py-0"> <span className="label-text text-xs">Mode</span> </label>
                                 <select
                                 value={modePaiement}
@@ -1964,7 +2044,7 @@ export default function Facturation() {
               ) : (
                 <>
                   {/* Standard payment mode for non-tiers payant */}
-                  <div className="form-control w-full">
+                  <div className="form-control w-full hidden">
                     <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
                     <select
                         value={modePaiement}
@@ -2071,7 +2151,7 @@ export default function Facturation() {
               <div className="pt-4 flex gap-3">
                 <button type="button" className="btn btn-ghost flex-1" onClick={fermerModalPaiement}>Annuler (Esc)</button>
                 <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer le paiement'}
+                  {loading ? <span className="loading loading-spinner"></span> : 'Caisse Centrale'}
                 </button>
               </div>
             </form>

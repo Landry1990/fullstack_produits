@@ -183,6 +183,7 @@ export interface Facture {
   total_ttc: string
   produits: FactureProduit[]
   is_remise_auto?: boolean
+  part_client?: string | number | null
 }
 
 export interface TicketCaisse {

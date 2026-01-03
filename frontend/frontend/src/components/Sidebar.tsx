@@ -19,7 +19,8 @@ export default function Sidebar() {
       ),
       submenus: [
         { path: '/app/ventes', label: 'Consultation', key: 'ventes' },
-        { path: '/app/journal-caisse', label: 'Journal de Caisse', key: 'ventes' }
+        { path: '/app/journal-caisse', label: 'Journal de Caisse', key: 'ventes' },
+        { path: '/app/caisse-centralisee', label: '💰 Caisse Centralisée', key: 'caisse' }
       ]
     },
     { path: '/app/facturation', label: 'Facturation', key: 'facturation', icon: (
@@ -91,16 +92,16 @@ export default function Sidebar() {
   // Filter menu items based on permissions
   const menuItems = allMenuItems.filter(item => {
     if (user?.is_superuser) return true;
-    // Dashboard is always accessible
-    if (item.key === 'dashboard') return true;
     
+    const allowed = (user as any)?.allowed_menus || [];
+
     // Check if item has submenus
     if (item.submenus) {
       // If any submenu is allowed, show the parent
-      return item.submenus.some(sub => user?.allowed_menus?.includes(sub.key));
+      return item.submenus.some(sub => allowed.includes(sub.key));
     }
     
-    return user?.allowed_menus?.includes(item.key);
+    return allowed.includes(item.key);
   });
 
   // Add User Management for superusers
@@ -175,8 +176,10 @@ export default function Sidebar() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                   </summary>
                   <ul className="menu menu-sm pl-8 mt-1 gap-1">
-                    {item.submenus.map((sub) => (
-                      (!user?.is_superuser && !user?.allowed_menus?.includes(sub.key)) ? null : (
+                    {item.submenus.map((sub) => {
+                      const allowed = (user as any)?.allowed_menus || [];
+                      if (!user?.is_superuser && !allowed.includes(sub.key)) return null;
+                      return (
                       <li key={sub.path}>
                         <NavLink 
                           to={sub.path}
@@ -188,8 +191,8 @@ export default function Sidebar() {
                           {sub.label}
                         </NavLink>
                       </li>
-                      )
-                    ))}
+                      );
+                    })}
                   </ul>
                 </details>
               ) : (
@@ -221,7 +224,9 @@ export default function Sidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
-            <p className="text-xs text-white/60 truncate">Pharmacien</p>
+            <p className="text-xs text-white/60 truncate">
+              {user?.is_superuser ? 'Pharmacien' : 'Utilisateur'}
+            </p>
           </div>
         </div>
         <button 

@@ -29,8 +29,8 @@ export default function Login() {
         password
       });
 
-      const { token, is_superuser, allowed_menus } = response.data;
-      login({ username, token, is_superuser, allowed_menus }); // User details stored in session storage
+      const { token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock } = response.data;
+      login({ username, token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock });
       navigate('/app');
     } catch (err) {
       console.error('Login error:', err);

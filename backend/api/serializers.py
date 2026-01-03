@@ -14,7 +14,7 @@ from .models import (
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['allowed_menus', 'can_do_returns', 'can_sell_negative_stock']
+        fields = ['allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role']
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,6 +47,8 @@ class UserSerializer(serializers.ModelSerializer):
             profile.allowed_menus = profile_data.get('allowed_menus', [])
             profile.can_do_returns = profile_data.get('can_do_returns', False)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', False)
+            profile.can_cash_out = profile_data.get('can_cash_out', True) # Default to True for now
+            profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
             
         return user
@@ -70,6 +72,8 @@ class UserSerializer(serializers.ModelSerializer):
             profile.allowed_menus = profile_data.get('allowed_menus', profile.allowed_menus)
             profile.can_do_returns = profile_data.get('can_do_returns', profile.can_do_returns)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', profile.can_sell_negative_stock)
+            profile.can_cash_out = profile_data.get('can_cash_out', profile.can_cash_out)
+            profile.role = profile_data.get('role', profile.role)
             profile.save()
             
         return instance
@@ -246,6 +250,7 @@ class FactureSerializer(serializers.ModelSerializer):
     total_tva = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     is_remise_auto = serializers.SerializerMethodField()
+    paiements = CaisseSerializer(many=True, read_only=True)
 
     def get_client_nom(self, obj):
         if obj.client:
@@ -285,7 +290,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'date', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
-            'is_remise_auto'
+            'is_remise_auto', 'part_client', 'paiements'
         ]
 
 class StockLotSerializer(serializers.ModelSerializer):

@@ -469,12 +469,12 @@ export default function Produit() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-base-100 overflow-hidden">
+    <div className="flex flex-col h-full p-4 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-white shrink-0">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">📦 Gestion des Produits</h1>
-          <p className="text-sm text-base-content/60 mt-1">Inventaire et détails</p>
+          <h1 className="text-2xl font-bold">📦 Gestion des Produits</h1>
+          <p className="text-sm text-base-content/60">Inventaire et détails</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -496,14 +496,25 @@ export default function Produit() {
         </div>
       </div>
 
-      {/* Filtres */}
+      {/* Stats Badges */}
+      <div className="flex flex-wrap gap-4 text-sm">
+          <div className="badge badge-lg badge-ghost gap-2">
+            📦 Total: <span className="font-bold">{totalProduits}</span>
+          </div>
+          <div className="badge badge-lg badge-warning gap-2">
+            ⚠️ Faible: <span className="font-bold">{lowStockCount}</span>
+          </div>
+          <div className="badge badge-lg badge-error gap-2">
+            🚫 Rupture: <span className="font-bold">{outOfStockCount}</span>
+          </div>
+      </div>
+
       {/* Filtres & Actions */}
-      <div className="px-6 py-4 bg-base-50 border-b border-base-200 shrink-0">
-        <div className="flex flex-col lg:flex-row gap-4 items-end">
+      <div className="flex flex-col lg:flex-row gap-4 items-end">
           {/* Recherche */}
           <div className="form-control flex-1 w-full">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Rechercher</span>
+              <span className="label-text text-xs font-bold uppercase text-gray-500">Rechercher</span>
             </label>
             <input
               type="text"
@@ -517,7 +528,7 @@ export default function Produit() {
           {/* Filtre Rayon */}
           <div className="form-control w-full lg:w-48">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Rayon</span>
+              <span className="label-text text-xs font-bold uppercase text-gray-500">Rayon</span>
             </label>
             <select
               value={filterRayon}
@@ -532,7 +543,7 @@ export default function Produit() {
           {/* Filtre Fournisseur */}
           <div className="form-control w-full lg:w-48">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Fournisseur</span>
+              <span className="label-text text-xs font-bold uppercase text-gray-500">Fournisseur</span>
             </label>
             <select
               value={filterFournisseur}
@@ -547,7 +558,7 @@ export default function Produit() {
           {/* Reset Button */}
            {(searchQuery || filterRayon || filterFournisseur) && (
             <button
-              className="btn btn-sm btn-ghost btn-square"
+              className="btn btn-sm btn-ghost btn-square mb-1"
               onClick={() => {
                 setSearchQuery('')
                 setFilterRayon('')
@@ -589,22 +600,6 @@ export default function Produit() {
               </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Badges Stats */}
-      <div className="px-6 py-3 bg-white border-b border-base-200 shrink-0 overflow-x-auto">
-        <div className="flex flex-nowrap gap-4 text-sm">
-          <div className="badge badge-lg badge-ghost gap-2 whitespace-nowrap">
-            📦 Total: <span className="font-bold">{totalProduits}</span>
-          </div>
-          <div className="badge badge-lg badge-warning gap-2 whitespace-nowrap">
-            ⚠️ Faible: <span className="font-bold">{lowStockCount}</span>
-          </div>
-          <div className="badge badge-lg badge-error gap-2 whitespace-nowrap">
-            🚫 Rupture: <span className="font-bold">{outOfStockCount}</span>
-          </div>
-        </div>
       </div>
 
       {/* Messages d'erreur */}
@@ -619,8 +614,8 @@ export default function Produit() {
         </div>
       )}
 
-      {/* Tableau */}
-      <div className="flex-1 overflow-auto px-6 py-4">
+      {/* Tableau avec Footer intégré */}
+      <div className="flex-1 min-h-0 bg-white rounded-lg shadow flex flex-col">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <span className="loading loading-spinner loading-lg"></span>
@@ -630,105 +625,106 @@ export default function Produit() {
             <p className="text-lg">Aucun produit trouvé</p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <table className="table table-zebra w-full table-xs">
-              <thead>
-                <tr className="bg-base-200">
-                  <th className="w-12">
-                    <label>
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-sm"
-                        checked={selectedProductIds.length === filteredProduits.length && filteredProduits.length > 0}
-                        onChange={handleSelectAll}
-                      />
-                    </label>
-                  </th>
-                  <th className="text-xs uppercase">Produit</th>
-                  <th className="text-xs uppercase">CIP</th>
-                  <th className="text-xs uppercase text-right">Prix Vente</th>
-                  <th className="text-xs uppercase text-center">Stock</th>
-                  <th className="text-xs uppercase">Rayon</th>
-                  <th className="text-xs uppercase text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProduits.map((produit) => {
-                  const stock = produit.stock ?? 0;
-                  
-                  const rowClass = stock < 0 
-                    ? 'hover cursor-pointer text-error' // Stock négatif : rouge
-                    : stock > 0 
-                    ? 'hover cursor-pointer font-bold' // Stock positif : gras
-                    : 'hover cursor-pointer'; // Stock zero : normal
-                  
-                  return (
-                  <tr
-                    key={produit.id}
-                    className={rowClass}
-                  >
-                    <td onClick={(e) => e.stopPropagation()}>
+          <>
+            <div className="flex-1 overflow-auto">
+              <table className="table table-xs w-full table-pin-rows">
+                <thead className="bg-base-200">
+                  <tr>
+                    <th className="w-12 bg-base-200">
                       <label>
                         <input
                           type="checkbox"
-                          className="checkbox checkbox-sm"
-                          checked={selectedProductIds.includes(produit.id)}
-                          onChange={() => handleSelectProduct(produit.id)}
+                          className="checkbox checkbox-xs"
+                          checked={selectedProductIds.length === filteredProduits.length && filteredProduits.length > 0}
+                          onChange={handleSelectAll}
                         />
                       </label>
-                    </td>
-                    <td className="uppercase" onClick={() => handleViewDetails(produit)}>{produit.name}</td>
-                    <td className="font-mono text-sm" onClick={() => handleViewDetails(produit)}>{produit.cip1 || '-'}</td>
-                    <td className="text-right" onClick={() => handleViewDetails(produit)}>
-                      {Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
-                    </td>
-                    <td className="text-center" onClick={() => handleViewDetails(produit)}>
-                      <span className="font-semibold">
-                        {stock}
-                      </span>
-                    </td>
-                    <td onClick={() => handleViewDetails(produit)}>
-                      <span className="badge badge-outline badge-sm">{produit.rayon_name || '-'}</span>
-                    </td>
-                    <td className="text-center">
-                      <div className="flex justify-center gap-1">
-                        <button
-                          className="btn btn-xs btn-ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleViewDetails(produit)
-                          }}
-                          title="Voir détails"
-                        >
-                          👁️
-                        </button>
-                        <button
-                          className="btn btn-xs btn-ghost"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleGenerateLabels(produit)
-                          }}
-                          title="Étiquettes"
-                        >
-                          🏷️
-                        </button>
-                      </div>
-                    </td>
+                    </th>
+                    <th className="text-xs uppercase bg-base-200">Produit</th>
+                    <th className="text-xs uppercase bg-base-200">CIP</th>
+                    <th className="text-xs uppercase text-right bg-base-200">Prix Vente</th>
+                    <th className="text-xs uppercase text-center bg-base-200">Stock</th>
+                    <th className="text-xs uppercase bg-base-200">Rayon</th>
+                    <th className="text-xs uppercase text-center bg-base-200">Actions</th>
                   </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredProduits.map((produit) => {
+                    const stock = produit.stock ?? 0;
+                    
+                    const rowClass = stock < 0 
+                      ? 'hover cursor-pointer text-error font-medium' // Stock négatif : rouge
+                      : stock > 0 
+                      ? 'hover cursor-pointer font-bold' // Stock positif : gras
+                      : 'hover cursor-pointer text-base-content/70'; // Stock zero : normal (grisé)
+                    
+                    return (
+                    <tr
+                      key={produit.id}
+                      className={rowClass}
+                      onClick={() => handleViewDetails(produit)}
+                    >
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <label>
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-xs"
+                            checked={selectedProductIds.includes(produit.id)}
+                            onChange={() => handleSelectProduct(produit.id)}
+                          />
+                        </label>
+                      </td>
+                      <td className="uppercase">{produit.name}</td>
+                      <td className="font-mono text-xs opacity-70">{produit.cip1 || '-'}</td>
+                      <td className="text-right font-mono">
+                        {Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
+                      </td>
+                      <td className="text-center">
+                        <span className={`badge badge-sm ${stock <= 0 ? (stock < 0 ? 'badge-error' : 'badge-ghost') : 'badge-success badge-outline'}`}>
+                          {stock}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-xs opacity-70">{produit.rayon_name || '-'}</span>
+                      </td>
+                      <td className="text-center">
+                        <div className="flex justify-center gap-1">
+                          <button
+                            className="btn btn-xs btn-ghost btn-square"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleViewDetails(produit)
+                            }}
+                            title="Voir détails"
+                          >
+                            👁️
+                          </button>
+                          <button
+                            className="btn btn-xs btn-ghost btn-square"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleGenerateLabels(produit)
+                            }}
+                            title="Étiquettes"
+                          >
+                            🏷️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Footer compact */}
+            <div className="p-2 border-t border-base-200 bg-base-50/50 text-xs text-center text-base-content/50">
+                {filteredProduits.length} produit{filteredProduits.length > 1 ? 's' : ''} affiché{filteredProduits.length > 1 ? 's' : ''}
+                {filteredProduits.length !== produits.length && ` sur ${produits.length} au total`}
+            </div>
+          </>
         )}
-      </div>
-
-      {/* Footer */}
-      <div className="px-6 py-3 border-t border-base-200 bg-base-50 shrink-0">
-        <p className="text-sm text-base-content/60">
-          {filteredProduits.length} produit{filteredProduits.length > 1 ? 's' : ''} affiché{filteredProduits.length > 1 ? 's' : ''}
-          {filteredProduits.length !== produits.length && ` sur ${produits.length} au total`}
-        </p>
       </div>
 
       {/* Modal Détails Produit */}
