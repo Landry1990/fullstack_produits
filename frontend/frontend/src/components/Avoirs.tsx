@@ -19,6 +19,7 @@ export default function Avoirs() {
   // const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]) // Removed unused state
   
   // Form State
+  const [editingAvoirId, setEditingAvoirId] = useState<number | null>(null)
   const [selectedFournisseurId, setSelectedFournisseurId] = useState<string>('')
   const [typeAvoir, setTypeAvoir] = useState<string>('PERIME')
   const [observations, setObservations] = useState<string>('')
@@ -127,12 +128,46 @@ export default function Avoirs() {
   const handleCreateNew = () => {
     setViewMode('CREATE')
     setSelectedAvoir(null)
+    setEditingAvoirId(null)
     setSelectedFournisseurId('')
     setFournisseurSearch('')
     setTypeAvoir('PERIME')
     setObservations('')
     setLignes([])
     setSearchProduitQuery('')
+  }
+
+  // Edit existing avoir
+  const handleEdit = (avoir: Avoir) => {
+    setEditingAvoirId(avoir.id)
+    setSelectedAvoir(avoir)
+    setSelectedFournisseurId(avoir.fournisseur.toString())
+    setFournisseurSearch(avoir.fournisseur_name || '')
+    setTypeAvoir(avoir.type_avoir)
+    setObservations(avoir.observations || '')
+    
+    // Convert existing products to LigneAvoir format
+    const existingLignes: LigneAvoir[] = (avoir.produits || []).map(p => ({
+      id: p.id,
+      avoir: avoir.id,
+      produit: {
+        id: p.produit,
+        name: p.produit_nom,
+        cip1: p.produit_cip || '',
+        stock: 0,
+        selling_price: p.price,
+        cost_price: p.price
+      } as ProduitModel,
+      quantity: p.quantity,
+      price: p.price,
+      lot: p.lot || '',
+      stock_lot: p.stock_lot || undefined,
+      date_expiration: p.date_expiration || '',
+      total: p.total || (Number(p.quantity) * Number(p.price)).toString()
+    }))
+    
+    setLignes(existingLignes)
+    setViewMode('EDIT')
   }
 
   const handleBackToList = () => {
@@ -255,7 +290,7 @@ export default function Avoirs() {
     })
   }
 
-  // Save
+  // Save (Create or Update)
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -272,20 +307,36 @@ export default function Avoirs() {
     try {
         setLoading(true)
         
-        // 1. Create Avoir
         const avoirPayload = {
             fournisseur: parseInt(selectedFournisseurId),
             type_avoir: typeAvoir,
             observations
         }
         
-        const { data: newAvoir } = await axios.post(avoirsEndpoint, avoirPayload)
+        let avoirId: number
         
-        // 2. Create Lines
+        if (editingAvoirId) {
+            // Mode EDIT: Update existing avoir
+            await axios.patch(`${avoirsEndpoint}${editingAvoirId}/`, avoirPayload)
+            avoirId = editingAvoirId
+            
+            // Delete old lines and recreate (simpler than patching each)
+            // The backend should handle this via the avoir update or we delete manually
+            const existingLignes = selectedAvoir?.produits || []
+            await Promise.all(
+                existingLignes.map(l => axios.delete(`${ligneAvoirsEndpoint}${l.id}/`).catch(() => {}))
+            )
+        } else {
+            // Mode CREATE: Create new avoir
+            const { data: newAvoir } = await axios.post(avoirsEndpoint, avoirPayload)
+            avoirId = newAvoir.id
+        }
+        
+        // Create/Recreate Lines
         const linePromises = lignes.map(ligne => {
              const produitId = typeof ligne.produit === 'object' ? ligne.produit.id : ligne.produit
              return axios.post(ligneAvoirsEndpoint, {
-                 avoir: newAvoir.id,
+                 avoir: avoirId,
                  produit: produitId,
                  stock_lot: ligne.stock_lot || null,
                  quantity: ligne.quantity,
@@ -297,12 +348,13 @@ export default function Avoirs() {
         
         await Promise.all(linePromises)
         
-        toast.success('Avoir créé avec succès (Brouillon)')
+        toast.success(editingAvoirId ? 'Avoir modifié avec succès' : 'Avoir créé avec succès (Brouillon)')
+        setEditingAvoirId(null)
         setViewMode('LIST')
         fetchAvoirs()
     } catch (err: any) {
         console.error(err)
-        toast.error('Erreur lors de la création: ' + (err.response?.data?.message || err.message))
+        toast.error('Erreur lors de la sauvegarde: ' + (err.response?.data?.message || err.message))
     } finally {
         setLoading(false)
     }
@@ -434,6 +486,12 @@ export default function Avoirs() {
                                         {avoir.status === 'BROUILLON' && (
                                             <>
                                                 <button 
+                                                    className="btn btn-sm btn-info btn-outline join-item"
+                                                    onClick={() => handleEdit(avoir)}
+                                                >
+                                                    Modifier
+                                                </button>
+                                                <button 
                                                     className="btn btn-sm btn-success btn-outline join-item"
                                                     onClick={() => handleValidate(avoir)}
                                                 >
@@ -467,7 +525,7 @@ export default function Avoirs() {
             <button onClick={handleBackToList} className="btn btn-circle btn-sm btn-ghost">
                 ←
             </button>
-            <h2 className="text-xl font-bold">Nouvel Avoir (Retour Stock)</h2>
+            <h2 className="text-xl font-bold">{editingAvoirId ? `Modifier Avoir ${selectedAvoir?.numero}` : 'Nouvel Avoir (Retour Stock)'}</h2>
             
             <div className="ml-auto flex gap-2">
                  <kbd className="kbd kbd-sm">F2: Rechercher</kbd>
@@ -698,7 +756,7 @@ export default function Avoirs() {
             <div className="flex justify-end gap-2 p-4 bg-white border-t">
                 <button type="button" onClick={handleBackToList} className="btn">Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={loading || !lignes.length}>
-                    {loading ? <span className="loading loading-spinner"></span> : 'Enregistrer Brouillon'}
+                    {loading ? <span className="loading loading-spinner"></span> : (editingAvoirId ? 'Enregistrer Modifications' : 'Enregistrer Brouillon')}
                 </button>
             </div>
         </form>
@@ -829,6 +887,12 @@ export default function Avoirs() {
             {selectedAvoir.status === 'BROUILLON' && (
                 <div className="flex justify-end p-4 gap-2">
                     <button 
+                        className="btn btn-info btn-outline"
+                        onClick={() => handleEdit(selectedAvoir)}
+                    >
+                        Modifier
+                    </button>
+                    <button 
                         className="btn btn-error btn-outline"
                         onClick={() => handleDelete(selectedAvoir)}
                     >
@@ -846,7 +910,7 @@ export default function Avoirs() {
     )
   }
 
-  if (viewMode === 'CREATE') return renderCreate()
+  if (viewMode === 'CREATE' || viewMode === 'EDIT') return renderCreate()
   if (viewMode === 'DETAILS') return renderDetails()
       
   return renderListCheck()

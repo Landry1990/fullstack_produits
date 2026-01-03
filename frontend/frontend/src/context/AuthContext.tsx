@@ -10,6 +10,7 @@ interface User {
   allowed_menus: string[]; // Liste des menus auxquels l'utilisateur a accès
   can_do_returns?: boolean;
   can_sell_negative_stock?: boolean;
+  can_cash_out?: boolean; // Autorisé à encaisser dans la caisse centralisée
 }
 
 // Définition du type pour le contexte d'authentification
@@ -42,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const allowed_menus = JSON.parse(localStorage.getItem('allowed_menus') || '[]');
     const can_do_returns = localStorage.getItem('can_do_returns') === 'true';
     const can_sell_negative_stock = localStorage.getItem('can_sell_negative_stock') === 'true';
+    const can_cash_out = localStorage.getItem('can_cash_out') === 'true';
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
@@ -51,7 +53,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         is_superuser, 
         allowed_menus,
         can_do_returns,
-        can_sell_negative_stock
+        can_sell_negative_stock,
+        can_cash_out
       });
       // On configure axios pour inclure ce token dans toutes les futures requêtes HTTP
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
@@ -69,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
     localStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
     localStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
+    localStorage.setItem('can_cash_out', String(userData.can_cash_out ?? true));
     
     // 2. On met à jour l'état de l'application
     setUser(userData);
@@ -86,6 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('allowed_menus');
     localStorage.removeItem('can_do_returns');
     localStorage.removeItem('can_sell_negative_stock');
+    localStorage.removeItem('can_cash_out');
     
     // 2. On remet l'utilisateur à null
     setUser(null);

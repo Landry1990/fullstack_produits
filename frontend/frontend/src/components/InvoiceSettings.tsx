@@ -8,6 +8,7 @@ interface InvoiceSettings {
     footer_text: string;
     header_layout: 'split' | 'left' | 'center' | 'right';
     primary_color: string;
+    centralized_cash_register?: boolean;
 }
 
 const InvoiceSettings: React.FC = () => {
@@ -16,7 +17,8 @@ const InvoiceSettings: React.FC = () => {
         company_address: '',
         footer_text: '',
         header_layout: 'split',
-        primary_color: '#000000'
+        primary_color: '#000000',
+        centralized_cash_register: false
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -121,6 +123,21 @@ const InvoiceSettings: React.FC = () => {
                             />
                             <span className="text-gray-600 font-mono">{settings.primary_color}</span>
                         </div>
+                        </div>
+
+                    <div className="pt-4 border-t border-gray-100">
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                            <input 
+                                type="checkbox"
+                                className="toggle toggle-success"
+                                checked={settings.centralized_cash_register || false}
+                                onChange={(e) => setSettings({...settings, centralized_cash_register: e.target.checked})}
+                            />
+                            <div>
+                                <span className="block text-sm font-medium text-gray-700">Mode Caisse Centralisée</span>
+                                <span className="block text-xs text-gray-500">Si activé, seuls les utilisateurs autorisés peuvent encaisser. Les autres envoient les commandes en attente.</span>
+                            </div>
+                        </label>
                     </div>
                 </div>
 

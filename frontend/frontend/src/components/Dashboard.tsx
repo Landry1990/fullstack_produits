@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import type { ProduitModel, StockLot } from '../types';
+import type { StockLot } from '../types';
 import {
   LineChart,
   Line,
@@ -22,8 +22,6 @@ interface DashboardStats {
   receivables: { value: number; count: number };
   discount: { value: number; change: number };
 }
-
-
 
 interface Transaction {
   id: number;
@@ -72,9 +70,6 @@ export default function Dashboard() {
   const dashboardEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/dashboard/`
     : '/api/dashboard/'
-  const produitsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
-    : '/api/produits/'
   const ugStatsEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stats-ug/par_fournisseur/`
     : '/api/stats-ug/par_fournisseur/'
@@ -191,7 +186,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {stats && [
           { 
             title: "Chiffre d'affaires", 
@@ -257,9 +252,8 @@ export default function Dashboard() {
       </div>
 
       {/* Section Unités Gratuites (UG) */}
-      {/* Section Unités Gratuites (UG) */}
       {ugStats && (ugStats as any).results && (
-        <div className="card bg-base-100 shadow-sm border border-base-200 lg:w-1/2">
+        <div className="card bg-base-100 shadow-sm border border-base-200 w-full xl:w-2/3">
           <div className="card-body p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -321,9 +315,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left Column: Charts & Transactions */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           {/* Revenue Bar Chart */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
@@ -587,7 +581,7 @@ export default function Dashboard() {
                 {expiringLots.length === 0 ? (
                   <div className="text-sm text-base-content/60 text-center py-2">Aucun lot proche de la péremption</div>
                 ) : (
-                  expiringLots.map((lot, i) => {
+                  expiringLots.map((lot) => {
                     const daysUntilExpiry = lot.date_expiration 
                       ? Math.floor((new Date(lot.date_expiration).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
                       : 0;

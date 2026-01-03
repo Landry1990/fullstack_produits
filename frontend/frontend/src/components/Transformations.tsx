@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 
@@ -35,7 +34,6 @@ interface HistoriqueTransformation {
 
 const Transformations: React.FC = () => {
   const confirm = useConfirm();
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'relations' | 'historique'>('relations');
   const [relations, setRelations] = useState<RelationTransformation[]>([]);
   const [historique, setHistorique] = useState<HistoriqueTransformation[]>([]);
@@ -61,6 +59,11 @@ const Transformations: React.FC = () => {
 
   const [submitting, setSubmitting] = useState(false);
 
+  // URL de base API dynamique
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL 
+    ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api`
+    : '/api';
+
   useEffect(() => {
     fetchData();
     fetchProduits();
@@ -74,7 +77,7 @@ const Transformations: React.FC = () => {
     
     setSubmitting(true);
     try {
-      const res = await axios.post(`http://localhost:8000/api/relations-transformation/${transformationData.relation.id}/transformer/`, {
+      const res = await axios.post(`${apiBaseUrl}/relations-transformation/${transformationData.relation.id}/transformer/`, {
         quantite: transformationData.quantite,
         notes: transformationData.notes
       });
@@ -103,8 +106,8 @@ const Transformations: React.FC = () => {
   const fetchData = async () => {
     try {
       const [relationsRes, historiqueRes] = await Promise.all([
-        axios.get('http://localhost:8000/api/relations-transformation/'),
-        axios.get('http://localhost:8000/api/historique-transformation/')
+        axios.get(`${apiBaseUrl}/relations-transformation/`),
+        axios.get(`${apiBaseUrl}/historique-transformation/`)
       ]);
       
       // Gestion de la pagination DRF (results) ou liste directe
@@ -123,7 +126,8 @@ const Transformations: React.FC = () => {
 
   const fetchProduits = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/produits/');
+      // Demander tous les produits pour les dropdowns (grande taille de page)
+      const res = await axios.get(`${apiBaseUrl}/produits/?page_size=10000`);
       // Gestion pagination
       const produitsData = Array.isArray(res.data) ? res.data : (res.data.results || []);
       setProduits(produitsData);
@@ -135,7 +139,7 @@ const Transformations: React.FC = () => {
   const handleCreateRelation = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:8000/api/relations-transformation/', {
+      await axios.post(`${apiBaseUrl}/relations-transformation/`, {
         produit_source: parseInt(newRelation.produit_source),
         produit_destination: parseInt(newRelation.produit_destination),
         ratio: parseFloat(newRelation.ratio)
@@ -173,7 +177,7 @@ const Transformations: React.FC = () => {
     })
     if (!confirmed) return;
     try {
-      await axios.delete(`http://localhost:8000/api/relations-transformation/${id}/`);
+      await axios.delete(`${apiBaseUrl}/relations-transformation/${id}/`);
       toast.success("Relation supprimée");
       fetchData();
     } catch (error) {

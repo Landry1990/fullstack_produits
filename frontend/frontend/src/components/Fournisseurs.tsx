@@ -226,126 +226,148 @@ export default function Fournisseurs() {
   }
 
   return (
-    <>
-      <h1 className="text-3xl font-bold mb-4 text-center">Gestion des Fournisseurs</h1>
-
+    <div className="flex flex-col h-full p-4 space-y-4">
       {error && (
-        <div role="alert" className="alert alert-error mb-4">
+        <div role="alert" className="alert alert-error shrink-0">
           <span>{error}</span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="card-title">Liste des fournisseurs</h2>
-              <div className="card-actions">
-                {loading && <span className="loading loading-spinner loading-sm" />}
-                <button className="btn btn-primary" onClick={openAddModal}>Ajouter</button>
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-0">
+         {/* Left Panel: List */}
+         <div className="md:col-span-1 lg:col-span-2 bg-white rounded-lg shadow flex flex-col overflow-hidden h-full">
+            {/* Header */}
+            <div className="p-4 border-b flex justify-between items-center shrink-0 bg-base-50/50">
+               <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-bold">Fournisseurs</h2>
+                  {loading ? (
+                      <span className="loading loading-spinner loading-xs text-primary"></span>
+                  ) : (
+                      <span className="badge badge-sm badge-neutral text-xs">{fournisseurs.length}</span>
+                  )}
+               </div>
+               <button className="btn btn-primary btn-sm gap-2" onClick={openAddModal}>
+                 ➕ Nouveau
+               </button>
             </div>
             
-            {/* Champ de recherche */}
-            <div className="form-control mb-4">
-              <div className="input-group">
-                <input 
-                  ref={searchInputRef}
-                  type="text" 
-                  placeholder="Rechercher un fournisseur... (utilisez ↑↓ pour naviguer, Entrée pour sélectionner)" 
-                  className="input input-bordered flex-1" 
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setHighlightedIndex(-1);
-                  }}
-                  onKeyDown={handleKeyDown}
-                />
-                <button className="btn btn-square" type="button">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </button>
-              </div>
+            {/* Search */}
+            <div className="p-3 bg-white border-b">
+                 <div className="relative">
+                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <span className="opacity-50">🔍</span>
+                   </div>
+                   <input 
+                      ref={searchInputRef}
+                      type="text" 
+                      placeholder="Rechercher (nom, tél, email)..." 
+                      className="input input-sm input-bordered w-full pl-9" 
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setHighlightedIndex(-1);
+                      }}
+                      onKeyDown={handleKeyDown}
+                    />
+                 </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="table table-zebra table-xs">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Téléphone</th>
-                    <th>Email</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFournisseurs.length > 0 ? (
-                    filteredFournisseurs.map((fournisseur, index) => (
-                      <tr 
-                        key={fournisseur.id} 
-                        className={`hover cursor-pointer ${
-                          selectedFournisseur?.id === fournisseur.id ? 'active' : ''
-                        } ${
-                          searchTerm && highlightedIndex === index ? 'bg-primary text-primary-content' : ''
-                        }`}
-                        onClick={() => selectFournisseur(fournisseur)}
-                      >
-                        <td>{fournisseur.name}</td>
-                        <td>{fournisseur.phone}</td>
-                        <td>{fournisseur.email}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3} className="text-center text-base-content/70 py-8">
-                        {searchTerm ? 'Aucun fournisseur trouvé pour cette recherche' : 'Aucun fournisseur enregistré'}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
 
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex justify-between items-center">
-              <h2 className="card-title">Détails du fournisseur</h2>
-              {selectedFournisseur && (
-                <div className="card-actions">
-                  <button className="btn btn-secondary btn-sm" onClick={openEditModal}>Modifier</button>
-                  <button className="btn btn-error btn-sm" onClick={handleDeleteFournisseur}>Supprimer</button>
-                </div>
-              )}
+            {/* Table */}
+            <div className="flex-1 overflow-auto">
+               <table className="table table-xs table-pin-rows w-full">
+                 <thead className="bg-base-100 text-base-content/70">
+                   <tr>
+                     <th>Nom</th>
+                     <th>Téléphone</th>
+                     <th>Email</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                    {filteredFournisseurs.length > 0 ? (
+                      filteredFournisseurs.map((fournisseur, index) => (
+                        <tr 
+                          key={fournisseur.id} 
+                          className={`hover cursor-pointer transition-colors ${
+                            selectedFournisseur?.id === fournisseur.id ? 'bg-primary/10 border-l-4 border-primary' : ''
+                          } ${
+                            searchTerm && highlightedIndex === index ? 'bg-base-200' : ''
+                          }`}
+                          onClick={() => selectFournisseur(fournisseur)}
+                        >
+                          <td className="font-bold">{fournisseur.name}</td>
+                          <td className="font-mono">{fournisseur.phone}</td>
+                          <td className="opacity-70">{fournisseur.email}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} className="text-center py-10 opacity-50">
+                           <div className="flex flex-col items-center gap-2">
+                             <span className="text-2xl">📭</span>
+                             <span>{searchTerm ? 'Aucun résultat' : 'Liste vide'}</span>
+                           </div>
+                        </td>
+                      </tr>
+                    )}
+                 </tbody>
+               </table>
             </div>
-            {!selectedFournisseur ? (
-              <p className="text-base-content/70">Sélectionnez un fournisseur dans la liste.</p>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">ID</span>
-                  <span className="col-span-2">{selectedFournisseur.id}</span>
+         </div>
+
+         {/* Right Panel: Details */}
+         <div className="bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
+             {selectedFournisseur ? (
+                <>
+                  <div className="p-6 border-b bg-base-50/30 shrink-0 flex justify-between items-start">
+                     <div>
+                        <div className="text-xs uppercase font-bold opacity-40 mb-1">Détails Fournisseur</div>
+                        <h2 className="text-xl font-bold text-base-content">{selectedFournisseur.name}</h2>
+                     </div>
+                     <div className="join shadow-sm">
+                        <button className="btn btn-sm btn-outline join-item" onClick={openEditModal} title="Modifier">✏️</button>
+                        <button className="btn btn-sm btn-outline btn-error join-item" onClick={handleDeleteFournisseur} title="Supprimer">🗑️</button>
+                     </div>
+                  </div>
+                  
+                  <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                      <div className="grid grid-cols-1 gap-6">
+                          <div className="flex gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">📍</div>
+                              <div>
+                                  <div className="text-xs font-bold opacity-50 uppercase mb-1">Adresse</div>
+                                  <div className="text-sm whitespace-pre-wrap leading-relaxed">{selectedFournisseur.address || 'Non renseignée'}</div>
+                              </div>
+                          </div>
+                          <div className="flex gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary shrink-0">📞</div>
+                              <div>
+                                  <div className="text-xs font-bold opacity-50 uppercase mb-1">Téléphone</div>
+                                  <div className="text-sm font-mono font-medium">{selectedFournisseur.phone || '-'}</div>
+                              </div>
+                          </div>
+                          <div className="flex gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent shrink-0">✉️</div>
+                              <div>
+                                  <div className="text-xs font-bold opacity-50 uppercase mb-1">Email</div>
+                                  <div className="text-sm break-all">{selectedFournisseur.email || '-'}</div>
+                              </div>
+                          </div>
+                      </div>
+                      
+                      <div className="divider"></div>
+                      
+                      <div className="text-xs text-center opacity-40">
+                         ID Système: {selectedFournisseur.id}
+                      </div>
+                  </div>
+                </>
+             ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-base-content/30 p-10 text-center">
+                    <span className="text-5xl mb-4 grayscale opacity-50">🏢</span>
+                    <p className="font-medium">Sélectionnez un fournisseur<br/>pour consulter ses détails</p>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Nom</span>
-                  <span className="col-span-2">{selectedFournisseur.name}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Adresse</span>
-                  <span className="col-span-2 whitespace-pre-wrap">{selectedFournisseur.address}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Téléphone</span>
-                  <span className="col-span-2">{selectedFournisseur.phone}</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <span className="font-semibold col-span-1">Email</span>
-                  <span className="col-span-2">{selectedFournisseur.email}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+             )}
+         </div>
       </div>
 
       {/* Add Modal */}
@@ -595,6 +617,6 @@ export default function Fournisseurs() {
           <button>close</button>
         </form>
       </dialog>
-    </>
+    </div>
   );
 }

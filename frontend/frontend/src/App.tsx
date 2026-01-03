@@ -24,6 +24,7 @@ import InvoiceSettings from './components/InvoiceSettings'
 import JournalAudit from './components/JournalAudit'
 import Promis from './components/Promis'
 import StockAnalysis from './components/StockAnalysis'
+import CaisseCentralisee from './components/CaisseCentralisee'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -49,7 +50,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/" />;
   }
 
-  return user.is_superuser ? <>{children}</> : <Navigate to="/app/produits" />;
+  return user.is_superuser ? <>{children}</> : <Navigate to="/app/facturation" />;
 };
 
 const HomeRedirector = () => {
@@ -63,7 +64,15 @@ const HomeRedirector = () => {
     return <Navigate to="/" />;
   }
 
-  return user.is_superuser ? <Navigate to="/app/dashboard" /> : <Navigate to="/app/produits" />;
+  if (user.is_superuser) return <Navigate to="/app/dashboard" />;
+  
+  const allowed = (user as any).allowed_menus || [];
+  if (allowed.includes('dashboard')) return <Navigate to="/app/dashboard" />;
+  if (allowed.includes('facturation')) return <Navigate to="/app/facturation" />;
+  if (allowed.includes('caisse')) return <Navigate to="/app/caisse-centralisee" />;
+  if (allowed.includes('produits')) return <Navigate to="/app/produits" />;
+  
+  return <Navigate to="/app/facturation" />; // Fallback safer
 };
 
 const router = createBrowserRouter([
@@ -81,11 +90,7 @@ const router = createBrowserRouter([
           { index: true, element: <HomeRedirector /> },
           { 
             path: 'dashboard', 
-            element: (
-              <AdminRoute>
-                <Dashboard />
-              </AdminRoute>
-            ) 
+            element: <Dashboard />
           },
           { path: 'produits', element: <Produit /> },
           { path: 'commandes', element: <Commandes /> },
@@ -96,6 +101,7 @@ const router = createBrowserRouter([
           { path: 'formes', element: <Formes /> },
           { path: 'rayons', element: <Rayons /> },
           { path: 'facturation', element: <Facturation /> },
+          { path: 'caisse-centralisee', element: <CaisseCentralisee /> },
           { path: 'statistiques', element: <StatistiquesProduit /> },
           { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
           { path: 'journal-caisse', element: <JournalCaisse /> },

@@ -66,7 +66,8 @@ class CustomAuthToken(ObtainAuthToken):
             'is_superuser': user.is_superuser,
             'allowed_menus': user.profile.allowed_menus if hasattr(user, 'profile') else [],
             'can_do_returns': user.profile.can_do_returns if hasattr(user, 'profile') else False,
-            'can_sell_negative_stock': user.profile.can_sell_negative_stock if hasattr(user, 'profile') else False
+            'can_sell_negative_stock': user.profile.can_sell_negative_stock if hasattr(user, 'profile') else False,
+            'can_cash_out': user.profile.can_cash_out if hasattr(user, 'profile') else True
         })
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -1152,6 +1153,14 @@ class FactureViewSet(viewsets.ModelViewSet):
     queryset = Facture.objects.select_related('client', 'ayant_droit').prefetch_related('produits', 'paiements').all().order_by('-date')
     serializer_class = FactureSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = {
+        'status': ['exact', 'in'],
+        'client': ['exact'],
+        'date': ['gte', 'lte', 'date'],
+        'numero_facture': ['exact', 'icontains']
+    }
+    search_fields = ['numero_facture', 'client__name']
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -1366,6 +1375,27 @@ class FactureViewSet(viewsets.ModelViewSet):
             facture.numero_facture = f"FAC-{facture.id:06d}"
         facture.save(update_fields=['status', 'numero_facture'])
 
+        # Gestion automatique des créances pour clients professionnels
+        # Si le client est professionnel et qu'une part_client est définie,
+        # créer automatiquement une créance (paiement "en_compte") pour la part assurance
+        if facture.client and facture.client.client_type == 'PROFESSIONNEL':
+            if facture.part_client is not None:
+                # Calculer la part assurance (part entreprise)
+                part_assurance = facture.total_ttc - Decimal(str(facture.part_client))
+                
+                if part_assurance > 0:
+                    # Créer un paiement "en_compte" pour la part assurance
+                    # Cela créera automatiquement une créance visible dans le module Créances
+                    Caisse.objects.create(
+                        facture=facture,
+                        mode_paiement='en_compte',
+                        montant=part_assurance,
+                        statut='completee',
+                        user=request.user,
+                        part_assurance=part_assurance,
+                        part_patient=Decimal('0.00')
+                    )
+
         # Rafraîchir et sérialiser la facture
         facture.refresh_from_db()
         serializer = self.get_serializer(facture)
@@ -1384,18 +1414,18 @@ class FactureViewSet(viewsets.ModelViewSet):
         # Récupérer le motif
         motif = request.data.get('motif', '')
 
-        # 1. Restaurer le stock des produits
-        # DÉSORMAIS GÉRÉ PAR LES LOTS: La suppression des allocations FIFO ci-dessous
-        # libère les quantités dans les lots, et le signal recalcule automatiquement le stock
-        # for ligne in facture.produits.all():
-        #     produit = ligne.produit
-        #     produit.stock += ligne.quantity
-        #     produit.save(update_fields=['stock'])
-
-        # 2. Libérer les allocations FIFO
-        FactureProduitAllocation.objects.filter(
-            facture_produit__facture=facture
-        ).delete()
+        # 1. Restaurer le stock UNIQUEMENT si la facture était validée ou payée
+        # Les brouillons (BROU) n'ont jamais décrémenté le stock, donc pas besoin de le restaurer
+        was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        
+        if was_validated:
+            # 2. Libérer les allocations FIFO (ce qui restaurera le stock via les signaux)
+            # DÉSORMAIS GÉRÉ PAR LES LOTS: La suppression des allocations FIFO
+            # libère les quantités dans les lots, et le signal recalcule automatiquement le stock
+            FactureProduitAllocation.objects.filter(
+                facture_produit__facture=facture
+            ).delete()
+        # Pour les brouillons, pas de suppression d'allocations (il n'y en a pas)
 
         # 3. Enregistrer la date d'annulation
         facture.date_annulation = timezone.now()

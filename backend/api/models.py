@@ -16,6 +16,15 @@ class Profile(models.Model):
     allowed_menus = models.JSONField(default=list, blank=True)
     can_do_returns = models.BooleanField(default=False)
     can_sell_negative_stock = models.BooleanField(default=False)
+    # New permission for Centralized Cash Mode
+    can_cash_out = models.BooleanField(default=True, help_text="Autorisé à encaisser (si mode centralisé actif)")
+
+    ROLE_CHOICES = [
+        ('PHARMACIEN', 'Pharmacien'),
+        ('VENDEUR', 'Vendeur'),
+        ('CAISSIER', 'Caissier'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='VENDEUR')
 
     def __str__(self):
         return f"Profile of {self.user.username}"
@@ -342,6 +351,8 @@ class Facture(models.Model):
     points_fidelite_gagnes = models.IntegerField(default=0)
     points_fidelite_utilises = models.IntegerField(default=0)
     montant_fidelite = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    part_client = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Part à payer par le client (Tiers Payant)")
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
@@ -690,31 +701,70 @@ class Caisse(models.Model):
         ]
 
 @receiver(post_save, sender=Caisse)
-def update_facture_status_on_payment(sender, instance, created, **kwargs):
+def handle_caisse_post_save(sender, instance, created, **kwargs):
     """
-    Met à jour automatiquement le statut de la facture vers PAYEE
-    lorsque le total des paiements atteint ou dépasse le montant total TTC.
-    Exception: les paiements 'en_compte' ne marquent pas la facture comme payée.
+    Logique métier après enregistrement d'un règlement :
+    1. Marquage Tiers Payant (Part Patient) pour le ticket.
+    2. Split Billing (Génération automatique du crédit assurance).
+    3. Mise à jour du statut de la facture vers PAYEE.
     """
-    if instance.statut == 'completee':
-        # Ne pas marquer comme payée si le mode de paiement est 'en_compte'
-        if instance.mode_paiement != 'en_compte':
-            facture = instance.facture
-            # Permettre la mise à jour pour toutes les factures non-annulées et non-payées
-            if facture.status not in [Facture.Status.ANNULEE, Facture.Status.PAYEE]:
-                # Calculer le total des paiements complétés (hors 'en_compte')
-                total_paiements = facture.paiements.filter(
-                    statut='completee'
-                ).exclude(
-                    mode_paiement='en_compte'
-                ).aggregate(
-                    total=Sum('montant')
-                )['total'] or Decimal('0.00')
+    if instance.statut != 'completee':
+        return
+
+    facture = instance.facture
+    
+    # 1. Marquage Tiers Payant (Part Patient)
+    # Si la facture a une part_client définie, on marque tout paiement réel comme 'Part Patient'
+    if facture.part_client is not None and instance.mode_paiement != 'en_compte':
+        if not instance.part_patient and (instance.part_assurance is None or instance.part_assurance == 0):
+            # Utilisation de .update() pour ne pas redéclencher le signal post_save
+            Caisse.objects.filter(id=instance.id).update(
+                part_patient=instance.montant,
+                part_assurance=Decimal('0.00')
+            )
+
+    # 2. Split Billing (Génération automatique de la créance)
+    # Si le montant cumulé payé par le client atteint sa part_client, on bascule le reste en crédit.
+    if created and facture.part_client is not None and instance.mode_paiement != 'en_compte':
+        paiements_reels = Caisse.objects.filter(
+            facture=facture, 
+            statut='completee'
+        ).exclude(mode_paiement='en_compte').aggregate(total=Sum('montant'))['total'] or Decimal('0')
+        
+        if paiements_reels >= facture.part_client:
+            reste_a_couvrir = facture.total_ttc - paiements_reels
+            if reste_a_couvrir > Decimal('1.00'):
+                # Vérifier si on a déjà généré un crédit automatique pour cette facture
+                deja_traite = Caisse.objects.filter(
+                    facture=facture, 
+                    mode_paiement='en_compte',
+                    reference__startswith='AUTO-CREDIT'
+                ).exists()
                 
-                # Marquer comme payée si le total des paiements >= total TTC
-                if total_paiements >= facture.total_ttc:
-                    facture.status = Facture.Status.PAYEE
-                    facture.save(update_fields=['status'])
+                if not deja_traite:
+                    # Création du paiement 'En Compte' pour le solde (Part Assurance)
+                    Caisse.objects.create(
+                        facture=facture,
+                        mode_paiement='en_compte',
+                        montant=reste_a_couvrir,
+                        user=instance.user,
+                        statut='completee',
+                        reference=f"AUTO-CREDIT-{facture.numero_facture or facture.id}",
+                        part_assurance=reste_a_couvrir,
+                        part_patient=Decimal('0.00')
+                    )
+
+    # 3. Mise à jour du statut de la facture
+    # Si le total des règlements (Cash + Crédit) couvre le montant TTC, la facture est payée.
+    if facture.status not in [Facture.Status.ANNULEE, Facture.Status.PAYEE]:
+        total_encaisse = Caisse.objects.filter(
+            facture=facture, 
+            statut='completee'
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+        
+        if total_encaisse >= facture.total_ttc:
+            facture.status = Facture.Status.PAYEE
+            facture.save(update_fields=['status'])
 
 
 
@@ -1086,6 +1136,7 @@ class InvoiceSettings(models.Model):
     
     header_layout = models.CharField(max_length=20, choices=HEADER_LAYOUT_CHOICES, default='split')
     primary_color = models.CharField(max_length=7, default="#000000") # Hex code
+    centralized_cash_register = models.BooleanField(default=False, help_text="Activer le mode Caisse Centralisée")
 
     def save(self, *args, **kwargs):
         # Singleton logic: ensure only one instance exists
