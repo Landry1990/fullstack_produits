@@ -21,9 +21,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         
         # Apply date filters
         if date_debut:
-            factures = factures.filter(date__gte=date_debut)
+            factures = factures.filter(date__date__gte=date_debut)
         if date_fin:
-            factures = factures.filter(date__lte=date_fin)
+            factures = factures.filter(date__date__lte=date_fin)
         
         # Group by date and aggregate
         daily_stats = factures.annotate(

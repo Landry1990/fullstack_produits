@@ -49,7 +49,7 @@ class ClientListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'phone', 'email', 'address',
             'client_type', 'current_debt', 'is_loyalty_member',
-            'points_fidelite'
+            'points_fidelite', 'taux_couverture', 'plafond'
         ]
 
 

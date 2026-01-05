@@ -402,8 +402,9 @@ export default function Facturation() {
           setShowStockResolution(true)
       } else {
           setIsNewSale(true)
-          // Auto-fill montant with total to pay
-          setMontantPaye(Math.round(totals.totalTtc).toString())
+          // Auto-fill montant with total to pay (Part Patient if Tiers Payant, else Total TTC)
+          const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
+          setMontantPaye(Math.round(montantInitial).toString())
           setIsPaymentModalOpen(true)
       }
   }
@@ -602,7 +603,8 @@ export default function Facturation() {
     
     if (!useManualClient && selectedClient) {
       const client = clients.find(c => c.id === selectedClient)
-      if (client?.client_type === 'PROFESSIONNEL' && client.taux_couverture) {
+      
+      if (client?.client_type === 'PROFESSIONNEL' && client.taux_couverture !== undefined && client.taux_couverture !== null) {
         tauxCouverture = normalizeNumberInput(client.taux_couverture, { min: 0, max: 100 })
         if (tauxCouverture > 0) {
           partAssurance = Math.round(totalTtcBase * (tauxCouverture / 100))

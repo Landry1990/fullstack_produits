@@ -27,7 +27,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 @receiver(post_save, sender=InvoiceSettings)
 def log_save(sender, instance, created, **kwargs):
     # Determine Action
-    action = AuditLog.Action.create if created else AuditLog.Action.update
+    action = AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE
     model_name = sender.__name__
     
     # Serialize data
@@ -56,7 +56,7 @@ def log_delete(sender, instance, **kwargs):
     model_name = sender.__name__
     
     AuditLog.objects.create(
-        action=AuditLog.Action.delete,
+        action=AuditLog.Action.DELETE,
         model_name=model_name,
         object_id=str(instance.pk),
         details=json.dumps({"info": "Deleted completely"}, cls=DjangoJSONEncoder)
