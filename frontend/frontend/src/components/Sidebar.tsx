@@ -19,6 +19,7 @@ export default function Sidebar() {
       ),
       submenus: [
         { path: '/app/ventes', label: 'Consultation', key: 'ventes' },
+        { path: '/app/historique-ventes', label: '📅 Historique par Jour', key: 'ventes' },
         { path: '/app/journal-caisse', label: 'Journal de Caisse', key: 'ventes' },
         { path: '/app/historique-clotures', label: '📊 Historique Clôtures', key: 'ventes' },
         { path: '/app/caisse-centralisee', label: '💰 Caisse Centralisée', key: 'caisse' }

@@ -27,6 +27,7 @@ import Promis from './components/Promis'
 import StockAnalysis from './components/StockAnalysis'
 import CaisseCentralisee from './components/CaisseCentralisee'
 import HistoriqueClotures from './components/HistoriqueClotures'
+import HistoriqueVentes from './components/HistoriqueVentes'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -116,6 +117,7 @@ const router = createBrowserRouter([
           { path: 'journal-ajustements', element: <JournalAjustements /> },
           { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
+          { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
           { path: 'invoice-settings', element: <InvoiceSettings /> },
           { 

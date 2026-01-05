@@ -82,10 +82,12 @@ export default function PaymentModal({
             }} className="p-6 space-y-5">
               
               <div className="text-center mb-6">
-                <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">Total à payer</div>
+                <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">
+                    {isNewSale && totals.tauxCouverture > 0 ? "Reste à charge (Part Patient)" : "Total à payer"}
+                </div>
                 <div className="text-4xl font-light text-primary">
                     {isNewSale 
-                        ? Math.round(totals.totalTtc) 
+                        ? Math.round(totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
                         : Math.round(Number(facturePourPaiement?.total_ttc))} F
                 </div>
               </div>
@@ -257,7 +259,10 @@ export default function PaymentModal({
                                   if (montantPaye && Number(montantPaye) > 0) {
                                       setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                       // Calculer le reste à payer pour la prochaine entrée
-                                      const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                      const totalAPayer = isNewSale 
+                                        ? (totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                                        : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                      
                                       const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
                                       const reste = Math.max(0, totalAPayer - dejaVerse)
                                       setMontantPaye(reste > 0 ? reste.toString() : '')
@@ -275,7 +280,10 @@ export default function PaymentModal({
                         onClick={() => {
                             if (montantPaye && Number(montantPaye) > 0) {
                                 setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
-                                const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                const totalAPayer = isNewSale 
+                                    ? (totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                                    : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                                
                                 const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
                                 const reste = Math.max(0, totalAPayer - dejaVerse)
                                 setMontantPaye(reste > 0 ? reste.toString() : '')
@@ -289,7 +297,9 @@ export default function PaymentModal({
               )}
 
               {(() => {
-                const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
+                const totalAPayer = isNewSale 
+                    ? (totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                    : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                 const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 ? Number(montantPaye) : 0)
                 const rendu = totalVerse - totalAPayer
                 return (

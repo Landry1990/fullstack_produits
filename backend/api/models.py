@@ -412,10 +412,23 @@ class Facture(models.Model):
         self.total_tva = total_tva
         self.total_ttc = total_ttc_apres_remise
         
+        # Calcul de la Part Client (Split Billing)
+        # Si le client a une couverture (ex: 70%), la part client est le reste (30%)
+        # Sinon, part client = 100% du TTC
+        if self.client and self.client.taux_couverture > 0:
+            taux_assurance = self.client.taux_couverture
+            taux_client = Decimal('100.00') - taux_assurance
+            # Protection contre taux incohérents
+            if taux_client < 0: taux_client = Decimal('0.00')
+            
+            self.part_client = (self.total_ttc * taux_client / Decimal('100.00')).quantize(Decimal('0.01'))
+        else:
+            self.part_client = self.total_ttc
+
         if save:
             # On update uniquement les champs de totaux pour éviter de déclencher des signaux récursifs inutiles
             # ou d'écraser d'autres changements concurrents
-            self.save(update_fields=['total_ht', 'total_tva', 'total_ttc'])
+            self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client'])
 
 
     class Meta:

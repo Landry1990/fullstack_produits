@@ -57,6 +57,7 @@ from .serializers_optimized import (
 from .serializer_mixins import OptimizedSerializerMixin
 from .cache_mixins import CachedSearchMixin
 from decimal import Decimal
+from .historique_ventes_view import HistoriqueVentesViewSet
 
 # Create your views here.
 
@@ -1597,6 +1598,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             facture.numero_facture = f"FAC-{facture.id:06d}"
         facture.save(update_fields=['status', 'numero_facture'])
 
+        # CRITICAL: Recalculer les totaux (y compris part_client) après avoir ajouté les produits
+        # Ceci est essentiel pour les clients professionnels avec tiers payant
+        facture.calculate_totals(save=True)
+
         # Gestion automatique des créances pour clients professionnels
         # Si le client est professionnel et qu'une part_client est définie,
         # créer automatiquement une créance (paiement "en_compte") pour la part assurance
@@ -2100,6 +2105,15 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             ['', '', '', f'TVA ({facture.tva}%):', f"{tva_montant:.2f} F"],
             ['', '', '', 'TOTAL TTC:', f"{total_ttc:.2f} F"]
         ]
+        
+        # Ajouter les parts Tiers Payant si applicable
+        if facture.part_client is not None and facture.client and facture.client.taux_couverture > 0:
+            part_assurance = total_ttc - facture.part_client
+            totaux_data.extend([
+                ['', '', '', '', ''],  # Ligne vide
+                ['', '', '', f'Part Assurance ({facture.client.taux_couverture}%):', f"{part_assurance:.2f} F"],
+                ['', '', '', f'Part Client ({100 - facture.client.taux_couverture}%):', f"{facture.part_client:.2f} F"]
+            ])
         
         totaux_table = Table(totaux_data, colWidths=[0.5*inch, 2.5*inch, 1*inch, 1*inch, 1*inch])
         totaux_table.setStyle(TableStyle([
@@ -2708,7 +2722,10 @@ class DashboardViewSet(viewsets.ViewSet):
         ).annotate(
             annotated_total_ttc=(
                 F('annotated_total_ht') - F('remise')
-            ) * (Value(Decimal('1.00')) + (F('tva') / Value(Decimal('100.00'))))
+            )
+            # FIX: Previously we multiplied by (1 + TVA/100), but 'annotated_total_ht' comes from 
+            # FactureProduit.selling_price which is ALREADY TTC (Tax Included).
+            # So the formula is simply: TotalTTC (sum of lines) - GlobalDiscount.
         )
 
         
@@ -2784,16 +2801,19 @@ class DashboardViewSet(viewsets.ViewSet):
 
         # --- 4. Créances Clients ---
         # Calcul du reste à payer sur la base annotée
+        # FIX: Align logic with CreanceViewSet & Client.current_debt
+        # We assume annotated_total_paye EXCLUDES 'en_compte' payments (defined in subquery above)
+        # So reste_a_payer > 0 means the client owes money (either unpaid, partial cash, or credit)
         receivables_aggs = factures_annotated.filter(
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            paiements__mode_paiement='en_compte'
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            # REMOVED: paiements__mode_paiement='en_compte' (To include ALL debt)
         ).annotate(
             reste_a_payer=F('annotated_total_ttc') - F('annotated_total_paye')
         ).filter(
             reste_a_payer__gt=Decimal('0.1') # Tolérance centimes
         ).aggregate(
             total_receivables=Sum('reste_a_payer'),
-            receivables_count=Count('id')
+            receivables_count=Count('id', distinct=True) # FIX: Avoid duplicate counts if joins occur
         )
 
         total_receivables = receivables_aggs['total_receivables'] or Decimal('0.00')
