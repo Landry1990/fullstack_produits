@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
@@ -14,7 +14,7 @@ export default function CaisseCentralisee() {
   const [facturesEnAttente, setFacturesEnAttente] = useState<Facture[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
-  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [montantPaye, setMontantPaye] = useState('')
   const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo'>('especes')
   const [reference, setReference] = useState('')
@@ -22,27 +22,41 @@ export default function CaisseCentralisee() {
   const [showTicketPreview, setShowTicketPreview] = useState(false)
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+  const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
 
   // Fonction pour récupérer les factures en attente
   const fetchFacturesEnAttente = useCallback(async () => {
     try {
       const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
       
-      
-      // Filtrer par statut BROU (Brouillon) ou VAL (Validée-Non Payée), toutes dates confondues
+      // Fetch list of pending invoices
       const response = await axios.get(`${facturesEndpoint}?status__in=BROU,VAL`)
-      setFacturesEnAttente(response.data.results || response.data || [])
+      const facturesList = response.data.results || response.data || []
+      
+      // Fetch full details for each invoice to get products
+      const facturesWithDetails = await Promise.all(
+        facturesList.map(async (facture: Facture) => {
+          try {
+            const detailResponse = await axios.get(`${facturesEndpoint}${facture.id}/`)
+            return detailResponse.data
+          } catch (err) {
+            console.error(`Failed to fetch details for invoice ${facture.id}:`, err)
+            return facture // Fallback to list data
+          }
+        })
+      )
+      
+      setFacturesEnAttente(facturesWithDetails)
     } catch (err) {
       console.error('Erreur lors du chargement des factures en attente:', err)
     }
   }, [apiBaseUrl])
 
 
-  // Rafraîchissement automatique toutes les 5 secondes
+  // Rafraîchissement automatique toutes les 20 secondes
   useEffect(() => {
     fetchFacturesEnAttente()
-    const interval = setInterval(fetchFacturesEnAttente, 5000)
+    const interval = setInterval(fetchFacturesEnAttente, 20000)
     return () => clearInterval(interval)
   }, [fetchFacturesEnAttente])
 
@@ -58,7 +72,7 @@ export default function CaisseCentralisee() {
     setModePaiement('especes')
     setReference('')
     setPaiements([]) // Reset multiple payments
-    setShowPaymentModal(true)
+    setIsPaymentModalOpen(true)
   }
 
   // Enregistrer le paiement
@@ -142,7 +156,7 @@ export default function CaisseCentralisee() {
       } as any)
 
       // 6. Fermer la modale de paiement et afficher le ticket
-      setShowPaymentModal(false)
+      setIsPaymentModalOpen(false)
       setShowTicketPreview(true)
 
       // 7. Rafraîchir la liste
@@ -180,28 +194,57 @@ export default function CaisseCentralisee() {
     if (!window.confirm(`Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.`)) return
 
     try {
-      // 1. D'abord annuler la facture actuelle pour libérer le stock (si validée) ou nettoyer
+      setLoading(true)
       const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
+      
+      // 1. Fetch the FULL invoice detail (list endpoint doesn't include products)
+      const { data: fullFacture } = await axios.get<Facture>(`${facturesEndpoint}${facture.id}/`)
+      
+      if (!fullFacture.produits || fullFacture.produits.length === 0) {
+        toast.error('Cette facture ne contient aucun produit')
+        setLoading(false)
+        return
+      }
+      
+      // 2. Fetch complete product details for all products
+      const productPromises = fullFacture.produits.map(async (p: any) => {
+        try {
+          const response = await axios.get(`${produitsEndpoint}${p.produit}/`)
+          return {
+            id: response.data.id,
+            name: response.data.name,
+            price: p.selling_price,
+            quantity: p.quantity,
+            stock: response.data.stock,
+            discount: p.discount || 0,
+            cip: response.data.cip,
+            tva: response.data.tva
+          }
+        } catch (err) {
+          console.error(`Failed to fetch product ${p.produit}:`, err)
+          return {
+            id: p.produit,
+            name: p.produit_nom || 'Produit',
+            price: p.selling_price,
+            quantity: p.quantity,
+            stock: 9999,
+            discount: p.discount || 0
+          }
+        }
+      })
+
+      const cartItems = await Promise.all(productPromises)
+
+      // 3. Cancel the invoice after fetching all data
       await axios.post(`${facturesEndpoint}${facture.id}/annuler/`, { motif: 'Modification (Reload)' })
 
-      // 2. Préparer les données pour le panier
-      // Nécessite de mapper les produits de la facture vers le format du panier
-      // On suppose que facture.produits contient les infos nécessaires (id produit, nom, prix...)
-      const cartItems = facture.produits?.map((p: any) => ({
-        id: p.produit.id || p.produit, // Gestion selon format retourné (objet ou ID)
-        name: p.produit.name || p.produit_nom || 'Produit',
-        price: p.selling_price,
-        quantity: p.quantity,
-        stock: 9999, // Stock inconnu ici, mais pas bloquant pour l'edit
-        discount: p.discount || 0
-      })) || []
-
-      // 3. Rediriger vers Facturation avec l'état
+      // 4. Navigate to Facturation with complete state
       navigate('/app/facturation', { 
         state: { 
           cartData: cartItems,
-          client: facture.client ? { id: facture.client, name: facture.client_name } : null,
-          remise: facture.remise,
+          client: fullFacture.client ? { id: fullFacture.client, name: fullFacture.client_name } : null,
+          remise: fullFacture.remise,
           mode: 'edit_reload'
         } 
       })
@@ -209,6 +252,8 @@ export default function CaisseCentralisee() {
     } catch (err) {
       console.error('Erreur modification:', err)
       toast.error('Impossible de charger la facture pour modification')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -227,7 +272,7 @@ export default function CaisseCentralisee() {
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Actualisation auto (5s)
+            Actualisation auto (20s)
           </div>
           <div className="badge badge-lg badge-error">
             {facturesEnAttente.length} en attente
@@ -247,15 +292,20 @@ export default function CaisseCentralisee() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {facturesEnAttente.map((facture) => (
+            {facturesEnAttente
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date ascending
+              .map((facture, index) => (
               <div
                 key={facture.id}
                 className="bg-white rounded-lg shadow-md border-2 border-base-200 hover:border-primary transition-all p-6"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="text-xs text-base-content/60 uppercase tracking-wide">Facture</div>
-                    <div className="text-2xl font-bold text-primary">#{facture.numero_facture}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="badge badge-lg badge-neutral font-bold">#{index + 1}</div>
+                    <div>
+                      <div className="text-xs text-base-content/60 uppercase tracking-wide">Facture</div>
+                      <div className="text-2xl font-bold text-primary">#{facture.numero_facture}</div>
+                    </div>
                   </div>
                   <div className="badge badge-warning">En attente</div>
                 </div>
@@ -269,6 +319,31 @@ export default function CaisseCentralisee() {
                     <span className="text-base-content/60">Date:</span>
                     <span className="font-medium">{new Date(facture.date).toLocaleString('fr-FR')}</span>
                   </div>
+                  
+                  {/* Products Preview - Collapsible */}
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-xs text-primary hover:text-primary-focus flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      Voir les produits ({facture.produits?.length || 0})
+                    </summary>
+                    <div className="mt-2 bg-base-50 rounded p-2 space-y-1 max-h-40 overflow-y-auto">
+                      {facture.produits && facture.produits.length > 0 ? (
+                        facture.produits.map((p: any) => (
+                          <div key={p.id} className="flex justify-between text-xs bg-white p-2 rounded">
+                            <span className="font-medium">{p.produit_nom || `Produit #${p.produit}`}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-base-content/60">×{p.quantity}</span>
+                              <span className="font-bold">{Math.round(p.quantity * Number(p.selling_price))} F</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-xs text-center text-base-content/40 py-2">Aucun produit</div>
+                      )}
+                    </div>
+                  </details>
                 </div>
 
                 <div className="divider my-2"></div>
@@ -334,7 +409,7 @@ export default function CaisseCentralisee() {
       </div>
 
       {/* Modal de paiement */}
-      {showPaymentModal && selectedFacture && (
+      {isPaymentModalOpen && selectedFacture && (
         <div className="modal modal-open">
           <div className="modal-box max-w-md">
             <h3 className="font-bold text-lg mb-4">Encaissement - Facture #{selectedFacture.numero_facture}</h3>
@@ -449,7 +524,7 @@ export default function CaisseCentralisee() {
 
             <div className="modal-action">
               <button
-                onClick={() => setShowPaymentModal(false)}
+                onClick={() => setIsPaymentModalOpen(false)}
                 className="btn btn-ghost"
                 disabled={loading}
               >
@@ -464,7 +539,7 @@ export default function CaisseCentralisee() {
               </button>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setShowPaymentModal(false)}></div>
+          <div className="modal-backdrop" onClick={() => setIsPaymentModalOpen(false)}></div>
         </div>
       )}
 
@@ -532,47 +607,51 @@ export default function CaisseCentralisee() {
                   <div className="flex justify-between text-sm font-normal">
                     <span>Rendu</span>
                     <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
-                  </div>
-                )}
-                {ticketCaisse.paiements_details ? (
-                  <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
-                      <div className="font-bold mb-1">Règlements:</div>
-                      {ticketCaisse.paiements_details.map((paiement: any, idx: number) => {
-                        const getModeLabel = (mode: string) => {
-                          if (!mode) return 'N/A'
-                          const labels: { [key: string]: string } = {
-                            'especes': 'Espèces',
-                            'carte': 'Carte',
-                            'cheque': 'Chèque',
-                            'virement': 'Virement',
-                            'om': 'Orange Money',
-                            'momo': 'Mobile Money',
-                            'en_compte': 'En compte'
-                          }
-                          return labels[mode] || mode.toUpperCase()
+                </div>
+              )}
+              {ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 ? (
+                <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
+                    <div className="font-bold mb-1">Règlements:</div>
+                    {ticketCaisse.paiements_details.map((paiement: any, idx: number) => {
+                      const getModeLabel = (mode: string) => {
+                        if (!mode) return 'N/A'
+                        const labels: { [key: string]: string } = {
+                          'especes': 'Espèces',
+                          'carte': 'Carte',
+                          'cheque': 'Chèque',
+                          'virement': 'Virement',
+                          'om': 'Orange Money',
+                          'momo': 'Mobile Money',
+                          'en_compte': 'En compte'
                         }
-                        
-                        // Check if it's tiers payant payment
-                        const isPartPatient = paiement.part_patient && paiement.part_patient > 0
-                        const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
-                        
-                        return (
-                          <div key={idx} className="flex justify-between">
-                            <span>
-                              {getModeLabel(paiement.mode)}
-                              {isPartPatient && <span className="text-success"> (Part Patient)</span>}
-                              {isPartAssurance && <span className="text-info"> (Part Assurance)</span>}
-                            </span>
-                            <span>{Math.round(paiement.montant)} F</span>
-                          </div>
-                        )
-                      })}
-                  </div>
-                ) : (
-                  <div className="text-xs font-normal mt-2 text-center">
-                    Mode: {ticketCaisse.mode_paiement.toUpperCase()}
-                  </div>
-                )}
+                        return labels[mode] || mode.toUpperCase()
+                      }
+                      
+                      // Check if it's tiers payant payment
+                      const isPartPatient = paiement.part_patient && paiement.part_patient > 0
+                      const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
+                      
+                      return (
+                        <div key={idx} className="flex justify-between">
+                          <span>
+                            {getModeLabel(paiement.mode || paiement.mode_paiement || 'N/A')}
+                            {isPartPatient && <span className="text-success"> (Part Patient)</span>}
+                            {isPartAssurance && <span className="text-info"> (Part Assurance)</span>}
+                          </span>
+                          <span>{Math.round(paiement.montant)} F</span>
+                        </div>
+                      )
+                    })}
+                </div>
+              ) : ticketCaisse.mode_paiement ? (
+                <div className="text-xs font-normal mt-2 text-center">
+                  Mode: {ticketCaisse.mode_paiement.toUpperCase()}
+                </div>
+              ) : (
+                <div className="text-xs text-red-500 mt-2 text-center">
+                  [Aucun mode de paiement détecté]
+                </div>
+              )}
               </div>
               
               <div className="text-center mt-6 text-xs">

@@ -7,7 +7,7 @@ from .views import (
     MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView,
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
-    InvoiceConfigurationView,
+    InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
     generer_suggestions_commande
 )
 
@@ -37,6 +37,8 @@ router.register(r'ligne-avoirs', LigneAvoirViewSet, basename='ligneavoir')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')
 router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
+router.register(r'clotures-caisse', ClotureCaisseViewSet, basename='cloturecaisse')
+router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadjustment')
 
 
 # The API URLs are now determined automatically by the router.
@@ -44,6 +46,6 @@ urlpatterns = [
     path('stock-analysis/unsold/', StockAnalysisUnsoldView.as_view(), name='stock-analysis-unsold'),
     path('stock-analysis/overstock/', StockAnalysisOverstockView.as_view(), name='stock-analysis-overstock'),
     path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),
-    path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
+    # The API URLs are now determined automatically by the router.
     path('', include(router.urls)),
 ]

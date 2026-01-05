@@ -12,6 +12,7 @@ export default function JournalCaisse() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<string>('all')
+  const [filterType, setFilterType] = useState<'all' | 'entrees' | 'sorties'>('all') // New: filter by entry/exit type
   const [dateDebut, setDateDebut] = useState('')
   const [dateFin, setDateFin] = useState('')
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
@@ -99,6 +100,9 @@ export default function JournalCaisse() {
       // Exclure les transactions 'en_compte'
       if (transaction.mode_paiement === 'en_compte') return false
 
+      // Transactions (sales) are not entries/exits - only show when filterType is 'all'
+      if (filterType !== 'all') return false
+
       // Filtre par mode de paiement
       const matchesMode = filterMode === 'all' || transaction.mode_paiement === filterMode
 
@@ -124,6 +128,11 @@ export default function JournalCaisse() {
        // For now, if mode is Espèces or All, we show them.
        const matchesMode = filterMode === 'all' || filterMode === 'especes'
 
+       // Filter by entry/exit type
+       const matchesType = filterType === 'all' || 
+        (filterType === 'entrees' && mouv.type === 'ENTREE') ||
+        (filterType === 'sorties' && mouv.type === 'SORTIE')
+
        let matchesDate = true
        if (dateDebut && dateFin) {
         const d = new Date(mouv.date)
@@ -132,7 +141,7 @@ export default function JournalCaisse() {
         fin.setHours(23, 59, 59, 999) 
         matchesDate = d >= debut && d <= fin
       }
-      return matchesSearch && matchesMode && matchesDate
+      return matchesSearch && matchesMode && matchesDate && matchesType
     })
 
     // Combine and mark types
@@ -144,7 +153,7 @@ export default function JournalCaisse() {
     // Sort by date desc
     return combined.sort((a, b) => new Date(b.date_paiement).getTime() - new Date(a.date_paiement).getTime())
 
-  }, [transactions, mouvements, searchQuery, filterMode, dateDebut, dateFin])
+  }, [transactions, mouvements, searchQuery, filterMode, filterType, dateDebut, dateFin])
 
   // Group transactions by Relevé
   const groupedItems = useMemo(() => {
@@ -456,6 +465,41 @@ export default function JournalCaisse() {
           {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
           Actualiser
         </button>
+        
+        {/* Quick Date Filter */}
+        <button
+          onClick={() => {
+            const today = new Date().toISOString().split('T')[0]
+            setDateDebut(today + 'T00:00')
+            setDateFin(today + 'T23:59')
+          }}
+          className="btn btn-sm btn-secondary gap-2 ml-2"
+        >
+          📅 Aujourd'hui
+        </button>
+        
+        {/* Entry/Exit Type Filter */}
+        <div className="btn-group ml-2">
+          <button 
+            className={`btn btn-sm ${filterType === 'all' ? 'btn-active' : ''}`}
+            onClick={() => setFilterType('all')}
+          >
+            Tout
+          </button>
+          <button 
+            className={`btn btn-sm ${filterType === 'entrees' ? 'btn-active btn-success' : ''}`}
+            onClick={() => setFilterType('entrees')}
+          >
+            📥 Entrées
+          </button>
+          <button 
+            className={`btn btn-sm ${filterType === 'sorties' ? 'btn-active btn-error' : ''}`}
+            onClick={() => setFilterType('sorties')}
+          >
+            📤 Sorties
+          </button>
+        </div>
+        
         <button
             onClick={() => setIsMovementModalOpen(true)}
             className="btn btn-sm btn-outline gap-2 ml-2"
@@ -536,12 +580,13 @@ export default function JournalCaisse() {
         </div>
 
         {/* Bouton reset filtres */}
-        {(searchQuery || filterMode !== 'all' || dateDebut || dateFin) && (
+        {(searchQuery || filterMode !== 'all' || filterType !== 'all' || dateDebut || dateFin) && (
           <div className="mt-3">
             <button
               onClick={() => {
                 setSearchQuery('')
                 setFilterMode('all')
+                setFilterType('all')
                 setDateDebut('')
                 setDateFin('')
               }}

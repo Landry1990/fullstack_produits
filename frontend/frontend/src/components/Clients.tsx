@@ -145,10 +145,7 @@ export default function Clients() {
         e.preventDefault();
         if (highlightedIndex >= 0 && highlightedIndex < filteredClients.length) {
           const client = filteredClients[highlightedIndex];
-          setSelectedClient(client);
-          setViewMode('DETAILS');
-          setSearchTerm('');
-          setHighlightedIndex(-1);
+          selectClient(client);
         }
         break;
       case 'Escape':
@@ -158,11 +155,26 @@ export default function Clients() {
     }
   }
 
-  function selectClient(client: ExtendedClient) {
-    setSelectedClient(client);
-    setViewMode('DETAILS');
-    setSearchTerm('');
-    setHighlightedIndex(-1);
+  async function selectClient(client: ExtendedClient) {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get<ExtendedClient>(`${clientsEndpoint}${client.id}/`);
+      setSelectedClient(response.data);
+      setViewMode('DETAILS');
+      setSearchTerm('');
+      setHighlightedIndex(-1);
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data ?? err.message;
+        setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
+      } else {
+        setError("Erreur lors du chargement des détails du client");
+      }
+      console.error('Erreur chargement client:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function openEditView() {
@@ -328,14 +340,32 @@ export default function Clients() {
         <div className="flex flex-col flex-1 min-h-0 space-y-4">
            {/* Header & Actions */}
            <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
-              <div>
+              <div className="flex flex-col">
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold">Gestion des Clients</h1>
                    {loading && <span className="loading loading-spinner loading-md text-primary"></span>}
                 </div>
                 <p className="text-sm text-base-content/60">Annuaire et fidélité</p>
               </div>
-              <div className="flex gap-2">
+              
+              <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                 <div className="relative flex-1 md:flex-none">
+                    <input 
+                       ref={searchInputRef}
+                       type="text" 
+                       placeholder="Rechercher (Nom, Tel)..." 
+                       className="input input-bordered w-full md:w-64 pl-10" 
+                       value={searchTerm}
+                       onChange={(e) => {
+                         setSearchTerm(e.target.value);
+                         setHighlightedIndex(-1);
+                       }}
+                       onKeyDown={handleKeyDown}
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                 </div>
                  <button className="btn btn-ghost btn-sm text-secondary gap-2" onClick={() => setIsLoyaltyConfigOpen(true)}>
                     <span className="text-lg">💎</span> Config.
                  </button>
@@ -347,41 +377,18 @@ export default function Clients() {
 
            {/* Tableau Container */}
            <div className="flex-1 bg-white rounded-lg shadow overflow-hidden flex flex-col min-h-0">
-             {/* Search Bar */}
-             <div className="p-4 border-b border-base-200 bg-base-50/50">
-               <div className="relative">
-                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                 </div>
-                 <input 
-                    ref={searchInputRef}
-                    type="text" 
-                    placeholder="Rechercher un client (nom, téléphone...)" 
-                    className="input input-bordered input-sm w-full pl-10" 
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setHighlightedIndex(-1);
-                    }}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-               </div>
-             </div>
 
              {/* Table Content */}
-             <div className="flex-1 overflow-auto">
+              <div className="flex-1 overflow-auto">
                 <table className="table table-xs w-full table-pin-rows">
                   <thead className="bg-base-200">
                     <tr>
-                      <th className="bg-base-200 font-semibold uppercase">Nom</th>
-                      <th className="bg-base-200 font-semibold uppercase">Type</th>
-                      <th className="bg-base-200 font-semibold uppercase">Téléphone</th>
-                      <th className="bg-base-200 font-semibold uppercase">Points</th>
-                      <th className="bg-base-200 font-semibold uppercase">Dette</th>
-                      <th className="bg-base-200 font-semibold uppercase text-right">Action</th>
+                      <th>Nom</th>
+                      <th>Type</th>
+                      <th>Téléphone</th>
+                      <th>Points</th>
+                      <th>Dette</th>
+                      <th className="text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -394,13 +401,13 @@ export default function Clients() {
                           }`}
                           onClick={() => selectClient(client)}
                         >
-                          <td className="font-semibold">{client.name}</td>
+                           <td className="font-bold">{client.name}</td>
                           <td>
-                              <span className={`badge badge-sm ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary badge-outline' : 'badge-ghost'}`}>
+                              <div className={`badge badge-outline badge-xs ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
                                   {client.client_type === 'PROFESSIONNEL' ? 'Pro' : 'Particulier'}
-                              </span>
+                              </div>
                           </td>
-                          <td className="font-mono text-xs">{client.phone}</td>
+                          <td className="font-mono">{client.phone}</td>
                           <td className="font-bold text-accent">
                             {client.client_type !== 'PROFESSIONNEL' && (
                               <div className="flex items-center gap-2">

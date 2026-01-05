@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
+import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
@@ -6,6 +7,7 @@ import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis } 
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 import LotSelectionModal from './LotSelectionModal'
+import PaymentModal from './facturation/PaymentModal'
 
 // Lazy load barcode component
 const Barcode = lazy(() => import('react-barcode'))
@@ -140,6 +142,53 @@ export default function Facturation() {
 
   // Settings State - Mode Caisse Centralisée
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
+
+  // Router Location State Handling (Reload from CaisseCentralisee)
+  const location = useLocation()
+  const [hasProcessedReload, setHasProcessedReload] = useState(false)
+  
+  useEffect(() => {
+    if (location.state && location.state.mode === 'edit_reload' && !loading && !hasProcessedReload) {
+        const { cartData, client, remise: remiseState } = location.state
+        
+        // Restore Client
+        if (client && client.id) {
+            setSelectedClient(client.id)
+        }
+        
+        // Restore Remise
+        if (remiseState) {
+            setRemise(remiseState)
+        }
+
+        // Restore Cart
+        if (cartData && Array.isArray(cartData)) {
+            const restoredLignes: LigneFacture[] = cartData.map((item: any) => ({
+                produit: {
+                    id: item.id,
+                    name: item.name,
+                    selling_price: item.price,
+                    is_stock: true,
+                    stock: item.stock || 9999,
+                    cip: item.cip || '',
+                    tva: item.tva || 0
+                } as unknown as ProduitModel,
+                quantite: Number(item.quantity),
+                prix_unitaire: item.price,
+                remise_produit: item.discount || '0',
+                total_ligne: Number(item.quantity) * Number(item.price) * (1 - (Number(item.discount || 0) / 100)) 
+            }))
+            
+            setLignesFacture(restoredLignes)
+            toast.success('Facture rechargée pour modification')
+            
+            // Clear state and mark as processed
+            window.history.replaceState({}, document.title)
+            setHasProcessedReload(true)
+        }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, hasProcessedReload])
 
 
 
@@ -359,51 +408,62 @@ export default function Facturation() {
       }
   }
 
-  const addProduitToFacture = (produit: ProduitModel) => {
-    const existingLigne = lignesFacture.find(ligne => ligne.produit.id === produit.id)
+  const addProduitToFacture = async (produit: ProduitModel) => {
+    setLoading(true)
+    try {
+      const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
+      const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
+      
+      const existingLigne = lignesFacture.find(ligne => ligne.produit.id === fullProduit.id)
 
-    if (existingLigne) {
-      // Pour les quantités positives, vérifier le stock
-      const nouvelleQuantite = existingLigne.quantite + 1
-      
-      // Pour les quantités positives, ajouter simplement
-      const updatedLignes = lignesFacture.map(ligne =>
-        ligne.produit.id === produit.id
-          ? {
-              ...ligne,
-              quantite: nouvelleQuantite,
-              total_ligne: calculateLigneTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
-            }
-          : ligne
-      )
-      setLignesFacture(updatedLignes)
-    } else {
-      // Pour un nouveau produit
-      const prixUnitaire = normalizeNumberInput(produit.selling_price ?? '0', { min: 0 })
-      const nouvelleLigne: LigneFacture = {
-        produit,
-        quantite: 1,
-        prix_unitaire: prixUnitaire.toString(),
-        remise_produit: '0',
-        total_ligne: prixUnitaire,
-        lotId: null, // Default to Auto/FEFO
-        lotText: null,
-        lotExpiration: null
-      }
-      setLignesFacture([...lignesFacture, nouvelleLigne])
-      
-      // Focus on quantity field of the newly added product
-      setTimeout(() => {
-        const qtyInput = quantityInputsRef.current.get(produit.id)
-        if (qtyInput) {
-          qtyInput.focus()
-          qtyInput.select()
+      if (existingLigne) {
+        // Pour les quantités positives, vérifier le stock
+        const nouvelleQuantite = existingLigne.quantite + 1
+        
+        // Pour les quantités positives, ajouter simplement
+        const updatedLignes = lignesFacture.map(ligne =>
+          ligne.produit.id === fullProduit.id
+            ? {
+                ...ligne,
+                quantite: nouvelleQuantite,
+                total_ligne: calculateLigneTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
+              }
+            : ligne
+        )
+        setLignesFacture(updatedLignes)
+      } else {
+        // Pour un nouveau produit
+        const prixUnitaire = normalizeNumberInput(fullProduit.selling_price ?? '0', { min: 0 })
+        const nouvelleLigne: LigneFacture = {
+          produit: fullProduit,
+          quantite: 1,
+          prix_unitaire: prixUnitaire.toString(),
+          remise_produit: '0',
+          total_ligne: prixUnitaire,
+          lotId: null, // Default to Auto/FEFO
+          lotText: null,
+          lotExpiration: null
         }
-      }, 50)
+        setLignesFacture([...lignesFacture, nouvelleLigne])
+        
+        // Focus on quantity field of the newly added product
+        setTimeout(() => {
+          const qtyInput = quantityInputsRef.current.get(fullProduit.id)
+          if (qtyInput) {
+            qtyInput.focus()
+            qtyInput.select()
+          }
+        }, 50)
+      }
+      
+      // Clear search after adding for better UX
+      setSearchQuery('')
+    } catch (err) {
+      console.error('Erreur lors du chargement des détails du produit:', err)
+      toast.error('Impossible de charger les détails complets du produit')
+    } finally {
+      setLoading(false)
     }
-    
-    // Clear search after adding for better UX
-    setSearchQuery('')
   }
 
   // Produits are already filtered by the hook
@@ -1903,262 +1963,25 @@ export default function Facturation() {
         </div>
       </div>
 
-      {/* Modal de paiement */}
-      <dialog className={`modal ${isPaymentModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
-          <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-50">
-            <h3 className="font-bold text-lg">Paiement</h3>
-            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={fermerModalPaiement}>✕</button>
-          </div>
-
-          {(facturePourPaiement || isNewSale) && (
-            <form onSubmit={(e) => { 
-              e.preventDefault(); 
-              if (isNewSale) {
-                handleCompleteSale();
-              } else {
-                enregistrerPaiement(); 
-              }
-            }} className="p-6 space-y-5">
-              
-              <div className="text-center mb-6">
-                <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">Total à payer</div>
-                <div className="text-4xl font-light text-primary">
-                    {isNewSale 
-                        ? Math.round(totals.totalTtc) 
-                        : Math.round(Number(facturePourPaiement?.total_ttc))} F
-                </div>
-              </div>
-
-
-              {/* Tiers Payant Display - Show breakdown if applicable */}
-              {isNewSale && totals.tauxCouverture > 0 && totals.partAssurance > 0 ? (
-                <div className="space-y-4">
-                  <div className="alert alert-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span className="text-sm">Tiers Payant {totals.tauxCouverture}% actif - Paiement automatiquement réparti</span>
-                  </div>
-                  
-                  <div className="bg-base-50 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">Détail du paiement</h4>
-                    
-                    {/* Part Patient */}
-                    <div className="bg-white rounded-lg p-3 border border-success/20">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-success">Part Patient ({100 - totals.tauxCouverture}%)</span>
-                        <span className="text-lg font-bold text-success">{Math.round(totals.partPatient)} F</span>
-                      </div>
-                      <div className="form-control w-full space-y-2">
-                            {/* Liste des paiements déjà ajoutés pour la part patient */}
-                            {paiements.length > 0 && (
-                                <div className="bg-base-50 rounded p-2 space-y-1 mb-2">
-                                    {paiements.map((p, idx) => (
-                                        <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-base-200">
-                                            <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'Autre'}</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-mono font-bold">{p.montant} F</span>
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
-                                                    className="btn btn-ghost btn-xs text-error btn-square h-5 w-5 min-h-0"
-                                                >✕</button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div className="text-right text-xs text-base-content/60 pt-1 border-t border-base-200">
-                                        Reste à allouer: <span className="font-bold text-error">{Math.max(0, totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0))} F</span>
-                                    </div>
-                                </div>
-                            )}
-
-                        <div className="flex gap-2 items-end">
-                            <div className="flex-1 hidden">
-                                <label className="label py-0"> <span className="label-text text-xs">Mode</span> </label>
-                                <select
-                                value={modePaiement}
-                                onChange={(e) => setModePaiement(e.target.value as any)}
-                                className="select select-bordered select-sm w-full"
-                                >
-                                <option value="especes">Espèces</option>
-                                <option value="cheque">Chèque</option>
-                                <option value="carte">Carte</option>
-                                <option value="virement">Virement</option>
-                                <option value="om">Orange Money</option>
-                                <option value="momo">Mobile Money</option>
-                                </select>
-                            </div>
-                            <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">Montant</span> </label>
-                                <input 
-                                    type="number" 
-                                    className="input input-sm input-bordered w-full" 
-                                    value={montantPaye}
-                                    placeholder={paiements.length === 0 ? totals.partPatient.toString() : ''}
-                                    onChange={(e) => setMontantPaye(e.target.value)}
-                                    // Auto-add on enter
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault()
-                                            if (montantPaye && Number(montantPaye) > 0) {
-                                                setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                                                // Calc rest
-                                                const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                                const reste = Math.max(0, totals.partPatient - dejaAlloue)
-                                                setMontantPaye(reste > 0 ? reste.toString() : '')
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
-                            <button 
-                                type="button"
-                                className="btn btn-sm btn-square btn-ghost border border-base-300"
-                                onClick={() => {
-                                    if (montantPaye && Number(montantPaye) > 0) {
-                                        setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                                        const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                        const reste = Math.max(0, totals.partPatient - dejaAlloue)
-                                        setMontantPaye(reste > 0 ? reste.toString() : '')
-                                    }
-                                }}
-                                title="Ajouter ce paiement"
-                            >
-                                ＋
-                            </button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Part Assurance */}
-                    <div className="bg-white rounded-lg p-3 border border-info/20">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-info">Part Assurance ({totals.tauxCouverture}%)</span>
-                        <span className="text-lg font-bold text-info">{Math.round(totals.partAssurance)} F</span>
-                      </div>
-                      <div className="text-xs text-base-content/60 mt-1">
-                        <span className="badge badge-ghost badge-xs">En compte (automatique)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* Standard payment mode for non-tiers payant */}
-                  <div className="form-control w-full hidden">
-                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
-                    <select
-                        value={modePaiement}
-                        onChange={(e) => setModePaiement(e.target.value as any)}
-                        className="select select-bordered w-full"
-                    >
-                        <option value="especes">Espèces</option>
-                        <option value="cheque">Chèque</option>
-                        <option value="carte">Carte</option>
-                        <option value="virement">Virement</option>
-                        <option value="om">Orange Money</option>
-                        <option value="momo">Mobile Money</option>
-                        <option value="en_compte" disabled={selectedClient === null || useManualClient}>
-                            En compte {selectedClient === null || useManualClient ? '(Client requis)' : ''}
-                        </option>
-                    </select>
-                  </div>
-
-                  {/* Liste des paiements multiples */}
-                  {paiements.length > 0 && (
-                    <div className="bg-base-50 rounded-lg p-2 space-y-1">
-                        {paiements.map((p, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
-                                <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'virement' ? 'Virement' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'En compte'}</span>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-mono">{p.montant} F</span>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
-                                        className="btn btn-ghost btn-xs text-error btn-square"
-                                    >✕</button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-end gap-2">
-                      <div className="form-control flex-1">
-                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant</span></label>
-                        <input
-                          ref={paymentInputRef}
-                          type="number"
-                          step="0.01"
-                          value={montantPaye}
-                          onChange={(e) => setMontantPaye(e.target.value)}
-                          onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                  e.preventDefault()
-                                  if (montantPaye && Number(montantPaye) > 0) {
-                                      setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                                      // Calculer le reste à payer pour la prochaine entrée
-                                      const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                                      const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                      const reste = Math.max(0, totalAPayer - dejaVerse)
-                                      setMontantPaye(reste > 0 ? reste.toString() : '')
-                                  }
-                              }
-                          }}
-                          className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
-                          placeholder="Saisir montant..."
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-primary h-[3rem]" // Match input height roughly
-                        disabled={!montantPaye || Number(montantPaye) <= 0}
-                        onClick={() => {
-                            if (montantPaye && Number(montantPaye) > 0) {
-                                setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                                const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                                const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                const reste = Math.max(0, totalAPayer - dejaVerse)
-                                setMontantPaye(reste > 0 ? reste.toString() : '')
-                            }
-                        }}
-                      >
-                        Ajouter
-                      </button>
-                  </div>
-                </>
-              )}
-
-              {(() => {
-                const totalAPayer = isNewSale ? totals.totalTtc : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 ? Number(montantPaye) : 0)
-                const rendu = totalVerse - totalAPayer
-                return (
-                  <div className="flex flex-col gap-1">
-                      <div className="flex justify-between text-sm">
-                          <span>Total versé:</span>
-                          <span className="font-bold">{Math.round(totalVerse)} F</span>
-                      </div>
-                      {rendu > 0 && (
-                        <div className="alert bg-success/10 text-success border-success/20 py-2 px-3 shadow-sm flex justify-between items-center">
-                            <span className="text-sm font-medium">Monnaie à rendre</span>
-                            <span className="text-xl font-bold">{rendu.toFixed(0)} F</span>
-                        </div>
-                      )}
-                  </div>
-                )
-              })()}
-
-              <div className="pt-4 flex gap-3">
-                <button type="button" className="btn btn-ghost flex-1" onClick={fermerModalPaiement}>Annuler (Esc)</button>
-                <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner"></span> : 'Caisse Centrale'}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-        <form method="dialog" className="modal-backdrop" onClick={fermerModalPaiement}><button>close</button></form>
-      </dialog>
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={fermerModalPaiement}
+        loading={loading}
+        facturePourPaiement={facturePourPaiement}
+        isNewSale={isNewSale}
+        totals={totals}
+        montantPaye={montantPaye}
+        setMontantPaye={setMontantPaye}
+        modePaiement={modePaiement}
+        setModePaiement={setModePaiement}
+        paiements={paiements}
+        setPaiements={setPaiements}
+        onCompleteSale={handleCompleteSale}
+        onRegisterPayment={enregistrerPaiement}
+        selectedClient={selectedClient}
+        useManualClient={useManualClient}
+        paymentInputRef={paymentInputRef}
+      />
 
       {/* Modal Ticket (Same as before but cleaner) */}
       {showTicketPreview && ticketCaisse && (
@@ -2226,7 +2049,14 @@ export default function Facturation() {
                     <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
                   </div>
                 )}
-                {ticketCaisse.paiements_details ? (
+                
+                {/* DEBUG - À retirer après test */}
+                <div className="text-xs text-gray-500 mt-2 border border-red-300 p-1">
+                  DEBUG: paiements_details = {JSON.stringify(ticketCaisse.paiements_details)}<br/>
+                  mode_paiement = {ticketCaisse.mode_paiement}
+                </div>
+                
+                {ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 ? (
                   <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
                       <div className="font-bold mb-1">Règlements:</div>
                       {ticketCaisse.paiements_details.map((paiement, idx) => {
@@ -2250,7 +2080,7 @@ export default function Facturation() {
                         return (
                           <div key={idx} className="flex justify-between">
                             <span>
-                              {getModeLabel(paiement.mode)}
+                              {getModeLabel(paiement.mode || paiement.mode_paiement || 'N/A')}
                               {isPartPatient && <span className="text-success"> (Part Patient)</span>}
                               {isPartAssurance && <span className="text-info"> (Part Assurance)</span>}
                             </span>
@@ -2259,9 +2089,13 @@ export default function Facturation() {
                         )
                       })}
                   </div>
-                ) : (
+                ) : ticketCaisse.mode_paiement ? (
                   <div className="text-xs font-normal mt-2 text-center">
                     Mode: {ticketCaisse.mode_paiement.toUpperCase()}
+                  </div>
+                ) : (
+                  <div className="text-xs text-red-500 mt-2 text-center">
+                    [Aucun mode de paiement détecté]
                   </div>
                 )}
               </div>

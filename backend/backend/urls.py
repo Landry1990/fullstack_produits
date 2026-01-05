@@ -15,7 +15,8 @@ from api.views import (
     StatsUGViewSet, StockLotViewSet, InvoiceConfigurationView,
     CategoriesListView, CategoriesDetailView, AuditLogViewSet,
     generer_suggestions_commande, PromisViewSet, MouvementCaisseViewSet,
-    StockAnalysisUnsoldView, StockAnalysisOverstockView, LoyaltySettingViewSet
+    StockAnalysisUnsoldView, StockAnalysisOverstockView, LoyaltySettingViewSet,
+    StockAdjustmentViewSet, ClotureCaisseViewSet
 )
 from api.rapport_view import RapportViewSet
 from api.produit_import_view import ProduitImportViewSet
@@ -50,6 +51,9 @@ router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
 router.register(r'stock-lots', StockLotViewSet, basename='stocklot')
 router.register(r'mouvements-caisse', MouvementCaisseViewSet, basename='mouvementcaisse')
 router.register(r'loyalty-settings', LoyaltySettingViewSet, basename='loyaltysetting')
+router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadjustment')
+router.register(r'clotures-caisse', ClotureCaisseViewSet, basename='cloturecaisse')
+
 
 urlpatterns = [
     # Manual paths MUST be before 'api/' router include to avoid being masked

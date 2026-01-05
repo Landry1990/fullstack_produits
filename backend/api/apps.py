@@ -8,3 +8,4 @@ class ApiConfig(AppConfig):
     def ready(self):
         import api.signals
         import api.signals_restock # Register restock signals
+        import api.cache_signals # Register cache invalidation signals

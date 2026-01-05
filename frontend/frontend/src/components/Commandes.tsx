@@ -871,14 +871,13 @@ export default function Commandes() {
       if (!selectedCommande) return;
       try {
           // Mise à jour partielle (PATCH) pour changer le statut
-          await axios.patch(`${commandesEndpoint}${selectedCommande.id}/`, { status: selectedCommande.status === 'ATT' ? 'PREP' : 'ATT' });
+          const { data: updated } = await axios.patch<Commande>(`${commandesEndpoint}${selectedCommande.id}/`, { status: selectedCommande.status === 'ATT' ? 'PREP' : 'ATT' });
           
-          // Refresh
-          const updated = { ...selectedCommande, status: selectedCommande.status === 'ATT' ? 'PREP' : 'ATT', status_display: selectedCommande.status === 'ATT' ? 'En préparation' : 'En attente' };
+          // Refresh list locally for background
+          setCommandes(prev => prev.map(c => c.id === updated.id ? { ...c, status: updated.status, status_display: updated.status_display } : c));
           
-          // Mise à jour optimiste locale
-          setCommandes(prev => prev.map(c => c.id === updated.id ? updated as any : c));
-          setSelectedCommande(updated as any);
+          // Maintain products from current selection if full object not returned
+          setSelectedCommande({ ...selectedCommande, ...updated });
           
       } catch (err) {
           handleApiError(err, "Erreur lors de la mise en attente");
@@ -895,20 +894,19 @@ export default function Commandes() {
         return;
     }
 
-    try {
-      const cloturerEndpoint = `${commandesEndpoint}${selectedCommande.id}/cloturer/`;
-      await axios.post(cloturerEndpoint);
+      try {
+        const cloturerEndpoint = `${commandesEndpoint}${selectedCommande.id}/cloturer/`;
+        await axios.post(cloturerEndpoint);
 
-      // Refresh commandes to get updated status (products are managed by search hook)
-      const controller = new AbortController()
-      const commandesResponse = await axios.get(commandesEndpoint, { signal: controller.signal })
-      
-      const commandesData: any = commandesResponse.data;
-      const commandesArray = Array.isArray(commandesData) ? commandesData : (commandesData.results || []);
-      setCommandes(commandesArray)
-      setSelectedCommande(commandesArray.find((c: Commande) => c.id === selectedCommande.id) ?? null)
+        // Fetch full updated details
+        const response = await axios.get<Commande>(`${commandesEndpoint}${selectedCommande.id}/`);
+        const updated = response.data;
+        
+        // Refresh list
+        setCommandes(prev => prev.map(c => c.id === updated.id ? { ...c, status: updated.status, status_display: updated.status_display } : c));
+        setSelectedCommande(updated);
 
-    } catch (err) {
+      } catch (err) {
       handleApiError(err, "Erreur lors de la clôture de la commande")
     }
   }
@@ -1078,6 +1076,19 @@ export default function Commandes() {
     // setSelectedCommande restera la commande active
   }
 
+  async function handleViewDetails(commande: Commande) {
+    setLoading(true);
+    try {
+      const response = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
+      setSelectedCommande(response.data);
+      setViewMode('DETAILS');
+    } catch (err) {
+      handleApiError(err, "Erreur lors du chargement des détails de la commande");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function handleBackToList() {
     setViewMode('LIST');
     setSelectedCommande(null);
@@ -1179,7 +1190,7 @@ export default function Commandes() {
             {loading && <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>}
 
             <div className="overflow-x-auto bg-white rounded-lg shadow">
-              <table className="table table-xs w-full">
+              <table className="table table-zebra w-full">
                 <thead className="bg-base-200">
                   <tr>
                     <th>ID</th>
@@ -1204,10 +1215,7 @@ export default function Commandes() {
                         {/* Actions groupées si nécessaire ou simple bouton voir */}
                         <button 
                           className="btn btn-ghost btn-xs"
-                          onClick={() => {
-                              setSelectedCommande(commande);
-                              setViewMode('DETAILS');
-                          }}
+                          onClick={() => handleViewDetails(commande)}
                         >
                           Voir Détails
                         </button>
@@ -1304,14 +1312,14 @@ export default function Commandes() {
             <div>
                  <div className="text-xs text-gray-500 uppercase">Total</div>
                  <div className="font-bold text-lg text-primary">
-                    {selectedCommande.produits.reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0).toLocaleString()} F
+                    {(selectedCommande.produits || []).reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0).toLocaleString()} F
                  </div>
             </div>
           </div>
 
           {/* Récapitulatif UG */}
           {(() => {
-            const totalUG = selectedCommande.produits.reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
+            const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
             if (totalUG > 0) {
               return (
                 <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4">
@@ -1336,10 +1344,10 @@ export default function Commandes() {
 
           {/* Liste des produits (Read Only) */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
-            {selectedCommande.produits.length === 0 ? (
+            {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
               <p className="text-base-content/70 text-center py-8 text-sm">Aucun produit dans cette commande.</p>
             ) : (
-                <table className="table table-xs">
+                <table className="table table-zebra">
                   <thead className="bg-base-200">
                     <tr>
                       <th className="cursor-pointer" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
@@ -1354,12 +1362,13 @@ export default function Commandes() {
                       <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
                         P.U. {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th>Lot/Exp</th>
+                      <th>Lot</th>
+                      <th>Expiration</th>
                       <th className="text-right">Sous-total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {[...selectedCommande.produits]
+                    {[...(selectedCommande.produits || [])]
                       .map(p => {
                         // Use produit_nom from backend if available, otherwise fallback to resolving from produitsList
                         const produitName = (p as any).produit_nom || (typeof p.produit === 'object' 
@@ -1408,10 +1417,8 @@ export default function Commandes() {
                             </span>
                           </td>
                           <td className="text-right font-mono">{Number(p.price).toLocaleString()} F</td>
-                          <td className="text-xs">
-                             <div className="font-mono">{p.lot || '-'}</div>
-                             <div className="text-gray-400">{p.date_expiration ? new Date(p.date_expiration).toLocaleDateString() : ''}</div>
-                          </td>
+                          <td className="text-xs font-mono">{p.lot || '-'}</td>
+                          <td className="text-xs text-gray-400">{p.date_expiration ? new Date(p.date_expiration).toLocaleDateString() : ''}</td>
                           <td className="text-right font-bold text-primary">{(Number(p.quantity) * Number(p.price)).toLocaleString()} F</td>
                         </tr>
                        );
@@ -1633,7 +1640,7 @@ export default function Commandes() {
                     <p className="font-light">Commencez par rechercher et ajouter des produits (F2)</p>
                   </div>
                 ) : (
-                  <table className="table table-pin-rows w-full table-xs">
+                  <table className="table table-pin-rows w-full">
                     <thead>
                       <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
                         <th className="bg-base-50 w-12">

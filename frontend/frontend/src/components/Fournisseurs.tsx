@@ -236,68 +236,76 @@ export default function Fournisseurs() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-0">
          {/* Left Panel: List */}
          <div className="md:col-span-1 lg:col-span-2 bg-white rounded-lg shadow flex flex-col overflow-hidden h-full">
-            {/* Header */}
-            <div className="p-4 border-b flex justify-between items-center shrink-0 bg-base-50/50">
+            {/* Header with Search and Actions */}
+            <div className="p-4 border-b flex flex-wrap gap-4 justify-between items-center shrink-0 bg-white">
                <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-bold">Fournisseurs</h2>
+                  <h2 className="text-xl font-bold text-slate-800">Fournisseurs</h2>
                   {loading ? (
                       <span className="loading loading-spinner loading-xs text-primary"></span>
                   ) : (
-                      <span className="badge badge-sm badge-neutral text-xs">{fournisseurs.length}</span>
+                      <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold">{fournisseurs.length}</span>
                   )}
                </div>
-               <button className="btn btn-primary btn-sm gap-2" onClick={openAddModal}>
-                 ➕ Nouveau
-               </button>
-            </div>
-            
-            {/* Search */}
-            <div className="p-3 bg-white border-b">
-                 <div className="relative">
-                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <span className="opacity-50">🔍</span>
-                   </div>
-                   <input 
-                      ref={searchInputRef}
-                      type="text" 
-                      placeholder="Rechercher (nom, tél, email)..." 
-                      className="input input-sm input-bordered w-full pl-9" 
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setHighlightedIndex(-1);
-                      }}
-                      onKeyDown={handleKeyDown}
-                    />
+               
+               <div className="flex items-center gap-2 flex-1 max-w-md">
+                 <div className="relative w-full">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    </div>
+                    <input 
+                       ref={searchInputRef}
+                       type="text" 
+                       placeholder="Rechercher un fournisseur..." 
+                       className="input input-sm input-bordered w-full pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-all h-9" 
+                       value={searchTerm}
+                       onChange={(e) => {
+                         setSearchTerm(e.target.value);
+                         setHighlightedIndex(-1);
+                       }}
+                       onKeyDown={handleKeyDown}
+                     />
                  </div>
+                 <button className="btn btn-primary btn-sm gap-2 h-9" onClick={openAddModal}>
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                   </svg>
+                   Nouveau
+                 </button>
+               </div>
             </div>
 
             {/* Table */}
             <div className="flex-1 overflow-auto">
                <table className="table table-xs table-pin-rows w-full">
-                 <thead className="bg-base-100 text-base-content/70">
+                 <thead className="bg-[#f8fafc] text-[#64748b]">
                    <tr>
-                     <th>Nom</th>
-                     <th>Téléphone</th>
-                     <th>Email</th>
+                     <th className="py-3 px-4 font-semibold uppercase text-[11px] tracking-wider text-left">Nom du Fournisseur</th>
+                     <th className="py-3 px-4 font-semibold uppercase text-[11px] tracking-wider text-center">Téléphone</th>
+                     <th className="py-3 px-4 font-semibold uppercase text-[11px] tracking-wider text-left">Email</th>
                    </tr>
                  </thead>
                  <tbody>
                     {filteredFournisseurs.length > 0 ? (
                       filteredFournisseurs.map((fournisseur, index) => (
-                        <tr 
-                          key={fournisseur.id} 
-                          className={`hover cursor-pointer transition-colors ${
-                            selectedFournisseur?.id === fournisseur.id ? 'bg-primary/10 border-l-4 border-primary' : ''
-                          } ${
-                            searchTerm && highlightedIndex === index ? 'bg-base-200' : ''
-                          }`}
-                          onClick={() => selectFournisseur(fournisseur)}
-                        >
-                          <td className="font-bold">{fournisseur.name}</td>
-                          <td className="font-mono">{fournisseur.phone}</td>
-                          <td className="opacity-70">{fournisseur.email}</td>
-                        </tr>
+                         <tr 
+                           key={fournisseur.id} 
+                           className={`hover cursor-pointer transition-all border-b border-slate-50 ${
+                             selectedFournisseur?.id === fournisseur.id ? 'bg-blue-50/50 text-primary' : 'text-slate-600'
+                           } ${
+                             searchTerm && highlightedIndex === index ? 'bg-slate-100' : ''
+                           }`}
+                           onClick={() => selectFournisseur(fournisseur)}
+                         >
+                           <td className="py-3 px-4">
+                             <div className="font-bold">{fournisseur.name}</div>
+                           </td>
+                           <td className="py-3 px-4 text-center">
+                             <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-500">{fournisseur.phone || '-'}</span>
+                           </td>
+                           <td className="py-3 px-4 opacity-80 text-sm">{fournisseur.email || '-'}</td>
+                         </tr>
                       ))
                     ) : (
                       <tr>
@@ -317,54 +325,89 @@ export default function Fournisseurs() {
          {/* Right Panel: Details */}
          <div className="bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
              {selectedFournisseur ? (
-                <>
-                  <div className="p-6 border-b bg-base-50/30 shrink-0 flex justify-between items-start">
+                <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-white shrink-0 flex justify-between items-start">
                      <div>
-                        <div className="text-xs uppercase font-bold opacity-40 mb-1">Détails Fournisseur</div>
-                        <h2 className="text-xl font-bold text-base-content">{selectedFournisseur.name}</h2>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">Fournisseur</span>
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedFournisseur.name}</h2>
                      </div>
-                     <div className="join shadow-sm">
-                        <button className="btn btn-sm btn-outline join-item" onClick={openEditModal} title="Modifier">✏️</button>
-                        <button className="btn btn-sm btn-outline btn-error join-item" onClick={handleDeleteFournisseur} title="Supprimer">🗑️</button>
+                     <div className="flex gap-2">
+                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-primary transition-colors" onClick={openEditModal} title="Modifier">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+                          </svg>
+                        </button>
+                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-error transition-colors" onClick={handleDeleteFournisseur} title="Supprimer">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                      </div>
                   </div>
                   
-                  <div className="p-6 space-y-6 overflow-y-auto flex-1">
-                      <div className="grid grid-cols-1 gap-6">
-                          <div className="flex gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">📍</div>
-                              <div>
-                                  <div className="text-xs font-bold opacity-50 uppercase mb-1">Adresse</div>
-                                  <div className="text-sm whitespace-pre-wrap leading-relaxed">{selectedFournisseur.address || 'Non renseignée'}</div>
+                  <div className="p-8 space-y-8 overflow-y-auto flex-1">
+                      <div className="space-y-6">
+                          <div className="flex gap-4 group">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-blue-50 group-hover:text-primary transition-all duration-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                              </div>
+                              <div className="flex-1">
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Adresse de contact</div>
+                                  <div className="text-slate-700 font-medium whitespace-pre-wrap leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                                    {selectedFournisseur.address || 'Non renseignée'}
+                                  </div>
                               </div>
                           </div>
-                          <div className="flex gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary shrink-0">📞</div>
-                              <div>
-                                  <div className="text-xs font-bold opacity-50 uppercase mb-1">Téléphone</div>
-                                  <div className="text-sm font-mono font-medium">{selectedFournisseur.phone || '-'}</div>
-                              </div>
-                          </div>
-                          <div className="flex gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent shrink-0">✉️</div>
-                              <div>
-                                  <div className="text-xs font-bold opacity-50 uppercase mb-1">Email</div>
-                                  <div className="text-sm break-all">{selectedFournisseur.email || '-'}</div>
-                              </div>
+
+                          <div className="grid grid-cols-1 gap-6">
+                            <div className="flex gap-4 group">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-blue-50 group-hover:text-primary transition-all duration-300">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Ligne directe</div>
+                                    <div className="text-lg font-black text-slate-700 font-mono tracking-tight">{selectedFournisseur.phone || '-'}</div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 group">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-blue-50 group-hover:text-primary transition-all duration-300">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Email professionnel</div>
+                                    <div className="text-slate-600 font-semibold break-all selection:bg-blue-100 underline decoration-blue-200 decoration-2 underline-offset-4">{selectedFournisseur.email || '-'}</div>
+                                </div>
+                            </div>
                           </div>
                       </div>
                       
-                      <div className="divider"></div>
-                      
-                      <div className="text-xs text-center opacity-40">
-                         ID Système: {selectedFournisseur.id}
+                      <div className="pt-8 mt-4 border-t border-slate-100">
+                        <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Référence interne</span>
+                          <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">#{selectedFournisseur.id}</span>
+                        </div>
                       </div>
                   </div>
-                </>
+                </div>
              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-base-content/30 p-10 text-center">
-                    <span className="text-5xl mb-4 grayscale opacity-50">🏢</span>
-                    <p className="font-medium">Sélectionnez un fournisseur<br/>pour consulter ses détails</p>
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-300 p-10 text-center animate-pulse">
+                    <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center mb-6">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <p className="font-bold text-slate-400">Aucun fournisseur sélectionné</p>
+                    <p className="text-sm text-slate-300 mt-1 max-w-[200px]">Sélectionnez une entreprise dans la liste pour voir ses coordonnées</p>
                 </div>
              )}
          </div>

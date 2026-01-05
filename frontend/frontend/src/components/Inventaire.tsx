@@ -154,15 +154,27 @@ export default function InventaireComponent() {
       }
   };
 
-  const handleProductSelect = (product: ProduitModel) => {
-      // Wrapper to check for lot management
-      if (product.use_lot_management) {
-          setSelectedProductForLot(product);
-          setAvailableLots([]);
-          setShowLotModal(true);
-          fetchAvailableLots(product.id);
-      } else {
-          handleAddProduct(product);
+  const handleProductSelect = async (product: ProduitModel) => {
+      // Fetch full details because search results use ProduitListSerializer (missing cost_price, etc.)
+      setLoading(true);
+      try {
+          const produitsEndpoint = `${apiBaseUrl ? String(apiBaseUrl).replace(/\/$/, '') : ''}/api/produits/`;
+          const { data: fullProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${product.id}/`);
+          
+          // Wrapper to check for lot management
+          if (fullProduct.use_lot_management) {
+              setSelectedProductForLot(fullProduct);
+              setAvailableLots([]);
+              setShowLotModal(true);
+              fetchAvailableLots(fullProduct.id);
+          } else {
+              handleAddProduct(fullProduct);
+          }
+      } catch (err) {
+          console.error("Erreur chargement détails produit", err);
+          toast.error("Impossible de charger les détails complets du produit");
+      } finally {
+          setLoading(false);
       }
   };
 

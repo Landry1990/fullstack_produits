@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm'
-import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot } from '../types'
+import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot, StockAdjustment } from '../types'
+import { STOCK_ADJUSTMENT_REASONS } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
 
 export default function Produit() {
@@ -23,8 +24,9 @@ export default function Produit() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false)
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
-  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'ajustements'>('general')
   const [isImporting, setIsImporting] = useState(false)
   
   // Formulaire d'édition
@@ -52,6 +54,13 @@ export default function Produit() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [achats, setAchats] = useState<AchatProduit[]>([])
   const [lots, setLots] = useState<StockLot[]>([])
+  const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
+  
+  // Formulaire d'ajustement de stock
+  const [adjustmentForm, setAdjustmentForm] = useState({
+    new_quantity: '',
+    reason_type: 'INVENTAIRE'
+  })
   
   // Sélection pour suppression groupée
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([])
@@ -64,6 +73,22 @@ export default function Produit() {
   useEffect(() => {
     fetchProduits()
     fetchRayonsAndFournisseurs()
+  }, [])
+
+  // Auto-refresh when user returns to the page/tab
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        // User returned to the tab - refresh product data
+        fetchProduits()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const fetchProduits = async () => {
@@ -137,36 +162,59 @@ export default function Produit() {
   }
 
   const handleViewDetails = async (produit: ProduitModel) => {
-    setSelectedProduit(produit)
-    setActiveTab('general')
-    setIsDetailsModalOpen(true)
-    
-    // Charger l'historique d'achats
+    setLoading(true)
     try {
-      const response = await axios.get(
-        `${apiBaseUrl ? `${apiBaseUrl}/api/commande-produits/` : '/api/commande-produits/'}?produit=${produit.id}`
-      )
-      // Handle paginated response
-      const achatsData: AchatProduit[] = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data?.results ?? []);
-      setAchats(achatsData)
-    } catch {
-      setAchats([])
-    }
+      const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
+      setSelectedProduit(fullProduit)
+      setActiveTab('general')
+      setIsDetailsModalOpen(true)
+      
+      // Charger l'historique d'achats
+      try {
+        const response = await axios.get(
+          `${apiBaseUrl ? `${apiBaseUrl}/api/commande-produits/` : '/api/commande-produits/'}?produit=${produit.id}`
+        )
+        // Handle paginated response
+        const achatsData: AchatProduit[] = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.results ?? []);
+        setAchats(achatsData)
+      } catch {
+        setAchats([])
+      }
 
-    // Charger les lots de stock
-    try {
-      const stockLotsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-lots/` : '/api/stock-lots/'
-      const response = await axios.get(
-        `${stockLotsEndpoint}?produit=${produit.id}&ordering=date_expiration`
-      )
-      const lotsData: StockLot[] = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data?.results ?? []);
-      setLots(lotsData)
-    } catch {
-      setLots([])
+      // Charger les lots de stock
+      try {
+        const stockLotsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-lots/` : '/api/stock-lots/'
+        const response = await axios.get(
+          `${stockLotsEndpoint}?produit=${produit.id}&ordering=date_expiration`
+        )
+        const lotsData: StockLot[] = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.results ?? []);
+        setLots(lotsData)
+      } catch {
+        setLots([])
+      }
+
+      // Charger l'historique des ajustements
+      try {
+        const adjustmentsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-adjustments/` : '/api/stock-adjustments/'
+        const response = await axios.get(
+          `${adjustmentsEndpoint}?produit=${produit.id}&ordering=-created_at`
+        )
+        const adjustmentsData: StockAdjustment[] = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data?.results ?? []);
+        setAdjustments(adjustmentsData)
+      } catch {
+        setAdjustments([])
+      }
+    } catch (err) {
+      toast.error('Erreur lors du chargement des détails du produit')
+      console.error(err)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -298,6 +346,46 @@ export default function Produit() {
   const handleProduitCreated = (produit: ProduitModel) => {
     setProduits(prev => [produit, ...prev])
     setIsCreateModalOpen(false)
+  }
+
+  const handleStockAdjustment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedProduit) return
+    
+    // Validation
+    if (!adjustmentForm.new_quantity) {
+      toast.error('Veuillez saisir la nouvelle quantité')
+      return
+    }
+    
+    try {
+      const { data } = await axios.post(
+        `${produitsEndpoint}${selectedProduit.id}/adjust_stock/`,
+        {
+          new_quantity: parseInt(adjustmentForm.new_quantity),
+          reason_type: adjustmentForm.reason_type
+        }
+      )
+      toast.success(`Stock ajusté: ${data.quantity_change >= 0 ? '+' : ''}${data.quantity_change}`)
+      
+      // Rafraîchir les données
+      handleViewDetails(selectedProduit)
+      setIsAdjustmentModalOpen(false)
+      setAdjustmentForm({ new_quantity: '', reason_type: 'INVENTAIRE' })
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Erreur lors de l\'ajustement')
+      console.error(err)
+    }
+  }
+
+  const handleOpenAdjustmentModal = () => {
+    if (selectedProduit) {
+      setAdjustmentForm({
+        new_quantity: String(selectedProduit.stock),
+        reason_type: 'INVENTAIRE'
+      })
+      setIsAdjustmentModalOpen(true)
+    }
   }
 
   const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -778,6 +866,13 @@ export default function Produit() {
                 >
                   Lots de stock
                 </a>
+                <a
+                  role="tab"
+                  className={`tab ${activeTab === 'ajustements' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('ajustements')}
+                >
+                  📝 Ajustements
+                </a>
               </div>
 
               {/* Contenu des tabs */}
@@ -944,10 +1039,58 @@ export default function Produit() {
                   </table>
                 </div>
               )}
+
+              {activeTab === 'ajustements' && (
+                <div className="overflow-x-auto">
+                  {adjustments.length === 0 ? (
+                    <p className="text-center text-base-content/50 py-4">Aucun ajustement enregistré</p>
+                  ) : (
+                    <table className="table table-xs">
+                      <thead>
+                        <tr className="bg-base-200">
+                          <th>Date</th>
+                          <th>Utilisateur</th>
+                          <th className="text-right">Avant</th>
+                          <th className="text-right">Après</th>
+                          <th className="text-center">Change</th>
+                          <th>Motif</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adjustments.map(adj => (
+                          <tr key={adj.id}>
+                            <td className="text-xs">
+                              {new Date(adj.created_at).toLocaleDateString('fr-FR')} {new Date(adj.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td>{adj.user_name || adj.username || '-'}</td>
+                            <td className="text-right">{adj.quantity_before}</td>
+                            <td className="text-right">{adj.quantity_after}</td>
+                            <td className="text-center">
+                              <span className={`badge badge-sm ${adj.quantity_change > 0 ? 'badge-success' : adj.quantity_change < 0 ? 'badge-error' : 'badge-ghost'}`}>
+                                {adj.quantity_change > 0 ? '+' : ''}{adj.quantity_change}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="badge badge-outline badge-xs mr-1">{adj.reason_type_display}</span>
+                              <span className="text-xs text-base-content/70">{adj.reason_detail}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              )}
             </div>
           )}
           
           <div className="modal-action">
+            <button
+              className="btn btn-sm btn-warning"
+              onClick={handleOpenAdjustmentModal}
+            >
+              📊 Ajuster Stock
+            </button>
             <button
               className="btn btn-sm btn-primary"
               onClick={() => selectedProduit && handleOpenEditModal(selectedProduit)}
@@ -1200,6 +1343,79 @@ export default function Produit() {
             </div>
           </form>
         </div>
+      </dialog>
+
+      {/* Modal Ajustement de Stock */}
+      <dialog className={`modal ${isAdjustmentModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box max-w-md">
+          <h3 className="font-bold text-lg mb-4">
+            📊 Ajuster le stock
+            {selectedProduit && <span className="text-base-content/70 ml-2">- {selectedProduit.name}</span>}
+          </h3>
+          
+          <form onSubmit={handleStockAdjustment} className="space-y-4">
+            <div className="alert alert-info py-2">
+              <span>Stock actuel : <strong>{selectedProduit?.stock ?? 0}</strong> unités</span>
+            </div>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-semibold">Nouvelle quantité *</span>
+              </label>
+              <input
+                type="number"
+                className="input input-bordered input-sm"
+                value={adjustmentForm.new_quantity}
+                onChange={(e) => setAdjustmentForm(prev => ({ ...prev, new_quantity: e.target.value }))}
+                required
+                min={0}
+              />
+              {adjustmentForm.new_quantity && selectedProduit && (
+                <label className="label">
+                  <span className={`label-text-alt ${
+                    parseInt(adjustmentForm.new_quantity) > selectedProduit.stock ? 'text-success' : 
+                    parseInt(adjustmentForm.new_quantity) < selectedProduit.stock ? 'text-error' : ''
+                  }`}>
+                    Différence : {parseInt(adjustmentForm.new_quantity) - selectedProduit.stock > 0 ? '+' : ''}
+                    {parseInt(adjustmentForm.new_quantity) - selectedProduit.stock}
+                  </span>
+                </label>
+              )}
+            </div>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-semibold">Type de motif *</span>
+              </label>
+              <select
+                className="select select-bordered select-sm"
+                value={adjustmentForm.reason_type}
+                onChange={(e) => setAdjustmentForm(prev => ({ ...prev, reason_type: e.target.value }))}
+                required
+              >
+                {STOCK_ADJUSTMENT_REASONS.map(reason => (
+                  <option key={reason.value} value={reason.value}>{reason.label}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="modal-action">
+              <button type="button" className="btn btn-sm" onClick={() => setIsAdjustmentModalOpen(false)}>
+                Annuler
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-sm btn-warning"
+                disabled={!adjustmentForm.new_quantity}
+              >
+                ✓ Confirmer l'ajustement
+              </button>
+            </div>
+          </form>
+        </div>
+        <form method="dialog" className="modal-backdrop">
+          <button onClick={() => setIsAdjustmentModalOpen(false)}>close</button>
+        </form>
       </dialog>
 
       {/* Modal Création Produit */}
