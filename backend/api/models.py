@@ -153,7 +153,7 @@ class Client(models.Model):
         # On replique la logique du ViewSet mais pour une instance unique
         # C'est moins grave de faire une requête ici car c'est pour un seul client
         
-        factures_with_debt = self.facture_set.filter(status='VAL').annotate(
+        factures_with_debt = self.facture_set.filter(status__in=['VAL', 'PAY']).annotate(
             paid_amount=Coalesce(
                 Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
                 Value(0, output_field=DecimalField())
@@ -797,16 +797,7 @@ class FactureProduitAllocation(models.Model):
         return self.selling_price * self.quantity
 
 
-class ClotureCaisse(models.Model):
-    date = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    montant_theorique = models.DecimalField(max_digits=12, decimal_places=2)
-    montant_reel = models.DecimalField(max_digits=12, decimal_places=2)
-    ecart = models.DecimalField(max_digits=12, decimal_places=2)
-    details = models.JSONField(default=dict) # Détails par mode de paiement
-    
-    def __str__(self):
-        return f"Clôture du {self.date} par {self.user}"
+
 
 
 class ActivityLog(models.Model):
@@ -1151,18 +1142,29 @@ class InvoiceSettings(models.Model):
 class AuditLog(models.Model):
     """Model representing an audit log entry for tracking detailed user actions."""
     class Action(models.TextChoices):
-        create = 'CREATE', 'Création'
-        update = 'UPDATE', 'Modification'
-        delete = 'DELETE', 'Suppression'
-        login = 'LOGIN', 'Connexion'
-        export = 'EXPORT', 'Export'
-        other = 'OTHER', 'Autre'
+        # Actions génériques CRUD
+        CREATE = 'CREATE', 'Création'
+        UPDATE = 'UPDATE', 'Modification'
+        DELETE = 'DELETE', 'Suppression'
+        LOGIN = 'LOGIN', 'Connexion'
+        EXPORT = 'EXPORT', 'Export'
+        OTHER = 'OTHER', 'Autre'
+        # Actions métier explicites
+        STOCK_ADJUST = 'STOCK_ADJ', 'Ajustement stock'
+        PRICE_CHANGE = 'PRICE_CHG', 'Changement prix'
+        CLOTURE_CAISSE = 'CLOTURE', 'Clôture caisse'
+        INVOICE_CANCEL = 'INV_CANCEL', 'Annulation facture'
+        INVOICE_DELETE = 'INV_DEL', 'Suppression facture'
+        INVOICE_VALIDATE = 'INV_VALID', 'Validation facture'
+        INVENTORY_CREATE = 'INV_CRE', 'Création inventaire'
+        INVENTORY_VALIDATE = 'INV_VAL', 'Validation inventaire'
 
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     action = models.CharField(max_length=10, choices=Action.choices)
     model_name = models.CharField(max_length=100)
     object_id = models.CharField(max_length=100, blank=True, null=True)
+    description = models.TextField(blank=True, default='', help_text="Description lisible de l'action")
     details = models.JSONField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     timestamp = models.DateTimeField(default=timezone.now)
@@ -1172,6 +1174,42 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.action} {self.model_name} at {self.timestamp}"
+
+
+class StockAdjustment(models.Model):
+    """Traçabilité des ajustements manuels de stock."""
+    
+    class ReasonType(models.TextChoices):
+        INVENTAIRE = 'INVENTAIRE', 'Ajustement inventaire'
+        CASSE = 'CASSE', 'Cassé'
+        VOL = 'VOL', 'Vol'
+        CONFUSION = 'CONFUSION', 'Confusion'
+        ERREUR_ENTREE = 'ERR_ENTREE', 'Erreur d\'entrée en stock'
+        AVARIE = 'AVARIE', 'Avarié'
+        USAGE_INTERNE = 'USAGE_INT', 'Usage interne'
+    
+    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='adjustments')
+    stock_lot = models.ForeignKey('StockLot', on_delete=models.SET_NULL, null=True, blank=True, related_name='adjustments')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    
+    quantity_before = models.IntegerField(help_text="Stock avant ajustement")
+    quantity_after = models.IntegerField(help_text="Stock après ajustement")
+    quantity_change = models.IntegerField(help_text="Différence (+/-)")
+    
+    reason_type = models.CharField(max_length=10, choices=ReasonType.choices)
+    reason_detail = models.TextField(blank=True, default='', help_text="Note optionnelle")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['produit', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.produit.name}: {self.quantity_change:+d} ({self.get_reason_type_display()})"
 
 
 class Promis(models.Model):
@@ -1244,3 +1282,33 @@ def update_facture_totals_on_change(sender, instance, created, **kwargs):
 
     if not created:
          instance.calculate_totals(save=True)
+
+
+class ClotureCaisse(models.Model):
+    """Model representing a cash register closure (clôture de caisse)."""
+    date = models.DateTimeField(default=timezone.now)
+    montant_reel = models.DecimalField(max_digits=12, decimal_places=2, help_text="Montant réellement compté en caisse")
+    montant_theorique = models.DecimalField(max_digits=12, decimal_places=2, help_text="Montant théorique calculé")
+    ecart_caisse = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Écart entre réel et théorique")
+    
+    # Détails
+    total_ventes = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total_entrees = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Entrées de caisse hors ventes")
+    total_sorties = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Sorties de caisse")
+    details_paiement = models.JSONField(default=dict, blank=True, help_text="Détails par mode de paiement")
+    
+    # Période couverte
+    date_debut = models.DateTimeField(null=True, blank=True, help_text="Début de la période de clôture")
+    date_fin = models.DateTimeField(null=True, blank=True, help_text="Fin de la période de clôture")
+    
+    # Caissier
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='clotures_caisse')
+    observation = models.TextField(blank=True, null=True, help_text="Notes ou observations sur la clôture")
+    
+    class Meta:
+        ordering = ['-date']
+        verbose_name = "Clôture de caisse"
+        verbose_name_plural = "Clôtures de caisse"
+    
+    def __str__(self):
+        return f"Clôture du {self.date.strftime('%d/%m/%Y %H:%M')} - Écart: {self.ecart_caisse} F"

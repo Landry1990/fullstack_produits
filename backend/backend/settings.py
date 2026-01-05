@@ -84,11 +84,12 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': os.getenv('DJANGO_THROTTLE_ANON', '100/day'),
-        'user': os.getenv('DJANGO_THROTTLE_USER', '1000/day'),
+        'user': os.getenv('DJANGO_THROTTLE_USER', '100000/day'),  # Increased for auto-refresh support
         'auth': os.getenv('DJANGO_THROTTLE_AUTH', '5/min'),
     },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
+    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
 }
 
 # Database
@@ -110,6 +111,25 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD', '123456'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '5432'),
+        
+        # Connection pooling configuration
+        # Garde les connexions ouvertes pour réutilisation (évite reconnexions fréquentes)
+        # Valeur en secondes, None = connexions persistantes, 0 = fermeture après chaque requête
+        'CONN_MAX_AGE': int(os.getenv('DB_CONN_MAX_AGE', '600')),  # 10 minutes par défaut
+        
+        # Options PostgreSQL pour optimiser les performances
+        'OPTIONS': {
+            # Psycopg3 utilise automatiquement READ COMMITTED par défaut
+            # Pas besoin de spécifier isolation_level explicitement
+            
+            # Connection pooling côté client (optionnel, pour pgBouncer)
+            # 'server_side_binding': False,  # Décommenter si vous utilisez pgBouncer
+        },
+        
+        # Pool de connexions (pour environnements avec beaucoup de workers)
+        # Note: Django ne gère pas nativement un pool, mais garde les connexions ouvertes
+        # Pour un vrai pool, utiliser pgBouncer ou django-db-pool
+        'CONN_HEALTH_CHECKS': True,  # Django 4.1+ : Vérifie la santé des connexions
     }
 }
 

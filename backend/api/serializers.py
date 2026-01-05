@@ -8,7 +8,7 @@ from .models import (
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog, Promis, LoyaltySetting
+    InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -317,12 +317,18 @@ class FactureProduitAllocationSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at']
 
 class ClotureCaisseSerializer(serializers.ModelSerializer):
-    user_nom = serializers.CharField(source='user.username', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    username = serializers.CharField(source='user.username', read_only=True, default='')
     
     class Meta:
         model = ClotureCaisse
         fields = '__all__'
         read_only_fields = ['date']
+
+    def get_user_name(self, obj):
+        if obj.user:
+            return obj.user.get_full_name() or obj.user.username
+        return 'N/A'
 
 class CreanceSerializer(serializers.ModelSerializer):
     """Serializer pour les créances (ventes en compte)"""
@@ -480,11 +486,47 @@ class HistoriqueTransformationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class AuditLogSerializer(serializers.ModelSerializer):
-    user_name = serializers.CharField(source='user.username', read_only=True)
+    user_name = serializers.SerializerMethodField()
+    action_display = serializers.CharField(source='get_action_display', read_only=True)
     
     class Meta:
         model = AuditLog
-        fields = '__all__'
+        fields = ['id', 'user', 'user_name', 'action', 'action_display', 'model_name', 
+                  'object_id', 'description', 'details', 'ip_address', 'timestamp']
+    
+    def get_user_name(self, obj):
+        if obj.user:
+            full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+            return full_name or obj.user.username
+        return 'Système'
+
+
+class StockAdjustmentSerializer(serializers.ModelSerializer):
+    """Serializer pour les ajustements de stock avec traçabilité"""
+    user_name = serializers.SerializerMethodField()
+    username = serializers.CharField(source='user.username', read_only=True)
+    produit_name = serializers.CharField(source='produit.name', read_only=True)
+    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    reason_type_display = serializers.CharField(source='get_reason_type_display', read_only=True)
+    lot_number = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = StockAdjustment
+        fields = [
+            'id', 'produit', 'produit_name', 'produit_cip', 
+            'stock_lot', 'lot_number',
+            'user', 'user_name', 'username',
+            'quantity_before', 'quantity_after', 'quantity_change',
+            'reason_type', 'reason_type_display', 'reason_detail',
+            'created_at'
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'quantity_change']
+    
+    def get_user_name(self, obj):
+        if obj.user:
+            full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+            return full_name or obj.user.username
+        return ''
 
 
 class PromisSerializer(serializers.ModelSerializer):

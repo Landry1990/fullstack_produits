@@ -112,14 +112,27 @@ export default function Ventes() {
   const handleOpenTicketPreview = async () => {
     if (!selectedFacture) return
     try {
-      const { data } = await axios.get<TicketCaisse[]>(`${caisseEndpoint}?facture=${selectedFacture.id}`)
+      const { data } = await axios.get<any[]>(`${caisseEndpoint}?facture=${selectedFacture.id}`)
       if (!data || data.length === 0) {
         setTicketCaisse(null)
         setShowTicketPreview(false)
         setError('Aucun ticket de caisse trouvé pour cette facture.')
         return
       }
-      setTicketCaisse(data[0])
+
+      // Créer un ticket agrégé avec tous les paiements
+      const paiementsDetails = data.map(p => ({
+        mode: p.mode_paiement,
+        montant: Number(p.montant),
+        part_patient: p.part_patient ? Number(p.part_patient) : null,
+        part_assurance: p.part_assurance ? Number(p.part_assurance) : null
+      }))
+
+      setTicketCaisse({
+        ...data[0],
+        paiements_details: paiementsDetails
+      } as TicketCaisse)
+      
       setShowTicketPreview(true)
     } catch (err) {
       setTicketCaisse(null)
@@ -800,15 +813,53 @@ export default function Ventes() {
                     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                   })}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Mode de paiement:</span>
-                  <span className="uppercase">
-                    {ticketCaisse.mode_paiement === 'especes' ? 'Espèces' :
-                     ticketCaisse.mode_paiement === 'cheque' ? 'Chèque' :
-                     ticketCaisse.mode_paiement === 'carte' ? 'Carte' :
-                     ticketCaisse.mode_paiement === 'virement' ? 'Virement' : ticketCaisse.mode_paiement}
-                  </span>
-                </div>
+                {ticketCaisse.paiements_details ? (
+                  <div className="mt-2 text-xs font-normal border-t border-dashed border-gray-400 pt-1">
+                      <div className="font-bold mb-1">Règlements:</div>
+                      {ticketCaisse.paiements_details.map((paiement, idx) => {
+                        const getModeLabel = (mode: string) => {
+                          const labels: { [key: string]: string } = {
+                            'especes': 'Espèces',
+                            'carte': 'Carte',
+                            'cheque': 'Chèque',
+                            'virement': 'Virement',
+                            'om': 'Orange Money',
+                            'momo': 'Mobile Money',
+                            'en_compte': 'En compte'
+                          }
+                          return labels[mode] || mode.toUpperCase()
+                        }
+                        
+                        const isPartPatient = paiement.part_patient && paiement.part_patient > 0
+                        const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
+                        
+                        return (
+                          <div key={idx} className="flex justify-between">
+                            <span>
+                              {getModeLabel(paiement.mode)}
+                              {isPartPatient && <span className="text-gray-600 italic font-normal"> (Patient)</span>}
+                              {isPartAssurance && <span className="text-gray-600 italic font-normal"> (Assur)</span>}
+                            </span>
+                            <span>{Math.round(paiement.montant)} F</span>
+                          </div>
+                        )
+                      })}
+                  </div>
+                ) : (
+                    <div className="flex justify-between">
+                    <span className="font-semibold">Mode de paiement:</span>
+                    <span className="uppercase">
+                        {ticketCaisse.mode_paiement === 'especes' ? 'Espèces' :
+                        ticketCaisse.mode_paiement === 'cheque' ? 'Chèque' :
+                        ticketCaisse.mode_paiement === 'carte' ? 'Carte' :
+                        ticketCaisse.mode_paiement === 'virement' ? 'Virement' : 
+                        ticketCaisse.mode_paiement === 'om' ? 'Orange Money' :
+                        ticketCaisse.mode_paiement === 'momo' ? 'Mobile Money' :
+                        ticketCaisse.mode_paiement === 'en_compte' ? 'En compte' :
+                        ticketCaisse.mode_paiement}
+                    </span>
+                    </div>
+                )}
                 {ticketCaisse.reference && (
                   <div className="flex justify-between">
                     <span className="font-semibold">Référence:</span>

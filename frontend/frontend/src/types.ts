@@ -198,7 +198,7 @@ export interface TicketCaisse {
   date_paiement: string
   montant_verse?: string
   rendu?: string
-  paiements_details?: { mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
+  paiements_details?: { mode?: string; mode_paiement?: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
 }
 
 export interface CaisseParTranche {
@@ -355,3 +355,32 @@ export interface Promis {
   date_livraison?: string
   notes?: string
 }
+
+export interface StockAdjustment {
+  id: number
+  produit: number
+  produit_name: string
+  produit_cip?: string
+  stock_lot: number | null
+  lot_number: string | null
+  user: number | null
+  user_name: string
+  username: string
+  quantity_before: number
+  quantity_after: number
+  quantity_change: number
+  reason_type: 'INVENTAIRE' | 'CASSE' | 'VOL' | 'CONFUSION' | 'ERR_ENTREE' | 'AVARIE' | 'USAGE_INT'
+  reason_type_display: string
+  reason_detail?: string
+  created_at: string
+}
+
+export const STOCK_ADJUSTMENT_REASONS = [
+  { value: 'INVENTAIRE', label: 'Ajustement inventaire' },
+  { value: 'CASSE', label: 'Cassé' },
+  { value: 'VOL', label: 'Vol' },
+  { value: 'CONFUSION', label: 'Confusion' },
+  { value: 'ERR_ENTREE', label: 'Erreur d\'entrée en stock' },
+  { value: 'AVARIE', label: 'Avarié' },
+  { value: 'USAGE_INT', label: 'Usage interne' },
+] as const

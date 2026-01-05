@@ -3,14 +3,16 @@ import axios from 'axios'
 import type { ProduitModel } from '../types'
 
 type TransactionHistory = {
-  type: 'ENTREE' | 'SORTIE' | 'RETOUR' | 'AVOIR' | 'TRANSFORMATION_ENTREE' | 'TRANSFORMATION_SORTIE'
+  type: 'ENTREE' | 'SORTIE' | 'RETOUR' | 'AVOIR' | 'TRANSFORMATION_ENTREE' | 'TRANSFORMATION_SORTIE' | 'AJUSTEMENT'
   date: string
   quantity: number
   libelle: string
   prix_unitaire: string
   stock_avant: number
   stock_apres: number
+  is_positive?: boolean
 }
+
 
 export default function StatistiquesProduit() {
   const [produits, setProduits] = useState<ProduitModel[]>([])
@@ -153,7 +155,9 @@ export default function StatistiquesProduit() {
                         </tr>
                       ) : (
                         history.map((item, index) => {
-                          const isPositive = ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                          const isPositive = item.type === 'AJUSTEMENT' 
+                            ? item.is_positive 
+                            : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
                           return (
                             <tr key={index} className="hover:bg-base-200/30">
                               <td className="whitespace-nowrap text-sm">
@@ -161,7 +165,9 @@ export default function StatistiquesProduit() {
                               </td>
                               <td>
                                 <span className={`badge badge-sm font-medium ${
-                                  isPositive ? 'badge-success text-white' : 'badge-error text-white'
+                                  item.type === 'AJUSTEMENT' 
+                                    ? 'badge-warning text-warning-content'
+                                    : isPositive ? 'badge-success text-white' : 'badge-error text-white'
                                 }`}>
                                   {item.type}
                                 </span>

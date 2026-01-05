@@ -281,7 +281,7 @@ export default function GestionUtilisateurs() {
                   >
                     Modifier
                   </button>
-                  {currentUser?.id !== user.id && (
+                  {currentUser?.username !== user.username && (
                     <button 
                       className="btn btn-ghost btn-sm text-error"
                       onClick={() => handleDeleteUser(user.id, user.username)}
@@ -397,7 +397,7 @@ export default function GestionUtilisateurs() {
                           onChange={() => handleMenuToggle(menu.key)}
                           disabled={formData.is_superuser} // Admin has all menus
                         />
-                        <span className={`label-text -sm ${formData.is_superuser ? 'opacity-50' : ''}`}>{menu.label}</span>
+                        <span className={`label-text text-sm ${formData.is_superuser ? 'opacity-50' : ''}`}>{menu.label}</span>
                       </label>
                     ))}
                   </div>

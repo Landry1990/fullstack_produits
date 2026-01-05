@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -7,12 +7,29 @@ interface AuditLog {
   id: number;
   user_name: string;
   action: string;
+  action_display: string;
   model_name: string;
   object_id: string;
-  details: string; // JSON string
+  description: string;
+  details: Record<string, unknown> | null;
   ip_address: string;
   timestamp: string;
 }
+
+const ACTION_TYPES = [
+  { value: '', label: 'Tous' },
+  { value: 'STOCK_ADJ', label: 'Ajustement stock' },
+  { value: 'PRICE_CHG', label: 'Changement prix' },
+  { value: 'CLOTURE', label: 'Clôture caisse' },
+  { value: 'INV_CANCEL', label: 'Annulation facture' },
+  { value: 'INV_DEL', label: 'Suppression facture' },
+  { value: 'INV_VALID', label: 'Validation facture' },
+  { value: 'INV_CRE', label: 'Création inventaire' },
+  { value: 'INV_VAL', label: 'Validation inventaire' },
+  { value: 'CREATE', label: 'Création' },
+  { value: 'UPDATE', label: 'Modification' },
+  { value: 'DELETE', label: 'Suppression' },
+];
 
 const JournalAudit: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -20,6 +37,8 @@ const JournalAudit: React.FC = () => {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [actionFilter, setActionFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -27,9 +46,14 @@ const JournalAudit: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const endpoint = apiBaseUrl 
+      let endpoint = apiBaseUrl 
         ? `${apiBaseUrl}/api/audit-logs/?page=${pageNum}`
         : `/api/audit-logs/?page=${pageNum}`;
+      
+      if (actionFilter) {
+        endpoint += `&action=${actionFilter}`;
+      }
+      
       const response = await axios.get(endpoint, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -48,25 +72,40 @@ const JournalAudit: React.FC = () => {
 
   useEffect(() => {
     fetchLogs(page);
-  }, [page]);
+  }, [page, actionFilter]);
 
-  const formatAction = (action: string) => {
-    const map: {[key: string]: string} = {
-      'CREATE': 'Création',
-      'UPDATE': 'Modification',
-      'DELETE': 'Suppression',
-      'LOGIN': 'Connexion',
-      'EXPORT': 'Export',
-    };
-    return map[action] || action;
-  };
+  // Filtrage local par recherche
+  const filteredLogs = useMemo(() => {
+    if (!searchQuery.trim()) return logs;
+    const query = searchQuery.toLowerCase();
+    return logs.filter(log => 
+      log.description?.toLowerCase().includes(query) ||
+      log.user_name?.toLowerCase().includes(query) ||
+      log.model_name?.toLowerCase().includes(query) ||
+      log.action_display?.toLowerCase().includes(query)
+    );
+  }, [logs, searchQuery]);
 
   const badgeColor = (action: string) => {
     switch (action) {
-      case 'CREATE': return 'badge-success';
-      case 'UPDATE': return 'badge-warning';
-      case 'DELETE': return 'badge-error';
-      default: return 'badge-ghost';
+      case 'CREATE':
+      case 'INV_CRE':
+        return 'badge-success';
+      case 'UPDATE':
+      case 'STOCK_ADJ':
+      case 'PRICE_CHG':
+        return 'badge-warning';
+      case 'DELETE':
+      case 'INV_CANCEL':
+      case 'INV_DEL':
+        return 'badge-error';
+      case 'CLOTURE':
+        return 'badge-info';
+      case 'INV_VALID':
+      case 'INV_VAL':
+        return 'badge-primary';
+      default:
+        return 'badge-ghost';
     }
   };
 
@@ -76,6 +115,37 @@ const JournalAudit: React.FC = () => {
       
       {error && <div className="alert alert-error mb-4">{error}</div>}
 
+      {/* Filtres */}
+      <div className="flex flex-wrap gap-4 mb-4">
+        <div className="form-control w-full max-w-xs">
+          <label className="label">
+            <span className="label-text">Type d'action</span>
+          </label>
+          <select 
+            className="select select-bordered"
+            value={actionFilter}
+            onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
+          >
+            {ACTION_TYPES.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="form-control w-full max-w-xs">
+          <label className="label">
+            <span className="label-text">Rechercher</span>
+          </label>
+          <input 
+            type="text"
+            placeholder="Rechercher dans les descriptions..."
+            className="input input-bordered"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="overflow-x-auto">
         <table className="table w-full table-zebra">
           <thead>
@@ -83,23 +153,31 @@ const JournalAudit: React.FC = () => {
               <th>Date</th>
               <th>Utilisateur</th>
               <th>Action</th>
-              <th>Cible</th>
-              <th>ID Objet</th>
-              <th>Détails</th>
+              <th>Description</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center">Chargement...</td></tr>
-            ) : logs.map(log => (
+              <tr><td colSpan={4} className="text-center">Chargement...</td></tr>
+            ) : filteredLogs.length === 0 ? (
+              <tr><td colSpan={4} className="text-center text-gray-500">Aucun log trouvé</td></tr>
+            ) : filteredLogs.map(log => (
               <tr key={log.id}>
-                <td>{format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm:ss', { locale: fr })}</td>
+                <td className="whitespace-nowrap">
+                  {format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                </td>
                 <td>{log.user_name || 'Système'}</td>
-                <td><span className={`badge ${badgeColor(log.action)}`}>{formatAction(log.action)}</span></td>
-                <td>{log.model_name}</td>
-                <td>{log.object_id}</td>
-                <td className="max-w-xs truncate" title={log.details}>
-                  {log.details ? log.details.substring(0, 50) + (log.details.length > 50 ? '...' : '') : '-'}
+                <td>
+                  <span className={`badge ${badgeColor(log.action)}`}>
+                    {log.action_display || log.action}
+                  </span>
+                </td>
+                <td className="max-w-md">
+                  {log.description || (
+                    <span className="text-gray-400 italic">
+                      {log.model_name} #{log.object_id}
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}

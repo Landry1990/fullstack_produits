@@ -22,9 +22,11 @@ import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 import InvoiceSettings from './components/InvoiceSettings'
 import JournalAudit from './components/JournalAudit'
+import JournalAjustements from './components/JournalAjustements'
 import Promis from './components/Promis'
 import StockAnalysis from './components/StockAnalysis'
 import CaisseCentralisee from './components/CaisseCentralisee'
+import HistoriqueClotures from './components/HistoriqueClotures'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -105,11 +107,13 @@ const router = createBrowserRouter([
           { path: 'statistiques', element: <StatistiquesProduit /> },
           { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
           { path: 'journal-caisse', element: <JournalCaisse /> },
+          { path: 'historique-clotures', element: <HistoriqueClotures /> },
           { path: 'perimes', element: <Perimes /> },
           { path: 'creances', element: <Creances /> },
           { path: 'avoirs', element: <Avoirs /> },
           { path: 'promis', element: <Promis /> },
           { path: 'stock-analysis', element: <StockAnalysis /> },
+          { path: 'journal-ajustements', element: <JournalAjustements /> },
           { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
