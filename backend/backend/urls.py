@@ -18,6 +18,7 @@ from api.views import (
     StockAnalysisUnsoldView, StockAnalysisOverstockView, LoyaltySettingViewSet,
     StockAdjustmentViewSet, ClotureCaisseViewSet, HistoriqueVentesViewSet
 )
+from api.historique_achats_view import HistoriqueAchatsViewSet
 from api.rapport_view import RapportViewSet
 from api.produit_import_view import ProduitImportViewSet
 
@@ -54,6 +55,7 @@ router.register(r'loyalty-settings', LoyaltySettingViewSet, basename='loyaltyset
 router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadjustment')
 router.register(r'clotures-caisse', ClotureCaisseViewSet, basename='cloturecaisse')
 router.register(r'historique-ventes', HistoriqueVentesViewSet, basename='historiqueventes')
+router.register(r'historique-achats', HistoriqueAchatsViewSet, basename='historiqueachats')
 
 
 urlpatterns = [
