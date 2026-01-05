@@ -387,11 +387,11 @@ export default function JournalCaisse() {
 
             <div style="margin-bottom: 15px; border-top: 1px dashed black; padding-top: 5px;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
-                    <span>📥 AUTRES ENTRÉES</span>
+                    <span>AUTRES ENTRÉES</span>
                     <span>${Math.round(closingTotals.total_entrees)} F</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
-                    <span>📤 SORTIES DIVERSES</span>
+                    <span>SORTIES DIVERSES</span>
                     <span>-${Math.round(closingTotals.total_sorties)} F</span>
                 </div>
             </div>
@@ -438,14 +438,14 @@ export default function JournalCaisse() {
 
   const getModeIcon = (mode: string) => {
     switch (mode) {
-      case 'especes': return '💵'
-      case 'cheque': return '📝'
-      case 'carte': return '💳'
-      case 'virement': return '🏦'
-      case 'om': return '🟧'
-      case 'momo': return '📱'
-      case 'en_compte': return '📊'
-      default: return '💰'
+      case 'especes': return ''
+      case 'cheque': return ''
+      case 'carte': return ''
+      case 'virement': return ''
+      case 'om': return ''
+      case 'momo': return ''
+      case 'en_compte': return ''
+      default: return ''
     }
   }
 
@@ -462,7 +462,7 @@ export default function JournalCaisse() {
           className="btn btn-sm btn-ghost gap-2"
           disabled={loading}
         >
-          {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
+          {loading ? <span className="loading loading-spinner loading-xs"></span> : ''}
           Actualiser
         </button>
         
@@ -475,7 +475,7 @@ export default function JournalCaisse() {
           }}
           className="btn btn-sm btn-secondary gap-2 ml-2"
         >
-          📅 Aujourd'hui
+          Aujourd'hui
         </button>
         
         {/* Entry/Exit Type Filter */}
@@ -490,13 +490,13 @@ export default function JournalCaisse() {
             className={`btn btn-sm ${filterType === 'entrees' ? 'btn-active btn-success' : ''}`}
             onClick={() => setFilterType('entrees')}
           >
-            📥 Entrées
+            Entrées
           </button>
           <button 
             className={`btn btn-sm ${filterType === 'sorties' ? 'btn-active btn-error' : ''}`}
             onClick={() => setFilterType('sorties')}
           >
-            📤 Sorties
+            Sorties
           </button>
         </div>
         
@@ -504,14 +504,14 @@ export default function JournalCaisse() {
             onClick={() => setIsMovementModalOpen(true)}
             className="btn btn-sm btn-outline gap-2 ml-2"
         >
-            ➕ Opération
+            Opération
         </button>
         <button
           onClick={openClosingModal}
           className="btn btn-sm btn-primary gap-2 ml-2"
           disabled={loading}
         >
-          🔒 Clôturer la Caisse
+          Clôturer la Caisse
         </button>
       </div>
 
@@ -602,34 +602,34 @@ export default function JournalCaisse() {
       <div className="px-6 py-3 bg-white border-b border-base-200 shrink-0">
         <div className="flex flex-wrap gap-4 text-sm">
           <div className="badge badge-lg badge-ghost gap-2">
-            💵 Espèces: <span className="font-bold">{Math.round(totauxParMode.especes)} F</span>
+            Espèces: <span className="font-bold">{Math.round(totauxParMode.especes)} F</span>
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
-            📝 Chèque: <span className="font-bold">{Math.round(totauxParMode.cheque)} F</span>
+            Chèque: <span className="font-bold">{Math.round(totauxParMode.cheque)} F</span>
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
-            💳 Carte: <span className="font-bold">{Math.round(totauxParMode.carte)} F</span>
+            Carte: <span className="font-bold">{Math.round(totauxParMode.carte)} F</span>
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
-            🏦 Virement: <span className="font-bold">{Math.round(totauxParMode.virement)} F</span>
+            Virement: <span className="font-bold">{Math.round(totauxParMode.virement)} F</span>
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
-            🟧 OM: <span className="font-bold">{Math.round(totauxParMode.om)} F</span>
+            OM: <span className="font-bold">{Math.round(totauxParMode.om)} F</span>
           </div>
           <div className="badge badge-lg badge-ghost gap-2">
-            📱 MoMo: <span className="font-bold">{Math.round(totauxParMode.momo)} F</span>
+            MoMo: <span className="font-bold">{Math.round(totauxParMode.momo)} F</span>
           </div>
 
           <div className="badge badge-lg badge-primary gap-2">
-            💰 SOLDE THÉORIQUE: <span className="font-bold">{Math.round(totauxParMode.total)} F</span>
+            SOLDE THÉORIQUE: <span className="font-bold">{Math.round(totauxParMode.total)} F</span>
           </div>
           
           <div className="ml-4 flex gap-2">
                <div className="badge badge-md badge-success gap-1">
-                📥 Entrées: {Math.round(totauxParMode.entrees)} F
+                Entrées: {Math.round(totauxParMode.entrees)} F
                </div>
                <div className="badge badge-md badge-error gap-1 text-white">
-                📤 Sorties: {Math.round(totauxParMode.sorties)} F
+                Sorties: {Math.round(totauxParMode.sorties)} F
                </div>
           </div>
         </div>
@@ -695,7 +695,7 @@ export default function JournalCaisse() {
                             </td>
                             <td>
                                 <div className={`badge badge-outline gap-2 ${mouv.type === 'ENTREE' ? 'badge-success' : 'badge-error'}`}>
-                                    {mouv.type === 'ENTREE' ? '📥 Entrée' : '📤 Sortie'}
+                                    {mouv.type === 'ENTREE' ? 'Entrée' : 'Sortie'}
                                 </div>
                             </td>
                             <td>
@@ -740,7 +740,7 @@ export default function JournalCaisse() {
                         {transaction.client_name}
                         {transaction.is_creance_settlement && (
                             <div className="badge badge-sm badge-info badge-outline ml-2 gap-1" title="Règlement de créance">
-                                💳 Créance
+                                Créance
                             </div>
                         )}
                         {transaction.isReleveGroup && (

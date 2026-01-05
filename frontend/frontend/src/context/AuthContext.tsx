@@ -35,15 +35,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Effet qui s'exécute une seule fois au chargement de l'application (mount)
   useEffect(() => {
-    // On tente de récupérer les infos de connexion depuis le localStorage du navigateur
-    // Cela permet de garder l'utilisateur connecté même s'il rafraîchit la page
-    const token = localStorage.getItem('authToken');
-    const username = localStorage.getItem('username');
-    const is_superuser = localStorage.getItem('is_superuser') === 'true';
-    const allowed_menus = JSON.parse(localStorage.getItem('allowed_menus') || '[]');
-    const can_do_returns = localStorage.getItem('can_do_returns') === 'true';
-    const can_sell_negative_stock = localStorage.getItem('can_sell_negative_stock') === 'true';
-    const can_cash_out = localStorage.getItem('can_cash_out') === 'true';
+    // On tente de récupérer les infos de connexion depuis le sessionStorage du navigateur
+    // Cela permet de garder l'utilisateur connecté tant que l'onglet est ouvert
+    const token = sessionStorage.getItem('authToken');
+    const username = sessionStorage.getItem('username');
+    const is_superuser = sessionStorage.getItem('is_superuser') === 'true';
+    const allowed_menus = JSON.parse(sessionStorage.getItem('allowed_menus') || '[]');
+    const can_do_returns = sessionStorage.getItem('can_do_returns') === 'true';
+    const can_sell_negative_stock = sessionStorage.getItem('can_sell_negative_stock') === 'true';
+    const can_cash_out = sessionStorage.getItem('can_cash_out') === 'true';
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
@@ -65,14 +65,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fonction de connexion appelée après un succès login (ex: depuis Login.tsx)
   const login = (userData: User) => {
-    // 1. On sauvegarde tout dans le localStorage pour la persistance
-    localStorage.setItem('authToken', userData.token);
-    localStorage.setItem('username', userData.username);
-    localStorage.setItem('is_superuser', String(userData.is_superuser));
-    localStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
-    localStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
-    localStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
-    localStorage.setItem('can_cash_out', String(userData.can_cash_out ?? true));
+    // 1. On sauvegarde tout dans le sessionStorage (effacé à la fermeture du navigateur)
+    sessionStorage.setItem('authToken', userData.token);
+    sessionStorage.setItem('username', userData.username);
+    sessionStorage.setItem('is_superuser', String(userData.is_superuser));
+    sessionStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
+    sessionStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
+    sessionStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
+    sessionStorage.setItem('can_cash_out', String(userData.can_cash_out ?? true));
     
     // 2. On met à jour l'état de l'application
     setUser(userData);
@@ -83,14 +83,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fonction de déconnexion
   const logout = () => {
-    // 1. On nettoie le localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('is_superuser');
-    localStorage.removeItem('allowed_menus');
-    localStorage.removeItem('can_do_returns');
-    localStorage.removeItem('can_sell_negative_stock');
-    localStorage.removeItem('can_cash_out');
+    // 1. On nettoie le sessionStorage
+    sessionStorage.removeItem('authToken');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('is_superuser');
+    sessionStorage.removeItem('allowed_menus');
+    sessionStorage.removeItem('can_do_returns');
+    sessionStorage.removeItem('can_sell_negative_stock');
+    sessionStorage.removeItem('can_cash_out');
     
     // 2. On remet l'utilisateur à null
     setUser(null);
