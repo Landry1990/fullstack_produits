@@ -856,6 +856,9 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         commande = self.get_object()
         if commande.status == Commande.Status.CLOTUREE:
             return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Enregistrer la date de clôture (maintenant, en timezone local)
+        commande.date_cloture = timezone.now()
 
         # Prefetch tous les produits de la commande en une seule requête
         items = commande.produits.select_related('produit', 'produit__fournisseur').all()
@@ -897,7 +900,7 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     selling_price=produit.selling_price,
                     lot=item.lot,
                     date_expiration=item.date_expiration,
-                    date_reception=commande.date
+                    date_reception=commande.date_cloture
                 )
                 lots_to_create.append(lot)
             
@@ -970,9 +973,9 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     batch_size=100
                 )
         
-        # 2.3 Mettre à jour le statut de la commande
+        # 2.3 Mettre à jour le statut et la date de clôture de la commande
         commande.status = Commande.Status.CLOTUREE
-        commande.save(update_fields=['status'])
+        commande.save(update_fields=['status', 'date_cloture'])
 
         return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
 
@@ -2683,12 +2686,16 @@ class DashboardViewSet(viewsets.ViewSet):
         """
         Returns dashboard statistics: revenue, sales count, new clients, low stock.
         """
-        # Try to get from cache
-        cached_stats = cache.get('dashboard_stats')
-        if cached_stats:
-            return Response(cached_stats)
+        # DISABLED CACHE: Real-time stats are critical for accuracy
+        # cached_stats = cache.get('dashboard_stats')
+        # if cached_stats:
+        #     return Response(cached_stats)
 
-        today = timezone.now().date()
+        # FIX: Use local timezone (Africa/Douala) to get the correct "today"
+        # timezone.now() returns UTC-aware datetime
+        # timezone.localtime() converts to the configured TIME_ZONE in settings.py
+        local_now = timezone.localtime(timezone.now())
+        today = local_now.date()
         yesterday = today - timedelta(days=1)
         
         # --- Préparation des sous-requêtes pour éviter les produits cartésiens ---

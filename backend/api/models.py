@@ -194,6 +194,7 @@ class Commande(models.Model):
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.PROTECT, null=True, blank=True)
     numero_facture = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
+    date_cloture = models.DateTimeField(null=True, blank=True, verbose_name="Date de clôture")
     status = models.CharField(
         max_length=4,
         choices=Status.choices,

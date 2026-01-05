@@ -1097,7 +1097,7 @@ export default function Commandes() {
 
   return (
     <>
-      <h1 className="text-3xl font-bold mb-4 text-center">Gestion des Commandes</h1>
+      <h1 className="text-xl md:text-2xl font-bold mb-4 text-center">Gestion des Commandes</h1>
 
       {error && (
         <div role="alert" className="alert alert-error mb-4">
@@ -1110,7 +1110,7 @@ export default function Commandes() {
         /* LISTE DES COMMANDES */
         <div className="flex flex-col h-full p-4 space-y-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 className="text-2xl font-bold">Liste des Commandes</h1>
+            <h1 className="text-lg md:text-xl font-bold">Liste des Commandes</h1>
             <div className="flex gap-2 w-full md:w-auto">
                 <button 
                     className="btn btn-secondary btn-sm" 
@@ -1239,7 +1239,7 @@ export default function Commandes() {
           {/* Header */}
           <div className="flex items-center gap-4">
              <button onClick={handleBackToList} className="btn btn-circle btn-sm btn-ghost">←</button>
-             <h2 className="text-xl font-bold">Commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
+             <h2 className="text-lg md:text-xl font-bold">Commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
              <div className="ml-auto flex flex-wrap gap-2">
                   <button 
                     className="btn btn-secondary btn-sm"
@@ -1311,7 +1311,7 @@ export default function Commandes() {
             </div>
             <div>
                  <div className="text-xs text-gray-500 uppercase">Total</div>
-                 <div className="font-bold text-lg text-primary">
+                 <div className="font-bold text-base md:text-lg text-primary">
                     {(selectedCommande.produits || []).reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0).toLocaleString()} F
                  </div>
             </div>
@@ -1445,7 +1445,7 @@ export default function Commandes() {
                   </svg>
                 </button>
                 <div>
-                  <h3 className="font-bold text-xl">
+                  <h3 className="font-bold text-base md:text-lg">
                       {viewMode === 'EDIT' && selectedCommande 
                         ? `Modifier Commande #${selectedCommande.numero_facture || selectedCommande.id}` 
                         : 'Nouvelle Commande'}
@@ -1606,13 +1606,13 @@ export default function Commandes() {
             <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
               <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-4">
-                  <h2 className="font-bold text-lg text-base-content">
+                  <h2 className="font-bold text-sm md:text-base text-base-content">
                     Produits ({commandeProduits.length})
                   </h2>
                   <div className="flex items-center gap-4">
                       {saving && <span className="text-sm text-warning animate-pulse">Sauvegarde...</span>}
                       {!saving && lastSaved && <span className="text-xs text-success">Enregistré à {lastSaved.toLocaleTimeString()}</span>}
-                      <div className="text-xl md:text-2xl font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
+                      <div className="text-base md:text-lg font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
                         Total : {commandeProduits.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0).toLocaleString('fr-FR')} F
                       </div>
                   </div>
@@ -1678,7 +1678,7 @@ export default function Commandes() {
                             />
                           </td>
                           <td className="pl-4 py-2 md:py-3">
-                            <div className="font-medium text-base">
+                            <div className="font-medium text-sm">
                               {(() => {
                                 // Try to get product name from different sources
                                 if (typeof p.produit === 'object' && p.produit.name) {
