@@ -53,6 +53,17 @@ body {
   box-sizing: border-box;
 }
 
+/* Force all inputs to display text in uppercase */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="search"],
+input[type="url"],
+textarea,
+select {
+  text-transform: uppercase;
+}
+
 /* Custom scrollbar for a cleaner look */
 ::-webkit-scrollbar {
   width: 8px;

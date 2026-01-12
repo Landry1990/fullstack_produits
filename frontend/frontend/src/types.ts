@@ -48,6 +48,9 @@ export interface ProduitModel {
   created_at?: string
   updated_at?: string
   use_lot_management?: boolean
+  // Ordonnancier
+  requires_prescription?: boolean
+  surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
 }
 
 export interface ProduitForm {
@@ -66,6 +69,8 @@ export interface ProduitForm {
   rayon: string
   fournisseur: string
   tva: string
+  requires_prescription?: boolean
+  surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
 }
 
 export interface AchatProduit {
@@ -169,6 +174,7 @@ export interface Facture {
   id: number
   client: number
   client_name?: string
+  client_name_override?: string | null
   ayant_droit?: number | null
   ayant_droit_details?: AyantDroit
   numero_facture: string | null
@@ -384,3 +390,26 @@ export const STOCK_ADJUSTMENT_REASONS = [
   { value: 'AVARIE', label: 'Avarié' },
   { value: 'USAGE_INT', label: 'Usage interne' },
 ] as const
+
+export interface LigneOrdonnancier {
+  id: number
+  ordonnancier: number
+  produit: number | null
+  produit_name?: string | null
+  produit_nom: string
+  quantite: number
+  surveillance_category: 'NONE' | 'STANDARD' | 'RENFORCEE'
+}
+
+export interface Ordonnancier {
+  numero_ordre: number
+  date_delivrance: string
+  patient_nom: string
+  prescripteur_nom: string
+  facture?: number | null
+  facture_numero?: string | null
+  lignes: LigneOrdonnancier[]
+  enregistre_par?: number | null
+  enregistre_par_nom?: string
+  created_at: string
+}

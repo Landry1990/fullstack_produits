@@ -26,7 +26,8 @@ class ProduitListSerializer(serializers.ModelSerializer):
             'id', 'name', 'cip1', 'cip2', 'cip3',
             'stock', 'stock_minimum', 'pmp', 'selling_price',
             'rayon_name', 'fournisseur_name', 'rotation_moyenne',
-            'use_lot_management'
+            'use_lot_management',
+            'tva', 'cost_price', 'taux_marge'
         ]
 
 

@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import type { Facture, TicketCaisse, CaisseParTranche } from '../types'
 
 export default function Ventes() {
+  const navigate = useNavigate()
   const [factures, setFactures] = useState<Facture[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -22,18 +24,61 @@ export default function Ventes() {
   const [refundMode, setRefundMode] = useState('especes')
   const [refundAmount, setRefundAmount] = useState('')
   const [refundReference, setRefundReference] = useState('')
+  
+  // Pagination State
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
+  // Helper pour formater la date locale en string pour l'input datetime-local (YYYY-MM-DDThh:mm)
+  const getLocalDateTimeString = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  }
+
+  // Helper pour formater la date en format français JJ/MM/AAAA HH:mm
+  const formatDateFr = (dateString: string) => {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    return `${day}/${month}/${year} ${hours}:${minutes}`
+  }
+
   const [dateDebut, setDateDebut] = useState<string>(() => {
     const now = new Date()
-    const date = now.toISOString().split('T')[0]
-    // Par défaut, commencer à 00:00 du jour actuel
-    return `${date}T00:00`
+    now.setHours(0, 0, 0, 0)
+    return getLocalDateTimeString(now)
   })
+  
   const [dateFin, setDateFin] = useState<string>(() => {
     const now = new Date()
-    const date = now.toISOString().split('T')[0]
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    return `${date}T${time}`
+    return getLocalDateTimeString(now)
   })
+
+  // Debounce search query
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchQuery, filterStatus]);
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -48,14 +93,37 @@ export default function Ventes() {
 
   useEffect(() => {
     fetchFactures()
-  }, [])
+  }, [page, debouncedSearchQuery, filterStatus])
 
   const fetchFactures = async () => {
+    setLoading(true)
     try {
-      const response = await axios.get(facturesEndpoint)
-      // Handle both paginated and non-paginated responses
-      const data: any = response.data;
-      setFactures(Array.isArray(data) ? data : (data.results || []))
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      
+      if (debouncedSearchQuery) {
+        params.append('search', debouncedSearchQuery)
+      }
+
+      if (filterStatus === 'validated') {
+        params.append('status__in', 'VAL,PAY')
+      } else if (filterStatus === 'cancelled') {
+        params.append('status', 'ANN')
+      }
+
+      const response = await axios.get(facturesEndpoint, { params })
+      const data = response.data
+
+      if (data.results) {
+        setFactures(data.results)
+        setTotalCount(data.count)
+        setTotalPages(Math.ceil(data.count / 50)) // Assuming page size is 50
+      } else {
+        // Fallback for non-paginated response (should not happen with default DRF)
+        setFactures(Array.isArray(data) ? data : [])
+        setTotalCount(Array.isArray(data) ? data.length : 0)
+        setTotalPages(1)
+      }
     } catch (error) {
       console.error('Erreur lors du chargement des factures:', error)
       setFactures([])
@@ -63,6 +131,8 @@ export default function Ventes() {
       setLoading(false)
     }
   }
+
+  // ... (keep fetchFactureDetails, handleViewProducts, handleOpenTicketPreview, handlePrintInvoice, handleOpenRefundModal, handleConfirmRefund, printInvoicePDF, handleDeleteBrouillons, brouillonsCount, fetchCaisseParTranche, useEffect for caisse) ...
 
   const fetchFactureDetails = async (factureId: number) => {
     setLoadingDetails(true)
@@ -277,7 +347,32 @@ export default function Ventes() {
     }
   }
 
-  const brouillonsCount = factures.filter(f => f.status === 'BROU').length
+  const brouillonsCount = useMemo(() => {
+      // Note: This count might be inaccurate if brouillons are not on the current page.
+      // Ideally backend should provide this count separately or we fetch distinct count
+      return factures.filter(f => f.status === 'BROU').length
+  }, [factures])
+
+  const handleOpenDevisInFacturation = useCallback(async (facture: Facture) => {
+    try {
+      // Charger les détails complets de la facture (avec produits) si pas déjà chargés
+      let factureComplete = facture
+      if (!facture.produits || facture.produits.length === 0) {
+        const response = await axios.get<Facture>(`${facturesEndpoint}${facture.id}/`)
+        factureComplete = response.data
+      }
+      
+      // Stocker le devis dans localStorage pour qu'il puisse être chargé par Facturation
+      localStorage.setItem('devis_to_load', JSON.stringify(factureComplete))
+      
+      // Naviguer vers l'interface de facturation
+      navigate('/app/facturation')
+    } catch (err) {
+      console.error('Erreur lors du chargement du devis:', err)
+      setError('Impossible de charger le devis')
+    }
+  }, [facturesEndpoint])
+
 
   const fetchCaisseParTranche = async () => {
     const dateDebutObj = new Date(dateDebut)
@@ -321,22 +416,6 @@ export default function Ventes() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showCaisseTranches, dateDebut, dateFin])
 
-  // Filtrer les factures
-  const filteredFactures = factures.filter(facture => {
-    const matchesSearch = (facture.client_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (facture.numero_facture && facture.numero_facture.toLowerCase().includes(searchQuery.toLowerCase()))
-
-    if (!matchesSearch) return false
-
-    if (filterStatus === 'validated') {
-      return facture.status === 'VAL' || facture.status === 'PAY'
-    } else if (filterStatus === 'cancelled') {
-      return facture.status === 'ANN'
-    }
-    
-    return true
-  })
-
   if (loading) {
     return (
       <div className="p-6">
@@ -359,12 +438,12 @@ export default function Ventes() {
         <div className="bg-white rounded-lg shadow-sm border border-base-200 px-4 py-2 flex items-center gap-6">
           <div className="flex flex-col items-center">
             <span className="text-xs uppercase tracking-wider font-bold opacity-50">Total Factures</span>
-            <span className="text-xl font-bold text-primary">{factures.length}</span>
+            <span className="text-xl font-bold text-primary">{totalCount}</span>
           </div>
           
           {brouillonsCount > 0 && (
             <div className="flex flex-col items-center border-l pl-6 border-base-200">
-              <span className="text-xs uppercase tracking-wider font-bold text-warning">Brouillons</span>
+              <span className="text-xs uppercase tracking-wider font-bold text-warning">Brouillons (Page)</span>
               <span className="text-xl font-bold text-warning">{brouillonsCount}</span>
             </div>
           )}
@@ -461,23 +540,41 @@ export default function Ventes() {
             <div className="flex flex-col md:flex-row gap-6 items-end">
               <div className="form-control flex-1">
                 <label className="label"><span className="label-text font-medium text-xs uppercase">Début</span></label>
-                <input
-                  type="datetime-local"
-                  value={dateDebut}
-                  onChange={(e) => setDateDebut(e.target.value)}
-                  className="input input-sm input-bordered w-full"
-                  step="60"
-                />
+                <div className="flex gap-1">
+                  <input
+                    type="date"
+                    value={dateDebut.split('T')[0]}
+                    onChange={(e) => setDateDebut(e.target.value + 'T' + dateDebut.split('T')[1])}
+                    className="input input-sm input-bordered w-full"
+                    lang="fr"
+                  />
+                  <input
+                    type="time"
+                    value={dateDebut.split('T')[1]}
+                    onChange={(e) => setDateDebut(dateDebut.split('T')[0] + 'T' + e.target.value)}
+                    className="input input-sm input-bordered w-32"
+                    lang="fr"
+                  />
+                </div>
               </div>
               <div className="form-control flex-1">
                 <label className="label"><span className="label-text font-medium text-xs uppercase">Fin</span></label>
-                <input
-                  type="datetime-local"
-                  value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                  className="input input-bordered input-sm w-full"
-                  step="60"
-                />
+                <div className="flex gap-1">
+                  <input
+                    type="date"
+                    value={dateFin.split('T')[0]}
+                    onChange={(e) => setDateFin(e.target.value + 'T' + dateFin.split('T')[1])}
+                    className="input input-bordered input-sm w-full"
+                    lang="fr"
+                  />
+                   <input
+                    type="time"
+                    value={dateFin.split('T')[1]}
+                    onChange={(e) => setDateFin(dateFin.split('T')[0] + 'T' + e.target.value)}
+                    className="input input-bordered input-sm w-32"
+                    lang="fr"
+                  />
+                </div>
               </div>
               <button
                 onClick={fetchCaisseParTranche}
@@ -534,7 +631,7 @@ export default function Ventes() {
               </tr>
             </thead>
             <tbody>
-              {filteredFactures.length === 0 ? (
+              {factures.length === 0 ? (
                 <tr>
                   <td colSpan={filterStatus === 'cancelled' ? 8 : 7} className="text-center py-12 text-base-content/50">
                     <div className="flex flex-col items-center gap-2">
@@ -544,32 +641,23 @@ export default function Ventes() {
                   </td>
                 </tr>
               ) : (
-                filteredFactures.map((facture) => (
+                factures.map((facture) => (
                   <tr 
                     key={facture.id} 
                     className="hover:bg-base-50 transition-colors cursor-pointer border-b border-base-100 last:border-0"
                     onClick={() => handleViewProducts(facture)}
                   >
-                    <td className="font-medium font-mono">
+                    <td className="font-bold font-mono text-sm md:text-base">
                       {facture.numero_facture || <span className="italic text-base-content/50">Brouillon #{facture.id}</span>}
                     </td>
                     <td>
                       <div className="font-bold text-sm">{facture.client_name || 'Client de passage'}</div>
                     </td>
                     <td className="text-xs text-base-content/70">
-                      {new Date(facture.date).toLocaleString('fr-FR', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                      })}
+                      {formatDateFr(facture.date)}
                     </td>
                     <td>
-                      <span className={`badge badge-sm font-medium ${
-                        facture.status === 'PAY' ? 'badge-success text-white' :
-                        facture.status === 'BROU' ? 'badge-warning text-warning-content' :
-                        facture.status === 'VAL' ? 'badge-info text-white' :
-                        facture.status === 'ANN' ? 'badge-error text-white' :
-                        'badge-ghost'
-                      }`}>
+                      <span className="badge badge-sm font-medium badge-ghost">
                         {facture.status_display}
                       </span>
                     </td>
@@ -606,6 +694,16 @@ export default function Ventes() {
                         >
                           👁️
                         </button>
+                        {/* Bouton pour ouvrir/modifier dans Facturation (toutes sauf annulées) */}
+                        {facture.status !== 'ANN' && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleOpenDevisInFacturation(facture); }}
+                            className="btn btn-xs btn-ghost btn-square text-success"
+                            title="Modifier / Rappeler dans Facturation"
+                          >
+                            ✏️
+                          </button>
+                        )}
                         <button
                           onClick={(e) => { e.stopPropagation(); handleOpenRefundModal(facture); }}
                           className={`btn btn-xs btn-ghost btn-square ${facture.status === 'ANN' ? 'opacity-0 cursor-default' : 'text-error'}`}
@@ -623,9 +721,34 @@ export default function Ventes() {
           </table>
         </div>
         
-        {/* Footer info */}
-        <div className="p-2 border-t bg-base-50/50 text-xs text-center text-base-content/50">
-            {filteredFactures.length} facture{filteredFactures.length > 1 ? 's' : ''} affichée{filteredFactures.length > 1 ? 's' : ''}
+        {/* Pagination & Footer info */}
+        <div className="p-2 border-t bg-base-50/50 text-xs text-center text-base-content/50 flex flex-col items-center gap-2">
+            <div>
+              {factures.length} facture{factures.length > 1 ? 's' : ''} affichée{factures.length > 1 ? 's' : ''} sur {totalCount} total
+            </div>
+            
+            {!loading && totalCount > 0 && (
+                <div className="flex justify-center items-center gap-2">
+                <button 
+                  className="btn btn-xs btn-outline" 
+                  disabled={page === 1} 
+                  onClick={() => setPage(page - 1)}
+                >
+                  ← Précédent
+                </button>
+                <div className="px-2 py-1 bg-white rounded border border-base-200">
+                  <span className="font-semibold">Page {page}</span>
+                  {totalPages > 1 && <span className="text-gray-500"> / {totalPages}</span>}
+                </div>
+                <button 
+                  className="btn btn-xs btn-outline" 
+                  disabled={page >= totalPages} 
+                  onClick={() => setPage(page + 1)}
+                >
+                  Suivant →
+                </button>
+              </div>
+            )}
         </div>
       </div>
 
@@ -836,7 +959,7 @@ export default function Ventes() {
                         return (
                           <div key={idx} className="flex justify-between">
                             <span>
-                              {getModeLabel(paiement.mode)}
+                              {getModeLabel(paiement.mode || '')}
                               {isPartPatient && <span className="text-gray-600 italic font-normal"> (Patient)</span>}
                               {isPartAssurance && <span className="text-gray-600 italic font-normal"> (Assur)</span>}
                             </span>

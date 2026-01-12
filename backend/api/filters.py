@@ -1,5 +1,5 @@
 from django_filters import rest_framework as filters
-from .models import Produit
+from .models import Produit, AuditLog
 
 class ProduitFilter(filters.FilterSet):
     # Permet de filtrer par le nom du rayon (insensible à la casse)
@@ -12,3 +12,13 @@ class ProduitFilter(filters.FilterSet):
         model = Produit
         # On garde les filtres simples par ID et on ajoute les nouveaux
         fields = ['rayon', 'fournisseur', 'rayon_name', 'min_price']
+
+
+class AuditLogFilter(filters.FilterSet):
+    """Filtre personnalisé pour le journal d'audit avec support des plages de dates."""
+    date_from = filters.DateTimeFilter(field_name='timestamp', lookup_expr='gte')
+    date_to = filters.DateTimeFilter(field_name='timestamp', lookup_expr='lte')
+    
+    class Meta:
+        model = AuditLog
+        fields = ['action', 'model_name', 'user', 'date_from', 'date_to']

@@ -557,12 +557,30 @@ export default function JournalCaisse() {
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Début (Date & Heure)</span>
             </label>
-            <input
-              type="datetime-local"
-              value={dateDebut}
-              onChange={(e) => setDateDebut(e.target.value)}
-              className="input input-bordered input-sm"
-            />
+            <div className="flex gap-1">
+              <input
+                type="date"
+                value={dateDebut ? dateDebut.split('T')[0] : ''}
+                onChange={(e) => {
+                    const d = e.target.value;
+                    const t = dateDebut ? dateDebut.split('T')[1] : '00:00';
+                    setDateDebut(d ? `${d}T${t}` : '');
+                }}
+                className="input input-bordered input-sm w-full"
+                lang="fr"
+              />
+              <input
+                type="time"
+                value={dateDebut ? dateDebut.split('T')[1] : ''}
+                onChange={(e) => {
+                    const t = e.target.value;
+                    const d = dateDebut ? dateDebut.split('T')[0] : new Date().toISOString().split('T')[0];
+                    setDateDebut(`${d}T${t}`);
+                }}
+                className="input input-bordered input-sm w-24"
+                lang="fr"
+              />
+            </div>
           </div>
 
           {/* Date fin */}
@@ -570,12 +588,30 @@ export default function JournalCaisse() {
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Fin (Date & Heure)</span>
             </label>
-            <input
-              type="datetime-local"
-              value={dateFin}
-              onChange={(e) => setDateFin(e.target.value)}
-              className="input input-bordered input-sm"
-            />
+            <div className="flex gap-1">
+              <input
+                type="date"
+                value={dateFin ? dateFin.split('T')[0] : ''}
+                onChange={(e) => {
+                    const d = e.target.value;
+                    const t = dateFin ? dateFin.split('T')[1] : '23:59';
+                    setDateFin(d ? `${d}T${t}` : '');
+                }}
+                className="input input-bordered input-sm w-full"
+                lang="fr"
+              />
+              <input
+                type="time"
+                value={dateFin ? dateFin.split('T')[1] : ''}
+                onChange={(e) => {
+                    const t = e.target.value;
+                    const d = dateFin ? dateFin.split('T')[0] : new Date().toISOString().split('T')[0];
+                    setDateFin(`${d}T${t}`);
+                }}
+                className="input input-bordered input-sm w-24"
+                lang="fr"
+              />
+             </div>
           </div>
         </div>
 

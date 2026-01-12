@@ -7,8 +7,12 @@ from .views import (
     MouvementCaisseViewSet, InventaireViewSet, LigneInventaireViewSet, AvoirViewSet, LigneAvoirViewSet,
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
     InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
-    generer_suggestions_commande, HistoriqueVentesViewSet
+    generer_suggestions_commande, HistoriqueVentesViewSet,
+    StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView
 )
+from .rapport_view import RapportViewSet
+from .ordonnancier_view import OrdonnancierViewSet
+
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -39,6 +43,8 @@ router.register(r'historique-transformation', HistoriqueTransformationViewSet, b
 router.register(r'clotures-caisse', ClotureCaisseViewSet, basename='cloturecaisse')
 router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadjustment')
 router.register(r'historique-ventes', HistoriqueVentesViewSet, basename='historiqueventes')
+router.register(r'rapports', RapportViewSet, basename='rapport')
+router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 
 
 # The API URLs are now determined automatically by the router.

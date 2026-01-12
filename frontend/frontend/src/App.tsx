@@ -29,6 +29,7 @@ import CaisseCentralisee from './components/CaisseCentralisee'
 import HistoriqueClotures from './components/HistoriqueClotures'
 import HistoriqueVentes from './components/HistoriqueVentes'
 import HistoriqueAchats from './components/HistoriqueAchats'
+import OrdonnancierPage from './components/Ordonnancier'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -119,6 +120,7 @@ const router = createBrowserRouter([
           { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
+          { path: 'ordonnancier', element: <OrdonnancierPage /> },
           { path: 'historique-achats', element: <HistoriqueAchats /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
           { path: 'invoice-settings', element: <InvoiceSettings /> },

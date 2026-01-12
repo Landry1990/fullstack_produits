@@ -26,7 +26,7 @@ from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from .filters import ProduitFilter
+from .filters import ProduitFilter, AuditLogFilter
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, CommandeProduit, Facture, FactureProduit, Caisse,
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse, ActivityLog, RelevePaiement,
@@ -107,8 +107,8 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
     # Pagination explicite pour limiter la taille des réponses (8000 produits → pages de 50)
     pagination_class = None  # Utilise la pagination globale définie dans settings (PAGE_SIZE=50)
     
-    # Configuration du cache (activé)
-    cache_ttl = 300  # 5 minutes
+    # Configuration du cache (activé avec invalidation intelligente)
+    cache_ttl = 300  # 5 minutes - Invalidé automatiquement lors des changements de stock
     
     # Configuration des serializers optimisés (activé)
     list_serializer_class = ProduitListSerializer  # Serializer allégé pour les listes
@@ -267,7 +267,7 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
         for trans in transactions:
             stock_after = running_stock
             
-            if trans['type'] in ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE']:
+            if trans['type'] in ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'] or (trans['type'] == 'AJUSTEMENT' and trans.get('is_positive')):
                 # Si c'était une entrée, on avait MOINS avant
                 stock_before = running_stock - trans['quantity']
             else: # SORTIE, AVOIR, TRANSFORMATION_SORTIE
@@ -712,7 +712,7 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         current_debt_annotated=Subquery(
             Facture.objects.filter(
                 client=OuterRef('pk'), 
-                status='VAL'
+                status__in=['VAL', 'PAY']  # Inclure VALIDEE et PAYEE
             ).annotate(
                 # 1. Calcul des paiements via Subquery pour obtenir un SCALAIRE
                 paid_amount=Coalesce(
@@ -844,14 +844,13 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     @transaction.atomic
     def cloturer(self, request, pk=None):
         """
-        Clôture une commande, met à jour le stock des produits et crée les lots de stock (FIFO).
-        Prend en compte les unités gratuites (UG) pour le calcul du PMP et la valorisation.
+        Clôture une commande, met à jour le stock et calcule le PMP.
+        Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.
         
         Optimisations:
         - Prefetch des produits pour éviter les requêtes N+1
         - Bulk create des lots de stock
         - Bulk update des produits
-        - Calculs en mémoire avant les écritures DB
         """
         commande = self.get_object()
         if commande.status == Commande.Status.CLOTUREE:
@@ -866,10 +865,17 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         if not items.exists():
             return Response({'detail': 'Aucun produit dans cette commande.'}, status=status.HTTP_400_BAD_REQUEST)
         
+        # VERROUILLAGE: On récupère les IDs des produits pour les verrouiller
+        product_ids = [item.produit_id for item in items]
+        
+        # On verrouille les produits pour empêcher toute modification de stock (ex: vente concomitante)
+        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
+        product_map = {p.id: p for p in locked_products}
+        
         # Préparer les lots de stock à créer en batch
         lots_to_create = []
         produits_to_update = []
-        produits_dict = {}  # Pour éviter les doublons
+        produits_dict = {}  # Pour éviter les doublons et suivre les mises à jour
         
         # Phase 1: Calculs en mémoire (pas de DB writes)
         for item in items:
@@ -884,7 +890,10 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             else:
                 effective_cost = item.price_cost
             
-            produit = item.produit
+            # Utiliser l'instance verrouillée du produit
+            produit = product_map.get(item.produit_id)
+            if not produit:
+                continue # Devrait pas arriver avec l'intégrité référentielle
             
             # 1. Préparer le lot de stock (si gestion par lots activée)
             if produit.use_lot_management:
@@ -905,7 +914,7 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 lots_to_create.append(lot)
             
             # 2. Calculer le nouveau PMP et stock
-            # Éviter de traiter le même produit plusieurs fois
+            # Éviter de traiter le même produit plusieurs fois (si plusieurs lignes pour même produit)
             if produit.id not in produits_dict:
                 old_stock = Decimal(produit.stock)
                 old_pmp = Decimal(produit.pmp)
@@ -920,31 +929,32 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     new_pmp = (current_val + incoming_val) / new_total_qty
                     produit.pmp = new_pmp
                 
-                # Mettre à jour le stock selon le mode
-                if not produit.use_lot_management:
-                    # MODE STOCK GLOBAL : Incrémentation directe
-                    produit.stock = old_stock + qty_received
+                # Mettre à jour le stock
+                produit.stock = old_stock + qty_received
                 
+                # Ajouter au dictionnaire pour suivi local
                 produits_dict[produit.id] = produit
                 produits_to_update.append(produit)
             else:
-                # Produit déjà traité, accumuler les quantités
+                # Produit déjà traité dans cette boucle (autre ligne de commande), accumuler
                 existing_produit = produits_dict[produit.id]
-                if not existing_produit.use_lot_management:
-                    existing_produit.stock += Decimal(total_qty)
                 
-                # Recalculer le PMP avec la nouvelle ligne
-                old_stock = Decimal(existing_produit.stock) - Decimal(total_qty)
-                old_pmp = Decimal(existing_produit.pmp)
+                # On part des valeurs déjà modifiées en mémoire
+                current_stock = Decimal(existing_produit.stock)
+                current_pmp = Decimal(existing_produit.pmp)
+                
                 qty_received = Decimal(total_qty)
                 cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
                 
-                new_total_qty = old_stock + qty_received
+                new_total_qty = current_stock + qty_received
+                
                 if new_total_qty > 0:
-                    current_val = old_stock * old_pmp
+                    current_val = current_stock * current_pmp
                     incoming_val = cout_total
                     new_pmp = (current_val + incoming_val) / new_total_qty
                     existing_produit.pmp = new_pmp
+                
+                existing_produit.stock += Decimal(total_qty)
         
         # Phase 2: Écritures en base de données (bulk operations)
         
@@ -962,7 +972,7 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             if produits_with_lots:
                 Produit.objects.bulk_update(
                     produits_with_lots, 
-                    ['pmp'], 
+                    ['pmp', 'stock'], 
                     batch_size=100
                 )
             
@@ -1397,6 +1407,12 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         facture = self.get_object()
         if facture.status == Facture.Status.VALIDEE:
             return Response({'detail': 'Cette facture est déjà validée.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Permettre la validation de BROUILLON ou PROFORMA (devis)
+        if facture.status not in [Facture.Status.BROUILLON, Facture.Status.PROFORMA]:
+            return Response({
+                'detail': f'Impossible de valider une facture avec le statut {facture.get_status_display()}.'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         # Récupérer les lignes de facture
         items = FactureProduit.objects.filter(facture=facture)
@@ -1767,11 +1783,36 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             invoice_details_text += f"<br/>Tel: {facture.client.phone}"
             
         # === 2. APPLICATION DU LAYOUT ===
+        # Titre du document
+        doc_title = "FACTURE"
+        is_proforma = request.query_params.get('type') == 'proforma' or facture.status == Facture.Status.PROFORMA
+        
+        if is_proforma:
+            doc_title = "PROFORMA"
+            if not facture.numero_facture:
+                facture.numero_facture = f"PROFORMA-{facture.id}" # Temporaire pour affichage
+                # On ne sauvegarde pas ce numéro temporaire en DB pour ne pas casser la séquence officielle
+
         layout = settings.header_layout # split, left, center, right
+        
+        # Style pour le titre (FACTURE ou PROFORMA)
+        style_doc_title = ParagraphStyle(
+            'DocTitle', 
+            parent=styles['Heading1'], 
+            fontSize=24, 
+            alignment=2 if layout in ['split', 'right'] else (0 if layout == 'left' else 1),
+            textColor=HexColor(settings.primary_color),
+            spaceAfter=12
+        )
+        
+        doc_title_flowable = Paragraph(f"<b>{doc_title}</b>", style_doc_title)
         
         if layout == 'split':
             # Logo/Company Gauche, Info Droite
-            invoice_block = [Paragraph(invoice_details_text, style_right)]
+            invoice_block = [
+                doc_title_flowable,
+                Paragraph(invoice_details_text, style_right)
+            ]
             header_data = [[company_block, invoice_block]]
             header_table = Table(header_data, colWidths=[9*cm, 8*cm])
             header_table.setStyle(TableStyle([
@@ -1785,6 +1826,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             # Tout à gauche
             story.extend(company_block)
             story.append(Spacer(1, 0.5*cm))
+            story.append(doc_title_flowable)
             story.append(Paragraph(invoice_details_text, style_left))
             
         elif layout == 'center':
@@ -1793,6 +1835,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company_center))
             story.append(Paragraph(company_address_fmt, style_center))
             story.append(Spacer(1, 0.5*cm))
+            story.append(doc_title_flowable)
             story.append(Paragraph(invoice_details_text, style_center))
             
         elif layout == 'right':
@@ -1802,9 +1845,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company_right))
             story.append(Paragraph(company_address_fmt, style_normal_right))
             story.append(Spacer(1, 0.5*cm))
+            story.append(doc_title_flowable)
             story.append(Paragraph(invoice_details_text, style_right))
 
-        story.append(Spacer(1, 1.5*cm))
+        story.append(Spacer(1, 1.0*cm))
         
         # === 3. TABLEAU DES PRODUITS ===
         table_header = [
@@ -1871,6 +1915,12 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # === FOOTER ===
         story.append(Spacer(1, 2*cm))
+        
+        # NOTE: Pas d'info de paiement sur le Proforma
+        if not is_proforma:
+            # Ajouter infos paiement (reste à payer, etc) si besoin
+            pass
+
         if settings.footer_text:
             footer = Paragraph(f"<i>{settings.footer_text}</i>", style_center)
             story.append(footer)
@@ -4295,10 +4345,121 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['action', 'model_name', 'user']
-    search_fields = ['details', 'object_id', 'model_name']
+    filterset_class = AuditLogFilter
+    search_fields = ['description', 'object_id', 'model_name']
     ordering_fields = ['timestamp']
     ordering = ['-timestamp']  # Default ordering for pagination
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """
+        Retourne des statistiques sur les logs d'audit.
+        """
+        from django.db.models import Count
+        from datetime import timedelta
+        
+        # Appliquer les mêmes filtres que la liste principale
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Statistiques générales
+        total_logs = queryset.count()
+        
+        # Répartition par type d'action
+        actions_stats = queryset.values('action').annotate(
+            count=Count('id')
+        ).order_by('-count')
+        
+        # Convertir les codes d'action en libellés lisibles
+        actions_with_labels = []
+        for stat in actions_stats:
+            action_code = stat['action']
+            # Récupérer le libellé depuis les choices
+            action_label = dict(AuditLog.Action.choices).get(action_code, action_code)
+            actions_with_labels.append({
+                'action': action_code,
+                'action_label': action_label,
+                'count': stat['count']
+            })
+        
+        # Top utilisateurs actifs
+        top_users = queryset.exclude(user__isnull=True).values(
+            'user__id', 'user__username', 'user__first_name', 'user__last_name'
+        ).annotate(count=Count('id')).order_by('-count')[:10]
+        
+        # Formater les noms des utilisateurs
+        top_users_formatted = []
+        for user_stat in top_users:
+            full_name = f"{user_stat.get('user__first_name', '')} {user_stat.get('user__last_name', '')}".strip()
+            display_name = full_name or user_stat.get('user__username', 'Utilisateur')
+            top_users_formatted.append({
+                'user_id': user_stat['user__id'],
+                'username': user_stat.get('user__username'),
+                'display_name': display_name,
+                'count': user_stat['count']
+            })
+        
+        # Actions récentes (dernières 24h, 7 jours, 30 jours)
+        now = timezone.now()
+        logs_24h = queryset.filter(timestamp__gte=now - timedelta(hours=24)).count()
+        logs_7d = queryset.filter(timestamp__gte=now - timedelta(days=7)).count()
+        logs_30d = queryset.filter(timestamp__gte=now - timedelta(days=30)).count()
+        
+        return Response({
+            'total_logs': total_logs,
+            'actions_stats': actions_with_labels,
+            'top_users': top_users_formatted,
+            'recent_activity': {
+                'last_24h': logs_24h,
+                'last_7d': logs_7d,
+                'last_30d': logs_30d
+            }
+        })
+    
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """
+        Exporte les logs d'audit en CSV.
+        """
+        import csv
+        from django.http import HttpResponse
+        
+        # Appliquer les mêmes filtres que la liste principale
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Créer la réponse HTTP avec le bon content-type
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="audit_logs_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+        
+        # Ajouter le BOM UTF-8 pour Excel
+        response.write('\ufeff')
+        
+        writer = csv.writer(response)
+        
+        # En-têtes
+        writer.writerow([
+            'ID', 'Date/Heure', 'Utilisateur', 'Action', 
+            'Modèle', 'ID Objet', 'Description', 'Adresse IP'
+        ])
+        
+        # Données
+        for log in queryset.select_related('user'):
+            user_name = 'Système'
+            if log.user:
+                full_name = f"{log.user.first_name} {log.user.last_name}".strip()
+                user_name = full_name or log.user.username
+            
+            writer.writerow([
+                log.id,
+                log.timestamp.strftime('%d/%m/%Y %H:%M:%S'),
+                user_name,
+                log.get_action_display(),
+                log.model_name,
+                log.object_id or '',
+                log.description or '',
+                log.ip_address or ''
+            ])
+        
+        return response
 
 
 class StockAdjustmentViewSet(viewsets.ReadOnlyModelViewSet):

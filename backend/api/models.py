@@ -274,6 +274,24 @@ class Produit(models.Model):
     pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pondéré")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Ordonnancier - Champs pour identifier les médicaments soumis à ordonnance
+    requires_prescription = models.BooleanField(
+        default=False,
+        help_text="Ce produit nécessite une ordonnance"
+    )
+    
+    SURVEILLANCE_CHOICES = [
+        ('NONE', 'Aucune'),
+        ('STANDARD', 'Surveillance standard'),
+        ('RENFORCEE', 'Surveillance renforcée'),
+    ]
+    surveillance_category = models.CharField(
+        max_length=20, 
+        choices=SURVEILLANCE_CHOICES, 
+        default='NONE',
+        help_text="Catégorie de surveillance du médicament"
+    )
 
     def save(self, *args, **kwargs):
         # Calcul automatique des marges
@@ -329,6 +347,7 @@ class Facture(models.Model):
     """Model representing a sales invoice."""
     class Status(models.TextChoices):
         BROUILLON = 'BROU', 'Brouillon'
+        PROFORMA = 'PROF', 'Proforma'
         VALIDEE = 'VAL', 'Validée'
         PAYEE = 'PAY', 'Payée'
         ANNULEE = 'ANN', 'Annulée'
@@ -1326,3 +1345,49 @@ class ClotureCaisse(models.Model):
     
     def __str__(self):
         return f"Clôture du {self.date.strftime('%d/%m/%Y %H:%M')} - Écart: {self.ecart_caisse} F"
+
+
+class Ordonnancier(models.Model):
+    """Registre des médicaments délivrés sur ordonnance (ordonnancier de la pharmacie)."""
+    numero_ordre = models.AutoField(primary_key=True)  # Numéro chronologique
+    date_delivrance = models.DateTimeField(default=timezone.now)
+    
+    # Patient
+    patient_nom = models.CharField(max_length=200, help_text="Nom du patient")
+    
+    # Prescripteur
+    prescripteur_nom = models.CharField(max_length=200, help_text="Nom du médecin prescripteur")
+    
+    # Lien avec la facture
+    facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='ordonnancier_entries')
+    
+    # Utilisateur qui a enregistré
+    enregistre_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ordonnancier_entries')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-numero_ordre']
+        verbose_name = "Ordonnancier"
+        verbose_name_plural = "Ordonnancier"
+    
+    def __str__(self):
+        return f"Ord. #{self.numero_ordre} - {self.patient_nom} ({self.date_delivrance.strftime('%d/%m/%Y')})"
+
+
+class LigneOrdonnancier(models.Model):
+    """Ligne de l'ordonnancier (un médicament délivré)."""
+    ordonnancier = models.ForeignKey(Ordonnancier, on_delete=models.CASCADE, related_name='lignes')
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, related_name='ordonnancier_lignes')
+    produit_nom = models.CharField(max_length=200, help_text="Copie du nom pour historique")
+    quantite = models.IntegerField()
+    
+    # Catégorie de surveillance (copie pour historique)
+    surveillance_category = models.CharField(max_length=20, default='NONE')
+    
+    class Meta:
+        verbose_name = "Ligne Ordonnancier"
+        verbose_name_plural = "Lignes Ordonnancier"
+    
+    def __str__(self):
+        return f"{self.produit_nom} x{self.quantite}"
