@@ -8,6 +8,7 @@ import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 import LotSelectionModal from './LotSelectionModal'
 import PaymentModal from './facturation/PaymentModal'
+import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
 
 // Lazy load barcode component
 const Barcode = lazy(() => import('react-barcode'))
@@ -119,6 +120,25 @@ export default function Facturation() {
   const [ayantsDroitList, setAyantsDroitList] = useState<AyantDroit[]>([])
   const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
 
+  // Client Search & Create Modal States
+  const [clientSearch, setClientSearch] = useState('')
+  const [showClientDropdown, setShowClientDropdown] = useState(false)
+  const [showClientCreateModal, setShowClientCreateModal] = useState(false)
+  const [newClientForm, setNewClientForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    address: '',
+    client_type: 'PARTICULIER' as 'PARTICULIER' | 'PROFESSIONNEL',
+    plafond: '0',
+    taux_couverture: '0',
+    remise_automatique: '0',
+    is_loyalty_member: true
+  })
+  const [isCreatingClient, setIsCreatingClient] = useState(false)
+  const [highlightedClientIndex, setHighlightedClientIndex] = useState(-1)
+  const clientSearchRef = useRef<HTMLDivElement>(null)
+
   // Lot Selection Modal State
   const [lotModal, setLotModal] = useState<{
     isOpen: boolean
@@ -136,12 +156,22 @@ export default function Facturation() {
   const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
   const [promisPhone, setPromisPhone] = useState('')
 
+  // Ordonnancier Temporary Data Storage
+  const [tempOrdonnanceData, setTempOrdonnanceData] = useState<OrdonnanceData | null>(null)
+
   // Loyalty State
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
 
+  // Ordonnancier State
+  const [showOrdonnanceModal, setShowOrdonnanceModal] = useState(false)
+  const [pendingOrdonnanceFacture, setPendingOrdonnanceFacture] = useState<Facture | null>(null)
+
   // Settings State - Mode Caisse Centralisée
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
+
+  // Devis to validate (when loading from Ventes)
+  const [devisIdToValidate, setDevisIdToValidate] = useState<number | null>(null)
 
   // Router Location State Handling (Reload from CaisseCentralisee)
   const location = useLocation()
@@ -222,6 +252,77 @@ export default function Facturation() {
       setMontantPaye(Math.round(Number(successInfo.total_ttc)).toString())
     }
   }, [successInfo])
+
+  // Charger un devis depuis localStorage si présent (navigation depuis Ventes)
+  useEffect(() => {
+    const devisString = localStorage.getItem('devis_to_load')
+    if (devisString) {
+      try {
+        const devis = JSON.parse(devisString) as Facture
+        
+        // Charger les informations du client
+        if (devis.client) {
+          setSelectedClient(devis.client)
+          setUseManualClient(false)
+          
+          // Charger l'ayant droit si présent
+          if (devis.ayant_droit) {
+            setSelectedAyantDroit(devis.ayant_droit)
+          }
+        } else if (devis.client_name_override) {
+          setUseManualClient(true)
+          setManualClientName(devis.client_name_override)
+        }
+        
+        // Charger les produits
+        if (devis.produits && devis.produits.length > 0) {
+          const lignes: LigneFacture[] = devis.produits.map(p => {
+            // Récupérer le nom du produit depuis l'objet produit ou produit_nom
+            let produitData: ProduitModel
+            if (typeof p.produit === 'object') {
+              produitData = p.produit
+            } else {
+              // Si produit est juste un ID, créer un objet minimal avec le nom
+              produitData = { 
+                id: p.produit, 
+                name: p.produit_nom || `Produit #${p.produit}` 
+              } as ProduitModel
+            }
+            
+            return {
+              produit: produitData,
+              quantite: p.quantity,
+              prix_unitaire: p.selling_price,
+              remise_produit: '0',
+              total_ligne: p.quantity * Number(p.selling_price),
+              lotId: p.lot || null,
+              lotText: p.lot || null,
+              lotExpiration: p.date_expiration || null
+            }
+          })
+          setLignesFacture(lignes)
+        }
+        
+        // Charger la remise
+        if (devis.remise) {
+          setRemise(devis.remise)
+          setRemiseMode('montant')
+        }
+        
+        // Stocker l'ID du devis pour mise à jour lors de la validation
+        setDevisIdToValidate(devis.id)
+        
+        // Nettoyer le localStorage
+        localStorage.removeItem('devis_to_load')
+        
+        toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
+      } catch (err) {
+        console.error('Erreur lors du chargement du devis:', err)
+        toast.error('Impossible de charger le devis')
+        localStorage.removeItem('devis_to_load')
+      }
+    }
+  }, [])
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -328,6 +429,73 @@ export default function Facturation() {
       setRemiseMode('taux') // La remise automatique est toujours en pourcentage
     }
   }, [selectedClient, clients, useManualClient])
+
+  // Filtrer les clients selon la recherche
+  const filteredClients = useMemo(() => {
+    if (!clientSearch.trim()) return clients.slice(0, 10)
+    const term = clientSearch.toLowerCase()
+    return clients.filter(c => 
+      c.name.toLowerCase().includes(term) ||
+      c.phone?.includes(term) ||
+      c.email?.toLowerCase().includes(term)
+    ).slice(0, 10)
+  }, [clients, clientSearch])
+
+  // Fermer le dropdown client au clic extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (clientSearchRef.current && !clientSearchRef.current.contains(event.target as Node)) {
+        setShowClientDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Fonction de création de client
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsCreatingClient(true)
+    try {
+      const { data: createdClient } = await axios.post<Client>(clientsEndpoint, newClientForm)
+      
+      // Ajouter le client à la liste et le sélectionner
+      setClients(prev => [...prev, createdClient].sort((a, b) => a.name.localeCompare(b.name)))
+      setSelectedClient(createdClient.id)
+      setShowClientCreateModal(false)
+      setClientSearch('')
+      
+      // Reset le formulaire
+      setNewClientForm({
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+        client_type: 'PARTICULIER',
+        plafond: '0',
+        taux_couverture: '0',
+        remise_automatique: '0',
+        is_loyalty_member: true
+      })
+      
+      toast.success(`Client "${createdClient.name}" créé et sélectionné`)
+    } catch (err) {
+      console.error('Erreur création client:', err)
+      if (axios.isAxiosError(err)) {
+        const errorData = err.response?.data
+        if (typeof errorData === 'object' && errorData !== null) {
+          const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
+          toast.error(`Erreur: ${messages}`)
+        } else {
+          toast.error('Erreur lors de la création du client')
+        }
+      } else {
+        toast.error('Erreur lors de la création du client')
+      }
+    } finally {
+      setIsCreatingClient(false)
+    }
+  }
 
   // Fonction pour calculer le total d'une ligne avec remise produit
   const calculateLigneTotal = (quantite: number, prixUnitaire: string, remiseProduit: string): number => {
@@ -455,6 +623,17 @@ export default function Facturation() {
             qtyInput.select()
           }
         }, 50)
+      }
+      
+      // ORDONNANCIER CHECK - Immediately after adding product
+      // Check if product requires prescription or surveillance
+      const requiresOrdonnance = fullProduit.requires_prescription || 
+                                 (fullProduit.surveillance_category && fullProduit.surveillance_category !== 'NONE')
+      
+      if (requiresOrdonnance) {
+        // Open ordonnancier modal immediately
+        setShowOrdonnanceModal(true)
+        toast('Produit sous ordonnance/surveillance détecté', { icon: '📋' })
       }
       
       // Clear search after adding for better UX
@@ -785,19 +964,33 @@ export default function Facturation() {
           }
       }
 
-      // 1. Créer la facture en mode brouillon AVEC l'ayant droit
-      const facturePayload = {
-        client: useManualClient ? null : selectedClient,
-        client_name_override: useManualClient ? manualClientName : null,
-        remise: totals.remiseMontant.toString(),
-        tva: '0',
-        ayant_droit: ayantDroitId, // Lier directement à la création
-        part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
-      }
-      const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
+      // 1. Créer la facture OU utiliser le devis existant
+      let createdFacture: Facture
 
-      // 2. Ajouter les produits à la facture
-      const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => {
+      if (devisIdToValidate) {
+        // On valide un devis existant - ne pas créer de nouvelle facture
+        const { data: existingFacture } = await axios.get<Facture>(`${facturesEndpoint}${devisIdToValidate}/`)
+        createdFacture = existingFacture
+        
+        // Reset le devisIdToValidate
+        setDevisIdToValidate(null)
+      } else {
+        // Flux normal : créer une nouvelle facture brouillon
+        const facturePayload = {
+          client: useManualClient ? null : selectedClient,
+          client_name_override: useManualClient ? manualClientName : null,
+          remise: totals.remiseMontant.toString(),
+          tva: '0',
+          ayant_droit: ayantDroitId, // Lier directement à la création
+          part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
+        }
+        const { data } = await axios.post(facturesEndpoint, facturePayload)
+        createdFacture = data
+      }
+
+      // 2. Ajouter les produits (uniquement si nouvelle facture, pas pour devis existant)
+      if (!devisIdToValidate) {
+        const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => {
         // Calculer le prix unitaire net après remise produit
         const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
         const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
@@ -813,11 +1006,12 @@ export default function Facturation() {
           lot: null, // Legacy field
           date_expiration: ligne.produit.expire_date || null,
         }
-      })
+        })
 
-      await Promise.all(
-        produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
-      )
+        await Promise.all(
+          produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
+        )
+      }
 
 
       // NOUVELLE LOGIQUE DE PAIEMENT
@@ -1057,11 +1251,9 @@ export default function Facturation() {
         ? manualClientName 
         : clients.find(c => c.id === selectedClient)?.name || 'Client'
       
-      // Pour le ticket, on prend le premier paiement comme référence principale ou on adapte le ticket
-      // Note: Le backend renvoie un TicketCaisse par paiement, ici on en a plusieurs.
-      // On va simuler un objet TicketCaisse agrégé pour l'affichage
+      // Pour le ticket standard
       setTicketCaisse({
-        id: 0, // Placeholder
+        id: 0, 
         facture: finalFacture,
         mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
         montant: finalFacture.total_ttc,
@@ -1075,18 +1267,42 @@ export default function Facturation() {
         paiements_details: paiementsList
       } as TicketCaisse)
       
-      setLignesFacture([])
-      setSelectedClient(null)
-      setRemise('0')
-      // Reset ayant droit fields
-      setAyantDroitNom('')
-      setAyantDroitMatricule('')
-      setAyantDroitSociete('')
-      setSelectedAyantDroit(null)
-      setShowNewAyantDroit(false)
-      fermerModalPaiement()
+      // Save ordonnancier data if it was collected earlier
+      console.log('DEBUG: tempOrdonnanceData =', tempOrdonnanceData)
+      if (tempOrdonnanceData) {
+        console.log('DEBUG: Saving ordonnancier with', tempOrdonnanceData.lignes.length, 'lines')
+        try {
+          const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/'
+          
+          // Transform lignes to match backend format (produit instead of produit_id)
+          const lignesForBackend = tempOrdonnanceData.lignes.map(ligne => ({
+            produit: ligne.produit_id,  // Backend expects 'produit' (ID)
+            produit_nom: ligne.produit_nom,
+            quantite: ligne.quantite,
+            surveillance_category: ligne.surveillance_category
+          }))
+          
+          console.log('DEBUG: lignesForBackend =', lignesForBackend)
+          
+          await axios.post(ordonnancierEndpoint, {
+            patient_nom: tempOrdonnanceData.patient_nom,
+            prescripteur_nom: tempOrdonnanceData.prescripteur_nom,
+            facture: finalFacture.id,
+            lignes: lignesForBackend
+          })
+          toast.success("Ordonnancier enregistré")
+          setTempOrdonnanceData(null)
+        } catch (err) {
+          console.error("Erreur enregistrement ordonnancier:", err)
+          toast.error("Erreur lors de l'enregistrement de l'ordonnancier")
+        }
+      } else {
+        console.log('DEBUG: tempOrdonnanceData is null, skipping ordonnancier save')
+      }
       
-      // Products are managed by search hook, will be updated on next search
+      // Standard Clean (ordonnancier modal already handled during product selection)
+      _resetSale()
+      fermerModalPaiement()
 
     } catch (err) {
       // ROLLBACK STOCK IF NEEDED
@@ -1102,6 +1318,146 @@ export default function Facturation() {
         }
       }
       handleApiError(err, 'Une erreur est survenue lors de l\'enregistrement de la vente.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Helper pour vider les données de vente sans fermer les modals de succès éventuels
+  const _resetSaleDataOnly = () => {
+      setLignesFacture([])
+      setSelectedClient(null)
+      setUseManualClient(false)
+      setManualClientName('')
+      setRemise('0')
+      setRemiseMode('montant')
+      setAyantDroitNom('')
+      setAyantDroitMatricule('')
+      setAyantDroitSociete('')
+      setSelectedAyantDroit(null)
+      setShowNewAyantDroit(false)
+      setShowNewAyantDroit(false)
+      setSearchQuery('')
+      setTempOrdonnanceData(null) // Clear temp data
+      // On ne clear pas error/successInfo ici si on veut les garder
+  }
+  
+  const handleOrdonnanceSave = async (data: OrdonnanceData) => {
+    console.log('=== handleOrdonnanceSave DEBUG ===');
+    console.log('Received data:', data);
+    
+    // Toujours enregistrer immédiatement dans l'API
+    setLoading(true);
+    try {
+        const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/';
+        
+        // Transformer les lignes pour le format backend
+        const lignesForBackend = data.lignes.map(ligne => ({
+          produit: ligne.produit_id,
+          produit_nom: ligne.produit_nom,
+          quantite: ligne.quantite,
+          surveillance_category: ligne.surveillance_category
+        }));
+        
+        const payload = {
+            patient_nom: data.patient_nom,
+            prescripteur_nom: data.prescripteur_nom,
+            facture: pendingOrdonnanceFacture?.id || null, // Lier à la facture si disponible
+            lignes: lignesForBackend
+        };
+        
+        console.log('API endpoint:', endpoint);
+        console.log('Payload being sent:', payload);
+        
+        const response = await axios.post(endpoint, payload);
+        console.log('API Response:', response.data);
+        
+        toast.success("Enregistré dans l'ordonnancier");
+        setShowOrdonnanceModal(false);
+        setPendingOrdonnanceFacture(null);
+        // Ne pas reset les données de vente ici, juste fermer le modal
+    } catch (err: any) {
+        console.error("=== ERREUR ORDONNANCIER ===");
+        console.error("Error object:", err);
+        console.error("Response status:", err.response?.status);
+        console.error("Response data:", err.response?.data);
+        toast.error("Erreur lors de l'enregistrement de l'ordonnance: " + (err.response?.data?.detail || err.message));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  // Function to handle Proforma generation
+  const handleProforma = async () => {
+    if (lignesFacture.length === 0) return
+    
+    setLoading(true)
+    try {
+      // 1. Create Facture as Proforma
+      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
+      
+      // Prepare payload
+      const facturePayload = {
+        client: useManualClient ? null : selectedClient,
+        client_name_override: useManualClient ? manualClientName : null,
+        remise: totals.remiseMontant.toString(),
+        tva: '0',
+        status: 'PROF',
+        ayant_droit: selectedAyantDroit,
+        part_client: (selectedClient && clients.find(c => c.id === selectedClient)?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
+      }
+      
+      const { data: createdFacture } = await axios.post(facturesEndpoint, facturePayload)
+      
+      // 2. Add Products
+      const produitsPayload = lignesFacture.map(ligne => {
+        const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
+        const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
+        const prixNet = prixUnitaire * (1 - remiseProduit / 100)
+        
+        return {
+          facture: createdFacture.id,
+          produit: ligne.produit.id,
+          quantity: Number(ligne.quantite),
+          selling_price: prixNet.toString(),
+          discount: (prixUnitaire - prixNet).toFixed(2),
+          stock_lot: ligne.lotId ? Number(ligne.lotId) : null,
+          lot: null,
+          date_expiration: ligne.produit.expire_date || null,
+        }
+      })
+      
+      await Promise.all(
+        produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
+      )
+      
+      // 3. Generate PDF (Proforma)
+      const pdfEndpoint = `${facturesEndpoint}${createdFacture.id}/imprimer_facture/?type=proforma`
+      
+      try {
+          const pdfResponse = await axios.get(pdfEndpoint, { responseType: 'blob' })
+          const file = new Blob([pdfResponse.data], { type: 'application/pdf' })
+          const fileURL = URL.createObjectURL(file)
+          window.open(fileURL, '_blank')
+          toast.success("Proforma généré avec succès")
+      } catch (err) {
+          console.error("Erreur téléchargement PDF:", err)
+          toast.error("Impossible de télécharger le PDF")
+      }
+      
+      // 4. Reset Cart
+      setLignesFacture([])
+      setMontantPaye('')
+      setModePaiement('especes')
+      setPaiements([{ mode: 'especes', montant: 0 }])
+      setSelectedClient(null)
+      setManualClientName('')
+      setTicketCaisse(null)
+      
+    } catch (error) {
+      console.error("Erreur lors de la génération du proforma:", error)
+      toast.error("Erreur lors de la création du proforma")
     } finally {
       setLoading(false)
     }
@@ -1198,6 +1554,33 @@ export default function Facturation() {
         date_paiement: new Date().toISOString(),
         paiements_details: paiementsList
       } as TicketCaisse)
+
+      // Save ordonnancier data if it was collected earlier
+      if (tempOrdonnanceData) {
+        try {
+          const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/'
+          
+          // Transform lignes to match backend format (produit instead of produit_id)
+          const lignesForBackend = tempOrdonnanceData.lignes.map(ligne => ({
+            produit: ligne.produit_id,  // Backend expects 'produit' (ID)
+            produit_nom: ligne.produit_nom,
+            quantite: ligne.quantite,
+            surveillance_category: ligne.surveillance_category
+          }))
+          
+          await axios.post(ordonnancierEndpoint, {
+            patient_nom: tempOrdonnanceData.patient_nom,
+            prescripteur_nom: tempOrdonnanceData.prescripteur_nom,
+            facture: factureUpdated.id,
+            lignes: lignesForBackend
+          })
+          toast.success("Ordonnancier enregistré")
+          setTempOrdonnanceData(null)
+        } catch (err) {
+          console.error("Erreur enregistrement ordonnancier:", err)
+          toast.error("Erreur lors de l'enregistrement de l'ordonnancier")
+        }
+      }
       
       fermerModalPaiement()
     } catch (err) {
@@ -1346,8 +1729,10 @@ export default function Facturation() {
     setAyantDroitSociete('')
     setSelectedAyantDroit(null)
     setShowNewAyantDroit(false)
+    setShowNewAyantDroit(false)
     setSearchQuery('')
     setError(null)
+    setTempOrdonnanceData(null) // Clear temp data
     
     searchInputRef.current?.focus()
   }
@@ -1540,90 +1925,193 @@ export default function Facturation() {
                         className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
                     />
                 ) : (
-                    <select
-                        ref={clientSelectRef}
-                        value={selectedClient !== null ? String(selectedClient) : ''}
-                        onChange={(e) => {
-                            const value = e.target.value
-                            setSelectedClient(value ? Number(value) : null)
-                        }}
-                        className="select select-bordered w-full select-sm bg-base-50 focus:bg-white transition-colors"
-                    >
-                        <option value="">Sélectionner un client...</option>
-                        {clients.map((client) => (
-                            <option key={client.id} value={client.id}>{client.name}</option>
+                    <div ref={clientSearchRef} className="relative">
+                        <input
+                            type="text"
+                            value={clientSearch || (selectedClient ? clients.find(c => c.id === selectedClient)?.name || '' : '')}
+                            onChange={(e) => {
+                                setClientSearch(e.target.value)
+                                setSelectedClient(null)
+                                setShowClientDropdown(true)
+                                setHighlightedClientIndex(-1)
+                            }}
+                            onFocus={() => {
+                                setShowClientDropdown(true)
+                                setHighlightedClientIndex(-1)
+                            }}
+                            onKeyDown={(e) => {
+                                if (!showClientDropdown) return
+                                
+                                switch (e.key) {
+                                    case 'ArrowDown':
+                                        e.preventDefault()
+                                        setHighlightedClientIndex(prev => 
+                                            prev < filteredClients.length - 1 ? prev + 1 : prev
+                                        )
+                                        break
+                                    case 'ArrowUp':
+                                        e.preventDefault()
+                                        setHighlightedClientIndex(prev => prev > 0 ? prev - 1 : -1)
+                                        break
+                                    case 'Enter':
+                                        e.preventDefault()
+                                        if (highlightedClientIndex >= 0 && highlightedClientIndex < filteredClients.length) {
+                                            const client = filteredClients[highlightedClientIndex]
+                                            setSelectedClient(client.id)
+                                            setClientSearch('')
+                                            setShowClientDropdown(false)
+                                            setHighlightedClientIndex(-1)
+                                        } else if (filteredClients.length === 0 && clientSearch) {
+                                            // Ouvrir modal création si aucun résultat
+                                            setNewClientForm(prev => ({ ...prev, name: clientSearch }))
+                                            setShowClientCreateModal(true)
+                                            setShowClientDropdown(false)
+                                        }
+                                        break
+                                    case 'Escape':
+                                        setShowClientDropdown(false)
+                                        setHighlightedClientIndex(-1)
+                                        break
+                                }
+                            }}
+                            placeholder="🔍 Rechercher un client..."
+                            className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors pr-8"
+                        />
+                        {selectedClient && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedClient(null)
+                                    setClientSearch('')
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-error"
+                                title="Effacer"
+                            >
+                                ✕
+                            </button>
+                        )}
+                        
+                        {/* Dropdown des résultats */}
+                        {showClientDropdown && !selectedClient && (
+                            <div className="absolute z-50 mt-1 w-full bg-white border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                                {filteredClients.length > 0 ? (
+                                    <>
+                                        {filteredClients.map((client, index) => (
+                                            <div 
+                                                key={client.id}
+                                                onClick={() => { 
+                                                    setSelectedClient(client.id)
+                                                    setClientSearch('')
+                                                    setShowClientDropdown(false)
+                                                    setHighlightedClientIndex(-1)
+                                                }}
+                                                onMouseEnter={() => setHighlightedClientIndex(index)}
+                                                className={`px-3 py-2 cursor-pointer flex justify-between items-center text-sm transition-colors ${
+                                                    index === highlightedClientIndex 
+                                                        ? 'bg-primary/20 text-primary-content' 
+                                                        : 'hover:bg-base-200'
+                                                }`}
+                                            >
+                                                <span className="font-medium">{client.name}</span>
+                                                <span className="text-xs text-base-content/50">{client.phone}</span>
+                                            </div>
+                                        ))}
+                                        {clientSearch && filteredClients.length < clients.length && (
+                                            <div className="px-3 py-2 text-xs text-base-content/50 border-t">
+                                                {filteredClients.length} résultat(s) sur {clients.length}
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="px-3 py-3 text-center">
+                                        <div className="text-sm text-base-content/50 mb-2">Aucun client trouvé</div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                // Pré-remplir le nom avec la recherche
+                                                setNewClientForm(prev => ({ ...prev, name: clientSearch }))
+                                                setShowClientCreateModal(true)
+                                                setShowClientDropdown(false)
+                                            }}
+                                            className="btn btn-primary btn-sm gap-1"
+                                        >
+                                            ➕ Créer "{clientSearch}"
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Ayant Droit Section - Intégré sous le client */}
+                {!useManualClient && selectedClient && clients.find(c => c.id === selectedClient)?.client_type === 'PROFESSIONNEL' && (
+                  <div className="mt-3 pt-3 border-t border-base-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
+                        Ayant Droit <span className="text-error">*</span>
+                      </label>
+                      {ayantsDroitList.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowNewAyantDroit(!showNewAyantDroit)
+                            if (!showNewAyantDroit) {
+                              setSelectedAyantDroit(null)
+                              setAyantDroitNom('')
+                              setAyantDroitMatricule('')
+                              setAyantDroitSociete('')
+                            }
+                          }}
+                          className="btn btn-xs btn-ghost"
+                          title={showNewAyantDroit ? "Sélectionner existant" : "Nouveau"}
+                        >
+                          {showNewAyantDroit ? '📋 Existant' : '➕ Nouveau'}
+                        </button>
+                      )}
+                    </div>
+                    
+                    {showNewAyantDroit || ayantsDroitList.length === 0 ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={ayantDroitNom}
+                          onChange={(e) => setAyantDroitNom(e.target.value)}
+                          placeholder="Nom de l'ayant droit *"
+                          className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                        />
+                        <input
+                          type="text"
+                          value={ayantDroitMatricule}
+                          onChange={(e) => setAyantDroitMatricule(e.target.value)}
+                          placeholder="Matricule *"
+                          className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                        />
+                        <input
+                          type="text"
+                          value={ayantDroitSociete}
+                          onChange={(e) => setAyantDroitSociete(e.target.value)}
+                          placeholder="Société (optionnel)"
+                          className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+                        />
+                      </div>
+                    ) : (
+                      <select
+                        value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
+                        onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
+                        className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
+                      >
+                        <option value="">Sélectionner un ayant droit...</option>
+                        {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (
+                          <option key={ad?.id || Math.random()} value={ad?.id || ''}>
+                            {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}
+                          </option>
                         ))}
-                    </select>
+                      </select>
+                    )}
+                  </div>
                 )}
             </div>
-
-            {/* Ayant Droit Section - Only for Professional Clients */}
-            {!useManualClient && selectedClient && clients.find(c => c.id === selectedClient)?.client_type === 'PROFESSIONNEL' && (
-              <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
-                    Ayant Droit <span className="text-error">*</span>
-                  </label>
-                  {ayantsDroitList.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewAyantDroit(!showNewAyantDroit)
-                        if (!showNewAyantDroit) {
-                          setSelectedAyantDroit(null)
-                          setAyantDroitNom('')
-                          setAyantDroitMatricule('')
-                          setAyantDroitSociete('')
-                        }
-                      }}
-                      className="btn btn-xs btn-ghost"
-                      title={showNewAyantDroit ? "Sélectionner existant" : "Nouveau"}
-                    >
-                      {showNewAyantDroit ? '📋 Existant' : '➕ Nouveau'}
-                    </button>
-                  )}
-                </div>
-                
-                {showNewAyantDroit || ayantsDroitList.length === 0 ? (
-                  <div className="space-y-2">
-                    <input
-                      type="text"
-                      value={ayantDroitNom}
-                      onChange={(e) => setAyantDroitNom(e.target.value)}
-                      placeholder="Nom de l'ayant droit *"
-                      className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-                    />
-                    <input
-                      type="text"
-                      value={ayantDroitMatricule}
-                      onChange={(e) => setAyantDroitMatricule(e.target.value)}
-                      placeholder="Matricule *"
-                      className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-                    />
-                    <input
-                      type="text"
-                      value={ayantDroitSociete}
-                      onChange={(e) => setAyantDroitSociete(e.target.value)}
-                      placeholder="Société (optionnel)"
-                      className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-                    />
-                  </div>
-                ) : (
-                  <select
-                    value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
-                    onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
-                    className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
-                  >
-                    <option value="">Sélectionner un ayant droit...</option>
-                    {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (
-                      <option key={ad?.id || Math.random()} value={ad?.id || ''}>
-                        {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-            )}
 
             {/* Product Search */}
             <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative">
@@ -1903,7 +2391,8 @@ export default function Facturation() {
                     </div>
                 )}
 
-                {/* Action Buttons - Dropdown Menu */}
+
+                        {/* Action Buttons - Dropdown Menu */}
                 <div className="dropdown dropdown-top">
                     <div tabIndex={0} role="button" className="btn btn-primary shadow-lg shadow-primary/20 btn-sm w-40">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
@@ -1924,6 +2413,22 @@ export default function Facturation() {
                                 </svg>
                                 Encaisser
                                 <kbd className="kbd kbd-xs ml-auto">F9</kbd>
+                            </button>
+                        </li>
+                        <li>
+                            <button
+                                onClick={() => {
+                                    handleProforma()
+                                    const elem = document.activeElement as HTMLElement
+                                    elem?.blur()
+                                }}
+                                disabled={lignesFacture.length === 0}
+                                className="gap-2 text-info"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Proforma
                             </button>
                         </li>
                         <li>
@@ -2321,6 +2826,161 @@ export default function Facturation() {
             onSelectLot={handleLotSelect}
             currentLotId={lotModal.currentLotId}
         />
+      )}
+
+      {/* Modal Création Client */}
+      {showClientCreateModal && (
+        <dialog className="modal modal-open">
+          <div className="modal-box max-w-lg">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              ➕ Nouveau Client
+              <span className="badge badge-sm badge-primary">{newClientForm.client_type}</span>
+            </h3>
+            
+            <form onSubmit={handleCreateClient} className="space-y-4">
+              {/* Type de client */}
+              <div className="flex gap-4">
+                <label className="label cursor-pointer gap-2">
+                  <input 
+                    type="radio" 
+                    className="radio radio-primary radio-sm" 
+                    checked={newClientForm.client_type === 'PARTICULIER'}
+                    onChange={() => setNewClientForm(prev => ({ ...prev, client_type: 'PARTICULIER' }))}
+                  />
+                  <span className="label-text">Particulier</span>
+                </label>
+                <label className="label cursor-pointer gap-2">
+                  <input 
+                    type="radio" 
+                    className="radio radio-secondary radio-sm" 
+                    checked={newClientForm.client_type === 'PROFESSIONNEL'}
+                    onChange={() => setNewClientForm(prev => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
+                  />
+                  <span className="label-text">Professionnel</span>
+                </label>
+              </div>
+
+              {/* Infos de base */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="form-control">
+                  <label className="label py-1"><span className="label-text text-xs">Nom *</span></label>
+                  <input 
+                    type="text" 
+                    value={newClientForm.name} 
+                    onChange={e => setNewClientForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="input input-bordered input-sm w-full" 
+                    placeholder="Nom complet" 
+                    required 
+                    />
+                </div>
+                <div className="form-control">
+                  <label className="label py-1"><span className="label-text text-xs">Téléphone *</span></label>
+                  <input 
+                    type="tel" 
+                    value={newClientForm.phone} 
+                    onChange={e => setNewClientForm(prev => ({ ...prev, phone: e.target.value }))}
+                    className="input input-bordered input-sm w-full" 
+                    placeholder="0612345678" 
+                    required 
+                    />
+                </div>
+              </div>
+              
+              <div className="form-control">
+                <label className="label py-1"><span className="label-text text-xs">Email *</span></label>
+                <input 
+                  type="email" 
+                  value={newClientForm.email} 
+                  onChange={e => setNewClientForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="input input-bordered input-sm w-full" 
+                  placeholder="email@exemple.com" 
+                  required 
+                  />
+              </div>
+
+              <div className="form-control">
+                <label className="label py-1"><span className="label-text text-xs">Adresse *</span></label>
+                <textarea 
+                  value={newClientForm.address} 
+                  onChange={e => setNewClientForm(prev => ({ ...prev, address: e.target.value }))}
+                  className="textarea textarea-bordered textarea-sm w-full h-16 resize-none" 
+                  placeholder="Adresse complète" 
+                  required 
+                  />
+              </div>
+
+              {/* Champs professionnels */}
+              {newClientForm.client_type === 'PROFESSIONNEL' && (
+                <div className="bg-base-200 p-3 rounded-lg space-y-3">
+                  <h4 className="text-sm font-bold text-secondary">Options professionnelles</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="form-control">
+                      <label className="label py-1"><span className="label-text text-xs">Plafond crédit</span></label>
+                      <input 
+                        type="number" 
+                        value={newClientForm.plafond} 
+                        onChange={e => setNewClientForm(prev => ({ ...prev, plafond: e.target.value }))}
+                        className="input input-bordered input-sm w-full" 
+                        min="0"
+                        />
+                    </div>
+                    <div className="form-control">
+                      <label className="label py-1"><span className="label-text text-xs">Couverture (%)</span></label>
+                      <input 
+                        type="number" 
+                        value={newClientForm.taux_couverture} 
+                        onChange={e => setNewClientForm(prev => ({ ...prev, taux_couverture: e.target.value }))}
+                        className="input input-bordered input-sm w-full" 
+                        min="0" 
+                        max="100"
+                        />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="modal-action mt-6">
+                <button 
+                  type="button" 
+                  className="btn btn-ghost" 
+                  onClick={() => setShowClientCreateModal(false)}
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary gap-2"
+                  disabled={isCreatingClient}
+                >
+                  {isCreatingClient ? (
+                    <span className="loading loading-spinner loading-sm"></span>
+                  ) : (
+                      <>➕ Créer et sélectionner</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+          <form method="dialog" className="modal-backdrop" onClick={() => setShowClientCreateModal(false)}>
+            <button>close</button>
+          </form>
+        </dialog>
+      )}
+
+      {/* Ordonnance Modal */}
+      {showOrdonnanceModal && (
+          <OrdonnanceModal
+              isOpen={showOrdonnanceModal}
+              onClose={() => {
+                  setShowOrdonnanceModal(false)
+                  setPendingOrdonnanceFacture(null)
+              }}
+              onSave={handleOrdonnanceSave}
+              facture={pendingOrdonnanceFacture}
+              lignes={lignesFacture}
+              loading={loading}
+          />
       )}
     </div>
   )

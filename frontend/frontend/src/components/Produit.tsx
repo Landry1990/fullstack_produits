@@ -32,7 +32,6 @@ export default function Produit() {
   // Formulaire d'édition
   const [editForm, setEditForm] = useState({
     name: '',
-    description: '',
     stock: '',
     cost_price: '',
     selling_price: '',
@@ -46,7 +45,9 @@ export default function Produit() {
     tva: '19.25',
     rayon: '',
     fournisseur: '',
-    use_lot_management: true  // Default to true
+    use_lot_management: true,  // Default to true
+    requires_prescription: false,
+    surveillance_category: 'NONE'
   })
   
   // Données complémentaires
@@ -290,7 +291,6 @@ export default function Produit() {
   const handleOpenEditModal = (produit: ProduitModel) => {
     setEditForm({
       name: produit.name,
-      description: produit.description || '',
       stock: String(produit.stock ?? ''),
       cost_price: String(produit.cost_price ?? ''),
       selling_price: String(produit.selling_price ?? ''),
@@ -304,7 +304,9 @@ export default function Produit() {
       tva: produit.tva || '19.25',
       rayon: produit.rayon ? String(produit.rayon) : '',
       fournisseur: produit.fournisseur ? String(produit.fournisseur) : '',
-      use_lot_management: produit.use_lot_management ?? true
+      use_lot_management: produit.use_lot_management ?? true,
+      requires_prescription: produit.requires_prescription ?? false,
+      surveillance_category: produit.surveillance_category || 'NONE'
     })
     setIsEditModalOpen(true)
   }
@@ -316,7 +318,7 @@ export default function Produit() {
     try {
       const payload = {
         name: editForm.name.trim().toUpperCase(),
-        description: editForm.description.trim().toUpperCase(),
+        description: '',
         stock: parseInt(editForm.stock || '0', 10),
         cost_price: editForm.cost_price.trim(),
         selling_price: editForm.selling_price.trim(),
@@ -330,7 +332,9 @@ export default function Produit() {
         tva: editForm.tva || '19.25',
         rayon: editForm.rayon ? parseInt(editForm.rayon, 10) : undefined,
         fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : undefined,
-        use_lot_management: editForm.use_lot_management
+        use_lot_management: editForm.use_lot_management,
+        requires_prescription: editForm.requires_prescription || false,
+        surveillance_category: editForm.surveillance_category || 'NONE'
       }
       
       const { data } = await axios.patch<ProduitModel>(`${produitsEndpoint}${selectedProduit.id}/`, payload)
@@ -1255,17 +1259,6 @@ export default function Produit() {
               </div>
             </div>
 
-            {/* Description */}
-            <div className="form-control">
-              <label className="label"><span className="label-text font-semibold">Description</span></label>
-              <textarea
-                className="textarea textarea-bordered"
-                rows={3}
-                value={editForm.description}
-                onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-              />
-            </div>
-
             {/* Gestion par lots */}
             <div className="form-control">
               <label className="label cursor-pointer justify-start gap-4">
@@ -1333,6 +1326,36 @@ export default function Produit() {
                   {fournisseurs.map(f => (
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Section Ordonnancier */}
+            <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Ordonnance & Surveillance</div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-base-100 p-4 rounded-lg border border-base-200">
+              <div className="form-control">
+                <label className="label cursor-pointer justify-start gap-4">
+                  <input 
+                    type="checkbox" 
+                    className="checkbox checkbox-primary" 
+                    checked={editForm.requires_prescription || false}
+                    onChange={(e) => setEditForm({...editForm, requires_prescription: e.target.checked})}
+                  />
+                  <span className="label-text font-medium">Nécessite une ordonnance</span>
+                </label>
+              </div>
+              
+              <div className="form-control w-full">
+                <label className="label py-0 mb-1"><span className="label-text">Niveau de surveillance</span></label>
+                <select 
+                  className="select select-bordered select-sm w-full"
+                  value={editForm.surveillance_category || 'NONE'}
+                  onChange={(e) => setEditForm({...editForm, surveillance_category: e.target.value as any})}
+                >
+                  <option value="NONE">Aucune</option>
+                  <option value="STANDARD">Surveillance Standard</option>
+                  <option value="RENFORCEE">Surveillance Renforcée</option>
                 </select>
               </div>
             </div>

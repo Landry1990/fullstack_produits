@@ -141,7 +141,7 @@ export default function ProduitFormModal({
       const stockValue = parseInt(form.stock, 10);
       const payload = {
         name: form.name.trim().toUpperCase(),
-        description: form.description.trim().toUpperCase(),
+        description: '',
         stock: Number.isFinite(stockValue) ? stockValue : undefined,
         cost_price: form.cost_price.trim(),
         selling_price: form.selling_price.trim(),
@@ -155,6 +155,8 @@ export default function ProduitFormModal({
         rayon: form.rayon ? parseInt(form.rayon, 10) : undefined,
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : undefined,
         tva: form.tva || '19.25',
+        requires_prescription: form.requires_prescription || false,
+        surveillance_category: form.surveillance_category || 'NONE',
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
@@ -260,15 +262,6 @@ export default function ProduitFormModal({
                </div>
             </div>
           </div>
-          <label className="form-control w-full">
-            <div className="label"><span className="label-text">Description</span></div>
-            <textarea
-              className="textarea textarea-bordered w-full"
-              value={form.description}
-              onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
-              rows={2}
-            />
-          </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <label className="form-control w-full"><div className="label"><span className="label-text">CIP1</span></div>
               <input className="input input-bordered w-full" value={form.cip1}
@@ -325,6 +318,36 @@ export default function ProduitFormModal({
               </select>
             </label>
           </div>
+          
+          <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Ordonnance & Surveillance</div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-base-100 p-4 rounded-lg border border-base-200">
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-4">
+                <input 
+                  type="checkbox" 
+                  className="checkbox checkbox-primary" 
+                  checked={form.requires_prescription || false}
+                  onChange={(e) => setForm(p => ({ ...p, requires_prescription: e.target.checked }))}
+                />
+                <span className="label-text font-medium">Nécessite une ordonnance</span>
+              </label>
+            </div>
+            
+            <div className="form-control w-full">
+               <label className="label py-0 mb-1"><span className="label-text">Niveau de surveillance</span></label>
+               <select 
+                  className="select select-bordered select-sm w-full"
+                  value={form.surveillance_category || 'NONE'}
+                  onChange={(e) => setForm(p => ({ ...p, surveillance_category: e.target.value as any }))}
+               >
+                  <option value="NONE">Aucune</option>
+                  <option value="STANDARD">Surveillance Standard</option>
+                  <option value="RENFORCEE">Surveillance Renforcée</option>
+               </select>
+            </div>
+          </div>
+          
           <div className="modal-action">
             <button type="button" className="btn btn-ghost" onClick={onClose} disabled={loading}>
               Annuler

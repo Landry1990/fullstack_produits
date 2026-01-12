@@ -8,7 +8,8 @@ from .models import (
     StockLot, FactureProduitAllocation, AyantDroit, ClotureCaisse,
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
-    InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment
+    InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
+    Ordonnancier, LigneOrdonnancier
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -550,3 +551,55 @@ class PromisSerializer(serializers.ModelSerializer):
 
 
 
+class LigneOrdonnancierSerializer(serializers.ModelSerializer):
+    """Serializer pour une ligne de l'ordonnancier (un médicament)"""
+    produit_name = serializers.CharField(source='produit.name', read_only=True, allow_null=True)
+    ordonnancier = serializers.PrimaryKeyRelatedField(read_only=True) # Read-only for nested creation
+    
+    class Meta:
+        model = LigneOrdonnancier
+        fields = ['id', 'ordonnancier', 'produit', 'produit_name', 'produit_nom', 
+                  'quantite', 'surveillance_category']
+
+
+class OrdonnancierSerializer(serializers.ModelSerializer):
+    """Serializer pour l'ordonnancier (registre des ordonnances)"""
+    lignes = LigneOrdonnancierSerializer(many=True, read_only=True)
+    enregistre_par_nom = serializers.SerializerMethodField()
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True, allow_null=True)
+    
+    class Meta:
+        model = Ordonnancier
+        fields = ['numero_ordre', 'date_delivrance', 'patient_nom', 'prescripteur_nom', 
+                  'facture', 'facture_numero', 'lignes', 'enregistre_par', 
+                  'enregistre_par_nom', 'created_at']
+        read_only_fields = ['numero_ordre', 'created_at']
+    
+    def get_enregistre_par_nom(self, obj):
+        if obj.enregistre_par:
+            full_name = f"{obj.enregistre_par.first_name} {obj.enregistre_par.last_name}".strip()
+            return full_name or obj.enregistre_par.username
+        return ''
+
+
+class OrdonnancierCreateSerializer(serializers.ModelSerializer):
+    """Serializer pour la création d'une entrée d'ordonnancier"""
+    lignes = LigneOrdonnancierSerializer(many=True, required=False)
+    
+    class Meta:
+        model = Ordonnancier
+        fields = ['patient_nom', 'prescripteur_nom', 'facture', 'lignes']
+    
+    def validate(self, data):
+        print("=== DEBUG ORDONNANCE VALIDATION ===")
+        print(f"Data received: {data}")
+        return data
+    
+    def create(self, validated_data):
+        lignes_data = validated_data.pop('lignes', [])
+        ordonnancier = Ordonnancier.objects.create(**validated_data)
+        
+        for ligne_data in lignes_data:
+            LigneOrdonnancier.objects.create(ordonnancier=ordonnancier, **ligne_data)
+        
+        return ordonnancier

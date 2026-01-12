@@ -71,6 +71,7 @@ const HistoriqueVentes = () => {
             className="input input-bordered" 
             value={dateDebut}
             onChange={(e) => setDateDebut(e.target.value)}
+            lang="fr"
           />
         </div>
         <div className="form-control">
@@ -82,6 +83,7 @@ const HistoriqueVentes = () => {
             className="input input-bordered" 
             value={dateFin}
             onChange={(e) => setDateFin(e.target.value)}
+            lang="fr"
           />
         </div>
         <div className="form-control justify-end">

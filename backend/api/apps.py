@@ -9,3 +9,4 @@ class ApiConfig(AppConfig):
         import api.signals
         import api.signals_restock # Register restock signals
         import api.cache_signals # Register cache invalidation signals
+        import api.cache_invalidation # Register smart cache invalidation on stock changes

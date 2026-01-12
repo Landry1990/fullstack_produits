@@ -26,7 +26,53 @@ interface RapportData {
     montant_tva: number;
     ca_ttc: number;
   }>;
-}
+  achats_par_fournisseur: Array<{
+    fournisseur_id: number;
+    fournisseur_nom: string;
+    montant_total: number;
+    nb_commandes: number;
+  }>;
+  clients_professionnels: {
+    ca_total: number;
+    montant_paye: number;
+    reste_a_payer: number;
+    taux_recouvrement_pct: number;
+    nb_factures: number;
+    top_clients: Array<{
+      client_id: number;
+      client_nom: string;
+      ca_total: number;
+      montant_paye: number;
+      reste_a_payer: number;
+    }>;
+  };
+  unites_gratuites: {
+    valeur_totale: number;
+    quantite_totale: number;
+    pct_du_ca: number;
+    nb_produits_distincts: number;
+    top_produits: Array<{
+      produit_id: number;
+      produit_nom: string;
+      quantite_gratuite: number;
+      valeur_totale: number;
+    }>;
+  };
+  mouvements_caisse: {
+    total_entrees: number;
+    total_sorties: number;
+    solde: number;
+    liste: Array<{
+        id: number;
+        date: string;
+        type: string;
+        montant: number;
+        motif: string;
+        user: string;
+    }>;
+  };
+};
+
 
 export default function RapportMensuel() {
   const [mois, setMois] = useState(() => {
@@ -54,146 +100,406 @@ export default function RapportMensuel() {
   };
 
   return (
-    <div className="p-6 space-y-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="p-6 space-y-6 animate-fade-in max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-lg shadow-sm border border-base-200">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">Rapport de Clôture Mensuelle</h1>
-          <p className="text-sm text-base-content/80">Synthèse du CA, marges et encaissements</p>
+          <h1 className="text-3xl font-bold text-base-content">📊 Synthèse Mensuelle d'Activité</h1>
+          <p className="text-sm text-base-content/70 mt-1">Rapport complet de votre activité mensuelle</p>
         </div>
         
-        <div className="flex items-end gap-2 bg-base-100 p-2 rounded-lg shadow-sm border border-base-200">
+        <div className="flex items-end gap-2">
           <div className="form-control">
-            <label className="label py-1"><span className="label-text text-xs">Mois</span></label>
+            <label className="label py-1"><span className="label-text text-xs font-medium">Mois</span></label>
             <input 
               type="month" 
-              className="input input-bordered input-sm" 
+              className="input input-bordered input-sm w-44" 
               value={mois}
               onChange={(e) => setMois(e.target.value)}
             />
           </div>
           <button 
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm gap-2"
             onClick={fetchRapport}
             disabled={loading}
           >
-            {loading ? <span className="loading loading-spinner loading-xs"></span> : 'Générer'}
+            {loading ? (
+              <>
+                <span className="loading loading-spinner loading-xs"></span>
+                Chargement...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Générer
+              </>
+            )}
+          </button>
+          
+          <button 
+            className="btn btn-neutral btn-sm gap-2"
+            onClick={async () => {
+              try {
+                const response = await axios.get(`${apiBaseUrl}/api/rapports/rapport_mensuel_pdf/`, {
+                  params: { mois },
+                  responseType: 'blob'
+                });
+                // Créer un lien de téléchargement
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `rapport_mensuel_${mois}.pdf`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+              } catch (error) {
+                console.error('Erreur téléchargement PDF:', error);
+                toast.error('Erreur lors du téléchargement du PDF');
+              }
+            }}
+            disabled={!rapport}
+            title="Télécharger le rapport en PDF"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            PDF
           </button>
         </div>
       </div>
 
       {rapport && (
         <>
-          {/* Cartes KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <p className="text-sm font-medium text-base-content/70">CA TTC</p>
-                <h3 className="text-2xl font-bold text-emerald-600">
-                  {Math.round(rapport.ca.ca_ttc).toLocaleString('fr-FR')} F
-                </h3>
-                <p className="text-xs text-base-content/60">{rapport.ca.nb_ventes} ventes</p>
+          {/* 1. KPIs Principaux */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="stat bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-lg shadow-lg">
+              <div className="stat-title text-emerald-100 font-semibold">CA TTC</div>
+              <div className="stat-value text-3xl">{Math.round(rapport.ca.ca_ttc).toLocaleString('fr-FR')} F</div>
+              <div className="stat-desc text-emerald-100">{rapport.ca.nb_ventes} ventes</div>
+            </div>
+
+            <div className="stat bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg">
+              <div className="stat-title text-blue-100 font-semibold">CA HT</div>
+              <div className="stat-value text-3xl">{Math.round(rapport.ca.ca_ht).toLocaleString('fr-FR')} F</div>
+            </div>
+
+            <div className="stat bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-lg shadow-lg">
+              <div className="stat-title text-amber-100 font-semibold">Marge Brute</div>
+              <div className="stat-value text-3xl">{Math.round(rapport.marge.marge_brute).toLocaleString('fr-FR')} F</div>
+              <div className="stat-desc text-amber-100">{rapport.marge.marge_pct.toFixed(1)}% du CA</div>
+            </div>
+
+            <div className="stat bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg">
+              <div className="stat-title text-purple-100 font-semibold">Coût d'Achat</div>
+              <div className="stat-value text-3xl">{Math.round(rapport.marge.cout_achat).toLocaleString('fr-FR')} F</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 2. Achats par Fournisseur */}
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Achats par Fournisseur
+                </h2>
+                <div className="overflow-x-auto">
+                  {rapport.achats_par_fournisseur.length > 0 ? (
+                    <table className="table table-zebra w-full">
+                      <thead>
+                        <tr className="bg-base-200 text-base-content uppercase text-sm">
+                          <th>Fournisseur</th>
+                          <th className="text-right">Nb Commandes</th>
+                          <th className="text-right">Montant Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rapport.achats_par_fournisseur.map((f) => (
+                          <tr key={f.fournisseur_id} className="hover">
+                            <td className="font-medium">{f.fournisseur_nom}</td>
+                            <td className="text-right">
+                              <span className="badge badge-ghost font-bold">{f.nb_commandes}</span>
+                            </td>
+                            <td className="text-right font-bold text-primary">
+                              {Math.round(Number(f.montant_total)).toLocaleString('fr-FR')} F
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-base-200 font-bold text-base-content">
+                        <tr>
+                          <td className="uppercase text-sm">Total</td>
+                          <td className="text-right">
+                            {rapport.achats_par_fournisseur.reduce((acc, f) => acc + f.nb_commandes, 0)}
+                          </td>
+                          <td className="text-right text-primary">
+                            {Math.round(rapport.achats_par_fournisseur.reduce((acc, f) => acc + Number(f.montant_total), 0)).toLocaleString('fr-FR')} F
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  ) : (
+                    <div className="text-center py-8 text-base-content/50">
+                      <p>Aucun achat ce mois-ci</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <p className="text-sm font-medium text-base-content/70">CA HT</p>
-                <h3 className="text-2xl font-bold text-blue-600">
-                  {Math.round(rapport.ca.ca_ht).toLocaleString('fr-FR')} F
-                </h3>
+
+            {/* 3. Clients Professionnels */}
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Clients Professionnels
+                </h2>
+
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center p-3 bg-base-50 rounded-lg">
+                    <div className="text-xs text-base-content/60 font-medium">CA Total</div>
+                    <div className="text-lg font-bold text-info">{Math.round(rapport.clients_professionnels.ca_total).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="text-center p-3 bg-success/10 rounded-lg">
+                    <div className="text-xs text-success/70 font-medium">Payé</div>
+                    <div className="text-lg font-bold text-success">{Math.round(rapport.clients_professionnels.montant_paye).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="text-center p-3 bg-warning/10 rounded-lg">
+                    <div className="text-xs text-warning/70 font-medium">Reste</div>
+                    <div className="text-lg font-bold text-warning">{Math.round(rapport.clients_professionnels.reste_a_payer).toLocaleString('fr-FR')} F</div>
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="font-medium">Taux de recouvrement</span>
+                    <span className="font-bold">{rapport.clients_professionnels.taux_recouvrement_pct.toFixed(1)}%</span>
+                  </div>
+                  <progress 
+                    className="progress progress-success w-full" 
+                    value={rapport.clients_professionnels.taux_recouvrement_pct} 
+                    max="100"
+                  ></progress>
+               </div>
+
+                {rapport.clients_professionnels.top_clients.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <div className="text-xs font-semibold text-base-content/70 mb-2">Top Clients Pro</div>
+                    <table className="table table-zebra table-xs w-full">
+                      <thead>
+                        <tr className="bg-base-200">
+                          <th>Client</th>
+                          <th className="text-right">CA</th>
+                          <th className="text-right">Reste</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rapport.clients_professionnels.top_clients.slice(0, 5).map((c) => (
+                          <tr key={c.client_id} className="hover">
+                            <td className="font-medium">{c.client_nom}</td>
+                            <td className="text-right">{Math.round(Number(c.ca_total)).toLocaleString('fr-FR')} F</td>
+                            <td className="text-right text-warning font-bold">{Math.round(Number(c.reste_a_payer)).toLocaleString('fr-FR')} F</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <p className="text-sm font-medium text-base-content/70">Marge Brute</p>
-                <h3 className="text-2xl font-bold text-amber-600">
-                  {Math.round(rapport.marge.marge_brute).toLocaleString('fr-FR')} F
-                </h3>
-                <p className="text-xs text-base-content/60">{rapport.marge.marge_pct.toFixed(1)}% du CA</p>
+
+            {/* 4. Unités Gratuites */}
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Unités Gratuites (UG)
+                </h2>
+
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="text-center p-2 bg-success/10 rounded">
+                    <div className="text-xs text-success/70">Valeur</div>
+                    <div className="text-sm font-bold text-success">{Math.round(rapport.unites_gratuites.valeur_totale).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="text-center p-2 bg-base-50 rounded">
+                    <div className="text-xs text-base-content/60">Quantité</div>
+                    <div className="text-sm font-bold">{rapport.unites_gratuites.quantite_totale}</div>
+                  </div>
+                  <div className="text-center p-2 bg-base-50 rounded">
+                    <div className="text-xs text-base-content/60">% CA</div>
+                    <div className="text-sm font-bold">{rapport.unites_gratuites.pct_du_ca.toFixed(1)}%</div>
+                  </div>
+                </div>
+
+                {rapport.unites_gratuites.top_produits.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <div className="text-xs font-semibold text-base-content/70 mb-2">Top Produits Offerts</div>
+                    <table className="table table-zebra table-xs w-full">
+                      <thead>
+                        <tr className="bg-base-200">
+                          <th>Produit</th>
+                          <th className="text-right">Qté</th>
+                          <th className="text-right">Valeur</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rapport.unites_gratuites.top_produits.slice(0, 5).map((p) => (
+                          <tr key={p.produit_id} className="hover">
+                            <td className="font-medium truncate max-w-xs" title={p.produit_nom}>{p.produit_nom}</td>
+                            <td className="text-right">{p.quantite_gratuite}</td>
+                            <td className="text-right font-bold">{Math.round(Number(p.valeur_totale)).toLocaleString('fr-FR')} F</td>
+                          </tr>
+                        ))}
+                      </tbody>
+
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <p className="text-sm font-medium text-base-content/70">Coût d'Achat</p>
-                <h3 className="text-2xl font-bold text-purple-600">
-                  {Math.round(rapport.marge.cout_achat).toLocaleString('fr-FR')} F
-                </h3>
+
+            {/* 5. Encaissements */}
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Encaissements du Mois
+                </h2>
+                <div className="overflow-x-auto">
+                  {rapport.encaissements.length > 0 ? (
+                    <table className="table table-zebra table-sm w-full">
+                      <thead>
+                        <tr className="bg-base-200">
+                          <th>Mode</th>
+                          <th className="text-right">Montant</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rapport.encaissements.map((enc, idx) => (
+                          <tr key={idx} className="hover">
+                            <td className="font-medium">{enc.mode_label}</td>
+                            <td className="text-right font-bold">{Math.round(Number(enc.montant)).toLocaleString('fr-FR')} F</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot className="bg-base-200 font-bold text-base-content">
+                        <tr>
+                          <td>Total</td>
+                          <td className="text-right text-success">
+                            {Math.round(rapport.encaissements.reduce((sum, e) => sum + Number(e.montant), 0)).toLocaleString('fr-FR')} F
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  ) : (
+                    <div className="text-center py-8 text-base-content/50">
+                      <p>Aucun encaissement ce mois-ci</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Encaissements réels */}
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <h2 className="card-title text-lg font-bold mb-2">Détail des Encaissements</h2>
+            {/* 6. Mouvements de Caisse Extra-Comptables */}
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Autres Mouvements de Caisse
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div className="stat bg-base-100 rounded-box border border-base-200 p-4">
+                    <div className="stat-title text-sm">Entrées Diverses</div>
+                    <div className="stat-value text-success text-lg">{Math.round(rapport.mouvements_caisse?.total_entrees || 0).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="stat bg-base-100 rounded-box border border-base-200 p-4">
+                    <div className="stat-title text-sm">Sorties Diverses</div>
+                    <div className="stat-value text-error text-lg">{Math.round(rapport.mouvements_caisse?.total_sorties || 0).toLocaleString('fr-FR')} F</div>
+                  </div>
+                  <div className="stat bg-base-100 rounded-box border border-base-200 p-4">
+                    <div className="stat-title text-sm">Solde Mouvements</div>
+                    <div className={`stat-value text-lg ${(rapport.mouvements_caisse?.solde || 0) >= 0 ? 'text-success' : 'text-error'}`}>
+                      {(rapport.mouvements_caisse?.solde || 0) > 0 ? '+' : ''}{Math.round(rapport.mouvements_caisse?.solde || 0).toLocaleString('fr-FR')} F
+                    </div>
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
-                    <thead>
-                      <tr className="bg-base-200">
-                        <th>Mode de Paiement</th>
-                        <th className="text-right">Montant</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rapport.encaissements.map((enc, idx) => (
-                        <tr key={idx}>
-                          <td>{enc.mode_label}</td>
-                          <td className="text-right font-bold">
-                            {Math.round(Number(enc.montant)).toLocaleString('fr-FR')} F
-                          </td>
+                  {rapport.mouvements_caisse?.liste && rapport.mouvements_caisse.liste.length > 0 ? (
+                    <table className="table table-zebra table-sm w-full">
+                      <thead>
+                        <tr className="bg-base-200">
+                          <th>Date</th>
+                          <th>Type</th>
+                          <th>Motif</th>
+                          <th>Utilisateur</th>
+                          <th className="text-right">Montant</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {rapport.mouvements_caisse.liste.map((mvt) => (
+                          <tr key={mvt.id} className="hover">
+                            <td>{new Date(mvt.date).toLocaleDateString()}</td>
+                            <td>
+                              <span className={`badge badge-sm ${mvt.type === 'ENTREE' ? 'badge-success badge-outline' : 'badge-error badge-outline'}`}>
+                                {mvt.type}
+                              </span>
+                            </td>
+                            <td className="font-medium">{mvt.motif}</td>
+                            <td className="text-xs text-base-content/70">{mvt.user}</td>
+                            <td className={`text-right font-bold ${mvt.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
+                              {mvt.type === 'SORTIE' ? '-' : '+'}{Math.round(Number(mvt.montant)).toLocaleString('fr-FR')} F
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="text-center py-8 text-base-content/50 bg-base-50 rounded-lg border border-base-200 border-dashed">
+                      <p>Aucun mouvement extra-comptable ce mois-ci</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Ventes à crédit (En Compte) */}
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <h2 className="card-title text-lg font-bold mb-2">Créances à Percevoir</h2>
-                <div className="flex items-center justify-between p-4 bg-warning/10 rounded-lg border border-warning/20">
-                  <div>
-                    <p className="text-sm text-base-content/70">Montant restant à recouvrer</p>
-                    <p className="text-xs text-base-content/60 mt-1">Sur les ventes à crédit du mois</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-warning">
-                      {Math.round(Number(rapport.creances_a_percevoir || 0)).toLocaleString('fr-FR')} F
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CA par TVA */}
-            <div className="card bg-base-100 shadow-sm border border-base-200">
-              <div className="card-body p-4">
-                <h2 className="card-title text-lg font-bold mb-2">CA par Taux de TVA</h2>
+            {/* 7. CA par TVA + Créances */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg">CA par Taux de TVA</h2>
                 <div className="overflow-x-auto">
-                  <table className="table table-zebra w-full">
+                  <table className="table table-zebra table-sm w-full">
                     <thead>
                       <tr className="bg-base-200">
-                        <th>Taux TVA</th>
+                        <th>Taux</th>
                         <th className="text-right">CA HT</th>
-                        <th className="text-right">Montant TVA</th>
-                        <th className="text-right">CA TTC</th>
+                        <th className="text-right">TVA</th>
+                        <th className="text-right">TTC</th>
                       </tr>
                     </thead>
                     <tbody>
                       {rapport.ca_par_tva.map((tva, idx) => (
-                        <tr key={idx}>
-                          <td>{tva.taux}%</td>
-                          <td className="text-right">
-                            {Math.round(Number(tva.ca_ht)).toLocaleString('fr-FR')} F
-                          </td>
-                          <td className="text-right">
-                            {Math.round(Number(tva.montant_tva)).toLocaleString('fr-FR')} F
-                          </td>
-                          <td className="text-right font-bold">
-                            {Math.round(Number(tva.ca_ttc)).toLocaleString('fr-FR')} F
-                          </td>
+                        <tr key={idx} className="hover">
+                          <td className="font-medium">{tva.taux}%</td>
+                          <td className="text-right">{Math.round(Number(tva.ca_ht)).toLocaleString('fr-FR')} F</td>
+                          <td className="text-right">{Math.round(Number(tva.montant_tva)).toLocaleString('fr-FR')} F</td>
+                          <td className="text-right font-bold">{Math.round(Number(tva.ca_ttc)).toLocaleString('fr-FR')} F</td>
                         </tr>
                       ))}
                     </tbody>
@@ -201,26 +507,37 @@ export default function RapportMensuel() {
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Bouton Export PDF - à implémenter */}
-          <div className="flex justify-end">
-            <button className="btn btn-outline btn-primary" disabled>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Export PDF (bientôt disponible)
-            </button>
+            <div className="card bg-white shadow-lg border border-base-200">
+              <div className="card-body">
+                <h2 className="card-title text-lg flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Créances à Percevoir
+                </h2>
+                <div className="flex items-center justify-center p-8 bg-warning/10 rounded-lg border border-warning/20">
+                  <div className="text-center">
+                    <div className="text-sm text-warning/70 font-medium mb-2">Montant total à recouvrer</div>
+                    <div className="text-4xl font-bold text-warning">
+                      {Math.round(Number(rapport.creances_a_percevoir || 0)).toLocaleString('fr-FR')} F
+                    </div>
+                    <div className="text-xs text-base-content/60 mt-2">Sur toutes les ventes à crédit</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
 
       {!rapport && !loading && (
         <div className="flex flex-col items-center justify-center h-96 text-base-content/40">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
-          <p className="text-lg font-medium">Sélectionnez un mois et cliquez sur "Générer"</p>
+          <p className="text-xl font-medium">Sélectionnez un mois et cliquez sur "Générer"</p>
+          <p className="text-sm mt-2">Pour visualiser la synthèse mensuelle complète</p>
         </div>
       )}
     </div>
