@@ -172,6 +172,11 @@ export default function Facturation() {
 
   // Devis to validate (when loading from Ventes)
   const [devisIdToValidate, setDevisIdToValidate] = useState<number | null>(null)
+  
+  // Modification mode (for validated/paid invoices)
+  const [isModificationMode, setIsModificationMode] = useState(false)
+  const [modificationInvoiceId, setModificationInvoiceId] = useState<number | null>(null)
+  const [originalTotalTtc, setOriginalTotalTtc] = useState<number>(0)
 
   // Router Location State Handling (Reload from CaisseCentralisee)
   const location = useLocation()
@@ -255,8 +260,10 @@ export default function Facturation() {
 
   // Charger un devis depuis localStorage si présent (navigation depuis Ventes)
   useEffect(() => {
-    const devisString = localStorage.getItem('devis_to_load')
-    if (devisString) {
+    const loadDevis = async () => {
+      const devisString = localStorage.getItem('devis_to_load')
+      if (!devisString) return
+      
       try {
         const devis = JSON.parse(devisString) as Facture
         
@@ -274,19 +281,31 @@ export default function Facturation() {
           setManualClientName(devis.client_name_override)
         }
         
-        // Charger les produits
+        // Charger les produits avec données complètes (stock actuel)
         if (devis.produits && devis.produits.length > 0) {
-          const lignes: LigneFacture[] = devis.produits.map(p => {
-            // Récupérer le nom du produit depuis l'objet produit ou produit_nom
+          const apiBase = import.meta.env.VITE_API_BASE_URL ?? ''
+          const produitsEndpoint = apiBase ? `${apiBase}/api/produits/` : '/api/produits/'
+          
+          const lignes: LigneFacture[] = await Promise.all(devis.produits.map(async (p) => {
             let produitData: ProduitModel
-            if (typeof p.produit === 'object') {
+            
+            if (typeof p.produit === 'object' && p.produit.stock !== undefined) {
+              // Le produit a déjà les données complètes
               produitData = p.produit
             } else {
-              // Si produit est juste un ID, créer un objet minimal avec le nom
-              produitData = { 
-                id: p.produit, 
-                name: p.produit_nom || `Produit #${p.produit}` 
-              } as ProduitModel
+              // Récupérer les données complètes du produit depuis l'API (incluant stock actuel)
+              const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit
+              try {
+                const { data: fullProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${produitId}/`)
+                produitData = fullProduct
+              } catch {
+                // Fallback en cas d'erreur - créer objet minimal
+                produitData = { 
+                  id: produitId, 
+                  name: p.produit_nom || `Produit #${produitId}`,
+                  stock: 0 // Défaut sécuritaire
+                } as ProduitModel
+              }
             }
             
             return {
@@ -299,7 +318,7 @@ export default function Facturation() {
               lotText: p.lot || null,
               lotExpiration: p.date_expiration || null
             }
-          })
+          }))
           setLignesFacture(lignes)
         }
         
@@ -309,19 +328,31 @@ export default function Facturation() {
           setRemiseMode('montant')
         }
         
-        // Stocker l'ID du devis pour mise à jour lors de la validation
-        setDevisIdToValidate(devis.id)
+        // Détecter si c'est une facture validée/payée (mode modification)
+        const isValidatedOrPaid = devis.status === 'VAL' || devis.status === 'PAY'
+        
+        if (isValidatedOrPaid) {
+          // Mode modification - facture déjà validée/payée
+          setIsModificationMode(true)
+          setModificationInvoiceId(devis.id)
+          setOriginalTotalTtc(Number(devis.total_ttc || 0))
+          toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
+        } else {
+          // Mode normal - devis/proforma/brouillon à valider
+          setDevisIdToValidate(devis.id)
+          toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
+        }
         
         // Nettoyer le localStorage
         localStorage.removeItem('devis_to_load')
-        
-        toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
       } catch (err) {
         console.error('Erreur lors du chargement du devis:', err)
         toast.error('Impossible de charger le devis')
         localStorage.removeItem('devis_to_load')
       }
     }
+    
+    loadDevis()
   }, [])
 
   const apiBaseUrl = useMemo(() => {
@@ -964,7 +995,65 @@ export default function Facturation() {
           }
       }
 
-      // 1. Créer la facture OU utiliser le devis existant
+      // === MODE MODIFICATION: Factures validées/payées ===
+      if (isModificationMode && modificationInvoiceId) {
+        // Préparer les données des produits pour l'endpoint modifier
+        const produitsPayload = lignesFacture.map(ligne => {
+          const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
+          const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
+          const prixNet = prixUnitaire * (1 - remiseProduit / 100)
+          
+          return {
+            produit: ligne.produit.id,
+            quantity: ligne.quantite,
+            selling_price: prixNet.toString(),
+            lot_id: ligne.lotId ? Number(ligne.lotId) : null
+          }
+        })
+        
+        // Appeler l'endpoint modifier
+        const modifierEndpoint = `${facturesEndpoint}${modificationInvoiceId}/modifier/`
+        const { data: modificationResult } = await axios.post(modifierEndpoint, {
+          produits: produitsPayload,
+          remise: totals.remiseMontant.toString(),
+          client: useManualClient ? null : selectedClient,
+          client_name_override: useManualClient ? manualClientName : null
+        })
+        
+        // Afficher le résultat
+        const difference = modificationResult.difference
+        if (difference > 0) {
+          toast.success(`Facture modifiée. Encaissement supplémentaire: ${Math.round(difference).toLocaleString('fr-FR')} F`)
+        } else if (difference < 0) {
+          toast.success(`Facture modifiée. Remboursement: ${Math.round(Math.abs(difference)).toLocaleString('fr-FR')} F`)
+        } else {
+          toast.success('Facture modifiée (même total)')
+        }
+        
+        // Réinitialiser l'état
+        setLignesFacture([])
+        setSelectedClient(null)
+        setUseManualClient(false)
+        setManualClientName('')
+        setRemise('0')
+        setRemiseMode('montant')
+        setIsModificationMode(false)
+        setModificationInvoiceId(null)
+        setOriginalTotalTtc(0)
+        setIsPaymentModalOpen(false)
+        setLoading(false)
+        
+        // Reset ayant droit state
+        setAyantDroitNom('')
+        setAyantDroitMatricule('')
+        setAyantDroitSociete('')
+        setSelectedAyantDroit(null)
+        setShowNewAyantDroit(false)
+        
+        return // Fin du traitement en mode modification
+      }
+
+      // === FLUX NORMAL: Créer la facture OU utiliser le devis existant ===
       let createdFacture: Facture
 
       if (devisIdToValidate) {
@@ -1057,6 +1146,13 @@ export default function Facturation() {
         return // Fin du traitement
       } else if (centralizedCashRegister) {
         // Mode Caisse Centralisée ACTIVE : Envoi en Caisse Centralisée (BROUILLON)
+        
+        // Si c'est un devis/proforma, mettre à jour son statut en BROUILLON
+        // pour qu'il apparaisse dans la caisse centralisée
+        if (createdFacture.status === 'PROF' || createdFacture.status === 'PROFORMA') {
+          await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, { status: 'BROU' })
+        }
+        
         toast.success(`Vente envoyée à la Caisse Centralisée (Ticket #${createdFacture.id})`)
         setSuccessInfo({ ...createdFacture, status: 'BROUILLON' })
         
@@ -1837,6 +1933,40 @@ export default function Facturation() {
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
       </div>
+      
+      {/* Modification Mode Banner */}
+      {isModificationMode && modificationInvoiceId && (
+        <div className="alert alert-warning shadow-lg mx-3 md:mx-4 lg:mx-6 mt-2">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div className="flex-1">
+            <h3 className="font-bold">Mode Modification</h3>
+            <div className="text-xs flex flex-wrap gap-4">
+              <span>Facture originale: <strong>{Math.round(originalTotalTtc).toLocaleString('fr-FR')} F</strong></span>
+              <span>Nouveau total: <strong>{Math.round(totals.totalTtc).toLocaleString('fr-FR')} F</strong></span>
+              {totals.totalTtc !== originalTotalTtc && (
+                <span className={totals.totalTtc > originalTotalTtc ? 'text-success font-bold' : 'text-error font-bold'}>
+                  Différence: {totals.totalTtc > originalTotalTtc ? '+' : ''}{Math.round(totals.totalTtc - originalTotalTtc).toLocaleString('fr-FR')} F
+                  {totals.totalTtc > originalTotalTtc ? ' (à encaisser)' : ' (à rembourser)'}
+                </span>
+              )}
+            </div>
+          </div>
+          <button 
+            className="btn btn-sm btn-ghost"
+            onClick={() => {
+              setIsModificationMode(false)
+              setModificationInvoiceId(null)
+              setOriginalTotalTtc(0)
+              setLignesFacture([])
+              toast('Mode modification annulé', { icon: '✖️' })
+            }}
+          >
+            Annuler
+          </button>
+        </div>
+      )}
       
       {/* Notifications */}
       {/* Notifications (Toasts) */}

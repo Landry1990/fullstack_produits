@@ -1707,6 +1707,172 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         return Response({'status': 'Facture annulée avec succès. Stock restauré.'})
 
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def modifier(self, request, pk=None):
+        """
+        Modifie une facture validée/payée et ajuste les paiements par différence.
+        - Recalcule le stock (restaure l'ancien, déduit le nouveau)
+        - Crée un paiement d'ajustement si le total change
+        """
+        facture = self.get_object()
+        
+        # Only allow modification of validated or paid invoices
+        if facture.status not in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
+            return Response(
+                {'detail': 'Seules les factures validées ou payées peuvent être modifiées.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save old total for difference calculation
+        old_total = facture.total_ttc
+        old_status = facture.status
+        
+        # Get new data from request
+        new_products = request.data.get('produits', [])
+        new_remise = request.data.get('remise', '0')
+        new_client = request.data.get('client', facture.client_id)
+        new_client_name_override = request.data.get('client_name_override', facture.client_name_override)
+        
+        if not new_products:
+            return Response(
+                {'detail': 'La liste des produits est requise.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # === STEP 1: Restore stock from old products ===
+        # Delete old allocations (this will restore lot quantities via signals)
+        FactureProduitAllocation.objects.filter(
+            facture_produit__facture=facture
+        ).delete()
+        
+        # Also restore stock on Produit model
+        old_items = FactureProduit.objects.filter(facture=facture)
+        for item in old_items:
+            Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+        
+        # Delete old FactureProduit items
+        old_items.delete()
+        
+        # === STEP 2: Create new FactureProduit items ===
+        for prod_data in new_products:
+            produit_id = prod_data.get('produit')
+            quantity = int(prod_data.get('quantity', 1))
+            selling_price = prod_data.get('selling_price', '0')
+            lot_id = prod_data.get('lot_id')  # Optional specific lot
+            
+            # Create the FactureProduit
+            fp = FactureProduit.objects.create(
+                facture=facture,
+                produit_id=produit_id,
+                quantity=quantity,
+                selling_price=selling_price,
+                stock_lot_id=lot_id if lot_id else None
+            )
+            
+            # === STEP 3: Deduct stock from Produit ===
+            Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)
+            
+            # === STEP 4: Allocate lots (FIFO/FEFO) ===
+            if quantity > 0:
+                produit = Produit.objects.get(pk=produit_id)
+                quantity_to_allocate = quantity
+                
+                if lot_id:
+                    # Specific lot targeted
+                    target_lot = StockLot.objects.select_for_update().get(id=lot_id)
+                    FactureProduitAllocation.objects.create(
+                        facture_produit=fp,
+                        stock_lot=target_lot,
+                        quantity=quantity_to_allocate,
+                        cost_price=target_lot.price_cost,
+                        selling_price=selling_price
+                    )
+                    target_lot.quantity_remaining -= quantity_to_allocate
+                    target_lot.save()
+                else:
+                    # FIFO/FEFO allocation
+                    available_lots = StockLot.objects.select_for_update().filter(
+                        produit=produit,
+                        quantity_remaining__gt=0
+                    ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
+                    
+                    for lot in available_lots:
+                        if quantity_to_allocate <= 0:
+                            break
+                        
+                        quantity_from_lot = min(lot.quantity_remaining, quantity_to_allocate)
+                        
+                        FactureProduitAllocation.objects.create(
+                            facture_produit=fp,
+                            stock_lot=lot,
+                            quantity=quantity_from_lot,
+                            cost_price=lot.price_cost,
+                            selling_price=selling_price
+                        )
+                        
+                        lot.quantity_remaining -= quantity_from_lot
+                        lot.save()
+                        
+                        quantity_to_allocate -= quantity_from_lot
+        
+        # === STEP 5: Update invoice fields ===
+        facture.remise = Decimal(str(new_remise))
+        if new_client:
+            facture.client_id = new_client
+        facture.client_name_override = new_client_name_override
+        facture.save()
+        
+        # === STEP 6: Recalculate totals ===
+        facture.calculate_totals(save=True)
+        facture.refresh_from_db()
+        new_total = facture.total_ttc
+        
+        # === STEP 7: Create adjustment payment if difference ===
+        difference = new_total - old_total
+        adjustment_created = False
+        
+        if difference != 0:
+            Caisse.objects.create(
+                facture=facture,
+                mode_paiement='especes',  # Default to espèces as per user request
+                montant=difference,  # Positive = additional payment, Negative = refund
+                statut='completee',
+                user=request.user,
+                reference=f"Ajustement modification facture {facture.numero_facture or facture.id}"
+            )
+            adjustment_created = True
+        
+        # === STEP 8: Audit log ===
+        numero = facture.numero_facture or f"#{facture.id}"
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Facture {numero} modifiée. Ancien total: {old_total:.0f}F, Nouveau total: {new_total:.0f}F, Différence: {difference:+.0f}F",
+            details={
+                'facture_id': facture.id,
+                'numero_facture': numero,
+                'old_total': float(old_total),
+                'new_total': float(new_total),
+                'difference': float(difference),
+                'adjustment_created': adjustment_created,
+                'products_count': len(new_products)
+            },
+            request=request
+        )
+        
+        # Return updated facture
+        serializer = self.get_serializer(facture)
+        return Response({
+            'facture': serializer.data,
+            'old_total': float(old_total),
+            'new_total': float(new_total),
+            'difference': float(difference),
+            'adjustment_created': adjustment_created
+        })
+
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     @transaction.atomic
     def supprimer_brouillons(self, request):
