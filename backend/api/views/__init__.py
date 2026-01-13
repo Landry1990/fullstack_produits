@@ -24,6 +24,10 @@ from .historique_ventes import HistoriqueVentesViewSet
 from .historique_achats import HistoriqueAchatsViewSet
 from .produit_import import ProduitImportViewSet
 
+# Import from parent api module (not yet migrated to views package)
+from ..rapport_view import RapportViewSet
+from ..ordonnancier_view import OrdonnancierViewSet
+
 # Expose all for import from api.views
 __all__ = [
     'ProduitViewSet', 'CategorieViewSet', 'FournisseurViewSet',
@@ -40,5 +44,7 @@ __all__ = [
     'LoyaltySettingViewSet', 'InvoiceConfigurationView',
     'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',
-    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProduitImportViewSet'
+    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProduitImportViewSet',
+    'RapportViewSet', 'OrdonnancierViewSet'
 ]
+

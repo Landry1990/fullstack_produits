@@ -20,36 +20,72 @@ class DashboardViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def stats(self, request):
         today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
         start_of_month = today.replace(day=1)
         
-        # 1. Total Chiffre d'Affaires (Mois en cours)
-        ca_mensuel = Facture.objects.filter(
-            date__gte=start_of_month,
+        # 1. Revenue (Chiffre d'Affaires) - Today and change vs yesterday
+        ca_today = Facture.objects.filter(
+            date__date=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Sum('total_ttc'))['total'] or 0
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
         
-        # 2. Total Commandes (Mois en cours)
-        achats_mensuel = Commande.objects.filter(
-            date__gte=start_of_month,
-            status=Commande.Status.CLOTUREE
-        ).aggregate(
-            total=Sum(F('produits__quantity') * F('produits__price'), output_field=DecimalField())
-        )['total'] or 0
+        ca_yesterday = Facture.objects.filter(
+            date__date=yesterday,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
         
-        # 3. Nombre de ventes aujourd'hui
-        ventes_jour = Facture.objects.filter(
+        revenue_change = 0
+        if ca_yesterday and ca_yesterday > 0:
+            revenue_change = round(((ca_today - ca_yesterday) / ca_yesterday) * 100, 1)
+        
+        # 2. Sales count (Number of invoices today)
+        sales_today = Facture.objects.filter(
             date__date=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).count()
         
-        # 4. Stock critique (produits en dessous du seuil min)
+        sales_yesterday = Facture.objects.filter(
+            date__date=yesterday,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).count()
+        
+        sales_change = 0
+        if sales_yesterday > 0:
+            sales_change = round(((sales_today - sales_yesterday) / sales_yesterday) * 100, 1)
+        
+        # 3. Low stock count
         stock_critique = Produit.objects.filter(stock__lte=F('stock_minimum')).count()
         
+        # 4. Receivables (Créances Clients) - Total unpaid amounts on validated invoices
+        receivables_data = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            paid=Coalesce(Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')), Decimal('0')),
+            remainder=F('total_ttc') - F('paid')
+        ).filter(remainder__gt=0).aggregate(
+            total_debt=Coalesce(Sum('remainder'), Decimal('0')),
+            count=Count('id')
+        )
+        
+        # 5. Discount (Remises accordées ce mois)
+        discount_total = Facture.objects.filter(
+            date__gte=start_of_month,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('remise'), Decimal('0')))['total']
+        
+        # 6. Stock value (Valeur totale du stock au PMP)
+        stock_value = Produit.objects.aggregate(
+            total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0'))
+        )['total']
+        
         return Response({
-            'ca_mensuel': ca_mensuel,
-            'achats_mensuel': achats_mensuel,
-            'ventes_jour': ventes_jour,
-            'stock_critique': stock_critique
+            'revenue': {'value': float(ca_today), 'change': revenue_change},
+            'sales': {'value': sales_today, 'change': sales_change},
+            'clients': {'value': Client.objects.count(), 'change': 0},
+            'low_stock': {'value': stock_critique, 'change': 0},
+            'receivables': {'value': float(receivables_data['total_debt'] or 0), 'count': receivables_data['count'] or 0},
+            'discount': {'value': float(discount_total), 'change': 0},
+            'stock_value': {'value': float(stock_value), 'change': 0}
         })
 
     @action(detail=False, methods=['get'])
@@ -84,31 +120,38 @@ class DashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def revenue_chart(self, request):
-        """Returns daily revenue for the last 30 days."""
+        """Returns daily revenue for the last 7 days in format expected by frontend."""
         end_date = timezone.now()
-        start_date = end_date - timedelta(days=30)
+        start_date = end_date - timedelta(days=6)  # 7 days including today
         
         daily_revenue = Facture.objects.filter(
-            date__range=(start_date, end_date),
+            date__date__gte=start_date.date(),
+            date__date__lte=end_date.date(),
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             day=TruncDay('date')
         ).values('day').annotate(
-            total=Sum('total_ttc')
+            total=Coalesce(Sum('total_ttc'), Decimal('0'))
         ).order_by('day')
         
-        chart_data = []
+        # Build the data structure expected by frontend
+        labels = []
+        data = []
         current_date = start_date.date()
-        revenue_map = {item['day'].date(): item['total'] for item in daily_revenue}
+        revenue_map = {item['day'].date(): float(item['total']) for item in daily_revenue}
+        
+        # French day names
+        day_names = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
         
         while current_date <= end_date.date():
-            chart_data.append({
-                'date': current_date.strftime('%Y-%m-%d'),
-                'revenue': revenue_map.get(current_date, 0)
-            })
+            labels.append(day_names[current_date.weekday()])
+            data.append(revenue_map.get(current_date, 0))
             current_date += timedelta(days=1)
             
-        return Response(chart_data)
+        return Response({
+            'labels': labels,
+            'data': data
+        })
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
