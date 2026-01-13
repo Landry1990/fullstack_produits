@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.views import APIView
 from django.db import transaction
 from django.db.models import F, Sum, Count, Q
 from django.http import HttpResponse
@@ -612,3 +613,56 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone']
+
+
+class CategoriesListView(APIView):
+    """Simple API View for categories without authentication."""
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        rayons = Rayon.objects.all().order_by('name')
+        serializer = RayonSerializer(rayons, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = RayonSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class CategoriesDetailView(APIView):
+    """Simple API View for category detail operations."""
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def get_object(self, pk):
+        try:
+            return Rayon.objects.get(pk=pk)
+        except Rayon.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        rayon = self.get_object(pk)
+        if not rayon:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = RayonSerializer(rayon)
+        return Response(serializer.data)
+
+    def put(self, request, pk):
+        rayon = self.get_object(pk)
+        if not rayon:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = RayonSerializer(rayon, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        rayon = self.get_object(pk)
+        if not rayon:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        rayon.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
