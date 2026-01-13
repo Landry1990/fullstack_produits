@@ -1323,7 +1323,7 @@ export default function Commandes() {
                           </td>
                           <td className="text-right font-mono">{Number(p.price).toLocaleString()} F</td>
                           <td className="text-xs font-mono">{p.lot || '-'}</td>
-                          <td className="text-xs text-gray-400">{p.date_expiration ? new Date(p.date_expiration).toLocaleDateString() : ''}</td>
+                          <td className="text-xs text-gray-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
                           <td className="text-right font-bold text-primary">{(Number(p.quantity) * Number(p.price)).toLocaleString()} F</td>
                         </tr>
                        );

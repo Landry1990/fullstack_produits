@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import { fr } from 'date-fns/locale'
+import 'react-datepicker/dist/react-datepicker.css'
+
+// Register French locale
+registerLocale('fr', fr)
 
 // Types pour les requêtes
 type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id'
@@ -112,10 +118,11 @@ const QUERIES: QueryDefinition[] = [
   {
     id: 'stock_negatif',
     name: 'Stock Négatif',
-    description: 'Produits avec stock négatif',
+    description: 'Produits avec stock négatif ou faible, triés par quantité',
     endpoint: '/api/produits/',
     params: [
-      { key: 'stock__lt', label: 'Stock inférieur à', type: 'number', default: 0 }
+      { key: 'stock_lt', label: 'Stock inférieur à', type: 'number', default: 0 },
+      { key: 'ordering', label: 'Tri', type: 'text', default: 'stock' }
     ],
     resultType: 'table'
   }
@@ -307,9 +314,9 @@ export default function CentreRapports() {
         const groupedByFacture: Record<string, { date: string; numero: string; items: any[] }> = {}
         
         results.forEach((item: any) => {
-          const factureId = item.facture?.id || item.facture || 'unknown'
-          const factureNumero = item.facture?.numero_facture || `#${factureId}`
-          const factureDate = item.facture?.created_at || item.created_at || ''
+          const factureId = typeof item.facture === 'object' ? item.facture.id : item.facture
+          const factureNumero = item.facture_numero || (typeof item.facture === 'object' ? item.facture.numero_facture : `#${factureId}`)
+          const factureDate = item.facture_date || (typeof item.facture === 'object' ? item.facture.created_at : '') || item.created_at || ''
           
           if (!groupedByFacture[factureId]) {
             groupedByFacture[factureId] = {
@@ -496,26 +503,51 @@ export default function CentreRapports() {
                           <span className="label-text text-xs">{param.label}</span>
                         </label>
                         {param.type === 'month' && (
-                          <input
-                            type="month"
-                            value={params[param.key] || ''}
-                            onChange={e => setParams(prev => ({ ...prev, [param.key]: e.target.value }))}
+                          <DatePicker
+                            selected={params[param.key] ? new Date(params[param.key] + '-01') : null}
+                            onChange={(date: Date | null) => {
+                              if (date) {
+                                const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+                                setParams(prev => ({ ...prev, [param.key]: formatted }))
+                              }
+                            }}
+                            dateFormat="MM/yyyy"
+                            showMonthYearPicker
+                            locale="fr"
+                            placeholderText="mm/aaaa"
                             className="input input-bordered input-sm w-48"
                           />
                         )}
                         {param.type === 'date' && (
-                          <input
-                            type="date"
-                            value={params[param.key] || ''}
-                            onChange={e => setParams(prev => ({ ...prev, [param.key]: e.target.value }))}
+                          <DatePicker
+                            selected={params[param.key] ? new Date(params[param.key]) : null}
+                            onChange={(date: Date | null) => {
+                              if (date) {
+                                const formatted = date.toISOString().slice(0, 10)
+                                setParams(prev => ({ ...prev, [param.key]: formatted }))
+                              }
+                            }}
+                            dateFormat="dd/MM/yyyy"
+                            locale="fr"
+                            placeholderText="jj/mm/aaaa"
                             className="input input-bordered input-sm w-40"
                           />
                         )}
                         {param.type === 'datetime' && (
-                          <input
-                            type="datetime-local"
-                            value={params[param.key] || ''}
-                            onChange={e => setParams(prev => ({ ...prev, [param.key]: e.target.value }))}
+                          <DatePicker
+                            selected={params[param.key] ? new Date(params[param.key]) : null}
+                            onChange={(date: Date | null) => {
+                              if (date) {
+                                const formatted = date.toISOString().slice(0, 16)
+                                setParams(prev => ({ ...prev, [param.key]: formatted }))
+                              }
+                            }}
+                            showTimeSelect
+                            timeFormat="HH:mm"
+                            timeIntervals={15}
+                            dateFormat="dd/MM/yyyy HH:mm"
+                            locale="fr"
+                            placeholderText="jj/mm/aaaa hh:mm"
                             className="input input-bordered input-sm w-48"
                           />
                         )}

@@ -2375,8 +2375,8 @@ export default function Facturation() {
                                     <td className="text-center py-1 hidden md:table-cell">
                                         <div className="text-xs text-base-content/60">
                                             {ligne.lotId && ligne.lotExpiration 
-                                                ? new Date(ligne.lotExpiration).toLocaleDateString('fr-FR')
-                                                : (ligne.produit.expire_date ? new Date(ligne.produit.expire_date).toLocaleDateString('fr-FR') : '-')
+                                                ? (() => { const d = new Date(ligne.lotExpiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })()
+                                                : (ligne.produit.expire_date ? (() => { const d = new Date(ligne.produit.expire_date); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : '-')
                                             }
                                         </div>
                                     </td>
@@ -2642,7 +2642,7 @@ export default function Facturation() {
                 {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
                   <div className="flex justify-between"><span>Facture:</span><span>#{ticketCaisse.facture.numero_facture}</span></div>
                 )}
-                <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span></div>
+                <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString('fr-FR')} {new Date().toLocaleTimeString('fr-FR')}</span></div>
                 <div className="flex justify-between"><span>Client:</span><span>{ticketCaisse.client_name || 'Passage'}</span></div>
               </div>
               

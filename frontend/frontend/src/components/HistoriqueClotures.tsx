@@ -1,6 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import { fr } from 'date-fns/locale'
+import 'react-datepicker/dist/react-datepicker.css'
+
+// Register French locale
+registerLocale('fr', fr)
 
 interface ClotureCaisse {
   id: number
@@ -23,8 +29,8 @@ interface ClotureCaisse {
 export default function HistoriqueClotures() {
   const [clotures, setClotures] = useState<ClotureCaisse[]>([])
   const [loading, setLoading] = useState(false)
-  const [dateDebut, setDateDebut] = useState('')
-  const [dateFin, setDateFin] = useState('')
+  const [dateDebut, setDateDebut] = useState<Date | null>(null)
+  const [dateFin, setDateFin] = useState<Date | null>(null)
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
 
   const apiBaseUrl = useMemo(() => {
@@ -36,8 +42,9 @@ export default function HistoriqueClotures() {
     setLoading(true)
     try {
       const params: Record<string, string> = {}
-      if (dateDebut) params.date_debut = dateDebut
-      if (dateFin) params.date_fin = dateFin
+      // Format dates for API (YYYY-MM-DDTHH:mm:ss without milliseconds)
+      if (dateDebut) params.date_debut = dateDebut.toISOString().slice(0, 19)
+      if (dateFin) params.date_fin = dateFin.toISOString().slice(0, 19)
       
       const response = await axios.get(`${apiBaseUrl}/api/clotures-caisse/`, { params })
       setClotures(response.data.results || response.data || [])
@@ -98,6 +105,18 @@ export default function HistoriqueClotures() {
             <div style="display: flex; justify-content: space-between;">
               <span>Caissier:</span>
               <span>${cloture.user_name || cloture.username || 'N/A'}</span>
+            </div>
+          </div>
+
+          <div style="border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 8px 0; margin-bottom: 15px;">
+            <div style="font-weight: bold; text-align: center; margin-bottom: 5px; text-transform: uppercase;">Période Clôturée</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+              <span>Du:</span>
+              <span>${cloture.date_debut ? formatDate(cloture.date_debut) : 'Début'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
+              <span>Au:</span>
+              <span>${cloture.date_fin ? formatDate(cloture.date_fin) : 'Maintenant'}</span>
             </div>
           </div>
 
@@ -178,11 +197,14 @@ export default function HistoriqueClotures() {
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Date début</span>
             </label>
-            <input
-              type="date"
-              value={dateDebut}
-              onChange={(e) => setDateDebut(e.target.value)}
+            <DatePicker
+              selected={dateDebut}
+              onChange={(date: Date | null) => setDateDebut(date)}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="jj/mm/aaaa"
+              locale="fr"
               className="input input-bordered input-sm"
+              isClearable
             />
           </div>
 
@@ -190,11 +212,14 @@ export default function HistoriqueClotures() {
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Date fin</span>
             </label>
-            <input
-              type="date"
-              value={dateFin}
-              onChange={(e) => setDateFin(e.target.value)}
+            <DatePicker
+              selected={dateFin}
+              onChange={(date: Date | null) => setDateFin(date)}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="jj/mm/aaaa"
+              locale="fr"
               className="input input-bordered input-sm"
+              isClearable
             />
           </div>
 
@@ -204,7 +229,7 @@ export default function HistoriqueClotures() {
 
           {(dateDebut || dateFin) && (
             <button 
-              onClick={() => { setDateDebut(''); setDateFin(''); fetchClotures(); }}
+              onClick={() => { setDateDebut(null); setDateFin(null); fetchClotures(); }}
               className="btn btn-sm btn-ghost"
             >
               ✕ Réinitialiser
@@ -231,7 +256,8 @@ export default function HistoriqueClotures() {
             <table className="table table-zebra w-full">
               <thead>
                 <tr className="bg-base-200">
-                  <th className="text-xs uppercase">Date</th>
+                  <th className="text-xs uppercase">Date Clôture</th>
+                  <th className="text-xs uppercase">Période</th>
                   <th className="text-xs uppercase">Caissier</th>
                   <th className="text-xs uppercase text-right">Théorique</th>
                   <th className="text-xs uppercase text-right">Réel</th>
@@ -243,6 +269,12 @@ export default function HistoriqueClotures() {
                 {clotures.map((cloture) => (
                   <tr key={cloture.id} className="hover">
                     <td className="font-mono text-sm">{formatDate(cloture.date)}</td>
+                    <td className="text-xs">
+                      <div className="flex flex-col">
+                        <span>Du: {cloture.date_debut ? formatDate(cloture.date_debut) : 'Début'}</span>
+                        <span>Au: {cloture.date_fin ? formatDate(cloture.date_fin) : 'Maintenant'}</span>
+                      </div>
+                    </td>
                     <td>{cloture.user_name || cloture.username || 'N/A'}</td>
                     <td className="text-right font-bold">{formatMoney(cloture.montant_theorique)} F</td>
                     <td className="text-right font-bold">{formatMoney(cloture.montant_reel)} F</td>
@@ -306,6 +338,21 @@ export default function HistoriqueClotures() {
                 <span className="font-bold">
                   Écart: {parseFloat(selectedCloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(selectedCloture.ecart_caisse)} F
                 </span>
+              </div>
+
+              <div className="divider">Période Clôturée</div>
+              
+              <div className="bg-base-100 p-4 rounded-lg border border-base-300">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <div className="text-xs opacity-60 uppercase font-bold">Du</div>
+                    <div className="font-mono">{selectedCloture.date_debut ? formatDate(selectedCloture.date_debut) : 'Début'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs opacity-60 uppercase font-bold">Au</div>
+                    <div className="font-mono">{selectedCloture.date_fin ? formatDate(selectedCloture.date_fin) : 'Maintenant'}</div>
+                  </div>
+                </div>
               </div>
 
               <div className="divider">Détails par mode de paiement</div>

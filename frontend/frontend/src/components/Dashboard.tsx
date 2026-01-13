@@ -503,7 +503,7 @@ export default function Dashboard() {
                               <span>Lot: {lot.lot || 'N/A'}</span>
                               <span>•</span>
                               <span>
-                                {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                                {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : 'N/A'}
                               </span>
                             </div>
                           </div>

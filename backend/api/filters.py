@@ -7,11 +7,17 @@ class ProduitFilter(filters.FilterSet):
 
     # Permet de filtrer les produits dont le prix est supérieur à une valeur
     min_price = filters.NumberFilter(field_name="selling_price", lookup_expr='gte')
+    
+    # Filtres pour le stock (utilisation de simple underscore pour éviter conflit avec lookup Django)
+    stock_lt = filters.NumberFilter(field_name='stock', lookup_expr='lt')
+    stock_lte = filters.NumberFilter(field_name='stock', lookup_expr='lte')
+    stock_gt = filters.NumberFilter(field_name='stock', lookup_expr='gt')
+    stock_gte = filters.NumberFilter(field_name='stock', lookup_expr='gte')
 
     class Meta:
         model = Produit
         # On garde les filtres simples par ID et on ajoute les nouveaux
-        fields = ['rayon', 'fournisseur', 'rayon_name', 'min_price']
+        fields = ['rayon', 'fournisseur', 'rayon_name', 'min_price', 'stock_lt', 'stock_lte', 'stock_gt', 'stock_gte']
 
 
 class AuditLogFilter(filters.FilterSet):

@@ -75,10 +75,10 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
                         >
                           <td>
                             <div className="font-medium">{lot.lot}</div>
-                            <div className="text-xs opacity-50">Reçu le {new Date(lot.date_reception).toLocaleDateString()}</div>
+                            <div className="text-xs opacity-50">Reçu le {new Date(lot.date_reception).toLocaleDateString('fr-FR')}</div>
                           </td>
                           <td className={expiryColor}>
-                            {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString() : 'N/A'}
+                            {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : 'N/A'}
                           </td>
                           <td className="text-right font-medium">
                             {lot.quantity_remaining}
