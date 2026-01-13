@@ -164,7 +164,7 @@ TIME_ZONE = 'Africa/Douala'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False  # Désactivé pour travailler avec l'heure locale du système
 
 
 # Static files (CSS, JavaScript, Images)

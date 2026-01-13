@@ -22,6 +22,11 @@ export default function JournalCaisse() {
   const [dateDebut, setDateDebut] = useState<Date | null>(null)
   const [dateFin, setDateFin] = useState<Date | null>(null)
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
+  
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
 
   const toggleReleve = (releveId: number) => {
     setExpandedReleves(prev => {
@@ -45,6 +50,11 @@ export default function JournalCaisse() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  // Re-fetch transactions when page changes
+  useEffect(() => {
+    fetchTransactions()
+  }, [page])
 
   // Re-fetch totals when date filters change
   useEffect(() => {
@@ -83,14 +93,24 @@ export default function JournalCaisse() {
   const fetchTransactions = async () => {
     // setLoading(true) handled in fetchData
     try {
-      const response = await axios.get(caisseEndpoint)
-      // Handle paginated response
-      const data: any = response.data;
-      setTransactions(Array.isArray(data) ? data : (data.results || []))
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      
+      const response = await axios.get(caisseEndpoint, { params })
+      const data: any = response.data
+      
+      if (data.results) {
+        setTransactions(data.results)
+        setTotalCount(data.count || 0)
+        setTotalPages(Math.ceil((data.count || 0) / 50)) // Page size is 50
+      } else {
+        setTransactions(Array.isArray(data) ? data : [])
+        setTotalCount(Array.isArray(data) ? data.length : 0)
+        setTotalPages(1)
+      }
     } catch (err) {
-      // setError('Erreur lors du chargement des transactions') handled in fetchData
       console.error('Erreur:', err)
-      throw err;
+      throw err
     }
   }
 
@@ -832,12 +852,36 @@ export default function JournalCaisse() {
 
       </div>
 
-      {/* Footer avec nombre de résultats */}
+      {/* Footer avec pagination */}
       <div className="px-6 py-3 border-t border-base-200 bg-base-50 shrink-0">
-        <p className="text-sm text-base-content/60">
-          {filteredItems.length} ligne{filteredItems.length > 1 ? 's' : ''} affichée{filteredItems.length > 1 ? 's' : ''}
-          {filteredItems.length !== (transactions.length + mouvements.length) && ` sur ${transactions.length + mouvements.length} au total`}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-base-content/60">
+            {filteredItems.length} ligne{filteredItems.length > 1 ? 's' : ''} affichée{filteredItems.length > 1 ? 's' : ''} sur {totalCount} total
+          </p>
+          
+          {!loading && totalCount > 0 && (
+            <div className="flex justify-center items-center gap-2">
+              <button 
+                className="btn btn-xs btn-outline" 
+                disabled={page === 1} 
+                onClick={() => setPage(page - 1)}
+              >
+                ← Précédent
+              </button>
+              <div className="px-2 py-1 bg-white rounded border border-base-200">
+                <span className="font-semibold">Page {page}</span>
+                {totalPages > 1 && <span className="text-gray-500"> / {totalPages}</span>}
+              </div>
+              <button 
+                className="btn btn-xs btn-outline" 
+                disabled={page >= totalPages} 
+                onClick={() => setPage(page + 1)}
+              >
+                Suivant →
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de Clôture */}

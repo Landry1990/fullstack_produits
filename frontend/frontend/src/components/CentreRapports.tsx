@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
@@ -72,7 +73,7 @@ const QUERIES: QueryDefinition[] = [
   {
     id: 'alertes_stock',
     name: 'Alertes Stock',
-    description: 'Produits en rupture ou sous le seuil minimum',
+    description: 'Stock < Rotation Moyenne OU Stock <= Seuil Minimum',
     endpoint: '/api/produits/stock_alerts/',
     params: [],
     resultType: 'table'
@@ -97,11 +98,12 @@ const QUERIES: QueryDefinition[] = [
   },
   {
     id: 'historique_ventes',
-    name: 'Historique Ventes du Jour',
-    description: 'Toutes les ventes d\'une journée',
-    endpoint: '/api/historique-ventes/',
+    name: 'Ventes par Tranche Horaire',
+    description: 'Produits vendus sur une période donnée',
+    endpoint: '/api/historique-ventes/ventes_par_tranche/',
     params: [
-      { key: 'date', label: 'Date', type: 'date', required: true }
+      { key: 'date_debut', label: 'Début', type: 'datetime', required: true },
+      { key: 'date_fin', label: 'Fin', type: 'datetime', required: true }
     ],
     resultType: 'table'
   },
@@ -159,6 +161,7 @@ const getTodayDate = (): string => {
 }
 
 export default function CentreRapports() {
+  const [searchParams] = useSearchParams()
   const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null)
   const [params, setParams] = useState<Record<string, any>>({})
   const [results, setResults] = useState<any>(null)
@@ -203,6 +206,19 @@ export default function CentreRapports() {
       setShowClientDropdown(false)
     }
   }, [clientSearch, clients])
+
+  // Auto-select report from URL parameter
+  useEffect(() => {
+    const reportId = searchParams.get('report')
+    if (reportId) {
+      const query = QUERIES.find(q => q.id === reportId)
+      if (query) {
+        handleSelectQuery(query)
+        // Auto-execute the query after a short delay to ensure UI is ready
+        setTimeout(() => executeQuery(), 100)
+      }
+    }
+  }, [searchParams])
 
   // Sélectionner une requête
   const handleSelectQuery = useCallback((query: QueryDefinition) => {
@@ -538,7 +554,13 @@ export default function CentreRapports() {
                             selected={params[param.key] ? new Date(params[param.key]) : null}
                             onChange={(date: Date | null) => {
                               if (date) {
-                                const formatted = date.toISOString().slice(0, 16)
+                                // Use local time format instead of toISOString() which converts to UTC
+                                const year = date.getFullYear()
+                                const month = String(date.getMonth() + 1).padStart(2, '0')
+                                const day = String(date.getDate()).padStart(2, '0')
+                                const hours = String(date.getHours()).padStart(2, '0')
+                                const minutes = String(date.getMinutes()).padStart(2, '0')
+                                const formatted = `${year}-${month}-${day}T${hours}:${minutes}`
                                 setParams(prev => ({ ...prev, [param.key]: formatted }))
                               }
                             }}

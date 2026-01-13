@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import type { StockLot } from '../types';
 import {
@@ -48,6 +48,7 @@ export default function Dashboard() {
   const [ugStats, setUgStats] = useState<{ug_en_stock: number; ug_recues_mois: number; valeur_economisee: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -184,7 +185,6 @@ export default function Dashboard() {
           { title: "Créances Clients", value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
 
           { title: "Valeur Stock", value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
-          { title: "Alertes Stock", value: stats.low_stock?.value || 0, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false },
         ].map((stat: any, index) => {
           const content = (
             <div className={`card-body p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
@@ -424,7 +424,10 @@ export default function Dashboard() {
           {/* Stock Alerts */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <div className="flex items-center justify-between mb-4">
+              <div 
+                className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/app/centre-rapports?report=alertes_stock')}
+              >
                 <h2 className="card-title text-lg font-bold text-base-content">Alertes Stock</h2>
                 {stats && (stats.low_stock?.value || 0) > 0 && (
                   <span className="badge badge-error text-white badge-sm">{stats.low_stock?.value || 0}</span>
@@ -447,7 +450,11 @@ export default function Dashboard() {
                   ))
                 )}
               </div>
-              <Link to="/produits" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
+              <Link 
+                to="/produits" 
+                className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10"
+                onClick={(e) => e.stopPropagation()}
+              >
                 Voir tout le stock
               </Link>
             </div>
