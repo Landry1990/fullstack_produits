@@ -3,6 +3,12 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import type { CaisseTransaction, MouvementCaisse } from '../types'
 import CashMovementModal from './CashMovementModal'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import { fr } from 'date-fns/locale'
+import 'react-datepicker/dist/react-datepicker.css'
+
+// Register French locale
+registerLocale('fr', fr)
 
 export default function JournalCaisse() {
   const [transactions, setTransactions] = useState<CaisseTransaction[]>([])
@@ -12,9 +18,9 @@ export default function JournalCaisse() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<string>('all')
-  const [filterType, setFilterType] = useState<'all' | 'entrees' | 'sorties'>('all') // New: filter by entry/exit type
-  const [dateDebut, setDateDebut] = useState('')
-  const [dateFin, setDateFin] = useState('')
+  const [filterType, setFilterType] = useState<'all' | 'entrees' | 'sorties'>('all')
+  const [dateDebut, setDateDebut] = useState<Date | null>(null)
+  const [dateFin, setDateFin] = useState<Date | null>(null)
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
 
   const toggleReleve = (releveId: number) => {
@@ -110,7 +116,7 @@ export default function JournalCaisse() {
       let matchesDate = true
       if (dateDebut && dateFin) {
         const transactionDate = new Date(transaction.date_paiement)
-        const debut = new Date(dateDebut)
+        const debut = dateDebut
         const fin = new Date(dateFin)
         fin.setHours(23, 59, 59, 999) 
         matchesDate = transactionDate >= debut && transactionDate <= fin
@@ -136,7 +142,7 @@ export default function JournalCaisse() {
        let matchesDate = true
        if (dateDebut && dateFin) {
         const d = new Date(mouv.date)
-        const debut = new Date(dateDebut)
+        const debut = dateDebut
         const fin = new Date(dateFin)
         fin.setHours(23, 59, 59, 999) 
         matchesDate = d >= debut && d <= fin
@@ -274,8 +280,9 @@ export default function JournalCaisse() {
   const fetchTotals = async () => {
     try {
       const params: any = {}
-      if (dateDebut) params.date_debut = dateDebut
-      if (dateFin) params.date_fin = dateFin
+      // Format without milliseconds for backend compatibility
+      if (dateDebut) params.date_debut = dateDebut.toISOString().slice(0, 19)
+      if (dateFin) params.date_fin = dateFin.toISOString().slice(0, 19)
       
       const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
       setGlobalTotals(response.data)
@@ -290,8 +297,8 @@ export default function JournalCaisse() {
   const openClosingModal = () => {
       // Use the filtered totals (totauxParMode) to match the displayed "Solde Théorique"
       const modalTotals = {
-          start_date: dateDebut || null,
-          end_date: dateFin || null,
+          start_date: dateDebut?.toISOString() || null,
+          end_date: dateFin?.toISOString() || null,
           total_theorique: totauxParMode.total,
           total_ventes: totauxParMode.total - totauxParMode.entrees + totauxParMode.sorties, // Sales only
           total_entrees: totauxParMode.entrees,
@@ -315,17 +322,25 @@ export default function JournalCaisse() {
     if (!actualAmount) return
     
     try {
+      // Format dates for backend (YYYY-MM-DDTHH:mm:ss, without milliseconds)
+      const formatDateForApi = (date: Date | null): string | undefined => {
+        if (!date) return undefined
+        return date.toISOString().slice(0, 19) // Remove .xxxZ
+      }
+      
       await axios.post(`${caisseEndpoint}cloturer/`, {
         montant_reel: parseFloat(actualAmount),
-        date_debut: dateDebut || undefined,
-        date_fin: dateFin || undefined
+        date_debut: formatDateForApi(dateDebut),
+        date_fin: formatDateForApi(dateFin)
       })
       setIsClosingModalOpen(false)
       toast.success('Caisse clôturée avec succès !')
       fetchTransactions() // Refresh list
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erreur clôture:', err)
-      setError('Erreur lors de la clôture de caisse')
+      const errorMessage = err.response?.data?.detail || err.message || 'Erreur inconnue'
+      setError(`Erreur lors de la clôture: ${errorMessage}`)
+      toast.error(errorMessage)
     }
   }
 
@@ -342,7 +357,7 @@ export default function JournalCaisse() {
       };
 
       const startStr = closingTotals.start_date ? formatDateLong(closingTotals.start_date) : 'Début';
-      const endStr = dateFin ? formatDateLong(dateFin) : 'Maintenant';
+      const endStr = dateFin ? formatDateLong(dateFin.toISOString()) : 'Maintenant';
 
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black;">
@@ -355,7 +370,7 @@ export default function JournalCaisse() {
             <div style="font-size: 0.8em; margin-bottom: 15px;">
                 <div style="display: flex; justify-content: space-between;">
                     <span>Date:</span>
-                    <span>${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</span>
+                    <span>${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span>Caissier:</span>
@@ -469,9 +484,12 @@ export default function JournalCaisse() {
         {/* Quick Date Filter */}
         <button
           onClick={() => {
-            const today = new Date().toISOString().split('T')[0]
-            setDateDebut(today + 'T00:00')
-            setDateFin(today + 'T23:59')
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const endToday = new Date()
+            endToday.setHours(23, 59, 59, 999)
+            setDateDebut(today)
+            setDateFin(endToday)
           }}
           className="btn btn-sm btn-secondary gap-2 ml-2"
         >
@@ -557,30 +575,18 @@ export default function JournalCaisse() {
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Début (Date & Heure)</span>
             </label>
-            <div className="flex gap-1">
-              <input
-                type="date"
-                value={dateDebut ? dateDebut.split('T')[0] : ''}
-                onChange={(e) => {
-                    const d = e.target.value;
-                    const t = dateDebut ? dateDebut.split('T')[1] : '00:00';
-                    setDateDebut(d ? `${d}T${t}` : '');
-                }}
-                className="input input-bordered input-sm w-full"
-                lang="fr"
-              />
-              <input
-                type="time"
-                value={dateDebut ? dateDebut.split('T')[1] : ''}
-                onChange={(e) => {
-                    const t = e.target.value;
-                    const d = dateDebut ? dateDebut.split('T')[0] : new Date().toISOString().split('T')[0];
-                    setDateDebut(`${d}T${t}`);
-                }}
-                className="input input-bordered input-sm w-24"
-                lang="fr"
-              />
-            </div>
+            <DatePicker
+              selected={dateDebut}
+              onChange={(date: Date | null) => setDateDebut(date)}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat="dd/MM/yyyy HH:mm"
+              placeholderText="jj/mm/aaaa hh:mm"
+              locale="fr"
+              className="input input-bordered input-sm w-full"
+              isClearable
+            />
           </div>
 
           {/* Date fin */}
@@ -588,30 +594,18 @@ export default function JournalCaisse() {
             <label className="label py-1">
               <span className="label-text text-xs font-bold uppercase">Fin (Date & Heure)</span>
             </label>
-            <div className="flex gap-1">
-              <input
-                type="date"
-                value={dateFin ? dateFin.split('T')[0] : ''}
-                onChange={(e) => {
-                    const d = e.target.value;
-                    const t = dateFin ? dateFin.split('T')[1] : '23:59';
-                    setDateFin(d ? `${d}T${t}` : '');
-                }}
-                className="input input-bordered input-sm w-full"
-                lang="fr"
-              />
-              <input
-                type="time"
-                value={dateFin ? dateFin.split('T')[1] : ''}
-                onChange={(e) => {
-                    const t = e.target.value;
-                    const d = dateFin ? dateFin.split('T')[0] : new Date().toISOString().split('T')[0];
-                    setDateFin(`${d}T${t}`);
-                }}
-                className="input input-bordered input-sm w-24"
-                lang="fr"
-              />
-             </div>
+            <DatePicker
+              selected={dateFin}
+              onChange={(date: Date | null) => setDateFin(date)}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat="dd/MM/yyyy HH:mm"
+              placeholderText="jj/mm/aaaa hh:mm"
+              locale="fr"
+              className="input input-bordered input-sm w-full"
+              isClearable
+            />
           </div>
         </div>
 
@@ -623,8 +617,8 @@ export default function JournalCaisse() {
                 setSearchQuery('')
                 setFilterMode('all')
                 setFilterType('all')
-                setDateDebut('')
-                setDateFin('')
+                setDateDebut(null)
+                setDateFin(null)
               }}
               className="btn btn-xs btn-ghost"
             >

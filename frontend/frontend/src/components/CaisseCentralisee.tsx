@@ -565,7 +565,7 @@ export default function CaisseCentralisee() {
                 {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
                   <div className="flex justify-between"><span>Facture:</span><span>#{ticketCaisse.facture.numero_facture}</span></div>
                 )}
-                <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</span></div>
+                <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString('fr-FR')} {new Date().toLocaleTimeString('fr-FR')}</span></div>
                 <div className="flex justify-between"><span>Client:</span><span>{typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.client_name || 'Passage' : ticketCaisse.client_name || 'Passage'}</span></div>
               </div>
               

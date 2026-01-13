@@ -193,6 +193,10 @@ class FactureProduitSerializer(serializers.ModelSerializer):
     )
     # Champ pour la lecture : retourner l'ID du lot dans les réponses
     stock_lot = serializers.PrimaryKeyRelatedField(read_only=True)
+    
+    # Champs détails facture pour les rapports/listes
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
+    facture_date = serializers.DateTimeField(source='facture.date', read_only=True)
 
     class Meta:
         model = FactureProduit

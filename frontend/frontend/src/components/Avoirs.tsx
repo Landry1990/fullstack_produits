@@ -459,7 +459,7 @@ export default function Avoirs() {
                         {avoirs.map(avoir => (
                             <tr key={avoir.id} className="hover">
                                 <td className="font-mono font-bold">{avoir.numero}</td>
-                                <td>{new Date(avoir.created_at).toLocaleDateString()}</td>
+                                <td>{new Date(avoir.created_at).toLocaleDateString('fr-FR')}</td>
                                 <td>{avoir.fournisseur_name}</td>
                                 <td>
                                     <div className="badge badge-outline">{avoir.type_avoir}</div>
@@ -794,7 +794,7 @@ export default function Avoirs() {
                                     <div>
                                         <div className="font-bold">Lot: {lot.lot || 'N/A'}</div>
                                         <div className="text-sm text-gray-600">
-                                            Exp: {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString() : 'N/A'}
+                                            Exp: {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : 'N/A'}
                                         </div>
                                         <div className="text-xs text-gray-500">
                                             Fournisseur: {lot.fournisseur_nom || 'N/A'}

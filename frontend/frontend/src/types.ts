@@ -51,6 +51,9 @@ export interface ProduitModel {
   // Ordonnancier
   requires_prescription?: boolean
   surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
+  // Dates dernière transaction
+  dernier_achat?: string | null
+  dernier_vente?: string | null
 }
 
 export interface ProduitForm {

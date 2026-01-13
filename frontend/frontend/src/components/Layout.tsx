@@ -19,7 +19,7 @@ function LayoutContent() {
       
       
       <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden overflow-y-auto h-screen">
-        <div className="max-w-full">
+        <div className="max-w-full h-full">
           <Outlet />
         </div>
       </main>

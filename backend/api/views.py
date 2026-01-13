@@ -285,6 +285,75 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
             
         return Response(history)
 
+    @action(detail=True, methods=['get'])
+    def monthly_stats(self, request, pk=None):
+        """
+        Retourne les statistiques mensuelles d'un produit:
+        - Quantité vendue (Qté V) par mois
+        - Quantité commandée (Qté C) par mois
+        - Nombre de commandes (Nb C) par mois
+        """
+        produit = self.get_object()
+        
+        # Agrégation des ventes (factures validées uniquement)
+        from django.db.models.functions import TruncMonth, ExtractYear, ExtractMonth
+        
+        ventes = FactureProduit.objects.filter(
+            produit=produit,
+            facture__status__in=['VAL', 'PAY']
+        ).annotate(
+            mois=TruncMonth('facture__date')
+        ).values('mois').annotate(
+            qte_v=Sum('quantity')
+        ).order_by('-mois')
+        
+        # Agrégation des commandes (clôturées uniquement)
+        commandes = CommandeProduit.objects.filter(
+            produit=produit,
+            commande__status='CLOT'
+        ).annotate(
+            mois=TruncMonth('commande__date')
+        ).values('mois').annotate(
+            qte_c=Sum('quantity'),
+            nb_c=Count('id', distinct=True)  # Distinct pour éviter les doublons
+        ).order_by('-mois')
+        
+        # Fusionner les données par mois
+        stats_by_month = {}
+        
+        for v in ventes:
+            if v['mois']:
+                key = v['mois'].strftime('%Y-%m')
+                if key not in stats_by_month:
+                    stats_by_month[key] = {'year': v['mois'].year, 'month': v['mois'].month, 'qte_v': 0, 'qte_c': 0, 'nb_c': 0}
+                stats_by_month[key]['qte_v'] = v['qte_v'] or 0
+        
+        for c in commandes:
+            if c['mois']:
+                key = c['mois'].strftime('%Y-%m')
+                if key not in stats_by_month:
+                    stats_by_month[key] = {'year': c['mois'].year, 'month': c['mois'].month, 'qte_v': 0, 'qte_c': 0, 'nb_c': 0}
+                stats_by_month[key]['qte_c'] = c['qte_c'] or 0
+                stats_by_month[key]['nb_c'] = c['nb_c'] or 0
+        
+        # Trier par date décroissante et formater
+        mois_noms = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 
+                     'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+        
+        result = []
+        for key in sorted(stats_by_month.keys(), reverse=True):
+            data = stats_by_month[key]
+            result.append({
+                'year': data['year'],
+                'month': data['month'],
+                'month_name': mois_noms[data['month']],
+                'qte_v': data['qte_v'],
+                'qte_c': data['qte_c'],
+                'nb_c': data['nb_c']
+            })
+        
+        return Response(result)
+
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         """
@@ -986,6 +1055,10 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         # 2.3 Mettre à jour le statut et la date de clôture de la commande
         commande.status = Commande.Status.CLOTUREE
         commande.save(update_fields=['status', 'date_cloture'])
+        
+        # 2.4 Mettre à jour la date de dernier achat pour tous les produits
+        today = date.today()
+        Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
 
         return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
 
@@ -1398,6 +1471,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     list_serializer_class = FactureListSerializer
     detail_serializer_class = FactureDetailSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def valider(self, request, pk=None):
@@ -1616,6 +1692,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         if not facture.numero_facture:
             facture.numero_facture = f"FAC-{facture.id:06d}"
         facture.save(update_fields=['status', 'numero_facture'])
+        
+        # Mettre à jour la date de dernière vente pour tous les produits
+        today = date.today()
+        Produit.objects.filter(id__in=product_ids).update(dernier_vente=today)
 
         # CRITICAL: Recalculer les totaux (y compris part_client) après avoir ajouté les produits
         # Ceci est essentiel pour les clients professionnels avec tiers payant

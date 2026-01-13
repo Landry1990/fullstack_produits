@@ -403,7 +403,7 @@ export default function InventaireComponent() {
                                   </tr>
                               ) : inventaires.map(inv => (
                                   <tr key={inv.id} className="hover:bg-base-200 cursor-pointer" onClick={() => handleEdit(inv)}>
-                                      <td>{new Date(inv.date).toLocaleDateString()}</td>
+                                      <td>{new Date(inv.date).toLocaleDateString('fr-FR')}</td>
                                       <td>{inv.description || '-'}</td>
                                       <td className="text-right font-mono">{(inv.total_valeur_theorique || 0).toLocaleString()} F</td>
                                       <td className="text-right font-bold">{(inv.total_valeur_physique || 0).toLocaleString()} F</td>

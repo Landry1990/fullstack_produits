@@ -6,6 +6,16 @@ import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot, StockAdj
 import { STOCK_ADJUSTMENT_REASONS } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
 
+// Type pour les statistiques mensuelles
+type MonthlyStat = {
+  year: number
+  month: number
+  month_name: string
+  qte_v: number
+  qte_c: number
+  nb_c: number
+}
+
 export default function Produit() {
   // Hook de confirmation
   const confirm = useConfirm()
@@ -26,7 +36,7 @@ export default function Produit() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false)
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
-  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'ajustements'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'ajustements' | 'stats'>('general')
   const [isImporting, setIsImporting] = useState(false)
   
   // Formulaire d'édition
@@ -56,6 +66,7 @@ export default function Produit() {
   const [achats, setAchats] = useState<AchatProduit[]>([])
   const [lots, setLots] = useState<StockLot[]>([])
   const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
+  const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([])
   
   // Formulaire d'ajustement de stock
   const [adjustmentForm, setAdjustmentForm] = useState({
@@ -210,6 +221,14 @@ export default function Produit() {
         setAdjustments(adjustmentsData)
       } catch {
         setAdjustments([])
+      }
+
+      // Charger les statistiques mensuelles
+      try {
+        const response = await axios.get<MonthlyStat[]>(`${produitsEndpoint}${produit.id}/monthly_stats/`)
+        setMonthlyStats(response.data)
+      } catch {
+        setMonthlyStats([])
       }
     } catch (err) {
       toast.error('Erreur lors du chargement des détails du produit')
@@ -877,6 +896,13 @@ export default function Produit() {
                 >
                   📝 Ajustements
                 </a>
+                <a
+                  role="tab"
+                  className={`tab ${activeTab === 'stats' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('stats')}
+                >
+                  📊 Stats Mensuelles
+                </a>
               </div>
 
               {/* Contenu des tabs */}
@@ -1083,6 +1109,57 @@ export default function Produit() {
                       </tbody>
                     </table>
                   )}
+                </div>
+              )}
+
+              {activeTab === 'stats' && (
+                <div className="overflow-x-auto max-h-96">
+                  {monthlyStats.length === 0 ? (
+                    <p className="text-center text-base-content/50 py-4">Aucune statistique disponible</p>
+                  ) : (
+                    <table className="table table-xs">
+                      <thead className="bg-base-200 sticky top-0">
+                        <tr>
+                          <th className="text-xs uppercase"></th>
+                          <th className="text-xs uppercase">Mois</th>
+                          <th className="text-xs uppercase text-right text-primary">Qté V</th>
+                          <th className="text-xs uppercase text-right text-warning">Qté C</th>
+                          <th className="text-xs uppercase text-right text-info">Nb C</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          let currentYear: number | null = null;
+                          return monthlyStats.map((stat, index) => {
+                            const showYear = stat.year !== currentYear;
+                            currentYear = stat.year;
+                            return (
+                              <tr key={index} className={showYear ? 'border-t-2 border-base-300' : ''}>
+                                <td className="font-bold text-base-content/60">
+                                  {showYear ? stat.year : ''}
+                                </td>
+                                <td>{stat.month_name}</td>
+                                <td className="text-right font-mono font-bold text-primary">
+                                  {stat.qte_v}
+                                </td>
+                                <td className="text-right font-mono text-warning">
+                                  {stat.qte_c}
+                                </td>
+                                <td className="text-right font-mono text-info">
+                                  {stat.nb_c}
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
+                      </tbody>
+                    </table>
+                  )}
+                  <div className="mt-3 text-xs text-base-content/50 flex justify-between">
+                    <span>Qté V = Quantité Vendue</span>
+                    <span>Qté C = Quantité Commandée</span>
+                    <span>Nb C = Nombre de Commandes</span>
+                  </div>
                 </div>
               )}
             </div>

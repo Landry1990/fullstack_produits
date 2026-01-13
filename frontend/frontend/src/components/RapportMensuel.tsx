@@ -454,7 +454,7 @@ export default function RapportMensuel() {
                       <tbody>
                         {rapport.mouvements_caisse.liste.map((mvt) => (
                           <tr key={mvt.id} className="hover">
-                            <td>{new Date(mvt.date).toLocaleDateString()}</td>
+                            <td>{new Date(mvt.date).toLocaleDateString('fr-FR')}</td>
                             <td>
                               <span className={`badge badge-sm ${mvt.type === 'ENTREE' ? 'badge-success badge-outline' : 'badge-error badge-outline'}`}>
                                 {mvt.type}

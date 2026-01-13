@@ -292,6 +292,18 @@ class Produit(models.Model):
         default='NONE',
         help_text="Catégorie de surveillance du médicament"
     )
+    
+    # Dates de dernière transaction
+    dernier_achat = models.DateField(
+        blank=True, 
+        null=True,
+        help_text="Date du dernier achat (réception de commande)"
+    )
+    dernier_vente = models.DateField(
+        blank=True, 
+        null=True,
+        help_text="Date de la dernière vente"
+    )
 
     def save(self, *args, **kwargs):
         # Calcul automatique des marges
@@ -373,6 +385,9 @@ class Facture(models.Model):
     montant_fidelite = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     part_client = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Part à payer par le client (Tiers Payant)")
+    
+    # Suivi de l'opérateur (Vendeur)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='factures_created', help_text="Utilisateur qui a créé la facture")
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
