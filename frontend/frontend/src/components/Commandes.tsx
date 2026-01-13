@@ -22,6 +22,11 @@ export default function Commandes() {
   const [rayons, setRayons] = useState<Rayon[]>([])
   const [newCommandeFournisseurId, setNewCommandeFournisseurId] = useState<string>('')
 
+  // Pagination State
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
 
   
   // State for creating commande (single modal)
@@ -102,41 +107,65 @@ export default function Commandes() {
   const filteredProduits = produitsList
 
 
+  // Fetch reference data (Fournisseurs, Rayons) only once
   useEffect(() => {
     const controller = new AbortController()
-    async function fetchInitialData() {
-      setLoading(true)
-      setError(null)
+    async function fetchReferenceData() {
       try {
-        // On récupère les commandes, fournisseurs et rayons (pas les produits - géré par le hook)
-        const [commandesResponse, fournisseursResponse, rayonsResponse] = await Promise.all([
-          axios.get(commandesEndpoint, { signal: controller.signal }),
+        const [fournisseursResponse, rayonsResponse] = await Promise.all([
           axios.get(fournisseursEndpoint, { signal: controller.signal }),
           axios.get(rayonsEndpoint, { signal: controller.signal }),
         ])
-        // Handle paginated responses
-        const commandesData: any = commandesResponse.data;
         const fournisseursData: any = fournisseursResponse.data;
         const rayonsData: any = rayonsResponse.data;
-        setCommandes(Array.isArray(commandesData) ? commandesData : (commandesData.results || []))
         setFournisseurs(Array.isArray(fournisseursData) ? fournisseursData : (fournisseursData.results || []))
         setRayons(Array.isArray(rayonsData) ? rayonsData : (rayonsData.results || []))
       } catch (err: unknown) {
         if (axios.isCancel(err)) return
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau')
-        } else {
-          setError('Erreur inconnue lors du chargement des commandes')
-        }
-      } finally {
-        setLoading(false)
+        console.error('Erreur chargement données référence:', err)
       }
     }
 
-    fetchInitialData()
-
+    fetchReferenceData()
     return () => controller.abort()
-  }, [commandesEndpoint, fournisseursEndpoint, rayonsEndpoint]) // Removed produitsEndpoint
+  }, [fournisseursEndpoint, rayonsEndpoint])
+
+  // Fetch Commandes with pagination
+  const fetchCommandes = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams()
+      params.append('page', page.toString())
+      
+      const response = await axios.get(commandesEndpoint, { params })
+      const data = response.data
+
+      if (data.results) {
+        setCommandes(data.results)
+        setTotalCount(data.count)
+        setTotalPages(Math.ceil(data.count / 50)) // Assuming page size is 50
+      } else {
+        // Fallback for non-paginated response
+        const results = Array.isArray(data) ? data : []
+        setCommandes(results)
+        setTotalCount(results.length)
+        setTotalPages(1)
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau')
+      } else {
+        setError('Erreur inconnue lors du chargement des commandes')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [commandesEndpoint, page])
+
+  useEffect(() => {
+    fetchCommandes()
+  }, [fetchCommandes])
 
   useEffect(() => {
     if (selectedCommande && !commandes.some(c => c.id === selectedCommande.id)) {
@@ -752,12 +781,9 @@ export default function Commandes() {
       }
 
       // Rafraîchir
-      const { data: updatedCommandesData } = await axios.get(commandesEndpoint)
-      const updatedCommandes: any = updatedCommandesData;
-      const updatedCommandesArray = Array.isArray(updatedCommandes) ? updatedCommandes : (updatedCommandes.results || []);
-      setCommandes(updatedCommandesArray)
+      await fetchCommandes()
       
-      setCommandes(updatedCommandesArray)
+      // Sélectionner la commande (mise à jour ou nouvelle)
       
       // Sélectionner la commande (mise à jour ou nouvelle)
       // On doit refetcher le détail complet car la liste n'inclut pas les produits (serializer optimisé)
@@ -1135,6 +1161,36 @@ export default function Commandes() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination & Footer info */}
+            <div className="p-2 bg-white border-t rounded-b-lg shadow text-xs text-center text-base-content/50 flex flex-col items-center gap-2 mt-[-8px] mb-4">
+                <div>
+                  {commandes.length} commande{commandes.length > 1 ? 's' : ''} affichée{commandes.length > 1 ? 's' : ''} sur {totalCount} total
+                </div>
+                
+                {!loading && totalCount > 0 && (
+                    <div className="flex justify-center items-center gap-2">
+                    <button 
+                      className="btn btn-xs btn-outline" 
+                      disabled={page === 1} 
+                      onClick={() => setPage(page - 1)}
+                    >
+                      ← Précédent
+                    </button>
+                    <div className="px-2 py-1 bg-white rounded border border-base-200">
+                      <span className="font-semibold">Page {page}</span>
+                      {totalPages > 1 && <span className="text-gray-500"> / {totalPages}</span>}
+                    </div>
+                    <button 
+                      className="btn btn-xs btn-outline" 
+                      disabled={page >= totalPages} 
+                      onClick={() => setPage(page + 1)}
+                    >
+                      Suivant →
+                    </button>
+                  </div>
+                )}
+            </div>
         </div>
       )}
 
@@ -1414,7 +1470,7 @@ export default function Commandes() {
                         <li><a onClick={() => handleCsvExport('UBIPHARM')}>Ubipharm (CIP1)</a></li>
                         <li><a onClick={() => handleCsvExport('LABOREX')}>Laborex (CIP2)</a></li>
                       </ul>
-                    </div>
+      </div>
 
                     <input 
                         type="file" 

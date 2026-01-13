@@ -59,9 +59,22 @@ input[type="email"],
 input[type="tel"],
 input[type="search"],
 input[type="url"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="datetime-local"],
 textarea,
 select {
   text-transform: uppercase;
+}
+
+/* Reduce default input/select height for more compact UI */
+.input, .select, input, select {
+  height: 2.5rem !important;
+  min-height: 2.5rem !important;
+  font-size: 0.875rem !important;
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
 }
 
 /* Custom scrollbar for a cleaner look */

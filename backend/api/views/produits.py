@@ -230,11 +230,25 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
     @action(detail=False, methods=['get'])
     def stock_alerts(self, request):
         """
-        Retourne les produits dont le stock est inférieur ou égal au stock minimum.
+        Retourne les produits en alerte stock.
+        Critères: Stock < Rotation Moyenne OU Stock <= Stock Minimum
         """
-        produits = Produit.objects.filter(stock__lte=F('stock_minimum')).order_by('name')
-        serializer = self.get_serializer(produits, many=True)
-        return Response(serializer.data)
+        produits = Produit.objects.filter(
+            Q(stock__lt=F('rotation_moyenne')) |
+            Q(stock__lte=F('stock_minimum'))
+        ).order_by('name').values('id', 'name', 'stock', 'rotation_moyenne', 'stock_minimum')
+        
+        # Format response with clean field names
+        result = [
+            {
+                'nom_produit': p['name'],
+                'stock': p['stock'],
+                'rotation': round(float(p['rotation_moyenne']), 1),
+                'stock_min': p['stock_minimum']
+            }
+            for p in produits
+        ]
+        return Response(result)
 
     @action(detail=False, methods=['post'])
     def recalculate_rotation(self, request):

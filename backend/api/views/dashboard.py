@@ -54,7 +54,10 @@ class DashboardViewSet(viewsets.ViewSet):
             sales_change = round(((sales_today - sales_yesterday) / sales_yesterday) * 100, 1)
         
         # 3. Low stock count
-        stock_critique = Produit.objects.filter(stock__lte=F('stock_minimum')).count()
+        stock_critique = Produit.objects.filter(
+            Q(stock__lt=F('rotation_moyenne')) |
+            Q(stock__lte=F('stock_minimum'))
+        ).count()
         
         # 4. Receivables (Créances Clients) - Total unpaid amounts on validated invoices
         receivables_data = Facture.objects.filter(
