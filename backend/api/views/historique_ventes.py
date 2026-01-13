@@ -5,7 +5,7 @@ from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncDate
 from datetime import datetime
 from decimal import Decimal
-from .models import Facture, Caisse
+from ..models import Facture, Caisse
 
 class HistoriqueVentesViewSet(viewsets.ViewSet):
     """API endpoint for daily sales history."""

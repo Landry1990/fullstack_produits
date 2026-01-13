@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Commande, CommandeProduit
+from ..models import Commande, CommandeProduit
 from django.db.models import Sum, Count, F, DecimalField, Value
 from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone

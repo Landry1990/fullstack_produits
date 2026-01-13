@@ -7,8 +7,6 @@ from api.views import (
     ClientViewSet, CommandeViewSet, CommandeProduitViewSet,
     FactureViewSet, FactureProduitViewSet, DashboardViewSet,
     UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
-    FactureViewSet, FactureProduitViewSet, DashboardViewSet,
-    UserViewSet, CustomAuthToken, CaisseViewSet, AyantDroitViewSet,
     CreanceViewSet, InventaireViewSet, LigneInventaireViewSet,
     AvoirViewSet, LigneAvoirViewSet, StatistiquesViewSet,
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
@@ -16,12 +14,9 @@ from api.views import (
     CategoriesListView, CategoriesDetailView, AuditLogViewSet,
     generer_suggestions_commande, PromisViewSet, MouvementCaisseViewSet,
     StockAnalysisUnsoldView, StockAnalysisOverstockView, LoyaltySettingViewSet,
-    StockAdjustmentViewSet, ClotureCaisseViewSet, HistoriqueVentesViewSet
+    StockAdjustmentViewSet, ClotureCaisseViewSet, HistoriqueVentesViewSet,
+    HistoriqueAchatsViewSet, RapportViewSet, ProduitImportViewSet, OrdonnancierViewSet
 )
-from api.historique_achats_view import HistoriqueAchatsViewSet
-from api.rapport_view import RapportViewSet
-from api.produit_import_view import ProduitImportViewSet
-from api.ordonnancier_view import OrdonnancierViewSet
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)

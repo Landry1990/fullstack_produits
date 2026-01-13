@@ -11,8 +11,8 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import UserProfile, Client
-from ..serializers import UserSerializer, UserProfileSerializer
+from ..models import Profile as UserProfile, Client
+from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer
 
 class CustomAuthToken(ObtainAuthToken):
     """
@@ -25,12 +25,31 @@ class CustomAuthToken(ObtainAuthToken):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         
-        # Determine user role
+        # Determine user role and profile data
         role = 'vendeur'
+        allowed_menus = []
+        can_do_returns = False
+        can_sell_negative_stock = False
+        can_cash_out = True
+        
         if user.is_superuser:
             role = 'admin'
-        elif hasattr(user, 'profile'):
+            # Superuser gets all menus
+            allowed_menus = [
+                'dashboard', 'facturation', 'produits', 'commandes', 
+                'clients', 'fournisseurs', 'inventaire', 'rapports',
+                'parametres', 'utilisateurs', 'avoirs', 'promis',
+                'ordonnancier', 'statistiques', 'audit', 'stock-analysis'
+            ]
+            can_do_returns = True
+            can_sell_negative_stock = True
+            can_cash_out = True
+        elif hasattr(user, 'profile') and user.profile:
             role = user.profile.role
+            allowed_menus = user.profile.allowed_menus or []
+            can_do_returns = user.profile.can_do_returns
+            can_sell_negative_stock = user.profile.can_sell_negative_stock
+            can_cash_out = user.profile.can_cash_out
             
         return Response({
             'token': token.key,
@@ -38,6 +57,11 @@ class CustomAuthToken(ObtainAuthToken):
             'username': user.username,
             'email': user.email,
             'role': role,
+            'is_superuser': user.is_superuser,
+            'allowed_menus': allowed_menus,
+            'can_do_returns': can_do_returns,
+            'can_sell_negative_stock': can_sell_negative_stock,
+            'can_cash_out': can_cash_out,
             'permissions': {
                 'can_delete_invoice': user.is_superuser,
                 'can_view_stats': user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'manager'),

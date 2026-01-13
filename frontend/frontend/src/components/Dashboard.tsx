@@ -66,7 +66,7 @@ export default function Dashboard() {
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
-    if (!revenueChart) return [];
+    if (!revenueChart || !revenueChart.labels || !revenueChart.data) return [];
     return revenueChart.labels.map((label, index) => ({
       jour: label,
       montant: revenueChart.data[index]
@@ -174,17 +174,17 @@ export default function Dashboard() {
         {stats && [
           { 
             title: "Chiffre d'affaires", 
-            value: `${Math.round(stats.revenue.value).toLocaleString('fr-FR')} F`, 
-            change: `${stats.revenue.change > 0 ? '+' : ''}${stats.revenue.change}%`, 
+            value: `${Math.round(stats.revenue?.value || 0).toLocaleString('fr-FR')} F`, 
+            change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
             icon: "💰", 
             color: "bg-emerald-100 text-emerald-700", 
-            isPositive: stats.revenue.change >= 0,
-            details: `Dont ${Math.round(stats.discount.value).toLocaleString('fr-FR')} F de remises`
+            isPositive: (stats.revenue?.change || 0) >= 0,
+            details: `Dont ${Math.round(stats.discount?.value || 0).toLocaleString('fr-FR')} F de remises`
           },
           { title: "Créances Clients", value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
 
           { title: "Valeur Stock", value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
-          { title: "Alertes Stock", value: stats.low_stock.value, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false },
+          { title: "Alertes Stock", value: stats.low_stock?.value || 0, change: "Produits", icon: "warning", color: "bg-red-100 text-red-700", isPositive: false },
         ].map((stat: any, index) => {
           const content = (
             <div className={`card-body p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
@@ -426,8 +426,8 @@ export default function Dashboard() {
             <div className="card-body p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-lg font-bold text-base-content">Alertes Stock</h2>
-                {stats && stats.low_stock.value > 0 && (
-                  <span className="badge badge-error text-white badge-sm">{stats.low_stock.value}</span>
+                {stats && (stats.low_stock?.value || 0) > 0 && (
+                  <span className="badge badge-error text-white badge-sm">{stats.low_stock?.value || 0}</span>
                 )}
               </div>
               <div className="space-y-3">
