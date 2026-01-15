@@ -15,7 +15,8 @@ from api.views import (
     generer_suggestions_commande, PromisViewSet, MouvementCaisseViewSet,
     StockAnalysisUnsoldView, StockAnalysisOverstockView, LoyaltySettingViewSet,
     StockAdjustmentViewSet, ClotureCaisseViewSet, HistoriqueVentesViewSet,
-    HistoriqueAchatsViewSet, RapportViewSet, ProduitImportViewSet, OrdonnancierViewSet
+    HistoriqueAchatsViewSet, RapportViewSet, ProduitImportViewSet, OrdonnancierViewSet,
+    verify_password
 )
 
 router = DefaultRouter()
@@ -61,6 +62,7 @@ urlpatterns = [
     path('api/categories/<int:pk>/', CategoriesDetailView.as_view()),
     path('api/invoice-settings/', InvoiceConfigurationView.as_view()),
     path('api/generer-suggestions/', generer_suggestions_commande),
+    path('api/verify-password/', verify_password, name='verify-password'),
     path('api/test-auth/', lambda request: JsonResponse({"message": "OK - Pas d'auth requise!"})),
     path('api-token-auth/', CustomAuthToken.as_view()),
     

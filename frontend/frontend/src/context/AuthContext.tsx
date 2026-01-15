@@ -1,17 +1,6 @@
 import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
-
-// Définition de la structure de l'objet User
-// Cela permet de typer les données de l'utilisateur connecté
-interface User {
-  username: string;
-  token: string;      // Le token d'authentification (ex: Token JWT ou DRF)
-  is_superuser: boolean; // Indique si l'utilisateur est administrateur
-  allowed_menus: string[]; // Liste des menus auxquels l'utilisateur a accès
-  can_do_returns?: boolean;
-  can_sell_negative_stock?: boolean;
-  can_cash_out?: boolean; // Autorisé à encaisser dans la caisse centralisée
-}
+import type { User } from '../types';
 
 // Définition du type pour le contexte d'authentification
 // Ce sont les données et fonctions qui seront accessibles partout dans l'application via useAuth()
@@ -44,6 +33,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const can_do_returns = sessionStorage.getItem('can_do_returns') === 'true';
     const can_sell_negative_stock = sessionStorage.getItem('can_sell_negative_stock') === 'true';
     const can_cash_out = sessionStorage.getItem('can_cash_out') === 'true';
+    const can_delete_product = sessionStorage.getItem('can_delete_product') === 'true';
+    const can_adjust_stock = sessionStorage.getItem('can_adjust_stock') === 'true';
+    const can_delete_fournisseur = sessionStorage.getItem('can_delete_fournisseur') === 'true';
+    const can_delete_commande = sessionStorage.getItem('can_delete_commande') === 'true';
+    const can_close_commande = sessionStorage.getItem('can_close_commande') === 'true';
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
@@ -54,7 +48,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         allowed_menus,
         can_do_returns,
         can_sell_negative_stock,
-        can_cash_out
+        can_cash_out,
+        can_delete_product,
+        can_adjust_stock,
+        can_delete_fournisseur,
+        can_delete_commande,
+        can_close_commande
       });
       // On configure axios pour inclure ce token dans toutes les futures requêtes HTTP
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
@@ -66,19 +65,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Fonction de connexion appelée après un succès login (ex: depuis Login.tsx)
   const login = (userData: User) => {
     // 1. On sauvegarde tout dans le sessionStorage (effacé à la fermeture du navigateur)
-    sessionStorage.setItem('authToken', userData.token);
+    sessionStorage.setItem('authToken', userData.token || '');
     sessionStorage.setItem('username', userData.username);
     sessionStorage.setItem('is_superuser', String(userData.is_superuser));
     sessionStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
     sessionStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
     sessionStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
     sessionStorage.setItem('can_cash_out', String(userData.can_cash_out ?? true));
+    sessionStorage.setItem('can_delete_product', String(userData.can_delete_product || false));
+    sessionStorage.setItem('can_adjust_stock', String(userData.can_adjust_stock || false));
+    sessionStorage.setItem('can_delete_fournisseur', String(userData.can_delete_fournisseur || false));
+    sessionStorage.setItem('can_delete_commande', String(userData.can_delete_commande || false));
+    sessionStorage.setItem('can_close_commande', String(userData.can_close_commande || false));
     
     // 2. On met à jour l'état de l'application
     setUser(userData);
     
     // 3. On configure le header Authorization pour les requêtes API
-    axios.defaults.headers.common['Authorization'] = `Token ${userData.token}`;
+    axios.defaults.headers.common['Authorization'] = `Token ${userData.token || ''}`;
   };
 
   // Fonction de déconnexion
@@ -91,6 +95,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('can_do_returns');
     sessionStorage.removeItem('can_sell_negative_stock');
     sessionStorage.removeItem('can_cash_out');
+    sessionStorage.removeItem('can_delete_product');
+    sessionStorage.removeItem('can_adjust_stock');
+    sessionStorage.removeItem('can_delete_fournisseur');
+    sessionStorage.removeItem('can_delete_commande');
+    sessionStorage.removeItem('can_close_commande');
     
     // 2. On remet l'utilisateur à null
     setUser(null);

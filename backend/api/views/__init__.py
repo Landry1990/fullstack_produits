@@ -17,6 +17,7 @@ from .stocks import (
     StockAnalysisUnsoldView, StockAnalysisOverstockView
 )
 from .users import CustomAuthToken, UserViewSet
+from .auth import verify_password
 from .settings import LoyaltySettingViewSet, InvoiceConfigurationView
 from .dashboard import DashboardViewSet, StatistiquesViewSet
 from .audit import AuditLogViewSet
@@ -26,6 +27,7 @@ from .produit_import import ProduitImportViewSet
 
 # Import from parent api module (not yet migrated to views package)
 from ..rapport_view import RapportViewSet
+from .rapports import RapportViewSet
 from ..ordonnancier_view import OrdonnancierViewSet
 
 # Expose all for import from api.views
@@ -40,7 +42,7 @@ __all__ = [
     'StockLotViewSet', 'InventaireViewSet', 'LigneInventaireViewSet', 'StockAdjustmentViewSet',
     'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
     'StockAnalysisUnsoldView', 'StockAnalysisOverstockView',
-    'CustomAuthToken', 'UserViewSet',
+    'CustomAuthToken', 'UserViewSet', 'verify_password',
     'LoyaltySettingViewSet', 'InvoiceConfigurationView',
     'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',

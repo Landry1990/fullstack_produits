@@ -35,8 +35,8 @@ class CachedSearchMixin:
             if key not in ['search', 'page', 'page_size', 'ordering']:
                 filters[key] = value
         
-        # Si c'est une recherche, utiliser le cache de recherche
-        if search_query:
+        # Si c'est une recherche ou s'il y a des filtres, utiliser le cache de recherche
+        if search_query or filters:
             cached_results = SearchCache.get_search_results(search_query, filters)
             if cached_results is not None:
                 # Ajouter un header pour indiquer que c'est du cache

@@ -1,23 +1,47 @@
+
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm'
+import { useAuth } from '../context/AuthContext';
 import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
 import ProduitFormModal from './ProduitFormModal'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 import SimplePrintLabelsModal from './SimplePrintLabelsModal'
 import SuggestionCommandeModal from './SuggestionCommandeModal'
+import PasswordConfirmModal from './PasswordConfirmModal'
+import CommandeList from './Commandes/CommandeList'
+import CommandeForm from './Commandes/CommandeForm'
+import TransferCommandeModal from './Commandes/TransferCommandeModal'
+import MergeCommandesModal from './Commandes/MergeCommandesModal'
+import { useCommandeActions } from '../hooks/useCommandeActions';
+import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 
+
+
+// Helper functions for Date format MM/YY
+// parseMMYYToDate removed as it is now in useCommandeActions
+
+function formatDateToMMYY(isoDate: string | null | undefined): string {
+    if (!isoDate) return '';
+    const parts = isoDate.split('-');
+    if (parts.length === 3) {
+        return `${parts[1]}/${parts[0].slice(-2)}`;
+    }
+    return '';
+}
 
 export default function Commandes() {
   const confirm = useConfirm()
+  const { user } = useAuth();
   const [commandes, setCommandes] = useState<Commande[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
 
 
+  const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
   const [rayons, setRayons] = useState<Rayon[]>([])
   const [newCommandeFournisseurId, setNewCommandeFournisseurId] = useState<string>('')
@@ -31,6 +55,8 @@ export default function Commandes() {
   
   // State for creating commande (single modal)
   const [numeroFacture, setNumeroFacture] = useState('');
+
+
   const [commandeProduits, setCommandeProduits] = useState<CommandeProduit[]>([]);
   
 
@@ -42,9 +68,12 @@ export default function Commandes() {
     setSearchQuery: setSearchProduitQuery
   } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
   
-  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  
+  // Initialize Keyboard Navigation Hook
+  const { searchInputRef, fournisseurSelectRef } = useKeyboardNavigation({ viewMode });
+
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref pour l'input file
-  const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
 
 
   // States for table navigation and selection
@@ -66,12 +95,17 @@ export default function Commandes() {
 
 
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
+
 
   // Etats pour le modal de suggestion de commande
   const [isSuggestionModalOpen, setIsSuggestionModalOpen] = useState(false);
 
+  // Etats pour le modal de transfert vers autre fournisseur (Refactored)
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
+  // Etats pour la sélection et fusion de commandes
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(new Set());
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
 
 
 
@@ -103,7 +137,7 @@ export default function Commandes() {
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
     : '/api/produits/'
 
-  // Products are already filtered by the hook
+
   const filteredProduits = produitsList
 
 
@@ -163,6 +197,28 @@ export default function Commandes() {
     }
   }, [commandesEndpoint, page])
 
+  // Initialize Actions Hook (After fetchCommandes definition)
+  const {
+      handleSaveCommande,
+      handleDeleteCommande,
+      handleCloturerCommande,
+      handleMettreEnAttente,
+      handleAnnulerReception,
+      handleImprimerReception,
+      isPasswordModalOpen,
+      setIsPasswordModalOpen,
+      passwordModalConfig,
+      handlePasswordConfirmed
+  } = useCommandeActions({
+      apiBaseUrl,
+      commandesEndpoint,
+      fetchCommandes,
+      setSelectedCommande,
+      setViewMode,
+      confirm,
+      user
+  });
+
   useEffect(() => {
     fetchCommandes()
   }, [fetchCommandes])
@@ -172,6 +228,42 @@ export default function Commandes() {
       setSelectedCommande(null)
     }
   }, [commandes, selectedCommande])
+
+  // Wrappers for Hook Actions to match UI Events
+  const onSave = (e: FormEvent) => {
+      e.preventDefault();
+      if (commandeProduits.length === 0) {
+          setError('Veuillez ajouter au moins un produit à la commande.');
+          return;
+      }
+      const cleanCommande: Partial<Commande> = {
+           fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
+           numero_facture: numeroFacture,
+      };
+      // viewMode is typed as string in state, cast to literal
+      const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
+      handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande);
+  };
+
+  const onDelete = () => {
+      if (selectedCommande) handleDeleteCommande(selectedCommande);
+  };
+
+  const onCloture = () => {
+      if (selectedCommande) handleCloturerCommande(selectedCommande);
+  };
+
+  const onMettreEnAttente = () => {
+      if (selectedCommande) handleMettreEnAttente(selectedCommande);
+  }
+
+  const onAnnulerReception = () => {
+      if (selectedCommande) handleAnnulerReception(selectedCommande);
+  }
+
+  const onImprimer = () => {
+     if (selectedCommande) handleImprimerReception(selectedCommande);
+  }
 
 
 
@@ -190,35 +282,12 @@ export default function Commandes() {
     }
   }, [commandeProduits, viewMode]);
 
-  // Raccourcis clavier globaux
+  // Raccourcis clavier globaux (Delete, Escape, Ctrl+A)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       // Ignorer si on est dans un input/textarea ou si modal n'est pas ouvert
       const target = e.target as HTMLElement;
       const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA';
-      
-      if (viewMode !== 'CREATE' && viewMode !== 'EDIT') return;
-      
-      // F2 : Focus recherche produit
-      if (e.key === 'F2') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-        return;
-      }
-      
-      // F4 : Focus fournisseur
-      if (e.key === 'F4') {
-        e.preventDefault();
-        fournisseurSelectRef.current?.focus();
-        return;
-      }
-      
-      // Ctrl+A : Sélectionner toutes les lignes
-      if (e.ctrlKey && e.key === 'a') {
-        e.preventDefault();
-        setSelectedRows(new Set(commandeProduits.map((_, i) => i)));
-        return;
-      }
       
       // Delete : Supprimer lignes sélectionnées
       if (e.key === 'Delete' && !isInput && selectedRows.size > 0) {
@@ -239,7 +308,6 @@ export default function Commandes() {
     };
 
     window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [viewMode, commandeProduits, selectedRows])
 
@@ -495,6 +563,93 @@ export default function Commandes() {
     setSelectedRows(new Set());
   }
 
+  // Ouvrir le modal de transfert
+  function openTransferModal() {
+    if (selectedRows.size === 0) {
+      toast.error('Veuillez sélectionner au moins un produit à transférer.');
+      return;
+    }
+    setIsTransferModalOpen(true);
+  }
+
+  // Callback après succès du transfert
+  function handleTransferSuccess(_transferredCount: number, _supplierName: string, _newCommandeId: number) {
+      // Retirer les produits transférés de la liste actuelle
+      setCommandeProduits(prev => prev.filter((_, idx) => !selectedRows.has(idx)));
+      setSelectedRows(new Set());
+      
+      // La notification est gérée par le modal
+      // toast.success(...) 
+      
+      // Rafraîchir la liste des commandes et fermer le modal
+      fetchCommandes();
+      setIsTransferModalOpen(false);
+  }
+
+  // ============== FUSION DE COMMANDES ==============
+
+  // Toggle la sélection d'une commande dans la liste
+  function toggleOrderSelection(orderId: number) {
+    setSelectedOrderIds(prev => {
+      const next = new Set(prev);
+      if (next.has(orderId)) {
+        next.delete(orderId);
+      } else {
+        next.add(orderId);
+      }
+      return next;
+    });
+  }
+
+  // Sélectionner/Désélectionner toutes les commandes filtrées
+  function toggleAllOrdersSelection() {
+    if (selectedOrderIds.size === sortedCommandes.length && sortedCommandes.length > 0) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(sortedCommandes.map(c => c.id)));
+    }
+  }
+
+  // Vérifier si la fusion est possible (même statut et au moins 2 sélectionnées)
+  function canMergeSelectedOrders(): { canMerge: boolean; reason?: string; status?: string } {
+    if (selectedOrderIds.size < 2) {
+      return { canMerge: false, reason: 'Sélectionnez au moins 2 commandes' };
+    }
+    
+    const selectedOrders = commandes.filter(c => selectedOrderIds.has(c.id));
+    const statuses = new Set(selectedOrders.map(c => c.status));
+    
+    if (statuses.size > 1) {
+      return { canMerge: false, reason: 'Les commandes doivent avoir le même statut' };
+    }
+    
+    const status = selectedOrders[0]?.status;
+    if (status === 'CLOT') {
+      return { canMerge: false, reason: 'Impossible de fusionner des commandes clôturées' };
+    }
+    
+    return { canMerge: true, status };
+  }
+
+  // Ouvrir le modal de fusion
+  function openMergeModal() {
+    const { canMerge, reason } = canMergeSelectedOrders();
+    if (!canMerge) {
+      toast.error(reason || 'Fusion impossible');
+      return;
+    }
+    setIsMergeModalOpen(true);
+  }
+
+  // Callback après succès de la fusion
+  function handleMergeSuccess(mergedCount: number, targetOrderId: number) {
+      setIsMergeModalOpen(false);
+      setSelectedOrderIds(new Set());
+      toast.success(`${mergedCount} commande(s) fusionnée(s) dans la commande #${targetOrderId}`);
+      fetchCommandes();
+  }
+
+
   // Fonction pour mettre à jour un champ dans une ligne
   function updateCommandeProduitField(
     index: number,
@@ -683,213 +838,11 @@ export default function Commandes() {
   }
 
 
-  async function handleSaveCommande(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    // Allow empty fournisseur for REASSORT_AUTO orders
-    // if (!newCommandeFournisseurId) {
-    //   setError('Veuillez sélectionner un fournisseur.')
-    //   return
-    // }
-    if (commandeProduits.length === 0) {
-      setError('Veuillez ajouter au moins un produit à la commande.')
-      return
-    }
-    
-    try {
-      let activeCommandeId: number;
-
-      if (viewMode === 'EDIT' && selectedCommande) {
-          // --- MODE MODIFICATION ---
-          activeCommandeId = selectedCommande.id;
-          
-          // 1. Mise à jour de l'en-tête
-          await axios.patch<Commande>(`${commandesEndpoint}${activeCommandeId}/`, {
-             fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : null,
-             numero_facture: numeroFacture,
-          });
-
-          // 2. Synchronisation des produits
-          const initialProducts = selectedCommande.produits;
-          const currentProducts = commandeProduits;
-          const commandeProduitsEndpointBase = apiBaseUrl
-             ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
-             : '/api/commande-produits/';
-
-          // A. Suppressions (Produits présents initialement mais absents de la liste actuelle)
-          // On compare par ID. Les nouveaux produits ont des ID temporels (grands) ou non trouvés.
-          const currentIds = new Set(currentProducts.map(p => p.id));
-          const toDelete = initialProducts.filter(initP => !currentIds.has(initP.id));
-          
-          for (const p of toDelete) {
-             await axios.delete(`${commandeProduitsEndpointBase}${p.id}/`);
-          }
-
-          // B. Ajouts et Modifications
-          for (const p of currentProducts) {
-             const payload = {
-                commande: activeCommandeId,
-                produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
-                quantity: parseInt(String(p.quantity || 1)),
-                unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
-                price: parseFloat(String(p.price || 0)).toFixed(2),
-                price_cost: parseFloat(String(p.price || 0)).toFixed(2), // Required field
-                selling_price: parseFloat(String(p.selling_price || 0)).toFixed(2),
-                tva: parseFloat(String(p.tva || 18)).toFixed(2),
-                marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
-                lot: p.lot || null,
-                date_expiration: p.date_expiration || null,
-             };
-
-             // Si l'ID existe dans les produits initiaux, c'est une modification
-             if (initialProducts.find(initP => initP.id === p.id)) {
-                 await axios.patch(`${commandeProduitsEndpointBase}${p.id}/`, payload);
-             } else {
-                 // Sinon c'est un ajout (POST)
-                 await axios.post(commandeProduitsEndpointBase, payload);
-             }
-          }
-
-      } else {
-          // --- MODE CRÉATION ---
-          const commandePayload = { 
-            fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : null,
-            numero_facture: numeroFacture,
-          }
-          const { data: createdCommande } = await axios.post<Commande>(commandesEndpoint, commandePayload)
-          activeCommandeId = createdCommande.id;
-          
-          const commandeProduitsEndpoint = apiBaseUrl
-            ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/` 
-            : '/api/commande-produits/'
-
-          for (const produit of commandeProduits) {
-            const produitPayload = {
-              commande: activeCommandeId,
-              produit: typeof produit.produit === 'object' ? produit.produit.id : produit.produit,
-              quantity: parseInt(String(produit.quantity || 1)),
-              unites_gratuites: parseInt(String(produit.unites_gratuites || 0)),
-              price: parseFloat(String(produit.price || 0)).toFixed(2),
-              price_cost: parseFloat(String(produit.price || 0)).toFixed(2), // Required field
-              selling_price: parseFloat(String(produit.selling_price || 0)).toFixed(2),
-              tva: parseFloat(String(produit.tva || 18)).toFixed(2),
-              marge: parseFloat(String(produit.marge || 1.3)).toFixed(4),
-              lot: produit.lot || null,
-              date_expiration: produit.date_expiration || null,
-            };
-            await axios.post(commandeProduitsEndpoint, produitPayload);
-          }
-      }
-
-      // Rafraîchir
-      await fetchCommandes()
-      
-      // Sélectionner la commande (mise à jour ou nouvelle)
-      
-      // Sélectionner la commande (mise à jour ou nouvelle)
-      // On doit refetcher le détail complet car la liste n'inclut pas les produits (serializer optimisé)
-      const { data: finalCommande } = await axios.get(`${commandesEndpoint}${activeCommandeId}/`);
-      setSelectedCommande(finalCommande || null);
-      
-      // Transition vers DETAILS
-      setViewMode('DETAILS');
-
-    } catch (err: any) {
-      console.error("Erreur lors de l'enregistrement:", err.response?.data);
-      handleApiError(err, viewMode === 'EDIT' ? 'Erreur lors de la modification' : 'Erreur lors de la création')
-    }
-  }
 
 
 
-  async function handleMettreEnAttente() {
-      if (!selectedCommande) return;
-      try {
-          // Mise à jour partielle (PATCH) pour changer le statut
-          const { data: updated } = await axios.patch<Commande>(`${commandesEndpoint}${selectedCommande.id}/`, { status: selectedCommande.status === 'ATT' ? 'PREP' : 'ATT' });
-          
-          // Refresh list locally for background
-          setCommandes(prev => prev.map(c => c.id === updated.id ? { ...c, status: updated.status, status_display: updated.status_display } : c));
-          
-          // Maintain products from current selection if full object not returned
-          setSelectedCommande({ ...selectedCommande, ...updated });
-          
-      } catch (err) {
-          handleApiError(err, "Erreur lors de la mise en attente");
-      }
-  }
 
-  async function handleCloturerCommande() {
-    if (!selectedCommande) {
-      setError("Aucune commande sélectionnée.");
-      return;
-    }
-    if (selectedCommande.status === 'CLOT') {
-        setError("Cette commande est déjà clôturée.");
-        return;
-    }
 
-      try {
-        const cloturerEndpoint = `${commandesEndpoint}${selectedCommande.id}/cloturer/`;
-        await axios.post(cloturerEndpoint);
-
-        // Fetch full updated details
-        const response = await axios.get<Commande>(`${commandesEndpoint}${selectedCommande.id}/`);
-        const updated = response.data;
-        
-        // Refresh list
-        setCommandes(prev => prev.map(c => c.id === updated.id ? { ...c, status: updated.status, status_display: updated.status_display } : c));
-        setSelectedCommande(updated);
-
-      } catch (err) {
-      handleApiError(err, "Erreur lors de la clôture de la commande")
-    }
-  }
-
-  async function handleDeleteCommande() {
-    if (!selectedCommande) {
-      setError("Aucune commande sélectionnée.");
-      return;
-    }
-
-    const confirmed = await confirm({
-      title: 'Supprimer la commande',
-      message: `Êtes-vous sûr de vouloir supprimer la commande #${selectedCommande.id} ?`,
-      variant: 'danger',
-      confirmText: 'Supprimer'
-    })
-    if (confirmed) {
-      try {
-        await axios.delete(`${commandesEndpoint}${selectedCommande.id}/`);
-        setCommandes(prev => prev.filter(c => c.id !== selectedCommande.id));
-        setSelectedCommande(null);
-      } catch (err) {
-        handleApiError(err, "Erreur lors de la suppression de la commande")
-      }
-    }
-  }
-
-  async function handleImprimerReception() {
-    if (!selectedCommande) {
-      setError("Aucune commande sélectionnée.");
-      return;
-    }
-
-    try {
-      const imprimerEndpoint = `${commandesEndpoint}${selectedCommande.id}/imprimer_reception/`;
-      const response = await axios.get(imprimerEndpoint, {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `reception_commande_${selectedCommande.id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-    } catch (err) {
-      handleApiError(err, "Erreur lors de l\'impression du bon de réception")
-    }
-  }
 
 
   // Fonction pour obtenir la classe CSS du badge de statut
@@ -997,8 +950,8 @@ export default function Commandes() {
             selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
             tva: p.tva || (fullProduct?.tva || '18'),
             marge: marge || (fullProduct?.taux_marge || '1.3'),
-            lot: '',
-            date_expiration: ''
+            lot: p.lot || '',
+            date_expiration: formatDateToMMYY(p.date_expiration || '')
         };
     });
     
@@ -1041,157 +994,38 @@ export default function Commandes() {
 
       {/* Vue conditionnelle basée sur viewMode */}
       {viewMode === 'LIST' && (
-        /* LISTE DES COMMANDES */
-        <div className="flex flex-col h-full p-4 space-y-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 className="text-lg md:text-xl font-bold">Liste des Commandes</h1>
-            <div className="flex gap-2 w-full md:w-auto">
-                <button 
-                    className="btn btn-secondary btn-sm" 
-                    onClick={() => { 
-                        setIsSuggestionModalOpen(true); 
-                    }}
-                >
-                    ✨ Suggestions
-                </button>
-                <button className="btn btn-primary btn-sm" onClick={openCreateView}>+ Créer</button>
-            </div>
-          </div>
-            
-            {/* Tri et Filtres */}
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trier par:</span>
-              <button 
-                className={`btn btn-xs ${sortKey === 'numero' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setSortKey('numero'); setSortOrder(prev => sortKey === 'numero' ? (prev === 'asc' ? 'desc' : 'asc') : 'desc'); }}
-              >
-                N° {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
-              </button>
-              <button 
-                className={`btn btn-xs ${sortKey === 'date' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setSortKey('date'); setSortOrder(prev => sortKey === 'date' ? (prev === 'asc' ? 'desc' : 'asc') : 'desc'); }}
-              >
-                Date {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
-              </button>
-              <button 
-                className={`btn btn-xs ${sortKey === 'fournisseur' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setSortKey('fournisseur'); setSortOrder(prev => sortKey === 'fournisseur' ? (prev === 'asc' ? 'desc' : 'asc') : 'asc'); }}
-              >
-                Fournisseur {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
-              </button>
-              <button 
-                className={`btn btn-xs ${sortKey === 'status' ? 'btn-primary' : 'btn-ghost'}`}
-                onClick={() => { setSortKey('status'); setSortOrder(prev => sortKey === 'status' ? (prev === 'asc' ? 'desc' : 'asc') : 'asc'); }}
-              >
-                Statut {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
-              </button>
-              
-              <div className="divider divider-horizontal mx-2"></div>
-              
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtrer:</span>
-              <button 
-                className={`btn btn-xs ${filterStatus === 'ALL' ? 'btn-neutral' : 'btn-ghost'}`}
-                onClick={() => setFilterStatus('ALL')}
-              >
-                Tous ({commandes.length})
-              </button>
-              <button 
-                className={`btn btn-xs gap-1 ${filterStatus === 'PREP' ? 'btn-info' : 'btn-ghost'}`}
-                onClick={() => setFilterStatus('PREP')}
-              >
-                <span className="w-2 h-2 rounded-full bg-info"></span>
-                En prép. ({commandes.filter(c => c.status === 'PREP').length})
-              </button>
-              <button 
-                className={`btn btn-xs gap-1 ${filterStatus === 'ATT' ? 'btn-warning' : 'btn-ghost'}`}
-                onClick={() => setFilterStatus('ATT')}
-              >
-                <span className="w-2 h-2 rounded-full bg-warning"></span>
-                En attente ({commandes.filter(c => c.status === 'ATT').length})
-              </button>
-              <button 
-                className={`btn btn-xs gap-1 ${filterStatus === 'CLOT' ? 'btn-success' : 'btn-ghost'}`}
-                onClick={() => setFilterStatus('CLOT')}
-              >
-                <span className="w-2 h-2 rounded-full bg-success"></span>
-                Clôturées ({commandes.filter(c => c.status === 'CLOT').length})
-              </button>
-            </div>
-
-            {loading && <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>}
-
-            <div className="overflow-x-auto bg-white rounded-lg shadow">
-              <table className="table table-zebra w-full">
-                <thead className="bg-base-200">
-                  <tr>
-                    <th>ID</th>
-                    <th>N° Facture</th>
-                    <th>Date</th>
-                    <th>Fournisseur</th>
-                    <th>Statut</th>
-                    <th className="text-right">Total (F)</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedCommandes.map(commande => (
-                    <tr key={commande.id} className="hover">
-                      <td className="font-mono font-bold text-xs opacity-50">#{commande.id}</td>
-                      <td className="font-mono">{commande.numero_facture || '-'}</td>
-                      <td>{new Date(commande.date).toLocaleDateString('fr-FR')}</td>
-                      <td className="font-bold">{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
-                      <td><span className={getStatusBadgeClass(commande.status)}>{commande.status_display}</span></td>
-                      <td className="font-bold text-right text-primary">{commande.total} F</td>
-                      <td className="text-center">
-                        {/* Actions groupées si nécessaire ou simple bouton voir */}
-                        <button 
-                          className="btn btn-ghost btn-xs"
-                          onClick={() => handleViewDetails(commande)}
-                        >
-                          Voir Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {sortedCommandes.length === 0 && (
-                      <tr>
-                          <td colSpan={7} className="text-center py-8 text-gray-400">Aucune commande trouvée</td>
-                      </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination & Footer info */}
-            <div className="p-2 bg-white border-t rounded-b-lg shadow text-xs text-center text-base-content/50 flex flex-col items-center gap-2 mt-[-8px] mb-4">
-                <div>
-                  {commandes.length} commande{commandes.length > 1 ? 's' : ''} affichée{commandes.length > 1 ? 's' : ''} sur {totalCount} total
-                </div>
-                
-                {!loading && totalCount > 0 && (
-                    <div className="flex justify-center items-center gap-2">
-                    <button 
-                      className="btn btn-xs btn-outline" 
-                      disabled={page === 1} 
-                      onClick={() => setPage(page - 1)}
-                    >
-                      ← Précédent
-                    </button>
-                    <div className="px-2 py-1 bg-white rounded border border-base-200">
-                      <span className="font-semibold">Page {page}</span>
-                      {totalPages > 1 && <span className="text-gray-500"> / {totalPages}</span>}
-                    </div>
-                    <button 
-                      className="btn btn-xs btn-outline" 
-                      disabled={page >= totalPages} 
-                      onClick={() => setPage(page + 1)}
-                    >
-                      Suivant →
-                    </button>
-                  </div>
-                )}
-            </div>
-        </div>
+        /* LISTE DES COMMANDES - REFACTOR */
+        <CommandeList
+          commandes={commandes}
+          sortedCommandes={sortedCommandes}
+          fournisseurs={fournisseurs}
+          loading={loading}
+          totalCount={totalCount}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          onSortChange={(key) => {
+            if (key === sortKey) {
+              setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+            } else {
+              setSortKey(key);
+              setSortOrder('desc'); // Default new sort to desc often better for dates/ids
+            }
+          }}
+          filterStatus={filterStatus}
+          onFilterStatusChange={setFilterStatus}
+          selectedOrderIds={selectedOrderIds}
+          onToggleOrderSelection={toggleOrderSelection}
+          onToggleAllOrdersSelection={toggleAllOrdersSelection}
+          canMerge={canMergeSelectedOrders().canMerge}
+          mergeReason={canMergeSelectedOrders().reason}
+          onOpenMergeModal={openMergeModal}
+          onOpenCreateView={openCreateView}
+          onOpenSuggestionModal={() => setIsSuggestionModalOpen(true)}
+          onViewDetails={handleViewDetails}
+        />
       )}
 
       {viewMode === 'DETAILS' && selectedCommande && (
@@ -1204,21 +1038,21 @@ export default function Commandes() {
              <div className="ml-auto flex flex-wrap gap-2">
                   <button 
                     className="btn btn-secondary btn-sm"
-                    onClick={() => openEditView(selectedCommande)}
+                     onClick={() => openEditView(selectedCommande)}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
                     Modifier
                   </button>
                   <button 
                     className={`btn btn-sm ${selectedCommande.status === 'ATT' ? 'btn-info' : 'btn-warning'}`}
-                    onClick={handleMettreEnAttente}
+                    onClick={onMettreEnAttente}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
                     {selectedCommande.status === 'ATT' ? 'Reprendre' : 'Mettre en attente'}
                   </button>
                   <button 
                     className="btn btn-success btn-sm text-white"
-                    onClick={handleCloturerCommande}
+                    onClick={onCloture}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
                     Clôturer
@@ -1232,19 +1066,27 @@ export default function Commandes() {
                   
                   <button 
                     className="btn btn-error btn-outline btn-sm"
-                    onClick={() => {
-                        handleDeleteCommande().then(() => setViewMode('LIST'));
-                    }}
+                    onClick={onDelete}
                   >
                     Supprimer
                   </button>
                   <button 
                     className="btn btn-primary btn-outline btn-sm"
-                    onClick={handleImprimerReception}
+                    onClick={onImprimer}
                     disabled={selectedCommande.status !== 'CLOT'}
                   >
                     Imprimer Bon
                   </button>
+                  {/* Bouton Annuler Réception - visible uniquement pour commandes clôturées */}
+                  {selectedCommande.status === 'CLOT' && (
+                    <button 
+                      className="btn btn-warning btn-outline btn-sm gap-1"
+                      onClick={onAnnulerReception}
+                      title="Annuler la réception et retirer le stock"
+                    >
+                      ↩️ Annuler Réception
+                    </button>
+                  )}
              </div>
           </div>
 
@@ -1392,444 +1234,48 @@ export default function Commandes() {
       )}
 
       {(viewMode === 'CREATE' || viewMode === 'EDIT') && (
-        /* VUE CRÉATION (Full Page) */
-        <div className="flex flex-col h-[calc(100vh-100px)]">
-          <div className="flex items-center justify-between mb-4 shrink-0">
-             <div className="flex items-center gap-4">
-                <button 
-                  onClick={handleBackToList}
-                  className="btn btn-circle btn-ghost btn-sm"
-                  title="Retour à la liste"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                </button>
-                <div>
-                  <h3 className="font-bold text-base md:text-lg">
-                      {viewMode === 'EDIT' && selectedCommande 
-                        ? `Modifier Commande #${selectedCommande.numero_facture || selectedCommande.id}` 
-                        : 'Nouvelle Commande'}
-                  </h3>
-                  <div className="flex gap-4 text-xs text-base-content/50 mt-1">
-                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
-                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Fournisseur</span>
-                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Ctrl+A</kbd> Select All</span>
-                  </div>
-                </div>
-            </div>
-          </div>
-          
-          
-          <form 
-            className="flex-1 flex flex-col min-h-0" 
-            onSubmit={handleSaveCommande}
-          > 
- 
-            {/* Section supérieure : Informations et Recherche */}
-            <div className="shrink-0 space-y-4 mb-4">
-              {/* Informations de la commande */}
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-base-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <label className="form-control w-full">
-                    <div className="label py-1">
-                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Fournisseur (F4) *</span>
-                    </div>
-                    <select
-                      ref={fournisseurSelectRef}
-                      className="select select-bordered w-full select-sm bg-base-50 focus:bg-white"
-                      value={newCommandeFournisseurId}
-                      onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
-                      required
-                    >
-                      <option value="" disabled>Sélectionnez un fournisseur</option>
-                      {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                    </select>
-                  </label>
-                  
-                  <label className="form-control w-full">
-                    <div className="label py-1">
-                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Numéro de facture</span>
-                    </div>
-                    <input 
-                      type="text"
-                      placeholder="Ex: FAC-2024-001"
-                      className="input input-bordered w-full input-sm bg-base-50 focus:bg-white"
-                      value={numeroFacture}
-                      onChange={(e) => setNumeroFacture(e.target.value)}
-                    />
-                  </label>
-
-                  <div className="flex items-end justify-end gap-2">
-                    {/* Export Dropdown */}
-                    <div className="dropdown dropdown-end">
-                      <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border-base-300">
-                        📤 Exporter CSV
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
-                        <li><a onClick={() => handleCsvExport('UBIPHARM')}>Ubipharm (CIP1)</a></li>
-                        <li><a onClick={() => handleCsvExport('LABOREX')}>Laborex (CIP2)</a></li>
-                      </ul>
-      </div>
-
-                    <input 
-                        type="file" 
-                        accept=".csv"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleCsvImport}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      📂 Importer CSV
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-sm"
-                      onClick={() => setIsCreateProduitModalOpen(true)}
-                    >
-                      + Nouveau produit
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recherche produit */}
-              <div className="bg-white rounded-xl shadow-sm border border-base-200 p-4 relative">
-                <label className="label py-1 mb-2">
-                  <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Rechercher un produit (F2)</span>
-                </label>
-                <div className="relative">
-                  <input 
-                    ref={searchInputRef}
-                    type="text" 
-                    placeholder="Tapez pour rechercher par nom ou CIP..."
-                    className="input input-bordered w-full pl-12 text-base h-12 bg-base-50 focus:bg-white focus:ring-2 focus:ring-primary/20"
-                    value={searchProduitQuery}
-                      onChange={(e) => setSearchProduitQuery(e.target.value)}
-                    onKeyDown={handleSearchKeyDown}
-                  />
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                
-                {/* Dropdown résultats */}
-                {searchProduitQuery && (
-                  <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
-                    {filteredProduits.length === 0 ? (
-                      <div className="text-center py-8 text-base-content/40 text-sm">
-                        Aucun produit trouvé
-                      </div>
-                    ) : (
-                      <div className="p-2 space-y-1">
-                        {filteredProduits.map((p, idx) => {
-                          const itemProps = getItemProps(idx);
-                          return (
-                          <div 
-                            key={p.id}
-                            {...itemProps}
-                            onClick={() => selectProduct(p)}
-                            style={itemProps.style}
-                            className={`
-                              group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                              ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
-                            `}
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate text-sm">{p.name}</div>
-                              <div className="text-xs flex gap-3 mt-0.5 opacity-80">
-                                <span>Stock: {p.stock}</span>
-                                <span>Prix: {p.selling_price} F</span>
-                                {(p.cip1 || p.cip2 || p.cip3) && (
-                                  <span>CIP: {p.cip1 || p.cip2 || p.cip3}</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className={`opacity-0 group-hover:opacity-100 ${itemProps.className ? 'opacity-100' : ''}`}>
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                              </svg>
-                            </div>
-                          </div>
-                        )})}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Tableau des produits avec édition inline */}
-            <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
-              <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
-                <div className="flex items-center gap-4">
-                  <h2 className="font-bold text-sm md:text-base text-base-content">
-                    Produits ({commandeProduits.length})
-                  </h2>
-                  <div className="flex items-center gap-4">
-                      {saving && <span className="text-sm text-warning animate-pulse">Sauvegarde...</span>}
-                      {!saving && lastSaved && <span className="text-xs text-success">Enregistré à {lastSaved.toLocaleTimeString()}</span>}
-                      <div className="text-base md:text-lg font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
-                        Total : {commandeProduits.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0).toLocaleString('fr-FR')} F
-                      </div>
-                  </div>
-                </div>
-                {selectedRows.size > 0 && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-base-content/70">{selectedRows.size} sélectionné(s)</span>
-                    <button
-                      type="button"
-                      className="btn btn-error btn-xs"
-                      onClick={deleteSelectedRows}
-                    >
-                      Supprimer sélection
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex-1 overflow-x-auto overflow-y-auto">
-                {commandeProduits.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-base-content/30 gap-4 py-12">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    <p className="font-light">Commencez par rechercher et ajouter des produits (F2)</p>
-                  </div>
-                ) : (
-                  <table className="table table-pin-rows w-full">
-                    <thead>
-                      <tr className="bg-base-50 text-xs uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-                        <th className="bg-base-50 w-12">
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-xs"
-                            checked={selectedRows.size === commandeProduits.length && commandeProduits.length > 0}
-                            onChange={toggleAllRows}
-                          />
-                        </th>
-                        <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">Produit</th>
-                        <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Qté</th>
-                        <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">UG</th>
-                        <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Achat HT</th>
-                        <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">TVA</th>
-                        <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Marge</th>
-                        <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Vente</th>
-                        <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">Lot</th>
-                        <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">Date Exp</th>
-                        <th className="bg-base-200 w-10"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {commandeProduits.map((p, index) => (
-                        <tr 
-                          key={p.id} 
-                          className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 ${selectedRows.has(index) ? 'bg-primary/5' : ''}`}
-                        >
-                          <td>
-                            <input
-                              type="checkbox"
-                              className="checkbox checkbox-xs"
-                              checked={selectedRows.has(index)}
-                              onChange={() => toggleRowSelection(index)}
-                            />
-                          </td>
-                          <td className="pl-4 py-2 md:py-3">
-                            <div className="font-medium text-sm">
-                              {(() => {
-                                // Try to get product name from different sources
-                                if (typeof p.produit === 'object' && p.produit.name) {
-                                  return p.produit.name;
-                                }
-                                // Check if there's a produit_nom field from API
-                                if ((p as any).produit_nom) {
-                                  return (p as any).produit_nom;
-                                }
-                                // Try to find in produitsList
-                                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
-                                const found = produitsList.find(prod => prod.id === produitId);
-                                if (found) {
-                                  return found.name;
-                                }
-                                // Last resort: show ID
-                                return `Produit #${produitId}`;
-                              })()}
-                            </div>
-                          </td>
-                          {/* Quantity (0) */}
-                          <td className="text-right py-2 md:py-3">
-                            <input
-                              type="text"
-                              data-row={index}
-                              data-field={0}
-                              value={p.quantity}
-                              onChange={(e) => updateCommandeProduitField(index, 'quantity', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
-                              className={`input input-ghost input-sm text-base w-full text-right font-medium focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 0}
-                              readOnly={!fieldsConfig[0].editable}
-                              tabIndex={!fieldsConfig[0].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* Unites Gratuites (1) - NEW */}
-                          <td className="text-center py-2 md:py-3">
-                            <input
-                              type="text"
-                              inputMode="numeric"
-                              data-row={index}
-                              data-field={1}
-                              value={p.unites_gratuites || 0}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (/^\d*$/.test(val)) {
-                                  updateCommandeProduitField(index, 'unites_gratuites', val === '' ? 0 : parseInt(val));
-                                }
-                              }}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
-                              className={`input input-ghost input-sm text-sm w-full text-center font-medium bg-success/10 focus:bg-success/20 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              placeholder="0"
-                              autoFocus={focusedField?.row === index && focusedField?.field === 1}
-                              readOnly={!fieldsConfig[1].editable}
-                              tabIndex={!fieldsConfig[1].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* Price (2) - Index updated */}
-                          <td className="text-right py-2 md:py-3">
-                            <input
-                              type="text"
-                              data-row={index}
-                              data-field={2}
-                              value={p.price}
-                              onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
-                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 2}
-                              readOnly={!fieldsConfig[2].editable}
-                              tabIndex={!fieldsConfig[2].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* TVA (3) - Index updated */}
-                          <td className="text-right py-2 md:py-3">
-                            <input
-                              type="text"
-                              data-row={index}
-                              data-field={3}
-                              value={p.tva || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 3)}
-                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 3}
-                              readOnly={!fieldsConfig[3].editable}
-                              tabIndex={!fieldsConfig[3].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* Marge (4) - Index updated */}
-                          <td className="text-right py-2 md:py-3">
-                            <input
-                              type="text"
-                              data-row={index}
-                              data-field={4}
-                              value={p.marge || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
-                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 4}
-                              readOnly={!fieldsConfig[4].editable}
-                              tabIndex={!fieldsConfig[4].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* Selling Price (5) - Index updated */}
-                          <td className="text-right py-2 md:py-3">
-                            <input
-                              type="text"
-                              data-row={index}
-                              data-field={5}
-                              value={p.selling_price}
-                              onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 5)}
-                              className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 5}
-                              readOnly={!fieldsConfig[5].editable}
-                              tabIndex={!fieldsConfig[5].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* Lot (6) - Index updated */}
-                          <td className="text-left py-2 md:py-3">
-                            <input
-                              type="text"
-                              data-row={index}
-                              data-field={6}
-                              value={p.lot || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
-                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              placeholder="Lot"
-                              autoFocus={focusedField?.row === index && focusedField?.field === 6}
-                              readOnly={!fieldsConfig[6].editable}
-                              tabIndex={!fieldsConfig[6].editable ? -1 : 0}
-                            />
-                          </td>
-                          {/* Expiration (7) - Index updated */}
-                          <td className="text-left py-2 md:py-3">
-                            <input
-                              type="date"
-                              data-row={index}
-                              data-field={7}
-                              value={p.date_expiration || ''}
-                              onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
-                              onKeyDown={(e) => handleTableFieldKeyDown(e, index, 7)}
-                              className={`input input-ghost input-sm text-base w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                              autoFocus={focusedField?.row === index && focusedField?.field === 7}
-                              readOnly={!fieldsConfig[7].editable}
-                              tabIndex={!fieldsConfig[7].editable ? -1 : 0}
-                            />
-                          </td>
-                          <td className="text-center py-3">
-                            <button
-                              type="button"
-                              onClick={() => removeProductFromCommande(index)}
-                              className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-
-            {/* Actions */} 
-            <div className="modal-action pt-4">
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                onClick={handleBackToList}
-              >
-                Annuler
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary"
-                disabled={commandeProduits.length === 0}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                {viewMode === 'EDIT' ? 'Enregistrer les modifications' : 'Créer la commande'}
-              </button>
-            </div>
-          </form>
-        </div>
+        <CommandeForm
+            viewMode={viewMode === 'CREATE' ? 'CREATE' : 'EDIT'}
+            selectedCommande={selectedCommande}
+            fournisseurs={fournisseurs}
+            newCommandeFournisseurId={newCommandeFournisseurId}
+            setNewCommandeFournisseurId={setNewCommandeFournisseurId}
+            numeroFacture={numeroFacture}
+            setNumeroFacture={setNumeroFacture}
+            handleBackToList={handleBackToList}
+            handleSaveCommande={onSave}
+            handleCsvExport={handleCsvExport}
+            handleCsvImport={handleCsvImport}
+            fileInputRef={fileInputRef as React.RefObject<HTMLInputElement>}
+            setIsCreateProduitModalOpen={setIsCreateProduitModalOpen}
+            searchInputRef={searchInputRef as React.RefObject<HTMLInputElement>}
+            fournisseurSelectRef={fournisseurSelectRef as React.RefObject<HTMLSelectElement>}
+            searchProduitQuery={searchProduitQuery}
+            setSearchProduitQuery={setSearchProduitQuery}
+            handleSearchKeyDown={handleSearchKeyDown}
+            filteredProduits={filteredProduits}
+            selectProduct={selectProduct}
+            getItemProps={getItemProps}
+            
+            // Table Props
+            commandeProduits={commandeProduits}
+            produitsList={produitsList}
+            selectedRows={selectedRows}
+            saving={saving}
+            lastSaved={lastSaved}
+            fieldsConfig={fieldsConfig}
+            focusedField={focusedField}
+            
+            toggleRowSelection={toggleRowSelection}
+            toggleAllRows={toggleAllRows}
+            deleteSelectedRows={deleteSelectedRows}
+            openTransferModal={openTransferModal}
+            updateCommandeProduitField={updateCommandeProduitField}
+            handleTableFieldKeyDown={handleTableFieldKeyDown}
+            onRemoveProduct={removeProductFromCommande}
+        />
       )}
+
 
 
 
@@ -1861,6 +1307,44 @@ export default function Commandes() {
           commandeId={selectedCommande.id}
           commandeNumero={selectedCommande.numero_facture || `#${selectedCommande.id}`}
           onClose={() => setShowPrintLabelsModal(false)}
+        />
+      )}
+
+      {/* Password Confirmation Modal */}
+      <PasswordConfirmModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onConfirm={handlePasswordConfirmed}
+        title={passwordModalConfig.title}
+        message={passwordModalConfig.message}
+      />
+
+      {/* Modal de Transfert vers autre Fournisseur (Refactored) */}
+      {isTransferModalOpen && (
+        <TransferCommandeModal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
+          selectedProducts={commandeProduits.filter((_, idx) => selectedRows.has(idx))}
+          fournisseurs={fournisseurs}
+          currentSupplierId={newCommandeFournisseurId}
+          produitsList={produitsList}
+          apiBaseUrl={apiBaseUrl}
+          commandesEndpoint={commandesEndpoint}
+          fournisseursEndpoint={fournisseursEndpoint}
+          onTransferSuccess={handleTransferSuccess}
+        />
+      )}
+
+      {/* Modal de Fusion de Commandes (Refactored) */}
+      {isMergeModalOpen && (
+        <MergeCommandesModal
+          isOpen={isMergeModalOpen}
+          onClose={() => setIsMergeModalOpen(false)}
+          selectedOrderIds={selectedOrderIds}
+          fournisseurs={fournisseurs}
+          commandesEndpoint={commandesEndpoint}
+          apiBaseUrl={apiBaseUrl}
+          onMergeSuccess={handleMergeSuccess}
         />
       )}
     </>

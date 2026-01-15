@@ -127,6 +127,17 @@ const QUERIES: QueryDefinition[] = [
       { key: 'ordering', label: 'Tri', type: 'text', default: 'stock' }
     ],
     resultType: 'table'
+  },
+  {
+    id: 'valeur_stock_journalier',
+    name: 'Valeur Stock Journalier',
+    description: 'Reconstitution historique de la valeur du stock, achats et ventes',
+    endpoint: '/api/rapports/valeur_stock_journalier/',
+    params: [
+      { key: 'date_debut', label: 'Date début', type: 'date', required: true },
+      { key: 'date_fin', label: 'Date fin', type: 'date', required: true }
+    ],
+    resultType: 'table'
   }
 ]
 
@@ -134,7 +145,10 @@ const QUERIES: QueryDefinition[] = [
 const formatValue = (key: string, value: any): string => {
   if (value === null || value === undefined) return '-'
   if (typeof value === 'number') {
-    return Math.round(value).toLocaleString('fr-FR') + (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') ? ' F' : '')
+    if (key.includes('pourcent') || key.includes('percent')) {
+      return value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'
+    }
+    return Math.round(value).toLocaleString('fr-FR') + (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') || key.includes('cout') || key.includes('marge') ? ' F' : '')
   }
   if (typeof value === 'object') {
     // Pour les objets imbriqués comme produit, afficher le nom
@@ -576,8 +590,8 @@ export default function CentreRapports() {
                         {param.type === 'number' && (
                           <input
                             type="number"
-                            value={params[param.key] || ''}
-                            onChange={e => setParams(prev => ({ ...prev, [param.key]: Number(e.target.value) }))}
+                            value={params[param.key] !== undefined && params[param.key] !== null ? params[param.key] : ''}
+                            onChange={e => setParams(prev => ({ ...prev, [param.key]: e.target.value === '' ? '' : Number(e.target.value) }))}
                             className="input input-bordered input-sm w-24"
                           />
                         )}

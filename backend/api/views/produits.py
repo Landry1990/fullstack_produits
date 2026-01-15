@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import F, Sum, Count, Q
+from django.db.models import F, Sum, Count, Q, ProtectedError
 from django.http import HttpResponse
 import io
 from datetime import datetime
@@ -50,9 +50,53 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
     search_fields = ['name', 'cip1', 'cip2', 'cip3']
     ordering_fields = ['name', 'stock', 'selling_price', 'updated_at']
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        # Filtrage manuel pour stock_lt (utilisé dans les rapports)
+        stock_lt = self.request.query_params.get('stock_lt')
+        if stock_lt is not None:
+            try:
+                val = float(stock_lt)
+                queryset = queryset.filter(stock__lt=val)
+            except ValueError:
+                pass
+                
+        return queryset
+
     # Configuration des serializers optimisés
     list_serializer_class = ProduitListSerializer
     detail_serializer_class = ProduitDetailSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Override destroy to handle ProtectedError gracefully.
+        Products cannot be deleted if they are referenced in historical records.
+        """
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+        except ProtectedError as e:
+            # Extract the protected objects information
+            protected_objects = e.protected_objects
+            
+            # Group by model type
+            model_counts = {}
+            for obj in protected_objects:
+                model_name = obj.__class__.__name__
+                model_counts[model_name] = model_counts.get(model_name, 0) + 1
+            
+            # Build a user-friendly error message
+            references = ', '.join([f"{count} {model}" for model, count in model_counts.items()])
+            
+            return Response({
+                'error': 'Cannot delete product',
+                'detail': f'This product cannot be deleted because it is referenced in: {references}. '
+                         'Products with historical records (sales, purchases, inventories, etc.) cannot be deleted to preserve data integrity.',
+                'protected_references': model_counts
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
@@ -88,7 +132,7 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
             produit=produit, 
             facture__status__in=['VAL', 'PAY']  # Inclure VAL (validée) et PAY (payée)
         ).select_related('facture', 'facture__client').values(
-            'facture__date', 'quantity', 'price', 'facture__numero_facture', 'facture__client__name', 'facture__id'
+            'facture__date', 'quantity', 'selling_price', 'facture__numero_facture', 'facture__client__name', 'facture__id'
         )
         
         for v in ventes:
@@ -98,7 +142,7 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
                 'quantity': -v['quantity'], # Sortie de stock
                 'stock_apres': 0, # Calculé après
                 'libelle': f"Vente: Facture #{v['facture__numero_facture'] or v['facture__id']} - {v['facture__client__name'] or 'Client Divers'}",
-                'prix_unitaire': v['price'],
+                'prix_unitaire': v['selling_price'],
                 'user': '',
                 'source': 'VENTE',
                 'id': v['facture__id']
@@ -125,6 +169,26 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
                 'source': 'ACHAT',
                 'id': a['commande__id']
             })
+
+        # 4. Ajustements de stock (inventaires, corrections, annulations réception)
+        adjustments = StockAdjustment.objects.filter(produit=produit).select_related('user').values(
+            'created_at', 'quantity_change', 'quantity_after', 'reason_type', 'reason_detail', 'user__username', 'id'
+        )
+        
+        for adj in adjustments:
+            type_mouvement = 'ENTREE' if adj['quantity_change'] >= 0 else 'SORTIE'
+            history.append({
+                'date': adj['created_at'],
+                'type': type_mouvement,
+                'quantity': adj['quantity_change'],  # Peut être négatif
+                'stock_apres': adj['quantity_after'],  # Déjà disponible
+                'libelle': f"Ajustement: {adj['reason_detail'] or adj['reason_type']}",
+                'prix_unitaire': 0,
+                'user': adj['user__username'] or '',
+                'source': 'AJUSTEMENT',
+                'id': adj['id']
+            })
+
 
         # Trier par date DESC
         history.sort(key=lambda x: x['date'], reverse=True)
@@ -627,6 +691,84 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone']
+
+    @action(detail=True, methods=['get'])
+    def catalogue(self, request, pk=None):
+        """
+        Retourne le catalogue des produits commandés chez ce fournisseur.
+        Agrège les données des commandes clôturées pour calculer:
+        - CIP du produit
+        - Dernier prix d'achat
+        - Date de dernière commande
+        - Marge (prix vente - dernier prix achat)
+        - Quantité totale commandée
+        - Stock actuel
+        """
+        from django.db.models import Max, Subquery, OuterRef
+        from django.db.models.functions import Coalesce
+        from decimal import Decimal
+        
+        fournisseur = self.get_object()
+        
+        # Sous-requête pour obtenir le dernier prix d'achat par produit
+        # On prend le prix de la commande la plus récente (par date_cloture)
+        latest_order_subquery = CommandeProduit.objects.filter(
+            produit=OuterRef('produit'),
+            commande__fournisseur=fournisseur,
+            commande__status='CLOT'
+        ).order_by('-commande__date_cloture').values('price_cost')[:1]
+        
+        latest_date_subquery = CommandeProduit.objects.filter(
+            produit=OuterRef('produit'),
+            commande__fournisseur=fournisseur,
+            commande__status='CLOT'
+        ).order_by('-commande__date_cloture').values('commande__date_cloture')[:1]
+        
+        # Agrégation principale
+        catalogue_data = CommandeProduit.objects.filter(
+            commande__fournisseur=fournisseur,
+            commande__status='CLOT'
+        ).values(
+            'produit'
+        ).annotate(
+            qte_totale=Sum(F('quantity') + F('unites_gratuites')),
+            dernier_prix_achat=Subquery(latest_order_subquery),
+            derniere_commande=Subquery(latest_date_subquery)
+        ).order_by('produit__name')
+        
+        # Construire la réponse avec les informations produit
+        result = []
+        for item in catalogue_data:
+            try:
+                produit = Produit.objects.get(pk=item['produit'])
+                dernier_prix = item['dernier_prix_achat'] or Decimal('0')
+                marge = produit.selling_price - dernier_prix if dernier_prix else Decimal('0')
+                marge_pourcent = ((marge / produit.selling_price) * 100) if produit.selling_price else Decimal('0')
+                
+                result.append({
+                    'produit_id': produit.id,
+                    'produit_nom': produit.name,
+                    'cip': produit.cip1 or produit.cip2 or produit.cip3 or '-',
+                    'dernier_prix_achat': float(dernier_prix),
+                    'derniere_commande': item['derniere_commande'],
+                    'prix_vente': float(produit.selling_price),
+                    'marge': float(marge),
+                    'marge_pourcent': round(float(marge_pourcent), 1),
+                    'qte_totale': item['qte_totale'] or 0,
+                    'stock_actuel': produit.stock
+                })
+            except Produit.DoesNotExist:
+                continue
+        
+        # Trier par nom de produit
+        result.sort(key=lambda x: x['produit_nom'].lower())
+        
+        return Response({
+            'fournisseur_id': fournisseur.id,
+            'fournisseur_nom': fournisseur.name,
+            'total_produits': len(result),
+            'produits': result
+        })
 
 
 class CategoriesListView(APIView):

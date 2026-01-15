@@ -23,10 +23,12 @@ export default function SuggestionCommandeModal({
   const [suggestionParams, setSuggestionParams] = useState({
       periode: 30,
       fournisseurId: '',
-      mode: 'optimise' // 'simple' | 'optimise'
+      mode: 'optimise', // 'simple' | 'optimise'
+      budgetMax: '' // New field for budget limit
   });
   
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [totalHt, setTotalHt] = useState<number>(0); // New state for total amount
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [stepSuggestion, setStepSuggestion] = useState<1 | 2>(1); // 1 = Config, 2 = Résultats
   const [selectedSuggestions, setSelectedSuggestions] = useState<Set<number>>(new Set());
@@ -38,11 +40,13 @@ export default function SuggestionCommandeModal({
           const payload = {
               mode: suggestionParams.mode,
               periode: Number(suggestionParams.periode),
-              fournisseur_id: suggestionParams.fournisseurId ? parseInt(suggestionParams.fournisseurId) : null
+              fournisseur_id: suggestionParams.fournisseurId ? parseInt(suggestionParams.fournisseurId) : null,
+              budget_max: suggestionParams.budgetMax ? Number(suggestionParams.budgetMax) : null
           };
           
           const response = await axios.post(`${apiBaseUrl ? apiBaseUrl.replace(/\/$/, '') : ''}/api/generer-suggestions/`, payload);
           setSuggestions(response.data.suggestions || []);
+          setTotalHt(response.data.total_ht || 0); // Capture total HT
           
           // Select all by default
           const allIndices = new Set(response.data.suggestions.map((_: any, i: number) => i));
@@ -75,15 +79,16 @@ export default function SuggestionCommandeModal({
            if (realProduct) {
                productStub = realProduct;
            } else {
+               // Fallback avec les données du backend
                productStub = {
                   id: item.produit_id,
                   name: item.produit_nom,
                   cip1: item.produit_ref,
                   stock: item.stock_actuel,
                   cost_price: String(item.prix_achat),
-                  selling_price: String(item.prix_achat * 1.3),
-                  tva: '18',
-                  taux_marge: '1.3'
+                  selling_price: String(item.prix_vente || item.prix_achat * 1.3),
+                  tva: item.tva || '0',
+                  taux_marge: item.taux_marge || '1.3'
               } as any;
            }
 
@@ -93,9 +98,9 @@ export default function SuggestionCommandeModal({
               quantity: item.quantite_suggeree,
               unites_gratuites: 0,
               price: String(item.prix_achat || productStub.cost_price || 0),
-              tva: productStub.tva || '18',
-              marge: productStub.taux_marge || '1.3',
-              selling_price: productStub.selling_price || String((item.prix_achat || 0) * 1.3),
+              tva: item.tva || productStub.tva || '0',
+              marge: item.taux_marge || productStub.taux_marge || '1.3',
+              selling_price: String(item.prix_vente || productStub.selling_price || 0),
               lot: '',
               date_expiration: ''
           };
@@ -119,12 +124,16 @@ export default function SuggestionCommandeModal({
           else next.add(index);
           return next;
       });
+      
+      // OPTIONAL: Recalculate displayed total based on selection if we wanted dynamic total update
+      // But for now keeping simple fixed total from backend or maybe recalculate locally?
+      // Let's stick to what backend returned for the proposal, but maybe better to recalc local sum.
   }
 
   // Render
   return (
       <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-5xl h-[80vh] flex flex-col p-0 overflow-hidden">
+          <div className="modal-box w-full max-w-7xl h-[90vh] flex flex-col p-0 overflow-hidden">
               <div className="p-4 border-b bg-base-100 shrink-0 flex justify-between items-center">
                   <h3 className="font-bold text-lg">Générateur de commande intelligent</h3>
                   <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
@@ -136,34 +145,93 @@ export default function SuggestionCommandeModal({
                           <div className="card-body">
                               <h4 className="card-title text-base mb-4">Paramètres de l'analyse</h4>
                               
-                              <div className="form-control mb-4">
-                                  <label className="label font-medium">Fournisseur</label>
-                                  <select 
-                                      className="select select-bordered w-full"
-                                      value={suggestionParams.fournisseurId}
-                                      onChange={(e) => setSuggestionParams(prev => ({ ...prev, fournisseurId: e.target.value }))}
-                                  >
-                                      <option value="">Tous les fournisseurs</option>
-                                      {fournisseurs.map(f => (
-                                          <option key={f.id} value={f.id}>{f.name}</option>
-                                      ))}
-                                  </select>
-                                  <label className="label text-xs text-base-content/60">
-                                      Si sélectionné, seuls les produits de ce fournisseur seront analysés.
-                                  </label>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <div className="form-control">
+                                      <label className="label font-medium">Fournisseur</label>
+                                      <select 
+                                          className="select select-bordered w-full"
+                                          value={suggestionParams.fournisseurId}
+                                          onChange={(e) => setSuggestionParams(prev => ({ ...prev, fournisseurId: e.target.value }))}
+                                      >
+                                          <option value="">Tous les fournisseurs</option>
+                                          {fournisseurs.map(f => (
+                                              <option key={f.id} value={f.id}>{f.name}</option>
+                                          ))}
+                                      </select>
+                                  </div>
+
+                                  <div className="form-control">
+                                      <label className="label font-medium">
+                                          <span className="flex items-center gap-2">
+                                              Budget Maximum (HT)
+                                              <div className="tooltip" data-tip="Laisser vide pour illimité. Le système sélectionnera les produits prioritaires.">
+                                                  <span className="badge badge-xs badge-info">?</span>
+                                              </div>
+                                          </span>
+                                      </label>
+                                      <div className="relative">
+                                          <input 
+                                              type="number" 
+                                              placeholder="Ex: 500000"
+                                              className="input input-bordered w-full pr-12"
+                                              value={suggestionParams.budgetMax}
+                                              onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
+                                          />
+                                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-base-content/50 font-bold">F</div>
+                                      </div>
+                                  </div>
                               </div>
 
                               <div className="form-control mb-4">
-                                  <label className="label font-medium">Période d'analyse (jours)</label>
-                                  <input 
-                                      type="number" 
-                                      className="input input-bordered w-full"
-                                      value={suggestionParams.periode}
-                                      onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 30 }))}
-                                  />
-                                  <label className="label text-xs text-base-content/60">
-                                      Base de calcul pour la moyenne des ventes (ex: 30 derniers jours).
-                                  </label>
+                                  <label className="label font-medium">Période de couverture</label>
+                                  <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-2">
+                                      {[
+                                          { label: '🏥 Garde', value: 3, desc: '3 jours' },
+                                          { label: '📅 Semaine', value: 7, desc: '7 jours' },
+                                          { label: '📆 Décade', value: 10, desc: '10 jours' },
+                                          { label: '📋 Bi-mens.', value: 15, desc: '15 jours' },
+                                          { label: '🗓️ Mois', value: 30, desc: '30 jours' },
+                                          { label: '✏️ Autre', value: 0, desc: 'Perso.' },
+                                      ].map(p => (
+                                          <button
+                                              key={p.value}
+                                              type="button"
+                                              className={`btn btn-sm flex-col h-auto py-2 gap-0 ${
+                                                  (p.value === 0 && ![3, 7, 10, 15, 30].includes(suggestionParams.periode))
+                                                  || suggestionParams.periode === p.value
+                                                      ? 'btn-primary'
+                                                      : 'btn-outline'
+                                              }`}
+                                              onClick={() => {
+                                                  if (p.value === 0) {
+                                                      // Focus on custom input
+                                                      const input = document.getElementById('periode-custom') as HTMLInputElement;
+                                                      input?.focus();
+                                                  } else {
+                                                      setSuggestionParams(prev => ({ ...prev, periode: p.value }));
+                                                  }
+                                              }}
+                                          >
+                                              <span className="text-xs font-bold">{p.label}</span>
+                                              <span className="text-[10px] opacity-70">{p.desc}</span>
+                                          </button>
+                                      ))}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                      <span className="text-sm text-base-content/60">Jours:</span>
+                                      <input 
+                                          id="periode-custom"
+                                          type="number" 
+                                          className="input input-bordered input-sm w-24"
+                                          value={suggestionParams.periode}
+                                          min={1}
+                                          max={90}
+                                          onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 7 }))}
+                                      />
+                                      <span className="text-xs text-base-content/50">
+                                          (Période d'analyse des ventes et couverture souhaitée)
+                                      </span>
+                                  </div>
                               </div>
 
                               <div className="form-control mb-6">
@@ -212,11 +280,16 @@ export default function SuggestionCommandeModal({
                   ) : (
                       /* STEP 2 : RÉSULTATS */
                       <div className="flex flex-col h-full gap-4">
-                          <div className="alert alert-info shadow-sm text-sm py-2">
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                              <div>
-                                  <span className="font-bold">{suggestions.length} produits suggérés.</span> 
-                                  {suggestions.length === 0 ? " Aucun produit à commander selon les critères." : " Vérifiez les quantités avant de valider."}
+                          <div className="alert alert-info shadow-sm text-sm py-2 flex justify-between">
+                              <div className="flex items-center gap-2">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                  <div>
+                                      <span className="font-bold">{suggestions.length} produits suggérés.</span> 
+                                      {suggestions.length === 0 ? " Aucun produit à commander selon les critères." : " Vérifiez les quantités avant de valider."}
+                                  </div>
+                              </div>
+                              <div className="badge badge-lg font-mono font-bold">
+                                  Total Est.: {totalHt.toLocaleString()} F
                               </div>
                           </div>
 
@@ -244,10 +317,11 @@ export default function SuggestionCommandeModal({
                                               </th>
                                               <th>Produit</th>
                                               <th className="text-center">Stock</th>
-                                              <th className="text-center">Ventes (Période)</th>
+                                              <th className="text-center">Ventes</th>
                                               {suggestionParams.mode === 'optimise' && <th className="text-center">Note</th>}
                                               <th className="text-right">Proposition</th>
                                               <th className="text-right">Prix Achat</th>
+                                              <th className="text-right">Total HT</th>
                                               <th>Raison</th>
                                           </tr>
                                       </thead>
@@ -280,6 +354,9 @@ export default function SuggestionCommandeModal({
                                                   </td>
                                                   <td className="text-right opacity-70">
                                                       {item.prix_achat} F
+                                                  </td>
+                                                  <td className="text-right font-mono font-medium">
+                                                      {(item.montant_ht || (item.prix_achat * item.quantite_suggeree)).toLocaleString()} F
                                                   </td>
                                                   <td className="text-xs max-w-xs truncate" title={item.raison}>
                                                       {item.raison}

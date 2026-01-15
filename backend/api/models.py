@@ -18,6 +18,13 @@ class Profile(models.Model):
     can_sell_negative_stock = models.BooleanField(default=False)
     # New permission for Centralized Cash Mode
     can_cash_out = models.BooleanField(default=True, help_text="Autorisé à encaisser (si mode centralisé actif)")
+    
+    # Granular Permissions
+    can_delete_product = models.BooleanField(default=False, verbose_name="Supprimer des produits")
+    can_adjust_stock = models.BooleanField(default=False, verbose_name="Ajuster le stock manuellement")
+    can_delete_fournisseur = models.BooleanField(default=False, verbose_name="Supprimer des fournisseurs")
+    can_delete_commande = models.BooleanField(default=False, verbose_name="Supprimer des commandes")
+    can_close_commande = models.BooleanField(default=False, verbose_name="Clôturer des commandes")
 
     ROLE_CHOICES = [
         ('PHARMACIEN', 'Pharmacien'),

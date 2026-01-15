@@ -1,7 +1,30 @@
 import { useEffect, useState, useMemo, type FormEvent, useRef } from 'react';
 import axios from 'axios';
 import { useConfirm } from '../hooks/useConfirm';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
+import PasswordConfirmModal from './PasswordConfirmModal';
 import type { Fournisseur } from '../types';
+
+interface CatalogueItem {
+  produit_id: number;
+  produit_nom: string;
+  cip: string;
+  dernier_prix_achat: number;
+  derniere_commande: string | null;
+  prix_vente: number;
+  marge: number;
+  marge_pourcent: number;
+  qte_totale: number;
+  stock_actuel: number;
+}
+
+interface CatalogueResponse {
+  fournisseur_id: number;
+  fournisseur_nom: string;
+  total_produits: number;
+  produits: CatalogueItem[];
+}
 
 const emptyForm: Omit<Fournisseur, 'id'> = {
   name: '',
@@ -12,9 +35,15 @@ const emptyForm: Omit<Fournisseur, 'id'> = {
 
 export default function Fournisseurs() {
   const confirm = useConfirm()
+  const { user } = useAuth();
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [selectedFournisseur, setSelectedFournisseur] = useState<Fournisseur | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Sudo Mode State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordModalConfig, setPasswordModalConfig] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  const [pendingAction, setPendingAction] = useState<() => Promise<void>>(() => Promise.resolve());
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
@@ -24,6 +53,12 @@ export default function Fournisseurs() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  // Catalogue state
+  const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
+  const [catalogueLoading, setCatalogueLoading] = useState<boolean>(false);
+  const [catalogueSearch, setCatalogueSearch] = useState<string>('');
+  const [showCatalogue, setShowCatalogue] = useState<boolean>(true);
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -45,6 +80,43 @@ export default function Fournisseurs() {
       fournisseur.address.toLowerCase().includes(term)
     );
   }, [fournisseurs, searchTerm]);
+
+  // Filtrer le catalogue selon le terme de recherche
+  const filteredCatalogue = useMemo(() => {
+    if (!catalogueSearch.trim()) return catalogue;
+    
+    const term = catalogueSearch.toLowerCase();
+    return catalogue.filter(item => 
+      item.produit_nom.toLowerCase().includes(term) ||
+      item.cip.toLowerCase().includes(term)
+    );
+  }, [catalogue, catalogueSearch]);
+
+  // Charger le catalogue quand un fournisseur est sélectionné
+  async function fetchCatalogue(fournisseurId: number) {
+    setCatalogueLoading(true);
+    try {
+      const response = await axios.get<CatalogueResponse>(
+        `${fournisseursEndpoint}${fournisseurId}/catalogue/`
+      );
+      setCatalogue(response.data.produits || []);
+    } catch (err) {
+      console.error('Erreur lors du chargement du catalogue:', err);
+      setCatalogue([]);
+    } finally {
+      setCatalogueLoading(false);
+    }
+  }
+
+  // Charger le catalogue quand le fournisseur sélectionné change
+  useEffect(() => {
+    if (selectedFournisseur) {
+      fetchCatalogue(selectedFournisseur.id);
+      setCatalogueSearch('');
+    } else {
+      setCatalogue([]);
+    }
+  }, [selectedFournisseur?.id]);
 
   async function fetchFournisseurs() {
     setLoading(true);
@@ -200,28 +272,52 @@ export default function Fournisseurs() {
     }
   }
 
+  const executeDeleteFournisseur = async (id: number) => {
+    try {
+      await axios.delete(`${fournisseursEndpoint}${id}/`);
+      setFournisseurs(prev => prev.filter(f => f.id !== id));
+      setSelectedFournisseur(null);
+      toast.success('Fournisseur supprimé avec succès');
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        // Handle FK protect errors explicitly
+        if (err.response?.status === 500 || (err.response?.data?.detail && String(err.response.data.detail).includes('protected'))) {
+             toast.error("Impossible de supprimer : ce fournisseur est lié à des données existantes (commandes, produits).");
+        } else {
+             const msg = err.response?.data?.message ?? err.message ?? 'Erreur réseau';
+             toast.error(`Erreur: ${msg}`);
+        }
+      } else {
+        toast.error('Erreur inconnue lors de la suppression');
+      }
+      console.error('Erreur lors de la suppression du fournisseur:', err);
+    }
+  }
+
   async function handleDeleteFournisseur() {
     if (!selectedFournisseur) return;
     
+    // Permission Check
+    if (!user?.is_superuser && !user?.can_delete_fournisseur) {
+        toast.error("Accès refusé : Vous n'avez pas la permission de supprimer des fournisseurs.")
+        return
+    }
+    
     const confirmed = await confirm({
       title: 'Supprimer le fournisseur',
-      message: `Supprimer le fournisseur "${selectedFournisseur.name}" ?`,
+      message: `Supprimer le fournisseur "${selectedFournisseur.name}" ?\n\nCette action est irréversible.`,
       variant: 'danger',
       confirmText: 'Supprimer'
     })
+    
     if (confirmed) {
-      try {
-        await axios.delete(`${fournisseursEndpoint}${selectedFournisseur.id}/`);
-        setFournisseurs(prev => prev.filter(f => f.id !== selectedFournisseur.id));
-        setSelectedFournisseur(null);
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau')
-        } else {
-          setError('Erreur inconnue lors de la suppression du fournisseur')
-        }
-        console.error('Erreur lors de la suppression du fournisseur:', err);
-      }
+        // Trigger Password Modal
+        setPasswordModalConfig({
+            title: "Confirmer la suppression",
+            message: "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive."
+        })
+        setPendingAction(() => () => executeDeleteFournisseur(selectedFournisseur.id));
+        setIsPasswordModalOpen(true);
     }
   }
 
@@ -233,9 +329,9 @@ export default function Fournisseurs() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 h-full min-h-0">
          {/* Left Panel: List */}
-         <div className="md:col-span-1 lg:col-span-2 bg-white rounded-lg shadow flex flex-col overflow-hidden h-full">
+         <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden h-full">
             {/* Header with Search and Actions */}
             <div className="p-4 border-b flex flex-wrap gap-4 justify-between items-center shrink-0 bg-white">
                <div className="flex items-center gap-3">
@@ -280,11 +376,10 @@ export default function Fournisseurs() {
             <div className="flex-1 overflow-auto">
                <table className="table table-xs table-pin-rows w-full">
                  <thead className="bg-[#f8fafc] text-[#64748b]">
-                   <tr>
-                     <th className="py-3 px-4 font-semibold uppercase text-[11px] tracking-wider text-left">Nom du Fournisseur</th>
-                     <th className="py-3 px-4 font-semibold uppercase text-[11px] tracking-wider text-center">Téléphone</th>
-                     <th className="py-3 px-4 font-semibold uppercase text-[11px] tracking-wider text-left">Email</th>
-                   </tr>
+                    <tr>
+                      <th className="py-2 px-2 font-semibold uppercase text-[10px] tracking-wider text-left">Fournisseur</th>
+                      <th className="py-2 px-2 font-semibold uppercase text-[10px] tracking-wider text-center">Tél.</th>
+                    </tr>
                  </thead>
                  <tbody>
                     {filteredFournisseurs.length > 0 ? (
@@ -298,21 +393,20 @@ export default function Fournisseurs() {
                            }`}
                            onClick={() => selectFournisseur(fournisseur)}
                          >
-                           <td className="py-3 px-4">
-                             <div className="font-bold">{fournisseur.name}</div>
+                           <td className="py-1.5 px-2">
+                             <div className="font-semibold text-xs truncate max-w-[140px]" title={fournisseur.name}>{fournisseur.name}</div>
                            </td>
-                           <td className="py-3 px-4 text-center">
-                             <span className="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-500">{fournisseur.phone || '-'}</span>
+                           <td className="py-1.5 px-2 text-center">
+                             <span className="font-mono text-[10px] text-slate-500">{fournisseur.phone || '-'}</span>
                            </td>
-                           <td className="py-3 px-4 opacity-80 text-sm">{fournisseur.email || '-'}</td>
                          </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={3} className="text-center py-10 opacity-50">
-                           <div className="flex flex-col items-center gap-2">
-                             <span className="text-2xl">📭</span>
-                             <span>{searchTerm ? 'Aucun résultat' : 'Liste vide'}</span>
+                        <td colSpan={2} className="text-center py-6 opacity-50">
+                           <div className="flex flex-col items-center gap-1">
+                             <span className="text-xl">📭</span>
+                             <span className="text-xs">{searchTerm ? 'Aucun résultat' : 'Liste vide'}</span>
                            </div>
                         </td>
                       </tr>
@@ -323,7 +417,7 @@ export default function Fournisseurs() {
          </div>
 
          {/* Right Panel: Details */}
-         <div className="bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
+         <div className="md:col-span-2 bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
              {selectedFournisseur ? (
                 <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
                   <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-white shrink-0 flex justify-between items-start">
@@ -396,6 +490,143 @@ export default function Fournisseurs() {
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Référence interne</span>
                           <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">#{selectedFournisseur.id}</span>
                         </div>
+                      </div>
+
+                      {/* Catalogue Fournisseur */}
+                      <div className="pt-6 mt-4 border-t border-slate-100">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer group"
+                          onClick={() => setShowCatalogue(!showCatalogue)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-800">Catalogue Produits</h3>
+                              <p className="text-[11px] text-slate-400">
+                                {catalogueLoading ? 'Chargement...' : `${catalogue.length} produit${catalogue.length > 1 ? 's' : ''} commandé${catalogue.length > 1 ? 's' : ''}`}
+                              </p>
+                            </div>
+                          </div>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${showCatalogue ? 'rotate-180' : ''}`} 
+                            fill="none" 
+                            viewBox="0 0 24 24" 
+                            stroke="currentColor"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+
+                        {showCatalogue && (
+                          <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {/* Barre de recherche du catalogue */}
+                            {catalogue.length > 0 && (
+                              <div className="relative mb-3">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                  </svg>
+                                </div>
+                                <input 
+                                  type="text" 
+                                  placeholder="Rechercher dans le catalogue..." 
+                                  className="input input-sm input-bordered w-full pl-9 bg-white text-xs h-8" 
+                                  value={catalogueSearch}
+                                  onChange={(e) => setCatalogueSearch(e.target.value)}
+                                />
+                              </div>
+                            )}
+
+                            {catalogueLoading ? (
+                              <div className="flex justify-center py-8">
+                                <span className="loading loading-spinner loading-md text-primary"></span>
+                              </div>
+                            ) : filteredCatalogue.length === 0 ? (
+                              <div className="text-center py-6 text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p className="text-xs font-medium">
+                                  {catalogueSearch ? 'Aucun résultat' : 'Aucun produit commandé'}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="overflow-x-auto rounded-xl border border-slate-200">
+                                <table className="table table-xs w-full">
+                                  <thead className="bg-slate-50">
+                                    <tr>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase">CIP</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase">Produit</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">Dern. Prix</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">Dern. Cmd</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">Marge</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">Qté Tot.</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">Stock</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {filteredCatalogue.map((item) => (
+                                      <tr key={item.produit_id} className="hover:bg-slate-50/50 border-b border-slate-100 last:border-0">
+                                        <td className="py-2">
+                                          <span className="font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+                                            {item.cip}
+                                          </span>
+                                        </td>
+                                        <td className="py-2">
+                                          <span className="text-xs font-medium text-slate-700 line-clamp-1" title={item.produit_nom}>
+                                            {item.produit_nom}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 text-right">
+                                          <span className="text-xs font-semibold text-slate-700">
+                                            {item.dernier_prix_achat.toLocaleString('fr-FR')} F
+                                          </span>
+                                        </td>
+                                        <td className="py-2 text-center">
+                                          <span className="text-[10px] text-slate-500">
+                                            {item.derniere_commande 
+                                              ? new Date(item.derniere_commande).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' })
+                                              : '-'
+                                            }
+                                          </span>
+                                        </td>
+                                        <td className="py-2 text-right">
+                                          <span className={`text-xs font-semibold ${item.marge >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                                            {item.marge.toLocaleString('fr-FR')} F
+                                          </span>
+                                          <span className="text-[9px] text-slate-400 ml-1">
+                                            ({item.marge_pourcent}%)
+                                          </span>
+                                        </td>
+                                        <td className="py-2 text-center">
+                                          <span className="text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                                            {item.qte_totale}
+                                          </span>
+                                        </td>
+                                        <td className="py-2 text-center">
+                                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                            item.stock_actuel <= 0 
+                                              ? 'bg-red-100 text-red-600' 
+                                              : item.stock_actuel < 10 
+                                                ? 'bg-amber-100 text-amber-600' 
+                                                : 'bg-emerald-100 text-emerald-600'
+                                          }`}>
+                                            {item.stock_actuel}
+                                          </span>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                   </div>
                 </div>
@@ -660,6 +891,16 @@ export default function Fournisseurs() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Sudo Mode Password Modal */}
+      <PasswordConfirmModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onConfirm={pendingAction}
+        title={passwordModalConfig.title}
+        message={passwordModalConfig.message}
+      />
+
     </div>
   );
 }
