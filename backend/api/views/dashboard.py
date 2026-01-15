@@ -70,9 +70,9 @@ class DashboardViewSet(viewsets.ViewSet):
             count=Count('id')
         )
         
-        # 5. Discount (Remises accordées ce mois)
+        # 5. Discount (Remises accordées AUJOURD'HUI)
         discount_total = Facture.objects.filter(
-            date__gte=start_of_month,
+            date__date=today,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(total=Coalesce(Sum('remise'), Decimal('0')))['total']
         

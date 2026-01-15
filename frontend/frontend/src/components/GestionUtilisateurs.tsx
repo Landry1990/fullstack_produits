@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import { useConfirm } from '../hooks/useConfirm';
+import PasswordConfirmModal from './PasswordConfirmModal';
 
 interface User {
   id: number;
@@ -16,6 +18,11 @@ interface User {
     can_do_returns?: boolean;
     can_sell_negative_stock?: boolean;
     can_cash_out?: boolean;
+    can_delete_product?: boolean;
+    can_adjust_stock?: boolean;
+    can_delete_fournisseur?: boolean;
+    can_delete_commande?: boolean;
+    can_close_commande?: boolean;
   };
 }
 
@@ -39,11 +46,17 @@ const ROLES = [
 ];
 
 export default function GestionUtilisateurs() {
+  const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const { user: currentUser } = useAuth();
+
+  // Sudo Mode State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordModalConfig, setPasswordModalConfig] = useState({ title: '', message: '' });
+  const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -58,6 +71,11 @@ export default function GestionUtilisateurs() {
     can_do_returns: false,
     can_sell_negative_stock: false,
     can_cash_out: false,
+    can_delete_product: false,
+    can_adjust_stock: false,
+    can_delete_fournisseur: false,
+    can_delete_commande: false,
+    can_close_commande: false,
   });
 
   useEffect(() => {
@@ -86,18 +104,33 @@ export default function GestionUtilisateurs() {
       updates.can_cash_out = true;
       updates.can_do_returns = true;
       updates.can_sell_negative_stock = true;
+      updates.can_delete_product = true;
+      updates.can_adjust_stock = true;
+      updates.can_delete_fournisseur = true;
+      updates.can_delete_commande = true;
+      updates.can_close_commande = true;
       updates.allowed_menus = AVAILABLE_MENUS.map(m => m.key);
     } else if (role === 'CAISSIER') {
       updates.is_superuser = false;
       updates.can_cash_out = true;
       updates.can_do_returns = false;
       updates.can_sell_negative_stock = false;
+      updates.can_delete_product = false;
+      updates.can_adjust_stock = false;
+      updates.can_delete_fournisseur = false;
+      updates.can_delete_commande = false;
+      updates.can_close_commande = false;
       updates.allowed_menus = ['ventes', 'facturation', 'caisse', 'clients', 'produits'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
       updates.can_cash_out = false; // RESTRICTION MAJEURE
       updates.can_do_returns = false;
       updates.can_sell_negative_stock = false;
+      updates.can_delete_product = false;
+      updates.can_adjust_stock = false;
+      updates.can_delete_fournisseur = false;
+      updates.can_delete_commande = false;
+      updates.can_close_commande = false;
       // Vendeur a accès à la caisse pour les rappels seulement (sera géré dans CaisseCentralisee)
       updates.allowed_menus = ['facturation', 'caisse', 'produits', 'clients', 'rayons'];
     }
@@ -120,6 +153,11 @@ export default function GestionUtilisateurs() {
         can_do_returns: user.profile?.can_do_returns || false,
         can_sell_negative_stock: user.profile?.can_sell_negative_stock || false,
         can_cash_out: user.profile?.can_cash_out ?? false,
+        can_delete_product: user.profile?.can_delete_product || false,
+        can_adjust_stock: user.profile?.can_adjust_stock || false,
+        can_delete_fournisseur: user.profile?.can_delete_fournisseur || false,
+        can_delete_commande: user.profile?.can_delete_commande || false,
+        can_close_commande: user.profile?.can_close_commande || false,
       });
     } else {
       setEditingUser(null);
@@ -135,6 +173,11 @@ export default function GestionUtilisateurs() {
         can_do_returns: false,
         can_sell_negative_stock: false,
         can_cash_out: false,
+        can_delete_product: false,
+        can_adjust_stock: false,
+        can_delete_fournisseur: false,
+        can_delete_commande: false,
+        can_close_commande: false,
       });
       handleRoleChange('VENDEUR'); // Initialize defaults
     }
@@ -150,16 +193,42 @@ export default function GestionUtilisateurs() {
     });
   };
 
+  // Execute user deletion (called after password confirmation)
+  const executeDeleteUser = async (userId: number, username: string) => {
+    try {
+      await axios.delete(`/api/users/${userId}/`);
+      toast.success(`Utilisateur ${username} supprimé`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error("Erreur lors de la suppression de l'utilisateur");
+    }
+  };
+
+  // Handle password confirmation callback
+  const handlePasswordConfirmed = () => {
+    if (pendingAction) {
+      pendingAction();
+      setPendingAction(null);
+    }
+  };
+
   const handleDeleteUser = async (userId: number, username: string) => {
-    if (window.confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${username}" ? Cette action est irréversible.`)) {
-      try {
-        await axios.delete(`/api/users/${userId}/`);
-        toast.success(`Utilisateur ${username} supprimé`);
-        fetchUsers();
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        toast.error("Erreur lors de la suppression de l'utilisateur");
-      }
+    const confirmed = await confirm({
+      title: 'Supprimer l\'utilisateur',
+      message: `Supprimer l'utilisateur "${username}" ?\n\nCette action est irréversible.`,
+      variant: 'danger',
+      confirmText: 'Supprimer'
+    });
+    
+    if (confirmed) {
+      // Trigger Password Modal for sudo confirmation
+      setPasswordModalConfig({
+        title: "Confirmer la suppression",
+        message: "La suppression d'un utilisateur est une action sensible. Veuillez saisir votre mot de passe pour confirmer."
+      });
+      setPendingAction(() => () => executeDeleteUser(userId, username));
+      setIsPasswordModalOpen(true);
     }
   };
 
@@ -178,7 +247,12 @@ export default function GestionUtilisateurs() {
           allowed_menus: formData.allowed_menus,
           can_do_returns: formData.can_do_returns,
           can_sell_negative_stock: formData.can_sell_negative_stock,
-          can_cash_out: formData.can_cash_out
+          can_cash_out: formData.can_cash_out,
+          can_delete_product: formData.can_delete_product,
+          can_adjust_stock: formData.can_adjust_stock,
+          can_delete_fournisseur: formData.can_delete_fournisseur,
+          can_delete_commande: formData.can_delete_commande,
+          can_close_commande: formData.can_close_commande
         }
       };
       
@@ -444,7 +518,59 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_sell_negative_stock}
                       onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Vente hors stock</span>
+                    <span className="label-text text-sm font-bold text-warning">Vente hors stock (Forcer)</span>
+                  </label>
+
+                  <div className="divider my-1">Sécurité</div>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs checkbox-error"
+                      checked={formData.can_delete_product}
+                      onChange={e => setFormData({...formData, can_delete_product: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Supprimer Produits</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs checkbox-warning"
+                      checked={formData.can_adjust_stock}
+                      onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Ajuster Stock Manuel</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs checkbox-error"
+                      checked={formData.can_delete_fournisseur}
+                      onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Supprimer Fournisseurs</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs checkbox-error"
+                      checked={formData.can_delete_commande}
+                      onChange={e => setFormData({...formData, can_delete_commande: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Supprimer Commandes</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs checkbox-warning"
+                      checked={formData.can_close_commande}
+                      onChange={e => setFormData({...formData, can_close_commande: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Clôturer Commandes</span>
                   </label>
                 </div>
               </div>
@@ -457,6 +583,15 @@ export default function GestionUtilisateurs() {
           </div>
         </div>
       )}
+
+      {/* Sudo Mode Password Modal */}
+      <PasswordConfirmModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onConfirm={handlePasswordConfirmed}
+        title={passwordModalConfig.title}
+        message={passwordModalConfig.message}
+      />
     </div>
   );
 }

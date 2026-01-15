@@ -416,3 +416,23 @@ export interface Ordonnancier {
   enregistre_par_nom?: string
   created_at: string
 }
+
+export interface User {
+  id?: number;
+  username: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  is_superuser: boolean;
+  token?: string;
+  allowed_menus?: string[];
+  // Permissions
+  can_do_returns?: boolean;
+  can_sell_negative_stock?: boolean;
+  can_cash_out?: boolean;
+  can_delete_product?: boolean;
+  can_adjust_stock?: boolean;
+  can_delete_commande?: boolean;
+  can_close_commande?: boolean;
+  can_delete_fournisseur?: boolean;
+}

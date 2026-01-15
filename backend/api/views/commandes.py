@@ -13,12 +13,12 @@ from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import Paragraph, Table, TableStyle, Frame, PageTemplate, BaseDocTemplate, Spacer, SimpleDocTemplate, PageBreak
 import io
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from reportlab.graphics.barcode import code128
 
 from ..models import (
     Commande, CommandeProduit, Produit, StockLot, StockAdjustment, AuditLog,
-    Avoir, LigneAvoir, Promis, Facture, FactureProduit, ActivityLog, Fournisseur
+    Avoir, LigneAvoir, Promis, Facture, FactureProduit, ActivityLog, Fournisseur, MouvementStock
 )
 from ..serializers import (
     CommandeSerializer, CommandeProduitSerializer, AvoirSerializer, 
@@ -253,12 +253,147 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         commande.status = Commande.Status.CLOTUREE
         commande.save(update_fields=['status', 'date_cloture'])
         
-        # 2.4 Mettre à jour la date de dernier achat pour tous les produits
+        # 2.4 Créer les MouvementStock pour historique permanent
+        mouvements_to_create = []
+        for item in items:
+            total_qty = item.quantity + item.unites_gratuites
+            produit = product_map.get(item.produit_id)
+            if produit:
+                mouvements_to_create.append(MouvementStock(
+                    produit=produit,
+                    type_mouvement=MouvementStock.TypeMouvement.ENTREE,
+                    quantite=total_qty,
+                    stock_apres=produit.stock,
+                    user=request.user if request else None,
+                    description=f"Clôture commande #{commande.id} - {commande.fournisseur.name if commande.fournisseur else 'Inconnu'}"
+                ))
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
+        
+        # 2.5 Mettre à jour la date de dernier achat pour tous les produits
         today = date.today()
         # Important: utiliser l'ID du produit dans la liste product_ids
         Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
 
         return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def annuler_reception(self, request, pk=None):
+        """
+        Annule la réception d'une commande clôturée.
+        - Retire le stock ajouté lors de la clôture
+        - Supprime les lots de stock créés
+        - Enregistre un ajustement de stock négatif
+        - Repasse la commande en statut PREP
+        """
+        commande = self.get_object()
+        
+        if commande.status != Commande.Status.CLOTUREE:
+            return Response(
+                {'detail': 'Seule une commande clôturée peut être annulée.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Récupérer tous les produits de la commande
+        items = commande.produits.select_related('produit').all()
+        
+        if not items.exists():
+            commande.status = Commande.Status.EN_PREPARATION
+            commande.date_cloture = None
+            commande.save(update_fields=['status', 'date_cloture'])
+            return Response({'status': 'Commande vide, statut repassé en préparation.'})
+        
+        # Verrouiller les produits pour éviter les modifications concurrentes
+        product_ids = [item.produit_id for item in items]
+        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
+        product_map = {p.id: p for p in locked_products}
+        
+        produits_to_update = []
+        produits_dict = {}
+        
+        # Phase 1: Calculer les retraits de stock
+        for item in items:
+            quantity_paid = item.quantity
+            quantity_free = item.unites_gratuites
+            total_qty = quantity_paid + quantity_free
+            
+            produit = product_map.get(item.produit_id)
+            if not produit:
+                continue
+            
+            # Accumuler les quantités à retirer par produit
+            if produit.id not in produits_dict:
+                produits_dict[produit.id] = {
+                    'produit': produit,
+                    'qty_to_remove': Decimal(total_qty),
+                    'items': [item]
+                }
+                produits_to_update.append(produit)
+            else:
+                produits_dict[produit.id]['qty_to_remove'] += Decimal(total_qty)
+                produits_dict[produit.id]['items'].append(item)
+        
+        # Phase 2: Mettre à jour les stocks et créer les mouvements
+        mouvements_to_create = []
+        for pid, data in produits_dict.items():
+            produit = data['produit']
+            qty_to_remove = data['qty_to_remove']
+            
+            old_stock = Decimal(produit.stock)
+            new_stock = old_stock - qty_to_remove
+            
+            # Éviter stock négatif
+            if new_stock < 0:
+                new_stock = Decimal(0)
+            
+            produit.stock = new_stock
+            
+            # Créer un MouvementStock pour traçabilité
+            mouvements_to_create.append(MouvementStock(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+                quantite=-int(qty_to_remove),  # Négatif car on retire
+                stock_apres=int(new_stock),
+                user=request.user,
+                description=f"Annulation réception commande #{commande.id}"
+            ))
+        
+        # Phase 3: Supprimer les lots de stock créés lors de la clôture
+        lots_to_delete = StockLot.objects.filter(commande_produit__commande=commande)
+        deleted_lots_count = lots_to_delete.count()
+        lots_to_delete.delete()
+        
+        # Phase 4: Bulk update des produits
+        if produits_to_update:
+            Produit.objects.bulk_update(produits_to_update, ['stock'], batch_size=100)
+        
+        # Phase 5: Créer les mouvements en bulk
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
+        
+        # Phase 6: Mettre à jour le statut de la commande
+        commande.status = Commande.Status.EN_PREPARATION
+        commande.date_cloture = None
+        commande.save(update_fields=['status', 'date_cloture'])
+        
+        # Log audit
+        log_audit(
+            request.user,
+            'ANN_RECEP',  # Max 10 chars pour le champ action
+            'Commande',
+            str(commande.id),
+            f"Annulation réception: stock retiré, {deleted_lots_count} lots supprimés"
+        )
+        
+        return Response({
+            'status': 'Réception annulée avec succès.',
+            'details': {
+                'produits_affectes': len(produits_dict),
+                'lots_supprimes': deleted_lots_count,
+                'nouveau_statut': 'En préparation'
+            }
+        })
 
     @action(detail=True, methods=['get'])
     def imprimer_reception(self, request, pk=None):
@@ -1002,33 +1137,48 @@ class PromisViewSet(viewsets.ModelViewSet):
 def generer_suggestions_commande(request):
     """
     Génère des suggestions de commandes selon le mode choisi.
+    Supporte un budget_max optionnel pour limiter le montant total HT.
     """
     mode = request.data.get('mode', 'simple')
     periode = int(request.data.get('periode', 30))
     fournisseur_id = request.data.get('fournisseur_id')
+    budget_max = request.data.get('budget_max')  # Optionnel, en HT
+    
+    # Convertir budget en float si fourni
+    if budget_max:
+        try:
+            budget_max = float(budget_max)
+        except (ValueError, TypeError):
+            budget_max = None
     
     if mode == 'simple':
-        suggestions = calculer_reapprovisionnement_simple(
+        suggestions, total_ht = calculer_reapprovisionnement_simple(
             periode=periode,
-            fournisseur_id=fournisseur_id
+            fournisseur_id=fournisseur_id,
+            budget_max=budget_max
         )
     else:
-        suggestions = calculer_optimisation_intelligente(
+        suggestions, total_ht = calculer_optimisation_intelligente(
             periode=periode,
-            fournisseur_id=fournisseur_id
+            fournisseur_id=fournisseur_id,
+            budget_max=budget_max
         )
     
     return Response({
         'mode': mode,
         'periode': periode,
+        'budget_max': budget_max,
+        'total_ht': total_ht,
         'suggestions': suggestions,
         'total_produits': len(suggestions)
     })
 
 
-def calculer_reapprovisionnement_simple(periode, fournisseur_id=None):
+def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max=None):
     """
-    Calcul simple : Qté = Ventes sur période - Stock actuel
+    Calcul simple : Qté = Quantité vendue sur la période.
+    On remplace exactement ce qui est sorti.
+    Si budget_max est fourni, on priorise les meilleurs vendeurs.
     """
     date_debut = timezone.now() - timedelta(days=periode)
     from django.db.models import Sum
@@ -1050,10 +1200,22 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None):
         
         stock_actuel = produit.stock or 0
         
-        # Calcul simple
-        qte_a_commander = max(0, int(ventes) - stock_actuel)
+        # Réassort simple = on commande exactement ce qu'on a vendu
+        qte_a_commander = int(ventes)
         
-        if ventes > 0:
+        # Calculer le montant HT
+        prix_achat = float(produit.cost_price or 0)
+        montant_ht = prix_achat * qte_a_commander
+        
+        # Calculer la raison
+        raison = f"Vendu: {int(ventes)} unités sur {periode}j"
+        if stock_actuel <= 0:
+            raison += " (RUPTURE)"
+        elif stock_actuel < ventes:
+            raison += f" | Stock restant: {int(stock_actuel)}"
+        
+        # Ne garder que les produits avec des ventes ET quantité > 0
+        if ventes > 0 and qte_a_commander > 0:
             suggestions.append({
                 'produit_id': produit.id,
                 'produit_nom': produit.name,
@@ -1062,24 +1224,68 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None):
                 'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
                 'stock_actuel': int(stock_actuel),
                 'ventes_periode': int(ventes),
-                'quantite_suggeree': int(qte_a_commander),
-                'prix_achat': float(produit.cost_price or 0),
+                'quantite_suggeree': qte_a_commander,
+                'prix_achat': prix_achat,
+                'montant_ht': montant_ht,
+                'prix_vente': float(produit.selling_price or 0),
+                'tva': str(produit.tva or '0'),
+                'taux_marge': str(produit.taux_marge or '1.3'),
                 'rotation': 'N/A',
                 'tendance': 'N/A',
-                'urgence': 'urgent' if stock_actuel < ventes else 'normal',
-                'couverture_jours': 0
+                'urgence': 'urgent' if stock_actuel <= 0 else 'normal',
+                'couverture_jours': int((stock_actuel / ventes) * periode) if ventes > 0 else 999,
+                'raison': raison
             })
     
-    suggestions.sort(key=lambda x: x['quantite_suggeree'], reverse=True)
-    return suggestions
+    # Trier par ventes élevées (priorité selon demande utilisateur)
+    suggestions.sort(key=lambda x: -x['ventes_periode'])
+    
+    # Appliquer le budget max si fourni
+    if budget_max and budget_max > 0:
+        filtered_suggestions = []
+        cumul_ht = 0.0
+        
+        for item in suggestions:
+            cost = item['montant_ht']
+            
+            if cumul_ht + cost <= budget_max * 1.05:  # Tolérance 5% pour le total
+                filtered_suggestions.append(item)
+                cumul_ht += cost
+            else:
+                # Essayer d'ajouter une quantité partielle
+                remaining = budget_max - cumul_ht
+                unit_price = item['prix_achat']
+                
+                if unit_price > 0 and remaining > 0:
+                    qty_possible = int(remaining // unit_price)
+                    # Si on peut en prendre au moins 1 et que ça en vaut la peine
+                    if qty_possible > 0:
+                        item['quantite_suggeree'] = qty_possible
+                        item['montant_ht'] = qty_possible * unit_price
+                        item['raison'] += " (Budget)"
+                        filtered_suggestions.append(item)
+                        cumul_ht += item['montant_ht']
+                
+                # On arrête dès qu'on ne peut plus ajouter un article complet ou partiel prioritaire
+                break
+        
+        return filtered_suggestions, round(cumul_ht, 2)
+    
+    # Calculer le total HT
+    total_ht = sum(item['montant_ht'] for item in suggestions)
+    return suggestions, round(total_ht, 2)
 
 
-def calculer_optimisation_intelligente(periode, fournisseur_id=None):
+def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=None):
     """
-    Calcul optimisé avec rotation, tendances, stock
+    Calcul optimisé avec rotation, tendances, stock.
+    Stock cible = période sélectionnée (en jours de consommation).
+    Si budget_max est fourni, on priorise les produits à plus fortes ventes.
     """
-    date_debut = timezone.now() - timedelta(days=periode)
-    date_mi_periode = timezone.now() - timedelta(days=periode // 2)
+    # Utiliser une période d'analyse plus longue (30j minimum) pour des stats fiables
+    periode_analyse = max(periode, 30)
+    date_debut = timezone.now() - timedelta(days=periode_analyse)
+    date_mi_periode = timezone.now() - timedelta(days=periode_analyse // 2)
     from django.db.models import Sum
 
     produits = Produit.objects.all()
@@ -1089,7 +1295,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None):
     suggestions = []
     
     for produit in produits:
-        # 1. Ventes totales
+        # 1. Ventes totales sur période d'analyse
         ventes_total = FactureProduit.objects.filter(
             produit=produit,
             facture__date__gte=date_debut,
@@ -1099,20 +1305,20 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None):
         if ventes_total == 0:
             continue
         
-        # 2. Consommation journalière
-        conso_jour = float(ventes_total) / periode
+        # 2. Consommation journalière moyenne
+        conso_jour = float(ventes_total) / periode_analyse
         
         # 3. Stock actuel
         stock_actuel = int(produit.stock or 0)
         
-        # 4. Couverture en jours
+        # 4. Couverture actuelle en jours
         if conso_jour > 0:
             couverture_jours = stock_actuel / conso_jour
         else:
             couverture_jours = 999
         
         # 5. Rotation (ventes / stock moyen)
-        stock_moyen = max(stock_actuel, 1)  # Simplification
+        stock_moyen = max(stock_actuel, 1)
         rotation = float(ventes_total) / stock_moyen
         
         # 6. Tendance (période récente vs ancienne)
@@ -1128,8 +1334,8 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None):
         else:
             tendance = 1.0 if ventes_recentes > 0 else 0
         
-        # 7. Calcul quantité optimale (Stock cible = 30 jours)
-        stock_cible = conso_jour * 30
+        # 7. Stock cible = consommation journalière × période demandée
+        stock_cible = conso_jour * periode
         qte_base = max(0, stock_cible - stock_actuel)
         
         # Ajustement selon rotation
@@ -1143,35 +1349,95 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None):
             niveau_rotation = 'normale'
         
         # Ajustement selon tendance
-        qte_base *= tendance
+        qte_base *= min(tendance, 2.0)  # Plafonner à 2x pour éviter les excès
         
         qte_finale = int(round(qte_base))
         
-        # Déterminer urgence
-        if couverture_jours < 7:
+        # Déterminer urgence selon la couverture vs période demandée
+        ratio_couverture = couverture_jours / periode if periode > 0 else 999
+        if ratio_couverture < 0.25:  # Moins de 25% de la période couverte
             urgence = 'urgent'
-        elif couverture_jours < 15:
+            score_urgence = 80
+        elif ratio_couverture < 0.5:  # Moins de 50%
             urgence = 'bientot'
+            score_urgence = 50
         else:
             urgence = 'normal'
+            score_urgence = 20
         
-        suggestions.append({
-            'produit_id': produit.id,
-            'produit_nom': produit.name,
-            'produit_ref': produit.cip1 or '',
-            'fournisseur_id': produit.fournisseur.id if produit.fournisseur else None,
-            'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
-            'stock_actuel': stock_actuel,
-            'ventes_periode': int(ventes_total),
-            'quantite_suggeree': max(qte_finale, 0),
-            'prix_achat': float(produit.cost_price or 0),
-            'rotation': niveau_rotation,
-            'tendance': round(tendance, 2),
-            'urgence': urgence,
-            'couverture_jours': int(couverture_jours)
-        })
+        # Construire la raison
+        raison = f"Couverture: {int(couverture_jours)}j/{periode}j. "
+        if niveau_rotation == 'haute':
+            raison += "Rotation élevée (+20%). "
+        elif niveau_rotation == 'faible':
+            raison += "Rotation faible (-20%). "
+        if tendance > 1.2:
+            raison += f"Tendance hausse (+{int((tendance-1)*100)}%)."
+        elif tendance < 0.8:
+            raison += f"Tendance baisse ({int((tendance-1)*100)}%)."
+        
+        # Calculer montant HT
+        prix_achat = float(produit.cost_price or 0)
+        qte_finale_finale = max(qte_finale, 0)
+        montant_ht = prix_achat * qte_finale_finale
+        
+        # Ne garder que les produits avec quantité suggérée > 0
+        if qte_finale_finale > 0:
+            suggestions.append({
+                'produit_id': produit.id,
+                'produit_nom': produit.name,
+                'produit_ref': produit.cip1 or '',
+                'fournisseur_id': produit.fournisseur.id if produit.fournisseur else None,
+                'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
+                'stock_actuel': stock_actuel,
+                'ventes_periode': int(ventes_total),
+                'quantite_suggeree': qte_finale_finale,
+                'prix_achat': prix_achat,
+                'montant_ht': montant_ht,
+                'prix_vente': float(produit.selling_price or 0),
+                'tva': str(produit.tva or '0'),
+                'taux_marge': str(produit.taux_marge or '1.3'),
+                'rotation': niveau_rotation,
+                'tendance': round(tendance, 2),
+                'urgence': urgence,
+                'score_urgence': score_urgence,
+                'couverture_jours': int(couverture_jours),
+                'raison': raison
+            })
     
-    ordre_urgence = {'urgent': 0, 'bientot': 1, 'normal': 2}
-    suggestions.sort(key=lambda x: (ordre_urgence.get(x['urgence'], 3), -x['quantite_suggeree']))
+    # Trier par ventes élevées (priorité selon demande utilisateur)
+    suggestions.sort(key=lambda x: -x['ventes_periode'])
     
-    return suggestions
+    # Appliquer le budget max si fourni
+    if budget_max and budget_max > 0:
+        filtered_suggestions = []
+        cumul_ht = 0.0
+        
+        for item in suggestions:
+            cost = item['montant_ht']
+            
+            if cumul_ht + cost <= budget_max * 1.05:  # Tolérance 5%
+                filtered_suggestions.append(item)
+                cumul_ht += cost
+            else:
+                 # Essayer d'ajouter une quantité partielle
+                remaining = budget_max - cumul_ht
+                unit_price = item['prix_achat']
+                
+                if unit_price > 0 and remaining > 0:
+                    qty_possible = int(remaining // unit_price)
+                    # Si on peut en prendre au moins 1
+                    if qty_possible > 0:
+                        item['quantite_suggeree'] = qty_possible
+                        item['montant_ht'] = qty_possible * unit_price
+                        item['raison'] += " (Budget)"
+                        filtered_suggestions.append(item)
+                        cumul_ht += item['montant_ht']
+                
+                break
+        
+        return filtered_suggestions, round(cumul_ht, 2)
+    
+    # Calculer le total HT
+    total_ht = sum(item['montant_ht'] for item in suggestions)
+    return suggestions, round(total_ht, 2)

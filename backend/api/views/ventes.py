@@ -23,7 +23,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, 
 from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse, ClotureCaisse, 
     MouvementCaisse, Produit, StockLot, LoyaltySetting, InvoiceSettings, AuditLog,
-    RelevePaiement
+    RelevePaiement, MouvementStock
 )
 from ..serializers import (
     FactureSerializer, FactureProduitSerializer, CaisseSerializer, ClotureCaisseSerializer,
@@ -337,9 +337,41 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
         
         if was_validated:
-            FactureProduitAllocation.objects.filter(
+            # 1. Restaurer le stock des lots (Quantité remaining)
+            allocations = FactureProduitAllocation.objects.filter(
                 facture_produit__facture=facture
-            ).delete()
+            ).select_related('stock_lot')
+            
+            for alloc in allocations:
+                if alloc.stock_lot:
+                    StockLot.objects.filter(pk=alloc.stock_lot.pk).update(
+                        quantity_remaining=F('quantity_remaining') + alloc.quantity
+                    )
+
+            # 2. Restaurer le stock global et créer MouvementStock
+            items = FactureProduit.objects.filter(facture=facture).select_related('produit')
+            
+            mouvements_to_create = []
+            
+            for item in items:
+                # Update Stock
+                Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)
+                
+                # Prepare trace
+                mouvements_to_create.append(MouvementStock(
+                    produit=item.produit,
+                    type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+                    quantite=item.quantity, # Positive because product comes BACK to stock
+                    stock_apres=item.produit.stock + item.quantity, # Approximation (concurrency safe enough for history)
+                    description=f"Annulation Facture #{facture.numero_facture or facture.id}",
+                    user=request.user
+                ))
+            
+            # Bulk create movements for performance
+            MouvementStock.objects.bulk_create(mouvements_to_create)
+
+            # 3. Supprimer les allocations
+            allocations.delete()
 
         facture.date_annulation = timezone.now()
         facture.status = Facture.Status.ANNULEE
@@ -398,9 +430,19 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             )
         
         # 1. Restore stock from old products
-        FactureProduitAllocation.objects.filter(
+        # A. Restore Lots
+        allocations = FactureProduitAllocation.objects.filter(
             facture_produit__facture=facture
-        ).delete()
+        ).select_related('stock_lot')
+        
+        for alloc in allocations:
+            if alloc.stock_lot:
+                StockLot.objects.filter(pk=alloc.stock_lot.pk).update(
+                    quantity_remaining=F('quantity_remaining') + alloc.quantity
+                )
+        
+        # B. Delete allocations
+        allocations.delete()
         
         old_items = FactureProduit.objects.filter(facture=facture)
         for item in old_items:

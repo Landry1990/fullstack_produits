@@ -15,7 +15,10 @@ from .models import (
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role']
+        fields = [
+            'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
+            'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande'
+        ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,7 +51,12 @@ class UserSerializer(serializers.ModelSerializer):
             profile.allowed_menus = profile_data.get('allowed_menus', [])
             profile.can_do_returns = profile_data.get('can_do_returns', False)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', False)
-            profile.can_cash_out = profile_data.get('can_cash_out', True) # Default to True for now
+            profile.can_cash_out = profile_data.get('can_cash_out', True)
+            profile.can_delete_product = profile_data.get('can_delete_product', False)
+            profile.can_adjust_stock = profile_data.get('can_adjust_stock', False)
+            profile.can_delete_fournisseur = profile_data.get('can_delete_fournisseur', False)
+            profile.can_delete_commande = profile_data.get('can_delete_commande', False)
+            profile.can_close_commande = profile_data.get('can_close_commande', False)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
             
@@ -74,6 +82,11 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_do_returns = profile_data.get('can_do_returns', profile.can_do_returns)
             profile.can_sell_negative_stock = profile_data.get('can_sell_negative_stock', profile.can_sell_negative_stock)
             profile.can_cash_out = profile_data.get('can_cash_out', profile.can_cash_out)
+            profile.can_delete_product = profile_data.get('can_delete_product', profile.can_delete_product)
+            profile.can_adjust_stock = profile_data.get('can_adjust_stock', profile.can_adjust_stock)
+            profile.can_delete_fournisseur = profile_data.get('can_delete_fournisseur', profile.can_delete_fournisseur)
+            profile.can_delete_commande = profile_data.get('can_delete_commande', profile.can_delete_commande)
+            profile.can_close_commande = profile_data.get('can_close_commande', profile.can_close_commande)
             profile.role = profile_data.get('role', profile.role)
             profile.save()
             

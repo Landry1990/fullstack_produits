@@ -10,6 +10,7 @@ from .views import (
     generer_suggestions_commande, HistoriqueVentesViewSet,
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView
 )
+from .views.auth import verify_password
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
 
@@ -30,6 +31,7 @@ router.register(r'facture-produits', FactureProduitViewSet, basename='facturepro
 router.register(r'caisse', CaisseViewSet, basename='caisse')
 router.register(r'dashboard', DashboardViewSet, basename='dashboard')
 router.register(r'statistiques', StatistiquesViewSet, basename='statistiques')
+router.register(r'rapports', RapportViewSet, basename='rapports')
 router.register(r'stock-lots', StockLotViewSet, basename='stocklot')
 router.register(r'creances', CreanceViewSet, basename='creance')
 router.register(r'mouvements-caisse', MouvementCaisseViewSet, basename='mouvementcaisse')
@@ -49,6 +51,7 @@ router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
+    path('verify-password/', verify_password, name='verify-password'),
     path('stock-analysis/unsold/', StockAnalysisUnsoldView.as_view(), name='stock-analysis-unsold'),
     path('stock-analysis/overstock/', StockAnalysisOverstockView.as_view(), name='stock-analysis-overstock'),
     path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),

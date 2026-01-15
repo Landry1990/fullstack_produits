@@ -1,7 +1,10 @@
+
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
-import { useConfirm } from '../hooks/useConfirm'
+import { useConfirm } from '../hooks/useConfirm';
+import { useAuth } from '../context/AuthContext';
+import PasswordConfirmModal from './PasswordConfirmModal';
 import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot, StockAdjustment } from '../types'
 import { STOCK_ADJUSTMENT_REASONS } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
@@ -20,6 +23,7 @@ export default function Produit() {
   // Hook de confirmation
   const confirm = useConfirm()
   
+  const { user } = useAuth();
   // État principal
   const [produits, setProduits] = useState<ProduitModel[]>([])
   const [loading, setLoading] = useState(false)
@@ -27,8 +31,17 @@ export default function Produit() {
   
   // Filtres
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [filterRayon, setFilterRayon] = useState('')
   const [filterFournisseur, setFilterFournisseur] = useState('')
+
+  // Debounce de la recherche (300ms) pour optimiser avec beaucoup de produits
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   // Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -76,6 +89,11 @@ export default function Produit() {
   
   // Sélection pour suppression groupée
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([])
+
+  // Sudo Mode State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordModalConfig, setPasswordModalConfig] = useState<{ title: string; message: string }>({ title: '', message: '' });
+  const [pendingAction, setPendingAction] = useState<() => Promise<void>>(() => Promise.resolve());
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
   const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
@@ -179,7 +197,6 @@ export default function Produit() {
       const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
       setSelectedProduit(fullProduit)
       setActiveTab('general')
-      setIsDetailsModalOpen(true)
       
       // Charger l'historique d'achats
       try {
@@ -266,7 +283,25 @@ export default function Produit() {
     }
   }
 
+  const executeDeleteProduit = async (produitId: number) => {
+    try {
+      await axios.delete(`${produitsEndpoint}${produitId}/`)
+      setProduits(prev => prev.filter(p => p.id !== produitId))
+      setSelectedProduit(null)
+      toast.success('Produit supprimé avec succès')
+    } catch (err) {
+      toast.error('Erreur lors de la suppression')
+      console.error(err)
+    }
+  }
+
   const handleDeleteProduit = async (produit: ProduitModel) => {
+    // Permission Check
+    if (!user?.is_superuser && !user?.can_delete_product) {
+        toast.error("Accès refusé : Vous n'avez pas la permission de supprimer des produits.")
+        return
+    }
+
     const confirmed = await confirm({
       title: 'Supprimer le produit',
       message: `Voulez-vous vraiment supprimer le produit "${produit.name}" ?\n\nCette action est irréversible.`,
@@ -275,14 +310,13 @@ export default function Produit() {
     })
     if (!confirmed) return
     
-    try {
-      await axios.delete(`${produitsEndpoint}${produit.id}/`)
-      setProduits(prev => prev.filter(p => p.id !== produit.id))
-      setIsDetailsModalOpen(false)
-    } catch (err) {
-      toast.error('Erreur lors de la suppression')
-      console.error(err)
-    }
+    // Trigger Password Modal
+    setPasswordModalConfig({
+        title: "Confirmer la suppression",
+        message: "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive de ce produit."
+    })
+    setPendingAction(() => () => executeDeleteProduit(produit.id))
+    setIsPasswordModalOpen(true)
   }
 
   const handleRecalculateRotation = async () => {
@@ -371,16 +405,9 @@ export default function Produit() {
     setIsCreateModalOpen(false)
   }
 
-  const handleStockAdjustment = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const executeStockAdjustment = async () => {
     if (!selectedProduit) return
-    
-    // Validation
-    if (!adjustmentForm.new_quantity) {
-      toast.error('Veuillez saisir la nouvelle quantité')
-      return
-    }
-    
+
     try {
       const { data } = await axios.post(
         `${produitsEndpoint}${selectedProduit.id}/adjust_stock/`,
@@ -399,6 +426,31 @@ export default function Produit() {
       toast.error(err.response?.data?.detail || 'Erreur lors de l\'ajustement')
       console.error(err)
     }
+  }
+
+  const handleStockAdjustment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedProduit) return
+
+    // Permission Check
+    if (!user?.is_superuser && !user?.can_adjust_stock) {
+        toast.error("Accès refusé : Vous n'avez pas la permission d'ajuster le stock manuellement.")
+        return
+    }
+    
+    // Validation
+    if (!adjustmentForm.new_quantity) {
+      toast.error('Veuillez saisir la nouvelle quantité')
+      return
+    }
+    
+    // Trigger Password Modal directly (no confirm dialog needed as the modal acts as confirmation)
+    setPasswordModalConfig({
+        title: "Confirmer l'ajustement de stock",
+        message: `Vous allez modifier manuellement le stock de "${selectedProduit.name}". Veuillez confirmer par mot de passe.`
+    })
+    setPendingAction(() => executeStockAdjustment)
+    setIsPasswordModalOpen(true)
   }
 
   const handleOpenAdjustmentModal = () => {
@@ -535,6 +587,86 @@ export default function Produit() {
     }
   }
 
+  const handleBulkChangeRayon = async (rayonId: number) => {
+    const rayonName = rayons.find(r => r.id === rayonId)?.name || 'sélectionné'
+    const confirmed = await confirm({
+      title: 'Changer le rayon',
+      message: `Affecter ${selectedProductIds.length} produit(s) au rayon "${rayonName}" ?`,
+      variant: 'info',
+      confirmText: 'Confirmer'
+    })
+    if (!confirmed) return
+
+    setLoading(true)
+    let successCount = 0
+    let errorCount = 0
+
+    try {
+      for (const id of selectedProductIds) {
+        try {
+          await axios.patch(`${produitsEndpoint}${id}/`, { rayon: rayonId })
+          successCount++
+        } catch {
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} produit(s) mis à jour`)
+        fetchProduits()
+        setSelectedProductIds([])
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} échec(s)`)
+      }
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleBulkChangeFournisseur = async (fournisseurId: number) => {
+    const fournisseurName = fournisseurs.find(f => f.id === fournisseurId)?.name || 'sélectionné'
+    const confirmed = await confirm({
+      title: 'Changer le fournisseur',
+      message: `Affecter ${selectedProductIds.length} produit(s) au fournisseur "${fournisseurName}" ?`,
+      variant: 'info',
+      confirmText: 'Confirmer'
+    })
+    if (!confirmed) return
+
+    setLoading(true)
+    let successCount = 0
+    let errorCount = 0
+
+    try {
+      for (const id of selectedProductIds) {
+        try {
+          await axios.patch(`${produitsEndpoint}${id}/`, { fournisseur: fournisseurId })
+          successCount++
+        } catch {
+          errorCount++
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} produit(s) mis à jour`)
+        fetchProduits()
+        setSelectedProductIds([])
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} échec(s)`)
+      }
+    } catch (err) {
+      toast.error('Erreur lors de la mise à jour')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Filtrer les produits
   const filteredProduits = useMemo(() => {
     // Ensure produits is always an array
@@ -542,8 +674,8 @@ export default function Produit() {
     
     let list = produits
     
-    if (searchQuery) {
-      const q = searchQuery.trim().toLowerCase()
+    if (debouncedSearchQuery) {
+      const q = debouncedSearchQuery.trim().toLowerCase()
       list = produits.filter(p => {
         const inName = p.name?.toLowerCase().includes(q)
         const inCips = [p.cip1, p.cip2, p.cip3].some(c => (c || '').toLowerCase().includes(q))
@@ -560,7 +692,55 @@ export default function Produit() {
     }
     
     return list.sort((a, b) => a.name.localeCompare(b.name))
-  }, [produits, searchQuery, filterRayon, filterFournisseur])
+  }, [produits, debouncedSearchQuery, filterRayon, filterFournisseur])
+
+  // Navigation clavier avec flèches haut/bas et Entrée pour sélection
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorer si un input/textarea est focus (sauf si c'est la recherche)
+      const activeElement = document.activeElement as HTMLElement
+      if (activeElement?.tagName === 'TEXTAREA' || 
+          (activeElement?.tagName === 'INPUT' && activeElement.getAttribute('type') !== 'text')) {
+        return
+      }
+
+      // Entrée pour sélectionner/désélectionner le produit courant
+      if (e.key === 'Enter' && selectedProduit) {
+        e.preventDefault()
+        handleSelectProduct(selectedProduit.id)
+        return
+      }
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        
+        if (filteredProduits.length === 0) return
+
+        const currentIndex = selectedProduit 
+          ? filteredProduits.findIndex(p => p.id === selectedProduit.id)
+          : -1
+
+        let newIndex: number
+        if (e.key === 'ArrowDown') {
+          newIndex = currentIndex < filteredProduits.length - 1 ? currentIndex + 1 : 0
+        } else {
+          newIndex = currentIndex > 0 ? currentIndex - 1 : filteredProduits.length - 1
+        }
+
+        const newProduit = filteredProduits[newIndex]
+        if (newProduit) {
+          handleViewDetails(newProduit)
+          
+          // Scroll to make the selected row visible
+          const row = document.querySelector(`tr[data-product-id="${newProduit.id}"]`)
+          row?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [filteredProduits, selectedProduit, selectedProductIds])
 
   // Stats
   const totalProduits = Array.isArray(produits) ? produits.length : 0
@@ -581,143 +761,36 @@ export default function Produit() {
 
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">📦 Gestion des Produits</h1>
-          <p className="text-sm text-base-content/60">Inventaire et détails</p>
+      {/* Header compact */}
+      <div className="flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-3">
+          <h1 className="text-lg font-bold">📦 Gestion des Produits</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <button
             onClick={handleRecalculateRotation}
-            className="btn btn-sm btn-ghost gap-2"
+            className="btn btn-xs btn-ghost"
             disabled={loading}
-            title="Recalculer la rotation moyenne de tous les produits"
+            title="Recalculer la rotation"
           >
             🔄 Rotation
           </button>
           <button
             onClick={fetchProduits}
-            className="btn btn-sm btn-ghost gap-2"
+            className="btn btn-xs btn-ghost"
             disabled={loading}
+            title="Actualiser"
           >
             {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
-            Actualiser
           </button>
         </div>
       </div>
 
-      {/* Stats Badges */}
-      <div className="flex flex-wrap gap-4 text-sm">
-          <div className="badge badge-lg badge-ghost gap-2">
-            📦 Total: <span className="font-bold">{totalProduits}</span>
-          </div>
-          <div className="badge badge-lg badge-warning gap-2">
-            ⚠️ Faible: <span className="font-bold">{lowStockCount}</span>
-          </div>
-          <div className="badge badge-lg badge-error gap-2">
-            🚫 Rupture: <span className="font-bold">{outOfStockCount}</span>
-          </div>
-      </div>
-
-      {/* Filtres & Actions */}
-      <div className="flex flex-col lg:flex-row gap-4 items-end">
-          {/* Recherche */}
-          <div className="form-control flex-1 w-full">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase text-gray-500">Rechercher</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Nom ou CIP..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input input-bordered input-sm w-full"
-            />
-          </div>
-          
-          {/* Filtre Rayon */}
-          <div className="form-control w-full lg:w-48">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase text-gray-500">Rayon</span>
-            </label>
-            <select
-              value={filterRayon}
-              onChange={(e) => setFilterRayon(e.target.value)}
-              className="select select-bordered select-sm w-full"
-            >
-              <option value="">Tous</option>
-              {rayons.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
-            </select>
-          </div>
-          
-          {/* Filtre Fournisseur */}
-          <div className="form-control w-full lg:w-48">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase text-gray-500">Fournisseur</span>
-            </label>
-            <select
-              value={filterFournisseur}
-              onChange={(e) => setFilterFournisseur(e.target.value)}
-              className="select select-bordered select-sm w-full"
-            >
-              <option value="">Tous</option>
-              {fournisseurs.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
-            </select>
-          </div>
-          
-          {/* Reset Button */}
-           {(searchQuery || filterRayon || filterFournisseur) && (
-            <button
-              className="btn btn-sm btn-ghost btn-square mb-1"
-              onClick={() => {
-                setSearchQuery('')
-                setFilterRayon('')
-                setFilterFournisseur('')
-              }}
-              title="Réinitialiser filtres"
-            >
-              ✕
-            </button>
-          )}
-
-          {/* Spacer for desktop */}
-          <div className="hidden lg:block w-4"></div>
-
-          {/* Boutons d'action */}
-          <div className="flex gap-2">
-            <label className="btn btn-sm btn-secondary" htmlFor="csv-import-input">
-              {isImporting ? <span className="loading loading-spinner loading-xs"></span> : '📄'}
-              Import
-            </label>
-            <input
-              id="csv-import-input"
-              type="file"
-              accept=".csv"
-              className="hidden"
-              onChange={handleCsvImport}
-              disabled={isImporting}
-            />
-            <button className="btn btn-sm btn-primary whitespace-nowrap" onClick={() => setIsCreateModalOpen(true)}>
-              ➕ Créer
-            </button>
-            {selectedProductIds.length > 0 && (
-              <button 
-                className="btn btn-sm btn-error gap-2 whitespace-nowrap" 
-                onClick={handleBulkDelete}
-                disabled={loading}
-              >
-                🗑️ Supprimer ({selectedProductIds.length})
-              </button>
-            )}
-          </div>
-      </div>
-
       {/* Messages d'erreur */}
       {error && (
-        <div className="px-6 pt-4 shrink-0">
-          <div role="alert" className="alert alert-error">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <div className="shrink-0">
+          <div role="alert" className="alert alert-error alert-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>{error}</span>
@@ -725,117 +798,581 @@ export default function Produit() {
         </div>
       )}
 
-      {/* Tableau avec Footer intégré */}
-      <div className="flex-1 min-h-0 bg-white rounded-lg shadow flex flex-col">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span className="loading loading-spinner loading-lg"></span>
+      {/* Layout Split-Panel */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 min-h-0">
+        {/* Left Panel: Liste des produits */}
+        <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden">
+          {/* Header avec recherche et actions */}
+          <div className="p-3 border-b bg-white shrink-0 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-slate-800">Produits</h2>
+                {loading ? (
+                  <span className="loading loading-spinner loading-xs text-primary"></span>
+                ) : (
+                  <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">{filteredProduits.length}</span>
+                )}
+              </div>
+              <div className="flex gap-1">
+                <label className="btn btn-xs btn-ghost" htmlFor="csv-import-input" title="Importer CSV">
+                  {isImporting ? <span className="loading loading-spinner loading-xs"></span> : '📄'}
+                </label>
+                <input
+                  id="csv-import-input"
+                  type="file"
+                  accept=".csv"
+                  className="hidden"
+                  onChange={handleCsvImport}
+                  disabled={isImporting}
+                />
+                <button className="btn btn-xs btn-primary" onClick={() => setIsCreateModalOpen(true)} title="Créer">
+                  ➕
+                </button>
+              </div>
+            </div>
+            
+            {/* Recherche */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Nom ou CIP..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input input-xs input-bordered w-full pl-7 bg-slate-50 focus:bg-white h-7 text-xs"
+              />
+            </div>
+
+            {/* Filtres compacts */}
+            <div className="flex gap-1">
+              <select
+                value={filterRayon}
+                onChange={(e) => setFilterRayon(e.target.value)}
+                className="select select-xs select-bordered flex-1 min-w-0 text-xs h-7"
+              >
+                <option value="">Rayon</option>
+                {rayons.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+              </select>
+              <select
+                value={filterFournisseur}
+                onChange={(e) => setFilterFournisseur(e.target.value)}
+                className="select select-xs select-bordered flex-1 min-w-0 text-xs h-7"
+              >
+                <option value="">Fournisseur</option>
+                {fournisseurs.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
+              </select>
+              {(searchQuery || filterRayon || filterFournisseur) && (
+                <button
+                  className="btn btn-xs btn-ghost btn-square"
+                  onClick={() => {
+                    setSearchQuery('')
+                    setFilterRayon('')
+                    setFilterFournisseur('')
+                  }}
+                  title="Réinitialiser"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
-        ) : filteredProduits.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-base-content/40">
-            <p className="text-lg">Aucun produit trouvé</p>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 overflow-auto">
-              <table className="table table-xs w-full table-pin-rows">
-                <thead className="bg-base-200">
+
+          {/* Tableau compact */}
+          <div className="flex-1 overflow-auto">
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <span className="loading loading-spinner loading-md"></span>
+              </div>
+            ) : filteredProduits.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4">
+                <span className="text-xl">📭</span>
+                <span className="text-xs mt-1">Aucun produit</span>
+              </div>
+            ) : (
+              <table className="table table-xs table-pin-rows w-full">
+                <thead className="bg-slate-50 text-slate-500">
                   <tr>
-                    <th className="w-12 bg-base-200">
-                      <label>
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-xs"
-                          checked={selectedProductIds.length === filteredProduits.length && filteredProduits.length > 0}
-                          onChange={handleSelectAll}
-                        />
-                      </label>
+                    <th className="py-1.5 px-1 w-6">
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-xs checkbox-primary"
+                        checked={selectedProductIds.length === filteredProduits.length && filteredProduits.length > 0}
+                        onChange={handleSelectAll}
+                        title="Tout sélectionner"
+                      />
                     </th>
-                    <th className="text-xs uppercase bg-base-200">Produit</th>
-                    <th className="text-xs uppercase bg-base-200">CIP</th>
-                    <th className="text-xs uppercase text-right bg-base-200">Prix Vente</th>
-                    <th className="text-xs uppercase text-center bg-base-200">Stock</th>
-                    <th className="text-xs uppercase bg-base-200">Rayon</th>
-                    <th className="text-xs uppercase text-center bg-base-200">Actions</th>
+                    <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider w-20">CIP</th>
+                    <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider">Produit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProduits.map((produit) => {
                     const stock = produit.stock ?? 0;
-                    
-                    const rowClass = stock < 0 
-                      ? 'hover cursor-pointer text-error font-medium' // Stock négatif : rouge
-                      : stock > 0 
-                      ? 'hover cursor-pointer font-bold' // Stock positif : gras
-                      : 'hover cursor-pointer text-base-content/70'; // Stock zero : normal (grisé)
+                    const isSelected = selectedProduit?.id === produit.id;
+                    const isChecked = selectedProductIds.includes(produit.id);
                     
                     return (
-                    <tr
-                      key={produit.id}
-                      className={rowClass}
-                      onClick={() => handleViewDetails(produit)}
-                    >
-                      <td onClick={(e) => e.stopPropagation()}>
-                        <label>
+                      <tr
+                        key={produit.id}
+                        data-product-id={produit.id}
+                        className={`hover cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'bg-primary/20 border-l-4 border-l-primary font-semibold' 
+                            : isChecked 
+                              ? 'bg-success/10 border-l-4 border-l-success' 
+                              : 'border-b border-slate-50 text-slate-600'
+                        } ${stock < 0 ? 'text-error' : stock === 0 ? 'opacity-60' : ''}`}
+                        onClick={() => handleViewDetails(produit)}
+                      >
+                        <td className="py-1 px-1 w-6" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="checkbox"
-                            className="checkbox checkbox-xs"
-                            checked={selectedProductIds.includes(produit.id)}
+                            className="checkbox checkbox-xs checkbox-primary"
+                            checked={isChecked}
                             onChange={() => handleSelectProduct(produit.id)}
                           />
-                        </label>
-                      </td>
-                      <td className="uppercase">{produit.name}</td>
-                      <td className="font-mono text-xs opacity-70">{produit.cip1 || '-'}</td>
-                      <td className="text-right font-mono">
-                        {Math.round(Number(produit.selling_price || 0)).toLocaleString('fr-FR')} F
-                      </td>
-                      <td className="text-center">
-                        <span className={`badge badge-sm ${stock <= 0 ? (stock < 0 ? 'badge-error' : 'badge-ghost') : 'badge-success badge-outline'}`}>
-                          {stock}
-                        </span>
-                      </td>
-                      <td>
-                        <span className="text-xs opacity-70">{produit.rayon_name || '-'}</span>
-                      </td>
-                      <td className="text-center">
-                        <div className="flex justify-center gap-1">
-                          <button
-                            className="btn btn-xs btn-ghost btn-square"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleViewDetails(produit)
-                            }}
-                            title="Voir détails"
+                        </td>
+                        <td className="py-1 px-2 w-20">
+                          <span className="font-mono text-xs text-slate-600 font-semibold">{produit.cip1 || '-'}</span>
+                        </td>
+                        <td className="py-1 px-2">
+                          <div 
+                            className={`text-xs uppercase ${
+                              stock < 0 ? 'text-error font-bold' : 
+                              stock === 0 ? 'text-slate-400 font-normal' : 
+                              'text-slate-800 font-bold'
+                            }`} 
+                            title={produit.name}
                           >
-                            👁️
-                          </button>
-                          <button
-                            className="btn btn-xs btn-ghost btn-square"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleGenerateLabels(produit)
-                            }}
-                            title="Étiquettes"
-                          >
-                            🏷️
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                            {produit.name}
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
               </table>
+            )}
+          </div>
+
+          {/* Footer stats */}
+          <div className="p-1.5 border-t bg-slate-50/50 text-[10px] text-center text-slate-400 shrink-0 flex justify-around">
+            <span>📦 {totalProduits}</span>
+            <span className="text-warning">⚠️ {lowStockCount}</span>
+            <span className="text-error">🚫 {outOfStockCount}</span>
+          </div>
+          
+          {/* Actions groupées */}
+          {selectedProductIds.length > 0 && (
+            <div className="p-2 border-t bg-primary/5 shrink-0 space-y-2">
+              <div className="flex items-center justify-between text-xs font-semibold text-primary">
+                <span>✓ {selectedProductIds.length} sélectionné(s)</span>
+                <button 
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => setSelectedProductIds([])}
+                  title="Désélectionner"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                <div className="dropdown dropdown-top dropdown-end">
+                  <label tabIndex={0} className="btn btn-xs btn-outline btn-primary gap-1">
+                    📁 Rayon ▼
+                  </label>
+                  <ul tabIndex={0} className="dropdown-content z-50 menu p-1 shadow bg-base-100 rounded-box w-40 max-h-48 overflow-auto">
+                    {rayons.map(r => (
+                      <li key={r.id}>
+                        <a onClick={() => handleBulkChangeRayon(r.id)} className="text-xs py-1">{r.name}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="dropdown dropdown-top dropdown-end">
+                  <label tabIndex={0} className="btn btn-xs btn-outline btn-secondary gap-1">
+                    🏭 Fournisseur ▼
+                  </label>
+                  <ul tabIndex={0} className="dropdown-content z-50 menu p-1 shadow bg-base-100 rounded-box w-48 max-h-48 overflow-auto">
+                    {fournisseurs.map(f => (
+                      <li key={f.id}>
+                        <a onClick={() => handleBulkChangeFournisseur(f.id)} className="text-xs py-1">{f.name}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button 
+                  className="btn btn-xs btn-error gap-1" 
+                  onClick={handleBulkDelete}
+                  disabled={loading}
+                >
+                  🗑️ Supprimer
+                </button>
+              </div>
             </div>
-            
-            {/* Footer compact */}
-            <div className="p-2 border-t border-base-200 bg-base-50/50 text-xs text-center text-base-content/50">
-                {filteredProduits.length} produit{filteredProduits.length > 1 ? 's' : ''} affiché{filteredProduits.length > 1 ? 's' : ''}
-                {filteredProduits.length !== produits.length && ` sur ${produits.length} au total`}
+          )}
+        </div>
+
+        {/* Right Panel: Détails du produit */}
+        <div className="md:col-span-2 bg-white rounded-lg shadow flex flex-col overflow-hidden">
+          {selectedProduit ? (
+            <div className="flex flex-col h-full">
+              {/* Header produit */}
+              <div className="p-4 border-b bg-gradient-to-r from-slate-50 to-white shrink-0">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold uppercase">#{selectedProduit.id}</span>
+                      <span className={`badge badge-md ${
+                        (selectedProduit.stock ?? 0) <= 0 ? 'badge-error' :
+                        (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :
+                        'badge-success'
+                      }`}>Stock: {selectedProduit.stock ?? 0}</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-800 uppercase">{selectedProduit.name}</h2>
+                    <p className="text-sm text-slate-500 font-mono mt-1">
+                      CIP: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
+                    </p>
+                  </div>
+                  <div className="flex gap-1">
+                    <button 
+                      className="btn btn-sm btn-ghost text-slate-400 hover:text-warning" 
+                      onClick={handleOpenAdjustmentModal}
+                      title="Ajuster stock"
+                    >
+                      📊
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-ghost text-slate-400 hover:text-primary" 
+                      onClick={() => handleOpenEditModal(selectedProduit)}
+                      title="Modifier"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-ghost text-slate-400 hover:text-secondary" 
+                      onClick={() => handleGenerateLabels(selectedProduit)}
+                      title="Étiquettes"
+                    >
+                      🏷️
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-ghost text-slate-400 hover:text-error" 
+                      onClick={() => handleDeleteProduit(selectedProduit)}
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Onglets */}
+              <div role="tablist" className="tabs tabs-boxed bg-slate-100 rounded-none px-4 pt-2 shrink-0">
+                <a role="tab" className={`tab ${activeTab === 'general' ? 'tab-active' : ''}`} onClick={() => setActiveTab('general')}>
+                  Général
+                </a>
+                <a role="tab" className={`tab ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>
+                  Prix
+                </a>
+                <a role="tab" className={`tab ${activeTab === 'achats' ? 'tab-active' : ''}`} onClick={() => setActiveTab('achats')}>
+                  Achats
+                </a>
+                <a role="tab" className={`tab ${activeTab === 'lots' ? 'tab-active' : ''}`} onClick={() => setActiveTab('lots')}>
+                  Lots
+                </a>
+                <a role="tab" className={`tab ${activeTab === 'ajustements' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ajustements')}>
+                  Ajust.
+                </a>
+                <a role="tab" className={`tab ${activeTab === 'stats' ? 'tab-active' : ''}`} onClick={() => setActiveTab('stats')}>
+                  Stats
+                </a>
+              </div>
+
+              {/* Contenu des onglets */}
+              <div className="flex-1 overflow-auto p-4">
+                {activeTab === 'general' && (
+                  <div className="overflow-x-auto">
+                    <table className="table table-sm">
+                      <tbody>
+                        <tr>
+                          <td className="font-semibold w-1/3">Description</td>
+                          <td className="uppercase">{selectedProduit.description || '-'}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Rayon</td>
+                          <td><span className="badge badge-outline badge-sm">{selectedProduit.rayon_name || '-'}</span></td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Fournisseur</td>
+                          <td><span className="badge badge-ghost badge-sm">{selectedProduit.fournisseur_name || '-'}</span></td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Stock min / max</td>
+                          <td>{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Seuil alerte</td>
+                          <td><span className="badge badge-warning badge-sm">{selectedProduit.stock_alert ?? 0}</span></td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Date expiration</td>
+                          <td>{selectedProduit.expire_date ? (() => {
+                            const d = new Date(selectedProduit.expire_date);
+                            return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                          })() : '-'}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Dernier achat</td>
+                          <td>{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString('fr-FR') : '-'}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Dernière vente</td>
+                          <td>{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString('fr-FR') : '-'}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Gestion par lots</td>
+                          <td>{selectedProduit.use_lot_management ? '✅ Activée' : '❌ Désactivée'}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Ordonnance requise</td>
+                          <td>{selectedProduit.requires_prescription ? '✅ Oui' : '❌ Non'}</td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold">Surveillance</td>
+                          <td>{selectedProduit.surveillance_category === 'NONE' ? '-' : selectedProduit.surveillance_category}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {activeTab === 'prix' && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                      <div className="stat-title text-sm">Prix Revient</div>
+                      <div className="stat-value text-blue-600 text-xl">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR')} F</div>
+                    </div>
+                    <div className="stat bg-primary text-primary-content rounded-xl p-4">
+                      <div className="stat-title text-primary-content/80 text-sm">Prix Vente</div>
+                      <div className="stat-value text-xl">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</div>
+                    </div>
+                    <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                      <div className="stat-title text-sm">TVA</div>
+                      <div className="stat-value text-lg">{selectedProduit.tva || '19.25'}%</div>
+                    </div>
+                    <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                      <div className="stat-title text-sm">% Marge</div>
+                      <div className="stat-value text-lg">{Number(selectedProduit.pourcentage_marge || 0).toFixed(2)}%</div>
+                    </div>
+                    <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                      <div className="stat-title text-sm">Coef. Marge</div>
+                      <div className="stat-value text-lg">{Number(selectedProduit.taux_marge || 0).toFixed(2)}</div>
+                    </div>
+                    <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
+                      <div className="stat-title text-sm">Rotation Moy.</div>
+                      <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(2)}<span className="text-sm"> /mois</span></div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'achats' && (
+                  <div className="overflow-x-auto">
+                    <table className="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Fournisseur</th>
+                          <th className="text-right">Qté</th>
+                          <th className="text-right">Prix</th>
+                          <th>Lot</th>
+                          <th>Exp.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {achats.length === 0 ? (
+                          <tr><td colSpan={6} className="text-center text-base-content/50">Aucun achat enregistré</td></tr>
+                        ) : (
+                          achats.map(a => (
+                            <tr key={a.id}>
+                              <td className="font-mono text-xs">{a.commande_date?.slice(0, 10) || '-'}</td>
+                              <td className="uppercase text-xs">{a.fournisseur_name || '-'}</td>
+                              <td className="text-right font-bold">{a.quantity}</td>
+                              <td className="text-right">{a.price} F</td>
+                              <td className="font-mono text-xs">{a.lot || '-'}</td>
+                              <td className="font-mono text-xs">{a.date_expiration ? (() => {
+                                const d = new Date(a.date_expiration);
+                                return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                              })() : '-'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {activeTab === 'lots' && (
+                  <div className="overflow-x-auto">
+                    <table className="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Lot</th>
+                          <th>Expiration</th>
+                          <th className="text-right">Stock</th>
+                          <th className="text-right">Prix</th>
+                          <th>Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lots.length === 0 ? (
+                          <tr><td colSpan={5} className="text-center text-base-content/50">Aucun lot disponible</td></tr>
+                        ) : (
+                          lots.map(lot => {
+                            const expirationDate = lot.date_expiration ? new Date(lot.date_expiration) : null
+                            const today = new Date()
+                            const isExpired = expirationDate ? expirationDate < today : false
+                            const monthsDiff = expirationDate 
+                              ? (expirationDate.getFullYear() - today.getFullYear()) * 12 + expirationDate.getMonth() - today.getMonth()
+                              : 999
+                            const isExpiringSoon = monthsDiff <= 3 && monthsDiff >= 0
+                            
+                            return (
+                              <tr key={lot.id} className={lot.quantity_remaining === 0 ? 'opacity-50' : ''}>
+                                <td className="font-mono font-bold">{lot.lot || 'N/A'}</td>
+                                <td>
+                                  {expirationDate ? (
+                                    <span className={isExpired ? 'text-error font-bold' : isExpiringSoon ? 'text-warning font-semibold' : ''}>
+                                      {`${(expirationDate.getMonth() + 1).toString().padStart(2, '0')}/${expirationDate.getFullYear().toString().slice(-2)}`}
+                                      {isExpired && ' ⚠️'}
+                                      {isExpiringSoon && !isExpired && ' ⏰'}
+                                    </span>
+                                  ) : 'N/A'}
+                                </td>
+                                <td className="text-right font-bold">
+                                  <span className={lot.quantity_remaining === 0 ? 'text-error' : 'text-success'}>
+                                    {lot.quantity_remaining}
+                                  </span>
+                                </td>
+                                <td className="text-right">{lot.selling_price} F</td>
+                                <td>
+                                  {lot.quantity_remaining === 0 ? (
+                                    <span className="badge badge-error badge-xs">Épuisé</span>
+                                  ) : (
+                                    <span className="badge badge-success badge-xs">Dispo</span>
+                                  )}
+                                </td>
+                              </tr>
+                            )
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {activeTab === 'ajustements' && (
+                  <div className="overflow-x-auto">
+                    {adjustments.length === 0 ? (
+                      <p className="text-center text-base-content/50 py-4">Aucun ajustement enregistré</p>
+                    ) : (
+                      <table className="table table-sm">
+                        <thead>
+                          <tr className="bg-base-200">
+                            <th>Date</th>
+                            <th>User</th>
+                            <th className="text-right">Avant</th>
+                            <th className="text-right">Après</th>
+                            <th className="text-center">Δ</th>
+                            <th>Motif</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adjustments.map(adj => (
+                            <tr key={adj.id}>
+                              <td className="text-xs">
+                                {new Date(adj.created_at).toLocaleDateString('fr-FR')}
+                              </td>
+                              <td className="text-xs">{adj.user_name || adj.username || '-'}</td>
+                              <td className="text-right">{adj.quantity_before}</td>
+                              <td className="text-right">{adj.quantity_after}</td>
+                              <td className="text-center">
+                                <span className={`badge badge-xs ${adj.quantity_change > 0 ? 'badge-success' : adj.quantity_change < 0 ? 'badge-error' : 'badge-ghost'}`}>
+                                  {adj.quantity_change > 0 ? '+' : ''}{adj.quantity_change}
+                                </span>
+                              </td>
+                              <td>
+                                <span className="badge badge-outline badge-xs">{adj.reason_type_display}</span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'stats' && (
+                  <div className="overflow-x-auto max-h-80">
+                    {monthlyStats.length === 0 ? (
+                      <p className="text-center text-base-content/50 py-4">Aucune statistique disponible</p>
+                    ) : (
+                      <>
+                        <table className="table table-sm">
+                          <thead className="bg-base-200 sticky top-0">
+                            <tr>
+                              <th className="text-xs uppercase"></th>
+                              <th className="text-xs uppercase">Mois</th>
+                              <th className="text-xs uppercase text-right text-primary">Qté V</th>
+                              <th className="text-xs uppercase text-right text-warning">Qté C</th>
+                              <th className="text-xs uppercase text-right text-info">Nb C</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(() => {
+                              let currentYear: number | null = null;
+                              return monthlyStats.map((stat, index) => {
+                                const showYear = stat.year !== currentYear;
+                                currentYear = stat.year;
+                                return (
+                                  <tr key={index} className={showYear ? 'border-t-2 border-base-300' : ''}>
+                                    <td className="font-bold text-base-content/60">
+                                      {showYear ? stat.year : ''}
+                                    </td>
+                                    <td>{stat.month_name}</td>
+                                    <td className="text-right font-mono font-bold text-primary">{stat.qte_v}</td>
+                                    <td className="text-right font-mono text-warning">{stat.qte_c}</td>
+                                    <td className="text-right font-mono text-info">{stat.nb_c}</td>
+                                  </tr>
+                                );
+                              });
+                            })()}
+                          </tbody>
+                        </table>
+                        <div className="mt-2 text-[10px] text-base-content/50 flex justify-around">
+                          <span>V = Vendue</span>
+                          <span>C = Commandée</span>
+                          <span>Nb = Nombre</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </>
-        )}
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-300 p-10 text-center">
+              <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+                <span className="text-3xl">📦</span>
+              </div>
+              <p className="font-bold text-slate-400">Aucun produit sélectionné</p>
+              <p className="text-sm text-slate-300 mt-1 max-w-[200px]">Sélectionnez un produit dans la liste pour voir ses détails</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal Détails Produit */}
@@ -1517,6 +2054,15 @@ export default function Produit() {
           <button onClick={() => setIsAdjustmentModalOpen(false)}>close</button>
         </form>
       </dialog>
+
+      {/* Sudo Mode Password Modal */}
+      <PasswordConfirmModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onConfirm={pendingAction}
+        title={passwordModalConfig.title}
+        message={passwordModalConfig.message}
+      />
 
       {/* Modal Création Produit */}
       <ProduitCreateModal
