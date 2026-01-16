@@ -5,7 +5,7 @@ from django.db.models import Sum, F, DecimalField
 from django.core.cache import cache
 from decimal import Decimal
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from datetime import date
 
@@ -68,6 +68,38 @@ class LoyaltySetting(models.Model):
         
     def __str__(self):
         return "Configuration Fidélité"
+
+
+class PharmacySettings(models.Model):
+    """Configuration de la pharmacie (Singleton) - Nom, Adresse, Téléphone, etc."""
+    pharmacy_name = models.CharField(max_length=200, default="PHARMA STOCK")
+    address = models.CharField(max_length=300, blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="Douala")
+    country = models.CharField(max_length=100, blank=True, default="Cameroun")
+    phone = models.CharField(max_length=50, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    niu = models.CharField(max_length=15, blank=True, default="", help_text="Numéro d'Identification Unique (14-15 caractères)")
+    registre_commerce = models.CharField(max_length=20, blank=True, default="", help_text="Registre de Commerce")
+    ticket_footer_message = models.TextField(blank=True, default="Merci de votre visite!")
+    receipt_header = models.TextField(blank=True, default="", help_text="Message en haut du ticket")
+    logo = models.ImageField(upload_to='pharmacy_logos/', blank=True, null=True, help_text="Logo de la pharmacie")
+    coefficient_direct_commande = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=1.35, 
+        help_text="Coefficient multiplicateur pour les commandes directes (Euro -> Revient)"
+    )
+    
+    class Meta:
+        verbose_name = "Paramètres Pharmacie"
+        verbose_name_plural = "Paramètres Pharmacie"
+    
+    def save(self, *args, **kwargs):
+        self.pk = 1  # Singleton pattern
+        super(PharmacySettings, self).save(*args, **kwargs)
+    
+    def __str__(self):
+        return self.pharmacy_name
 
 class Rayon(models.Model):
     """Model representing a product category."""
@@ -194,11 +226,27 @@ class Commande(models.Model):
         EN_PREPARATION = 'PREP', 'En préparation'
         EN_ATTENTE = 'ATT', 'En attente'
         CLOTUREE = 'CLOT', 'Clôturée'
+    
+    class Type(models.TextChoices):
+        LOCALE = 'LOC', 'Locale'
+        DIRECTE = 'DIR', 'Directe'
 
     id = models.AutoField(primary_key=True)
+    type = models.CharField(
+        max_length=3,
+        choices=Type.choices,
+        default=Type.LOCALE,
+        help_text="Type de commande (Locale ou Directe)"
+    )
+    # Taux de change Euro -> FCFA (ex: 655.957)
+    taux_change = models.DecimalField(max_digits=10, decimal_places=3, default=655.957)
+    # Coefficient global appliqué à la commande (Snapshot de PharmacySettings au moment de la création)
+    frais_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
+    
     # On utilise PROTECT pour éviter de supprimer des commandes si un fournisseur est effacé.
     # Nullable pour permettre les commandes de réassort global (sans fournisseur initial)
-    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.PROTECT, null=True, blank=True)
+    fournisseur = models.ForeignKey(Fournisseur, on_delete=models.SET_NULL, null=True, blank=True)
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
     numero_facture = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     date_cloture = models.DateTimeField(null=True, blank=True, verbose_name="Date de clôture")
@@ -223,10 +271,13 @@ class Commande(models.Model):
 class CommandeProduit(models.Model):
     """Model representing a product in an order."""
     id = models.AutoField(primary_key=True)
-    produit = models.ForeignKey('Produit', on_delete=models.CASCADE)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits')
     quantity = models.IntegerField(help_text="Quantité commandée et payée")
     unites_gratuites = models.IntegerField(default=0, help_text="Unités gratuites reçues (ex: promotion 3+1)")
+    # Prix d'achat original en devise (pour commandes directes)
+    prix_euro = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     price_cost = models.DecimalField(max_digits=10, decimal_places=2)
     lot = models.CharField(max_length=20, blank=True, null=True)
@@ -552,9 +603,11 @@ class StockLot(models.Model):
     Représente un lot de stock reçu d'un fournisseur.
     Permet la traçabilité FIFO et le calcul du CA par fournisseur.
     """
-    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='stock_lots')
-    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot')
-    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='stock_lots')
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot', null=True, blank=True, help_text="Référence à la ligne de commande (si applicable)")
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
     quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
     quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
     quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
@@ -651,7 +704,8 @@ def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
 class FactureProduit(models.Model):
     """Model representing a product in an invoice."""
     id = models.AutoField(primary_key=True)
-    produit = models.ForeignKey('Produit', on_delete=models.CASCADE)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='produits')
     quantity = models.IntegerField()
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -891,10 +945,11 @@ class Inventaire(models.Model):
 
 class LigneInventaire(models.Model):
     inventaire = models.ForeignKey(Inventaire, on_delete=models.CASCADE, related_name='lignes')
-    produit = models.ForeignKey(Produit, on_delete=models.PROTECT) # Protect to exclude deleted products from historical inventories
+    produit = models.ForeignKey(Produit, on_delete=models.SET_NULL, null=True, blank=True)  # SET_NULL pour permettre suppression
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     stock_lot = models.ForeignKey(
         'StockLot',
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='inventaires',
@@ -973,7 +1028,8 @@ class Avoir(models.Model):
     ]
     
     numero = models.CharField(max_length=50, unique=True, blank=True)
-    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.PROTECT, related_name='avoirs')
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, related_name='avoirs')
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
     type_avoir = models.CharField(max_length=20, choices=TYPE_CHOICES, default='AUTRE')
     date = models.DateField(default=date.today)
     observations = models.TextField(blank=True)
@@ -1031,10 +1087,11 @@ class Avoir(models.Model):
 class LigneAvoir(models.Model):
     """Ligne d'un avoir fournisseur"""
     avoir = models.ForeignKey(Avoir, related_name='produits', on_delete=models.CASCADE)
-    produit = models.ForeignKey('Produit', on_delete=models.PROTECT)
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)  # SET_NULL pour permettre suppression
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     stock_lot = models.ForeignKey(
         'StockLot', 
-        on_delete=models.PROTECT, 
+        on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
         related_name='avoirs',
@@ -1079,7 +1136,8 @@ class MouvementStock(models.Model):
         TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entrée)'
         TRANSFORMATION_SORTIE = 'TRANSFORMATION_SORTIE', 'Transformation (Sortie)'
 
-    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='mouvements_stock')
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_stock')
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     type_mouvement = models.CharField(max_length=30, choices=TypeMouvement.choices)
     quantite = models.IntegerField(help_text="Quantité mouvementée (positive ou négative)")
     stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock après mouvement (snapshot)")
@@ -1144,14 +1202,20 @@ class HistoriqueTransformation(models.Model):
     )
     produit_source = models.ForeignKey(
         'Produit', 
-        on_delete=models.CASCADE, 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='hist_trans_source'
     )
+    produit_source_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit source sauvegardé")
     produit_destination = models.ForeignKey(
         'Produit', 
-        on_delete=models.CASCADE, 
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='hist_trans_dest'
     )
+    produit_destination_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit destination sauvegardé")
     quantite_source = models.IntegerField(help_text="Quantité transformée (source)")
     quantite_destination = models.IntegerField(help_text="Quantité obtenue (destination)")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -1243,7 +1307,8 @@ class StockAdjustment(models.Model):
         AVARIE = 'AVARIE', 'Avarié'
         USAGE_INTERNE = 'USAGE_INT', 'Usage interne'
     
-    produit = models.ForeignKey('Produit', on_delete=models.CASCADE, related_name='adjustments')
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='adjustments')
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     stock_lot = models.ForeignKey('StockLot', on_delete=models.SET_NULL, null=True, blank=True, related_name='adjustments')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
@@ -1282,7 +1347,8 @@ class Promis(models.Model):
     client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='promis')
     client_name = models.CharField(max_length=100, blank=True, help_text="Nom du client (pour clients de passage)")
     client_phone = models.CharField(max_length=20, blank=True, help_text="Téléphone du client")
-    produit = models.ForeignKey('Produit', on_delete=models.PROTECT, related_name='promis')
+    produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='promis')
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     quantite = models.IntegerField(help_text="Quantité promise au client")
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.EN_ATTENTE)
     date_promis = models.DateTimeField(auto_now_add=True, help_text="Date de la promesse")
@@ -1413,3 +1479,89 @@ class LigneOrdonnancier(models.Model):
     
     def __str__(self):
         return f"{self.produit_nom} x{self.quantite}"
+
+
+#
+# SIGNAUX POUR SUPPRESSION DOUCE (SOFT DELETE)
+#
+@receiver(pre_delete, sender=Produit)
+def preserve_product_name_on_delete(sender, instance, **kwargs):
+    """
+    Avant la suppression d'un produit, on sauvegarde son nom 
+    dans les modèles liés qui ont un champ produit_nom.
+    """
+    if not instance.pk:
+        return
+        
+    nom = instance.name
+    
+    # Modèles liés (via related_names et sets implicites)
+    # Note: On utilise update() pour une requête SQL unique efficace
+    
+    try:
+        instance.factureproduit_set.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.commandeproduit_set.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.stock_lots.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.mouvements_stock.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.adjustments.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.promis.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.hist_trans_source.all().update(produit_source_nom=nom)
+    except: pass
+    
+    try:
+        instance.hist_trans_dest.all().update(produit_destination_nom=nom)
+    except: pass
+    
+    try:
+        instance.ordonnancier_lignes.all().update(produit_nom=nom)
+    except: pass
+    
+    # Modèles sans related_name explicite (utilise modelname_set)
+    try:
+        instance.ligneinventaire_set.all().update(produit_nom=nom)
+    except: pass
+    
+    try:
+        instance.ligneavoir_set.all().update(produit_nom=nom)
+    except: pass
+
+
+@receiver(pre_delete, sender=Fournisseur)
+def preserve_supplier_name_on_delete(sender, instance, **kwargs):
+    """
+    Avant suppression fournisseur, sauvegarde du nom.
+    """
+    if not instance.pk:
+        return
+        
+    nom = instance.name
+    
+    try:
+        instance.commande_set.all().update(fournisseur_nom=nom)
+    except: pass
+    
+    try:
+        instance.stocklot_set.all().update(fournisseur_nom=nom)
+    except: pass
+    
+    try:
+        instance.avoirs.all().update(fournisseur_nom=nom)
+    except: pass

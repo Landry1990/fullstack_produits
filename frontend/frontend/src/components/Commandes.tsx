@@ -17,6 +17,7 @@ import TransferCommandeModal from './Commandes/TransferCommandeModal'
 import MergeCommandesModal from './Commandes/MergeCommandesModal'
 import { useCommandeActions } from '../hooks/useCommandeActions';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
+import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 
 
@@ -32,7 +33,11 @@ function formatDateToMMYY(isoDate: string | null | undefined): string {
     return '';
 }
 
-export default function Commandes() {
+interface CommandesProps {
+    forcedType?: 'LOC' | 'DIR';
+}
+
+export default function Commandes({ forcedType }: CommandesProps) {
   const confirm = useConfirm()
   const { user } = useAuth();
   const [commandes, setCommandes] = useState<Commande[]>([])
@@ -40,6 +45,22 @@ export default function Commandes() {
   const [error, setError] = useState<string | null>(null)
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
 
+
+  const { settings: pharmacySettings } = usePharmacySettings();
+  const [activeTab, setActiveTab] = useState<'LOC' | 'DIR'>(forcedType || 'LOC'); // Onglet actif (List)
+  const [commandeType, setCommandeType] = useState<'LOC' | 'DIR'>(forcedType || 'LOC'); // Type de la commande en cours (Form)
+
+  // Sync state if forcedType changes
+  useEffect(() => {
+    if (forcedType) {
+        setActiveTab(forcedType);
+        setCommandeType(forcedType);
+    }
+  }, [forcedType]);
+  
+  // Champs spécifiques Commandes Directes
+  const [tauxChange, setTauxChange] = useState<string>('655.957');
+  const [fraisCoefficient, setFraisCoefficient] = useState<string>('1.35');
 
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
@@ -171,6 +192,8 @@ export default function Commandes() {
     try {
       const params = new URLSearchParams()
       params.append('page', page.toString())
+      if (activeTab) params.append('type', activeTab)
+      if (filterStatus !== 'ALL') params.append('status', filterStatus)
       
       const response = await axios.get(commandesEndpoint, { params })
       const data = response.data
@@ -195,7 +218,7 @@ export default function Commandes() {
     } finally {
       setLoading(false)
     }
-  }, [commandesEndpoint, page])
+  }, [commandesEndpoint, page, activeTab, filterStatus])
 
   // Initialize Actions Hook (After fetchCommandes definition)
   const {
@@ -239,6 +262,9 @@ export default function Commandes() {
       const cleanCommande: Partial<Commande> = {
            fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
            numero_facture: numeroFacture,
+           type: commandeType,
+           taux_change: commandeType === 'DIR' ? tauxChange : undefined,
+           frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
       };
       // viewMode is typed as string in state, cast to literal
       const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
@@ -281,6 +307,44 @@ export default function Commandes() {
         return () => clearTimeout(timer);
     }
   }, [commandeProduits, viewMode]);
+
+  // Auto-recalculate prices when Global Rate/Coeff changes
+  useEffect(() => {
+      if (commandeType === 'DIR' && viewMode === 'CREATE') {
+          const rate = parseFloat(tauxChange || '0');
+          const coeff = parseFloat(fraisCoefficient || '0');
+          
+          if (!rate || !coeff) return;
+
+          setCommandeProduits(prev => prev.map(item => {
+              // Only update if item has Euro price
+              if (item.prix_euro) {
+                  const pEuro = parseFloat(String(item.prix_euro));
+                  if (!isNaN(pEuro)) {
+                      // 1. Prix Achat FCFA = Euro * Taux
+                      const priceFCFA = pEuro * rate;
+                      // 2. Prix Revient = Prix Achat * Coeff
+                      const costPrice = priceFCFA * coeff;
+                      
+                      // 3. Update Item
+                      const newPrice = costPrice.toFixed(2);
+                      
+                      // 4. Update Selling Price (maintain current margin if possible, else 1.3 default or simple recalc)
+                      // Recalculate selling price based on existing margin
+                      const currentMargin = parseFloat(String(item.marge || 1.3));
+                      const newSelling = costPrice * currentMargin;
+
+                      return {
+                          ...item,
+                          price: newPrice,
+                          selling_price: newSelling.toFixed(0) // Generally rounded
+                      };
+                  }
+              }
+              return item;
+          }));
+      }
+  }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
 
   // Raccourcis clavier globaux (Delete, Escape, Ctrl+A)
   useEffect(() => {
@@ -493,8 +557,9 @@ export default function Commandes() {
         produit: product,
         quantity: 1,
         unites_gratuites: 0,  // NEW: Initialize UG
+        prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(2) : '0') : undefined,
         price: product.cost_price || '0',
-        tva: product.tva || '18',
+        tva: product.tva || '0',
         marge: product.taux_marge || '1.3',
         selling_price: product.selling_price || '0',
         lot: '',
@@ -653,13 +718,34 @@ export default function Commandes() {
   // Fonction pour mettre à jour un champ dans une ligne
   function updateCommandeProduitField(
     index: number,
-    field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration',
+    field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration' | 'prix_euro',
     value: string | number
   ) {
     setCommandeProduits(prev => prev.map((item, i) => {
       if (i === index) {
         const newItem = { ...item, [field]: value };
         
+        // AUTO-CALCUL: Euro -> FCFA
+        if (commandeType === 'DIR' && field === 'prix_euro') {
+             const pEuro = parseFloat(String(newItem.prix_euro || 0));
+             const rate = parseFloat(tauxChange || '655.957'); 
+             const coeff = parseFloat(fraisCoefficient || '1.0');
+
+             if (!isNaN(pEuro) && !isNaN(rate)) {
+                 const priceFCFA = pEuro * rate;
+                 newItem.price = priceFCFA.toFixed(2); // Prix Achat (Base)
+                 
+                 // Prix de Revient (Cost Price) = Prix Achat * Coeff Frais
+                 if (!isNaN(coeff)) {
+                     newItem.price = (priceFCFA * coeff).toFixed(2); // Wait, usually 'price' in line item IS the cost price base. 
+                     // Let's assume 'price' is the landed cost for the system? 
+                     // Or 'price' is invoice price and 'cost_price' is landed?
+                     // In valid_validation logic: stock movement uses 'price'.
+                     // So 'price' should be the FINAL COST PRICE (Revient).
+                 }
+             }
+        }
+
         // Recalculer selling_price si price ou marge change
         if (field === 'price' || field === 'marge') {
              const price = parseFloat(String(newItem.price || 0));
@@ -733,8 +819,9 @@ export default function Commandes() {
                   id: Date.now() + Math.random(), // Unique temp ID
                   produit: product,
                   quantity: qty,
+                  prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(2) : '0') : undefined,
                   price: product.cost_price || '0',
-                  tva: product.tva || '18',
+                  tva: product.tva || '0',
                   marge: product.taux_marge || '1.3',
                   selling_price: product.selling_price || '0',
                   lot: '',
@@ -910,13 +997,20 @@ export default function Commandes() {
 
 
   // Remplacer openAddModal
-  function openCreateView() {
+  function openCreateView(type: 'LOC' | 'DIR' = activeTab) {
     setNewCommandeFournisseurId(fournisseurs.length > 0 ? String(fournisseurs[0].id) : '')
     setNumeroFacture('')
     setCommandeProduits([])
     setSearchProduitQuery('')
 
+    setCommandeType(type);
     
+    // Init Euro params
+    if (type === 'DIR') {
+        setTauxChange('655.957');
+        setFraisCoefficient(pharmacySettings?.coefficient_direct_commande || '1.35');
+    }
+
     // Switch view
     setViewMode('CREATE');
     setSelectedCommande(null);
@@ -926,6 +1020,12 @@ export default function Commandes() {
     // Initialiser le formulaire avec les données de la commande
     setNewCommandeFournisseurId(String(commande.fournisseur));
     setNumeroFacture(commande.numero_facture || '');
+    setCommandeType((commande.type as 'LOC' | 'DIR') || 'LOC');
+    
+    if (commande.type === 'DIR') {
+        setTauxChange(commande.taux_change || '655.957');
+        setFraisCoefficient(commande.frais_coefficient || pharmacySettings?.coefficient_direct_commande || '1.0');
+    }
     
     // Cloner les produits et enrichir les données manquantes
     const enrichedProducts = commande.produits.map(p => {
@@ -946,9 +1046,10 @@ export default function Commandes() {
             produit: fullProduct || p.produit,
             quantity: p.quantity,
             unites_gratuites: p.unites_gratuites || 0,  // NEW: Preserve UG
+            prix_euro: p.prix_euro,
             price: p.price || (fullProduct?.cost_price || '0'),
             selling_price: p.selling_price || (fullProduct?.selling_price || '0'),
-            tva: p.tva || (fullProduct?.tva || '18'),
+            tva: p.tva || (fullProduct?.tva || '0'),
             marge: marge || (fullProduct?.taux_marge || '1.3'),
             lot: p.lot || '',
             date_expiration: formatDateToMMYY(p.date_expiration || '')
@@ -984,7 +1085,26 @@ export default function Commandes() {
 
   return (
     <>
-      <h1 className="text-xl md:text-2xl font-bold mb-4 text-center">Gestion des Commandes</h1>
+      <div className="flex flex-col items-center mb-6">
+          <h1 className="text-xl md:text-2xl font-bold text-center mb-4">Gestion des Commandes</h1>
+          
+          {!forcedType && (
+            <div className="tabs tabs-boxed">
+                <a 
+                className={`tab ${activeTab === 'LOC' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('LOC')}
+                >
+                Commandes Locales
+                </a> 
+                <a 
+                className={`tab ${activeTab === 'DIR' ? 'tab-active' : ''}`}
+                onClick={() => setActiveTab('DIR')}
+                >
+                Commandes Directes
+                </a>
+            </div>
+          )}
+      </div>
 
       {error && (
         <div role="alert" className="alert alert-error mb-4">
@@ -1204,9 +1324,14 @@ export default function Commandes() {
                         const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
                         const rotationDisplay = rotation ? parseFloat(String(rotation)).toFixed(1) : '-';
                         
+                        const isDeleted = p.produit === null;
+
                         return (
                         <tr key={p.id} className="hover">
-                          <td className="font-bold">{p.produitName}</td>
+                          <td className={`font-bold ${isDeleted ? 'italic' : ''}`}>
+                              {p.produitName}
+                              {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+                          </td>
                           <td className="text-center">
                             <span className={`font-mono ${stockNum === 0 ? 'text-error font-bold' : stockNum < 0 ? 'text-error' : 'text-success'}`}>
                               {stock}
@@ -1242,6 +1367,11 @@ export default function Commandes() {
             setNewCommandeFournisseurId={setNewCommandeFournisseurId}
             numeroFacture={numeroFacture}
             setNumeroFacture={setNumeroFacture}
+            commandeType={commandeType}
+            tauxChange={tauxChange}
+            setTauxChange={setTauxChange}
+            fraisCoefficient={fraisCoefficient}
+            setFraisCoefficient={setFraisCoefficient}
             handleBackToList={handleBackToList}
             handleSaveCommande={onSave}
             handleCsvExport={handleCsvExport}

@@ -7,6 +7,7 @@ from django.db.models import F, Sum, Q, Value, DecimalField, Avg, Count
 from django.db.models.functions import Coalesce, TruncMonth, TruncDay
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from django.http import HttpResponse
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 import io
@@ -317,6 +318,20 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         part_assurance=part_assurance,
                         part_patient=Decimal('0.00')
                     )
+        
+        # Create payment record for regular sales if mode_paiement is provided
+        mode_paiement = request.data.get('mode_paiement')
+        if mode_paiement and facture.total_ttc > 0:
+            # Check if a payment was already created (e.g., for professional clients)
+            existing_payment = Caisse.objects.filter(facture=facture).exists()
+            if not existing_payment:
+                Caisse.objects.create(
+                    facture=facture,
+                    mode_paiement=mode_paiement,
+                    montant=facture.total_ttc,
+                    statut='completee',
+                    user=request.user
+                )
 
         facture.refresh_from_db()
         serializer = self.get_serializer(facture)
@@ -853,7 +868,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
 class FactureProduitViewSet(viewsets.ModelViewSet):
     """API endpoint for facture produits."""
-    queryset = FactureProduit.objects.all().order_by('-created_at')
+    queryset = FactureProduit.objects.select_related('produit', 'facture', 'stock_lot').order_by('-created_at')
     serializer_class = FactureProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit', 'facture']
@@ -884,17 +899,38 @@ class CaisseViewSet(viewsets.ModelViewSet):
         
         if date_debut:
             try:
-                start_date = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
-            except ValueError:
+                # Support both ISO format with T and simple date space time
+                clean_date = date_debut.replace('T', ' ').replace('Z', '')
+                try:
+                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
+                
+                if timezone.is_naive(start_date):
+                    start_date = timezone.make_aware(start_date)
+            except ValueError as e:
+                logger.error(f"Error parsing date_debut {date_debut}: {e}")
                 pass
                 
         if date_fin:
             try:
-                if len(date_fin) == 10:
-                    end_date = datetime.fromisoformat(f"{date_fin}T23:59:59")
-                else:
-                    end_date = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
-            except ValueError:
+                clean_date = date_fin.replace('T', ' ').replace('Z', '')
+                try: 
+                    # Try full timestamp first
+                    end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    try:
+                        # Try without seconds
+                        end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
+                    except ValueError:
+                         # Try date only -> end of day
+                        end_date = datetime.strptime(clean_date, '%Y-%m-%d')
+                        end_date = end_date.replace(hour=23, minute=59, second=59)
+
+                if timezone.is_naive(end_date):
+                    end_date = timezone.make_aware(end_date)
+            except ValueError as e:
+                logger.error(f"Error parsing date_fin {date_fin}: {e}")
                 pass
 
         if not start_date:
@@ -961,17 +997,34 @@ class CaisseViewSet(viewsets.ModelViewSet):
         
         if date_debut:
             try:
-                start_date = datetime.fromisoformat(date_debut.replace('Z', '+00:00'))
-            except ValueError:
-                pass
+                clean_date = date_debut.replace('T', ' ').replace('Z', '')
+                try:
+                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    start_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
+
+                if timezone.is_naive(start_date):
+                    start_date = timezone.make_aware(start_date)
+            except ValueError as e:
+                 logger.error(f"Error parsing date_debut {date_debut}: {e}")
+                 pass
                 
         if date_fin:
             try:
-                if len(date_fin) == 10:
-                    end_date = datetime.fromisoformat(f"{date_fin}T23:59:59")
-                else:
-                    end_date = datetime.fromisoformat(date_fin.replace('Z', '+00:00'))
-            except ValueError:
+                clean_date = date_fin.replace('T', ' ').replace('Z', '')
+                try:
+                    end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M:%S')
+                except ValueError:
+                    try:
+                        end_date = datetime.strptime(clean_date, '%Y-%m-%d %H:%M')
+                    except ValueError:
+                        end_date = datetime.strptime(clean_date, '%Y-%m-%d')
+                        end_date = end_date.replace(hour=23, minute=59, second=59)
+
+                if timezone.is_naive(end_date):
+                    end_date = timezone.make_aware(end_date)
+            except ValueError as e:
+                logger.error(f"Error parsing date_fin {date_fin}: {e}")
                 pass
 
         if not start_date:
@@ -1062,7 +1115,7 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        queryset = ClotureCaisse.objects.all().order_by('-date')
+        queryset = ClotureCaisse.objects.select_related('user').order_by('-date')
         
         date_debut = self.request.query_params.get('date_debut')
         date_fin = self.request.query_params.get('date_fin')

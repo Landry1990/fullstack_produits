@@ -3,30 +3,25 @@ import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis } from '../types'
-import { useSearchNavigation } from '../hooks/useSearchNavigation'
+import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture } from '../types'
 import { useProductSearch } from '../hooks/useProductSearch'
+import { useCart } from '../hooks/useCart'
+import { useFacturationClients } from '../hooks/useFacturationClients'
+import { usePendingSales } from '../hooks/usePendingSales'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { normalizeNumberInput } from '../utils/formatters'
 import LotSelectionModal from './LotSelectionModal'
 import PaymentModal from './facturation/PaymentModal'
+import CartTable from './facturation/CartTable'
+import ClientSection from './facturation/ClientSection'
+import ProductSearchSection from './facturation/ProductSearchSection'
+import TotalsSection from './facturation/TotalsSection'
+import ActionButtons from './facturation/ActionButtons'
 import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
-
 // Lazy load barcode component
 const Barcode = lazy(() => import('react-barcode'))
 
-// Interface locale pour la gestion des lignes de facture dans le state
-type LigneFacture = {
-  produit: ProduitModel
-  quantite: number
-  prix_unitaire: string
-  remise_produit: string // Remise en pourcentage pour ce produit
-  total_ligne: number
-  isPromis?: boolean
-  promisQuantity?: number
-  promisPhone?: string
-  lotId?: string | null // Specific lot ID or null for Auto/FEFO
-  lotText?: string | null // For display
-  lotExpiration?: string | null // Display expiration for selected lot
-}
+
 
 type FactureProduitPayload = {
   facture: number
@@ -38,52 +33,13 @@ type FactureProduitPayload = {
   date_expiration: string | null
 }
 
-type VenteEnAttente = {
-  id: number
-  timestamp: number
-  client: number | null
-  clientName: string | null
-  useManualClient: boolean
-  manualClientName: string
-  lignes: LigneFacture[]
-  remise: string
-  remiseMode: 'montant' | 'taux'
-  ayantDroit: {
-    id: number | null
-    nom: string
-    matricule: string
-    societe: string
-    showNew: boolean
-  } | null
-}
 
-const normalizeNumberInput = (value: string | number, options?: { min?: number; max?: number }) => {
-  let parsedValue: number
-  
-  if (typeof value === 'number') {
-    parsedValue = value
-  } else {
-    // Remplacer la virgule par un point pour le format décimal
-    parsedValue = Number(value.toString().replace(',', '.'))
-  }
 
-  if (!Number.isFinite(parsedValue)) {
-    parsedValue = 0
-  }
 
-  if (options?.min !== undefined) {
-    parsedValue = Math.max(options.min, parsedValue)
-  }
-
-  if (options?.max !== undefined) {
-    parsedValue = Math.min(options.max, parsedValue)
-  }
-
-  return parsedValue
-}
 
 export default function Facturation() {
   const { user } = useAuth()
+  const { settings: pharmacySettings } = usePharmacySettings()
   
   // Use product search hook
   const { 
@@ -93,12 +49,60 @@ export default function Facturation() {
     setSearchQuery 
   } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
   
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<number | null>(null)
-  const [manualClientName, setManualClientName] = useState('') // Nom client saisi manuellement
-  const [useManualClient, setUseManualClient] = useState(false) // Toggle entre select et input
-  const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
+  // Local loading state for non-hook operations (e.g. payment)
   const [loading, setLoading] = useState(false)
+
+  // Refs - declared early for hook usage
+  const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
+
+  // useCart Hook - Manages all cart logic
+  const {
+      lignesFacture,
+      setLignesFacture,
+      addProduit: addProduitToFacture,
+      updateQuantite,
+      updatePrix,
+      updateRemiseProduit,
+      updateLineLot,
+      removeLigne,
+      clearCart,
+      cartStats,
+      loading: cartLoading
+  } = useCart({
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+      onRequirePrescription: () => setShowOrdonnanceModal(true),
+      quantityInputsRef
+  })
+
+  // useFacturationClients Hook - Manages all client/AD logic
+  const {
+    clients,
+    loading: clientsLoading,
+    selectedClient, setSelectedClient,
+    manualClientName, setManualClientName,
+    useManualClient, setUseManualClient,
+    clientSearch, setClientSearch,
+    filteredClients,
+    showClientDropdown, setShowClientDropdown,
+    showClientCreateModal, setShowClientCreateModal,
+    newClientForm, setNewClientForm,
+    isCreatingClient,
+    handleCreateClient,
+    ayantsDroitList,
+    selectedAyantDroit, setSelectedAyantDroit,
+    ayantDroitNom, setAyantDroitNom,
+    ayantDroitMatricule, setAyantDroitMatricule,
+    ayantDroitSociete, setAyantDroitSociete,
+    showNewAyantDroit, setShowNewAyantDroit
+  } = useFacturationClients({
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL
+  })
+
+  // Combined loading state
+  const isLoading = loading || cartLoading || clientsLoading || searchLoading
+
+
+
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
   const [error, setError] = useState<string | null>(null)
@@ -112,32 +116,6 @@ export default function Facturation() {
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
 
-  // Ayant Droit states
-  const [ayantDroitNom, setAyantDroitNom] = useState('')
-  const [ayantDroitMatricule, setAyantDroitMatricule] = useState('')
-  const [ayantDroitSociete, setAyantDroitSociete] = useState('')
-  const [selectedAyantDroit, setSelectedAyantDroit] = useState<number | null>(null)
-  const [ayantsDroitList, setAyantsDroitList] = useState<AyantDroit[]>([])
-  const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
-
-  // Client Search & Create Modal States
-  const [clientSearch, setClientSearch] = useState('')
-  const [showClientDropdown, setShowClientDropdown] = useState(false)
-  const [showClientCreateModal, setShowClientCreateModal] = useState(false)
-  const [newClientForm, setNewClientForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    address: '',
-    client_type: 'PARTICULIER' as 'PARTICULIER' | 'PROFESSIONNEL',
-    plafond: '0',
-    taux_couverture: '0',
-    remise_automatique: '0',
-    is_loyalty_member: true
-  })
-  const [isCreatingClient, setIsCreatingClient] = useState(false)
-  const [highlightedClientIndex, setHighlightedClientIndex] = useState(-1)
-  const clientSearchRef = useRef<HTMLDivElement>(null)
 
   // Lot Selection Modal State
   const [lotModal, setLotModal] = useState<{
@@ -230,20 +208,18 @@ export default function Facturation() {
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null)
   const clientSelectRef = useRef<HTMLSelectElement>(null)
-  const productListRef = useRef<HTMLDivElement>(null)
-  const paymentInputRef = useRef<HTMLInputElement>(null)
-  const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
 
-  // Pending Sales Management - Initialize from localStorage to prevent data loss on navigation
-  const [ventesEnAttente, setVentesEnAttente] = useState<VenteEnAttente[]>(() => {
-    try {
-      const saved = localStorage.getItem('ventesEnAttente')
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
-  const [showPendingSales, setShowPendingSales] = useState(false)
+  const paymentInputRef = useRef<HTMLInputElement>(null)
+  // quantityInputsRef declared earlier (before useCart)
+
+  // usePendingSales Hook
+  const {
+      ventesEnAttente,
+      showPendingSales,
+      setShowPendingSales,
+      savePendingSale,
+      deletePendingSale
+  } = usePendingSales()
   
   // Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -303,7 +279,8 @@ export default function Facturation() {
                 produitData = { 
                   id: produitId, 
                   name: p.produit_nom || `Produit #${produitId}`,
-                  stock: 0 // Défaut sécuritaire
+                  stock: 0, // Défaut sécuritaire
+                  is_deleted: true
                 } as ProduitModel
               }
             }
@@ -381,72 +358,27 @@ export default function Facturation() {
     }
   }, [])
 
+  // Charger les paramètres de facturation (mode caisse centralisée)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchSettings = async () => {
       setLoading(true)
       try {
-        // Only load clients, not all products (too many!)
-        const clientsRes = await axios.get(clientsEndpoint)
-        const clientsData: any = clientsRes.data;
-        setClients(Array.isArray(clientsData) ? clientsData : (clientsData.results || []))
-        
-        // Sélectionner "Clients divers" par défaut
-        const allClients = Array.isArray(clientsData) ? clientsData : (clientsData.results || []);
-        const defaultClient = allClients.find((c: Client) => c.name.toLowerCase() === 'clients divers')
-        if (defaultClient) {
-          setSelectedClient(defaultClient.id)
-        }
-
-        // Charger les paramètres de facturation (mode caisse centralisée)
-        try {
-          const settingsEndpoint = apiBaseUrl
+        const settingsEndpoint = apiBaseUrl
             ? `${apiBaseUrl}/api/invoice-settings/`
             : '/api/invoice-settings/'
-          const settingsRes = await axios.get(settingsEndpoint)
-          setCentralizedCashRegister(settingsRes.data?.centralized_cash_register ?? true)
-        } catch (settingsErr) {
-          console.warn('Impossible de charger les paramètres de facturation, mode caisse centralisée activé par défaut')
-        }
+        const settingsRes = await axios.get(settingsEndpoint)
+        setCentralizedCashRegister(settingsRes.data?.centralized_cash_register ?? true)
       } catch (err) {
-        handleApiError(err, 'Erreur lors du chargement des données.')
+        console.warn('Impossible de charger les paramètres de facturation, mode caisse centralisée activé par défaut')
+        handleApiError(err, 'Erreur lors du chargement des paramètres.')
       } finally {
         setLoading(false)
       }
     }
-    fetchData()
-  }, [clientsEndpoint, apiBaseUrl, handleApiError])
+    fetchSettings()
+  }, [apiBaseUrl, handleApiError])
 
-  // Charger les ayants droit quand un client professionnel est sélectionné
-  useEffect(() => {
-    const fetchAyantsDroit = async () => {
-      if (!selectedClient || useManualClient) {
-        setAyantsDroitList([])
-        setSelectedAyantDroit(null)
-        setShowNewAyantDroit(false)
-        return
-      }
 
-      const client = clients.find(c => c.id === selectedClient)
-      if (client?.client_type === 'PROFESSIONNEL') {
-        try {
-          const ayantsDroitEndpoint = apiBaseUrl
-            ? `${apiBaseUrl}/api/ayants-droit/?client=${selectedClient}`
-            : `/api/ayants-droit/?client=${selectedClient}`
-          const response = await axios.get(ayantsDroitEndpoint)
-          const ayantsDroitData: any = response.data
-          setAyantsDroitList(Array.isArray(ayantsDroitData) ? ayantsDroitData : (ayantsDroitData.results || []))
-        } catch (err) {
-          console.error('Erreur lors du chargement des ayants droit:', err)
-          setAyantsDroitList([])
-        }
-      } else {
-        setAyantsDroitList([])
-        setSelectedAyantDroit(null)
-        setShowNewAyantDroit(false)
-      }
-    }
-    fetchAyantsDroit()
-  }, [selectedClient, clients, apiBaseUrl, useManualClient])
 
   // Appliquer automatiquement la remise du client quand il est sélectionné
   useEffect(() => {
@@ -461,83 +393,7 @@ export default function Facturation() {
     }
   }, [selectedClient, clients, useManualClient])
 
-  // Filtrer les clients selon la recherche
-  const filteredClients = useMemo(() => {
-    if (!clientSearch.trim()) return clients.slice(0, 10)
-    const term = clientSearch.toLowerCase()
-    return clients.filter(c => 
-      c.name.toLowerCase().includes(term) ||
-      c.phone?.includes(term) ||
-      c.email?.toLowerCase().includes(term)
-    ).slice(0, 10)
-  }, [clients, clientSearch])
 
-  // Fermer le dropdown client au clic extérieur
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (clientSearchRef.current && !clientSearchRef.current.contains(event.target as Node)) {
-        setShowClientDropdown(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Fonction de création de client
-  const handleCreateClient = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsCreatingClient(true)
-    try {
-      const { data: createdClient } = await axios.post<Client>(clientsEndpoint, newClientForm)
-      
-      // Ajouter le client à la liste et le sélectionner
-      setClients(prev => [...prev, createdClient].sort((a, b) => a.name.localeCompare(b.name)))
-      setSelectedClient(createdClient.id)
-      setShowClientCreateModal(false)
-      setClientSearch('')
-      
-      // Reset le formulaire
-      setNewClientForm({
-        name: '',
-        phone: '',
-        email: '',
-        address: '',
-        client_type: 'PARTICULIER',
-        plafond: '0',
-        taux_couverture: '0',
-        remise_automatique: '0',
-        is_loyalty_member: true
-      })
-      
-      toast.success(`Client "${createdClient.name}" créé et sélectionné`)
-    } catch (err) {
-      console.error('Erreur création client:', err)
-      if (axios.isAxiosError(err)) {
-        const errorData = err.response?.data
-        if (typeof errorData === 'object' && errorData !== null) {
-          const messages = Object.entries(errorData).map(([k, v]) => `${k}: ${v}`).join(', ')
-          toast.error(`Erreur: ${messages}`)
-        } else {
-          toast.error('Erreur lors de la création du client')
-        }
-      } else {
-        toast.error('Erreur lors de la création du client')
-      }
-    } finally {
-      setIsCreatingClient(false)
-    }
-  }
-
-  // Fonction pour calculer le total d'une ligne avec remise produit
-  const calculateLigneTotal = (quantite: number, prixUnitaire: string, remiseProduit: string): number => {
-    const qty = quantite
-    const prix = normalizeNumberInput(prixUnitaire, { min: 0 })
-    const remise = normalizeNumberInput(remiseProduit, { min: 0, max: 100 })
-    const sousTotal = qty * prix
-    const montantRemise = Math.abs(sousTotal) * (remise / 100)
-    // Si la quantité est négative (retour), la remise doit aussi être soustraite pour un crédit net
-    return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise)
-  }
 
   const handleStockResolutionConfirm = () => {
       // Apply Promis selections to the invoice lines
@@ -578,7 +434,7 @@ export default function Facturation() {
          // Use existing logic for resolution.
       }
 
-      const problematicLines = lignesFacture.filter(l => 
+      const problematicLines = lignesFacture.filter(l =>
           // Check if quantity > stock (and product manages stock)
           l.quantite > (l.produit.stock ?? 0)
       )
@@ -590,14 +446,14 @@ export default function Facturation() {
               stock: l.produit.stock ?? 0
           }))
           setStockResolutionItems(items)
-          
+
           // Pre-select phone if available
           const client = clients.find(c => c.id === selectedClient)
           setPromisPhone(client?.phone || '')
-          
+
           // By default, do NOT select Promis (Force) - User must opt-in
           setPromisSelections(new Set())
-          
+
           setShowStockResolution(true)
       } else {
           setIsNewSale(true)
@@ -608,168 +464,15 @@ export default function Facturation() {
       }
   }
 
-  const addProduitToFacture = async (produit: ProduitModel) => {
-    setLoading(true)
-    try {
-      const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-      const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
-      
-      const existingLigne = lignesFacture.find(ligne => ligne.produit.id === fullProduit.id)
-
-      if (existingLigne) {
-        // Pour les quantités positives, vérifier le stock
-        const nouvelleQuantite = existingLigne.quantite + 1
-        
-        // Pour les quantités positives, ajouter simplement
-        const updatedLignes = lignesFacture.map(ligne =>
-          ligne.produit.id === fullProduit.id
-            ? {
-                ...ligne,
-                quantite: nouvelleQuantite,
-                total_ligne: calculateLigneTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
-              }
-            : ligne
-        )
-        setLignesFacture(updatedLignes)
-      } else {
-        // Pour un nouveau produit
-        const prixUnitaire = normalizeNumberInput(fullProduit.selling_price ?? '0', { min: 0 })
-        const nouvelleLigne: LigneFacture = {
-          produit: fullProduit,
-          quantite: 1,
-          prix_unitaire: prixUnitaire.toString(),
-          remise_produit: '0',
-          total_ligne: prixUnitaire,
-          lotId: null, // Default to Auto/FEFO
-          lotText: null,
-          lotExpiration: null
-        }
-        setLignesFacture([...lignesFacture, nouvelleLigne])
-        
-        // Focus on quantity field of the newly added product
-        setTimeout(() => {
-          const qtyInput = quantityInputsRef.current.get(fullProduit.id)
-          if (qtyInput) {
-            qtyInput.focus()
-            qtyInput.select()
-          }
-        }, 50)
-      }
-      
-      // ORDONNANCIER CHECK - Immediately after adding product
-      // Check if product requires prescription or surveillance
-      const requiresOrdonnance = fullProduit.requires_prescription || 
-                                 (fullProduit.surveillance_category && fullProduit.surveillance_category !== 'NONE')
-      
-      if (requiresOrdonnance) {
-        // Open ordonnancier modal immediately
-        setShowOrdonnanceModal(true)
-        toast('Produit sous ordonnance/surveillance détecté', { icon: '📋' })
-      }
-      
-      // Clear search after adding for better UX
-      setSearchQuery('')
-    } catch (err) {
-      console.error('Erreur lors du chargement des détails du produit:', err)
-      toast.error('Impossible de charger les détails complets du produit')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   // Produits are already filtered by the hook
   const filteredProduits = produits
-
-
-  // Use search navigation hook (after addProduitToFacture is defined)
-  const { handleKeyDown: handleSearchKeyDown, getItemProps } = useSearchNavigation(
-    filteredProduits,
-    addProduitToFacture,
-    { resetOnSelect: true, searchInputRef }
-  )
-
-  const updateQuantite = (produitId: number, quantite: number) => {
-    // Permettre les quantités négatives (retours) et positives (ventes)
-    const normalizedQuantite = Math.floor(normalizeNumberInput(quantite))
-
-    // Si vide ou 0, mettre 1 par défaut au lieu de supprimer
-    const finalQuantite = normalizedQuantite === 0 ? 1 : normalizedQuantite
-
-    
-    // Vérifier les permissions pour les retours (quantité négative)
-    if (finalQuantite < 0 && !user?.can_do_returns) {
-      setError("Vous n'avez pas la permission d'effectuer des retours (quantités négatives).")
-      return
-    }
-
-    // Vérifier le stock pour les quantités positives (ventes) - Deferred check
-    // Logic moved to handlePaymentClick
-    
-    
-    const updatedLignes = lignesFacture.map(ligne => 
-      ligne.produit.id === produitId
-        ? { 
-            ...ligne, 
-            quantite: finalQuantite, 
-            total_ligne: calculateLigneTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit),
-            // Clear promis if stock is sufficient
-            isPromis: undefined,
-            promisQuantity: undefined,
-            promisPhone: undefined
-          }
-        : ligne
-    )
-    setLignesFacture(updatedLignes)
-  }
-
-  const updatePrix = (produitId: number, prix: string) => {
-    const updatedLignes = lignesFacture.map(ligne => 
-      ligne.produit.id === produitId 
-        ? { ...ligne, prix_unitaire: prix, total_ligne: calculateLigneTotal(ligne.quantite, prix, ligne.remise_produit) }
-        : ligne
-    )
-    setLignesFacture(updatedLignes)
-  }
-
-  const updateRemiseProduit = (produitId: number, remise: string) => {
-    const updatedLignes = lignesFacture.map(ligne => 
-      ligne.produit.id === produitId 
-        ? { ...ligne, remise_produit: remise, total_ligne: calculateLigneTotal(ligne.quantite, ligne.prix_unitaire, remise) }
-        : ligne
-    )
-    setLignesFacture(updatedLignes)
-  }
-
-
-
 
   const handleLotSelect = (lot: any | null) => {
       // Update the line with the selected lot
       if (!lotModal.product) return
 
-      const updatedLignes = lignesFacture.map(ligne => 
-        ligne.produit.id === lotModal.product!.id
-          ? { 
-              ...ligne, 
-              lotId: lot ? String(lot.id) : null,
-              lotText: lot ? lot.lot : null,
-              lotExpiration: lot?.date_expiration || null,
-              // Update price if lot has a specific selling price (check for !== null/undefined, not truthy)
-              prix_unitaire: (lot && lot.selling_price !== null && lot.selling_price !== undefined) 
-                  ? String(lot.selling_price) 
-                  : ligne.prix_unitaire,
-              // Recalculate total with new price
-              total_ligne: calculateLigneTotal(
-                  ligne.quantite, 
-                  (lot && lot.selling_price !== null && lot.selling_price !== undefined) 
-                      ? String(lot.selling_price) 
-                      : ligne.prix_unitaire, 
-                  ligne.remise_produit
-              )
-            }
-          : ligne
-      )
-      setLignesFacture(updatedLignes)
+      updateLineLot(lotModal.product.id, lot)
+
       setLotModal({ isOpen: false, product: null, currentLotId: null })
       
       // Return focus to search
@@ -777,16 +480,11 @@ export default function Facturation() {
   }
 
 
-  const removeLigne = (produitId: number) => {
-    setLignesFacture(lignesFacture.filter(ligne => ligne.produit.id !== produitId))
-  }
+
 
   const totals = useMemo(() => {
-    // Sous-total après remises produits (peut être négatif si retours > ventes)
-    const sousTotal = lignesFacture.reduce((total, ligne) => {
-      const valeurLigne = typeof ligne.total_ligne === 'number' ? ligne.total_ligne : Number(ligne.total_ligne)
-      return total + (Number.isFinite(valeurLigne) ? valeurLigne : 0)
-    }, 0)
+    // Sous-total via hook useCart
+    const sousTotal = cartStats.sousTotal
     
     // Calculer la remise globale selon le mode
     let remiseMontant = 0
@@ -798,9 +496,9 @@ export default function Facturation() {
       remiseMontant = sousTotal * (tauxRemise / 100)
     }
     
-    const tvaRate = 0
+    // TVA calculée par ligne (depuis cartStats)
+    const montantTva = cartStats.totalTva
     const baseHT = sousTotal - remiseMontant
-    const montantTva = Math.round(baseHT * (tvaRate / 100))
     const totalTtcBase = baseHT + montantTva
 
     // Calcul tiers payant
@@ -982,8 +680,8 @@ export default function Facturation() {
                         const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
                         ayantDroitId = createdAyantDroit.id || null
                         
-                        // Mettre à jour la liste locale
-                        setAyantsDroitList(prev => Array.isArray(prev) ? [...prev, createdAyantDroit] : [createdAyantDroit])
+                        // Note: La liste sera rechargée automatiquement lors de la prochaine sélection client
+                        // setAyantsDroitList(prev => Array.isArray(prev) ? [...prev, createdAyantDroit] : [createdAyantDroit])
                         setSelectedAyantDroit(createdAyantDroit.id || null)
                         setShowNewAyantDroit(false)
                       }
@@ -1341,6 +1039,9 @@ export default function Facturation() {
       const rendu = totalVerse - Number(finalFacture.total_ttc)
 
       setSuccessInfo(finalFacture)
+
+      // trigger premium print
+      window.open(`/app/print-invoice?id=${finalFacture.id}`, '_blank')
       
       // Get client name for ticket
       const clientName = useManualClient 
@@ -1397,8 +1098,8 @@ export default function Facturation() {
       }
       
       // Standard Clean (ordonnancier modal already handled during product selection)
-      _resetSale()
-      fermerModalPaiement()
+      _resetSaleDataOnly()
+      setIsPaymentModalOpen(false)
 
     } catch (err) {
       // ROLLBACK STOCK IF NEEDED
@@ -1528,18 +1229,13 @@ export default function Facturation() {
         produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
       )
       
-      // 3. Generate PDF (Proforma)
-      const pdfEndpoint = `${facturesEndpoint}${createdFacture.id}/imprimer_facture/?type=proforma`
-      
+      // 3. Open Print Window (Frontend)
       try {
-          const pdfResponse = await axios.get(pdfEndpoint, { responseType: 'blob' })
-          const file = new Blob([pdfResponse.data], { type: 'application/pdf' })
-          const fileURL = URL.createObjectURL(file)
-          window.open(fileURL, '_blank')
+          // Allow some time for backend to process if needed, or just open immediately since we have ID
+          window.open(`/app/print-invoice?id=${createdFacture.id}`, '_blank')
           toast.success("Proforma généré avec succès")
       } catch (err) {
-          console.error("Erreur téléchargement PDF:", err)
-          toast.error("Impossible de télécharger le PDF")
+          console.error("Erreur ouverture impression:", err)
       }
       
       // 4. Reset Cart
@@ -1566,18 +1262,9 @@ export default function Facturation() {
     }
 
     try {
-      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-      const imprimerEndpoint = `${facturesEndpoint}${facture.id}/imprimer_facture/`;
-      const response = await axios.get(imprimerEndpoint, {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `facture_${facture.numero_facture}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
+      if (facture.id) {
+          window.open(`/app/print-invoice?id=${facture.id}`, '_blank')
+      }
     } catch (err) {
       handleApiError(err, "Erreur lors de l'impression de la facture")
     }
@@ -1636,6 +1323,9 @@ export default function Facturation() {
 
       setSuccessInfo(factureUpdated)
 
+      // trigger premium print
+      window.open(`/app/print-invoice?id=${factureUpdated.id}`, '_blank')
+
       // Construction ticket simulé
       setTicketCaisse({
         id: 0,
@@ -1673,12 +1363,11 @@ export default function Facturation() {
           toast.success("Ordonnancier enregistré")
           setTempOrdonnanceData(null)
         } catch (err) {
-          console.error("Erreur enregistrement ordonnancier:", err)
           toast.error("Erreur lors de l'enregistrement de l'ordonnancier")
         }
       }
       
-      fermerModalPaiement()
+      setIsPaymentModalOpen(false)
     } catch (err) {
       handleApiError(err, "Erreur lors de l'enregistrement du paiement")
     } finally {
@@ -1719,21 +1408,6 @@ export default function Facturation() {
     }, 100)
   }
 
-  const fermerModalPaiement = () => {
-    setIsPaymentModalOpen(false)
-    setFacturePourPaiement(null)
-    setMontantPaye('')
-    setPaiements([])
-    setReference('')
-    setModePaiement('especes')
-    setIsNewSale(false)
-    
-    // Retourner le focus à la recherche
-    setTimeout(() => {
-        searchInputRef.current?.focus()
-    }, 100)
-  }
-
   // === PENDING SALES MANAGEMENT ===
   
   // Save pending sales to localStorage whenever they change
@@ -1752,51 +1426,49 @@ export default function Facturation() {
       return
     }
 
-    // Get client name
-    const clientName = useManualClient 
-      ? manualClientName 
-      : clients.find(c => c.id === selectedClient)?.name || null
-
-    // Create pending sale
-    const vente: VenteEnAttente = {
-      id: Date.now(),
-      timestamp: Date.now(),
-      client: selectedClient,
-      clientName,
-      useManualClient,
-      manualClientName,
-      lignes: [...lignesFacture],
-      remise,
-      remiseMode,
-      ayantDroit: ayantsDroitList.length > 0 || showNewAyantDroit ? {
+    const clientName = !useManualClient && selectedClient 
+        ? clients.find(c => c.id === selectedClient)?.name || ''
+        : manualClientName
+    
+    const ayantDroitData = selectedAyantDroit || showNewAyantDroit || ayantDroitNom ? {
         id: selectedAyantDroit,
         nom: ayantDroitNom,
         matricule: ayantDroitMatricule,
         societe: ayantDroitSociete,
         showNew: showNewAyantDroit
-      } : null
-    }
+    } : null
 
-    // Add to pending sales
-    setVentesEnAttente(prev => [...prev, vente])
-
-    // Clear current sale
+    savePendingSale({
+        client: useManualClient ? null : selectedClient,
+        clientName,
+        useManualClient,
+        manualClientName,
+        lignes: lignesFacture,
+        remise,
+        remiseMode,
+        ayantDroit: ayantDroitData
+    })
+    
+    // Réinitialiser la vente actuelle
     setLignesFacture([])
     setSelectedClient(null)
     setUseManualClient(false)
-    setManualClientName ('')
+    setManualClientName('')
     setRemise('0')
     setRemiseMode('montant')
+    setMontantPaye('')
+    setFacturePourPaiement(null)
+    setSuccessInfo(null)
+    setError(null)
+    
+    // Reset ayant droit
     setAyantDroitNom('')
     setAyantDroitMatricule('')
     setAyantDroitSociete('')
     setSelectedAyantDroit(null)
     setShowNewAyantDroit(false)
-    setSearchQuery('')
-
-    // Notification
-    setError(null)
-    searchInputRef.current?.focus()
+    
+    toast.success('Vente mise en attente')
   }
 
   const annulerVente = () => {
@@ -1834,36 +1506,52 @@ export default function Facturation() {
   }
 
   const restaurerVente = (id: number) => {
-    const vente = ventesEnAttente.find(v => v.id === id)
-    if (!vente) return
+      const vente = ventesEnAttente.find(v => v.id === id)
+      if (!vente) return
 
-    // Restore sale
-    setLignesFacture(vente.lignes)
-    setSelectedClient(vente.client)
-    setUseManualClient(vente.useManualClient)
-    setManualClientName(vente.manualClientName)
-    setRemise(vente.remise)
-    setRemiseMode(vente.remiseMode)
-    
-    if (vente.ayantDroit) {
-      setSelectedAyantDroit(vente.ayantDroit.id)
-      setAyantDroitNom(vente.ayantDroit.nom)
-      setAyantDroitMatricule(vente.ayantDroit.matricule)
-      setAyantDroitSociete(vente.ayantDroit.societe)
-      setShowNewAyantDroit(vente.ayantDroit.showNew)
-    }
+      // Si le panier actuel n'est pas vide, confirmer l'écrasement
+      if (lignesFacture.length > 0) {
+          if (!window.confirm('Le panier actuel n\'est pas vide. Voulez-vous le remplacer par la vente en attente ?')) {
+              return
+          }
+      }
 
-    // Remove from pending
-    setVentesEnAttente(prev => prev.filter(v => v.id !== id))
-    setShowPendingSales(false)
+      setLignesFacture(vente.lignes)
+      setUseManualClient(vente.useManualClient)
+      setManualClientName(vente.manualClientName)
+      setRemise(vente.remise)
+      setRemiseMode(vente.remiseMode)
+      
+      if (vente.client) {
+          setSelectedClient(vente.client)
+      } else {
+          setSelectedClient(null)
+      }
+      
+      // Restaurer ayant droit
+      if (vente.ayantDroit) {
+          setSelectedAyantDroit(vente.ayantDroit.id)
+          setAyantDroitNom(vente.ayantDroit.nom)
+          setAyantDroitMatricule(vente.ayantDroit.matricule)
+          setAyantDroitSociete(vente.ayantDroit.societe)
+          setShowNewAyantDroit(vente.ayantDroit.showNew)
+      }
+
+      deletePendingSale(id)
+      setShowPendingSales(false)
+      toast.success('Vente restaurée')
   }
 
   const supprimerVenteEnAttente = (id: number) => {
-    setConfirmModal({
+     setConfirmModal({
         isOpen: true,
-        message: 'Voulez-vous vraiment supprimer cette vente en attente ? Cette action est irréversible.',
-        onConfirm: () => setVentesEnAttente(prev => prev.filter(v => v.id !== id))
-    })
+        message: "Voulez-vous vraiment supprimer cette vente en attente ?",
+        onConfirm: () => {
+             deletePendingSale(id);
+             setConfirmModal(null);
+             toast.success("Vente en attente supprimée");
+        }
+     });
   }
 
   // Global Keyboard Listeners
@@ -1886,14 +1574,14 @@ export default function Facturation() {
       if (e.key === 'F9') {
         e.preventDefault()
         if (!isPaymentModalOpen && lignesFacture.length > 0 && selectedClient) {
-           handlePaymentClick()
+           ouvrirModalPaiement()
         }
         return
       }
       
       if (e.key === 'Escape') {
         if (isPaymentModalOpen) {
-           fermerModalPaiement()
+           setIsPaymentModalOpen(false)
         } else if (showTicketPreview) {
             setShowTicketPreview(false)
         } else if (successInfo) {
@@ -1905,16 +1593,11 @@ export default function Facturation() {
         return
       }
 
-      // Keyboard navigation in search (delegated to hook when search input is focused)
-      if (e.target === searchInputRef.current && !isPaymentModalOpen && !showTicketPreview) {
-        const keyboardEvent = e as unknown as React.KeyboardEvent
-        handleSearchKeyDown(keyboardEvent)
-      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [filteredProduits, lignesFacture, selectedClient, isPaymentModalOpen, showTicketPreview, successInfo, handleSearchKeyDown])
+  }, [selectedClient, isPaymentModalOpen, showTicketPreview, successInfo])
 
   return (
     <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
@@ -2028,284 +1711,49 @@ export default function Facturation() {
         {/* Top Section: Client & Search */}
         <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
             {/* Client Selection */}
-            <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
-                <div className="flex items-center justify-between mb-2">
-                    <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">Client (F4)</label>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setUseManualClient(!useManualClient)
-                            if (!useManualClient) {
-                                setSelectedClient(null)
-                                setManualClientName('')
-                            }
-                        }}
-                        className="btn btn-xs btn-ghost"
-                        title={useManualClient ? "Sélectionner dans la liste" : "Saisir manuellement"}
-                    >
-                        {useManualClient ? '📋 Liste' : '✏️ Saisir'}
-                    </button>
-                </div>
-                {useManualClient ? (
-                    <input
-                        type="text"
-                        value={manualClientName}
-                        onChange={(e) => setManualClientName(e.target.value)}
-                        placeholder="Nom du client..."
-                        className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
-                    />
-                ) : (
-                    <div ref={clientSearchRef} className="relative">
-                        <input
-                            type="text"
-                            value={clientSearch || (selectedClient ? clients.find(c => c.id === selectedClient)?.name || '' : '')}
-                            onChange={(e) => {
-                                setClientSearch(e.target.value)
-                                setSelectedClient(null)
-                                setShowClientDropdown(true)
-                                setHighlightedClientIndex(-1)
-                            }}
-                            onFocus={() => {
-                                setShowClientDropdown(true)
-                                setHighlightedClientIndex(-1)
-                            }}
-                            onKeyDown={(e) => {
-                                if (!showClientDropdown) return
-                                
-                                switch (e.key) {
-                                    case 'ArrowDown':
-                                        e.preventDefault()
-                                        setHighlightedClientIndex(prev => 
-                                            prev < filteredClients.length - 1 ? prev + 1 : prev
-                                        )
-                                        break
-                                    case 'ArrowUp':
-                                        e.preventDefault()
-                                        setHighlightedClientIndex(prev => prev > 0 ? prev - 1 : -1)
-                                        break
-                                    case 'Enter':
-                                        e.preventDefault()
-                                        if (highlightedClientIndex >= 0 && highlightedClientIndex < filteredClients.length) {
-                                            const client = filteredClients[highlightedClientIndex]
-                                            setSelectedClient(client.id)
-                                            setClientSearch('')
-                                            setShowClientDropdown(false)
-                                            setHighlightedClientIndex(-1)
-                                        } else if (filteredClients.length === 0 && clientSearch) {
-                                            // Ouvrir modal création si aucun résultat
-                                            setNewClientForm(prev => ({ ...prev, name: clientSearch }))
-                                            setShowClientCreateModal(true)
-                                            setShowClientDropdown(false)
-                                        }
-                                        break
-                                    case 'Escape':
-                                        setShowClientDropdown(false)
-                                        setHighlightedClientIndex(-1)
-                                        break
-                                }
-                            }}
-                            placeholder="🔍 Rechercher un client..."
-                            className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors pr-8"
-                        />
-                        {selectedClient && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSelectedClient(null)
-                                    setClientSearch('')
-                                }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-error"
-                                title="Effacer"
-                            >
-                                ✕
-                            </button>
-                        )}
-                        
-                        {/* Dropdown des résultats */}
-                        {showClientDropdown && !selectedClient && (
-                            <div className="absolute z-50 mt-1 w-full bg-white border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                                {filteredClients.length > 0 ? (
-                                    <>
-                                        {filteredClients.map((client, index) => (
-                                            <div 
-                                                key={client.id}
-                                                onClick={() => { 
-                                                    setSelectedClient(client.id)
-                                                    setClientSearch('')
-                                                    setShowClientDropdown(false)
-                                                    setHighlightedClientIndex(-1)
-                                                }}
-                                                onMouseEnter={() => setHighlightedClientIndex(index)}
-                                                className={`px-3 py-2 cursor-pointer flex justify-between items-center text-sm transition-colors ${
-                                                    index === highlightedClientIndex 
-                                                        ? 'bg-primary/20 text-primary-content' 
-                                                        : 'hover:bg-base-200'
-                                                }`}
-                                            >
-                                                <span className="font-medium">{client.name}</span>
-                                                <span className="text-xs text-base-content/50">{client.phone}</span>
-                                            </div>
-                                        ))}
-                                        {clientSearch && filteredClients.length < clients.length && (
-                                            <div className="px-3 py-2 text-xs text-base-content/50 border-t">
-                                                {filteredClients.length} résultat(s) sur {clients.length}
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="px-3 py-3 text-center">
-                                        <div className="text-sm text-base-content/50 mb-2">Aucun client trouvé</div>
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                // Pré-remplir le nom avec la recherche
-                                                setNewClientForm(prev => ({ ...prev, name: clientSearch }))
-                                                setShowClientCreateModal(true)
-                                                setShowClientDropdown(false)
-                                            }}
-                                            className="btn btn-primary btn-sm gap-1"
-                                        >
-                                            ➕ Créer "{clientSearch}"
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Ayant Droit Section - Intégré sous le client */}
-                {!useManualClient && selectedClient && clients.find(c => c.id === selectedClient)?.client_type === 'PROFESSIONNEL' && (
-                  <div className="mt-3 pt-3 border-t border-base-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
-                        Ayant Droit <span className="text-error">*</span>
-                      </label>
-                      {ayantsDroitList.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowNewAyantDroit(!showNewAyantDroit)
-                            if (!showNewAyantDroit) {
-                              setSelectedAyantDroit(null)
-                              setAyantDroitNom('')
-                              setAyantDroitMatricule('')
-                              setAyantDroitSociete('')
-                            }
-                          }}
-                          className="btn btn-xs btn-ghost"
-                          title={showNewAyantDroit ? "Sélectionner existant" : "Nouveau"}
-                        >
-                          {showNewAyantDroit ? '📋 Existant' : '➕ Nouveau'}
-                        </button>
-                      )}
-                    </div>
-                    
-                    {showNewAyantDroit || ayantsDroitList.length === 0 ? (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          value={ayantDroitNom}
-                          onChange={(e) => setAyantDroitNom(e.target.value)}
-                          placeholder="Nom de l'ayant droit *"
-                          className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-                        />
-                        <input
-                          type="text"
-                          value={ayantDroitMatricule}
-                          onChange={(e) => setAyantDroitMatricule(e.target.value)}
-                          placeholder="Matricule *"
-                          className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-                        />
-                        <input
-                          type="text"
-                          value={ayantDroitSociete}
-                          onChange={(e) => setAyantDroitSociete(e.target.value)}
-                          placeholder="Société (optionnel)"
-                          className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-                        />
-                      </div>
-                    ) : (
-                      <select
-                        value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
-                        onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
-                        className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
-                      >
-                        <option value="">Sélectionner un ayant droit...</option>
-                        {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (
-                          <option key={ad?.id || Math.random()} value={ad?.id || ''}>
-                            {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                )}
-            </div>
+            <ClientSection
+                clients={clients}
+                filteredClients={filteredClients}
+                useManualClient={useManualClient}
+                setUseManualClient={setUseManualClient}
+                manualClientName={manualClientName}
+                setManualClientName={setManualClientName}
+                selectedClient={selectedClient}
+                setSelectedClient={setSelectedClient}
+                clientSearch={clientSearch}
+                setClientSearch={setClientSearch}
+                showClientDropdown={showClientDropdown}
+                setShowClientDropdown={setShowClientDropdown}
+                onOpenCreateClient={(initialName) => {
+                    setNewClientForm(prev => ({ ...prev, name: initialName }))
+                    setShowClientCreateModal(true)
+                }}
+                ayantsDroitList={ayantsDroitList}
+                selectedAyantDroit={selectedAyantDroit}
+                setSelectedAyantDroit={setSelectedAyantDroit}
+                showNewAyantDroit={showNewAyantDroit}
+                setShowNewAyantDroit={setShowNewAyantDroit}
+                ayantDroitNom={ayantDroitNom}
+                setAyantDroitNom={setAyantDroitNom}
+                ayantDroitMatricule={ayantDroitMatricule}
+                setAyantDroitMatricule={setAyantDroitMatricule}
+                ayantDroitSociete={ayantDroitSociete}
+                setAyantDroitSociete={setAyantDroitSociete}
+            />
 
             {/* Product Search */}
-            <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative">
-                <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Rechercher un produit (F2)</label>
-                <div className="relative">
-                    <input
-                        ref={searchInputRef}
-                        type="text"
-                        placeholder="Tapez pour rechercher un produit..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-white transition-colors focus:ring-2 focus:ring-primary/20"
-                    />
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                </div>
-                
-                {/* Search Results Dropdown */}
-                {searchQuery && (
-                    <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
-                        {filteredProduits.length === 0 ? (
-                            <div className="text-center py-8 text-base-content/40 text-sm">
-                                {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? 'Tapez au moins 2 caractères' : 'Aucun produit trouvé'}
-                            </div>
-                        ) : (
-                            <div ref={productListRef} className="max-h-96 overflow-y-auto space-y-1 p-1">
-                                {filteredProduits.map((produit, idx) => {
-                                    const itemProps = getItemProps(idx);
-                                    return (
-                                    <div 
-                                        key={produit.id}
-                                        {...itemProps}
-                                        onClick={() => (produit.stock ?? 0) > 0 && addProduitToFacture(produit)}
-                                        style={itemProps.style}
-                                        className={`
-                                            group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                                            ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
-                                            ${(produit.stock ?? 0) === 0 ? 'opacity-50 cursor-not-allowed' : ''}
-                                        `}
-                                    >
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-medium truncate text-sm">{produit.name}</div>
-                                            <div className="text-xs flex gap-3 mt-0.5 opacity-80">
-                                                <span className={(produit.stock ?? 0) === 0 ? 'text-error font-bold' : ''}>
-                                                    Stock: {produit.stock}
-                                                </span>
-                                                <span>{produit.selling_price} F</span>
-                                            </div>
-                                        </div>
-                                        {(produit.stock ?? 0) > 0 && (
-                                            <div className={`opacity-0 group-hover:opacity-100 ${itemProps.className ? 'opacity-100' : ''}`}>
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                                            </div>
-                                        )}
-                                    </div>
-                                )})}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+            <ProductSearchSection
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                searchLoading={searchLoading}
+                filteredProduits={filteredProduits}
+                addProduitToFacture={addProduitToFacture}
+                searchInputRef={searchInputRef}
+            />
         </div>
 
         {/* Bottom Section: Cart/Invoice Details */}
-        <div className="w-full bg-white rounded-xl shadow-sm border border-base-200 flex flex-col min-h-0 overflow-hidden flex-1">
+        <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
                 <h2 className="font-bold text-lg text-base-content">Panier</h2>
                 <div className="badge badge-ghost font-mono">{lignesFacture.length} articles</div>
@@ -2313,296 +1761,52 @@ export default function Facturation() {
 
             {/* Table */}
             <div className="flex-1 overflow-x-auto overflow-y-auto">
-                {lignesFacture.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-base-content/30 gap-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                        <p className="font-light">Commencez par ajouter des produits (F2)</p>
-                    </div>
-                ) : (
-                    <table className="table table-pin-rows table-xs w-full">
-                        <thead>
-                            <tr className="bg-base-50 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-                                <th className="bg-base-50 pl-2 md:pl-4">Produit</th>
-                                <th className="bg-base-50 text-right w-16 md:w-20">Qté</th>
-                                <th className="bg-base-50 text-right w-20 md:w-24">Prix</th>
-                                <th className="bg-base-50 text-right w-14 md:w-16 hidden sm:table-cell">Remise</th>
-                                <th className="bg-base-50 text-center w-24 hidden md:table-cell">Péremption</th>
-                                <th className="bg-base-50 text-right w-20 md:w-28 pr-2 md:pr-4">Total</th>
-                                <th className="bg-base-50 w-8"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lignesFacture.map((ligne) => (
-                                <tr key={ligne.produit.id} className="hover:bg-base-50/50 group border-b border-base-100 last:border-0">
-                                    <td className="pl-2 md:pl-4 py-1">
-                                        <div className="font-medium">{ligne.produit.name}</div>
-                                    </td>
-                                    <td className="text-right py-1">
-                                        <input
-                                            ref={(el) => {
-                                              if (el) quantityInputsRef.current.set(ligne.produit.id, el)
-                                              else quantityInputsRef.current.delete(ligne.produit.id)
-                                            }}
-                                            type="text"
-                                            value={ligne.quantite}
-                                            onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault()
-                                                searchInputRef.current?.focus()
-                                              }
-                                            }}
-                                            className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
-                                        />
-                                    </td>
-                                    <td className="text-right py-1">
-                                        <input
-                                            type="text"
-                                            value={ligne.prix_unitaire}
-                                            onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
-                                        />
-                                    </td>
-                                    <td className="text-right py-1 hidden sm:table-cell">
-                                        <input
-                                            type="text"
-                                            value={ligne.remise_produit}
-                                            onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
-                                            className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
-                                            placeholder="%"
-                                        />
-                                    </td>
-                                    <td className="text-center py-1 hidden md:table-cell">
-                                        <div className="text-xs text-base-content/60">
-                                            {ligne.lotId && ligne.lotExpiration 
-                                                ? (() => { const d = new Date(ligne.lotExpiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })()
-                                                : (ligne.produit.expire_date ? (() => { const d = new Date(ligne.produit.expire_date); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : '-')
-                                            }
-                                        </div>
-                                    </td>
-                                    <td className="text-center py-1">
-                                        <button 
-                                            className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
-                                            onClick={() => setLotModal({
-                                                isOpen: true,
-                                                product: ligne.produit,
-                                                currentLotId: ligne.lotId || null
-                                            })}
-                                            title={ligne.lotId ? `Lot: ${ligne.lotText}` : "Lot: Automatique (FEFO)"}
-                                        >
-                                            {ligne.lotId ? ligne.lotText : 'Auto'}
-                                        </button>
-                                    </td>
-                                    <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
-                                        {Math.round(ligne.total_ligne)}
-                                    </td>
-                                    <td className="text-center py-1">
-                                        <button
-                                            onClick={() => removeLigne(ligne.produit.id)}
-                                            className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                <CartTable 
+                    lignesFacture={lignesFacture}
+                    updateQuantite={updateQuantite}
+                    updatePrix={updatePrix}
+                    updateRemiseProduit={updateRemiseProduit}
+                    removeLigne={removeLigne}
+                    onOpenLotModal={(product, currentLotId) => setLotModal({
+                        isOpen: true,
+                        product,
+                        currentLotId
+                    })}
+                    quantityInputsRef={quantityInputsRef}
+                    onReturnFocus={() => searchInputRef.current?.focus()}
+                />
             </div>
 
             {/* Footer Totals */}
-            <div className="p-3 md:p-4 lg:p-6 bg-base-50 border-t border-base-200 shrink-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 mb-4 md:mb-6">
-                    <div className="space-y-3">
-                        {/* Loyalty Controls */}
-                        {selectedClient && !useManualClient && totals.currentPoints > 0 && (
-                            <div className="bg-amber-50 p-2 rounded text-xs space-y-2 border border-amber-100">
-                                <div className="font-bold text-amber-800 flex justify-between">
-                                    <span>💎 Fidélité (Solde: {totals.currentPoints})</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="whitespace-nowrap">Utiliser pts:</span>
-                                    <input 
-                                        type="number" 
-                                        className="input input-xs input-bordered w-full"
-                                        min="0"
-                                        max={totals.currentPoints}
-                                        value={pointsToUse}
-                                        onChange={e => setPointsToUse(Math.min(totals.currentPoints, Math.max(0, parseInt(e.target.value)||0)))}
-                                    />
-                                </div>
-                                <div className="text-right text-amber-700 font-medium">-{pointsToUse * 10} F</div>
-                            </div>
-                        )}
-                        {selectedClient && !useManualClient && totals.pendingDiscountVal > 0 && (
-                            <div className="form-control bg-purple-50 p-2 rounded border border-purple-100">
-                                <label className="label cursor-pointer py-0">
-                                    <span className="label-text text-xs font-bold text-purple-800">Utiliser Remise Acquise ({totals.pendingDiscountVal}%)</span>
-                                    <input 
-                                        type="checkbox" 
-                                        className="checkbox checkbox-xs checkbox-primary"
-                                        checked={usePendingDiscount}
-                                        onChange={e => setUsePendingDiscount(e.target.checked)}
-                                    />
-                                </label>
-                            </div>
-                        )}
-                    
-                        <div className="flex items-center gap-2">
-                             <select
-                                value={remiseMode}
-                                onChange={(e) => {
-                                    setRemiseMode(e.target.value as 'montant' | 'taux')
-                                    setRemise('0')
-                                }}
-                                className="select select-bordered select-xs w-24"
-                            >
-                                <option value="montant">Remise (F)</option>
-                                <option value="taux">Remise (%)</option>
-                            </select>
-                            <input
-                                type="number"
-                                value={remise}
-                                onChange={(e) => setRemise(e.target.value)}
-                                className="input input-bordered input-xs w-32"
-                            />
-                        </div>
-                    </div>
-                    <div className="space-y-1 text-right">
-                        <div className="text-sm text-base-content/60">
-                            Sous-total: <span className="font-medium text-base-content">{Math.round(totals.sousTotal)} F</span>
-                        </div>
-                        <div className="text-sm text-base-content/60">
-                            Remise: <span className="font-medium text-error">-{Math.round(totals.remiseMontant)} F</span>
-                        </div>
-                        {totals.loyaltyDeduction > 0 && (
-                            <div className="text-sm text-base-content/60">
-                                Fidélité: <span className="font-medium text-amber-600">-{Math.round(totals.loyaltyDeduction)} F</span>
-                            </div>
-                        )}
-                        <div className="text-3xl font-light text-primary mt-2">
-                            {Math.round(totals.totalTtc)} <span className="text-lg font-normal text-primary/60">FCFA</span>
-                        </div>
-                        
-                        {/* Tiers Payant Section */}
-                        {totals.tauxCouverture > 0 && totals.partAssurance > 0 && (
-                            <div className="mt-3 pt-3 border-t border-base-200">
-                                <div className="flex items-center justify-end gap-2 mb-2">
-                                    <span className="badge badge-info badge-sm">Tiers Payant {totals.tauxCouverture}%</span>
-                                </div>
-                                <div className="text-xs text-base-content/60 space-y-1">
-                                    <div className="flex justify-between items-center">
-                                        <span>Part Assurance ({totals.tauxCouverture}%):</span>
-                                        <span className="font-medium text-info">{Math.round(totals.partAssurance)} F (En compte)</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span>Part Patient ({100 - totals.tauxCouverture}%):</span>
-                                        <span className="font-medium text-success">{Math.round(totals.partPatient)} F (À payer)</span>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-                {/* Pending Sales Indicator */}
-                {ventesEnAttente.length > 0 && (
-                    <div className="mb-3 flex justify-center">
-                        <button 
-                            onClick={() => setShowPendingSales(true)}
-                            className="badge badge-warning badge-lg cursor-pointer hover:badge-warning/80 transition-colors gap-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {ventesEnAttente.length} vente{ventesEnAttente.length > 1 ? 's' : ''} en attente
-                        </button>
-                    </div>
-                )}
+            <TotalsSection
+                totalHT={totals.sousTotal}
+                remiseGlobale={remise}
+                setRemiseGlobale={setRemise}
+                remiseMode={remiseMode}
+                setRemiseMode={setRemiseMode}
+                remiseMontant={totals.remiseMontant}
+                tvaAmount={totals.montantTva}
+                totalTTC={totals.totalTtc}
+            />
 
-
-                        {/* Action Buttons - Dropdown Menu */}
-                <div className="dropdown dropdown-top">
-                    <div tabIndex={0} role="button" className="btn btn-primary shadow-lg shadow-primary/20 btn-sm w-40">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
-                    </div>
-                    <ul tabIndex={0} className="dropdown-content z-[1] menu p-1 shadow-lg bg-base-100 rounded-box w-52 mb-2 border border-base-200 menu-sm">
-                        <li>
-                            <button
-                                onClick={() => {
-                                    handlePaymentClick()
-                                    const elem = document.activeElement as HTMLElement
-                                    elem?.blur()
-                                }}
-                                disabled={loading || (!selectedClient && !useManualClient) || lignesFacture.length === 0}
-                                className="gap-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                Encaisser
-                                <kbd className="kbd kbd-xs ml-auto">F9</kbd>
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => {
-                                    handleProforma()
-                                    const elem = document.activeElement as HTMLElement
-                                    elem?.blur()
-                                }}
-                                disabled={lignesFacture.length === 0}
-                                className="gap-2 text-info"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Proforma
-                            </button>
-                        </li>
-                        <li>
-                            <button
-                                onClick={() => {
-                                    mettreEnAttente()
-                                    const elem = document.activeElement as HTMLElement
-                                    elem?.blur()
-                                }}
-                                disabled={lignesFacture.length === 0 || ventesEnAttente.length >= 4}
-                                className="gap-2"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                En attente
-                                <span className="badge badge-warning badge-xs ml-auto">{ventesEnAttente.length}/4</span>
-                            </button>
-                        </li>
-                        <div className="divider my-0 h-0"></div>
-                        <li>
-                            <button
-                                onClick={() => {
-                                    annulerVente()
-                                    const elem = document.activeElement as HTMLElement
-                                    elem?.blur()
-                                }}
-                                className="gap-2 text-error"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                                Annuler
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+            {/* Action Buttons */}
+            <ActionButtons
+                onPayment={handlePaymentClick}
+                onProforma={handleProforma}
+                onSuspend={mettreEnAttente}
+                onCancel={() => {
+                   if (window.confirm('Voulez-vous vraiment annuler cette facture ?')) {
+                       annulerVente()
+                   }
+                }}
+                isValid={lignesFacture.length > 0}
+            />
         </div>
       </div>
 
       <PaymentModal
         isOpen={isPaymentModalOpen}
-        onClose={fermerModalPaiement}
+        onClose={() => setIsPaymentModalOpen(false)}
         loading={loading}
         facturePourPaiement={facturePourPaiement}
         isNewSale={isNewSale}
@@ -2632,9 +1836,11 @@ export default function Facturation() {
             <div className="p-6 bg-white text-black font-mono text-sm overflow-y-auto max-h-[60vh]" id="ticket-preview">
                 {/* ... Ticket Content (kept mostly same for print compatibility) ... */}
                 <div className="text-center mb-4 border-b-2 border-black pb-4">
-                <h2 className="text-xl font-black">PHARMA STOCK</h2>
-                <p>Douala, Cameroun</p>
-                <p>Tel: +237 6XX XX XX XX</p>
+                <h2 className="text-xl font-black">{pharmacySettings.pharmacy_name}</h2>
+                <p>{pharmacySettings.city}, {pharmacySettings.country}</p>
+                {pharmacySettings.phone && <p>Tel: {pharmacySettings.phone}</p>}
+                {pharmacySettings.niu && <p>NIU: {pharmacySettings.niu}</p>}
+                {pharmacySettings.registre_commerce && <p>RC: {pharmacySettings.registre_commerce}</p>}
               </div>
               
               <div className="space-y-1 mb-4">
@@ -3086,7 +2292,7 @@ export default function Facturation() {
                   {isCreatingClient ? (
                     <span className="loading loading-spinner loading-sm"></span>
                   ) : (
-                      <>➕ Créer et sélectionner</>
+                      <> Créer et sélectionner</>
                   )}
                 </button>
               </div>

@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
 
 // Register French locale
 registerLocale('fr', fr)
@@ -32,19 +33,32 @@ export default function HistoriqueClotures() {
   const [dateDebut, setDateDebut] = useState<Date | null>(null)
   const [dateFin, setDateFin] = useState<Date | null>(null)
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
+  const { settings: pharmacySettings } = usePharmacySettings()
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
   }, [])
 
+  // Helper function to format date as YYYY-MM-DDTHH:mm:ss in local time
+  const formatLocalISOString = (date: Date): string => {
+    const pad = (num: number) => num.toString().padStart(2, '0')
+    const year = date.getFullYear()
+    const month = pad(date.getMonth() + 1)
+    const day = pad(date.getDate())
+    const hours = pad(date.getHours())
+    const minutes = pad(date.getMinutes())
+    const seconds = pad(date.getSeconds())
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+  }
+
   const fetchClotures = async () => {
     setLoading(true)
     try {
       const params: Record<string, string> = {}
-      // Format dates for API (YYYY-MM-DDTHH:mm:ss without milliseconds)
-      if (dateDebut) params.date_debut = dateDebut.toISOString().slice(0, 19)
-      if (dateFin) params.date_fin = dateFin.toISOString().slice(0, 19)
+      // Format dates for API in local time to avoid UTC shift
+      if (dateDebut) params.date_debut = formatLocalISOString(dateDebut)
+      if (dateFin) params.date_fin = formatLocalISOString(dateFin)
       
       const response = await axios.get(`${apiBaseUrl}/api/clotures-caisse/`, { params })
       setClotures(response.data.results || response.data || [])
@@ -92,7 +106,7 @@ export default function HistoriqueClotures() {
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black;">
           <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px;">
-            <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">PHARMA STOCK</h2>
+            <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">${pharmacySettings.pharmacy_name}</h2>
             <div style="font-size: 0.9em;">HISTORIQUE CLÔTURE</div>
             <div style="font-size: 0.8em; margin-top: 5px;">Clôture #${cloture.id}</div>
           </div>

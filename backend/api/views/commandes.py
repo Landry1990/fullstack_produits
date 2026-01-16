@@ -90,6 +90,10 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits__produit', 'produits__commande__fournisseur').order_by('-date')
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['type', 'status', 'fournisseur']
+    search_fields = ['id', 'fournisseur__name', 'numero_facture']
+    ordering_fields = ['date', 'status']
     
     # Serializers optimisés
     list_serializer_class = CommandeListSerializer
@@ -766,7 +770,7 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
 class CommandeProduitViewSet(viewsets.ModelViewSet):
     """API endpoint for commande produits."""
-    queryset = CommandeProduit.objects.all().order_by('-created_at')
+    queryset = CommandeProduit.objects.select_related('produit', 'commande').order_by('-created_at')
     serializer_class = CommandeProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit']

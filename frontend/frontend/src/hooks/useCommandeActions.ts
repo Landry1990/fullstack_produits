@@ -54,15 +54,59 @@ export function useCommandeActions({
     };
 
     const handleApiError = (err: unknown, defaultMessage: string) => {
-        console.error('API Error:', err);
+        // Safely log error without triggering circular reference issues
+        try {
+            if (axios.isAxiosError(err)) {
+                console.error('API Error:', err.message, err.response?.data);
+            } else if (err instanceof Error) {
+                console.error('Error:', err.message);
+            } else {
+                console.error('Unknown error:', String(err));
+            }
+        } catch (logError) {
+            console.error('Error logging failed');
+        }
+
+        // Extract and display error message
         if (axios.isAxiosError(err)) {
-            toast.error(err.response?.data?.message || err.message || defaultMessage);
+            const errorData = err.response?.data;
+            const message = errorData?.message || errorData?.detail || err.message || defaultMessage;
+            toast.error(message);
+        } else if (err instanceof Error) {
+            toast.error(err.message || defaultMessage);
         } else {
             toast.error(defaultMessage);
         }
     };
 
     // ============== SAUVEGARDE ==============
+
+    // Helper function to safely clean payload (avoid circular references) 
+    const cleanPayload = (data: any): any => {
+        try {
+            // JSON parse/stringify to remove any non-serializable references (proxies, window refs, etc.)
+            return JSON.parse(JSON.stringify(data));
+        } catch (e) {
+            console.error('cleanPayload failed, manually cleaning:', e);
+            // Manual fallback: extract only primitive/simple values
+            const clean: any = {};
+            for (const key of Object.keys(data)) {
+                const val = data[key];
+                if (val === null || val === undefined) {
+                    clean[key] = val;
+                } else if (typeof val === 'object' && val.constructor === Object) {
+                    clean[key] = cleanPayload(val);
+                } else if (Array.isArray(val)) {
+                    clean[key] = val.map((v: any) => typeof v === 'object' ? cleanPayload(v) : v);
+                } else if (['string', 'number', 'boolean'].includes(typeof val)) {
+                    clean[key] = val;
+                }
+                // Skip functions, symbols, etc.
+            }
+            return clean;
+        }
+    };
+
     async function handleSaveCommande(
         commandeData: Partial<Commande>,
         commandeProduits: CommandeProduit[],
@@ -78,13 +122,17 @@ export function useCommandeActions({
         try {
             let commandeId = selectedCommande?.id;
 
+            // Clean the command data to remove any non-serializable references
+            const cleanedCommandeData = cleanPayload(commandeData);
+            console.log('Saving commande with data:', cleanedCommandeData);
+
             // 1. Créer ou mettre à jour la commande
             if (viewMode === 'CREATE') {
-                const response = await axios.post<Commande>(commandesEndpoint, commandeData);
+                const response = await axios.post<Commande>(commandesEndpoint, cleanedCommandeData);
                 commandeId = response.data.id;
                 toast.success(`Commande #${commandeId} créée`);
             } else if (viewMode === 'EDIT' && commandeId) {
-                await axios.patch<Commande>(`${commandesEndpoint}${commandeId}/`, commandeData);
+                await axios.patch<Commande>(`${commandesEndpoint}${commandeId}/`, cleanedCommandeData);
                 toast.success('Commande mise à jour');
             }
 
@@ -113,6 +161,8 @@ export function useCommandeActions({
             // The original Commandes.tsx handleSaveCommande logic seemed to rely on `commandeProduits` state.
 
             // We will loop through provided produits
+            const existingIds = new Set(existingProducts.map(ep => ep.id));
+
             for (const p of commandeProduits) {
                 const payload = {
                     commande: commandeId,
@@ -121,17 +171,20 @@ export function useCommandeActions({
                     unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
                     price: parseFloat(String(p.price)).toFixed(2),
                     price_cost: parseFloat(String(p.price)).toFixed(2), // Assumant price est cost
-                    selling_price: parseFloat(String(p.selling_price || 0)).toFixed(2),
+                    selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(2) : '0.00',
+                    prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(2) : null,
                     tva: parseFloat(String(p.tva || 18)).toFixed(2),
                     marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
                     date_expiration: parseMMYYToDate(p.date_expiration)
                 };
-                if (p.id) {
+
+                // Fix: Check if ID is a real existing ID in the backend, not a temp timestamp
+                if (p.id && existingIds.has(p.id)) {
                     // Update existing line
                     await axios.patch(`${commandeProduitsEndpoint}${p.id}/`, payload);
                 } else {
-                    // Create new line
+                    // Create new line (ignore temporary p.id)
                     await axios.post(commandeProduitsEndpoint, payload);
                 }
             }

@@ -156,7 +156,7 @@ export default function TransferCommandeModal({
                     price: priceToUse.toFixed(2),
                     price_cost: priceToUse.toFixed(2),
                     selling_price: parseFloat(String(p.selling_price || 0)).toFixed(2),
-                    tva: parseFloat(String(p.tva || 18)).toFixed(2),
+                    tva: parseFloat(String(p.tva || 0)).toFixed(2),
                     marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
                     date_expiration: parseMMYYToDate(p.date_expiration), 

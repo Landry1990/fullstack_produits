@@ -8,6 +8,7 @@ import PasswordConfirmModal from './PasswordConfirmModal';
 import type { Fournisseur, Rayon, ProduitModel, AchatProduit, StockLot, StockAdjustment } from '../types'
 import { STOCK_ADJUSTMENT_REASONS } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
+import ImportProductsModal from './products/ImportProductsModal'
 
 // Type pour les statistiques mensuelles
 type MonthlyStat = {
@@ -27,7 +28,13 @@ export default function Produit() {
   // État principal
   const [produits, setProduits] = useState<ProduitModel[]>([])
   const [loading, setLoading] = useState(false)
+  const [detailsLoading, setDetailsLoading] = useState(false) // Copilot: added separate loading state
   const [error, setError] = useState<string | null>(null)
+  
+  // Pagination
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   
   // Filtres
   const [searchQuery, setSearchQuery] = useState('')
@@ -39,7 +46,8 @@ export default function Produit() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery)
-    }, 300)
+      setPage(1) // Reset page on search change
+    }, 500)
     return () => clearTimeout(timer)
   }, [searchQuery])
 
@@ -102,6 +110,9 @@ export default function Produit() {
 
   useEffect(() => {
     fetchProduits()
+  }, [debouncedSearchQuery, page])
+  
+  useEffect(() => {
     fetchRayonsAndFournisseurs()
   }, [])
 
@@ -125,7 +136,11 @@ export default function Produit() {
     setLoading(true)
     setError(null)
     try {
-      const response = await axios.get(produitsEndpoint)
+      const params = new URLSearchParams()
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery)
+      if (page > 1) params.append('page', page.toString())
+
+      const response = await axios.get(`${produitsEndpoint}?${params.toString()}`)
       
       // Robust pagination handling - always ensure we get an array
       let produitsData: ProduitModel[] = [];
@@ -134,13 +149,21 @@ export default function Produit() {
         if (Array.isArray(response.data)) {
           // Direct array response (no pagination)
           produitsData = response.data;
+          setTotalCount(response.data.length)
+          setTotalPages(1)
         } else if (response.data.results && Array.isArray(response.data.results)) {
           // Paginated response with results array
           produitsData = response.data.results;
+          setTotalCount(response.data.count || 0)
+          // Default DRF limit is usually 50 or 100, assuming 50 for calculation if not provided
+          const count = response.data.count || 0
+          const limit = produitsData.length > 0 ? (count > produitsData.length && page === 1 ? produitsData.length : 50) : 50 // Try to infer limit or default
+          setTotalPages(Math.ceil(count / limit) || 1)
         } else {
           // Unexpected format - log and use empty array
           console.warn('Unexpected API response format:', response.data);
           produitsData = [];
+          setTotalCount(0)
         }
       }
       
@@ -192,7 +215,8 @@ export default function Produit() {
   }
 
   const handleViewDetails = async (produit: ProduitModel) => {
-    setLoading(true)
+    // Only set list loading if we don't have the product details? No, we want list to stay stable.
+    setDetailsLoading(true) 
     try {
       const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
       setSelectedProduit(fullProduit)
@@ -251,7 +275,7 @@ export default function Produit() {
       toast.error('Erreur lors du chargement des détails du produit')
       console.error(err)
     } finally {
-      setLoading(false)
+      setDetailsLoading(false)
     }
   }
 
@@ -675,12 +699,9 @@ export default function Produit() {
     let list = produits
     
     if (debouncedSearchQuery) {
-      const q = debouncedSearchQuery.trim().toLowerCase()
-      list = produits.filter(p => {
-        const inName = p.name?.toLowerCase().includes(q)
-        const inCips = [p.cip1, p.cip2, p.cip3].some(c => (c || '').toLowerCase().includes(q))
-        return inName || inCips
-      })
+        // Server-side filtered already, but we might want to keep highlighting or secondary local filter
+        // For now, we trust server results, no additional name filtering needed locally if server does it.
+        // But if filtering by Rayon/Fournisseur (which are local for now), we keep that.
     }
     
     if (filterRayon) {
@@ -814,17 +835,22 @@ export default function Produit() {
                 )}
               </div>
               <div className="flex gap-1">
-                <label className="btn btn-xs btn-ghost" htmlFor="csv-import-input" title="Importer CSV">
-                  {isImporting ? <span className="loading loading-spinner loading-xs"></span> : '📄'}
-                </label>
-                <input
-                  id="csv-import-input"
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleCsvImport}
-                  disabled={isImporting}
-                />
+                <button 
+                  className="btn btn-xs btn-ghost" 
+                  onClick={() => setIsImporting(true)} 
+                  title="Importer CSV/Excel"
+                >
+                  📄
+                </button>
+                {isImporting && (
+                  <ImportProductsModal
+                    onClose={() => setIsImporting(false)}
+                    onSuccess={() => {
+                      fetchProduits()
+                      // Modal will auto-show success state, user manually closes it
+                    }}
+                  />
+                )}
                 <button className="btn btn-xs btn-primary" onClick={() => setIsCreateModalOpen(true)} title="Créer">
                   ➕
                 </button>
@@ -958,6 +984,29 @@ export default function Produit() {
               </table>
             )}
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center p-2 border-t bg-slate-50 gap-2 items-center text-xs">
+              <button 
+                className="btn btn-xs btn-ghost" 
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                ←
+              </button>
+              <span className="opacity-70">
+                Page {page} / {totalPages}
+              </span>
+              <button 
+                className="btn btn-xs btn-ghost"
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              >
+                →
+              </button>
+            </div>
+          )}
 
           {/* Footer stats */}
           <div className="p-1.5 border-t bg-slate-50/50 text-[10px] text-center text-slate-400 shrink-0 flex justify-around">
@@ -1018,7 +1067,11 @@ export default function Produit() {
 
         {/* Right Panel: Détails du produit */}
         <div className="md:col-span-2 bg-white rounded-lg shadow flex flex-col overflow-hidden">
-          {selectedProduit ? (
+          {detailsLoading ? (
+             <div className="flex items-center justify-center h-full">
+               <span className="loading loading-spinner loading-lg"></span>
+             </div>
+          ) : selectedProduit ? (
             <div className="flex flex-col h-full">
               {/* Header produit */}
               <div className="p-4 border-b bg-gradient-to-r from-slate-50 to-white shrink-0">

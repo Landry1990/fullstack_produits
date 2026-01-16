@@ -19,6 +19,13 @@ interface CommandeFormProps {
     numeroFacture: string;
     setNumeroFacture: (num: string) => void;
     
+    // Direct Orders
+    commandeType: 'LOC' | 'DIR';
+    tauxChange: string;
+    setTauxChange: (val: string) => void;
+    fraisCoefficient: string;
+    setFraisCoefficient: (val: string) => void;
+    
     // Actions
     handleBackToList: () => void;
     handleSaveCommande: (e: FormEvent<HTMLFormElement>) => void;
@@ -54,7 +61,7 @@ interface CommandeFormProps {
     openTransferModal: () => void;
     updateCommandeProduitField: (
         index: number, 
-        field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration', 
+        field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration' | 'prix_euro', 
         value: string | number
     ) => void;
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
@@ -69,6 +76,11 @@ export default function CommandeForm({
     setNewCommandeFournisseurId,
     numeroFacture,
     setNumeroFacture,
+    commandeType,
+    tauxChange,
+    setTauxChange,
+    fraisCoefficient,
+    setFraisCoefficient,
     handleBackToList,
     handleSaveCommande,
     handleCsvExport,
@@ -206,6 +218,47 @@ export default function CommandeForm({
                 </div>
               </div>
 
+              {/* Champs Spécifiques Commandes Directes */}
+              {commandeType === 'DIR' && (
+                <div className="bg-blue-50/50 rounded-xl p-4 shadow-sm border border-blue-100 mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                      <span className="badge badge-info badge-sm">COMMANDE DIRECTE (IMPORT)</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label className="form-control w-full">
+                      <div className="label py-1">
+                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Taux de Change (XAF/€)</span>
+                      </div>
+                      <input 
+                        type="number"
+                        step="0.001"
+                        placeholder="655.957"
+                        className="input input-bordered w-full input-sm bg-white"
+                        value={tauxChange}
+                        onChange={(e) => setTauxChange(e.target.value)}
+                      />
+                    </label>
+                    
+                    <label className="form-control w-full">
+                      <div className="label py-1">
+                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Coefficient (Frais)</span>
+                      </div>
+                      <input 
+                        type="number"
+                        step="0.01"
+                        placeholder="1.35"
+                        className="input input-bordered w-full input-sm bg-white"
+                        value={fraisCoefficient}
+                        onChange={(e) => setFraisCoefficient(e.target.value)}
+                      />
+                      <div className="label py-0">
+                          <span className="label-text-alt text-xs opacity-60">Prix Revient = (Prix € * Taux) * Coeff</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {/* Recherche produit */}
               <div className="bg-white rounded-xl shadow-sm border border-base-200 p-4 relative">
                 <label className="label py-1 mb-2">
@@ -277,6 +330,7 @@ export default function CommandeForm({
                 commandeProduits={commandeProduits}
                 produitsList={produitsList}
                 selectedRows={selectedRows}
+                commandeType={commandeType} // Pass type to table
                 viewMode={viewMode === 'CREATE' ? 'CREATE' : 'EDIT'}
                 selectedCommande={selectedCommande}
                 saving={saving}

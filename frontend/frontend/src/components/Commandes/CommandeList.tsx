@@ -219,7 +219,20 @@ export default function CommandeList({
                 <td className="font-mono font-bold text-xs opacity-50">#{commande.id}</td>
                 <td className="font-mono">{commande.numero_facture || '-'}</td>
                 <td>{new Date(commande.date).toLocaleDateString('fr-FR')}</td>
-                <td className="font-bold">{fournisseurs.find(f => f.id === commande.fournisseur)?.name ?? `ID: ${commande.fournisseur}`}</td>
+                <td className="font-bold">
+                    {(() => {
+                        const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
+                        const isDeleted = !fournisseur && !!commande.fournisseur_nom;
+                        const nom = fournisseur?.name ?? (commande.fournisseur_nom || `ID: ${commande.fournisseur}`);
+                        
+                        return (
+                            <span className={isDeleted ? 'italic' : ''}>
+                                {nom}
+                                {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+                            </span>
+                        );
+                    })()}
+                </td>
                 <td><span className={getStatusBadgeClass(commande.status)}>{commande.status_display}</span></td>
                 <td className="font-bold text-right text-primary">{commande.total} F</td>
                 <td className="text-center">

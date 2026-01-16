@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from ..models import LoyaltySetting, InvoiceSettings
-from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer
+from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings
+from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer, PharmacySettingsSerializer
 
 class LoyaltySettingViewSet(viewsets.ModelViewSet):
     """
@@ -47,3 +47,25 @@ class InvoiceConfigurationView(APIView):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PharmacySettingsView(APIView):
+    """
+    API View pour gérer les paramètres de la pharmacie.
+    Singleton: récupère ou crée l'unique configuration.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        settings, created = PharmacySettings.objects.get_or_create(pk=1)
+        serializer = PharmacySettingsSerializer(settings)
+        return Response(serializer.data)
+
+    def put(self, request):
+        settings, created = PharmacySettings.objects.get_or_create(pk=1)
+        serializer = PharmacySettingsSerializer(settings, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

@@ -15,8 +15,8 @@ from api.views import (
     generer_suggestions_commande, PromisViewSet, MouvementCaisseViewSet,
     StockAnalysisUnsoldView, StockAnalysisOverstockView, LoyaltySettingViewSet,
     StockAdjustmentViewSet, ClotureCaisseViewSet, HistoriqueVentesViewSet,
-    HistoriqueAchatsViewSet, RapportViewSet, ProduitImportViewSet, OrdonnancierViewSet,
-    verify_password
+    HistoriqueAchatsViewSet, RapportViewSet, OrdonnancierViewSet,
+    verify_password, PharmacySettingsView, ProductImportView
 )
 
 router = DefaultRouter()
@@ -42,7 +42,7 @@ router.register(r'avoirs', AvoirViewSet)
 router.register(r'ligne-avoirs', LigneAvoirViewSet)
 router.register(r'statistiques', StatistiquesViewSet, basename='statistiques')
 router.register(r'rapports', RapportViewSet, basename='rapports')
-router.register(r'produits-import', ProduitImportViewSet, basename='produits-import')
+
 router.register(r'relations-transformation', RelationTransformationViewSet, basename='relationtransformation')
 router.register(r'historique-transformation', HistoriqueTransformationViewSet, basename='historiquetransformation')
 router.register(r'stats-ug', StatsUGViewSet, basename='statsug')
@@ -60,9 +60,12 @@ urlpatterns = [
     # Manual paths MUST be before 'api/' router include to avoid being masked
     path('api/categories/', CategoriesListView.as_view()),
     path('api/categories/<int:pk>/', CategoriesDetailView.as_view()),
+    path('api/categories/<int:pk>/', CategoriesDetailView.as_view()),
     path('api/invoice-settings/', InvoiceConfigurationView.as_view()),
+    path('api/pharmacy-settings/', PharmacySettingsView.as_view()),
     path('api/generer-suggestions/', generer_suggestions_commande),
     path('api/verify-password/', verify_password, name='verify-password'),
+    path('api/import/products/', ProductImportView.as_view(), name='import-products'),
     path('api/test-auth/', lambda request: JsonResponse({"message": "OK - Pas d'auth requise!"})),
     path('api-token-auth/', CustomAuthToken.as_view()),
     

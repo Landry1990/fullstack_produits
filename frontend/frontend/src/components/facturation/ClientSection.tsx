@@ -1,0 +1,297 @@
+import React, { useState, useRef, useEffect } from 'react'
+import type { Client, AyantDroit } from '../../types'
+
+interface ClientSectionProps {
+  clients: Client[]
+  filteredClients: Client[]
+  
+  useManualClient: boolean
+  setUseManualClient: (v: boolean) => void
+  manualClientName: string
+  setManualClientName: (v: string) => void
+  
+  selectedClient: number | null
+  setSelectedClient: (id: number | null) => void
+  
+  clientSearch: string
+  setClientSearch: (v: string) => void
+  
+  showClientDropdown: boolean
+  setShowClientDropdown: (v: boolean) => void
+  
+  onOpenCreateClient: (initialName: string) => void
+  
+  // Ayant Droit
+  ayantsDroitList: AyantDroit[]
+  selectedAyantDroit: number | null
+  setSelectedAyantDroit: (id: number | null) => void
+  showNewAyantDroit: boolean
+  setShowNewAyantDroit: (v: boolean) => void
+  
+  ayantDroitNom: string
+  setAyantDroitNom: (v: string) => void
+  ayantDroitMatricule: string
+  setAyantDroitMatricule: (v: string) => void
+  ayantDroitSociete: string
+  setAyantDroitSociete: (v: string) => void
+}
+
+export default function ClientSection({
+  clients,
+  filteredClients,
+  useManualClient,
+  setUseManualClient,
+  manualClientName,
+  setManualClientName,
+  selectedClient,
+  setSelectedClient,
+  clientSearch,
+  setClientSearch,
+  showClientDropdown,
+  setShowClientDropdown,
+  onOpenCreateClient,
+  ayantsDroitList,
+  selectedAyantDroit,
+  setSelectedAyantDroit,
+  showNewAyantDroit,
+  setShowNewAyantDroit,
+  ayantDroitNom,
+  setAyantDroitNom,
+  ayantDroitMatricule,
+  setAyantDroitMatricule,
+  ayantDroitSociete,
+  setAyantDroitSociete
+}: ClientSectionProps) {
+  
+  const [highlightedClientIndex, setHighlightedClientIndex] = useState(-1)
+  const clientSearchRef = useRef<HTMLDivElement>(null)
+
+  // Fermer le dropdown client au clic extérieur
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (clientSearchRef.current && !clientSearchRef.current.contains(event.target as Node)) {
+        setShowClientDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [setShowClientDropdown])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showClientDropdown) return
+    
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setHighlightedClientIndex(prev => 
+          prev < filteredClients.length - 1 ? prev + 1 : prev
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setHighlightedClientIndex(prev => prev > 0 ? prev - 1 : -1)
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (highlightedClientIndex >= 0 && highlightedClientIndex < filteredClients.length) {
+          const client = filteredClients[highlightedClientIndex]
+          setSelectedClient(client.id)
+          setClientSearch('')
+          setShowClientDropdown(false)
+          setHighlightedClientIndex(-1)
+        } else if (filteredClients.length === 0 && clientSearch) {
+          // Ouvrir modal création si aucun résultat
+          onOpenCreateClient(clientSearch)
+          setShowClientDropdown(false)
+        }
+        break
+      case 'Escape':
+        setShowClientDropdown(false)
+        setHighlightedClientIndex(-1)
+        break
+    }
+  }
+
+  const selectedClientData = clients.find(c => c.id === selectedClient)
+
+  return (
+    <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
+      <div className="flex items-center justify-between mb-2">
+        <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">Client (F4)</label>
+        <button
+          type="button"
+          onClick={() => {
+            setUseManualClient(!useManualClient)
+            if (!useManualClient) {
+              setSelectedClient(null)
+              setManualClientName('')
+            }
+          }}
+          className="btn btn-xs btn-ghost"
+          title={useManualClient ? "Sélectionner dans la liste" : "Saisir manuellement"}
+        >
+          {useManualClient ? '📋 Liste' : '✏️ Saisir'}
+        </button>
+      </div>
+      {useManualClient ? (
+        <input
+          type="text"
+          value={manualClientName}
+          onChange={(e) => setManualClientName(e.target.value)}
+          placeholder="Nom du client..."
+          className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
+        />
+      ) : (
+        <div ref={clientSearchRef} className="relative">
+          <input
+            type="text"
+            value={clientSearch || (selectedClientData ? selectedClientData.name : '')}
+            onChange={(e) => {
+              setClientSearch(e.target.value)
+              setSelectedClient(null)
+              setShowClientDropdown(true)
+              setHighlightedClientIndex(-1)
+            }}
+            onFocus={() => {
+              setShowClientDropdown(true)
+              setHighlightedClientIndex(-1)
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="🔍 Rechercher un client..."
+            className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors pr-8"
+          />
+          {selectedClient && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedClient(null)
+                setClientSearch('')
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-error"
+              title="Effacer"
+            >
+              ✕
+            </button>
+          )}
+          
+          {/* Dropdown des résultats */}
+          {showClientDropdown && !selectedClient && (
+            <div className="absolute z-50 mt-1 w-full bg-white border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+              {filteredClients.length > 0 ? (
+                <>
+                  {filteredClients.map((client, index) => (
+                    <div 
+                      key={client.id}
+                      onClick={() => { 
+                        setSelectedClient(client.id)
+                        setClientSearch('')
+                        setShowClientDropdown(false)
+                        setHighlightedClientIndex(-1)
+                      }}
+                      onMouseEnter={() => setHighlightedClientIndex(index)}
+                      className={`px-3 py-2 cursor-pointer flex justify-between items-center text-sm transition-colors ${
+                        index === highlightedClientIndex 
+                          ? 'bg-primary/20 text-primary-content' 
+                          : 'hover:bg-base-200'
+                      }`}
+                    >
+                      <span className="font-medium">{client.name}</span>
+                      <span className="text-xs text-base-content/50">{client.phone}</span>
+                    </div>
+                  ))}
+                  {clientSearch && filteredClients.length < clients.length && (
+                    <div className="px-3 py-2 text-xs text-base-content/50 border-t">
+                      {filteredClients.length} résultat(s) sur {clients.length}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="px-3 py-3 text-center">
+                  <div className="text-sm text-base-content/50 mb-2">Aucun client trouvé</div>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      onOpenCreateClient(clientSearch)
+                      setShowClientDropdown(false)
+                    }}
+                    className="btn btn-primary btn-sm gap-1"
+                  >
+                    ➕ Créer "{clientSearch}"
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Ayant Droit Section */}
+      {!useManualClient && selectedClient && selectedClientData?.client_type === 'PROFESSIONNEL' && (
+        <div className="mt-3 pt-3 border-t border-base-200">
+          <div className="flex items-center justify-between mb-2">
+            <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
+              Ayant Droit <span className="text-error">*</span>
+            </label>
+            {ayantsDroitList.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowNewAyantDroit(!showNewAyantDroit)
+                  if (!showNewAyantDroit) {
+                    setSelectedAyantDroit(null)
+                    setAyantDroitNom('')
+                    setAyantDroitMatricule('')
+                    setAyantDroitSociete('')
+                  }
+                }}
+                className="btn btn-xs btn-ghost"
+                title={showNewAyantDroit ? "Sélectionner existant" : "Nouveau"}
+              >
+                {showNewAyantDroit ? '📋 Existant' : '➕ Nouveau'}
+              </button>
+            )}
+          </div>
+          
+          {showNewAyantDroit || ayantsDroitList.length === 0 ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={ayantDroitNom}
+                onChange={(e) => setAyantDroitNom(e.target.value)}
+                placeholder="Nom de l'ayant droit *"
+                className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+              />
+              <input
+                type="text"
+                value={ayantDroitMatricule}
+                onChange={(e) => setAyantDroitMatricule(e.target.value)}
+                placeholder="Matricule *"
+                className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+              />
+              <input
+                type="text"
+                value={ayantDroitSociete}
+                onChange={(e) => setAyantDroitSociete(e.target.value)}
+                placeholder="Société (optionnel)"
+                className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
+              />
+            </div>
+          ) : (
+            <select
+              value={selectedAyantDroit !== null ? String(selectedAyantDroit) : ''}
+              onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
+              className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
+            >
+              <option value="">Sélectionner un ayant droit...</option>
+              {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (
+                <option key={ad?.id || Math.random()} value={ad?.id || ''}>
+                  {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
