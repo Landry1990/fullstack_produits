@@ -9,7 +9,7 @@ from .models import (
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
-    Ordonnancier, LigneOrdonnancier
+    Ordonnancier, LigneOrdonnancier, PharmacySettings
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -28,6 +28,12 @@ class InvoiceSettingsSerializer(serializers.ModelSerializer):
 class LoyaltySettingSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoyaltySetting
+        fields = '__all__'
+
+
+class PharmacySettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PharmacySettings
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
@@ -174,11 +180,11 @@ class ProduitSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
-    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_nom = serializers.SerializerMethodField()
     produit_stock = serializers.IntegerField(source='produit.stock', read_only=True)
     produit_rotation_moyenne = serializers.CharField(source='produit.rotation_moyenne', read_only=True)
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
-    fournisseur_name = serializers.CharField(source='commande.fournisseur.name', read_only=True)
+    fournisseur_name = serializers.SerializerMethodField()
     total_quantity = serializers.IntegerField(read_only=True)
     effective_cost = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     
@@ -187,8 +193,16 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost']
 
+    def get_produit_nom(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
+
+    def get_fournisseur_name(self, obj):
+        if obj.commande.fournisseur:
+            return obj.commande.fournisseur.name
+        return obj.commande.fournisseur_nom
+
 class CommandeSerializer(serializers.ModelSerializer):
-    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
+    fournisseur_nom = serializers.SerializerMethodField()
     produits = CommandeProduitSerializer(many=True, read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
 
@@ -197,8 +211,11 @@ class CommandeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['date', 'status']
 
+    def get_fournisseur_nom(self, obj):
+        return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
+
 class FactureProduitSerializer(serializers.ModelSerializer):
-    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_nom = serializers.SerializerMethodField()
     # Champ pour l'écriture : on envoie stock_lot_id depuis le frontend
     # Le source='stock_lot' permet d'écrire dans le champ stock_lot du modèle
     stock_lot_id = serializers.PrimaryKeyRelatedField(
@@ -215,6 +232,9 @@ class FactureProduitSerializer(serializers.ModelSerializer):
         model = FactureProduit
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_produit_nom(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
 
 class CaisseSerializer(serializers.ModelSerializer):
     user_details = serializers.SerializerMethodField()
@@ -313,13 +333,19 @@ class FactureSerializer(serializers.ModelSerializer):
 
 class StockLotSerializer(serializers.ModelSerializer):
     """Serializer pour les lots de stock avec traçabilité fournisseur"""
-    produit_nom = serializers.CharField(source='produit.name', read_only=True)
-    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
+    produit_nom = serializers.SerializerMethodField()
+    fournisseur_nom = serializers.SerializerMethodField()
     
     class Meta:
         model = StockLot
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+    def get_produit_nom(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
+
+    def get_fournisseur_nom(self, obj):
+        return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
 
 
 class FactureProduitAllocationSerializer(serializers.ModelSerializer):
@@ -391,7 +417,7 @@ class CreanceSerializer(serializers.ModelSerializer):
         return obj.total_ttc - montant_paye
 
 class LigneInventaireSerializer(serializers.ModelSerializer):
-    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_nom = serializers.SerializerMethodField()
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     produit_rayon = serializers.CharField(source='produit.rayon.name', read_only=True)
     produit_description = serializers.CharField(source='produit.description', read_only=True)
@@ -406,6 +432,9 @@ class LigneInventaireSerializer(serializers.ModelSerializer):
     class Meta:
         model = LigneInventaire
         fields = '__all__'
+
+    def get_produit_nom(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
 
 class InventaireSerializer(serializers.ModelSerializer):
     lignes = LigneInventaireSerializer(many=True, read_only=True)
@@ -446,7 +475,7 @@ class MouvementCaisseSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['date']
 class LigneAvoirSerializer(serializers.ModelSerializer):
-    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_nom = serializers.SerializerMethodField()
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     total = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     lot_numero = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
@@ -458,10 +487,13 @@ class LigneAvoirSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['total']
 
+    def get_produit_nom(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
+
 
 class AvoirSerializer(serializers.ModelSerializer):
     produits = LigneAvoirSerializer(many=True, read_only=True)
-    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    fournisseur_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
     total_ht = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
@@ -471,6 +503,9 @@ class AvoirSerializer(serializers.ModelSerializer):
         model = Avoir
         fields = '__all__'
         read_only_fields = ['numero', 'date', 'created_at', 'updated_at', 'total_ht']
+
+    def get_fournisseur_name(self, obj):
+        return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
     
     def get_created_by_name(self, obj):
         if obj.created_by:
@@ -488,20 +523,29 @@ class RelationTransformationSerializer(serializers.ModelSerializer):
 
 class MouvementStockSerializer(serializers.ModelSerializer):
     user_nom = serializers.CharField(source='user.username', read_only=True)
-    produit_nom = serializers.CharField(source='produit.name', read_only=True)
+    produit_nom = serializers.SerializerMethodField()
 
     class Meta:
         model = MouvementStock
         fields = '__all__'
 
+    def get_produit_nom(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
+
 class HistoriqueTransformationSerializer(serializers.ModelSerializer):
     user_nom = serializers.CharField(source='user.username', read_only=True)
-    produit_source_nom = serializers.CharField(source='produit_source.name', read_only=True)
-    produit_destination_nom = serializers.CharField(source='produit_destination.name', read_only=True)
+    produit_source_nom = serializers.SerializerMethodField()
+    produit_destination_nom = serializers.SerializerMethodField()
     
     class Meta:
         model = HistoriqueTransformation
         fields = '__all__'
+    
+    def get_produit_source_nom(self, obj):
+        return obj.produit_source.name if obj.produit_source else obj.produit_source_nom
+
+    def get_produit_destination_nom(self, obj):
+        return obj.produit_destination.name if obj.produit_destination else obj.produit_destination_nom
 
 class AuditLogSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
@@ -523,7 +567,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
     """Serializer pour les ajustements de stock avec traçabilité"""
     user_name = serializers.SerializerMethodField()
     username = serializers.CharField(source='user.username', read_only=True)
-    produit_name = serializers.CharField(source='produit.name', read_only=True)
+    produit_name = serializers.SerializerMethodField()
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     reason_type_display = serializers.CharField(source='get_reason_type_display', read_only=True)
     lot_number = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
@@ -540,6 +584,9 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'user', 'created_at', 'quantity_change']
     
+    def get_produit_name(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
+    
     def get_user_name(self, obj):
         if obj.user:
             full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
@@ -550,7 +597,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
 class PromisSerializer(serializers.ModelSerializer):
     client_display = serializers.CharField(read_only=True)
     client_phone_display = serializers.CharField(read_only=True)
-    produit_name = serializers.CharField(read_only=True)
+    produit_name = serializers.SerializerMethodField()
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
@@ -565,6 +612,9 @@ class PromisSerializer(serializers.ModelSerializer):
             'notes', 'created_by', 'created_by_name'
         ]
         read_only_fields = ['date_promis', 'date_livraison', 'created_by']
+
+    def get_produit_name(self, obj):
+        return obj.produit.name if obj.produit else obj.produit_nom
 
 
 

@@ -47,7 +47,7 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
     serializer_class = ProduitSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['name', 'cip1', 'cip2', 'cip3']
+    search_fields = ['^name', '^cip1', '^cip2', '^cip3']  # ^ = starts with (not contains)
     ordering_fields = ['name', 'stock', 'selling_price', 'updated_at']
 
     def get_queryset(self):

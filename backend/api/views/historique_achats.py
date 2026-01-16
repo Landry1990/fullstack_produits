@@ -15,6 +15,7 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
         fournisseur_id = request.query_params.get('fournisseur_id')
+        commande_type = request.query_params.get('type')
 
         # Filter only completed/closed orders
         queryset = Commande.objects.filter(status=Commande.Status.CLOTUREE)
@@ -30,6 +31,10 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
         # Supplier filtering
         if fournisseur_id:
             queryset = queryset.filter(fournisseur_id=fournisseur_id)
+
+        # Type filtering
+        if commande_type:
+            queryset = queryset.filter(type=commande_type)
 
         # Aggregation by Day
         # We need to sum the total of products for each order.

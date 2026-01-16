@@ -18,12 +18,12 @@ from .stocks import (
 )
 from .users import CustomAuthToken, UserViewSet
 from .auth import verify_password
-from .settings import LoyaltySettingViewSet, InvoiceConfigurationView
+from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView
 from .dashboard import DashboardViewSet, StatistiquesViewSet
 from .audit import AuditLogViewSet
 from .historique_ventes import HistoriqueVentesViewSet
 from .historique_achats import HistoriqueAchatsViewSet
-from .produit_import import ProduitImportViewSet
+from .import_views import ProductImportView
 
 # Import from parent api module (not yet migrated to views package)
 from ..rapport_view import RapportViewSet
@@ -43,10 +43,10 @@ __all__ = [
     'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
     'StockAnalysisUnsoldView', 'StockAnalysisOverstockView',
     'CustomAuthToken', 'UserViewSet', 'verify_password',
-    'LoyaltySettingViewSet', 'InvoiceConfigurationView',
+    'LoyaltySettingViewSet', 'InvoiceConfigurationView', 'PharmacySettingsView',
     'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',
-    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProduitImportViewSet',
+    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
     'RapportViewSet', 'OrdonnancierViewSet'
 ]
 

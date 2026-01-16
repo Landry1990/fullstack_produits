@@ -14,7 +14,11 @@ interface Supplier {
   name: string;
 }
 
-const HistoriqueAchats = () => {
+interface HistoriqueAchatsProps {
+    forcedType?: 'LOC' | 'DIR';
+}
+
+const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const { user } = useAuth();
   const [data, setData] = useState<DailyPurchase[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -50,7 +54,9 @@ const HistoriqueAchats = () => {
       const params = new URLSearchParams();
       if (dateDebut) params.append('date_debut', dateDebut);
       if (dateFin) params.append('date_fin', dateFin);
+      if (dateFin) params.append('date_fin', dateFin);
       if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);
+      if (forcedType) params.append('type', forcedType);
 
       const response = await axios.get(`/api/historique-achats/?${params.toString()}`, {
         headers: {
@@ -77,7 +83,10 @@ const HistoriqueAchats = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Historique des Achats par Jour</h1>
+      <h1 className="text-2xl font-bold mb-6">
+        Historique des Achats 
+        {forcedType === 'LOC' ? ' Locaux' : forcedType === 'DIR' ? ' Directs (Import)' : ' par Jour'}
+      </h1>
 
       <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end">
         <div className="form-control">

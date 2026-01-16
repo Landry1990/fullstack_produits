@@ -46,6 +46,7 @@ export interface ProduitModel {
   pourcentage_marge?: string
   pmp?: string
   created_at?: string
+  is_deleted?: boolean
   updated_at?: string
   use_lot_management?: boolean
   // Ordonnancier
@@ -101,17 +102,24 @@ export interface CommandeProduit {
   date_expiration?: string
   tva?: string
   marge?: string
+  // Champs pour commande directe
+  prix_euro?: string
 }
 
 export interface Commande {
   id: number
   fournisseur: number
+  fournisseur_nom?: string // Name preserved or from relation
   numero_facture: string | null
   date: string
   status: string
   status_display: string
   total: string
   produits: CommandeProduit[]
+  // Nouveaux champs
+  type?: 'LOC' | 'DIR'
+  taux_change?: string
+  frais_coefficient?: string
 }
 
 export interface LigneInventaire {
@@ -435,4 +443,32 @@ export interface User {
   can_delete_commande?: boolean;
   can_close_commande?: boolean;
   can_delete_fournisseur?: boolean;
+}
+
+export interface LigneFacture {
+  produit: ProduitModel
+  quantite: number
+  prix_unitaire: string
+  remise_produit: string // Remise en pourcentage pour ce produit
+  total_ligne: number
+  isPromis?: boolean
+  promisQuantity?: number
+  promisPhone?: string
+  lotId?: string | null // Specific lot ID or null for Auto/FEFO
+  lotText?: string | null // For display
+  lotExpiration?: string | null // Display expiration for selected lot
+}
+
+export interface PharmacySettings {
+  id?: number
+  pharmacy_name: string
+  address: string
+  phone: string
+  email: string
+  nif?: string
+  rccm?: string
+  ticket_footer_message?: string
+  receipt_header?: string
+  logo?: string
+  coefficient_direct_commande?: string
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import type { Creance, Client } from '../types'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
 
 export default function Creances() {
   const [creances, setCreances] = useState<Creance[]>([])
@@ -33,6 +34,7 @@ export default function Creances() {
 
   // Notification System
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const { settings: pharmacySettings } = usePharmacySettings()
 
   useEffect(() => {
       if (notification) {
@@ -200,8 +202,10 @@ export default function Creances() {
           <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto;">
             <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
               <h1 style="margin: 0; font-size: 24px;">RELEVÉ DE CRÉANCES</h1>
-              <p style="margin: 5px 0;">PHARMA STOCK</p>
-              <p style="margin: 5px 0; font-size: 12px;">Douala, Cameroun</p>
+              <p style="margin: 5px 0;">${pharmacySettings.pharmacy_name}</p>
+              <p style="margin: 5px 0; font-size: 12px;">${pharmacySettings.city}, ${pharmacySettings.country}</p>
+              ${pharmacySettings.niu ? `<p style="margin: 5px 0; font-size: 12px;">NIU: ${pharmacySettings.niu}</p>` : ''}
+              ${pharmacySettings.registre_commerce ? `<p style="margin: 5px 0; font-size: 12px;">RC: ${pharmacySettings.registre_commerce}</p>` : ''}
             </div>
 
             <div style="margin-bottom: 20px;">

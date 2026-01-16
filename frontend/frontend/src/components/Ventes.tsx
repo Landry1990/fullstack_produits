@@ -791,9 +791,14 @@ export default function Ventes() {
                       <tbody>
                         {selectedFacture.produits.map((p, index) => {
                            const produitNom = typeof p.produit === 'object' ? p.produit.name : (p.produit_nom ?? `Produit #${p.produit}`)
+                           const isDeleted = p.produit === null;
+                           
                            return (
                           <tr key={index}>
-                            <td>{produitNom}</td>
+                            <td className={isDeleted ? 'italic' : ''}>
+                                {produitNom}
+                                {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+                            </td>
                             <td className="text-right">{Math.round(Number(p.selling_price)).toLocaleString('fr-FR')} F</td>
                             <td className="text-right">{Math.abs(p.quantity)}</td>
                             <td className="text-right">{Math.round(Math.abs(p.quantity) * Number(p.selling_price)).toLocaleString('fr-FR')} F</td>

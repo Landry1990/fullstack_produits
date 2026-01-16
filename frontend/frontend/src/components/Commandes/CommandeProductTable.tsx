@@ -13,6 +13,7 @@ interface CommandeProductTableProps {
     
     // UI State
     selectedRows: Set<number>;
+    commandeType?: 'LOC' | 'DIR';
     viewMode: 'CREATE' | 'EDIT' | 'LIST' | 'DETAILS';
     selectedCommande: Commande | null;
     saving: boolean;
@@ -29,7 +30,7 @@ interface CommandeProductTableProps {
     // Updates
     updateCommandeProduitField: (
         index: number, 
-        field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration', 
+        field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration' | 'prix_euro', 
         value: string | number
     ) => void;
     
@@ -41,6 +42,7 @@ export default function CommandeProductTable({
     commandeProduits,
     produitsList,
     selectedRows,
+    commandeType = 'LOC',
     viewMode,
     selectedCommande,
     saving,
@@ -117,6 +119,9 @@ export default function CommandeProductTable({
                     <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">Produit</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Qté</th>
                     <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">UG</th>
+                    {commandeType === 'DIR' && (
+                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">Prix €</th>
+                    )}
                     <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Achat HT</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">TVA</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Marge</th>
@@ -199,6 +204,18 @@ export default function CommandeProductTable({
                             tabIndex={!fieldsConfig[1].editable ? -1 : 0}
                         />
                         </td>
+                        {/* Prix Euro (Direct Only) */}
+                        {commandeType === 'DIR' && (
+                            <td className="text-right py-2 md:py-3 bg-blue-50/10 border-l border-blue-100">
+                            <input
+                                type="text"
+                                value={p.prix_euro || ''}
+                                onChange={(e) => updateCommandeProduitField(index, 'prix_euro', e.target.value)}
+                                className="input input-ghost input-sm text-base w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
+                                placeholder="€"
+                            />
+                            </td>
+                        )}
                         {/* Price (2) - Index updated */}
                         <td className="text-right py-2 md:py-3">
                         <input

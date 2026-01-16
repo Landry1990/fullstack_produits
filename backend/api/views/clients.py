@@ -60,7 +60,7 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""
-    queryset = AyantDroit.objects.all().order_by('nom')
+    queryset = AyantDroit.objects.select_related('client').order_by('nom')
     serializer_class = AyantDroitSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = (DjangoFilterBackend,)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import type { StockLot } from '../types';
 import {
   LineChart,
@@ -98,6 +99,20 @@ export default function Dashboard() {
         }).slice(0, 10); // Limit to 10 lots
         
         setExpiringLots(validLots);
+        
+        // Show toast notification for critical lots (< 7 days)
+        const criticalLots = validLots.filter(lot => {
+          if (!lot.date_expiration) return false;
+          const daysUntil = Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          return daysUntil <= 7;
+        });
+        
+        if (criticalLots.length > 0) {
+          toast.error(
+            `⚠️ ${criticalLots.length} lot${criticalLots.length > 1 ? 's' : ''} expire${criticalLots.length > 1 ? 'nt' : ''} dans moins de 7 jours!`,
+            { duration: 5000, id: 'critical-expiration' }
+          );
+        }
       } catch (err) {
         console.error('Error fetching expiring lots:', err);
       }
@@ -159,14 +174,14 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header - Mobile Optimized */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">Tableau de bord</h1>
-          <p className="text-sm text-base-content/80">Aperçu de l'activité de la pharmacie</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-base-content">Tableau de bord</h1>
+          <p className="text-xs sm:text-sm text-base-content/80">Aperçu de l'activité de la pharmacie</p>
         </div>
-        <div className="text-sm font-medium text-base-content/80 bg-base-100 px-4 py-2 rounded-lg shadow-sm border border-base-200">
-          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+        <div className="text-xs sm:text-sm font-medium text-base-content/80 bg-base-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-sm border border-base-200">
+          {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       </div>
 
@@ -187,20 +202,20 @@ export default function Dashboard() {
           { title: "Valeur Stock", value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
         ].map((stat: any, index) => {
           const content = (
-            <div className={`card-body p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
-              <div>
-                <p className="text-sm font-medium text-base-content/70">{stat.title}</p>
-                <h3 className="text-2xl font-bold text-base-content mt-1">{stat.value}</h3>
+            <div className={`card-body p-3 sm:p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-base-content/70">{stat.title}</p>
+                <h3 className="text-lg sm:text-2xl font-bold text-base-content mt-1 truncate">{stat.value}</h3>
                 <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === 'Valeur Stock' ? 'text-base-content/60' : stat.title === 'Créances Clients' ? 'text-orange-600' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
-                  {stat.change} <span className="text-base-content/60">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : stat.title === 'Créances Clients' ? 'en attente' : 'vs hier'}</span>
+                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : stat.title === 'Créances Clients' ? 'en attente' : 'vs hier'}</span>
                 </span>
                 {stat.details && (
-                  <div className="text-xs text-base-content/50 mt-1 font-medium">
+                  <div className="text-xs text-base-content/50 mt-1 font-medium hidden sm:block">
                     {stat.details}
                   </div>
                 )}
               </div>
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${stat.color}`}>
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl ${stat.color} shrink-0 ml-2`}>
                 {stat.icon === 'shopping_cart' && (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 )}
@@ -400,20 +415,20 @@ export default function Dashboard() {
 
         {/* Right Column: Quick Actions & Alerts */}
         <div className="space-y-6">
-          {/* Quick Actions */}
+          {/* Quick Actions - Touch-friendly */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
-            <div className="card-body p-4">
-              <h2 className="card-title text-lg font-bold text-base-content mb-4">Actions Rapides</h2>
-              <div className="grid grid-cols-1 gap-3">
-                <Link to="/facturation" className="btn btn-primary w-full justify-start gap-3 text-white shadow-md hover:shadow-lg transition-all">
+            <div className="card-body p-3 sm:p-4">
+              <h2 className="card-title text-base sm:text-lg font-bold text-base-content mb-3 sm:mb-4">Actions Rapides</h2>
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
+                <Link to="/facturation" className="btn btn-primary w-full justify-start gap-2 sm:gap-3 text-white shadow-md hover:shadow-lg transition-all min-h-12 sm:min-h-10">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
                   Nouvelle Facture
                 </Link>
-                <Link to="/produits" className="btn btn-outline btn-primary w-full justify-start gap-3 hover:bg-primary/10">
+                <Link to="/produits" className="btn btn-outline btn-primary w-full justify-start gap-2 sm:gap-3 hover:bg-primary/10 min-h-12 sm:min-h-10">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
                   Gérer Produits
                 </Link>
-                <Link to="/clients" className="btn btn-outline btn-primary w-full justify-start gap-3 hover:bg-primary/10">
+                <Link to="/clients" className="btn btn-outline btn-primary w-full justify-start gap-2 sm:gap-3 hover:bg-primary/10 min-h-12 sm:min-h-10">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
                   Nouveau Client
                 </Link>
@@ -466,7 +481,10 @@ export default function Dashboard() {
           {/* Expiring Lots */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <div className="flex items-center justify-between mb-4">
+              <div 
+                className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/app/perimes')}
+              >
                 <h2 className="card-title text-lg font-bold text-base-content">Péremption Proche</h2>
                 {expiringLots.length > 0 && (
                   <span className="badge badge-error text-white badge-sm">{expiringLots.length}</span>
@@ -482,6 +500,7 @@ export default function Dashboard() {
                   className="select select-bordered select-sm w-full"
                   value={expirationMonths}
                   onChange={(e) => setExpirationMonths(Number(e.target.value))}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <option value={1}>1 mois</option>
                   <option value={2}>2 mois</option>
@@ -500,31 +519,46 @@ export default function Dashboard() {
                       ? Math.floor((new Date(lot.date_expiration).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
                       : 0;
                     
+                    // Color-coded urgency
+                    let urgencyColor = 'bg-yellow-100 border-yellow-200 text-yellow-700'; // Default: Caution (< 90 days)
+                    let dotColor = 'bg-yellow-500';
+                    let badgeClass = 'badge-warning';
+                    
+                    if (daysUntilExpiry <= 7) {
+                      urgencyColor = 'bg-red-100 border-red-200 text-red-700'; // Critical
+                      dotColor = 'bg-red-500';
+                      badgeClass = 'badge-error';
+                    } else if (daysUntilExpiry <= 30) {
+                      urgencyColor = 'bg-orange-100 border-orange-200 text-orange-700'; // Warning
+                      dotColor = 'bg-orange-500';
+                      badgeClass = 'badge-warning';
+                    }
+                    
                     return (
-                      <div key={lot.id} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
+                      <div key={lot.id} className={`flex items-center justify-between p-2 rounded-lg border ${urgencyColor}`}>
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-2 h-2 rounded-full bg-error"></div>
+                          <div className={`w-2 h-2 rounded-full ${dotColor} animate-pulse`}></div>
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium text-base-content block truncate">{lot.produit_nom}</span>
                             <div className="flex gap-2 text-xs text-base-content/60">
                               <span>Lot: {lot.lot || 'N/A'}</span>
                               <span>•</span>
                               <span>
-                                {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : 'N/A'}
+                                {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })() : 'N/A'}
                               </span>
                             </div>
                           </div>
                         </div>
-                        <span className="text-xs font-bold whitespace-nowrap ml-2 text-error">
-                          {daysUntilExpiry} j
+                        <span className={`badge ${badgeClass} text-xs font-bold whitespace-nowrap ml-2`}>
+                          {daysUntilExpiry <= 0 ? 'Expiré!' : `${daysUntilExpiry}j`}
                         </span>
                       </div>
                     );
                   })
                 )}
               </div>
-              <Link to="/produits" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
-                Voir tous les produits
+              <Link to="/app/perimes" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
+                Gérer les Périmés
               </Link>
             </div>
           </div>

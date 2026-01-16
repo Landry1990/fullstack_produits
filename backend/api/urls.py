@@ -8,7 +8,8 @@ from .views import (
     RelationTransformationViewSet, HistoriqueTransformationViewSet,
     InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
     generer_suggestions_commande, HistoriqueVentesViewSet,
-    StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView
+    StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView,
+    PharmacySettingsView, ProductImportView
 )
 from .views.auth import verify_password
 from .rapport_view import RapportViewSet
@@ -55,6 +56,8 @@ urlpatterns = [
     path('stock-analysis/unsold/', StockAnalysisUnsoldView.as_view(), name='stock-analysis-unsold'),
     path('stock-analysis/overstock/', StockAnalysisOverstockView.as_view(), name='stock-analysis-overstock'),
     path('invoice-settings/', InvoiceConfigurationView.as_view(), name='invoice-settings'),
+    path('pharmacy-settings/', PharmacySettingsView.as_view(), name='pharmacy-settings'),
+    path('products/import/', ProductImportView.as_view(), name='product-import'),
     # The API URLs are now determined automatically by the router.
     path('', include(router.urls)),
 ]

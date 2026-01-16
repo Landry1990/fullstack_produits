@@ -6,6 +6,7 @@ import CashMovementModal from './CashMovementModal'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
 
 // Register French locale
 registerLocale('fr', fr)
@@ -22,6 +23,7 @@ export default function JournalCaisse() {
   const [dateDebut, setDateDebut] = useState<Date | null>(null)
   const [dateFin, setDateFin] = useState<Date | null>(null)
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
+  const { settings: pharmacySettings } = usePharmacySettings()
   
   // Pagination
   const [page, setPage] = useState(1)
@@ -297,12 +299,24 @@ export default function JournalCaisse() {
   } | null>(null)
   const [actualAmount, setActualAmount] = useState<string>('')
 
+  // Helper function to format date as YYYY-MM-DDTHH:mm:ss in local time
+  const formatLocalISOString = (date: Date): string => {
+    const pad = (num: number) => num.toString().padStart(2, '0')
+    const year = date.getFullYear()
+    const month = pad(date.getMonth() + 1)
+    const day = pad(date.getDate())
+    const hours = pad(date.getHours())
+    const minutes = pad(date.getMinutes())
+    const seconds = pad(date.getSeconds())
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+  }
+
   const fetchTotals = async () => {
     try {
       const params: any = {}
-      // Format without milliseconds for backend compatibility
-      if (dateDebut) params.date_debut = dateDebut.toISOString().slice(0, 19)
-      if (dateFin) params.date_fin = dateFin.toISOString().slice(0, 19)
+      // Use local time formatting to avoid UTC shifting
+      if (dateDebut) params.date_debut = formatLocalISOString(dateDebut)
+      if (dateFin) params.date_fin = formatLocalISOString(dateFin)
       
       const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
       setGlobalTotals(response.data)
@@ -317,8 +331,8 @@ export default function JournalCaisse() {
   const openClosingModal = () => {
       // Use the filtered totals (totauxParMode) to match the displayed "Solde Théorique"
       const modalTotals = {
-          start_date: dateDebut?.toISOString() || null,
-          end_date: dateFin?.toISOString() || null,
+          start_date: dateDebut ? formatLocalISOString(dateDebut) : null,
+          end_date: dateFin ? formatLocalISOString(dateFin) : null,
           total_theorique: totauxParMode.total,
           total_ventes: totauxParMode.total - totauxParMode.entrees + totauxParMode.sorties, // Sales only
           total_entrees: totauxParMode.entrees,
@@ -342,16 +356,10 @@ export default function JournalCaisse() {
     if (!actualAmount) return
     
     try {
-      // Format dates for backend (YYYY-MM-DDTHH:mm:ss, without milliseconds)
-      const formatDateForApi = (date: Date | null): string | undefined => {
-        if (!date) return undefined
-        return date.toISOString().slice(0, 19) // Remove .xxxZ
-      }
-      
       await axios.post(`${caisseEndpoint}cloturer/`, {
         montant_reel: parseFloat(actualAmount),
-        date_debut: formatDateForApi(dateDebut),
-        date_fin: formatDateForApi(dateFin)
+        date_debut: dateDebut ? formatLocalISOString(dateDebut) : undefined,
+        date_fin: dateFin ? formatLocalISOString(dateFin) : undefined
       })
       setIsClosingModalOpen(false)
       toast.success('Caisse clôturée avec succès !')
@@ -382,8 +390,8 @@ export default function JournalCaisse() {
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black;">
             <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px;">
-                <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">PHARMA STOCK</h2>
-                <div style="font-size: 0.9em;">Douala, Cameroun</div>
+                <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">${pharmacySettings.pharmacy_name}</h2>
+                <div style="font-size: 0.9em;">${pharmacySettings.city}, ${pharmacySettings.country}</div>
                 <div style="font-size: 0.9em;">CLÔTURE DE CAISSE</div>
             </div>
 

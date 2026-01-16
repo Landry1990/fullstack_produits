@@ -50,7 +50,8 @@ class ClientListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'phone', 'email', 'address',
             'client_type', 'current_debt', 'is_loyalty_member',
-            'points_fidelite', 'taux_couverture', 'plafond'
+            'points_fidelite', 'taux_couverture', 'plafond',
+            'remise_automatique'
         ]
 
 
@@ -97,16 +98,19 @@ class FactureDetailSerializer(FactureSerializer):
 class CommandeListSerializer(serializers.ModelSerializer):
     """
     Serializer allégé pour la liste des commandes.
+    Inclut les champs pour les commandes directes (type, taux_change, frais_coefficient).
     """
     fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
     
     class Meta:
         model = Commande
         fields = [
             'id', 'numero_facture', 'fournisseur', 'fournisseur_nom',
-            'date', 'status', 'status_display', 'total'
+            'date', 'date_cloture', 'status', 'status_display', 'total',
+            'type', 'type_display', 'taux_change', 'frais_coefficient'
         ]
 
 

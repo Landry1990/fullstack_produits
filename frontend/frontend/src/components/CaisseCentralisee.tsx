@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Facture, TicketCaisse } from '../types'
 
 // Lazy load barcode component
@@ -11,6 +12,7 @@ const Barcode = lazy(() => import('react-barcode'))
 export default function CaisseCentralisee() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { settings: pharmacySettings } = usePharmacySettings()
   const [facturesEnAttente, setFacturesEnAttente] = useState<Facture[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
@@ -555,9 +557,11 @@ export default function CaisseCentralisee() {
             <div className="p-6 bg-white text-black font-mono text-sm overflow-y-auto max-h-[60vh]" id="ticket-preview">
                 {/* ... Ticket Content (kept mostly same for print compatibility) ... */}
                 <div className="text-center mb-4 border-b-2 border-black pb-4">
-                <h2 className="text-xl font-black">PHARMA STOCK</h2>
-                <p>Douala, Cameroun</p>
-                <p>Tel: +237 6XX XX XX XX</p>
+                <h2 className="text-xl font-black">{pharmacySettings.pharmacy_name}</h2>
+                <p>{pharmacySettings.city}, {pharmacySettings.country}</p>
+                {pharmacySettings.phone && <p>Tel: {pharmacySettings.phone}</p>}
+                {pharmacySettings.niu && <p>NIU: {pharmacySettings.niu}</p>}
+                {pharmacySettings.registre_commerce && <p>RC: {pharmacySettings.registre_commerce}</p>}
               </div>
               
               <div className="space-y-1 mb-4">
@@ -655,8 +659,7 @@ export default function CaisseCentralisee() {
               </div>
               
               <div className="text-center mt-6 text-xs">
-                <p>Merci de votre visite !</p>
-                <p>À bientôt.</p>
+                <p>{pharmacySettings.ticket_footer_message || 'Merci de votre visite !'}</p>
               </div>
               
               {/* Barcode with invoice number at bottom */}

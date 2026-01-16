@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import PrintPage from './components/printing/PrintPage'
 import Layout from './components/Layout'
 import Produit from './components/Produit'
 import Commandes from './components/Commandes'
@@ -21,6 +22,7 @@ import Avoirs from './components/Avoirs'
 import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 import InvoiceSettings from './components/InvoiceSettings'
+import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
 import JournalAudit from './components/JournalAudit'
 import JournalAjustements from './components/JournalAjustements'
 import Promis from './components/Promis'
@@ -90,6 +92,7 @@ const router = createBrowserRouter([
     path: '/app',
     element: <ProtectedRoute />,
     children: [
+      { path: 'print-invoice', element: <PrintPage /> },
       {
         element: <Layout />,
         children: [
@@ -100,6 +103,9 @@ const router = createBrowserRouter([
           },
           { path: 'produits', element: <Produit /> },
           { path: 'commandes', element: <Commandes /> },
+          { path: 'commandes/locales', element: <Commandes forcedType="LOC" /> },
+          { path: 'commandes/directes', element: <Commandes forcedType="DIR" /> },
+          
           { path: 'ventes', element: <Ventes /> },
           { path: 'fournisseurs', element: <Fournisseurs /> },
           { path: 'clients', element: <Clients /> },
@@ -123,9 +129,13 @@ const router = createBrowserRouter([
           { path: 'centre-rapports', element: <CentreRapports /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },
+          
           { path: 'historique-achats', element: <HistoriqueAchats /> },
+          { path: 'historique-achats/locales', element: <HistoriqueAchats forcedType="LOC" /> },
+          { path: 'historique-achats/directes', element: <HistoriqueAchats forcedType="DIR" /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
           { path: 'invoice-settings', element: <InvoiceSettings /> },
+          { path: 'pharmacy-settings', element: <PharmacySettingsForm /> },
           { 
             path: 'journal-audit', 
             element: (
