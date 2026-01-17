@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
 import { useLocation } from 'react-router-dom'
 import axios from 'axios'
+import DOMPurify from 'dompurify'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture } from '../types'
@@ -41,21 +42,21 @@ export default function Facturation() {
   const { user } = useAuth()
   const { settings: pharmacySettings } = usePharmacySettings()
   
-  // Use product search hook
-  const { 
-    produits, 
-    loading: searchLoading, 
-    searchQuery, 
-    setSearchQuery 
-  } = useProductSearch({ minSearchLength: 2, debounceMs: 200 })
-  
   // Local loading state for non-hook operations (e.g. payment)
   const [loading, setLoading] = useState(false)
 
   // Refs - declared early for hook usage
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
+  
+  // Ref for barcode callback (to avoid hook ordering issues)
+  const addProductRef = useRef<((product: ProduitModel) => void) | null>(null)
 
-  // useCart Hook - Manages all cart logic
+  // Stabilize callbacks to prevent hook infinite loops
+  const handleRequirePrescription = useCallback(() => {
+    setShowOrdonnanceModal(true)
+  }, [])
+
+  // useCart Hook - Manages all cart logic (must be before useProductSearch for barcode callback)
   const {
       lignesFacture,
       setLignesFacture,
@@ -70,8 +71,33 @@ export default function Facturation() {
       loading: cartLoading
   } = useCart({
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
-      onRequirePrescription: () => setShowOrdonnanceModal(true),
+      onRequirePrescription: handleRequirePrescription,
       quantityInputsRef
+  })
+  
+  // Keep ref updated with latest addProduit function
+  addProductRef.current = addProduitToFacture
+
+  // Use product search hook with barcode scan auto-add
+  const handleBarcodeMatch = useCallback((product: ProduitModel) => {
+      // Auto-add scanned product to cart via ref
+      if (addProductRef.current) {
+        addProductRef.current(product)
+        toast.success(`✅ ${product.name} ajouté (scan)`, { duration: 1500 })
+      }
+  }, [])
+
+  // Use product search hook with barcode scan auto-add
+  const { 
+    produits, 
+    loading: searchLoading, 
+    searchQuery, 
+    setSearchQuery,
+    wasBarcodeScanned
+  } = useProductSearch({ 
+    minSearchLength: 2, 
+    debounceMs: 200,
+    onBarcodeMatch: handleBarcodeMatch
   })
 
   // useFacturationClients Hook - Manages all client/AD logic
@@ -609,14 +635,15 @@ export default function Facturation() {
         const plafond = Number(client.plafond || 0);
         if (plafond > 0) {
             const currentDebt = Number(client.current_debt || 0);
-            const newTotal = currentDebt + totals.totalTtc; // Using totalTtc (amount to be paid/invoiced)
+            const newTotal = currentDebt + totals.totalTtc;
             
             if (newTotal > plafond) {
-                // Warning - user can still proceed if backend allows, but we should warn
-                // If backend strictly blocks, we should probably block here too or at least warn loudly.
-                // The implementation plan says "warn". Backend blocks. So we should probably block or confirm.
-                // Let's simple block for now as backend returns 400.
-                setError(`Le plafond de crédit (${plafond} F) serait dépassé. Dette: ${currentDebt} + Nouveau: ${Math.round(totals.totalTtc)} = ${Math.round(newTotal)}`);
+                const message = `⚠️ PLAFOND DÉPASSÉ !\nDette actuelle: ${Math.round(currentDebt).toLocaleString()} F\nNouvelle facture: ${Math.round(totals.totalTtc).toLocaleString()} F\nTotal: ${Math.round(newTotal).toLocaleString()} F\nPlafond: ${Math.round(plafond).toLocaleString()} F`;
+                setError(message);
+                toast.error(`⚠️ Plafond crédit dépassé ! (${Math.round(plafond).toLocaleString()} F)`, { 
+                  duration: 6000,
+                  style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
+                });
                 return;
             }
         }
@@ -1794,6 +1821,8 @@ export default function Facturation() {
                 onPayment={handlePaymentClick}
                 onProforma={handleProforma}
                 onSuspend={mettreEnAttente}
+                onViewPending={() => setShowPendingSales(true)}
+                pendingCount={ventesEnAttente.length}
                 onCancel={() => {
                    if (window.confirm('Voulez-vous vraiment annuler cette facture ?')) {
                        annulerVente()
@@ -1963,7 +1992,7 @@ export default function Facturation() {
               <button 
                 className="btn btn-primary btn-sm"
                 onClick={() => {
-                  const content = document.getElementById('ticket-preview')?.innerHTML;
+                  const content = DOMPurify.sanitize(document.getElementById('ticket-preview')?.innerHTML || '');
                   const win = window.open('', '', 'height=600,width=400');
                   if (win && content) {
                     win.document.write('<html><head><title>Ticket</title>');

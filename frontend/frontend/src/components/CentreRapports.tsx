@@ -138,6 +138,17 @@ const QUERIES: QueryDefinition[] = [
       { key: 'date_fin', label: 'Date fin', type: 'date', required: true }
     ],
     resultType: 'table'
+  },
+  {
+    id: 'produits_tva',
+    name: 'Produits avec TVA',
+    description: 'Liste des produits soumis à la TVA (> 0%)',
+    endpoint: '/api/produits/',
+    params: [
+        { key: 'tva_gt', label: 'TVA supérieure à (%)', type: 'number', default: 0 },
+        { key: 'ordering', label: 'Tri', type: 'text', default: '-tva' }
+    ],
+    resultType: 'table'
   }
 ]
 
@@ -179,6 +190,7 @@ export default function CentreRapports() {
   const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null)
   const [params, setParams] = useState<Record<string, any>>({})
   const [results, setResults] = useState<any>(null)
+  const [pagination, setPagination] = useState<{ count: number; next: string | null; previous: string | null } | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
@@ -238,6 +250,7 @@ export default function CentreRapports() {
   const handleSelectQuery = useCallback((query: QueryDefinition) => {
     setSelectedQuery(query)
     setResults(null)
+    setPagination(null)
     setError(null)
     
     // Initialiser les paramètres avec les valeurs par défaut
@@ -257,27 +270,58 @@ export default function CentreRapports() {
   }, [])
 
   // Exécuter la requête
-  const executeQuery = useCallback(async () => {
+  const executeQuery = useCallback(async (urlOverride?: string) => {
     if (!selectedQuery) return
     
     setLoading(true)
     setError(null)
     
     try {
-      const endpoint = apiBaseUrl 
-        ? `${apiBaseUrl.replace(/\/$/, '')}${selectedQuery.endpoint}`
-        : selectedQuery.endpoint
+      let endpoint = urlOverride;
       
-      const response = await axios.get(endpoint, { params })
+      if (!endpoint) {
+          endpoint = apiBaseUrl 
+            ? `${apiBaseUrl.replace(/\/$/, '')}${selectedQuery.endpoint}`
+            : selectedQuery.endpoint
+      }
+      
+      // Si on utilise une URL complète (pagination), on n'envoie pas les params de nouveau car ils sont déjà dans l'URL
+      // Sauf si c'est la première requête (urlOverride undefined)
+      const config = urlOverride ? {} : { params }
+      
+      const response = await axios.get(endpoint, config)
       
       // Normaliser les résultats
       let data = response.data
-      if (data.results) {
-        data = data.results // Pagination DRF
+      
+      // Helper: Extract path from absolute URL (to go through Vite proxy)
+      const extractPath = (url: string | null): string | null => {
+          if (!url) return null;
+          try {
+              const parsed = new URL(url);
+              return parsed.pathname + parsed.search;
+          } catch {
+              return url; // Already a relative URL
+          }
       }
       
-      setResults(data)
-      toast.success(`Requête "${selectedQuery.name}" exécutée`)
+      // Gestion de la pagination DRF
+      if (data.results && Array.isArray(data.results)) {
+        setResults(data.results)
+        setPagination({
+            count: data.count,
+            // Use relative paths to go through Vite proxy
+            next: extractPath(data.next), 
+            previous: extractPath(data.previous)
+        })
+      } else {
+        // Pas de pagination standard
+        setResults(data)
+        setPagination(null)
+      }
+      
+      if (!urlOverride) toast.success(`Requête "${selectedQuery.name}" exécutée`)
+      
     } catch (err) {
       console.error('Erreur requête:', err)
       if (axios.isAxiosError(err)) {
@@ -291,12 +335,247 @@ export default function CentreRapports() {
     }
   }, [selectedQuery, params, apiBaseUrl])
 
+  // Changer de page
+  const handlePageChange = (url: string | null) => {
+      if (url) {
+          // Fix: Ensure we use the full URL correctly or handle relative if proxied
+          // DRF returns absolute URLs usually.
+          executeQuery(url)
+      }
+  }
+
+  // Copier les résultats dans le presse-papier (format TSV pour Excel)
+  const copyToClipboard = () => {
+    if (!results) {
+      toast.error('Aucun résultat à copier')
+      return
+    }
+    
+    let tsv = ''
+    
+    // Si les résultats sont un tableau (format table)
+    if (Array.isArray(results) && results.length > 0) {
+      // Récupérer les colonnes (max 8 comme dans renderResults)
+      const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id').slice(0, 8)
+      
+      // En-têtes
+      const headers = columns.map(col => col.replace(/_/g, ' '))
+      
+      // Lignes de données
+      const rows = results.map(row =>
+        columns.map(col => {
+          const val = row[col]
+          if (val === null || val === undefined) return ''
+          if (typeof val === 'object') return val.name || JSON.stringify(val)
+          return String(val)
+        })
+      )
+      
+      tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
+    } 
+    // Si les résultats sont un objet (format cards)
+    else if (typeof results === 'object' && !Array.isArray(results)) {
+      const entries = Object.entries(results).map(([key, value]) => {
+        const formattedKey = key.replace(/_/g, ' ')
+        let formattedValue = ''
+        if (typeof value === 'object' && value !== null) {
+          formattedValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(', ')
+        } else {
+          formattedValue = String(value ?? '')
+        }
+        return `${formattedKey}\t${formattedValue}`
+      })
+      tsv = entries.join('\n')
+    } else {
+      toast.error('Format de résultats non supporté')
+      return
+    }
+    
+    // Méthode fallback avec textarea pour compatibilité
+    const textarea = document.createElement('textarea')
+    textarea.value = tsv
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+    
+    try {
+      document.execCommand('copy')
+      const count = Array.isArray(results) ? results.length : Object.keys(results).length
+      toast.success(`${count} éléments copiés ! Collez dans Excel.`)
+    } catch (err) {
+      toast.error('Erreur lors de la copie')
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
+
   // Rendu des résultats selon le type
   const renderResults = () => {
     if (!results) return null
     
+    // === SPECIAL RENDERER: Rapport Mensuel ===
+    if (selectedQuery?.id === 'rapport_mensuel' && typeof results === 'object' && !Array.isArray(results)) {
+      const data = results as any
+      const formatMoney = (v: number) => Math.round(v || 0).toLocaleString('fr-FR') + ' F'
+      
+      return (
+        <div className="space-y-6">
+          {/* Header KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="stat bg-primary/10 rounded-lg p-4">
+              <div className="stat-title text-xs">CA TTC</div>
+              <div className="stat-value text-lg text-primary">{formatMoney(data.ca?.ca_ttc)}</div>
+            </div>
+            <div className="stat bg-success/10 rounded-lg p-4">
+              <div className="stat-title text-xs">CA HT</div>
+              <div className="stat-value text-lg text-success">{formatMoney(data.ca?.ca_ht)}</div>
+            </div>
+            <div className="stat bg-info/10 rounded-lg p-4">
+              <div className="stat-title text-xs">Marge ({data.marge?.marge_pct || 0}%)</div>
+              <div className="stat-value text-lg text-info">{formatMoney(data.marge?.marge_brute)}</div>
+            </div>
+            <div className="stat bg-base-200 rounded-lg p-4">
+              <div className="stat-title text-xs">Nb Ventes</div>
+              <div className="stat-value text-lg">{data.ca?.nb_ventes || 0}</div>
+            </div>
+            <div className="stat bg-warning/10 rounded-lg p-4">
+              <div className="stat-title text-xs">Créances</div>
+              <div className="stat-value text-lg text-warning">{formatMoney(data.creances?.total)}</div>
+              <div className="stat-desc text-xs">{data.creances?.nb_factures || 0} factures</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Encaissements */}
+            <div className="card bg-base-100 shadow border border-base-200">
+              <div className="card-body p-4">
+                <h3 className="font-bold text-sm mb-3">💰 Encaissements</h3>
+                <div className="space-y-2">
+                  {(data.encaissements || []).map((enc: any, idx: number) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span className="text-base-content/70">{enc.mode_label || enc.mode}</span>
+                      <span className="font-bold">{formatMoney(enc.montant)}</span>
+                    </div>
+                  ))}
+                  {(!data.encaissements || data.encaissements.length === 0) && (
+                    <div className="text-sm text-base-content/50">Aucun encaissement</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* TVA */}
+            <div className="card bg-base-100 shadow border border-base-200">
+              <div className="card-body p-4">
+                <h3 className="font-bold text-sm mb-3">📊 Répartition TVA</h3>
+                <div className="space-y-2">
+                  {(data.ca_par_tva || []).map((tva: any, idx: number) => (
+                    <div key={idx} className="flex justify-between text-sm">
+                      <span className="text-base-content/70">TVA {tva.taux}%</span>
+                      <span className="font-bold">{formatMoney(tva.montant_tva)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Mouvements Caisse */}
+            {data.mouvements_caisse && (
+              <div className="card bg-base-100 shadow border border-base-200">
+                <div className="card-body p-4">
+                  <h3 className="font-bold text-sm mb-3">🏦 Mouvements Caisse</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-success">Entrées</span>
+                      <span className="font-bold text-success">{formatMoney(data.mouvements_caisse.total_entrees)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-error">Sorties</span>
+                      <span className="font-bold text-error">{formatMoney(data.mouvements_caisse.total_sorties)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span>Solde</span>
+                      <span className="font-bold">{formatMoney(data.mouvements_caisse.solde)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Fournisseurs */}
+            {data.achats_par_fournisseur && data.achats_par_fournisseur.length > 0 && (
+              <div className="card bg-base-100 shadow border border-base-200">
+                <div className="card-body p-4">
+                  <h3 className="font-bold text-sm mb-3">📦 Top Fournisseurs</h3>
+                  <div className="space-y-2">
+                    {data.achats_par_fournisseur.slice(0, 5).map((f: any, idx: number) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span className="text-base-content/70 truncate max-w-[150px]">{f.fournisseur_nom}</span>
+                        <span className="font-bold">{formatMoney(f.montant_total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Clients Pro */}
+            {data.clients_professionnels && data.clients_professionnels.ca_total > 0 && (
+              <div className="card bg-base-100 shadow border border-base-200">
+                <div className="card-body p-4">
+                  <h3 className="font-bold text-sm mb-3">🏢 Clients Pro</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>CA Total</span>
+                      <span className="font-bold">{formatMoney(data.clients_professionnels.ca_total)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Payé</span>
+                      <span className="font-bold text-success">{formatMoney(data.clients_professionnels.montant_paye)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Reste</span>
+                      <span className="font-bold text-warning">{formatMoney(data.clients_professionnels.reste_a_payer)}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span>Recouvrement</span>
+                      <span className="font-bold">{data.clients_professionnels.taux_recouvrement_pct}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* UG */}
+            {data.unites_gratuites && data.unites_gratuites.valeur_totale > 0 && (
+              <div className="card bg-base-100 shadow border border-base-200">
+                <div className="card-body p-4">
+                  <h3 className="font-bold text-sm mb-3">🎁 Unités Gratuites</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Valeur</span>
+                      <span className="font-bold">{formatMoney(data.unites_gratuites.valeur_totale)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Quantité</span>
+                      <span className="font-bold">{data.unites_gratuites.quantite_totale}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>% du CA</span>
+                      <span className="font-bold">{data.unites_gratuites.pct_du_ca}%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )
+    }
+    
     if (selectedQuery?.resultType === 'cards' && typeof results === 'object' && !Array.isArray(results)) {
-      // Affichage en cartes pour les objets
+      // Affichage en cartes pour les objets (generic)
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.entries(results).map(([key, value]) => {
@@ -406,7 +685,7 @@ export default function CentreRapports() {
               </div>
             ))}
             <div className="text-sm text-base-content/50 text-center">
-              Total: {results.length} ligne(s) réparties sur {sortedGroups.length} facture(s)
+              Total: {pagination ? pagination.count : results.length} ligne(s) réparties sur {sortedGroups.length} facture(s)
             </div>
           </div>
         )
@@ -435,7 +714,7 @@ export default function CentreRapports() {
               ))}
             </tbody>
           </table>
-          {results.length > 100 && (
+          {results.length > 100 && !pagination && (
             <div className="text-center text-sm text-base-content/50 mt-2">
               Affichage limité à 100 résultats sur {results.length}
             </div>
@@ -502,7 +781,7 @@ export default function CentreRapports() {
                   {/* Action Buttons */}
                   <div className="flex gap-2 shrink-0">
                     <button
-                      onClick={executeQuery}
+                      onClick={() => executeQuery()}
                       disabled={loading}
                       className="btn btn-primary btn-sm gap-2"
                     >
@@ -520,6 +799,13 @@ export default function CentreRapports() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                       </svg>
                       Imprimer
+                    </button>
+                    <button 
+                      className="btn btn-outline btn-sm gap-2"
+                      onClick={copyToClipboard}
+                      disabled={!results}
+                    >
+                      📋 Copier
                     </button>
                   </div>
                 </div>
@@ -658,7 +944,7 @@ export default function CentreRapports() {
               </div>
               
               {/* Results Panel */}
-              <div className="flex-1 overflow-auto p-4 bg-base-50">
+              <div className="flex-1 overflow-auto p-4 bg-base-50 flex flex-col">
                 {error && (
                   <div className="alert alert-error mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -673,9 +959,37 @@ export default function CentreRapports() {
                     <span className="loading loading-spinner loading-lg text-primary"></span>
                   </div>
                 ) : results ? (
-                  <div className="bg-white rounded-lg shadow-sm border border-base-200 p-4">
+                  <div className="bg-white rounded-lg shadow-sm border border-base-200 p-4 flex flex-col h-full">
                     <div className="text-xs text-base-content/50 mb-3 uppercase font-bold">Résultats</div>
-                    {renderResults()}
+                    
+                    <div className="flex-1 overflow-auto">
+                        {renderResults()}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {pagination && (
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-base-200">
+                          <div className="text-sm text-base-content/60">
+                             Total: <span className="font-bold text-base-content">{pagination.count}</span> éléments
+                          </div>
+                          <div className="join">
+                            <button 
+                                className="join-item btn btn-sm" 
+                                disabled={!pagination.previous || loading}
+                                onClick={() => handlePageChange(pagination.previous)}
+                            >
+                                « Précédent
+                            </button>
+                            <button 
+                                className="join-item btn btn-sm"
+                                disabled={!pagination.next || loading}
+                                onClick={() => handlePageChange(pagination.next)}
+                            >
+                                Suivant »
+                            </button>
+                          </div>
+                        </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-base-content/40">

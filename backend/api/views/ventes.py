@@ -113,6 +113,45 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    def destroy(self, request, *args, **kwargs):
+        """
+        Supprime une facture (si brouillon ou annulée).
+        Logs l'action avant suppression.
+        """
+        instance = self.get_object()
+        
+        # Vérification sécurité supplémentaire (si nécessaire)
+        # if instance.status not in [Facture.Status.BROUILLON, Facture.Status.ANNULEE]:
+        #     return Response({'detail': 'Seules les factures brouillon ou annulées peuvent être supprimées.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        facture_id = instance.id
+        numero = instance.numero_facture
+        montant = instance.total_ttc
+        client_nom = instance.client.name if instance.client else 'Passager'
+
+        try:
+            # Log avant suppression car l'objet n'existera plus
+            log_audit(
+                user=request.user,
+                action='INV_DEL',
+                model_name='Facture',
+                object_id=numero or str(facture_id),
+                description=f"Suppression Facture {numero or '#' + str(facture_id)}",
+                details={
+                    'id': facture_id,
+                    'numero': numero,
+                    'amount': float(montant),
+                    'client': client_nom
+                },
+                request=request
+            )
+            
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+            
+        except ProtectedError:
+            return Response({'detail': 'Impossible de supprimer cette facture car elle est liée à d\'autres éléments.'}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def valider(self, request, pk=None):
@@ -397,6 +436,24 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             facture.notes = f"{current_notes}\n[Annulation le {timestamp}] Motif: {motif}".strip()
             
         facture.save(update_fields=['status', 'notes', 'date_annulation'])
+
+        # Log Audit
+        log_audit(
+            user=request.user,
+            action='INV_CANCEL',
+            model_name='Facture',
+            object_id=facture.numero_facture,
+            description=f"Annulation Facture #{facture.numero_facture}",
+            details={
+                'facture_id': facture.id,
+                'numero': facture.numero_facture,
+                'amount': -float(facture.total_ttc), # Negative because cancelled
+                'montant': -float(facture.total_ttc),
+                'motif': motif,
+                'client': facture.client.name if facture.client else 'Passager'
+            },
+            request=request
+        )
 
         numero = facture.numero_facture or f"#{facture.id}"
         log_audit(
@@ -1183,6 +1240,30 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 pass
         
         return queryset
+    
+    @action(detail=False, methods=['get'])
+    def totals(self, request):
+        """
+        Returns aggregated totals for créances.
+        This is the SINGLE SOURCE OF TRUTH for créances totals.
+        Used by Dashboard and rapport_mensuel.
+        """
+        queryset = self.get_queryset()
+        
+        total_creances = Decimal('0')
+        count = 0
+        for f in queryset:
+            # Calculate remainder using same logic as queryset annotation
+            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
+            reste = f.total_ttc - paye
+            if reste > 0:
+                total_creances += reste
+                count += 1
+        
+        return Response({
+            'total': total_creances,
+            'count': count
+        })
     
     @action(detail=True, methods=['post'])
     @transaction.atomic

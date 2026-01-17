@@ -61,6 +61,15 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
                 queryset = queryset.filter(stock__lt=val)
             except ValueError:
                 pass
+        
+        # Filtrage pour TVA (utilisé dans les rapports)
+        tva_gt = self.request.query_params.get('tva_gt')
+        if tva_gt is not None:
+             try:
+                 val = float(tva_gt)
+                 queryset = queryset.filter(tva__gt=val)
+             except ValueError:
+                 pass
                 
         return queryset
 
@@ -68,14 +77,61 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
     list_serializer_class = ProduitListSerializer
     detail_serializer_class = ProduitDetailSerializer
 
+    def perform_update(self, serializer):
+        """
+        Override update to audit price changes.
+        """
+        instance = serializer.instance
+        old_price = instance.selling_price
+        
+        # Save updates
+        serializer.save()
+        
+        # Check if price changed
+        new_price = serializer.instance.selling_price
+        if old_price != new_price:
+            log_audit(
+                user=self.request.user,
+                action='PRICE_CHG', # Custom or standard action
+                model_name='Produit',
+                object_id=instance.id,
+                description=f"Changement prix {instance.name}: {old_price:.0f} -> {new_price:.0f}",
+                details={
+                    'produit_id': instance.id,
+                    'produit_nom': instance.name,
+                    'old_price': float(old_price),
+                    'new_price': float(new_price),
+                    'montant': float(new_price)
+                },
+                request=self.request
+            )
+
     def destroy(self, request, *args, **kwargs):
         """
         Override destroy to handle ProtectedError gracefully.
         Products cannot be deleted if they are referenced in historical records.
         """
         instance = self.get_object()
+        produit_id = instance.id
+        produit_nom = instance.name
+        
         try:
             self.perform_destroy(instance)
+            
+            # Log successful deletion
+            log_audit(
+                user=request.user,
+                action='DELETE',
+                model_name='Produit',
+                object_id=produit_id,
+                description=f"Suppression produit: {produit_nom}",
+                details={
+                    'id': produit_id,
+                    'name': produit_nom
+                },
+                request=request
+            )
+            
         except ProtectedError as e:
             # Extract the protected objects information
             protected_objects = e.protected_objects
@@ -148,27 +204,18 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
                 'id': v['facture__id']
             })
             
-        # 3. Achats (Commandes Clôturées)
-        achats = CommandeProduit.objects.filter(
-            produit=produit,
-            commande__status='CLOT' # Statut Clôturée correct
-        ).select_related('commande', 'commande__fournisseur').values(
-            'commande__date', 'quantity', 'unites_gratuites', 'price_cost', 'commande__id', 'commande__fournisseur__name'
-        )
-
-        for a in achats:
-            total_qty = a['quantity'] + a['unites_gratuites']
-            history.append({
-                'date': a['commande__date'], # Date de commande (ou date_reception si dispo)
-                'type': 'ENTREE',
-                'quantity': total_qty, # Entrée en stock
-                'stock_apres': 0, # Calculé après
-                'libelle': f"Achat: Commande #{a['commande__id']} - {a['commande__fournisseur__name'] or 'Inconnu'}",
-                'prix_unitaire': a['price_cost'],
-                'user': '',
-                'source': 'ACHAT',
-                'id': a['commande__id']
-            })
+        # 3. Achats (Commandes Clôturées) - SUPPRIMÉ car dupliqué avec MouvementStock
+        # Les entrées de stock lors de la clôture sont déjà enregistrées dans MouvementStock
+        # Garder cette section commentée pour référence:
+        # achats = CommandeProduit.objects.filter(
+        #     produit=produit,
+        #     commande__status='CLOT'
+        # ).select_related('commande', 'commande__fournisseur').values(
+        #     'commande__date', 'quantity', 'unites_gratuites', 'price_cost', 'commande__id', 'commande__fournisseur__name'
+        # )
+        # for a in achats:
+        #     total_qty = a['quantity'] + a['unites_gratuites']
+        #     history.append({...})
 
         # 4. Ajustements de stock (inventaires, corrections, annulations réception)
         adjustments = StockAdjustment.objects.filter(produit=produit).select_related('user').values(
@@ -496,6 +543,7 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
             if new_lot_qty < 0:
                 new_lot_qty = 0
             stock_lot.quantity_remaining = new_lot_qty
+            stock_lot.quantity_remaining = new_lot_qty
             stock_lot.save(update_fields=['quantity_remaining'])
         
         # Log d'audit explicite
@@ -504,15 +552,16 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
             action=AuditLog.Action.STOCK_ADJUST,
             model_name='Produit',
             object_id=produit.id,
-            description=f"Stock de {produit.name} ajusté: {quantity_before} → {new_quantity} ({quantity_change:+d}) - Motif: {adjustment.get_reason_type_display()}",
+            description=f"Ajustement stock: {quantity_change:+d} ({reason_detail or reason_type})",
             details={
                 'produit_id': produit.id,
-                'produit_name': produit.name,
-                'before': quantity_before,
-                'after': new_quantity,
-                'change': quantity_change,
+                'produit_nom': produit.name,
+                'quantity_before': quantity_before,
+                'quantity_after': new_quantity,
+                'quantity_change': quantity_change,
                 'reason_type': reason_type,
-                'reason_detail': reason_detail
+                'reason_detail': reason_detail,
+                'stock_lot': stock_lot.lot if stock_lot else None
             },
             request=request
         )
@@ -525,6 +574,175 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
             'quantity_after': new_quantity,
             'quantity_change': quantity_change,
             'reason': f"{adjustment.get_reason_type_display()}: {adjustment.reason_detail}"
+        })
+
+    @action(detail=False, methods=['get'])
+    def analyse_abc(self, request):
+        """
+        Calcule la classification ABC des produits basée sur le chiffre d'affaires.
+        Principe de Pareto: A = 80% CA, B = 15% CA, C = 5% CA
+        
+        Paramètres:
+        - periode: nombre de mois d'analyse (défaut: 6)
+        - rayon_id: filtrer par rayon (optionnel)
+        - fournisseur_id: filtrer par fournisseur (optionnel)
+        """
+        from django.db.models.functions import Coalesce
+        from decimal import Decimal
+        from dateutil.relativedelta import relativedelta
+        
+        # Paramètres
+        try:
+            periode = int(request.query_params.get('periode', 6))
+        except ValueError:
+            periode = 6
+            
+        rayon_id = request.query_params.get('rayon_id')
+        fournisseur_id = request.query_params.get('fournisseur_id')
+        
+        # Date de début basée sur la période
+        date_debut = timezone.now() - relativedelta(months=periode)
+        
+        # Calculer le CA par produit sur la période
+        # On ne prend que les factures validées/payées (exclure BROU, PROF, ANN)
+        produit_filter = Q(
+            facture__status__in=['VAL', 'PAY'],
+            facture__date__gte=date_debut
+        )
+        
+        if rayon_id:
+            produit_filter &= Q(produit__rayon_id=rayon_id)
+        if fournisseur_id:
+            produit_filter &= Q(produit__fournisseur_id=fournisseur_id)
+        
+        # Agrégation: CA par produit
+        ventes_par_produit = FactureProduit.objects.filter(
+            produit_filter
+        ).values(
+            'produit', 'produit__name', 'produit__stock', 'produit__cip1', 
+            'produit__selling_price', 'produit__rayon__name', 'produit__fournisseur__name'
+        ).annotate(
+            chiffre_affaires=Coalesce(Sum(F('quantity') * F('selling_price')), Decimal('0')),
+            quantite_vendue=Coalesce(Sum('quantity'), 0)
+        ).order_by('-chiffre_affaires')
+        
+        # Calculer le CA total
+        ca_total = sum(item['chiffre_affaires'] for item in ventes_par_produit)
+        
+        if ca_total == 0:
+            return Response({
+                'periode_mois': periode,
+                'date_debut': date_debut.date().isoformat(),
+                'ca_total': 0,
+                'nb_produits_a': 0,
+                'nb_produits_b': 0,
+                'nb_produits_c': 0,
+                'produits': []
+            })
+        
+        # Classification ABC
+        seuil_a = Decimal('0.80')  # 80% du CA
+        seuil_b = Decimal('0.95')  # 80% + 15% = 95%
+        
+        ca_cumule = Decimal('0')
+        produits_classes = []
+        
+        stats = {'A': 0, 'B': 0, 'C': 0}
+        ca_par_categorie = {'A': Decimal('0'), 'B': Decimal('0'), 'C': Decimal('0')}
+        
+        for item in ventes_par_produit:
+            ca_produit = item['chiffre_affaires']
+            ca_cumule += ca_produit
+            pourcentage_cumule = ca_cumule / ca_total
+            pourcentage_ca = (ca_produit / ca_total * 100).quantize(Decimal('0.01'))
+            
+            # Déterminer la catégorie
+            if pourcentage_cumule <= seuil_a:
+                categorie = 'A'
+            elif pourcentage_cumule <= seuil_b:
+                categorie = 'B'
+            else:
+                categorie = 'C'
+            
+            stats[categorie] += 1
+            ca_par_categorie[categorie] += ca_produit
+            
+            produits_classes.append({
+                'id': item['produit'],
+                'nom': item['produit__name'],
+                'cip': item['produit__cip1'] or '-',
+                'rayon': item['produit__rayon__name'] or 'Sans rayon',
+                'fournisseur': item['produit__fournisseur__name'] or '-',
+                'stock': item['produit__stock'],
+                'prix_vente': float(item['produit__selling_price']),
+                'chiffre_affaires': float(ca_produit),
+                'quantite_vendue': item['quantite_vendue'],
+                'pourcentage_ca': float(pourcentage_ca),
+                'pourcentage_cumule': float((pourcentage_cumule * 100).quantize(Decimal('0.01'))),
+                'categorie': categorie,
+                'en_rupture': item['produit__stock'] <= 0
+            })
+        
+        # Compter les produits sans ventes (catégorie C) - OPTIMISATION: seulement compter, pas charger
+        produits_avec_ventes = [p['id'] for p in produits_classes]
+        
+        produits_sans_ventes_filter = ~Q(id__in=produits_avec_ventes)
+        if rayon_id:
+            produits_sans_ventes_filter &= Q(rayon_id=rayon_id)
+        if fournisseur_id:
+            produits_sans_ventes_filter &= Q(fournisseur_id=fournisseur_id)
+        
+        # Compter seulement (rapide)
+        nb_produits_sans_ventes = Produit.objects.filter(produits_sans_ventes_filter).count()
+        stats['C'] += nb_produits_sans_ventes
+        
+        # Paramètre pour charger les détails des produits C sans ventes
+        include_no_sales = request.query_params.get('include_no_sales', 'false').lower() == 'true'
+        limite_c = int(request.query_params.get('limite_c', 100))  # Limiter par défaut à 100
+        
+        if include_no_sales:
+            produits_sans_ventes = Produit.objects.filter(
+                produits_sans_ventes_filter
+            ).values('id', 'name', 'cip1', 'stock', 'selling_price', 'rayon__name', 'fournisseur__name')[:limite_c]
+            
+            for p in produits_sans_ventes:
+                produits_classes.append({
+                    'id': p['id'],
+                    'nom': p['name'],
+                    'cip': p['cip1'] or '-',
+                    'rayon': p['rayon__name'] or 'Sans rayon',
+                    'fournisseur': p['fournisseur__name'] or '-',
+                    'stock': p['stock'],
+                    'prix_vente': float(p['selling_price']),
+                    'chiffre_affaires': 0,
+                    'pourcentage_ca': 0,
+                    'pourcentage_cumule': 100,
+                    'categorie': 'C',
+                    'en_rupture': p['stock'] <= 0
+                })
+        
+        # Filtrer par catégorie demandée (optionnel)
+        categorie_filter = request.query_params.get('categorie')
+        if categorie_filter and categorie_filter in ['A', 'B', 'C']:
+            produits_classes = [p for p in produits_classes if p['categorie'] == categorie_filter]
+        
+        # Alertes: produits A en rupture
+        produits_a_en_rupture = [p for p in produits_classes if p['categorie'] == 'A' and p['en_rupture']]
+        
+        return Response({
+            'periode_mois': periode,
+            'date_debut': date_debut.date().isoformat(),
+            'ca_total': float(ca_total),
+            'nb_produits_a': stats['A'],
+            'nb_produits_b': stats['B'],
+            'nb_produits_c': stats['C'],
+            'nb_produits_c_sans_ventes': nb_produits_sans_ventes,
+            'ca_categorie_a': float(ca_par_categorie['A']),
+            'ca_categorie_b': float(ca_par_categorie['B']),
+            'ca_categorie_c': float(ca_par_categorie['C']),
+            'alertes_rupture_a': len(produits_a_en_rupture),
+            'produits_a_en_rupture': [p['nom'] for p in produits_a_en_rupture[:5]],  # Top 5
+            'produits': produits_classes
         })
 
 class CategorieViewSet(viewsets.ModelViewSet):
@@ -741,9 +959,18 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         for item in catalogue_data:
             try:
                 produit = Produit.objects.get(pk=item['produit'])
+                
+                selling_price = produit.selling_price or Decimal('0')
                 dernier_prix = item['dernier_prix_achat'] or Decimal('0')
-                marge = produit.selling_price - dernier_prix if dernier_prix else Decimal('0')
-                marge_pourcent = ((marge / produit.selling_price) * 100) if produit.selling_price else Decimal('0')
+                
+                # Calcul de la marge
+                marge = selling_price - dernier_prix
+                
+                # Calcul du pourcentage de marge (sécurisé contre division par zéro)
+                if selling_price > 0:
+                    marge_pourcent = (marge / selling_price) * 100
+                else:
+                    marge_pourcent = Decimal('0')
                 
                 result.append({
                     'produit_id': produit.id,
@@ -751,13 +978,13 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                     'cip': produit.cip1 or produit.cip2 or produit.cip3 or '-',
                     'dernier_prix_achat': float(dernier_prix),
                     'derniere_commande': item['derniere_commande'],
-                    'prix_vente': float(produit.selling_price),
+                    'prix_vente': float(selling_price),
                     'marge': float(marge),
                     'marge_pourcent': round(float(marge_pourcent), 1),
                     'qte_totale': item['qte_totale'] or 0,
                     'stock_actuel': produit.stock
                 })
-            except Produit.DoesNotExist:
+            except (Produit.DoesNotExist, ValueError, TypeError):
                 continue
         
         # Trier par nom de produit

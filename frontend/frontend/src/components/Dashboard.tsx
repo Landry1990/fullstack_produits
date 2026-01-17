@@ -47,6 +47,7 @@ export default function Dashboard() {
   const [expiringLots, setExpiringLots] = useState<StockLot[]>([]);
   const [expirationMonths, setExpirationMonths] = useState(1); // Délai par défaut: 1 mois
   const [ugStats, setUgStats] = useState<{ug_en_stock: number; ug_recues_mois: number; valeur_economisee: number} | null>(null);
+  const [promisDisponibles, setPromisDisponibles] = useState<{id: number; client: string; produit_nom: string; quantite: number; jours_attente: number}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -125,23 +126,36 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [statsRes, chartRes, lowStockRes, ugStatsRes] = await Promise.all([
+        const promisEndpoint = apiBaseUrl 
+          ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/promis/disponibles/`
+          : '/api/promis/disponibles/';
+          
+        const [statsRes, chartRes, lowStockRes, ugStatsRes, promisRes] = await Promise.all([
           axios.get(`${dashboardEndpoint}stats/`),
           axios.get(`${dashboardEndpoint}revenue_chart/`),
           axios.get(`${dashboardEndpoint}low_stock/`),
           axios.get(ugStatsEndpoint).catch(() => ({ data: null })), // Ne pas bloquer si l'endpoint UG échoue
+          axios.get(promisEndpoint).catch(() => ({ data: { promis_disponibles: [] } })),
         ]);
 
           setStats(statsRes.data);
-          // setRecentTransactions(transactionsRes.data); // Supprimé
           setRevenueChart(chartRes.data);
           setLowStockItems(lowStockRes.data);
           // Set UG stats if available
           if (ugStatsRes.data) {
             setUgStats(ugStatsRes.data);
           }
-          // Set clients depassement
-          // setClientsDepassement(clientsDepassementRes.data || []); // Supprimé
+          // Set promis disponibles
+          if (promisRes.data?.promis_disponibles) {
+            setPromisDisponibles(promisRes.data.promis_disponibles);
+            // Notification si promis disponibles
+            if (promisRes.data.promis_disponibles.length > 0) {
+              toast.success(
+                `📦 ${promisRes.data.promis_disponibles.length} produit(s) promis disponible(s) !`,
+                { duration: 5000, id: 'promis-dispo' }
+              );
+            }
+          }
       } catch (err) {
         console.error('Erreur lors du chargement du tableau de bord:', err);
         setError('Impossible de charger les données du tableau de bord.');
@@ -151,7 +165,7 @@ export default function Dashboard() {
     };
 
     fetchData();
-  }, [dashboardEndpoint, ugStatsEndpoint]);
+  }, [dashboardEndpoint, ugStatsEndpoint, apiBaseUrl]);
 
   if (loading) {
     return (
@@ -435,6 +449,37 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* Promis Disponibles Alert */}
+          {promisDisponibles.length > 0 && (
+            <div className="card bg-green-50 shadow-sm border border-green-200">
+              <div className="card-body p-4">
+                <div 
+                  className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => navigate('/app/promis')}
+                >
+                  <h2 className="card-title text-lg font-bold text-green-700">📦 Promis Disponibles</h2>
+                  <span className="badge badge-success text-white badge-sm">{promisDisponibles.length}</span>
+                </div>
+                <div className="space-y-2">
+                  {promisDisponibles.slice(0, 5).map((p) => (
+                    <div key={p.id} className="flex items-center justify-between p-2 rounded-lg bg-green-100/50 border border-green-200">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-base-content block truncate">{p.produit_nom}</span>
+                        <span className="text-xs text-base-content/60">{p.client} • {p.quantite} unité(s)</span>
+                      </div>
+                      <span className="badge badge-ghost text-xs whitespace-nowrap ml-2">
+                        {p.jours_attente}j
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <Link to="/app/promis" className="btn btn-success btn-sm w-full mt-2 text-white">
+                  Livrer les Promis
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Stock Alerts */}
           <div className="card bg-base-100 shadow-sm border border-base-200">

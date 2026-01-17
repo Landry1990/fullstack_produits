@@ -53,22 +53,30 @@ class DashboardViewSet(viewsets.ViewSet):
         if sales_yesterday > 0:
             sales_change = round(((sales_today - sales_yesterday) / sales_yesterday) * 100, 1)
         
-        # 3. Low stock count
+        # 3. Low stock count (only products with rotation > 0)
         stock_critique = Produit.objects.filter(
             Q(stock__lt=F('rotation_moyenne')) |
-            Q(stock__lte=F('stock_minimum'))
+            Q(stock__lte=F('stock_minimum')),
+            rotation_moyenne__gt=0  # Exclure produits dormants
         ).count()
         
         # 4. Receivables (Créances Clients) - Total unpaid amounts on validated invoices
-        receivables_data = Facture.objects.filter(
+        # Aligned with rapport_mensuel calculation - iterate through each invoice
+        factures_for_receivables = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
-            paid=Coalesce(Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')), Decimal('0')),
-            remainder=F('total_ttc') - F('paid')
-        ).filter(remainder__gt=0).aggregate(
-            total_debt=Coalesce(Sum('remainder'), Decimal('0')),
-            count=Count('id')
-        )
+        ).prefetch_related('paiements')
+        
+        total_receivables = Decimal('0')
+        count_unpaid = 0
+        for f in factures_for_receivables:
+            # Sum of real payments (exclude 'en_compte', include only 'completee')
+            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
+            reste = f.total_ttc - paye
+            if reste > 0:
+                total_receivables += reste
+                count_unpaid += 1
+        
+        receivables_data = {'total_debt': total_receivables, 'count': count_unpaid}
         
         # 5. Discount (Remises accordées AUJOURD'HUI)
         discount_total = Facture.objects.filter(
@@ -158,9 +166,10 @@ class DashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
-        """Returns top 5 products with lowest stock relative to minimum."""
+        """Returns top 10 products with lowest stock relative to minimum (only active products)."""
         products = Produit.objects.filter(
-            stock__lte=F('stock_minimum')
+            stock__lte=F('stock_minimum'),
+            rotation_moyenne__gt=0  # Exclure produits dormants sans rotation
         ).order_by('stock')[:10]
         
         data = [{
@@ -209,44 +218,40 @@ class StatistiquesViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def ca_par_fournisseur(self, request):
-        start_date = request.query_params.get('start_date')
-        end_date = request.query_params.get('end_date')
+        # Support both param naming conventions
+        start_date = request.query_params.get('date_debut') or request.query_params.get('start_date')
+        end_date = request.query_params.get('date_fin') or request.query_params.get('end_date')
         
-        # Filtre sur les factures (ventes)
-        filters = Q(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
-        if start_date:
-            filters &= Q(date__gte=start_date)
-        if end_date:
-            filters &= Q(date__lte=end_date)
-            
-        # On doit passer par les produits vendus -> LigneFacture -> Produit -> Fournisseur
-        # Attention : FactureProduitAllocation permet de savoir exactement quel lot (et donc fournisseur) a été vendu
-        # Mais pour simplifier et si l'allocation n'est pas stricte, on utilise le fournisseur par défaut du produit
-        
-        # Méthode précise via FactureProduitAllocation (si utilisé)
-        # Allocations
+        # Méthode via FactureProduitAllocation pour traçabilité FIFO
         from ..models import FactureProduitAllocation
         
         allocations = FactureProduitAllocation.objects.filter(
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).select_related('stock_lot__fournisseur')
+        
         if start_date:
             allocations = allocations.filter(facture_produit__facture__date__gte=start_date)
         if end_date:
             allocations = allocations.filter(facture_produit__facture__date__lte=end_date)
             
         stats = allocations.values(
+            'stock_lot__fournisseur__id',
             'stock_lot__fournisseur__name'
         ).annotate(
-            ca=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
-            marge=Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField())
-        ).order_by('-ca')
+            ca_ttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
+            cout_achat=Sum(F('quantity') * F('cost_price'), output_field=DecimalField()),
+            marge_brute=Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()),
+            quantite_vendue=Sum('quantity')
+        ).order_by('-ca_ttc')
         
         data = [
             {
-                'fournisseur': item['stock_lot__fournisseur__name'] or 'Inconnu',
-                'ca_total': item['ca'],
-                'marge_totale': item['marge']
+                'id': item['stock_lot__fournisseur__id'] or 0,
+                'nom': item['stock_lot__fournisseur__name'] or 'Inconnu',
+                'ca_ttc': float(item['ca_ttc'] or 0),
+                'cout_achat': float(item['cout_achat'] or 0),
+                'marge_brute': float(item['marge_brute'] or 0),
+                'quantite_vendue': item['quantite_vendue'] or 0
             }
             for item in stats
         ]

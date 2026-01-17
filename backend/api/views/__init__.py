@@ -27,7 +27,6 @@ from .import_views import ProductImportView
 
 # Import from parent api module (not yet migrated to views package)
 from ..rapport_view import RapportViewSet
-from .rapports import RapportViewSet
 from ..ordonnancier_view import OrdonnancierViewSet
 
 # Expose all for import from api.views

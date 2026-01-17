@@ -183,6 +183,7 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()
     produit_stock = serializers.IntegerField(source='produit.stock', read_only=True)
     produit_rotation_moyenne = serializers.CharField(source='produit.rotation_moyenne', read_only=True)
+    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
     fournisseur_name = serializers.SerializerMethodField()
     total_quantity = serializers.IntegerField(read_only=True)

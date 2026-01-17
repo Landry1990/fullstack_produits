@@ -59,17 +59,49 @@ export default function CommandeProductTable({
 }: CommandeProductTableProps) {
     return (
         <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
-            <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
+            <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-4">
                 <h2 className="font-bold text-sm md:text-base text-base-content">
                 Produits ({commandeProduits.length})
                 </h2>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
                     {saving && <span className="text-sm text-warning animate-pulse">Sauvegarde...</span>}
-                    {!saving && lastSaved && <span className="text-xs text-success">Enregistré à {lastSaved.toLocaleTimeString()}</span>}
-                    <div className="text-base md:text-lg font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg">
-                    Total : {commandeProduits.reduce((acc, p) => acc + (Number(p.price || 0) * Number(p.quantity || 0)), 0).toLocaleString('fr-FR')} F
-                    </div>
+                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">Enregistré à {lastSaved.toLocaleTimeString()}</span>}
+                    
+                    {(() => {
+                        const stats = commandeProduits.reduce((acc, p) => {
+                            const qty = Number(p.quantity || 0);
+                            const price = Number(p.price || 0);
+                            const tvaRate = Number(p.tva || 0);
+                            
+                            const lineHT = qty * price;
+                            const lineTVA = lineHT * (tvaRate / 100);
+                            
+                            return {
+                                ht: acc.ht + lineHT,
+                                tva: acc.tva + lineTVA
+                            };
+                        }, { ht: 0, tva: 0 });
+                        
+                        const totalTTC = stats.ht + stats.tva;
+                        
+                        return (
+                            <div className="flex gap-2 text-xs md:text-sm">
+                                <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
+                                    <span className="text-[10px] text-base-content/60 uppercase">Total HT</span>
+                                    <span className="font-bold">{stats.ht.toLocaleString('fr-FR')} F</span>
+                                </div>
+                                <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
+                                    <span className="text-[10px] text-base-content/60 uppercase">Total TVA</span>
+                                    <span className="font-bold">{stats.tva.toLocaleString('fr-FR')} F</span>
+                                </div>
+                                <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
+                                    <span className="text-[10px] text-primary/70 uppercase">Total TTC</span>
+                                    <span className="font-bold text-primary">{totalTTC.toLocaleString('fr-FR')} F</span>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
             </div>
             {selectedRows.size > 0 && (
@@ -117,6 +149,7 @@ export default function CommandeProductTable({
                         />
                     </th>
                     <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">Produit</th>
+                    <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">CIP</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Qté</th>
                     <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">UG</th>
                     {commandeType === 'DIR' && (
@@ -166,6 +199,17 @@ export default function CommandeProductTable({
                             return `Produit #${produitId}`;
                             })()}
                         </div>
+                        </td>
+                        {/* CIP Column */}
+                        <td className="pl-2 py-2 md:py-3">
+                            <span className="text-xs font-mono text-base-content/70">
+                                {(() => {
+                                    if (typeof p.produit === 'object' && p.produit.cip1) return p.produit.cip1;
+                                    const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                                    const found = produitsList.find(prod => prod.id === produitId);
+                                    return found?.cip1 || '-';
+                                })()}
+                            </span>
                         </td>
                         {/* Quantity (0) */}
                         <td className="text-right py-2 md:py-3">

@@ -46,7 +46,6 @@ router.register(r'historique-transformation', HistoriqueTransformationViewSet, b
 router.register(r'clotures-caisse', ClotureCaisseViewSet, basename='cloturecaisse')
 router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadjustment')
 router.register(r'historique-ventes', HistoriqueVentesViewSet, basename='historiqueventes')
-router.register(r'rapports', RapportViewSet, basename='rapport')
 router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 
 
