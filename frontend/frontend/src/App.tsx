@@ -33,6 +33,7 @@ import HistoriqueVentes from './components/HistoriqueVentes'
 import HistoriqueAchats from './components/HistoriqueAchats'
 import OrdonnancierPage from './components/Ordonnancier'
 import CentreRapports from './components/CentreRapports'
+import AnalyseABC from './components/AnalyseABC'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -127,6 +128,7 @@ const router = createBrowserRouter([
           { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
           { path: 'centre-rapports', element: <CentreRapports /> },
+          { path: 'analyse-abc', element: <AnalyseABC /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },
           
@@ -150,13 +152,17 @@ const router = createBrowserRouter([
   },
 ])
 
+import ErrorBoundary from './components/ErrorBoundary'
+
 export default function App() {
   return (
-    <AuthProvider>
-      <ConfirmProvider>
-        <Toaster position="top-right" />
-        <RouterProvider router={router} />
-      </ConfirmProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <ConfirmProvider>
+          <Toaster position="top-right" />
+          <RouterProvider router={router} />
+        </ConfirmProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }

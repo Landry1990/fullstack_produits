@@ -85,6 +85,23 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         produit.stock = F('stock') - quantity_to_remove
         produit.save(update_fields=['stock'])
         
+        # Log Audit
+        log_audit(
+            user=request.user,
+            action='STOCK_ADJ',
+            model_name='StockLot',
+            object_id=lot.id,
+            description=f"Sortie périmés: {quantity_to_remove} unités (Lot {lot.lot})",
+            details={
+                'produit_id': produit.id,
+                'produit_nom': produit.name,
+                'quantity': -quantity_to_remove,
+                'reason': reason,
+                'lot': lot.lot
+            },
+            request=request
+        )
+
         return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.'})
 
 
@@ -479,6 +496,25 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 stock_apres=destination.stock,
                 user=request.user,
                 description=f"Transformation depuis {relation.produit_source.name}"
+            )
+
+            # Log Audit transaction
+            log_audit(
+                user=request.user,
+                action='STOCK_ADJ',
+                model_name='Transformation',
+                object_id=relation.id,
+                description=f"Transformation: {quantite} {source.name} -> {quantite_dest} {destination.name}",
+                details={
+                    'source_id': source.id,
+                    'source_nom': source.name,
+                    'destination_id': destination.id,
+                    'destination_nom': destination.name,
+                    'quantite_source': -quantite,
+                    'quantite_destination': quantite_dest,
+                    'quantity': -quantite # Convention: negative for source consumption
+                },
+                request=request
             )
         
         return Response({

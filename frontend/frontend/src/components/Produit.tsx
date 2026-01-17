@@ -57,7 +57,7 @@ export default function Produit() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false)
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
-  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'ajustements' | 'stats'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'ajustements' | 'stats' | 'mouvements'>('general')
   const [isImporting, setIsImporting] = useState(false)
   
   // Formulaire d'édition
@@ -88,6 +88,8 @@ export default function Produit() {
   const [lots, setLots] = useState<StockLot[]>([])
   const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStat[]>([])
+  const [stockHistory, setStockHistory] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   
   // Formulaire d'ajustement de stock
   const [adjustmentForm, setAdjustmentForm] = useState({
@@ -131,6 +133,25 @@ export default function Produit() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [])
+
+  // Lazy load stock history when mouvements tab is selected
+  useEffect(() => {
+    if (activeTab === 'mouvements' && selectedProduit && stockHistory.length === 0) {
+      const fetchHistory = async () => {
+        setLoadingHistory(true)
+        try {
+          const response = await axios.get(`${produitsEndpoint}${selectedProduit.id}/history/`)
+          setStockHistory(response.data)
+        } catch (err) {
+          console.error('Erreur chargement historique:', err)
+          setStockHistory([])
+        } finally {
+          setLoadingHistory(false)
+        }
+      }
+      fetchHistory()
+    }
+  }, [activeTab, selectedProduit, produitsEndpoint])
 
   const fetchProduits = async () => {
     setLoading(true)
@@ -221,6 +242,7 @@ export default function Produit() {
       const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
       setSelectedProduit(fullProduit)
       setActiveTab('general')
+      setStockHistory([])  // Reset history for new product
       
       // Charger l'historique d'achats
       try {
@@ -392,11 +414,23 @@ export default function Produit() {
     e.preventDefault()
     if (!selectedProduit) return
     
+    // Vérifier si l'utilisateur a tenté de modifier le stock via ce formulaire
+    const newStock = parseInt(editForm.stock || '0', 10)
+    if (newStock !== selectedProduit.stock) {
+      toast.error('⚠️ Le stock ne peut pas être modifié ici. Utilisez l\'outil "Ajuster le stock" dans l\'onglet Ajustements pour une traçabilité complète.', {
+        duration: 6000
+      })
+      // Restaurer la valeur originale dans le formulaire
+      setEditForm(prev => ({ ...prev, stock: String(selectedProduit.stock) }))
+      return
+    }
+    
     try {
+      // NE PAS envoyer le stock - il doit être modifié via adjust_stock uniquement
       const payload = {
         name: editForm.name.trim().toUpperCase(),
         description: '',
-        stock: parseInt(editForm.stock || '0', 10),
+        // stock: retiré intentionnellement pour la traçabilité
         cost_price: editForm.cost_price.trim(),
         selling_price: editForm.selling_price.trim(),
         cip1: editForm.cip1.trim() || null,
@@ -418,6 +452,7 @@ export default function Produit() {
       setProduits(prev => prev.map(p => p.id === data.id ? data : p))
       setSelectedProduit(data)
       setIsEditModalOpen(false)
+      toast.success('Produit mis à jour')
     } catch (err) {
       toast.error('Erreur lors de la mise à jour')
       console.error(err)
@@ -442,7 +477,14 @@ export default function Produit() {
       )
       toast.success(`Stock ajusté: ${data.quantity_change >= 0 ? '+' : ''}${data.quantity_change}`)
       
-      // Rafraîchir les données
+      // Mise à jour IMMÉDIATE dans la liste des produits
+      setProduits(prev => prev.map(p => 
+        p.id === selectedProduit.id 
+          ? { ...p, stock: data.quantity_after }
+          : p
+      ))
+      
+      // Rafraîchir les détails du produit sélectionné
       handleViewDetails(selectedProduit)
       setIsAdjustmentModalOpen(false)
       setAdjustmentForm({ new_quantity: '', reason_type: 'INVENTAIRE' })
@@ -468,10 +510,13 @@ export default function Produit() {
       return
     }
     
-    // Trigger Password Modal directly (no confirm dialog needed as the modal acts as confirmation)
+    // Fermer le modal d'ajustement AVANT d'ouvrir le modal de mot de passe
+    setIsAdjustmentModalOpen(false)
+    
+    // Trigger Password Modal
     setPasswordModalConfig({
         title: "Confirmer l'ajustement de stock",
-        message: `Vous allez modifier manuellement le stock de "${selectedProduit.name}". Veuillez confirmer par mot de passe.`
+        message: `Vous allez modifier le stock de "${selectedProduit.name}" : ${selectedProduit.stock} → ${adjustmentForm.new_quantity} (${parseInt(adjustmentForm.new_quantity) - selectedProduit.stock >= 0 ? '+' : ''}${parseInt(adjustmentForm.new_quantity) - selectedProduit.stock})`
     })
     setPendingAction(() => executeStockAdjustment)
     setIsPasswordModalOpen(true)
@@ -1143,6 +1188,9 @@ export default function Produit() {
                 <a role="tab" className={`tab ${activeTab === 'stats' ? 'tab-active' : ''}`} onClick={() => setActiveTab('stats')}>
                   Stats
                 </a>
+                <a role="tab" className={`tab ${activeTab === 'mouvements' ? 'tab-active' : ''}`} onClick={() => setActiveTab('mouvements')}>
+                  📜 Mvts
+                </a>
               </div>
 
               {/* Contenu des onglets */}
@@ -1411,6 +1459,62 @@ export default function Produit() {
                           <span>Nb = Nombre</span>
                         </div>
                       </>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'mouvements' && (
+                  <div className="overflow-x-auto">
+                    {loadingHistory ? (
+                      <div className="flex justify-center py-12">
+                        <span className="loading loading-spinner loading-lg"></span>
+                      </div>
+                    ) : stockHistory.length === 0 ? (
+                      <p className="text-center text-base-content/50 py-8">Aucun mouvement de stock enregistré</p>
+                    ) : (
+                      <table className="table table-sm">
+                        <thead className="bg-base-200 sticky top-0">
+                          <tr>
+                            <th className="text-xs">Date</th>
+                            <th className="text-xs">Type</th>
+                            <th className="text-xs">Libellé</th>
+                            <th className="text-xs text-right">Avant</th>
+                            <th className="text-xs text-right">Qté</th>
+                            <th className="text-xs text-right">Après</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {stockHistory.map((item, index) => {
+                            const isPositive = item.type === 'AJUSTEMENT' 
+                              ? item.quantity > 0 
+                              : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                            return (
+                              <tr key={index} className="hover:bg-base-200/30">
+                                <td className="whitespace-nowrap text-xs font-mono">
+                                  {new Date(item.date).toLocaleDateString('fr-FR')}
+                                </td>
+                                <td>
+                                  <span className={`badge badge-xs font-medium ${
+                                    item.type === 'AJUSTEMENT' 
+                                      ? 'badge-warning text-warning-content'
+                                      : isPositive ? 'badge-success text-white' : 'badge-error text-white'
+                                  }`}>
+                                    {item.type}
+                                  </span>
+                                </td>
+                                <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
+                                  {item.libelle}
+                                </td>
+                                <td className="text-right font-mono text-xs">{item.stock_avant}</td>
+                                <td className={`text-right font-bold text-xs ${isPositive ? 'text-success' : 'text-error'}`}>
+                                  {isPositive ? '+' : ''}{item.quantity}
+                                </td>
+                                <td className="text-right font-mono font-bold text-xs">{item.stock_apres}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     )}
                   </div>
                 )}
@@ -1799,15 +1903,29 @@ export default function Produit() {
               </div>
 
               {/* Stock */}
+              {/* Stock (Lecture seule) */}
               <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Stock *</span></label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  value={editForm.stock}
-                  onChange={(e) => setEditForm({...editForm, stock: e.target.value})}
-                  required
-                />
+                <label className="label">
+                  <span className="label-text font-semibold">Stock</span>
+                  <span className="badge badge-sm badge-ghost">🔒 Sécurisé</span>
+                </label>
+                <div className="tooltip" data-tip="Pour la traçabilité, utilisez le bouton 'Ajuster Stock' dans les détails produit">
+                    <input
+                      type="number"
+                      className="input input-bordered bg-base-200 text-base-content/60 w-full cursor-not-allowed font-bold"
+                      value={editForm.stock}
+                      readOnly
+                      disabled
+                    />
+                </div>
+                <label className="label">
+                   <span className="label-text-alt text-info flex items-center gap-1">
+                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                     </svg>
+                     Utilisez l'option <strong>Ajuster Stock</strong>
+                   </span>
+                </label>
               </div>
 
               {/* Prix de revient */}

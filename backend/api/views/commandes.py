@@ -167,6 +167,12 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             
             # 1. Préparer le lot de stock (si gestion par lots activée)
             if produit.use_lot_management:
+                # Auto-generate lot number if not provided
+                lot_number = item.lot
+                if not lot_number or lot_number.strip() == '':
+                    # Format: LOTXXX (using commande.id - same lot for all products in the order)
+                    lot_number = f"LOT{commande.id:03d}"
+                
                 lot = StockLot(
                     produit=produit,
                     commande_produit=item,
@@ -177,7 +183,7 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     quantity_remaining=total_qty,
                     price_cost=effective_cost,
                     selling_price=produit.selling_price,
-                    lot=item.lot,
+                    lot=lot_number,
                     date_expiration=item.date_expiration,
                     date_reception=commande.date_cloture
                 )
@@ -844,10 +850,20 @@ class AvoirViewSet(viewsets.ModelViewSet):
                     
                     # Créer historique de stock (NEGATIF pour sortie)
                     lot_info = f" - Lot: {ligne.stock_lot.lot}" if ligne.stock_lot else ""
-                    ActivityLog.objects.create(
+                    log_audit(
                         user=request.user,
-                        action='AVOIR',
-                        details=f'Avoir {avoir.numero}: {ligne.produit_nom} x {ligne.quantity}{lot_info} (Type: {avoir.get_type_avoir_display()})'
+                        action='STOCK_ADJ', # Use standard action code
+                        model_name='Avoir',
+                        object_id=avoir.numero,
+                        description=f"Validation Avoir {avoir.numero}",
+                        details={
+                            'produit_id': produit.id,
+                            'produit_nom': ligne.produit_nom,
+                            'quantity': -ligne.quantity,
+                            'lot': ligne.lot,
+                            'type_avoir': avoir.get_type_avoir_display()
+                        },
+                        request=request
                     )
                 
                 # Marquer comme validé
@@ -1134,6 +1150,44 @@ class PromisViewSet(viewsets.ModelViewSet):
         buffer.close()
         response.write(pdf)
         return response
+
+    @action(detail=False, methods=['get'])
+    def disponibles(self, request):
+        """
+        Retourne les promis en attente dont le produit est maintenant disponible en stock.
+        Utile pour les alertes Dashboard et la page Promis.
+        """
+        from django.db.models import F
+        
+        # Promis en attente avec stock suffisant
+        promis_disponibles = Promis.objects.filter(
+            status=Promis.Status.EN_ATTENTE,
+            produit__isnull=False
+        ).select_related('client', 'produit', 'facture').annotate(
+            stock_actuel=F('produit__stock')
+        ).filter(
+            stock_actuel__gte=F('quantite')
+        ).order_by('-date_promis')
+        
+        # Sérialiser
+        data = []
+        for p in promis_disponibles:
+            data.append({
+                'id': p.id,
+                'client': p.client_display,
+                'client_phone': p.client_phone_display,
+                'produit_id': p.produit.id if p.produit else None,
+                'produit_nom': p.produit.name if p.produit else p.produit_nom,
+                'quantite': p.quantite,
+                'stock_actuel': p.produit.stock if p.produit else 0,
+                'date_promis': p.date_promis.isoformat(),
+                'jours_attente': (timezone.now() - p.date_promis).days
+            })
+        
+        return Response({
+            'count': len(data),
+            'promis_disponibles': data
+        })
 
 
 @api_view(['POST'])

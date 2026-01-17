@@ -5,6 +5,8 @@ interface ActionButtonsProps {
   onProforma: () => void
   onSuspend: () => void
   onCancel: () => void
+  onViewPending?: () => void
+  pendingCount?: number
   isValid: boolean
 }
 
@@ -13,6 +15,8 @@ export default function ActionButtons({
   onProforma,
   onSuspend,
   onCancel,
+  onViewPending,
+  pendingCount = 0,
   isValid
 }: ActionButtonsProps) {
   return (
@@ -38,6 +42,18 @@ export default function ActionButtons({
             <span className="hidden md:inline">Mettre en attente</span>
             <span className="md:hidden">Attente</span>
           </button>
+          
+          {pendingCount > 0 && onViewPending && (
+            <button
+              onClick={onViewPending}
+              className="btn btn-accent btn-outline w-full md:w-auto gap-2 relative"
+              title="Voir les ventes en attente"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              <span className="hidden md:inline">En attente</span>
+              <span className="badge badge-warning badge-sm absolute -top-1 -right-1">{pendingCount}</span>
+            </button>
+          )}
 
           <button
             onClick={onProforma}

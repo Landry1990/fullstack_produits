@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import DOMPurify from 'dompurify'
 import type { Facture, TicketCaisse, CaisseParTranche } from '../types'
 
 export default function Ventes() {
@@ -1074,7 +1075,7 @@ export default function Ventes() {
                             </style>
                           </head>
                           <body>
-                            ${printContent.innerHTML}
+                            ${DOMPurify.sanitize(printContent.innerHTML)}
                           </body>
                         </html>
                       `)

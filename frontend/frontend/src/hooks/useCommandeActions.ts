@@ -111,11 +111,13 @@ export function useCommandeActions({
         commandeData: Partial<Commande>,
         commandeProduits: CommandeProduit[],
         viewMode: 'CREATE' | 'EDIT',
-        selectedCommande: Commande | null
+        selectedCommande: Commande | null,
+        isAutoSave: boolean = false
     ) {
         // Validation basique
         if (!commandeData.fournisseur) {
-            toast.error('Veuillez sélectionner un fournisseur');
+            // Pas de toast en auto-save pour ne pas spammer, sauf erreur critique
+            if (!isAutoSave) toast.error('Veuillez sélectionner un fournisseur');
             return;
         }
 
@@ -124,16 +126,25 @@ export function useCommandeActions({
 
             // Clean the command data to remove any non-serializable references
             const cleanedCommandeData = cleanPayload(commandeData);
-            console.log('Saving commande with data:', cleanedCommandeData);
+            if (!isAutoSave) console.log('Saving commande with data:', cleanedCommandeData);
 
             // 1. Créer ou mettre à jour la commande
             if (viewMode === 'CREATE') {
                 const response = await axios.post<Commande>(commandesEndpoint, cleanedCommandeData);
                 commandeId = response.data.id;
-                toast.success(`Commande #${commandeId} créée`);
+                if (!isAutoSave) toast.success(`Commande #${commandeId} créée`);
+
+                // Important pour l'auto-save: mise à jour immédiate du mode et de la commande
+                if (isAutoSave) {
+                    // Fetch full object to get correct structure
+                    const { data: createdCmd } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
+                    setSelectedCommande(createdCmd);
+                    setViewMode('EDIT');
+                }
+
             } else if (viewMode === 'EDIT' && commandeId) {
                 await axios.patch<Commande>(`${commandesEndpoint}${commandeId}/`, cleanedCommandeData);
-                toast.success('Commande mise à jour');
+                if (!isAutoSave) toast.success('Commande mise à jour');
             }
 
             if (!commandeId) throw new Error("ID de commande manquant");
@@ -145,22 +156,14 @@ export function useCommandeActions({
 
             // Récupérer les produits existants pour comparer
             let existingProducts: { id: number }[] = [];
-            if (viewMode === 'EDIT') {
+
+            // Toujours récupérer les produits actuels pour être sûr de l'état
+            if (commandeId) {
                 const { data: currentOrder } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
-                existingProducts = currentOrder.produits.map((p: any) => ({ id: p.id }));
+                existingProducts = currentOrder.produits ? currentOrder.produits.map((p: any) => ({ id: p.id })) : [];
             }
 
             // Identifier les produits à supprimer (ceux qui ne sont plus dans commandeProduits)
-            // Note: This logic assumes commandeProduits contains ALL current lines. 
-            // If a line from existingProducts isn't in commandeProduits (by ID), it should be deleted.
-            // However, new lines won't have an ID yet (or fake ID).
-
-            // Simple strategy: Update existing, Create new, Delete missing
-            // But simplifying: The original code logic for products saving was often component-specific or mixed.
-            // Retrying logic from Commandes.tsx if available or implementing robust save.
-            // The original Commandes.tsx handleSaveCommande logic seemed to rely on `commandeProduits` state.
-
-            // We will loop through provided produits
             const existingIds = new Set(existingProducts.map(ep => ep.id));
 
             for (const p of commandeProduits) {
@@ -180,6 +183,7 @@ export function useCommandeActions({
                 };
 
                 // Fix: Check if ID is a real existing ID in the backend, not a temp timestamp
+                // Using existingIds check is safer than just p.id
                 if (p.id && existingIds.has(p.id)) {
                     // Update existing line
                     await axios.patch(`${commandeProduitsEndpoint}${p.id}/`, payload);
@@ -190,8 +194,9 @@ export function useCommandeActions({
             }
 
             // Handle deletions if needed (lines present in DB but not in current list)
-            if (viewMode === 'EDIT') {
-                const currentIds = new Set(commandeProduits.filter(p => p.id).map(p => p.id));
+            // Only logical if we are in EDIT mode effectively (which we are if commandeId exists)
+            if (commandeId) {
+                const currentIds = new Set(commandeProduits.filter(p => p.id && existingIds.has(p.id)).map(p => p.id));
                 for (const exist of existingProducts) {
                     if (!currentIds.has(exist.id)) {
                         await axios.delete(`${commandeProduitsEndpoint}${exist.id}/`);
@@ -199,11 +204,20 @@ export function useCommandeActions({
                 }
             }
 
-            fetchCommandes();
-            setViewMode('LIST');
+            if (!isAutoSave) {
+                fetchCommandes();
+                setViewMode('LIST');
+            } else {
+                // En auto-save, on refetch juste pour avoir l'état à jour sans changer de vue
+                // fetchCommandes(); // Peut-être pas nécessaire de refresh toute la liste tout de suite
+            }
 
         } catch (err) {
-            handleApiError(err, "Erreur lors de l'enregistrement de la commande");
+            if (!isAutoSave) {
+                handleApiError(err, "Erreur lors de l'enregistrement de la commande");
+            } else {
+                console.error("Erreur Auto-save:", err);
+            }
         }
     }
 

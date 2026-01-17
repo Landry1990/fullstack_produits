@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import axios from '../config/axios';
+
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -78,11 +79,8 @@ const JournalAudit: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('access_token');
       const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/` : `/api/users/`;
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      const response = await axios.get(endpoint);
       setUsers(response.data.results || response.data || []);
     } catch (err) {
       console.error('Erreur chargement utilisateurs:', err);
@@ -91,7 +89,6 @@ const JournalAudit: React.FC = () => {
 
   const fetchStatistics = async () => {
     try {
-      const token = localStorage.getItem('access_token');
       let endpoint = apiBaseUrl 
         ? `${apiBaseUrl}/api/audit-logs/statistics/`
         : `/api/audit-logs/statistics/`;
@@ -108,9 +105,7 @@ const JournalAudit: React.FC = () => {
         endpoint += `?${params.toString()}`;
       }
       
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      const response = await axios.get(endpoint);
       setStatistics(response.data);
     } catch (err) {
       console.error('Erreur chargement statistiques:', err);
@@ -120,11 +115,11 @@ const JournalAudit: React.FC = () => {
   const fetchLogs = async (pageNum: number) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
       let endpoint = apiBaseUrl 
         ? `${apiBaseUrl}/api/audit-logs/?page=${pageNum}`
         : `/api/audit-logs/?page=${pageNum}`;
       
+      // Ajouter les filtres actifs aux statistiques
       const params = new URLSearchParams();
       if (actionFilter) params.append('action', actionFilter);
       if (userFilter) params.append('user', userFilter);
@@ -133,16 +128,26 @@ const JournalAudit: React.FC = () => {
       if (dateTo) params.append('date_to', dateTo);
       
       if (params.toString()) {
-        endpoint += `&${params.toString()}`;
+        endpoint += `?${params.toString()}`;
       }
       
-      const response = await axios.get(endpoint, {
-        headers: { Authorization: `Token ${token}` }
-      });
+      const response = await axios.get(endpoint);
       const data = response.data;
       const results = Array.isArray(data) ? data : (data.results || []);
       const count = data.count || results.length;
-      setLogs(results);
+      const safeResults = results.map((log: AuditLog) => {
+        let details = log.details;
+        if (typeof details === 'string') {
+          try {
+            details = JSON.parse(details);
+          } catch (e) {
+            console.warn('Failed to parse log details:', e);
+            details = {};
+          }
+        }
+        return { ...log, details };
+      });
+      setLogs(safeResults);
       setTotalPages(Math.ceil(count / 50));
       
       // Extraire les modèles uniques
@@ -179,7 +184,6 @@ const JournalAudit: React.FC = () => {
 
   const handleExportCSV = async () => {
     try {
-      const token = localStorage.getItem('access_token');
       let endpoint = apiBaseUrl 
         ? `${apiBaseUrl}/api/audit-logs/export_csv/`
         : `/api/audit-logs/export_csv/`;
@@ -196,7 +200,6 @@ const JournalAudit: React.FC = () => {
       }
       
       const response = await axios.get(endpoint, {
-        headers: { Authorization: `Token ${token}` },
         responseType: 'blob'
       });
       
@@ -567,35 +570,69 @@ const JournalAudit: React.FC = () => {
           <table className="table table-zebra w-full">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Date/Heure</th>
-                <th>Utilisateur</th>
-                <th>Action</th>
-                <th>Description</th>
-                <th>Modèle</th>
-                <th>IP</th>
+                <th>Date</th>
+                <th>Opérateur</th>
+                <th>Type d'opération</th>
+                <th>Facture/Produit/Numéro</th>
+                <th className="text-right">Montant</th>
               </tr>
             </thead>
             <tbody>
               {filteredLogs.map(log => {
                 const style = getActionStyle(log.action);
+                
+                // Extraction du montant/quantité depuis les détails
+                let montant: React.ReactNode = '-';
+                if (log.details) {
+                  if ('quantity' in log.details) montant = log.details.quantity as string;
+                  else if ('quantite' in log.details) montant = log.details.quantite as string;
+                  else if ('ecart_total' in log.details) montant = (log.details.ecart_total as number) > 0 ? `+${log.details.ecart_total}` : log.details.ecart_total as string;
+                  else if ('amount' in log.details) montant = (log.details.amount as number).toLocaleString('fr-FR') + ' F';
+                  else if ('montant' in log.details) montant = (log.details.montant as number).toLocaleString('fr-FR') + ' F';
+                }
+
+
+
                 return (
                   <tr key={log.id} className="hover">
-                    <td>{log.id}</td>
-                    <td className="whitespace-nowrap">
-                      {format(new Date(log.timestamp), 'dd/MM/yy HH:mm', { locale: fr })}
+                    <td className="whitespace-nowrap font-medium">
+                      {format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm', { locale: fr })}
                     </td>
-                    <td>{log.user_name || 'Système'}</td>
                     <td>
-                      <span className={`badge ${style.badge} badge-sm`}>
-                        {style.icon} {log.action_display}
+                      <div className="font-medium text-gray-700">{log.user_name || 'Système'}</div>
+                    </td>
+                    <td>
+                      <span className={`badge ${style.badge} badge-sm uppercase font-bold text-xs`}>
+                        {log.action === 'STOCK_ADJ' ? 'MODIFICATION STOCK' : log.action_display}
                       </span>
                     </td>
-                    <td className="max-w-md truncate">
-                      {log.description || `${log.model_name} #${log.object_id}`}
+                    <td className="max-w-md">
+                      <div className="font-medium text-gray-800">
+                        {log.details && (log.details.produit_nom || log.details.name || log.details.produit_name) ? (
+                          <>
+                            <span className="font-bold text-primary">{(log.details.produit_nom || log.details.name || log.details.produit_name) as string}</span>
+                            {/* Only show description if it adds valuable info and isn't just a repeat */}
+                            {log.description && !log.description.includes(log.details.produit_nom as string) && 
+                             !log.description.includes(log.details.name as string) && (
+                              <div className="text-sm text-gray-600 mt-1">{log.description}</div>
+                            )}
+                          </>
+                        ) : (
+                          log.description
+                        )}
+                      </div>
+                      {log.model_name !== 'Produit' && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                           {log.model_name} #{log.object_id}
+                        </div>
+                      )}
                     </td>
-                    <td><code className="text-xs">{log.model_name}</code></td>
-                    <td className="text-xs text-gray-500">{log.ip_address}</td>
+                    <td className={`text-right font-mono font-bold ${
+                      String(montant).startsWith('-') ? 'text-red-600' : 
+                      String(montant).startsWith('+') ? 'text-green-600' : 'text-gray-600'
+                    }`}>
+                      {montant}
+                    </td>
                   </tr>
                 );
               })}

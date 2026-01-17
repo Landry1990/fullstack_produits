@@ -295,18 +295,44 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   useEffect(() => {
     if (viewMode === 'CREATE' || viewMode === 'EDIT') {
-        const timer = setTimeout(() => {
-            if (commandeProduits.length > 0) {
+        // Debounce de 1.5 secondes pour éviter de spammer l'API
+        const timer = setTimeout(async () => {
+             // Conditions pour sauvegarde automatique:
+             // 1. Avoir des produits
+             // 2. Avoir un fournisseur (obligatoire pour créer)
+             if (commandeProduits.length > 0 && newCommandeFournisseurId) {
                  setSaving(true);
-                 setTimeout(() => {
-                     setSaving(false);
-                     setLastSaved(new Date());
-                 }, 600);
-            }
-        }, 1000);
+                 
+                 const cleanCommande: Partial<Commande> = {
+                    fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
+                    numero_facture: numeroFacture,
+                    type: commandeType,
+                    taux_change: commandeType === 'DIR' ? tauxChange : undefined,
+                    frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
+                 };
+                 
+                 const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
+                 
+                 // Appel avec isAutoSave = true
+                 await handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande, true);
+                 
+                 setSaving(false);
+                 setLastSaved(new Date());
+             }
+        }, 1500);
         return () => clearTimeout(timer);
     }
-  }, [commandeProduits, viewMode]);
+  }, [
+      commandeProduits, 
+      viewMode, 
+      newCommandeFournisseurId, 
+      numeroFacture, 
+      commandeType, 
+      tauxChange, 
+      fraisCoefficient, 
+      selectedCommande,
+      handleSaveCommande 
+  ]);
 
   // Auto-recalculate prices when Global Rate/Coeff changes
   useEffect(() => {
@@ -1232,11 +1258,38 @@ export default function Commandes({ forcedType }: CommandesProps) {
                  <div className="text-xs text-gray-500 uppercase">Statut</div>
                  <div><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></div>
             </div>
-            <div>
-                 <div className="text-xs text-gray-500 uppercase">Total</div>
-                 <div className="font-bold text-base md:text-lg text-primary">
-                    {(selectedCommande.produits || []).reduce((acc, p) => acc + (Number(p.quantity) * Number(p.price)), 0).toLocaleString()} F
-                 </div>
+            <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
+                 <div className="text-xs text-gray-500 uppercase mb-1">Résumé Financier</div>
+                 {(() => {
+                    const stats = (selectedCommande.produits || []).reduce((acc, p) => {
+                        const qty = Number(p.quantity || 0);
+                        const price = Number(p.price || 0);
+                        const tvaRate = Number(p.tva || 0);
+                        
+                        const lineHT = qty * price;
+                        const lineTVA = lineHT * (tvaRate / 100);
+                        
+                        return { ht: acc.ht + lineHT, tva: acc.tva + lineTVA };
+                    }, { ht: 0, tva: 0 });
+                    const totalTTC = stats.ht + stats.tva;
+                    
+                    return (
+                        <div className="flex flex-col gap-0.5 text-xs">
+                           <div className="flex justify-between">
+                                <span className="text-base-content/60">HT:</span> 
+                                <span className="font-semibold">{stats.ht.toLocaleString()} F</span>
+                           </div>
+                           <div className="flex justify-between">
+                                <span className="text-base-content/60">TVA:</span> 
+                                <span className="font-semibold">{stats.tva.toLocaleString()} F</span>
+                           </div>
+                           <div className="flex justify-between border-t border-base-200 pt-0.5 mt-0.5">
+                                <span className="font-bold text-primary">TTC:</span> 
+                                <span className="font-bold text-primary text-sm">{totalTTC.toLocaleString()} F</span>
+                           </div>
+                        </div>
+                    );
+                 })()}
             </div>
           </div>
 
@@ -1276,6 +1329,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                       <th className="cursor-pointer" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
                         Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                       </th>
+                      <th>CIP</th>
                       <th className="text-center">Stock</th>
                       <th className="text-center">Rot.</th>
                       <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
@@ -1293,11 +1347,15 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   <tbody>
                     {[...(selectedCommande.produits || [])]
                       .map(p => {
+                        const produitData = (typeof p.produit === 'object') 
+                          ? p.produit 
+                          : produitsList.find(prod => prod.id === p.produit);
+                        
                         // Use produit_nom from backend if available, otherwise fallback to resolving from produitsList
-                        const produitName = (p as any).produit_nom || (typeof p.produit === 'object' 
-                          ? p.produit.name 
-                          : produitsList.find(prod => prod.id === p.produit)?.name || `Produit #${p.produit}`);
-                        return { ...p, produitName };
+                        const produitName = (p as any).produit_nom || (produitData?.name || `Produit #${p.produit}`);
+                        const cip = (p as any).produit_cip || produitData?.cip1 || '-';
+                        
+                        return { ...p, produitName, cip };
                       })
                       .sort((a, b) => {
                         let comparison = 0;
@@ -1332,6 +1390,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                               {p.produitName}
                               {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
                           </td>
+                          <td className="font-mono text-xs">{p.cip}</td>
                           <td className="text-center">
                             <span className={`font-mono ${stockNum === 0 ? 'text-error font-bold' : stockNum < 0 ? 'text-error' : 'text-success'}`}>
                               {stock}

@@ -239,7 +239,7 @@ safety check
 
 ### Semaine 1 (Critique)
 - [x] Audit initial terminé
-- [ ] Installer DOMPurify
+- [x] Installer DOMPurify
 - [ ] Configurer CSP
 - [ ] Vérifier CORS
 

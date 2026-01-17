@@ -73,7 +73,7 @@ class RapportViewSet(viewsets.ViewSet):
         # Alignement avec CreanceViewSet : inclure VALIDEE et PAYEE
         factures_avec_reste = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        )
+        ).prefetch_related('paiements')
         
         total_creances = Decimal('0.00')
         nb_factures_impayees = 0
@@ -186,12 +186,16 @@ class RapportViewSet(viewsets.ViewSet):
             
         achats_par_fournisseur = sorted(achats_stats.values(), key=lambda x: x['montant_total'], reverse=True)
 
-        # 8. Clients Pro
-        factures_pro = factures.filter(client__client_type='PROFESSIONNEL')
+        # 8. Clients Pro - Aligned with créances calculation
+        factures_pro = factures.filter(client__client_type='PROFESSIONNEL').prefetch_related('paiements')
         ca_pro_total = sum(f.total_ttc for f in factures_pro)
         
-        paiements_pro = Caisse.objects.filter(facture__in=factures_pro).exclude(mode_paiement='en_compte')
-        montant_paye_pro = paiements_pro.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        # Calculate paid amount using same logic as créances
+        montant_paye_pro = Decimal('0.00')
+        for f in factures_pro:
+            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+            montant_paye_pro += paye
+        
         reste_a_payer_pro = ca_pro_total - montant_paye_pro
         taux_recouvrement_pro = (montant_paye_pro / ca_pro_total * 100) if ca_pro_total > 0 else Decimal('0.00')
         
@@ -201,14 +205,15 @@ class RapportViewSet(viewsets.ViewSet):
             if cid not in clients_pro_stats:
                 clients_pro_stats[cid] = {'client_id': cid, 'client_nom': f.client.name, 'ca_total': Decimal('0.00'), 'montant_paye': Decimal('0.00')}
             clients_pro_stats[cid]['ca_total'] += f.total_ttc
-            paye_f = f.paiements.exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+            # Same logic as créances - filter by statut='completee' and exclude 'en_compte'
+            paye_f = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
             clients_pro_stats[cid]['montant_paye'] += paye_f
             
         top_clients_pro = []
         for c in clients_pro_stats.values():
             c['reste_a_payer'] = c['ca_total'] - c['montant_paye']
             top_clients_pro.append(c)
-        top_clients_pro.sort(key=lambda x: x['ca_total'], reverse=True)
+        top_clients_pro.sort(key=lambda x: x['reste_a_payer'], reverse=True)  # Sort by reste_a_payer instead
         top_clients_pro = top_clients_pro[:10]
 
         # 9. UG

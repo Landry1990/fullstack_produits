@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
+import axios from '../config/axios'
 import type { ProduitModel } from '../types'
 
 type TransactionHistory = {
@@ -29,7 +29,7 @@ export default function StatistiquesProduit() {
     const fetchProduits = async () => {
       setLoading(true)
       try {
-        const response = await axios.get(produitsEndpoint)
+        const response = await axios.get(`${produitsEndpoint}?page_size=9999`)
         // Handle paginated response
         const data: any = response.data;
         setProduits(Array.isArray(data) ? data : (data.results || []))

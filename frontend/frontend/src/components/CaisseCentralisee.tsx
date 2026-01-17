@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import DOMPurify from 'dompurify'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Facture, TicketCaisse } from '../types'
@@ -677,7 +678,7 @@ export default function CaisseCentralisee() {
               <button 
                 className="btn btn-primary btn-sm"
                 onClick={() => {
-                  const content = document.getElementById('ticket-preview')?.innerHTML;
+                  const content = DOMPurify.sanitize(document.getElementById('ticket-preview')?.innerHTML || '');
                   const win = window.open('', '', 'height=600,width=400');
                   if (win && content) {
                     win.document.write('<html><head><title>Ticket</title>');
