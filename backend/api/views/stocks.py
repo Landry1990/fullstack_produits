@@ -30,6 +30,7 @@ from ..serializers import (
 )
 from ..serializers_optimized import StockLotListSerializer, StockLotDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
+from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
 
 class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
@@ -105,10 +106,14 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.'})
 
 
-class InventaireViewSet(viewsets.ModelViewSet):
+class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     queryset = Inventaire.objects.all().order_by('-date')
     serializer_class = InventaireSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['status']
+    search_fields = ['description', 'status']
+    ordering_fields = ['date', 'status']
 
     def get_permissions(self):
         if self.action == 'imprimer_etat':
@@ -294,7 +299,7 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
         else:
             serializer.save()
 
-class StockAdjustmentViewSet(viewsets.ReadOnlyModelViewSet):
+class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet):
     """
     API endpoint pour consulter l'historique des ajustements de stock.
     Lecture seule - les ajustements sont créés via l'action 'adjust_stock' de ProduitViewSet.
@@ -302,7 +307,7 @@ class StockAdjustmentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StockAdjustment.objects.select_related('produit', 'user', 'stock_lot').order_by('-created_at')
     serializer_class = StockAdjustmentSerializer
     permission_classes = [permissions.AllowAny] # As per original view
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['produit', 'user', 'reason_type']
     search_fields = ['produit__name', 'reason_detail', 'produit__cip1']
     ordering_fields = ['created_at', 'quantity_change']

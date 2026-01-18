@@ -26,6 +26,7 @@ from ..serializers import (
 )
 from ..serializers_optimized import CommandeListSerializer, CommandeDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
+from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
 
 def header_footer(canvas, doc, company_info, commande_info, total_achat):
@@ -81,7 +82,7 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
     
     canvas.restoreState()
 
-class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
+class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for commands with optimized serializers.
     - List view: Lightweight serializer (8 fields)
@@ -90,9 +91,9 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits__produit', 'produits__commande__fournisseur').order_by('-date')
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['type', 'status', 'fournisseur']
-    search_fields = ['id', 'fournisseur__name', 'numero_facture']
+    search_fields = ['id', 'fournisseur__name', 'numero_facture', 'fournisseur_nom']
     ordering_fields = ['date', 'status']
     
     # Serializers optimisés
@@ -776,7 +777,7 @@ class CommandeViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
 class CommandeProduitViewSet(viewsets.ModelViewSet):
     """API endpoint for commande produits."""
-    queryset = CommandeProduit.objects.select_related('produit', 'commande').order_by('-created_at')
+    queryset = CommandeProduit.objects.select_related('produit', 'commande', 'commande__fournisseur').order_by('-created_at')
     serializer_class = CommandeProduitSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit']
@@ -886,14 +887,14 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
     filterset_fields = ['avoir']
 
 
-class PromisViewSet(viewsets.ModelViewSet):
+class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     """
     API endpoint for managing Promis (products promised to clients).
     """
     queryset = Promis.objects.select_related('client', 'produit', 'facture', 'created_by').all()
     serializer_class = PromisSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['status', 'client', 'produit']
     search_fields = ['client_name', 'client_phone', 'produit__name', 'notes']
     ordering_fields = ['date_promis', 'status']
