@@ -1,8 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import type { StockLot } from '../types';
 import {
   LineChart,
   Line,
@@ -14,58 +12,29 @@ import {
   Tooltip,
   ResponsiveContainer
 } from 'recharts';
-
-interface DashboardStats {
-  revenue: { value: number; change: number };
-  sales: { value: number; change: number };
-  clients: { value: number; change: number };
-  low_stock: { value: number; change: number };
-  receivables: { value: number; count: number };
-  discount: { value: number; change: number };
-}
-
-
-
-interface RevenueChartData {
-  labels: string[];
-  data: number[];
-}
-
-interface LowStockItem {
-  id: number;
-  name: string;
-  stock: number;
-}
-
-
+import { 
+  useDashboardStats, 
+  useRevenueChart, 
+  useLowStock, 
+  useUgStats, 
+  usePromisDisponibles, 
+  useExpiringLots 
+} from '../hooks/useDashboard';
 
 export default function Dashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [revenueChart, setRevenueChart] = useState<RevenueChartData | null>(null);
-  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
-  
-  const [expiringLots, setExpiringLots] = useState<StockLot[]>([]);
   const [expirationMonths, setExpirationMonths] = useState(1); // Délai par défaut: 1 mois
-  const [ugStats, setUgStats] = useState<{ug_en_stock: number; ug_recues_mois: number; valeur_economisee: number} | null>(null);
-  const [promisDisponibles, setPromisDisponibles] = useState<{id: number; client: string; produit_nom: string; quantite: number; jours_attente: number}[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const apiBaseUrl = useMemo(
-    () => (import.meta.env.VITE_API_BASE_URL ?? ''),
-    [],
-  )
-  const dashboardEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/dashboard/`
-    : '/api/dashboard/'
-  const ugStatsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stats-ug/par_fournisseur/`
-    : '/api/stats-ug/par_fournisseur/'
-  const stockLotsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/stock-lots/`
-    : '/api/stock-lots/'
+  // Queries
+  const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats();
+  const { data: revenueChart, isLoading: chartLoading } = useRevenueChart();
+  const { data: lowStockItems = [] } = useLowStock();
+  const { data: ugStats } = useUgStats();
+  const { data: promisDisponibles = [] } = usePromisDisponibles();
+  const { data: expiringLots = [] } = useExpiringLots(expirationMonths);
 
+  const loading = statsLoading || chartLoading;
+  const error = statsError ? 'Impossible de charger les données du tableau de bord.' : null;
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -76,96 +45,41 @@ export default function Dashboard() {
     }));
   }, [revenueChart]);
 
-  // Fetch expiring lots based on selected period
+  // Notifications (controlled side effects)
+  // We use refs to prevent duplicate toasts in strict mode or react-query refetches
+  // However, simple useEffect dependency on data length or ID change is usually enough
+  
+  // Critical Lots Notification
   useEffect(() => {
-    const fetchExpiringLots = async () => {
-      try {
-        const today = new Date();
-        const futureDate = new Date();
-        futureDate.setMonth(today.getMonth() + expirationMonths);
-        
-        const params = new URLSearchParams({
-          date_expiration_lte: futureDate.toISOString().split('T')[0],
-          ordering: 'date_expiration'
-        });
-        
-        const response = await axios.get(`${stockLotsEndpoint}?${params}`);
-        const lots: StockLot[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
-        
-        // Filter out lots that have already expired
-        const validLots = lots.filter(lot => {
-          if (!lot.date_expiration) return false;
-          const expDate = new Date(lot.date_expiration);
-          return expDate > today;
-        }).slice(0, 10); // Limit to 10 lots
-        
-        setExpiringLots(validLots);
-        
-        // Show toast notification for critical lots (< 7 days)
-        const criticalLots = validLots.filter(lot => {
-          if (!lot.date_expiration) return false;
-          const daysUntil = Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          return daysUntil <= 7;
-        });
-        
-        if (criticalLots.length > 0) {
-          toast.error(
-            `⚠️ ${criticalLots.length} lot${criticalLots.length > 1 ? 's' : ''} expire${criticalLots.length > 1 ? 'nt' : ''} dans moins de 7 jours!`,
-            { duration: 5000, id: 'critical-expiration' }
-          );
-        }
-      } catch (err) {
-        console.error('Error fetching expiring lots:', err);
-      }
-    };
+    if (expiringLots.length === 0) return;
     
-    fetchExpiringLots();
-  }, [stockLotsEndpoint, expirationMonths]);
+    const today = new Date();
+    const criticalLots = expiringLots.filter(lot => {
+      if (!lot.date_expiration) return false;
+      const daysUntil = Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return daysUntil <= 7;
+    });
+    
+    // Only show if we have critical lots and haven't shown it recently
+    if (criticalLots.length > 0) {
+      // Use specific ID to prevent duplicates
+      toast.error(
+        `⚠️ ${criticalLots.length} lot${criticalLots.length > 1 ? 's' : ''} expire${criticalLots.length > 1 ? 'nt' : ''} dans moins de 7 jours!`,
+        { duration: 5000, id: 'critical-expiration-dashboard' }
+      );
+    }
+  }, [expiringLots.length]); // Depend on length to re-trigger if count changes meaningfully
 
+  // Promis Notification
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const promisEndpoint = apiBaseUrl 
-          ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/promis/disponibles/`
-          : '/api/promis/disponibles/';
-          
-        const [statsRes, chartRes, lowStockRes, ugStatsRes, promisRes] = await Promise.all([
-          axios.get(`${dashboardEndpoint}stats/`),
-          axios.get(`${dashboardEndpoint}revenue_chart/`),
-          axios.get(`${dashboardEndpoint}low_stock/`),
-          axios.get(ugStatsEndpoint).catch(() => ({ data: null })), // Ne pas bloquer si l'endpoint UG échoue
-          axios.get(promisEndpoint).catch(() => ({ data: { promis_disponibles: [] } })),
-        ]);
+    if (promisDisponibles.length > 0) {
+      toast.success(
+        `📦 ${promisDisponibles.length} produit(s) promis disponible(s) !`,
+        { duration: 5000, id: 'promis-dispo-dashboard' }
+      );
+    }
+  }, [promisDisponibles.length]);
 
-          setStats(statsRes.data);
-          setRevenueChart(chartRes.data);
-          setLowStockItems(lowStockRes.data);
-          // Set UG stats if available
-          if (ugStatsRes.data) {
-            setUgStats(ugStatsRes.data);
-          }
-          // Set promis disponibles
-          if (promisRes.data?.promis_disponibles) {
-            setPromisDisponibles(promisRes.data.promis_disponibles);
-            // Notification si promis disponibles
-            if (promisRes.data.promis_disponibles.length > 0) {
-              toast.success(
-                `📦 ${promisRes.data.promis_disponibles.length} produit(s) promis disponible(s) !`,
-                { duration: 5000, id: 'promis-dispo' }
-              );
-            }
-          }
-      } catch (err) {
-        console.error('Erreur lors du chargement du tableau de bord:', err);
-        setError('Impossible de charger les données du tableau de bord.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [dashboardEndpoint, ugStatsEndpoint, apiBaseUrl]);
 
   if (loading) {
     return (
@@ -336,44 +250,46 @@ export default function Dashboard() {
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
               <h2 className="card-title text-lg font-bold text-base-content mb-4">Évolution du Chiffre d'Affaires (7 derniers jours)</h2>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
-                      <stop offset="100%" stopColor="#059669" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="jour" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Montant']}
-                    contentStyle={{ 
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}
-                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                  />
-                  <Bar 
-                    dataKey="montant" 
-                    fill="url(#barGradient)" 
-                    radius={[8, 8, 0, 0]}
-                    animationDuration={800}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {revenueChart && (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData}>
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                          <stop offset="100%" stopColor="#059669" stopOpacity={0.6} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="jour" 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                        domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Montant']}
+                        contentStyle={{ 
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                        cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                      />
+                      <Bar 
+                        dataKey="montant" 
+                        fill="url(#barGradient)" 
+                        radius={[8, 8, 0, 0]}
+                        animationDuration={800}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -381,46 +297,48 @@ export default function Dashboard() {
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
               <h2 className="card-title text-lg font-bold text-base-content mb-4">Tendance des Ventes (7 derniers jours)</h2>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={chartData}>
-                  <defs>
-                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#10b981" />
-                      <stop offset="100%" stopColor="#059669" />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis 
-                    dataKey="jour" 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12, fill: '#6b7280' }}
-                    stroke="#9ca3af"
-                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                    domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
-                  />
-                  <Tooltip 
-                    formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Chiffre d\'affaires']}
-                    contentStyle={{ 
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="montant" 
-                    stroke="url(#lineGradient)" 
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', r: 5 }}
-                    activeDot={{ r: 7, fill: '#059669' }}
-                    animationDuration={1000}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+               {revenueChart && (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <LineChart data={chartData}>
+                      <defs>
+                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                          <stop offset="0%" stopColor="#10b981" />
+                          <stop offset="100%" stopColor="#059669" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis 
+                        dataKey="jour" 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                      />
+                      <YAxis 
+                        tick={{ fontSize: 12, fill: '#6b7280' }}
+                        stroke="#9ca3af"
+                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                        domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
+                      />
+                      <Tooltip 
+                        formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Chiffre d\'affaires']}
+                        contentStyle={{ 
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="montant" 
+                        stroke="url(#lineGradient)" 
+                        strokeWidth={3}
+                        dot={{ fill: '#10b981', r: 5 }}
+                        activeDot={{ r: 7, fill: '#059669' }}
+                        animationDuration={1000}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+               )}
             </div>
           </div>
 
@@ -612,3 +530,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

@@ -1,0 +1,26 @@
+src/components/ErrorBoundary.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/ErrorBoundary.tsx(1,28): error TS1484: 'ErrorInfo' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/ErrorBoundary.tsx(1,39): error TS1484: 'ReactNode' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/components/Facturation.tsx(7,29): error TS6196: 'Client' is declared but never used.
+src/components/Facturation.tsx(69,7): error TS6133: 'clearCart' is declared but its value is never read.
+src/components/Facturation.tsx(96,5): error TS6133: 'wasBarcodeScanned' is declared but its value is never read.
+src/components/Facturation.tsx(128,9): error TS6133: 'isLoading' is declared but its value is never read.
+src/components/Facturation.tsx(366,9): error TS6133: 'clientsEndpoint' is declared but its value is never read.
+src/components/facturation/ActionButtons.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/GestionUtilisateurs.tsx(51,10): error TS6133: 'loading' is declared but its value is never read.
+src/components/JournalCaisse.tsx(279,10): error TS6133: 'globalTotals' is declared but its value is never read.
+src/components/LotSelectionModal.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/PharmaCrossLogo.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/printing/InvoiceTemplate.tsx(2,1): error TS6133: 'ProduitModel' is declared but its value is never read.
+src/components/printing/PrintPage.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/Produit.tsx(78,10): error TS6133: 'isImporting' is declared but its value is never read.
+src/components/ProduitFormModal.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/components/ProduitFormModal.tsx(6,11): error TS6196: 'Props' is declared but never used.
+src/components/ProduitFormModal.tsx(62,10): error TS6133: 'rayonsData' is declared but its value is never read.
+src/components/ProduitFormModal.tsx(63,10): error TS6133: 'fournisseursData' is declared but its value is never read.
+src/hooks/useAudit.ts(3,10): error TS1484: 'AuditLogResponse' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useAudit.ts(3,28): error TS1484: 'Statistics' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useAudit.ts(3,40): error TS1484: 'AuditFilters' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useAudit.ts(3,54): error TS1484: 'User' is a type and must be imported using a type-only import when 'verbatimModuleSyntax' is enabled.
+src/hooks/useFacturationClients.ts(1,40): error TS6133: 'useCallback' is declared but its value is never read.
+src/hooks/useProduits.ts(232,21): error TS6133: 'data' is declared but its value is never read.

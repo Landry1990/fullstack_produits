@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useDebounce } from 'use-debounce'
 import axios from 'axios'
+import { useQuery } from '@tanstack/react-query'
 import type { ProduitModel } from '../types'
 
 interface UseProductSearchOptions {
@@ -16,7 +17,7 @@ interface UseProductSearchOptions {
 interface UseProductSearchReturn {
     produits: ProduitModel[]
     loading: boolean
-    error: string | null
+    error: Error | null
     searchQuery: string
     setSearchQuery: (query: string) => void
     refetch: () => void
@@ -46,9 +47,6 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
 
-    const [produits, setProduits] = useState<ProduitModel[]>([])
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [debouncedSearch] = useDebounce(searchQuery, debounceMs)
     const [wasBarcodeScanned, setWasBarcodeScanned] = useState(false)
@@ -88,70 +86,74 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         setSearchQuery(query)
     }, [detectBarcodeInput])
 
-    const refetch = () => {
-        setSearchQuery(prev => prev)
-    }
-
-    useEffect(() => {
-        const searchProducts = async () => {
-            // If autoLoad is false and search is empty, don't fetch
-            if (!autoLoad && (!debouncedSearch || debouncedSearch.length < minSearchLength)) {
-                setProduits([])
-                setLoading(false)
-                setError(null)
-                return
-            }
-
-            // If autoLoad is true and search is empty, load all products
-            const shouldFetchAll = autoLoad && !debouncedSearch
-
-            setLoading(true)
-            setError(null)
-
-            try {
-                let endpoint = apiBaseUrl
-                    ? `${apiBaseUrl}/api/produits/`
-                    : '/api/produits/'
-
-                if (debouncedSearch) {
-                    endpoint += `?search=${encodeURIComponent(debouncedSearch)}`
-                }
-
-                const response = await axios.get(endpoint)
-                const produitsData: any = response.data
-                const results = Array.isArray(produitsData)
-                    ? produitsData
-                    : (produitsData.results || [])
-
-                setProduits(results)
-
-                // Barcode auto-match: if exactly one product and looks like CIP scan
-                const isNumericSearch = /^\d+$/.test(debouncedSearch)
-                if (onBarcodeMatch && isNumericSearch && results.length === 1) {
-                    const product = results[0]
-                    // Verify exact CIP match
-                    const cipMatch =
-                        product.cip1 === debouncedSearch ||
-                        product.cip2 === debouncedSearch ||
-                        product.cip3 === debouncedSearch
-
-                    if (cipMatch) {
-                        onBarcodeMatch(product)
-                        setSearchQuery('') // Clear after match
-                        setProduits([])
-                    }
-                }
-            } catch (err) {
-                console.error('Erreur recherche produits:', err)
-                setError('Erreur lors de la recherche des produits')
-                setProduits([])
-            } finally {
-                setLoading(false)
-            }
+    // Fetch function for React Query
+    const fetchProducts = async (search: string, auto: boolean): Promise<ProduitModel[]> => {
+        // If autoLoad is false and search is empty/short, don't fetch (handled by enabled query option normally, but double check)
+        if (!auto && (!search || search.length < minSearchLength)) {
+            return []
         }
 
-        searchProducts()
-    }, [debouncedSearch, apiBaseUrl, autoLoad, minSearchLength, onBarcodeMatch])
+        let endpoint = apiBaseUrl
+            ? `${apiBaseUrl}/api/produits/`
+            : '/api/produits/'
+
+        if (search) {
+            endpoint += `?search=${encodeURIComponent(search)}`
+        }
+
+        const response = await axios.get(endpoint)
+        const produitsData = response.data as any // Temporary cast to handle varied response structure safely
+        const results = Array.isArray(produitsData)
+            ? produitsData
+            : (produitsData.results || [])
+
+        return results
+    }
+
+    // Determine if query should run
+    const shouldFetch = autoLoad || (!!debouncedSearch && debouncedSearch.length >= minSearchLength)
+
+    const { data: produits = [], isLoading: loading, error, refetch } = useQuery({
+        queryKey: ['products', 'search', debouncedSearch, autoLoad],
+        queryFn: () => fetchProducts(debouncedSearch, autoLoad),
+        enabled: shouldFetch,
+        staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+        placeholderData: (previousData) => previousData, // Keep showing previous results while fetching new ones
+    })
+
+    // Handle Barcode matching effect
+    // We use a separate effect to trigger the callback when data arrives
+    // This replaces the logic inside the previous fetch function
+    const hasHandledBarcode = useRef<string>('')
+
+    if (onBarcodeMatch && wasBarcodeScanned && !loading && produits.length === 1) {
+        // Prevent duplicate firing for the same search query
+        if (hasHandledBarcode.current !== debouncedSearch) {
+            const product = produits[0]
+            const isNumericSearch = /^\d+$/.test(debouncedSearch)
+
+            if (isNumericSearch) {
+                // Verify exact CIP match
+                const cipMatch =
+                    product.cip1 === debouncedSearch ||
+                    product.cip2 === debouncedSearch ||
+                    product.cip3 === debouncedSearch
+
+                if (cipMatch) {
+                    hasHandledBarcode.current = debouncedSearch;
+                    // setTimeout to avoid update-during-render warning if callback updates state synchronously
+                    setTimeout(() => {
+                        onBarcodeMatch(product)
+                        setSearchQuery('')
+                        setWasBarcodeScanned(false)
+                    }, 0)
+                }
+            }
+        }
+    } else if (debouncedSearch !== hasHandledBarcode.current) {
+        // Reset when search changes
+        hasHandledBarcode.current = ''
+    }
 
     return {
         produits,
