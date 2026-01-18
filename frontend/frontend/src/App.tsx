@@ -9,7 +9,6 @@ import Clients from './components/Clients'
 import Rayons from './components/Rayons'
 import Facturation from './components/Facturation'
 import Dashboard from './components/Dashboard'
-import StatistiquesProduit from './components/StatistiquesProduit'
 import GestionUtilisateurs from './components/GestionUtilisateurs'
 import Inventaire from './components/Inventaire'
 import Formes from './components/Formes'
@@ -115,7 +114,6 @@ const router = createBrowserRouter([
           { path: 'rayons', element: <Rayons /> },
           { path: 'facturation', element: <Facturation /> },
           { path: 'caisse-centralisee', element: <CaisseCentralisee /> },
-          { path: 'statistiques', element: <StatistiquesProduit /> },
           { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
           { path: 'journal-caisse', element: <JournalCaisse /> },
           { path: 'historique-clotures', element: <HistoriqueClotures /> },

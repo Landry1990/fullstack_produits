@@ -211,9 +211,33 @@ class CommandeSerializer(serializers.ModelSerializer):
         model = Commande
         fields = '__all__'
         read_only_fields = ['date', 'status']
+        extra_kwargs = {
+            'fournisseur': {
+                'required': True,
+                'allow_null': False,
+                'error_messages': {
+                    'required': 'Le fournisseur est obligatoire pour créer une commande.',
+                    'null': 'Le fournisseur ne peut pas être vide.'
+                }
+            }
+        }
 
     def get_fournisseur_nom(self, obj):
         return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
+
+    def create(self, validated_data):
+        # Auto-save fournisseur_nom as backup when fournisseur is linked
+        fournisseur = validated_data.get('fournisseur')
+        if fournisseur and not validated_data.get('fournisseur_nom'):
+            validated_data['fournisseur_nom'] = fournisseur.name
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        # Auto-update fournisseur_nom when fournisseur changes
+        fournisseur = validated_data.get('fournisseur', instance.fournisseur)
+        if fournisseur:
+            validated_data['fournisseur_nom'] = fournisseur.name
+        return super().update(instance, validated_data)
 
 class FactureProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()

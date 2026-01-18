@@ -30,13 +30,15 @@ from ..serializers_optimized import (
 )
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..cache_mixins import CachedSearchMixin
+from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
 
-class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
+class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for products with optimizations:
     - Automatic caching for search queries (TTL: 5 minutes)
     - Optimized serializers for list vs detail views
+    - Multi-term AND search (e.g., "doli 500" finds products with both terms)
     
     Performance improvements:
     - Cache: 90-95% faster for cached queries
@@ -46,9 +48,9 @@ class ProduitViewSet(CachedSearchMixin, OptimizedSerializerMixin, viewsets.Model
     queryset = Produit.objects.select_related('rayon', 'fournisseur').order_by('name')
     serializer_class = ProduitSerializer
     permission_classes = [IsAuthenticated]
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['^name', '^cip1', '^cip2', '^cip3']  # ^ = starts with (not contains)
+    filter_backends = [filters.OrderingFilter]  # Removed SearchFilter, using custom search
     ordering_fields = ['name', 'stock', 'selling_price', 'updated_at']
+    search_fields = ['^name', '^cip1', '^cip2', '^cip3']
 
     def get_queryset(self):
         queryset = super().get_queryset()
