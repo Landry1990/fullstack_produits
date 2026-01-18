@@ -4,7 +4,7 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../context/AuthContext';
-import type { Fournisseur, ProduitModel, Commande, CommandeProduit, Rayon } from '../types'
+import type { ProduitModel, Commande, CommandeProduit } from '../types'
 import ProduitFormModal from './ProduitFormModal'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
@@ -18,6 +18,7 @@ import MergeCommandesModal from './Commandes/MergeCommandesModal'
 import { useCommandeActions } from '../hooks/useCommandeActions';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
+import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
 
 
 
@@ -40,11 +41,7 @@ interface CommandesProps {
 export default function Commandes({ forcedType }: CommandesProps) {
   const confirm = useConfirm()
   const { user } = useAuth();
-  const [commandes, setCommandes] = useState<Commande[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
-
 
   const { settings: pharmacySettings } = usePharmacySettings();
   const [activeTab, setActiveTab] = useState<'LOC' | 'DIR'>(forcedType || 'LOC'); // Onglet actif (List)
@@ -63,14 +60,28 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const [fraisCoefficient, setFraisCoefficient] = useState<string>('1.35');
 
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'DETAILS' | 'EDIT'>('LIST');
-  const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([])
-  const [rayons, setRayons] = useState<Rayon[]>([])
   const [newCommandeFournisseurId, setNewCommandeFournisseurId] = useState<string>('')
 
   // Pagination State
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [totalCount, setTotalCount] = useState(0)
+  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+
+  // React Query Hooks for data fetching
+  const { 
+    data: commandesData, 
+    isLoading: loading, 
+    error: loadError,
+    refetch: refetchCommandes 
+  } = useCommandes({ page, type: activeTab, status: filterStatus });
+  
+  const { data: fournisseurs = [] } = useCommandeFournisseurs();
+  const { data: rayons = [] } = useCommandeRayons();
+
+  // Derived state from React Query
+  const commandes = useMemo(() => commandesData?.results || [], [commandesData]);
+  const totalCount = commandesData?.count || 0;
+  const totalPages = Math.ceil(totalCount / 50) || 1;
+  const error = loadError ? (loadError as Error).message : null;
 
 
   
@@ -104,7 +115,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const [sortKey, setSortKey] = useState<'numero' | 'date' | 'fournisseur' | 'status'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  // filterStatus is declared above with React Query hooks
 
   // Tri pour les produits dans la vue détails
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
@@ -134,9 +145,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
     if (axios.isAxiosError(err)) {
       const errorMessage = err.response?.data?.message || err.message || defaultMessage;
-      setError(errorMessage);
+      toast.error(errorMessage);
     } else {
-      setError(defaultMessage);
+      toast.error(defaultMessage);
     }
     console.error('Erreur API:', err);
   }, []);
@@ -148,79 +159,18 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const commandesEndpoint = apiBaseUrl
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commandes/`
     : '/api/commandes/'
-  const fournisseursEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/fournisseurs/`
-    : '/api/fournisseurs/'
-  const rayonsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/rayons/`
-    : '/api/rayons/'
-  const produitsEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/produits/`
-    : '/api/produits/'
+  // Endpoints for reference
+  const produitsEndpoint = `${apiBaseUrl}/api/produits/`
+  const rayonsEndpoint = `${apiBaseUrl}/api/rayons/`
+  const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`
 
 
   const filteredProduits = produitsList
 
 
-  // Fetch reference data (Fournisseurs, Rayons) only once
-  useEffect(() => {
-    const controller = new AbortController()
-    async function fetchReferenceData() {
-      try {
-        const [fournisseursResponse, rayonsResponse] = await Promise.all([
-          axios.get(fournisseursEndpoint, { signal: controller.signal }),
-          axios.get(rayonsEndpoint, { signal: controller.signal }),
-        ])
-        const fournisseursData: any = fournisseursResponse.data;
-        const rayonsData: any = rayonsResponse.data;
-        setFournisseurs(Array.isArray(fournisseursData) ? fournisseursData : (fournisseursData.results || []))
-        setRayons(Array.isArray(rayonsData) ? rayonsData : (rayonsData.results || []))
-      } catch (err: unknown) {
-        if (axios.isCancel(err)) return
-        console.error('Erreur chargement données référence:', err)
-      }
-    }
+  // Data fetching is now handled by React Query hooks above
 
-    fetchReferenceData()
-    return () => controller.abort()
-  }, [fournisseursEndpoint, rayonsEndpoint])
-
-  // Fetch Commandes with pagination
-  const fetchCommandes = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const params = new URLSearchParams()
-      params.append('page', page.toString())
-      if (activeTab) params.append('type', activeTab)
-      if (filterStatus !== 'ALL') params.append('status', filterStatus)
-      
-      const response = await axios.get(commandesEndpoint, { params })
-      const data = response.data
-
-      if (data.results) {
-        setCommandes(data.results)
-        setTotalCount(data.count)
-        setTotalPages(Math.ceil(data.count / 50)) // Assuming page size is 50
-      } else {
-        // Fallback for non-paginated response
-        const results = Array.isArray(data) ? data : []
-        setCommandes(results)
-        setTotalCount(results.length)
-        setTotalPages(1)
-      }
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau')
-      } else {
-        setError('Erreur inconnue lors du chargement des commandes')
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [commandesEndpoint, page, activeTab, filterStatus])
-
-  // Initialize Actions Hook (After fetchCommandes definition)
+  // Initialize Actions Hook
   const {
       handleSaveCommande,
       handleDeleteCommande,
@@ -235,17 +185,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
   } = useCommandeActions({
       apiBaseUrl,
       commandesEndpoint,
-      fetchCommandes,
+      fetchCommandes: async () => { await refetchCommandes(); },
       setSelectedCommande,
       setViewMode,
       confirm,
       user
   });
 
-  useEffect(() => {
-    fetchCommandes()
-  }, [fetchCommandes])
-
+  // Sync selected commande with list
   useEffect(() => {
     if (selectedCommande && !commandes.some(c => c.id === selectedCommande.id)) {
       setSelectedCommande(null)
@@ -256,7 +203,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const onSave = (e: FormEvent) => {
       e.preventDefault();
       if (commandeProduits.length === 0) {
-          setError('Veuillez ajouter au moins un produit à la commande.');
+          toast.error('Veuillez ajouter au moins un produit à la commande.');
           return;
       }
       const cleanCommande: Partial<Commande> = {
@@ -673,7 +620,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       // toast.success(...) 
       
       // Rafraîchir la liste des commandes et fermer le modal
-      fetchCommandes();
+      refetchCommandes();
       setIsTransferModalOpen(false);
   }
 
@@ -737,7 +684,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       setIsMergeModalOpen(false);
       setSelectedOrderIds(new Set());
       toast.success(`${mergedCount} commande(s) fusionnée(s) dans la commande #${targetOrderId}`);
-      fetchCommandes();
+      refetchCommandes();
   }
 
 
@@ -1091,15 +1038,12 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }
 
   async function handleViewDetails(commande: Commande) {
-    setLoading(true);
     try {
       const response = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
       setSelectedCommande(response.data);
       setViewMode('DETAILS');
     } catch (err) {
       handleApiError(err, "Erreur lors du chargement des détails de la commande");
-    } finally {
-      setLoading(false);
     }
   }
 
