@@ -25,7 +25,7 @@ class RapportViewSet(viewsets.ViewSet):
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
             date__lt=date_fin
-        )
+        ).prefetch_related('produits', 'produits__produit')
         
         # 2. Calculer CA TTC et HT
         ca_ttc = Decimal('0.00')

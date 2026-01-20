@@ -19,7 +19,9 @@ import ProductSearchSection from './facturation/ProductSearchSection'
 import TotalsSection from './facturation/TotalsSection'
 import ActionButtons from './facturation/ActionButtons'
 import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
-// Lazy load barcode component
+import { TicketTemplate } from './printing/TicketTemplate'
+
+// Lazy load barcode component (kept if needed elsewhere, otherwise remove)
 const Barcode = lazy(() => import('react-barcode'))
 
 
@@ -44,12 +46,13 @@ export default function Facturation() {
   
   // Local loading state for non-hook operations (e.g. payment)
   const [loading, setLoading] = useState(false)
+  const [isRetrocession, setIsRetrocession] = useState(false)
 
   // Refs - declared early for hook usage
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
   
   // Ref for barcode callback (to avoid hook ordering issues)
-  const addProductRef = useRef<((product: ProduitModel) => void) | null>(null)
+  const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean }) => void) | null>(null)
 
   // Stabilize callbacks to prevent hook infinite loops
   const handleRequirePrescription = useCallback(() => {
@@ -82,10 +85,10 @@ export default function Facturation() {
   const handleBarcodeMatch = useCallback((product: ProduitModel) => {
       // Auto-add scanned product to cart via ref
       if (addProductRef.current) {
-        addProductRef.current(product)
+        addProductRef.current(product, { isRetrocession })
         toast.success(`✅ ${product.name} ajouté (scan)`, { duration: 1500 })
       }
-  }, [])
+  }, [isRetrocession])
 
   // Use product search hook with barcode scan auto-add
   const { 
@@ -228,6 +231,37 @@ export default function Facturation() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state, hasProcessedReload])
+
+  // Retrocession Mode Effect - Dynamic Price Update
+  useEffect(() => {
+    if (lignesFacture.length > 0) {
+      setLignesFacture(prevLignes => prevLignes.map(ligne => {
+        let newPrice = '0'
+        
+        if (isRetrocession) {
+            // Mode Retrocession: Utiliser Last Purchase Price ou Cost Price
+            const lastPurchase = ligne.produit.last_purchase_price
+            const costPrice = ligne.produit.cost_price?.toString()
+            newPrice = lastPurchase ? String(lastPurchase) : (costPrice ? costPrice : '0')
+        } else {
+            // Mode Standard: Revenir au Selling Price
+            newPrice = ligne.produit.selling_price ? String(ligne.produit.selling_price) : '0'
+        }
+
+        return {
+          ...ligne,
+          prix_unitaire: newPrice,
+          total_ligne: Number(newPrice) * Number(ligne.quantite) * (1 - Number(ligne.remise_produit) / 100)
+        }
+      }))
+      
+      if (isRetrocession) {
+          toast('Mode Rétrocession: Prix mis à jour (Prix Achat)', { icon: '🔄', id: 'retro-price-update' })
+      } else {
+          toast('Mode Standard: Prix rétablis', { icon: '🔄', id: 'retro-price-update' })
+      }
+    }
+  }, [isRetrocession])
 
 
 
@@ -796,7 +830,8 @@ export default function Facturation() {
           remise: totals.remiseMontant.toString(),
           tva: '0',
           ayant_droit: ayantDroitId, // Lier directement à la création
-          part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null
+          part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null,
+          type: isRetrocession ? 'RETRO' : 'STD' // Add Retrocession Type
         }
         const { data } = await axios.post(facturesEndpoint, facturePayload)
         createdFacture = data
@@ -1068,7 +1103,7 @@ export default function Facturation() {
       setSuccessInfo(finalFacture)
 
       // trigger premium print
-      window.open(`/app/print-invoice?id=${finalFacture.id}`, '_blank')
+      window.open(`/app/print-invoice/${finalFacture.id}`, '_blank')
       
       // Get client name for ticket
       const clientName = useManualClient 
@@ -1259,7 +1294,7 @@ export default function Facturation() {
       // 3. Open Print Window (Frontend)
       try {
           // Allow some time for backend to process if needed, or just open immediately since we have ID
-          window.open(`/app/print-invoice?id=${createdFacture.id}`, '_blank')
+          window.open(`/app/print-invoice/${createdFacture.id}`, '_blank')
           toast.success("Proforma généré avec succès")
       } catch (err) {
           console.error("Erreur ouverture impression:", err)
@@ -1290,7 +1325,7 @@ export default function Facturation() {
 
     try {
       if (facture.id) {
-          window.open(`/app/print-invoice?id=${facture.id}`, '_blank')
+          window.open(`/app/print-invoice/${facture.id}`, '_blank')
       }
     } catch (err) {
       handleApiError(err, "Erreur lors de l'impression de la facture")
@@ -1351,7 +1386,7 @@ export default function Facturation() {
       setSuccessInfo(factureUpdated)
 
       // trigger premium print
-      window.open(`/app/print-invoice?id=${factureUpdated.id}`, '_blank')
+      window.open(`/app/print-invoice/${factureUpdated.id}`, '_blank')
 
       // Construction ticket simulé
       setTicketCaisse({
@@ -1769,12 +1804,13 @@ export default function Facturation() {
             />
 
             {/* Product Search */}
+            {/* Product Search */}
             <ProductSearchSection
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 searchLoading={searchLoading}
                 filteredProduits={filteredProduits}
-                addProduitToFacture={addProduitToFacture}
+                addProduitToFacture={(p) => addProduitToFacture(p, { isRetrocession })}
                 searchInputRef={searchInputRef}
             />
         </div>
@@ -1816,6 +1852,22 @@ export default function Facturation() {
                 totalTTC={totals.totalTtc}
             />
 
+            {/* Retrocession Toggle (Near Actions) */}
+            <div className="px-4 pb-2 flex justify-end">
+                <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200">
+                        <input
+                        type="checkbox"
+                        id="retrocession-toggle-bottom"
+                        checked={isRetrocession}
+                        onChange={(e) => setIsRetrocession(e.target.checked)}
+                        className="checkbox checkbox-xs checkbox-warning"
+                        />
+                        <label htmlFor="retrocession-toggle-bottom" className="text-xs font-bold text-yellow-800 cursor-pointer select-none uppercase tracking-wide">
+                            Mode Rétrocession (SUDO)
+                        </label>
+                </div>
+            </div>
+
             {/* Action Buttons */}
             <ActionButtons
                 onPayment={handlePaymentClick}
@@ -1853,141 +1905,22 @@ export default function Facturation() {
         paymentInputRef={paymentInputRef}
       />
 
-      {/* Modal Ticket (Same as before but cleaner) */}
+      {/* Modal Ticket */}
       {showTicketPreview && ticketCaisse && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
-            <div className="bg-base-50 p-4 flex justify-between items-center border-b border-base-200">
+          <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
+            <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
               <h3 className="font-bold text-lg">Ticket de Caisse</h3>
               <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>
             </div>
             
-            <div className="p-6 bg-white text-black font-mono text-sm overflow-y-auto max-h-[60vh]" id="ticket-preview">
-                {/* ... Ticket Content (kept mostly same for print compatibility) ... */}
-                <div className="text-center mb-4 border-b-2 border-black pb-4">
-                <h2 className="text-xl font-black">{pharmacySettings.pharmacy_name}</h2>
-                <p>{pharmacySettings.city}, {pharmacySettings.country}</p>
-                {pharmacySettings.phone && <p>Tel: {pharmacySettings.phone}</p>}
-                {pharmacySettings.niu && <p>NIU: {pharmacySettings.niu}</p>}
-                {pharmacySettings.registre_commerce && <p>RC: {pharmacySettings.registre_commerce}</p>}
-              </div>
-              
-              <div className="space-y-1 mb-4">
-                <div className="flex justify-between"><span>Ticket:</span><span>#{ticketCaisse.id}</span></div>
-                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
-                  <div className="flex justify-between"><span>Facture:</span><span>#{ticketCaisse.facture.numero_facture}</span></div>
-                )}
-                <div className="flex justify-between"><span>Date:</span><span>{new Date().toLocaleDateString('fr-FR')} {new Date().toLocaleTimeString('fr-FR')}</span></div>
-                <div className="flex justify-between"><span>Client:</span><span>{ticketCaisse.client_name || 'Passage'}</span></div>
-              </div>
-              
-              <div className="border-y border-dashed border-black py-2 mb-4">
-                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.produits?.map((p: any) => (
-                  <div key={p.id} className="flex justify-between mb-1">
-                    <span>{typeof p.produit === 'object' ? p.produit.name : (p.produit_nom || `Produit #${p.produit}`)} x{p.quantity}</span>
-                    <span>{Math.round(p.quantity * p.selling_price)}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="space-y-1 font-bold text-right">
-                <div className="flex justify-between text-xs font-normal border-t border-dashed border-black pt-2">
-                  <span>Sous-total HT</span>
-                  <span>{typeof ticketCaisse.facture === 'object' ? Math.round(Number(ticketCaisse.facture.total_ht)) : 0}</span>
-                </div>
-                {typeof ticketCaisse.facture === 'object' && Number(ticketCaisse.facture.remise) > 0 && (
-                  <div className="flex justify-between text-xs font-normal">
-                    <span>Remise</span>
-                    <span>-{Math.round(Number(ticketCaisse.facture.remise))}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-xs font-normal">
-                  <span>TVA</span>
-                  <span>{typeof ticketCaisse.facture === 'object' ? Math.round(Number(ticketCaisse.facture.total_tva)) : 0}</span>
-                </div>
-                <div className="flex justify-between text-lg border-t-2 border-black pt-2 mt-1">
-                  <span>TOTAL TTC</span>
-                  <span>{Math.round(Number(ticketCaisse.montant))} F</span>
-                </div>
-                {ticketCaisse.montant_verse && (
-                  <div className="flex justify-between text-sm font-normal mt-1 border-t border-dashed border-black pt-1">
-                    <span>Montant Versé</span>
-                    <span>{Math.round(Number(ticketCaisse.montant_verse))} F</span>
-                  </div>
-                )}
-                {ticketCaisse.rendu && (
-                  <div className="flex justify-between text-sm font-normal">
-                    <span>Rendu</span>
-                    <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
-                  </div>
-                )}
-                
-                {/* DEBUG - À retirer après test */}
-                <div className="text-xs text-gray-500 mt-2 border border-red-300 p-1">
-                  DEBUG: paiements_details = {JSON.stringify(ticketCaisse.paiements_details)}<br/>
-                  mode_paiement = {ticketCaisse.mode_paiement}
-                </div>
-                
-                {ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 ? (
-                  <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
-                      <div className="font-bold mb-1">Règlements:</div>
-                      {ticketCaisse.paiements_details.map((paiement, idx) => {
-                        const getModeLabel = (mode: string) => {
-                          const labels: { [key: string]: string } = {
-                            'especes': 'Espèces',
-                            'carte': 'Carte',
-                            'cheque': 'Chèque',
-                            'virement': 'Virement',
-                            'om': 'Orange Money',
-                            'momo': 'Mobile Money',
-                            'en_compte': 'En compte'
-                          }
-                          return labels[mode] || mode.toUpperCase()
-                        }
-                        
-                        // Check if it's tiers payant payment
-                        const isPartPatient = paiement.part_patient && paiement.part_patient > 0
-                        const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
-                        
-                        return (
-                          <div key={idx} className="flex justify-between">
-                            <span>
-                              {getModeLabel(paiement.mode || paiement.mode_paiement || 'N/A')}
-                              {isPartPatient && <span className="text-success"> (Part Patient)</span>}
-                              {isPartAssurance && <span className="text-info"> (Part Assurance)</span>}
-                            </span>
-                            <span>{Math.round(paiement.montant)} F</span>
-                          </div>
-                        )
-                      })}
-                  </div>
-                ) : ticketCaisse.mode_paiement ? (
-                  <div className="text-xs font-normal mt-2 text-center">
-                    Mode: {ticketCaisse.mode_paiement.toUpperCase()}
-                  </div>
-                ) : (
-                  <div className="text-xs text-red-500 mt-2 text-center">
-                    [Aucun mode de paiement détecté]
-                  </div>
-                )}
-              </div>
-              
-              <div className="text-center mt-6 text-xs">
-                <p>Merci de votre visite !</p>
-                <p>À bientôt.</p>
-              </div>
-              
-              {/* Barcode with invoice number at bottom */}
-              {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
-                <Suspense fallback={<div className="text-center py-2">Chargement...</div>}>
-                  <div className="flex justify-center mt-4 bg-white">
-                    <Barcode value={ticketCaisse.facture.numero_facture} height={50} width={1.5} fontSize={12} />
-                  </div>
-                </Suspense>
-              )}
+            <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4" id="ticket-preview-container">
+               <div id="ticket-preview">
+                  <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
+               </div>
             </div>
             
-            <div className="p-4 bg-base-50 border-t border-base-200 flex justify-end gap-2">
+            <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
               <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>Fermer (Esc)</button>
               <button 
                 className="btn btn-primary btn-sm"
@@ -1996,12 +1929,16 @@ export default function Facturation() {
                   const win = window.open('', '', 'height=600,width=400');
                   if (win && content) {
                     win.document.write('<html><head><title>Ticket</title>');
-                    win.document.write('<style>body { font-family: monospace; padding: 20px; } .text-center { text-align: center; } .flex { display: flex; justify-content: space-between; } .font-bold { font-weight: bold; } .border-b-2 { border-bottom: 2px solid black; } .border-t-2 { border-top: 2px solid black; } .mb-4 { margin-bottom: 1rem; } .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }</style>');
+                    win.document.write('<style>@media print { @page { margin: 0; size: 80mm auto; } body { margin: 0; padding: 0; } } body { margin: 0; padding: 0; background: white; }</style>');
                     win.document.write('</head><body>');
                     win.document.write(content);
                     win.document.write('</body></html>');
                     win.document.close();
-                    win.print();
+                    win.focus();
+                    setTimeout(() => {
+                        win.print();
+                        win.close();
+                    }, 250);
                   }
                 }}
               >

@@ -173,6 +173,7 @@ class ClientSerializer(serializers.ModelSerializer):
 class ProduitSerializer(serializers.ModelSerializer):
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
     fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    forme_nom = serializers.CharField(source='forme.nom', read_only=True)
 
     class Meta:
         model = Produit
@@ -350,7 +351,7 @@ class FactureSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
             'ayant_droit', 'ayant_droit_details',
-            'date', 'status', 'status_display', 'produits', 
+            'date', 'status', 'status_display', 'type', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
             'is_remise_auto', 'part_client', 'paiements'
@@ -695,3 +696,119 @@ class OrdonnancierCreateSerializer(serializers.ModelSerializer):
             LigneOrdonnancier.objects.create(ordonnancier=ordonnancier, **ligne_data)
         
         return ordonnancier
+
+
+class FacturePrintSerializer(serializers.ModelSerializer):
+    """
+    Serializer optimisé pour l'impression de facture.
+    Retourne TOUTES les informations nécessaires pour le rendu frontend.
+    """
+    client = ClientSerializer(read_only=True)
+    vendeur_nom = serializers.SerializerMethodField()
+    produits = FactureProduitSerializer(many=True, read_only=True)
+    montant_recu = serializers.SerializerMethodField()
+    montant_rendu = serializers.SerializerMethodField()
+    mode_reglement = serializers.SerializerMethodField()
+    tva_analysis = serializers.SerializerMethodField()
+    total_lettres = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Facture
+        fields = [
+            'id', 'numero_facture', 'date', 'status', 'type',
+            'client', 'client_name_override', 
+            'total_ht', 'total_tva', 'total_ttc', 'remise',
+            'vendeur_nom', 'produits',
+            'montant_recu', 'montant_rendu', 'mode_reglement',
+            'tva_analysis', 'total_lettres', 'notes'
+        ]
+
+    def get_vendeur_nom(self, obj):
+        if obj.created_by:
+            return f"{obj.created_by.first_name} {obj.created_by.last_name}".strip() or obj.created_by.username
+        return "Système"
+
+    def get_montant_recu(self, obj):
+        # Somme des paiements
+        total = sum(p.montant for p in obj.paiements.all())
+        return total
+
+    def get_montant_rendu(self, obj):
+        # Pour l'instant on ne stocke pas explicitement la monnaie rendue, 
+        # mais on peut le déduire si on avait le montant versé vs montant dû.
+        # Ici on retourne 0 ou on pourrait ajouter un champ au modèle Caisse.
+        # Pour l'instant on retourne 0.
+        return Decimal('0.00')
+
+    def get_mode_reglement(self, obj):
+        paiements = obj.paiements.all()
+        if not paiements:
+            return "Non réglé"
+        modes = set(p.get_mode_paiement_display() for p in paiements)
+        return ", ".join(modes)
+
+    def get_tva_analysis(self, obj):
+        """
+        Calcule la répartition par taux de TVA.
+        Retourne une liste : [{ taux: '19.25', ht: 1000, tva: 192.5, ttc: 1192.5 }, ...]
+        """
+        analysis = {}
+        
+        # On itère sur les produits pour regrouper par taux de TVA
+        # Note: ceci est une reconstruction, l'idéal serait de stocker ces totaux,
+        # mais pour l'impression on peut recalculer.
+        
+        # Pour gérer correctement la remise globale, on doit l'appliquer au prorata
+        # ou alors afficher les montants bruts et la remise à part.
+        # Le modèle utilisateur montre un tableau de TVA en bas.
+        # Dans Facture.calculate_totals on a la logique de répartition.
+        
+        # On va refaire un calcul simple basé sur les lignes
+        for ligne in obj.produits.all():
+            taux = ligne.tva
+            if taux not in analysis:
+                analysis[taux] = {'base_ht': Decimal(0), 'montant_tva': Decimal(0)}
+            
+            # Montant HT de la ligne après remise ligne (discount)
+            # ligne.selling_price est TTC.
+            # ligne.discount est un montant TTC unitaire.
+            
+            # Prix unitaire TTC net
+            pu_ttc_net = ligne.selling_price - ligne.discount
+            total_ttc_ligne = pu_ttc_net * ligne.quantity
+            
+            # Si remise globale sur la facture, on l'applique ici ?
+            # Pour l'affichage "analyse TVA", il vaut mieux montrer les valeurs nettes de remise ligne,
+            # et gérer la remise globale séparément dans les totaux finaux, 
+            # SAUF si la remise globale affecte la base d'imposition (ce qui est le cas fiscalement).
+            
+            # Appliquer la remise globale au prorata
+            ratio_remise_globale = Decimal(1)
+            if obj.total_ttc > 0 and (obj.total_ttc + obj.remise) > 0:
+                 # Ratio = Total TTC Net / Total TTC Brut
+                 # Si obj.remise est le montant de la remise
+                 total_brut_facture = obj.total_ttc + obj.remise
+                 ratio_remise_globale = obj.total_ttc / total_brut_facture
+            
+            total_ttc_ligne_net = total_ttc_ligne * ratio_remise_globale
+            
+            # Retrouver le HT
+            ht_ligne = (total_ttc_ligne_net / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
+            tva_ligne = total_ttc_ligne_net - ht_ligne
+            
+            analysis[taux]['base_ht'] += ht_ligne
+            analysis[taux]['montant_tva'] += tva_ligne
+
+        return [
+            {
+                'taux': taux,
+                'base_ht': vals['base_ht'],
+                'montant_tva': vals['montant_tva']
+            }
+            for taux, vals in analysis.items()
+        ]
+
+    def get_total_lettres(self, obj):
+        # TODO: Implémenter la conversion chiffres -> lettres si besoin
+        # Pour l'instant on retourne une chaîne vide ou on utilise une lib
+        return ""

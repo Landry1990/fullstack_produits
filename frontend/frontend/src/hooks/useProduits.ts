@@ -6,13 +6,15 @@ import type {
     Fournisseur,
     AchatProduit,
     StockLot,
-    StockAdjustment
+    StockAdjustment,
+    Forme
 } from '../types';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 const produitsEndpoint = `${apiBaseUrl}/api/produits/`;
 const categoriesEndpoint = `${apiBaseUrl}/api/categories/`;
 const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
+const formesEndpoint = `${apiBaseUrl}/api/formes/`;
 
 // Types
 interface ProduitFilters {
@@ -97,6 +99,18 @@ export const useFournisseurs = () => {
         queryKey: ['fournisseurs'],
         queryFn: async () => {
             const response = await axios.get<Fournisseur[] | { results: Fournisseur[] }>(fournisseursEndpoint);
+            if (Array.isArray(response.data)) return response.data;
+            return response.data.results;
+        },
+        staleTime: 1000 * 60 * 30, // 30 mins
+    });
+};
+
+export const useFormes = () => {
+    return useQuery({
+        queryKey: ['formes'],
+        queryFn: async () => {
+            const response = await axios.get<Forme[] | { results: Forme[] }>(formesEndpoint);
             if (Array.isArray(response.data)) return response.data;
             return response.data.results;
         },

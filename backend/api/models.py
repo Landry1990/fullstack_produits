@@ -17,14 +17,14 @@ class Profile(models.Model):
     can_do_returns = models.BooleanField(default=False)
     can_sell_negative_stock = models.BooleanField(default=False)
     # New permission for Centralized Cash Mode
-    can_cash_out = models.BooleanField(default=True, help_text="Autorisé à encaisser (si mode centralisé actif)")
+    can_cash_out = models.BooleanField(default=True, help_text="Autoris├® ├á encaisser (si mode centralis├® actif)")
     
     # Granular Permissions
     can_delete_product = models.BooleanField(default=False, verbose_name="Supprimer des produits")
     can_adjust_stock = models.BooleanField(default=False, verbose_name="Ajuster le stock manuellement")
     can_delete_fournisseur = models.BooleanField(default=False, verbose_name="Supprimer des fournisseurs")
     can_delete_commande = models.BooleanField(default=False, verbose_name="Supprimer des commandes")
-    can_close_commande = models.BooleanField(default=False, verbose_name="Clôturer des commandes")
+    can_close_commande = models.BooleanField(default=False, verbose_name="Cl├┤turer des commandes")
 
     ROLE_CHOICES = [
         ('PHARMACIEN', 'Pharmacien'),
@@ -52,33 +52,33 @@ def save_user_profile(sender, instance, **kwargs):
 
 
 class LoyaltySetting(models.Model):
-    """Configuration du système de fidélité (Singleton)"""
+    """Configuration du syst├¿me de fid├®lit├® (Singleton)"""
     amount_per_point = models.DecimalField(max_digits=10, decimal_places=0, default=1000, help_text="Montant en FCFA pour gagner 1 point")
     point_value = models.DecimalField(max_digits=10, decimal_places=0, default=10, help_text="Valeur d'un point en FCFA")
-    auto_reward_threshold = models.IntegerField(default=0, help_text="Nombre de points pour déclencher la récompense auto (0=désactivé)")
+    auto_reward_threshold = models.IntegerField(default=0, help_text="Nombre de points pour d├®clencher la r├®compense auto (0=d├®sactiv├®)")
     auto_reward_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Pourcentage de remise auto")
 
     class Meta:
-        verbose_name = "Configuration Fidélité"
-        verbose_name_plural = "Configuration Fidélité"
+        verbose_name = "Configuration Fid├®lit├®"
+        verbose_name_plural = "Configuration Fid├®lit├®"
 
     def save(self, *args, **kwargs):
         self.pk = 1 # Singleton
         super(LoyaltySetting, self).save(*args, **kwargs)
         
     def __str__(self):
-        return "Configuration Fidélité"
+        return "Configuration Fid├®lit├®"
 
 
 class PharmacySettings(models.Model):
-    """Configuration de la pharmacie (Singleton) - Nom, Adresse, Téléphone, etc."""
+    """Configuration de la pharmacie (Singleton) - Nom, Adresse, T├®l├®phone, etc."""
     pharmacy_name = models.CharField(max_length=200, default="PHARMA STOCK")
     address = models.CharField(max_length=300, blank=True, default="")
     city = models.CharField(max_length=100, blank=True, default="Douala")
     country = models.CharField(max_length=100, blank=True, default="Cameroun")
     phone = models.CharField(max_length=50, blank=True, default="")
     email = models.EmailField(blank=True, default="")
-    niu = models.CharField(max_length=15, blank=True, default="", help_text="Numéro d'Identification Unique (14-15 caractères)")
+    niu = models.CharField(max_length=15, blank=True, default="", help_text="Num├®ro d'Identification Unique (14-15 caract├¿res)")
     registre_commerce = models.CharField(max_length=20, blank=True, default="", help_text="Registre de Commerce")
     ticket_footer_message = models.TextField(blank=True, default="Merci de votre visite!")
     receipt_header = models.TextField(blank=True, default="", help_text="Message en haut du ticket")
@@ -91,8 +91,8 @@ class PharmacySettings(models.Model):
     )
     
     class Meta:
-        verbose_name = "Paramètres Pharmacie"
-        verbose_name_plural = "Paramètres Pharmacie"
+        verbose_name = "Param├¿tres Pharmacie"
+        verbose_name_plural = "Param├¿tres Pharmacie"
     
     def save(self, *args, **kwargs):
         self.pk = 1  # Singleton pattern
@@ -117,7 +117,7 @@ class Fournisseur(models.Model):
     address = models.TextField()
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
-        message="Le numéro de téléphone doit être au format: '+999999999'. Jusqu'à 15 chiffres autorisés."
+        message="Le num├®ro de t├®l├®phone doit ├¬tre au format: '+999999999'. Jusqu'├á 15 chiffres autoris├®s."
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
     email = models.EmailField(unique=True)
@@ -134,7 +134,7 @@ class Client(models.Model):
     address = models.TextField()
     phone_regex = RegexValidator(
         regex=r'^\+?1?\d{9,15}$',
-        message="Le numéro de téléphone doit être au format: '+999999999'. Jusqu'à 15 chiffres autorisés."
+        message="Le num├®ro de t├®l├®phone doit ├¬tre au format: '+999999999'. Jusqu'├á 15 chiffres autoris├®s."
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
     email = models.EmailField(unique=True)
@@ -157,13 +157,13 @@ class Client(models.Model):
         decimal_places=2,
         default=0.00,
         validators=[MinValueValidator(0), MaxValueValidator(100)],
-        help_text="Pourcentage de remise automatique (0-100%) appliqué à chaque vente",
+        help_text="Pourcentage de remise automatique (0-100%) appliqu├® ├á chaque vente",
         verbose_name="Remise automatique (%)"
     )
     
     points_fidelite = models.IntegerField(default=0)
     pending_discount = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="Remise en % acquise pour la prochaine vente")
-    is_loyalty_member = models.BooleanField(default=True, help_text="Si activé, ce client participe au programme de fidélité")
+    is_loyalty_member = models.BooleanField(default=True, help_text="Si activ├®, ce client participe au programme de fid├®lit├®")
 
     created_at = models.DateTimeField(default=timezone.now)
 
@@ -174,8 +174,8 @@ class Client(models.Model):
     def current_debt(self):
         """
         Calcule la dette actuelle du client.
-        Somme des restes à payer sur les factures VALIDEE.
-        Optimisé pour utiliser l'annotation du ViewSet ou une agrégation unique.
+        Somme des restes ├á payer sur les factures VALIDEE.
+        Optimis├® pour utiliser l'annotation du ViewSet ou une agr├®gation unique.
         """
         # 1. Check if annotated by ViewSet (Zero SQL queries)
         if hasattr(self, 'current_debt_annotated'):
@@ -186,11 +186,11 @@ class Client(models.Model):
         from django.db.models.functions import Coalesce
         
         # On calcule la dette pour chaque facture et on somme
-        # Note: L'agrégation directe sur self.facture_set est complexe car il faut faire la différence (TTC - Paiements)
+        # Note: L'agr├®gation directe sur self.facture_set est complexe car il faut faire la diff├®rence (TTC - Paiements)
         # Et ne garder que les positifs.
         
         # On replique la logique du ViewSet mais pour une instance unique
-        # C'est moins grave de faire une requête ici car c'est pour un seul client
+        # C'est moins grave de faire une requ├¬te ici car c'est pour un seul client
         
         factures_with_debt = self.facture_set.filter(status__in=['VAL', 'PAY']).annotate(
             paid_amount=Coalesce(
@@ -223,9 +223,9 @@ class AyantDroit(models.Model):
 class Commande(models.Model):
     """Model representing an order."""
     class Status(models.TextChoices):
-        EN_PREPARATION = 'PREP', 'En préparation'
+        EN_PREPARATION = 'PREP', 'En pr├®paration'
         EN_ATTENTE = 'ATT', 'En attente'
-        CLOTUREE = 'CLOT', 'Clôturée'
+        CLOTUREE = 'CLOT', 'Cl├┤tur├®e'
     
     class Type(models.TextChoices):
         LOCALE = 'LOC', 'Locale'
@@ -240,29 +240,29 @@ class Commande(models.Model):
     )
     # Taux de change Euro -> FCFA (ex: 655.957)
     taux_change = models.DecimalField(max_digits=10, decimal_places=3, default=655.957)
-    # Coefficient global appliqué à la commande (Snapshot de PharmacySettings au moment de la création)
+    # Coefficient global appliqu├® ├á la commande (Snapshot de PharmacySettings au moment de la cr├®ation)
     frais_coefficient = models.DecimalField(max_digits=5, decimal_places=2, default=1.00)
     
-    # On utilise PROTECT pour éviter de supprimer des commandes si un fournisseur est effacé.
-    # Nullable pour permettre les commandes de réassort global (sans fournisseur initial)
+    # On utilise PROTECT pour ├®viter de supprimer des commandes si un fournisseur est effac├®.
+    # Nullable pour permettre les commandes de r├®assort global (sans fournisseur initial)
     fournisseur = models.ForeignKey(Fournisseur, on_delete=models.SET_NULL, null=True, blank=True)
-    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegard├®")
     numero_facture = models.CharField(max_length=100, blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
-    date_cloture = models.DateTimeField(null=True, blank=True, verbose_name="Date de clôture")
+    date_cloture = models.DateTimeField(null=True, blank=True, verbose_name="Date de cl├┤ture")
     status = models.CharField(
         max_length=4,
         choices=Status.choices,
         default=Status.EN_PREPARATION,
     )
-    # Le champ 'total' est retiré de la base de données.
+    # Le champ 'total' est retir├® de la base de donn├®es.
 
     def __str__(self):
         return f"Commande {self.id}"
     
     @property
     def total(self):
-        """Calcule le total de la commande en utilisant une agrégation de la base de données."""
+        """Calcule le total de la commande en utilisant une agr├®gation de la base de donn├®es."""
         total_value = self.produits.aggregate(
             total=Sum(F('quantity') * F('price'), output_field=DecimalField())
         )['total']
@@ -272,10 +272,10 @@ class CommandeProduit(models.Model):
     """Model representing a product in an order."""
     id = models.AutoField(primary_key=True)
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
     commande = models.ForeignKey(Commande, on_delete=models.CASCADE, related_name='produits')
-    quantity = models.IntegerField(help_text="Quantité commandée et payée")
-    unites_gratuites = models.IntegerField(default=0, help_text="Unités gratuites reçues (ex: promotion 3+1)")
+    quantity = models.IntegerField(help_text="Quantit├® command├®e et pay├®e")
+    unites_gratuites = models.IntegerField(default=0, help_text="Unit├®s gratuites re├ºues (ex: promotion 3+1)")
     # Prix d'achat original en devise (pour commandes directes)
     prix_euro = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -291,12 +291,12 @@ class CommandeProduit(models.Model):
     
     @property
     def total_quantity(self):
-        """Quantité totale reçue (payée + gratuites)"""
+        """Quantit├® totale re├ºue (pay├®e + gratuites)"""
         return self.quantity + self.unites_gratuites
     
     @property
     def effective_cost(self):
-        """Coût unitaire effectif incluant les UG"""
+        """Co├╗t unitaire effectif incluant les UG"""
         total_qty = self.total_quantity
         if total_qty > 0:
             return (self.quantity * self.price_cost) / total_qty
@@ -304,17 +304,27 @@ class CommandeProduit(models.Model):
     
 
 
+class Forme(models.Model):
+    """Model representing a pharmaceutical form (e.g., Comprimé, Sirop)."""
+    id = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nom
+
 class Produit(models.Model):
     """Model representing a product."""
     id = models.AutoField(primary_key=True)
     rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True)
-    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True) 
+    fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
+    forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits') 
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     stock = models.IntegerField()
     use_lot_management = models.BooleanField(
         default=True,
-        help_text="Activer la gestion par lots FIFO pour ce produit (recommandé pour traçabilité)"
+        help_text="Activer la gestion par lots FIFO pour ce produit (recommand├® pour tra├ºabilit├®)"
     )
     cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True)
     cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True)
@@ -329,38 +339,38 @@ class Produit(models.Model):
     rotation_moyenne = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     taux_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
     pourcentage_marge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, editable=False)
-    pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pondéré")
+    pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pond├®r├®")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # Ordonnancier - Champs pour identifier les médicaments soumis à ordonnance
+    # Ordonnancier - Champs pour identifier les m├®dicaments soumis ├á ordonnance
     requires_prescription = models.BooleanField(
         default=False,
-        help_text="Ce produit nécessite une ordonnance"
+        help_text="Ce produit n├®cessite une ordonnance"
     )
     
     SURVEILLANCE_CHOICES = [
         ('NONE', 'Aucune'),
         ('STANDARD', 'Surveillance standard'),
-        ('RENFORCEE', 'Surveillance renforcée'),
+        ('RENFORCEE', 'Surveillance renforc├®e'),
     ]
     surveillance_category = models.CharField(
         max_length=20, 
         choices=SURVEILLANCE_CHOICES, 
         default='NONE',
-        help_text="Catégorie de surveillance du médicament"
+        help_text="Cat├®gorie de surveillance du m├®dicament"
     )
     
-    # Dates de dernière transaction
+    # Dates de derni├¿re transaction
     dernier_achat = models.DateField(
         blank=True, 
         null=True,
-        help_text="Date du dernier achat (réception de commande)"
+        help_text="Date du dernier achat (r├®ception de commande)"
     )
     dernier_vente = models.DateField(
         blank=True, 
         null=True,
-        help_text="Date de la dernière vente"
+        help_text="Date de la derni├¿re vente"
     )
 
     def save(self, *args, **kwargs):
@@ -389,8 +399,8 @@ class Produit(models.Model):
     
     def calculate_stock_from_lots(self):
         """
-        Calcule et met à jour le stock du produit basé sur la somme
-        des quantités restantes de tous ses lots.
+        Calcule et met ├á jour le stock du produit bas├® sur la somme
+        des quantit├®s restantes de tous ses lots.
         """
         from django.db.models import Sum
         total = self.stock_lots.aggregate(
@@ -402,13 +412,13 @@ class Produit(models.Model):
 
     class Meta:
         indexes = [
-            # Index sur stock pour les requêtes stock__lte, stock__gte, etc.
+            # Index sur stock pour les requ├¬tes stock__lte, stock__gte, etc.
             models.Index(fields=['stock']),
             # Index composite pour les recherches par rayon et stock
             models.Index(fields=['rayon', 'stock']),
             # Index pour les recherches par fournisseur
             models.Index(fields=['fournisseur']),
-            # Index pour les recherches de produits à faible stock
+            # Index pour les recherches de produits ├á faible stock
             models.Index(fields=['stock', 'stock_minimum']),
         ]
 
@@ -418,9 +428,9 @@ class Facture(models.Model):
     class Status(models.TextChoices):
         BROUILLON = 'BROU', 'Brouillon'
         PROFORMA = 'PROF', 'Proforma'
-        VALIDEE = 'VAL', 'Validée'
-        PAYEE = 'PAY', 'Payée'
-        ANNULEE = 'ANN', 'Annulée'
+        VALIDEE = 'VAL', 'Valid├®e'
+        PAYEE = 'PAY', 'Pay├®e'
+        ANNULEE = 'ANN', 'Annul├®e'
 
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey(Client, on_delete=models.PROTECT, null=True, blank=True)
@@ -442,10 +452,10 @@ class Facture(models.Model):
     points_fidelite_utilises = models.IntegerField(default=0)
     montant_fidelite = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
-    part_client = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Part à payer par le client (Tiers Payant)")
+    part_client = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Part ├á payer par le client (Tiers Payant)")
     
-    # Suivi de l'opérateur (Vendeur)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='factures_created', help_text="Utilisateur qui a créé la facture")
+    # Suivi de l'op├®rateur (Vendeur)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='factures_created', help_text="Utilisateur qui a cr├®├® la facture")
 
     def __str__(self):
         return f"Facture {self.numero_facture or self.id}"
@@ -465,7 +475,7 @@ class Facture(models.Model):
         """
         from django.db.models import Sum, F, DecimalField
         
-        # Calcul Total TTC (somme des prix de vente qui incluent déjà la TVA)
+        # Calcul Total TTC (somme des prix de vente qui incluent d├®j├á la TVA)
         aggregated = self.produits.aggregate(
             total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
         )
@@ -476,10 +486,10 @@ class Facture(models.Model):
         total_tva = Decimal('0.00')
         
         for ligne in self.produits.all():
-            # TTC de la ligne (prix de vente qui inclut déjà la TVA)
+            # TTC de la ligne (prix de vente qui inclut d├®j├á la TVA)
             ttc_ligne = ligne.quantity * ligne.selling_price
             
-            # Calculer HT à partir du TTC : HT = TTC / (1 + TVA%)
+            # Calculer HT ├á partir du TTC : HT = TTC / (1 + TVA%)
             if ligne.tva > 0:
                 ht_ligne = (ttc_ligne / (1 + ligne.tva / 100)).quantize(Decimal('0.01'))
                 tva_ligne = (ttc_ligne - ht_ligne).quantize(Decimal('0.01'))
@@ -494,7 +504,7 @@ class Facture(models.Model):
         remise = Decimal(str(self.remise))
         total_ttc_apres_remise = total_ttc_brut - remise
         
-        # Recalculer HT et TVA proportionnellement après remise
+        # Recalculer HT et TVA proportionnellement apr├¿s remise
         if total_ttc_brut > 0:
             ratio_remise = total_ttc_apres_remise / total_ttc_brut
             total_ht = (total_ht * ratio_remise).quantize(Decimal('0.01'))
@@ -511,7 +521,7 @@ class Facture(models.Model):
         if self.client and self.client.taux_couverture > 0:
             taux_assurance = self.client.taux_couverture
             taux_client = Decimal('100.00') - taux_assurance
-            # Protection contre taux incohérents
+            # Protection contre taux incoh├®rents
             if taux_client < 0: taux_client = Decimal('0.00')
             
             self.part_client = (self.total_ttc * taux_client / Decimal('100.00')).quantize(Decimal('0.01'))
@@ -519,30 +529,30 @@ class Facture(models.Model):
             self.part_client = self.total_ttc
 
         if save:
-            # On update uniquement les champs de totaux pour éviter de déclencher des signaux récursifs inutiles
-            # ou d'écraser d'autres changements concurrents
+            # On update uniquement les champs de totaux pour ├®viter de d├®clencher des signaux r├®cursifs inutiles
+            # ou d'├®craser d'autres changements concurrents
             self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client'])
 
 
     class Meta:
         indexes = [
-            # Index sur status pour les filtres fréquents (dashboard, listes)
+            # Index sur status pour les filtres fr├®quents (dashboard, listes)
             models.Index(fields=['status']),
-            # Index composite pour les requêtes par client et status
+            # Index composite pour les requ├¬tes par client et status
             models.Index(fields=['client', 'status']),
             # Index sur date pour les tris et filtres par date
-            models.Index(fields=['-date']),  # Descending pour les listes récentes
+            models.Index(fields=['-date']),  # Descending pour les listes r├®centes
         ]
 
 
 class LotSequence(models.Model):
     """
-    Modèle pour gérer la séquence atomique des numéros de lot.
-    Singleton : une seule instance (id=1) stocke le dernier numéro utilisé.
-    Utilisé par generate_lot_number() pour générer des numéros de lot uniques de manière atomique.
+    Mod├¿le pour g├®rer la s├®quence atomique des num├®ros de lot.
+    Singleton : une seule instance (id=1) stocke le dernier num├®ro utilis├®.
+    Utilis├® par generate_lot_number() pour g├®n├®rer des num├®ros de lot uniques de mani├¿re atomique.
     """
     id = models.IntegerField(primary_key=True, default=1)
-    last_number = models.IntegerField(default=0, help_text="Dernier numéro de séquence utilisé")
+    last_number = models.IntegerField(default=0, help_text="Dernier num├®ro de s├®quence utilis├®")
     
     class Meta:
         db_table = 'lot_sequence'
@@ -553,22 +563,22 @@ class LotSequence(models.Model):
 
 def generate_lot_number():
     """
-    Génère un numéro de lot unique au format L01
-    Utilise Redis (cache) pour éviter le verrouillage global de la base de données (select_for_update).
-    Si le cache est vide (redémarrage), il s'initialise depuis la dernière entrée StockLot.
+    G├®n├¿re un num├®ro de lot unique au format L01
+    Utilise Redis (cache) pour ├®viter le verrouillage global de la base de donn├®es (select_for_update).
+    Si le cache est vide (red├®marrage), il s'initialise depuis la derni├¿re entr├®e StockLot.
     """
     CACHE_KEY = 'lot_sequence'
     
     try:
-        # Essayer d'incrémenter atomiquement via Redis
+        # Essayer d'incr├®menter atomiquement via Redis
         sequence = cache.incr(CACHE_KEY)
     except ValueError:
-        # La clé n'existe pas, initialisation depuis la DB (Recovery)
-        # On cherche le dernier lot créé dans StockLot
+        # La cl├® n'existe pas, initialisation depuis la DB (Recovery)
+        # On cherche le dernier lot cr├®├® dans StockLot
         last_number = 0
         
-        # 1. Vérifier StockLot (Source de vérité principale)
-        # On utilise 'created_at' car l'ID peut être désynchronisé (ex: import données)
+        # 1. V├®rifier StockLot (Source de v├®rit├® principale)
+        # On utilise 'created_at' car l'ID peut ├¬tre d├®synchronis├® (ex: import donn├®es)
         last_stock = StockLot.objects.order_by('-created_at', '-id').first()
         
         if last_stock and last_stock.lot and last_stock.lot.startswith('L'):
@@ -577,7 +587,7 @@ def generate_lot_number():
             except ValueError:
                 pass
                 
-        # 2. Vérifier LotSequence (Fallback historique)
+        # 2. V├®rifier LotSequence (Fallback historique)
         try:
             seq_obj = LotSequence.objects.get(id=1)
             if seq_obj.last_number > last_number:
@@ -588,11 +598,11 @@ def generate_lot_number():
         # 3. Initialiser le cache
         cache.set(CACHE_KEY, last_number, timeout=None)
         
-        # 4. Incrémenter
+        # 4. Incr├®menter
         sequence = cache.incr(CACHE_KEY)
         
-        # On met à jour LotSequence uniquement lors de la récupération pour garder une trace approximative
-        # mais PAS à chaque génération pour éviter le lock
+        # On met ├á jour LotSequence uniquement lors de la r├®cup├®ration pour garder une trace approximative
+        # mais PAS ├á chaque g├®n├®ration pour ├®viter le lock
         LotSequence.objects.update_or_create(id=1, defaults={'last_number': sequence})
 
     return f'L{sequence:02d}'
@@ -600,33 +610,33 @@ def generate_lot_number():
 
 class StockLot(models.Model):
     """
-    Représente un lot de stock reçu d'un fournisseur.
-    Permet la traçabilité FIFO et le calcul du CA par fournisseur.
+    Repr├®sente un lot de stock re├ºu d'un fournisseur.
+    Permet la tra├ºabilit├® FIFO et le calcul du CA par fournisseur.
     """
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='stock_lots')
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
-    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot', null=True, blank=True, help_text="Référence à la ligne de commande (si applicable)")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
+    commande_produit = models.ForeignKey('CommandeProduit', on_delete=models.CASCADE, related_name='stock_lot', null=True, blank=True, help_text="R├®f├®rence ├á la ligne de commande (si applicable)")
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
-    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
-    quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
-    quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
-    quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
-    quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
-    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire effectif (ajusté avec UG)")
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix de vente lors de la réception") # NEW
-    lot = models.CharField(max_length=20, blank=True, null=True, db_index=True, help_text="Numéro de lot auto-généré ou manuel")
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegard├®")
+    quantity_initial = models.IntegerField(help_text="Quantit├® totale initiale (pay├®e + gratuites)")
+    quantity_paid = models.IntegerField(default=0, help_text="Quantit├® pay├®e uniquement")
+    quantity_free = models.IntegerField(default=0, help_text="Unit├®s gratuites (UG)")
+    quantity_remaining = models.IntegerField(help_text="Quantit├® restante dans le lot")
+    price_cost = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat unitaire effectif (ajust├® avec UG)")
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix de vente lors de la r├®ception") # NEW
+    lot = models.CharField(max_length=20, blank=True, null=True, db_index=True, help_text="Num├®ro de lot auto-g├®n├®r├® ou manuel")
     date_expiration = models.DateField(blank=True, null=True)
-    date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
+    date_reception = models.DateTimeField(help_text="Date de r├®ception du lot (pour FIFO)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['date_reception']  # FIFO: Premier arrivé, premier servi
+        ordering = ['date_reception']  # FIFO: Premier arriv├®, premier servi
         indexes = [
             models.Index(fields=['produit', 'date_reception']),
             models.Index(fields=['produit', 'quantity_remaining']),
         ]
-        # Contrainte unique sur la combinaison (produit, lot) pour permettre le même lot sur différents produits
+        # Contrainte unique sur la combinaison (produit, lot) pour permettre le m├¬me lot sur diff├®rents produits
         constraints = [
             models.UniqueConstraint(
                 fields=['produit', 'lot'],
@@ -640,14 +650,14 @@ class StockLot(models.Model):
         return f"Lot {self.id} - {self.produit.name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
 
 
-# Signal pour auto-génération de numéro de lot
+# Signal pour auto-g├®n├®ration de num├®ro de lot
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 
 @receiver(pre_save, sender=StockLot)
 def auto_generate_lot_number(sender, instance, **kwargs):
     """
-    Génère automatiquement un numéro de lot si non fourni.
+    G├®n├¿re automatiquement un num├®ro de lot si non fourni.
     """
     if not instance.lot:
         instance.lot = generate_lot_number()
@@ -656,14 +666,14 @@ def auto_generate_lot_number(sender, instance, **kwargs):
 @receiver(post_save, sender=StockLot)
 def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
     """
-    Synchronise le stock du produit quand un lot est créé ou modifié.
+    Synchronise le stock du produit quand un lot est cr├®├® ou modifi├®.
     Uniquement pour les produits avec use_lot_management=True.
     
     OPTIMISATION: Pour les modifications, on calcule le delta au lieu de tout recalculer.
-    Pour les créations, on doit recalculer car on ne connaît pas l'ancien état.
+    Pour les cr├®ations, on doit recalculer car on ne conna├«t pas l'ancien ├®tat.
     """
     if instance.produit and instance.produit.use_lot_management:
-        # Pour les créations, on doit recalculer car on n'a pas l'ancienne valeur
+        # Pour les cr├®ations, on doit recalculer car on n'a pas l'ancienne valeur
         if created:
             from django.db.models import Sum
             total = instance.produit.stock_lots.aggregate(
@@ -675,7 +685,7 @@ def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
         else:
             # Pour les modifications, utiliser le delta si possible
             # Note: Django ne fournit pas toujours l'ancienne instance dans post_save
-            # On recalcule pour être sûr de la cohérence (trade-off performance vs exactitude)
+            # On recalcule pour ├¬tre s├╗r de la coh├®rence (trade-off performance vs exactitude)
             # TODO: Utiliser pre_save pour capturer l'ancienne valeur et calculer le delta
             from django.db.models import Sum
             total = instance.produit.stock_lots.aggregate(
@@ -689,7 +699,7 @@ def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=StockLot)
 def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
     """
-    Synchronise le stock du produit quand un lot est supprimé.
+    Synchronise le stock du produit quand un lot est supprim├®.
     Uniquement pour les produits avec use_lot_management=True.
     """
     if instance.produit and instance.produit.use_lot_management:
@@ -705,7 +715,7 @@ class FactureProduit(models.Model):
     """Model representing a product in an invoice."""
     id = models.AutoField(primary_key=True)
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='produits')
     quantity = models.IntegerField()
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -714,10 +724,10 @@ class FactureProduit(models.Model):
         max_digits=5, 
         decimal_places=2, 
         default=0.00,
-        help_text="TVA applicable à cette ligne (copiée du produit lors de la création)"
+        help_text="TVA applicable ├á cette ligne (copi├®e du produit lors de la cr├®ation)"
     )
     lot = models.CharField(max_length=20, blank=True, null=True)
-    stock_lot = models.ForeignKey(StockLot, on_delete=models.SET_NULL, null=True, blank=True, help_text="Lot spécifique choisi manuellement") # NEW
+    stock_lot = models.ForeignKey(StockLot, on_delete=models.SET_NULL, null=True, blank=True, help_text="Lot sp├®cifique choisi manuellement") # NEW
     date_expiration = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -727,9 +737,9 @@ class FactureProduit(models.Model):
 
     class Meta:
         indexes = [
-            # Index sur produit pour les joins fréquents (history, stats)
+            # Index sur produit pour les joins fr├®quents (history, stats)
             models.Index(fields=['produit']),
-            # Index composite pour les requêtes par facture et produit
+            # Index composite pour les requ├¬tes par facture et produit
             models.Index(fields=['facture', 'produit']),
         ]
 
@@ -738,7 +748,7 @@ class FactureProduit(models.Model):
 @receiver(pre_save, sender=FactureProduit)
 def copy_tva_from_product(sender, instance, **kwargs):
     """
-    Copie automatiquement la TVA du produit vers la ligne de facture lors de la création.
+    Copie automatiquement la TVA du produit vers la ligne de facture lors de la cr├®ation.
     Si la TVA de la ligne est 0 et que le produit a une TVA, on la copie.
     """
     if instance.produit and instance.tva == Decimal('0.00'):
@@ -748,8 +758,8 @@ def copy_tva_from_product(sender, instance, **kwargs):
 
 class RelevePaiement(models.Model):
     """
-    Regroupe plusieurs paiements de factures effectués en une seule opération (bulk).
-    Permet d'afficher une ligne unique dans le journal de caisse tout en gardant le détail.
+    Regroupe plusieurs paiements de factures effectu├®s en une seule op├®ration (bulk).
+    Permet d'afficher une ligne unique dans le journal de caisse tout en gardant le d├®tail.
     """
     id = models.AutoField(primary_key=True)
     client = models.ForeignKey(Client, on_delete=models.PROTECT, related_name='releves')
@@ -759,7 +769,7 @@ class RelevePaiement(models.Model):
     reference = models.CharField(max_length=50, unique=True, help_text="Ex: REL-20231212-001")
 
     def __str__(self):
-        return f"Relevé {self.reference} - {self.client.name} ({self.total_amount})"
+        return f"Relev├® {self.reference} - {self.client.name} ({self.total_amount})"
 
     class Meta:
         ordering = ['-created_at']
@@ -767,8 +777,8 @@ class RelevePaiement(models.Model):
 
 class Caisse(models.Model):
     MODES_PAIEMENT = [
-        ('especes', 'Espèces'),
-        ('cheque', 'Chèque'),
+        ('especes', 'Esp├¿ces'),
+        ('cheque', 'Ch├¿que'),
         ('carte', 'Carte'),
         ('virement', 'Virement'),
         ('om', 'Orange Money'),
@@ -778,8 +788,8 @@ class Caisse(models.Model):
     
     STATUTS = [
         ('en_attente', 'En attente'),
-        ('completee', 'Complétée'),
-        ('annulee', 'Annulée'),
+        ('completee', 'Compl├®t├®e'),
+        ('annulee', 'Annul├®e'),
     ]
     
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='paiements')
@@ -792,7 +802,7 @@ class Caisse(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT, null=True, blank=True, related_name='transactions_caisse')
     releve = models.ForeignKey(RelevePaiement, on_delete=models.SET_NULL, null=True, blank=True, related_name='paiements_caisse')
     # Champs pour tiers payant
-    part_patient = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Part payée par le patient (tiers payant)")
+    part_patient = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Part pay├®e par le patient (tiers payant)")
     part_assurance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Part prise en charge par l'assurance")
     
     def __str__(self):
@@ -801,7 +811,7 @@ class Caisse(models.Model):
     class Meta:
         ordering = ['-date_paiement']
         indexes = [
-            # Index sur statut pour les filtres fréquents (get_totals, cloturer)
+            # Index sur statut pour les filtres fr├®quents (get_totals, cloturer)
             models.Index(fields=['statut']),
             # Index composite pour les filtres par facture et statut
             models.Index(fields=['facture', 'statut']),
@@ -812,10 +822,10 @@ class Caisse(models.Model):
 @receiver(post_save, sender=Caisse)
 def handle_caisse_post_save(sender, instance, created, **kwargs):
     """
-    Logique métier après enregistrement d'un règlement :
+    Logique m├®tier apr├¿s enregistrement d'un r├¿glement :
     1. Marquage Tiers Payant (Part Patient) pour le ticket.
-    2. Split Billing (Génération automatique du crédit assurance).
-    3. Mise à jour du statut de la facture vers PAYEE.
+    2. Split Billing (G├®n├®ration automatique du cr├®dit assurance).
+    3. Mise ├á jour du statut de la facture vers PAYEE.
     """
     if instance.statut != 'completee':
         return
@@ -823,17 +833,17 @@ def handle_caisse_post_save(sender, instance, created, **kwargs):
     facture = instance.facture
     
     # 1. Marquage Tiers Payant (Part Patient)
-    # Si la facture a une part_client définie, on marque tout paiement réel comme 'Part Patient'
+    # Si la facture a une part_client d├®finie, on marque tout paiement r├®el comme 'Part Patient'
     if facture.part_client is not None and instance.mode_paiement != 'en_compte':
         if not instance.part_patient and (instance.part_assurance is None or instance.part_assurance == 0):
-            # Utilisation de .update() pour ne pas redéclencher le signal post_save
+            # Utilisation de .update() pour ne pas red├®clencher le signal post_save
             Caisse.objects.filter(id=instance.id).update(
                 part_patient=instance.montant,
                 part_assurance=Decimal('0.00')
             )
 
-    # 2. Split Billing (Génération automatique de la créance)
-    # Si le montant cumulé payé par le client atteint sa part_client, on bascule le reste en crédit.
+    # 2. Split Billing (G├®n├®ration automatique de la cr├®ance)
+    # Si le montant cumul├® pay├® par le client atteint sa part_client, on bascule le reste en cr├®dit.
     if created and facture.part_client is not None and instance.mode_paiement != 'en_compte':
         paiements_reels = Caisse.objects.filter(
             facture=facture, 
@@ -843,7 +853,7 @@ def handle_caisse_post_save(sender, instance, created, **kwargs):
         if paiements_reels >= facture.part_client:
             reste_a_couvrir = facture.total_ttc - paiements_reels
             if reste_a_couvrir > Decimal('1.00'):
-                # Vérifier si on a déjà généré un crédit automatique pour cette facture
+                # V├®rifier si on a d├®j├á g├®n├®r├® un cr├®dit automatique pour cette facture
                 deja_traite = Caisse.objects.filter(
                     facture=facture, 
                     mode_paiement='en_compte',
@@ -851,7 +861,7 @@ def handle_caisse_post_save(sender, instance, created, **kwargs):
                 ).exists()
                 
                 if not deja_traite:
-                    # Création du paiement 'En Compte' pour le solde (Part Assurance)
+                    # Cr├®ation du paiement 'En Compte' pour le solde (Part Assurance)
                     Caisse.objects.create(
                         facture=facture,
                         mode_paiement='en_compte',
@@ -863,8 +873,8 @@ def handle_caisse_post_save(sender, instance, created, **kwargs):
                         part_patient=Decimal('0.00')
                     )
 
-    # 3. Mise à jour du statut de la facture
-    # Si le total des règlements (Cash + Crédit) couvre le montant TTC, la facture est payée.
+    # 3. Mise ├á jour du statut de la facture
+    # Si le total des r├¿glements (Cash + Cr├®dit) couvre le montant TTC, la facture est pay├®e.
     if facture.status not in [Facture.Status.ANNULEE, Facture.Status.PAYEE]:
         total_encaisse = Caisse.objects.filter(
             facture=facture, 
@@ -879,12 +889,12 @@ def handle_caisse_post_save(sender, instance, created, **kwargs):
 
 class FactureProduitAllocation(models.Model):
     """
-    Traçabilité: enregistre quelle part d'une vente provient de quel lot.
+    Tra├ºabilit├®: enregistre quelle part d'une vente provient de quel lot.
     Permet de calculer la marge et le CA par fournisseur.
     """
     facture_produit = models.ForeignKey('FactureProduit', on_delete=models.CASCADE, related_name='allocations')
     stock_lot = models.ForeignKey('StockLot', on_delete=models.PROTECT)
-    quantity = models.IntegerField(help_text="Quantité prélevée de ce lot")
+    quantity = models.IntegerField(help_text="Quantit├® pr├®lev├®e de ce lot")
     cost_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix d'achat du lot")
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de vente")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -893,7 +903,7 @@ class FactureProduitAllocation(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Allocation {self.id} - {self.quantity} unités du lot {self.stock_lot.id}"
+        return f"Allocation {self.id} - {self.quantity} unit├®s du lot {self.stock_lot.id}"
     
     @property
     def margin(self):
@@ -931,7 +941,7 @@ class ActivityLog(models.Model):
 class Inventaire(models.Model):
     class Status(models.TextChoices):
         EN_COURS = 'EN_COURS', 'En cours'
-        VALIDEE = 'VALIDEE', 'Validée'
+        VALIDEE = 'VALIDEE', 'Valid├®e'
 
     date = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=200, blank=True)
@@ -946,14 +956,14 @@ class Inventaire(models.Model):
 class LigneInventaire(models.Model):
     inventaire = models.ForeignKey(Inventaire, on_delete=models.CASCADE, related_name='lignes')
     produit = models.ForeignKey(Produit, on_delete=models.SET_NULL, null=True, blank=True)  # SET_NULL pour permettre suppression
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
     stock_lot = models.ForeignKey(
         'StockLot',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='inventaires',
-        help_text="Lot spécifique compté (si inventaire par lot)"
+        help_text="Lot sp├®cifique compt├® (si inventaire par lot)"
     )
     stock_theorique = models.IntegerField(help_text="Stock au moment de l'ajout dans l'inventaire")
     quantite_physique = models.IntegerField(default=0)
@@ -978,7 +988,7 @@ class LigneInventaire(models.Model):
     
     @property
     def lot_numero(self):
-        """Retourne le numéro du lot si disponible"""
+        """Retourne le num├®ro du lot si disponible"""
         return self.stock_lot.lot if self.stock_lot else None
     
     @property
@@ -988,17 +998,17 @@ class LigneInventaire(models.Model):
 
 class MouvementCaisse(models.Model):
     """
-    Modèle pour les entrées et sorties de caisse spéciales (hors ventes).
-    Ex: Paiement facture électricité, Achat carburant, Entrée fonds de caisse...
+    Mod├¿le pour les entr├®es et sorties de caisse sp├®ciales (hors ventes).
+    Ex: Paiement facture ├®lectricit├®, Achat carburant, Entr├®e fonds de caisse...
     """
     TYPE_CHOICES = [
-        ('ENTREE', 'Entrée'),
+        ('ENTREE', 'Entr├®e'),
         ('SORTIE', 'Sortie'),
     ]
     
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     montant = models.DecimalField(max_digits=12, decimal_places=2)
-    motif = models.CharField(max_length=200, help_text="Ex: Electricité, Carburant, etc.")
+    motif = models.CharField(max_length=200, help_text="Ex: Electricit├®, Carburant, etc.")
     description = models.TextField(blank=True, null=True)
     date = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_caisse')
@@ -1011,25 +1021,25 @@ class MouvementCaisse(models.Model):
 
 class Avoir(models.Model):
     """
-    Modèle pour les retours fournisseurs (Avoirs).
+    Mod├¿le pour les retours fournisseurs (Avoirs).
     Retire du stock contrairement aux Commandes qui en ajoutent.
     """
     TYPE_CHOICES = [
-        ('PERIME', 'Produit périmé'),
-        ('AVARIE', 'Produit avarié'),
-        ('NON_FACTURE', 'Livré non facturé'),
+        ('PERIME', 'Produit p├®rim├®'),
+        ('AVARIE', 'Produit avari├®'),
+        ('NON_FACTURE', 'Livr├® non factur├®'),
         ('ERREUR', 'Erreur de livraison'),
         ('AUTRE', 'Autre'),
     ]
     
     STATUS_CHOICES = [
         ('BROUILLON', 'Brouillon'),
-        ('VALIDEE', 'Validée'),
+        ('VALIDEE', 'Valid├®e'),
     ]
     
     numero = models.CharField(max_length=50, unique=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True, related_name='avoirs')
-    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegard├®")
     type_avoir = models.CharField(max_length=20, choices=TYPE_CHOICES, default='AUTRE')
     date = models.DateField(default=date.today)
     observations = models.TextField(blank=True)
@@ -1052,7 +1062,7 @@ class Avoir(models.Model):
         super().save(*args, **kwargs)
     
     def generate_numero(self):
-        """Génère un numéro d'avoir au format AV-YYYYMM-XXXX"""
+        """G├®n├¿re un num├®ro d'avoir au format AV-YYYYMM-XXXX"""
         today = date.today()
         prefix = f"AV-{today.strftime('%Y%m')}"
         last = Avoir.objects.filter(numero__startswith=prefix).order_by('-numero').first()
@@ -1088,14 +1098,14 @@ class LigneAvoir(models.Model):
     """Ligne d'un avoir fournisseur"""
     avoir = models.ForeignKey(Avoir, related_name='produits', on_delete=models.CASCADE)
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True)  # SET_NULL pour permettre suppression
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
     stock_lot = models.ForeignKey(
         'StockLot', 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True,
         related_name='avoirs',
-        help_text="Lot spécifique retourné (si applicable)"
+        help_text="Lot sp├®cifique retourn├® (si applicable)"
     )
     quantity = models.IntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Prix de retour")
@@ -1125,22 +1135,22 @@ class LigneAvoir(models.Model):
 
 class MouvementStock(models.Model):
     """
-    Historique de tous les mouvements de stock (Entrées, Sorties, Ajustements, Transformations)
-    Permet de reconstruire l'état du stock à une date donnée et d'analyser les flux.
+    Historique de tous les mouvements de stock (Entr├®es, Sorties, Ajustements, Transformations)
+    Permet de reconstruire l'├®tat du stock ├á une date donn├®e et d'analyser les flux.
     """
     class TypeMouvement(models.TextChoices):
-        ENTREE = 'ENTREE', 'Entrée (Commande)'
+        ENTREE = 'ENTREE', 'Entr├®e (Commande)'
         SORTIE = 'SORTIE', 'Sortie (Vente)'
         RETOUR = 'RETOUR', 'Retour (Annulation)'
         AJUSTEMENT = 'AJUSTEMENT', 'Ajustement Inventaire'
-        TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entrée)'
+        TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entr├®e)'
         TRANSFORMATION_SORTIE = 'TRANSFORMATION_SORTIE', 'Transformation (Sortie)'
 
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_stock')
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
     type_mouvement = models.CharField(max_length=30, choices=TypeMouvement.choices)
-    quantite = models.IntegerField(help_text="Quantité mouvementée (positive ou négative)")
-    stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock après mouvement (snapshot)")
+    quantite = models.IntegerField(help_text="Quantit├® mouvement├®e (positive ou n├®gative)")
+    stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock apr├¿s mouvement (snapshot)")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
@@ -1157,25 +1167,25 @@ class MouvementStock(models.Model):
 
 class RelationTransformation(models.Model):
     """
-    Définit la relation de transformation entre deux produits.
-    Exemple: 1 boîte PARACETAMOL (produit_source) = 20 détails PARACETAMOL (produit_destination)
+    D├®finit la relation de transformation entre deux produits.
+    Exemple: 1 bo├«te PARACETAMOL (produit_source) = 20 d├®tails PARACETAMOL (produit_destination)
     """
     produit_source = models.ForeignKey(
         'Produit', 
         on_delete=models.CASCADE, 
         related_name='transformations_source',
-        help_text="Produit à transformer (ex: BOITE)"
+        help_text="Produit ├á transformer (ex: BOITE)"
     )
     produit_destination = models.ForeignKey(
         'Produit', 
         on_delete=models.CASCADE, 
         related_name='transformations_destination',
-        help_text="Produit résultant (ex: DETAIL)"
+        help_text="Produit r├®sultant (ex: DETAIL)"
     )
     ratio = models.DecimalField(
         max_digits=10, 
         decimal_places=2,
-        help_text="Ratio de conversion (ex: 20.00 si 1 boîte = 20 détails)"
+        help_text="Ratio de conversion (ex: 20.00 si 1 bo├«te = 20 d├®tails)"
     )
     actif = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1192,8 +1202,8 @@ class RelationTransformation(models.Model):
 
 class HistoriqueTransformation(models.Model):
     """
-    Historique des transformations effectuées.
-    Trace chaque opération de déconditionnement/reconditionnement.
+    Historique des transformations effectu├®es.
+    Trace chaque op├®ration de d├®conditionnement/reconditionnement.
     """
     relation = models.ForeignKey(
         RelationTransformation, 
@@ -1207,7 +1217,7 @@ class HistoriqueTransformation(models.Model):
         blank=True,
         related_name='hist_trans_source'
     )
-    produit_source_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit source sauvegardé")
+    produit_source_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit source sauvegard├®")
     produit_destination = models.ForeignKey(
         'Produit', 
         on_delete=models.SET_NULL,
@@ -1215,9 +1225,9 @@ class HistoriqueTransformation(models.Model):
         blank=True,
         related_name='hist_trans_dest'
     )
-    produit_destination_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit destination sauvegardé")
-    quantite_source = models.IntegerField(help_text="Quantité transformée (source)")
-    quantite_destination = models.IntegerField(help_text="Quantité obtenue (destination)")
+    produit_destination_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit destination sauvegard├®")
+    quantite_source = models.IntegerField(help_text="Quantit├® transform├®e (source)")
+    quantite_destination = models.IntegerField(help_text="Quantit├® obtenue (destination)")
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     date_transformation = models.DateTimeField(auto_now_add=True)
     notes = models.TextField(blank=True)
@@ -1234,19 +1244,19 @@ class InvoiceSettings(models.Model):
     Singleton model to store invoice configuration.
     """
     HEADER_LAYOUT_CHOICES = [
-        ('split', 'Séparé (Logo Gauche / Info Droite)'),
-        ('left', 'Tout à Gauche'),
-        ('center', 'Tout Centré'),
-        ('right', 'Tout à Droite'),
+        ('split', 'S├®par├® (Logo Gauche / Info Droite)'),
+        ('left', 'Tout ├á Gauche'),
+        ('center', 'Tout Centr├®'),
+        ('right', 'Tout ├á Droite'),
     ]
 
-    company_name = models.CharField(max_length=255, default="Ma Société")
-    company_address = models.TextField(default="Adresse de l'entreprise\nTéléphone: 00 00 00 00 00")
+    company_name = models.CharField(max_length=255, default="Ma Soci├®t├®")
+    company_address = models.TextField(default="Adresse de l'entreprise\nT├®l├®phone: 00 00 00 00 00")
     footer_text = models.TextField(default="Merci de votre confiance.", blank=True)
     
     header_layout = models.CharField(max_length=20, choices=HEADER_LAYOUT_CHOICES, default='split')
     primary_color = models.CharField(max_length=7, default="#000000") # Hex code
-    centralized_cash_register = models.BooleanField(default=False, help_text="Activer le mode Caisse Centralisée")
+    centralized_cash_register = models.BooleanField(default=False, help_text="Activer le mode Caisse Centralis├®e")
 
     def save(self, *args, **kwargs):
         # Singleton logic: ensure only one instance exists
@@ -1261,21 +1271,21 @@ class InvoiceSettings(models.Model):
 class AuditLog(models.Model):
     """Model representing an audit log entry for tracking detailed user actions."""
     class Action(models.TextChoices):
-        # Actions génériques CRUD
-        CREATE = 'CREATE', 'Création'
+        # Actions g├®n├®riques CRUD
+        CREATE = 'CREATE', 'Cr├®ation'
         UPDATE = 'UPDATE', 'Modification'
         DELETE = 'DELETE', 'Suppression'
         LOGIN = 'LOGIN', 'Connexion'
         EXPORT = 'EXPORT', 'Export'
         OTHER = 'OTHER', 'Autre'
-        # Actions métier explicites
+        # Actions m├®tier explicites
         STOCK_ADJUST = 'STOCK_ADJ', 'Ajustement stock'
         PRICE_CHANGE = 'PRICE_CHG', 'Changement prix'
-        CLOTURE_CAISSE = 'CLOTURE', 'Clôture caisse'
+        CLOTURE_CAISSE = 'CLOTURE', 'Cl├┤ture caisse'
         INVOICE_CANCEL = 'INV_CANCEL', 'Annulation facture'
         INVOICE_DELETE = 'INV_DEL', 'Suppression facture'
         INVOICE_VALIDATE = 'INV_VALID', 'Validation facture'
-        INVENTORY_CREATE = 'INV_CRE', 'Création inventaire'
+        INVENTORY_CREATE = 'INV_CRE', 'Cr├®ation inventaire'
         INVENTORY_VALIDATE = 'INV_VAL', 'Validation inventaire'
 
     id = models.AutoField(primary_key=True)
@@ -1296,25 +1306,25 @@ class AuditLog(models.Model):
 
 
 class StockAdjustment(models.Model):
-    """Traçabilité des ajustements manuels de stock."""
+    """Tra├ºabilit├® des ajustements manuels de stock."""
     
     class ReasonType(models.TextChoices):
         INVENTAIRE = 'INVENTAIRE', 'Ajustement inventaire'
-        CASSE = 'CASSE', 'Cassé'
+        CASSE = 'CASSE', 'Cass├®'
         VOL = 'VOL', 'Vol'
         CONFUSION = 'CONFUSION', 'Confusion'
-        ERREUR_ENTREE = 'ERR_ENTREE', 'Erreur d\'entrée en stock'
-        AVARIE = 'AVARIE', 'Avarié'
+        ERREUR_ENTREE = 'ERR_ENTREE', 'Erreur d\'entr├®e en stock'
+        AVARIE = 'AVARIE', 'Avari├®'
         USAGE_INTERNE = 'USAGE_INT', 'Usage interne'
     
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='adjustments')
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
     stock_lot = models.ForeignKey('StockLot', on_delete=models.SET_NULL, null=True, blank=True, related_name='adjustments')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     
     quantity_before = models.IntegerField(help_text="Stock avant ajustement")
-    quantity_after = models.IntegerField(help_text="Stock après ajustement")
-    quantity_change = models.IntegerField(help_text="Différence (+/-)")
+    quantity_after = models.IntegerField(help_text="Stock apr├¿s ajustement")
+    quantity_change = models.IntegerField(help_text="Diff├®rence (+/-)")
     
     reason_type = models.CharField(max_length=10, choices=ReasonType.choices)
     reason_detail = models.TextField(blank=True, default='', help_text="Note optionnelle")
@@ -1340,16 +1350,16 @@ class Promis(models.Model):
     """
     class Status(models.TextChoices):
         EN_ATTENTE = 'ATT', 'En attente'
-        DELIVRE = 'DEL', 'Délivré'
-        ANNULE = 'ANN', 'Annulé'
+        DELIVRE = 'DEL', 'D├®livr├®'
+        ANNULE = 'ANN', 'Annul├®'
 
     facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, related_name='promis', null=True, blank=True)
     client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='promis')
     client_name = models.CharField(max_length=100, blank=True, help_text="Nom du client (pour clients de passage)")
-    client_phone = models.CharField(max_length=20, blank=True, help_text="Téléphone du client")
+    client_phone = models.CharField(max_length=20, blank=True, help_text="T├®l├®phone du client")
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='promis')
-    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
-    quantite = models.IntegerField(help_text="Quantité promise au client")
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegard├®")
+    quantite = models.IntegerField(help_text="Quantit├® promise au client")
     status = models.CharField(max_length=4, choices=Status.choices, default=Status.EN_ATTENTE)
     date_promis = models.DateTimeField(auto_now_add=True, help_text="Date de la promesse")
     date_livraison = models.DateTimeField(null=True, blank=True, help_text="Date de livraison effective")
@@ -1386,8 +1396,8 @@ class Promis(models.Model):
 
 
 
-# Signaux pour mise à jour automatique des totaux de Facture
-# Placés ici car FactureProduit doit être défini
+# Signaux pour mise ├á jour automatique des totaux de Facture
+# Plac├®s ici car FactureProduit doit ├¬tre d├®fini
 @receiver(post_save, sender=FactureProduit)
 @receiver(post_delete, sender=FactureProduit)
 def update_facture_totals_on_line_change(sender, instance, **kwargs):
@@ -1396,7 +1406,7 @@ def update_facture_totals_on_line_change(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Facture)
 def update_facture_totals_on_change(sender, instance, created, **kwargs):
-    # Eviter récursion infinie si le save vient de calculate_totals
+    # Eviter r├®cursion infinie si le save vient de calculate_totals
     update_fields = kwargs.get('update_fields')
     if update_fields and ('total_ht' in update_fields or 'total_ttc' in update_fields):
         return
@@ -1406,50 +1416,50 @@ def update_facture_totals_on_change(sender, instance, created, **kwargs):
 
 
 class ClotureCaisse(models.Model):
-    """Model representing a cash register closure (clôture de caisse)."""
+    """Model representing a cash register closure (cl├┤ture de caisse)."""
     date = models.DateTimeField(default=timezone.now)
-    montant_reel = models.DecimalField(max_digits=12, decimal_places=2, help_text="Montant réellement compté en caisse")
-    montant_theorique = models.DecimalField(max_digits=12, decimal_places=2, help_text="Montant théorique calculé")
-    ecart_caisse = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Écart entre réel et théorique")
+    montant_reel = models.DecimalField(max_digits=12, decimal_places=2, help_text="Montant r├®ellement compt├® en caisse")
+    montant_theorique = models.DecimalField(max_digits=12, decimal_places=2, help_text="Montant th├®orique calcul├®")
+    ecart_caisse = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="├ëcart entre r├®el et th├®orique")
     
-    # Détails
+    # D├®tails
     total_ventes = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    total_entrees = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Entrées de caisse hors ventes")
+    total_entrees = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Entr├®es de caisse hors ventes")
     total_sorties = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Sorties de caisse")
-    details_paiement = models.JSONField(default=dict, blank=True, help_text="Détails par mode de paiement")
+    details_paiement = models.JSONField(default=dict, blank=True, help_text="D├®tails par mode de paiement")
     
-    # Période couverte
-    date_debut = models.DateTimeField(null=True, blank=True, help_text="Début de la période de clôture")
-    date_fin = models.DateTimeField(null=True, blank=True, help_text="Fin de la période de clôture")
+    # P├®riode couverte
+    date_debut = models.DateTimeField(null=True, blank=True, help_text="D├®but de la p├®riode de cl├┤ture")
+    date_fin = models.DateTimeField(null=True, blank=True, help_text="Fin de la p├®riode de cl├┤ture")
     
     # Caissier
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='clotures_caisse')
-    observation = models.TextField(blank=True, null=True, help_text="Notes ou observations sur la clôture")
+    observation = models.TextField(blank=True, null=True, help_text="Notes ou observations sur la cl├┤ture")
     
     class Meta:
         ordering = ['-date']
-        verbose_name = "Clôture de caisse"
-        verbose_name_plural = "Clôtures de caisse"
+        verbose_name = "Cl├┤ture de caisse"
+        verbose_name_plural = "Cl├┤tures de caisse"
     
     def __str__(self):
-        return f"Clôture du {self.date.strftime('%d/%m/%Y %H:%M')} - Écart: {self.ecart_caisse} F"
+        return f"Cl├┤ture du {self.date.strftime('%d/%m/%Y %H:%M')} - ├ëcart: {self.ecart_caisse} F"
 
 
 class Ordonnancier(models.Model):
-    """Registre des médicaments délivrés sur ordonnance (ordonnancier de la pharmacie)."""
-    numero_ordre = models.AutoField(primary_key=True)  # Numéro chronologique
+    """Registre des m├®dicaments d├®livr├®s sur ordonnance (ordonnancier de la pharmacie)."""
+    numero_ordre = models.AutoField(primary_key=True)  # Num├®ro chronologique
     date_delivrance = models.DateTimeField(default=timezone.now)
     
     # Patient
     patient_nom = models.CharField(max_length=200, help_text="Nom du patient")
     
     # Prescripteur
-    prescripteur_nom = models.CharField(max_length=200, help_text="Nom du médecin prescripteur")
+    prescripteur_nom = models.CharField(max_length=200, help_text="Nom du m├®decin prescripteur")
     
     # Lien avec la facture
     facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='ordonnancier_entries')
     
-    # Utilisateur qui a enregistré
+    # Utilisateur qui a enregistr├®
     enregistre_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='ordonnancier_entries')
     
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1464,13 +1474,13 @@ class Ordonnancier(models.Model):
 
 
 class LigneOrdonnancier(models.Model):
-    """Ligne de l'ordonnancier (un médicament délivré)."""
+    """Ligne de l'ordonnancier (un m├®dicament d├®livr├®)."""
     ordonnancier = models.ForeignKey(Ordonnancier, on_delete=models.CASCADE, related_name='lignes')
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, related_name='ordonnancier_lignes')
     produit_nom = models.CharField(max_length=200, help_text="Copie du nom pour historique")
     quantite = models.IntegerField()
     
-    # Catégorie de surveillance (copie pour historique)
+    # Cat├®gorie de surveillance (copie pour historique)
     surveillance_category = models.CharField(max_length=20, default='NONE')
     
     class Meta:
@@ -1488,15 +1498,15 @@ class LigneOrdonnancier(models.Model):
 def preserve_product_name_on_delete(sender, instance, **kwargs):
     """
     Avant la suppression d'un produit, on sauvegarde son nom 
-    dans les modèles liés qui ont un champ produit_nom.
+    dans les mod├¿les li├®s qui ont un champ produit_nom.
     """
     if not instance.pk:
         return
         
     nom = instance.name
     
-    # Modèles liés (via related_names et sets implicites)
-    # Note: On utilise update() pour une requête SQL unique efficace
+    # Mod├¿les li├®s (via related_names et sets implicites)
+    # Note: On utilise update() pour une requ├¬te SQL unique efficace
     
     try:
         instance.factureproduit_set.all().update(produit_nom=nom)
@@ -1534,7 +1544,7 @@ def preserve_product_name_on_delete(sender, instance, **kwargs):
         instance.ordonnancier_lignes.all().update(produit_nom=nom)
     except: pass
     
-    # Modèles sans related_name explicite (utilise modelname_set)
+    # Mod├¿les sans related_name explicite (utilise modelname_set)
     try:
         instance.ligneinventaire_set.all().update(produit_nom=nom)
     except: pass

@@ -19,13 +19,14 @@ class ProduitListSerializer(serializers.ModelSerializer):
     """
     rayon_name = serializers.CharField(source='rayon.name', read_only=True)
     fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    forme_nom = serializers.CharField(source='forme.nom', read_only=True)
     
     class Meta:
         model = Produit
         fields = [
             'id', 'name', 'cip1', 'cip2', 'cip3',
             'stock', 'stock_minimum', 'pmp', 'selling_price',
-            'rayon_name', 'fournisseur_name', 'rotation_moyenne',
+            'rayon_name', 'fournisseur_name', 'forme_nom', 'rotation_moyenne',
             'use_lot_management',
             'tva', 'cost_price', 'taux_marge',
             'dernier_achat', 'dernier_vente'
@@ -78,7 +79,7 @@ class FactureListSerializer(serializers.ModelSerializer):
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name',
-            'date', 'status', 'status_display',
+            'date', 'status', 'status_display', 'type',
             'total_ht', 'total_ttc', 'remise'
         ]
     

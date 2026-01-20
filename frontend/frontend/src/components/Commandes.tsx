@@ -745,9 +745,26 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
 
-  const handleCsvImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Charger TOUS les produits depuis l'API pour la correspondance CIP
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+    const produitsEndpoint = apiBaseUrl
+      ? `${apiBaseUrl}/api/produits/?page_size=10000`
+      : '/api/produits/?page_size=10000';
+
+    let allProducts: ProduitModel[] = [];
+    try {
+      const response = await axios.get(produitsEndpoint);
+      const data = response.data as any;
+      allProducts = Array.isArray(data) ? data : (data.results || []);
+    } catch (err) {
+      toast.error("Erreur lors du chargement des produits pour l'import CSV");
+      console.error(err);
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -758,6 +775,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       let currentList = [...commandeProduits];
       let productsFound = 0;
       let productsNotFound = 0;
+      const notFoundCips: string[] = [];
 
       lines.forEach(line => {
         if (!line.trim()) return;
@@ -767,9 +785,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
         const qty = parseInt(qtyStr) || 1;
         const cleanCip = cip.trim();
 
-        // Recherche par CIP (1, 2 ou 3)
-        const product = produitsList.find(p => 
-          p.cip1 === cleanCip || p.cip2 === cleanCip || p.cip3 === cleanCip
+        // Recherche par CIP (1, 2 ou 3) - comparaison normalisée
+        const product = allProducts.find(p => 
+          p.cip1?.trim() === cleanCip || 
+          p.cip2?.trim() === cleanCip || 
+          p.cip3?.trim() === cleanCip
         );
 
         if (product) {
@@ -804,17 +824,18 @@ export default function Commandes({ forcedType }: CommandesProps) {
             }
         } else {
             console.warn(`Produit avec CIP ${cleanCip} non trouvé.`);
+            notFoundCips.push(cleanCip);
             productsNotFound++;
         }
       });
 
       setCommandeProduits(currentList);
       
-      const message = productsNotFound > 0 
-        ? `${productsFound} produits ajoutés. ${productsNotFound} CIPs introuvables.`
-        : `${productsFound} produits importés avec succès.`;
-      
-      toast.success(message);
+      if (productsNotFound > 0) {
+        toast.error(`${productsFound} produits ajoutés. ${productsNotFound} CIPs introuvables: ${notFoundCips.slice(0, 5).join(', ')}${notFoundCips.length > 5 ? '...' : ''}`);
+      } else {
+        toast.success(`${productsFound} produits importés avec succès.`);
+      }
       
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = '';

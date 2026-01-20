@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import axios from 'axios';
-import type { ProduitForm, ProduitModel, Rayon, Fournisseur } from '../types';
+import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme } from '../types';
 
 interface Props {
   open: boolean;
@@ -12,6 +12,9 @@ interface Props {
   fournisseursEndpoint: string; // Ajout du endpoint des fournisseurs
   initialData?: Partial<ProduitForm>;
   title?: string;
+  rayons: Rayon[];
+  fournisseurs: Fournisseur[];
+  formes: Forme[];
 }
 
 interface ProduitFormModalProps {
@@ -25,6 +28,7 @@ interface ProduitFormModalProps {
   title?: string;
   rayons: Rayon[];
   fournisseurs: Fournisseur[];
+  formes: Forme[];
 }
 
 export default function ProduitFormModal({
@@ -38,6 +42,7 @@ export default function ProduitFormModal({
   title = "Créer un nouveau produit",
   rayons = [],
   fournisseurs = [],
+  formes = [],
 }: ProduitFormModalProps) {
   const [form, setForm] = useState<ProduitForm>({
     name: '',
@@ -54,6 +59,7 @@ export default function ProduitFormModal({
     stock_maximum: '',
     rayon: '',
     fournisseur: '',
+    forme: '',
     tva: '19.25',
     ...initialData,
   });
@@ -79,6 +85,7 @@ export default function ProduitFormModal({
       stock_maximum: '',
       rayon: '',
       fournisseur: '',
+      forme: '',
       tva: '19.25',
       ...initialData,
     });
@@ -154,6 +161,7 @@ export default function ProduitFormModal({
         stock_maximum: form.stock_maximum ? parseInt(form.stock_maximum, 10) : 0,
         rayon: form.rayon ? parseInt(form.rayon, 10) : undefined,
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : undefined,
+        forme: form.forme ? parseInt(form.forme, 10) : undefined,
         tva: form.tva || '19.25',
         requires_prescription: form.requires_prescription || false,
         surveillance_category: form.surveillance_category || 'NONE',
@@ -294,7 +302,14 @@ export default function ProduitFormModal({
                 onChange={(e) => setForm((p) => ({ ...p, stock_maximum: e.target.value }))} min={0} step={1} />
             </label>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <label className="form-control w-full"><div className="label"><span className="label-text">Forme</span></div>
+              <select className="select select-bordered w-full" value={form.forme}
+                onChange={(e) => setForm((p) => ({ ...p, forme: e.target.value }))}>
+                <option value="">—</option>
+                {formes.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
+              </select>
+            </label>
             <label className="form-control w-full"><div className="label"><span className="label-text">Rayon</span></div>
               <select
                 className="select select-bordered"

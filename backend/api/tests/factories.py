@@ -153,6 +153,25 @@ class TestDataFactory:
         )
     
     @staticmethod
+    def create_commande_produit(commande, produit, quantity=1, **kwargs):
+        """Create a line item for an order."""
+        # Clean up kwargs to avoid passing unknown fields if user uses old names
+        kwargs.pop('quantite_demandee', None)
+        kwargs.pop('quantite_recue', None)
+        
+        price = kwargs.pop('price', produit.cost_price)
+        price_cost = kwargs.pop('price_cost', price) # Default to price if not set
+        
+        return CommandeProduit.objects.create(
+            commande=commande,
+            produit=produit,
+            quantity=quantity,
+            price=price,
+            price_cost=price_cost,
+            **kwargs
+        )
+    
+    @staticmethod
     def create_mouvement_caisse(user, type_mouvement='ENTREE', montant=1000, description='Test mouvement', **kwargs):
         """Create a cash movement."""
         return MouvementCaisse.objects.create(

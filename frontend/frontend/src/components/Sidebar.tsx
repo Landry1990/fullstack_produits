@@ -32,6 +32,9 @@ export default function Sidebar() {
     { path: '/app/produits', label: 'Produits', key: 'produits', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )},
+    { path: '/app/vitrine', label: 'Ma Vitrine (Web)', key: 'produits', icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+    )},
     { 
       label: 'Commandes', 
       key: 'commandes', 
@@ -179,7 +182,7 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="menu w-full px-2 gap-1">
           {menuItems.map((item) => (
-            <li key={item.key}>
+            <li key={item.path || item.key}>
               {item.submenus ? (
                 <details className="group">
                   <summary className="pharma-menu-item flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white cursor-pointer marker:content-none">

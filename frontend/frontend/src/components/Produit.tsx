@@ -13,6 +13,7 @@ import {
   useProduits,
   useRayons,
   useFournisseurs,
+  useFormes,
   useProduitAchats,
   useProduitLots,
   useProduitAdjustments,
@@ -61,6 +62,7 @@ export default function Produit() {
 
   const { data: rayons = [] } = useRayons();
   const { data: fournisseurs = [] } = useFournisseurs();
+  const { data: formes = [] } = useFormes();
 
   // Derived state for pagination and list
   const produits = useMemo(() => produitsData?.results || [], [produitsData]);
@@ -109,6 +111,7 @@ export default function Produit() {
     tva: '19.25',
     rayon: '',
     fournisseur: '',
+    forme: '',
     use_lot_management: true,  // Default to true
     requires_prescription: false,
     surveillance_category: 'NONE'
@@ -248,6 +251,7 @@ export default function Produit() {
       tva: produit.tva || '19.25',
       rayon: produit.rayon ? String(produit.rayon) : '',
       fournisseur: produit.fournisseur ? String(produit.fournisseur) : '',
+      forme: produit.forme ? String(produit.forme) : '',
       use_lot_management: produit.use_lot_management ?? true,
       requires_prescription: produit.requires_prescription ?? false,
       surveillance_category: produit.surveillance_category || 'NONE'
@@ -282,6 +286,7 @@ export default function Produit() {
         tva: editForm.tva || '19.25',
         rayon: editForm.rayon ? parseInt(editForm.rayon, 10) : undefined,
         fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : undefined,
+        forme: editForm.forme ? parseInt(editForm.forme, 10) : undefined,
         use_lot_management: editForm.use_lot_management,
         requires_prescription: editForm.requires_prescription || false,
         surveillance_category: (editForm.surveillance_category || 'NONE') as "NONE" | "STANDARD" | "RENFORCEE"
@@ -1817,8 +1822,22 @@ export default function Produit() {
               </label>
             </div>
 
-            {/* Rayon et Fournisseur */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Rayon, Fournisseur et Forme */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <div className="form-control">
+                <label className="label"><span className="label-text font-semibold">Forme</span></label>
+                <select
+                  className="select select-bordered w-full"
+                  value={editForm.forme}
+                  onChange={(e) => setEditForm({...editForm, forme: e.target.value})}
+                >
+                  <option value="">Sélectionner</option>
+                  {formes.map(f => (
+                    <option key={f.id} value={f.id}>{f.nom}</option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-control">
                 <label className="label"><span className="label-text font-semibold">Rayon</span></label>
                 <select
@@ -2000,6 +2019,7 @@ export default function Produit() {
         fournisseursEndpoint={fournisseursEndpoint}
         rayons={rayons}
         fournisseurs={fournisseurs}
+        formes={formes}
       />
     </div>
   )

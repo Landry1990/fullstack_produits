@@ -121,6 +121,7 @@ DATABASES = {
         'OPTIONS': {
             # Psycopg3 utilise automatiquement READ COMMITTED par défaut
             # Pas besoin de spécifier isolation_level explicitement
+            'options': '-c client_encoding=UTF8',
             
             # Connection pooling côté client (optionnel, pour pgBouncer)
             # 'server_side_binding': False,  # Décommenter si vous utilisez pgBouncer

@@ -209,6 +209,9 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 # Mettre à jour le stock
                 produit.stock = old_stock + qty_received
                 
+                # Update Last Purchase Price (for Retrocession)
+                produit.last_purchase_price = item.price_cost
+
                 # Ajouter au dictionnaire pour suivi local
                 produits_dict[produit.id] = produit
                 produits_to_update.append(produit)
@@ -249,14 +252,14 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             if produits_with_lots:
                 Produit.objects.bulk_update(
                     produits_with_lots, 
-                    ['pmp', 'stock'], 
+                    ['pmp', 'stock', 'last_purchase_price'], 
                     batch_size=100
                 )
             
             if produits_without_lots:
                 Produit.objects.bulk_update(
                     produits_without_lots, 
-                    ['stock', 'pmp'], 
+                    ['stock', 'pmp', 'last_purchase_price'], 
                     batch_size=100
                 )
         

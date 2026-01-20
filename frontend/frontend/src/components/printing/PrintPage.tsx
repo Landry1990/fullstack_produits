@@ -1,86 +1,93 @@
+
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import InvoiceTemplate from './InvoiceTemplate';
-import { usePharmacySettings } from '../../hooks/usePharmacySettings';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
 
-// Mock data fetcher - in real app would call API
-const fetchInvoiceData = async (id: string) => {
-    try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/factures/${id}/`);
-        if (!response.ok) throw new Error('Facture introuvable');
-        const data = await response.json();
-        
-        // Transform API data to InvoiceTemplate format
-        return {
-            id_facture: data.id,
-            date: data.created_at,
-            client: data.client ? {
-                id: data.client.id,
-                nom: data.client.nom,
-                prenom: data.client.prenom,
-                telephone: data.client.telephone,
-                email: data.client.email,
-                adresse: data.client.adresse,
-                niu: data.client.niu
-            } : null,
-            items: data.lignes_facture.map((l: any) => ({
-                produit_nom: l.produit_details?.name || 'Produit',
-                quantite: l.quantite,
-                prix_unitaire: Number(l.prix_unitaire),
-                total_ligne: Number(l.total_ligne),
-                cip: l.produit_details?.cip1
-            })),
-            total_ht: Number(data.total_ttc) / 1.1925, // Approx HT if not provided
-            total_tva: 0, // Simplified for now, backend should provide detail
-            total_ttc: Number(data.total_ttc),
-            remise_globale: Number(data.remise_globale || 0),
-            montant_recu: Number(data.montant_recu || 0),
-            monnaie_rendue: Number(data.monnaie_rendue || 0),
-            vendeur: data.vendeur_name,
-            type_facture: data.statut === 'PROFORMA' ? 'DEVIS' : 'VENTE' as any
-        };
-    } catch (err) {
-        console.error("Error fetching invoice:", err);
-        return null;
-    }
-};
+const PrintPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+    const [settings, setSettings] = useState<PharmacySettings | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-const PrintPage = () => {
-    const [searchParams] = useSearchParams();
-    const id = searchParams.get('id');
-    const [invoiceData, setInvoiceData] = useState<any>(null);
-    const { settings } = usePharmacySettings();
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
     useEffect(() => {
-        if (id) {
-            fetchInvoiceData(id).then(data => {
-                if (data) {
-                    setInvoiceData(data);
-                    // Auto print when data is ready
-                    setTimeout(() => window.print(), 1000);
+        const fetchData = async () => {
+            try {
+                const token = sessionStorage.getItem('authToken');
+                if (!token) {
+                    setError("Authentification requise");
+                    setLoading(false);
+                    return;
                 }
-            });
+
+                const config = { headers: { Authorization: `Token ${token}` } };
+
+                // Parallel fetch
+                const [invoiceRes, settingsRes] = await Promise.all([
+                    axios.get(`${apiBaseUrl}/factures/${id}/print_data/`, config),
+                    axios.get(`${apiBaseUrl}/invoice-settings/`, config)
+                ]);
+
+                // Transform invoice data if needed, but serializer should match interface
+                setInvoiceData(invoiceRes.data);
+                setSettings(settingsRes.data);
+                
+                setLoading(false);
+
+                // Auto-print after a short delay to ensure rendering
+                setTimeout(() => {
+                    window.print();
+                }, 1000);
+
+            } catch (err) {
+                console.error("Error fetching print data:", err);
+                setError("Erreur lors du chargement de la facture.");
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchData();
         }
     }, [id]);
 
-    if (!id) return <div>ID de facture manquant</div>;
-    if (!invoiceData) return <div>Chargement de la facture...</div>;
-    if (!settings) return <div>Chargement des paramètres...</div>;
+    if (loading) return <div className="flex items-center justify-center h-screen">Chargement de la facture...</div>;
+    if (error) return <div className="flex items-center justify-center h-screen text-red-600 font-bold">{error}</div>;
+    if (!invoiceData || !settings) return <div>Données incomplètes</div>;
 
     return (
-        <InvoiceTemplate 
-            settings={{
-                pharmacy_name: settings.pharmacy_name || 'Ma Pharmacie',
-                address: settings.address || '',
-                phone: settings.phone || '',
-                email: settings.email || '',
-                ticket_footer_message: settings.ticket_footer_message || 'Merci de votre visite',
-                niu: settings.niu,
-                registre_commerce: settings.registre_commerce,
-                logo: settings.logo
-            }}
-            data={invoiceData}
-        />
+        <div className="print-page bg-gray-100 min-h-screen p-8">
+            <style>
+                {`
+                    @media print {
+                        @page { margin: 0; size: auto; }
+                        body { margin: 0; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .no-print { display: none !important; }
+                        .print-page { padding: 0 !important; background: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                    }
+                `}
+            </style>
+            
+            <div className="no-print fixed top-4 right-4 z-50 flex gap-4">
+                <button 
+                    onClick={() => window.print()}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-blue-700 font-bold"
+                >
+                    Imprimer
+                </button>
+                <button 
+                    onClick={() => window.close()}
+                    className="bg-gray-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-gray-700"
+                >
+                    Fermer
+                </button>
+            </div>
+
+            <InvoiceTemplate settings={settings} data={invoiceData} />
+        </div>
     );
 };
 

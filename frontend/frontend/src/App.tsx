@@ -6,10 +6,11 @@ import Commandes from './components/Commandes'
 import Ventes from './components/Ventes'
 import Fournisseurs from './components/Fournisseurs'
 import Clients from './components/Clients'
-import Rayons from './components/Rayons'
+import Categories from './components/Categories'
 import Facturation from './components/Facturation'
 import Dashboard from './components/Dashboard'
 import GestionUtilisateurs from './components/GestionUtilisateurs'
+import Vitrine from './components/Vitrine'
 import Inventaire from './components/Inventaire'
 import Formes from './components/Formes'
 import Login from './components/Login'
@@ -92,7 +93,7 @@ const router = createBrowserRouter([
     path: '/app',
     element: <ProtectedRoute />,
     children: [
-      { path: 'print-invoice', element: <PrintPage /> },
+      { path: 'print-invoice/:id', element: <PrintPage /> },
       {
         element: <Layout />,
         children: [
@@ -111,7 +112,7 @@ const router = createBrowserRouter([
           { path: 'clients', element: <Clients /> },
           { path: 'inventaire', element: <Inventaire /> },
           { path: 'formes', element: <Formes /> },
-          { path: 'rayons', element: <Rayons /> },
+          { path: 'rayons', element: <Categories /> },
           { path: 'facturation', element: <Facturation /> },
           { path: 'caisse-centralisee', element: <CaisseCentralisee /> },
           { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
@@ -122,6 +123,7 @@ const router = createBrowserRouter([
           { path: 'avoirs', element: <Avoirs /> },
           { path: 'promis', element: <Promis /> },
           { path: 'stock-analysis', element: <StockAnalysis /> },
+          { path: 'vitrine', element: <Vitrine /> },
           { path: 'journal-ajustements', element: <JournalAjustements /> },
           { path: 'transformations', element: <Transformations /> },
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
