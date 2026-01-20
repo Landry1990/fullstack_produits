@@ -308,10 +308,39 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
     serializer_class = StockAdjustmentSerializer
     permission_classes = [permissions.AllowAny] # As per original view
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['produit', 'user', 'reason_type']
+    filterset_fields = {
+        'produit': ['exact'],
+        'user': ['exact'],
+        'reason_type': ['exact'],
+        'created_at': ['gte', 'lte', 'date'],
+    }
     search_fields = ['produit__name', 'reason_detail', 'produit__cip1']
     ordering_fields = ['created_at', 'quantity_change']
     ordering = ['-created_at']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        Calculates statistics based on current filters.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Aggregation
+        # Positive changes (Entrées)
+        positive = queryset.filter(quantity_change__gt=0).aggregate(
+            total=Sum('quantity_change')
+        )['total'] or 0
+        
+        # Negative changes (Sorties)
+        negative = queryset.filter(quantity_change__lt=0).aggregate(
+            total=Sum('quantity_change')
+        )['total'] or 0
+        
+        return Response({
+            'total_count': queryset.count(),
+            'positive_sum': int(positive),
+            'negative_sum': int(negative)
+        })
 
 class StatsUGViewSet(viewsets.GenericViewSet):
     """

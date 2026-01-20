@@ -11,6 +11,7 @@ from .views import (
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView,
     PharmacySettingsView, ProductImportView
 )
+from .views.formes import FormeViewSet
 from .views.auth import verify_password
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
@@ -47,6 +48,7 @@ router.register(r'clotures-caisse', ClotureCaisseViewSet, basename='cloturecaiss
 router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadjustment')
 router.register(r'historique-ventes', HistoriqueVentesViewSet, basename='historiqueventes')
 router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
+router.register(r'formes', FormeViewSet, basename='forme')
 
 
 # The API URLs are now determined automatically by the router.

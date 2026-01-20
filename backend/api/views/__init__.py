@@ -23,7 +23,9 @@ from .dashboard import DashboardViewSet, StatistiquesViewSet
 from .audit import AuditLogViewSet
 from .historique_ventes import HistoriqueVentesViewSet
 from .historique_achats import HistoriqueAchatsViewSet
+from .historique_achats import HistoriqueAchatsViewSet
 from .import_views import ProductImportView
+from .formes import FormeViewSet
 
 # Import from parent api module (not yet migrated to views package)
 from ..rapport_view import RapportViewSet
@@ -46,6 +48,7 @@ __all__ = [
     'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',
     'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
-    'RapportViewSet', 'OrdonnancierViewSet'
+    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
+    'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet'
 ]
 

@@ -10,18 +10,63 @@ export default function JournalAjustements() {
   const [filterReasonType, setFilterReasonType] = useState('')
   const [dateStart, setDateStart] = useState('')
   const [dateEnd, setDateEnd] = useState('')
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+
+  // Stats State
+  const [stats, setStats] = useState({
+    total_count: 0,
+    positive_sum: 0,
+    negative_sum: 0
+  })
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
   const adjustmentsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/stock-adjustments/` : '/api/stock-adjustments/'
 
-  const fetchAdjustments = async () => {
+  const fetchAdjustments = async (page = 1) => {
     setLoading(true)
     try {
-      const response = await axios.get(adjustmentsEndpoint)
-      const data: StockAdjustment[] = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data?.results ?? [])
-      setAdjustments(data)
+      // Build filters
+      const params: any = {
+        page: page,
+        page_size: 20 // Adjust page size as needed
+      }
+      
+      if (searchQuery) params.search = searchQuery
+      if (filterReasonType) params.reason_type = filterReasonType
+      if (dateStart) params.created_at__gte = dateStart
+      if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59' // Include full end day
+
+      // 1. Fetch List
+      const response = await axios.get(adjustmentsEndpoint, { params })
+      
+      // DRF PageNumberPagination returns { count, next, previous, results }
+      if (response.data && Array.isArray(response.data.results)) {
+        setAdjustments(response.data.results)
+        setTotalCount(response.data.count)
+        setTotalPages(Math.ceil(response.data.count / 20)) // Assuming page_size=20
+      } else {
+         // Fallback if no pagination configured (should not happen with generic setup but safe)
+        setAdjustments(Array.isArray(response.data) ? response.data : [])
+        setTotalCount(Array.isArray(response.data) ? response.data.length : 0)
+        setTotalPages(1)
+      }
+      setCurrentPage(page)
+
+      // 2. Fetch Stats (uses same filters minus pagination)
+      // Remove pagination params for stats
+      const statsParams = { ...params }
+      delete statsParams.page
+      delete statsParams.page_size
+      
+      const statsResponse = await axios.get(`${adjustmentsEndpoint}stats/`, { params: statsParams })
+      if (statsResponse.data) {
+        setStats(statsResponse.data)
+      }
+
     } catch (err) {
       toast.error('Erreur lors du chargement des ajustements')
       console.error(err)
@@ -30,42 +75,26 @@ export default function JournalAjustements() {
     }
   }
 
+  // Effect to trigger fetch when filters change (Reset to page 1)
   useEffect(() => {
-    fetchAdjustments()
-  }, [])
+    const timer = setTimeout(() => {
+      fetchAdjustments(1)
+    }, 500) // Debounce search
+    return () => clearTimeout(timer)
+  }, [searchQuery, filterReasonType, dateStart, dateEnd])
 
-  // Filtrage
-  const filteredAdjustments = useMemo(() => {
-    return adjustments.filter(adj => {
-      const matchSearch = !searchQuery || 
-        adj.produit_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        adj.produit_cip?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        adj.user_name?.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchReason = !filterReasonType || adj.reason_type === filterReasonType
-      
-      // Filtre par date
-      const adjDate = new Date(adj.created_at)
-      const matchDateStart = !dateStart || adjDate >= new Date(dateStart)
-      const matchDateEnd = !dateEnd || adjDate <= new Date(dateEnd + 'T23:59:59')
-      
-      return matchSearch && matchReason && matchDateStart && matchDateEnd
-    })
-  }, [adjustments, searchQuery, filterReasonType, dateStart, dateEnd])
-
-  // Stats rapides
-  const stats = useMemo(() => {
-    const total = adjustments.length
-    const positiveChanges = adjustments.filter(a => a.quantity_change > 0).reduce((s, a) => s + a.quantity_change, 0)
-    const negativeChanges = adjustments.filter(a => a.quantity_change < 0).reduce((s, a) => s + a.quantity_change, 0)
-    return { total, positiveChanges, negativeChanges }
-  }, [adjustments])
+  // Simple handler for page changes
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchAdjustments(newPage)
+    }
+  }
 
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">📋 Journal des Ajustements de Stock</h1>
-        <button className="btn btn-sm btn-ghost" onClick={fetchAdjustments}>
+        <button className="btn btn-sm btn-ghost" onClick={() => fetchAdjustments(currentPage)}>
           🔄 Actualiser
         </button>
       </div>
@@ -73,16 +102,16 @@ export default function JournalAjustements() {
       {/* Stats */}
       <div className="stats shadow mb-6 w-full">
         <div className="stat">
-          <div className="stat-title">Total ajustements</div>
-          <div className="stat-value text-primary">{stats.total}</div>
+          <div className="stat-title">Total ajustements (Filtrés)</div>
+          <div className="stat-value text-primary">{stats.total_count}</div>
         </div>
         <div className="stat">
-          <div className="stat-title">Entrées (+)</div>
-          <div className="stat-value text-success">+{stats.positiveChanges}</div>
+          <div className="stat-title">Total Entrées (+)</div>
+          <div className="stat-value text-success">+{stats.positive_sum}</div>
         </div>
         <div className="stat">
-          <div className="stat-title">Sorties (-)</div>
-          <div className="stat-value text-error">{stats.negativeChanges}</div>
+          <div className="stat-title">Total Sorties (-)</div>
+          <div className="stat-value text-error">{stats.negative_sum}</div>
         </div>
       </div>
 
@@ -148,6 +177,7 @@ export default function JournalAjustements() {
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : (
+        <>
         <div className="overflow-x-auto bg-base-100 rounded-lg shadow">
           <table className="table table-zebra">
             <thead>
@@ -163,14 +193,14 @@ export default function JournalAjustements() {
               </tr>
             </thead>
             <tbody>
-              {filteredAdjustments.length === 0 ? (
+              {adjustments.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="text-center py-8 text-base-content/50">
                     Aucun ajustement trouvé
                   </td>
                 </tr>
               ) : (
-                filteredAdjustments.map(adj => (
+                adjustments.map(adj => (
                   <tr key={adj.id}>
                     <td className="text-sm">
                       {new Date(adj.created_at).toLocaleDateString('fr-FR')}
@@ -198,11 +228,34 @@ export default function JournalAjustements() {
             </tbody>
           </table>
         </div>
-      )}
 
-      <div className="mt-4 text-sm text-base-content/60 text-right">
-        {filteredAdjustments.length} ajustement(s) affiché(s)
-      </div>
+        {/* Pagination Controls */}
+        <div className="flex justify-between items-center mt-4">
+            <span className="text-sm text-base-content/60">
+              Page {currentPage} sur {totalPages} ({totalCount} items)
+            </span>
+            <div className="join">
+              <button 
+                className="join-item btn btn-sm"
+                disabled={currentPage <= 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                « Précédent
+              </button>
+              <button className="join-item btn btn-sm pointer-events-none">
+                {currentPage}
+              </button>
+              <button 
+                className="join-item btn btn-sm"
+                disabled={currentPage >= totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                Suivant »
+              </button>
+            </div>
+        </div>
+        </>
+      )}
     </div>
   )
 }

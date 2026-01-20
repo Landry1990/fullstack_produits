@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import DOMPurify from 'dompurify'
 import type { Facture, TicketCaisse, CaisseParTranche } from '../types'
+import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { TicketTemplate } from './printing/TicketTemplate'
 
 export default function Ventes() {
   const navigate = useNavigate()
@@ -30,6 +32,8 @@ export default function Ventes() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalCount, setTotalCount] = useState(0)
+
+  const { settings: pharmacySettings } = usePharmacySettings()
 
   // Helper pour formater la date locale en string pour l'input datetime-local (YYYY-MM-DDThh:mm)
   const getLocalDateTimeString = (date: Date) => {
@@ -183,8 +187,13 @@ export default function Ventes() {
   const handleOpenTicketPreview = async () => {
     if (!selectedFacture) return
     try {
-      const { data } = await axios.get<any[]>(`${caisseEndpoint}?facture=${selectedFacture.id}`)
-      if (!data || data.length === 0) {
+      const response = await axios.get<any>(`${caisseEndpoint}?facture=${selectedFacture.id}`)
+      const data = response.data
+      
+      // Gérer la pagination (DRF peut retourner { results: [...] } ou [...])
+      const results = Array.isArray(data) ? data : (data.results || [])
+
+      if (!results || results.length === 0) {
         setTicketCaisse(null)
         setShowTicketPreview(false)
         setError('Aucun ticket de caisse trouvé pour cette facture.')
@@ -192,7 +201,7 @@ export default function Ventes() {
       }
 
       // Créer un ticket agrégé avec tous les paiements
-      const paiementsDetails = data.map(p => ({
+      const paiementsDetails = results.map((p: any) => ({
         mode: p.mode_paiement,
         montant: Number(p.montant),
         part_patient: p.part_patient ? Number(p.part_patient) : null,
@@ -200,7 +209,7 @@ export default function Ventes() {
       }))
 
       setTicketCaisse({
-        ...data[0],
+        ...results[0],
         paiements_details: paiementsDetails
       } as TicketCaisse)
       
@@ -291,34 +300,11 @@ export default function Ventes() {
   }
 
   const printInvoicePDF = async (factureId: number, clientName?: string | null) => {
-    try {
-      const endpoint = `${facturesEndpoint}${factureId}/imprimer_facture/`
-      const params = clientName ? { client_name_override: clientName } : {}
-      
-      const response = await axios.get(endpoint, {
-        params,
-        responseType: 'blob'
-      })
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `facture_${factureId}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.parentNode?.removeChild(link)
-      
-      setSuccessMessage('Facture téléchargée avec succès')
-      setTimeout(() => setSuccessMessage(null), 3000)
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Erreur lors de l\'impression de la facture')
-      } else {
-        setError('Erreur lors de l\'impression de la facture')
-      }
-      console.error('Erreur impression:', err)
-    }
+    // Open the new print page in a new tab
+    const url = `/app/print-invoice/${factureId}`;
+    window.open(url, '_blank');
   }
+
 
   const handleDeleteBrouillons = async () => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les factures brouillons ? Cette action est irréversible.')) {
@@ -649,7 +635,12 @@ export default function Ventes() {
                     onClick={() => handleViewProducts(facture)}
                   >
                     <td className="font-bold font-mono text-sm md:text-base">
-                      {facture.numero_facture || <span className="italic text-base-content/50">Brouillon #{facture.id}</span>}
+                      <div className="flex flex-col">
+                        <span>{facture.numero_facture || <span className="italic text-base-content/50">Brouillon #{facture.id}</span>}</span>
+                        {facture.type === 'RETROCESSION' && (
+                            <span className="badge badge-xs badge-warning mt-1">RÉTROCESSION</span>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <div className="font-bold text-sm">{facture.client_name || 'Client de passage'}</div>
@@ -905,11 +896,12 @@ export default function Ventes() {
       )}
 
       {/* Modal Aperçu Ticket */}
+      {/* Modal Aperçu Ticket */}
       {showTicketPreview && ticketCaisse && selectedFacture && (
         <div className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">Aperçu du Ticket de Caisse</h3>
+          <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
+             <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
+              <h3 className="font-bold text-lg">Aperçu du Ticket</h3>
               <button 
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={() => setShowTicketPreview(false)}
@@ -917,161 +909,38 @@ export default function Ventes() {
                 ✕
               </button>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg" id="ticket-preview" style={{ maxWidth: '80mm', margin: '0 auto', color: '#000', fontFamily: "'Arial Black', Arial, sans-serif" }}>
-              <div className="text-center mb-4 border-b-2 border-gray-800 pb-3">
-                <h2 className="text-xl font-bold">DJADEU PHARMACY</h2>
-                <p className="text-sm">Logbessou</p>
-                <p className="text-sm">Tel: 697268949</p>
-              </div>
-              <div className="mb-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-semibold">Ticket N°:</span>
-                  <span>#{ticketCaisse.id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Facture:</span>
-                  <span>{selectedFacture.numero_facture || `FAC-${selectedFacture.id}`}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Client:</span>
-                  <span className="text-right">{selectedFacture.client_name || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-semibold">Date:</span>
-                  <span>{new Date(ticketCaisse.date_paiement || selectedFacture.date).toLocaleString('fr-FR', {
-                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                  })}</span>
-                </div>
-                {ticketCaisse.paiements_details ? (
-                  <div className="mt-2 text-xs font-normal border-t border-dashed border-gray-400 pt-1">
-                      <div className="font-bold mb-1">Règlements:</div>
-                      {ticketCaisse.paiements_details.map((paiement, idx) => {
-                        const getModeLabel = (mode: string) => {
-                          const labels: { [key: string]: string } = {
-                            'especes': 'Espèces',
-                            'carte': 'Carte',
-                            'cheque': 'Chèque',
-                            'virement': 'Virement',
-                            'om': 'Orange Money',
-                            'momo': 'Mobile Money',
-                            'en_compte': 'En compte'
-                          }
-                          return labels[mode] || mode.toUpperCase()
-                        }
-                        
-                        const isPartPatient = paiement.part_patient && paiement.part_patient > 0
-                        const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
-                        
-                        return (
-                          <div key={idx} className="flex justify-between">
-                            <span>
-                              {getModeLabel(paiement.mode || '')}
-                              {isPartPatient && <span className="text-gray-600 italic font-normal"> (Patient)</span>}
-                              {isPartAssurance && <span className="text-gray-600 italic font-normal"> (Assur)</span>}
-                            </span>
-                            <span>{Math.round(paiement.montant)} F</span>
-                          </div>
-                        )
-                      })}
-                  </div>
-                ) : (
-                    <div className="flex justify-between">
-                    <span className="font-semibold">Mode de paiement:</span>
-                    <span className="uppercase">
-                        {ticketCaisse.mode_paiement === 'especes' ? 'Espèces' :
-                        ticketCaisse.mode_paiement === 'cheque' ? 'Chèque' :
-                        ticketCaisse.mode_paiement === 'carte' ? 'Carte' :
-                        ticketCaisse.mode_paiement === 'virement' ? 'Virement' : 
-                        ticketCaisse.mode_paiement === 'om' ? 'Orange Money' :
-                        ticketCaisse.mode_paiement === 'momo' ? 'Mobile Money' :
-                        ticketCaisse.mode_paiement === 'en_compte' ? 'En compte' :
-                        ticketCaisse.mode_paiement}
-                    </span>
-                    </div>
-                )}
-                {ticketCaisse.reference && (
-                  <div className="flex justify-between">
-                    <span className="font-semibold">Référence:</span>
-                    <span>{ticketCaisse.reference}</span>
-                  </div>
-                )}
-              </div>
-              {selectedFacture.produits && selectedFacture.produits.length > 0 && (
-                <div className="mb-4 border-t border-b border-gray-300 py-2">
-                  <div className="text-xs font-semibold mb-2">Détails:</div>
-                  {selectedFacture.produits.slice(0, 5).map((p) => {
-                    const produitNom = typeof p.produit === 'object' ? p.produit.name : (p.produit_nom ?? `Produit #${p.produit}`)
-                    return (
-                      <div key={p.id} className="flex justify-between text-xs mb-1">
-                        <span className="flex-1">{produitNom} x{Math.abs(p.quantity)}</span>
-                        <span>{Math.round(Math.abs(p.quantity) * Number(p.selling_price || 0))} F</span>
-                      </div>
-                    )
-                  })}
-                  {selectedFacture.produits.length > 5 && (
-                    <div className="text-xs text-gray-500 mt-1">... et {selectedFacture.produits.length - 5} autre(s) produit(s)</div>
-                  )}
-                </div>
-              )}
-              <div className="mb-4 space-y-1 text-sm border-t border-gray-300 pt-2">
-                <div className="flex justify-between">
-                  <span>Sous-total HT:</span>
-                  <span>{Math.round(Number(selectedFacture.total_ht || 0)).toLocaleString('fr-FR')} F</span>
-                </div>
-                {Number(selectedFacture.remise || 0) > 0 && (
-                  <div className="flex justify-between text-red-600">
-                    <span>Remise:</span>
-                    <span>-{Math.round(Number(selectedFacture.remise || 0)).toLocaleString('fr-FR')} F</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span>TVA:</span>
-                  <span>{Math.round(Number(selectedFacture.total_tva || 0)).toLocaleString('fr-FR')} F</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2">
-                  <span>TOTAL:</span>
-                  <span>{Math.round(Number(ticketCaisse.montant || selectedFacture.total_ttc || 0)).toLocaleString('fr-FR')} F</span>
-                </div>
-              </div>
-              <div className="text-center text-xs border-t border-gray-300 pt-3 mt-4">
-                <p>Merci de votre visite !</p>
-                <p className="mt-1">Ticket généré le {new Date().toLocaleString('fr-FR')}</p>
-              </div>
+
+            <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4" id="ticket-preview-container">
+                 {/* Container for print content */}
+                 <div id="ticket-preview">
+                    <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
+                 </div>
             </div>
-            <div className="modal-action">
+
+            <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
               <button 
-                className="btn btn-ghost"
+                className="btn btn-ghost btn-sm"
                 onClick={() => setShowTicketPreview(false)}
               >
                 Fermer
               </button>
               <button 
-                className="btn btn-primary"
+                className="btn btn-primary btn-sm"
                 onClick={() => {
                   const printContent = document.getElementById('ticket-preview')
                   if (printContent) {
-                    const printWindow = window.open('', '_blank')
+                    const printWindow = window.open('', '_blank', 'height=600,width=400')
                     if (printWindow) {
                       printWindow.document.write(`
-                        <!DOCTYPE html>
                         <html>
                           <head>
                             <title>Ticket de Caisse - ${selectedFacture.numero_facture || ''}</title>
                             <style>
                               @media print {
                                 @page { margin: 0; size: 80mm auto; }
-                                body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                                body { margin: 0; padding: 0; }
                               }
-                              body { margin: 0; padding: 10mm; font-family: 'Arial Black', Arial, sans-serif; font-size: 12px; color: #000; font-weight: 600; }
-                              .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                              .header h2 { margin: 0; font-size: 18px; font-weight: bold; }
-                              .info { margin-bottom: 15px; }
-                              .info div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
-                              .details { border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 10px 0; margin: 15px 0; }
-                              .totals { border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; }
-                              .totals div { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 11px; }
-                              .total-final { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; }
-                              .footer { text-align: center; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 15px; font-size: 10px; }
+                              body { margin: 0; padding: 0; background: white; }
                             </style>
                           </head>
                           <body>
@@ -1080,6 +949,7 @@ export default function Ventes() {
                         </html>
                       `)
                       printWindow.document.close()
+                      printWindow.focus()
                       setTimeout(() => {
                         printWindow.print()
                         printWindow.close()
@@ -1088,7 +958,7 @@ export default function Ventes() {
                   }
                 }}
               >
-                Imprimer Ticket
+                Imprimer
               </button>
             </div>
           </div>

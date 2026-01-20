@@ -27,7 +27,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
         return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise)
     }, [])
 
-    const addProduit = useCallback(async (produit: ProduitModel) => {
+    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean }) => {
         setLoading(true)
         try {
             const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
@@ -48,7 +48,17 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                             : ligne
                     )
                 } else {
-                    const prixUnitaire = normalizeNumberInput(fullProduit.selling_price ?? '0', { min: 0 })
+                    let basePrice = fullProduit.selling_price ?? '0'
+
+                    if (options?.isRetrocession) {
+                        // Rétrocession: Use Last Purchase Price (Best) -> Cost Price (Fallback) -> Selling Price
+                        const price = fullProduit.last_purchase_price
+                            ? fullProduit.last_purchase_price
+                            : fullProduit.cost_price ?? '0'
+                        basePrice = price
+                    }
+
+                    const prixUnitaire = normalizeNumberInput(basePrice, { min: 0 })
                     const nouvelleLigne: LigneFacture = {
                         produit: fullProduit,
                         quantite: 1,

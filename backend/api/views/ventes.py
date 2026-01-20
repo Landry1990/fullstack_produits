@@ -28,7 +28,7 @@ from ..models import (
 )
 from ..serializers import (
     FactureSerializer, FactureProduitSerializer, CaisseSerializer, ClotureCaisseSerializer,
-    CreanceSerializer, MouvementCaisseSerializer
+    CreanceSerializer, MouvementCaisseSerializer, FacturePrintSerializer
 )
 from ..serializers_optimized import FactureListSerializer, FactureDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
@@ -796,34 +796,40 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             ['TOTAL À PAYER :', f"{total_ttc:,.0f} F"]
         ]
         
+        
         totals_table = Table(totals_data, colWidths=[4*cm, 4*cm])
         totals_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (0, -1), 'RIGHT'),
-            ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-            ('FONTNAME', (0, -1), (-1,  -1), 'Helvetica-Bold'),
-            ('LINEABOVE', (0, -1), (-1, -1), 1.5, colors.black),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
+            ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
+            ('LINEABOVE', (0,-1), (-1,-1), 1, colors.black),  # Line above total
         ]))
+        story.append(totals_table)
         
-        container_table = Table([[None, totals_table]], colWidths=[9*cm, 8*cm])
-        container_table.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-        ]))
-        story.append(container_table)
+        doc.build(story, onFirstPage=lambda c, d: header_footer_facture(c, d, {
+            'name': settings.company_name,
+            'address': company_address_fmt.replace('<br/>', '\n'),
+            'tel': 'N/A' # TODO: Add phone to settings
+        }, {
+            'facture_id': facture.numero_facture or f"#{facture.id}",
+            'date_facture': invoice_date,
+            'client_name': client_name,
+            'client_address': facture.client.address if facture.client and facture.client.address else "",
+            'client_phone': facture.client.phone if facture.client and facture.client.phone else ""
+        }, facture))
         
-        story.append(Spacer(1, 2*cm))
-        
-        if settings.footer_text:
-            footer = Paragraph(f"<i>{settings.footer_text}</i>", style_center)
-            story.append(footer)
-        
-        doc.build(story)
-        pdf = buffer.getvalue()
-        buffer.close()
-        response.write(pdf)
+        buffer.seek(0)
+        response.write(buffer.getvalue())
         return response
+
+    @action(detail=True, methods=['get'])
+    def print_data(self, request, pk=None):
+        """
+        Retourne les données complètes pour l'impression frontend.
+        """
+        facture = self.get_object()
+        serializer = FacturePrintSerializer(facture)
+        return Response(serializer.data)
+
         
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def caisse_par_tranche_horaire(self, request):

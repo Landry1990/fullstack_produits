@@ -32,7 +32,7 @@ const InvoiceSettings: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('authToken');
             const res = await axios.get(`${apiBaseUrl}/invoice-settings/`, {
                 headers: { Authorization: `Token ${token}` }
             });
@@ -48,7 +48,7 @@ const InvoiceSettings: React.FC = () => {
         setSaving(true);
         setMessage(null);
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('authToken');
             // Toujours utiliser PUT sur l'endpoint racine, le backend gère le singleton
             await axios.put(`${apiBaseUrl}/invoice-settings/`, settings, {
                 headers: { Authorization: `Token ${token}` }

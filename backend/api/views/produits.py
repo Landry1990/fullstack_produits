@@ -73,7 +73,68 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
              except ValueError:
                  pass
                 
+        # Filtrage pour la Vitrine (produits publics uniquement)
+        is_public = self.request.query_params.get('is_public')
+        if is_public is not None:
+             if is_public.lower() == 'true':
+                 queryset = queryset.filter(is_public=True)
+             elif is_public.lower() == 'false':
+                 queryset = queryset.filter(is_public=False)
+
+        # Filtrage par Rayon (Catégorie)
+        rayon_id = self.request.query_params.get('rayon')
+        if rayon_id:
+            queryset = queryset.filter(rayon_id=rayon_id)
+            
+        # Filtrage par Fournisseur
+        fournisseur_id = self.request.query_params.get('fournisseur')
+        if fournisseur_id:
+            queryset = queryset.filter(fournisseur_id=fournisseur_id)
+
+        # Filtrage par Forme
+        forme_id = self.request.query_params.get('forme')
+        if forme_id:
+            queryset = queryset.filter(forme_id=forme_id)
+
         return queryset
+
+    @action(detail=True, methods=['post'])
+    def toggle_public(self, request, pk=None):
+        """Action pour basculer rapidement la visibilité publique d'un produit."""
+        produit = self.get_object()
+        produit.is_public = not produit.is_public
+        produit.save()
+        return Response({
+            'status': 'success',
+            'is_public': produit.is_public,
+            'message': f"Produit {'rendu public' if produit.is_public else 'retiré de la vitrine'}"
+        })
+
+    @action(detail=False, methods=['post'])
+    def bulk_toggle_public(self, request):
+        """
+        Active ou désactive la visibilité publique pour une liste de produits.
+        Body: { 'ids': [1, 2, 3], 'target_status': true/false }
+        """
+        ids = request.data.get('ids', [])
+        target_status = request.data.get('target_status')
+        
+        if not ids or not isinstance(ids, list):
+            return Response({'detail': 'Liste d\'IDs invalide ou vide.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if target_status is None:
+             return Response({'detail': 'target_status est requis (true/false).'}, status=status.HTTP_400_BAD_REQUEST)
+             
+        # Conversion explicite en booléen
+        is_public = bool(target_status)
+        
+        updated_count = Produit.objects.filter(id__in=ids).update(is_public=is_public)
+        
+        return Response({
+            'status': 'success',
+            'updated_count': updated_count,
+            'message': f"{updated_count} produits mis à jour."
+        })
 
     # Configuration des serializers optimisés
     list_serializer_class = ProduitListSerializer

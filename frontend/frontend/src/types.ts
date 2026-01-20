@@ -1,3 +1,9 @@
+export interface Forme {
+  id: number;
+  nom: string;
+  description?: string;
+}
+
 export interface Rayon {
   id: number;
   name: string;
@@ -41,6 +47,8 @@ export interface ProduitModel {
   fournisseur?: number | null
   fournisseur_name: string
   tva?: string
+  forme?: number | null
+  forme_nom?: string
   rotation_moyenne?: string
   taux_marge?: string
   pourcentage_marge?: string
@@ -55,6 +63,7 @@ export interface ProduitModel {
   // Dates dernière transaction
   dernier_achat?: string | null
   dernier_vente?: string | null
+  last_purchase_price?: string | null
 }
 
 export interface ProduitForm {
@@ -72,6 +81,7 @@ export interface ProduitForm {
   stock_maximum: string
   rayon: string
   fournisseur: string
+  forme: string
   tva: string
   requires_prescription?: boolean
   surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
@@ -191,6 +201,7 @@ export interface Facture {
   numero_facture: string | null
   date: string
   status: string
+  type?: 'STANDARD' | 'RETROCESSION' // Added type field
   status_display: string
   remise: string
   tva: string
@@ -212,9 +223,15 @@ export interface TicketCaisse {
   montant: string
   reference?: string | null
   statut: string
+  rendu?: string
   date_paiement: string
   montant_verse?: string
-  rendu?: string
+  user_details?: {  // Added user_details
+    id: number
+    username: string
+    first_name?: string
+    last_name?: string
+  }
   paiements_details?: { mode?: string; mode_paiement?: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
 }
 
@@ -471,4 +488,12 @@ export interface PharmacySettings {
   receipt_header?: string
   logo?: string
   coefficient_direct_commande?: string
+  // Added fields for TicketTemplate compatibility
+  niu?: string
+  registre_commerce?: string
+  primary_color?: string
+  secondary_color?: string
+  accent_color?: string
+  font_family?: string
+  website?: string
 }
