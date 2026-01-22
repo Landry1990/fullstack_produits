@@ -8,6 +8,9 @@ from django.utils import timezone
 from datetime import datetime
 from decimal import Decimal
 from ..models import Facture, Caisse, FactureProduit
+import logging
+
+logger = logging.getLogger(__name__)
 
 class HistoriqueVentesViewSet(viewsets.ViewSet):
     """API endpoint for daily sales history."""
@@ -111,16 +114,16 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             return Response({'error': 'Invalid datetime format'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Debug logging
-        print(f"[VENTES PAR TRANCHE] Recherche de {debut} à {fin}")
+        logger.debug(f"[VENTES PAR TRANCHE] Recherche de {debut} à {fin}")
         
         # First, check all validated/paid invoices to debug
         all_factures = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).order_by('-date')[:10]
         
-        print(f"[DEBUG] Dernières 10 factures VAL/PAY:")
+        logger.debug(f"[DEBUG] Dernières 10 factures VAL/PAY:")
         for f in all_factures:
-            print(f"  - Facture #{f.id} ({f.numero_facture}): {f.date} - Status: {f.status}")
+            logger.debug(f"  - Facture #{f.id} ({f.numero_facture}): {f.date} - Status: {f.status}")
         
         # Get FactureProduit for validated/paid invoices in the time range
         factures_in_range = Facture.objects.filter(
@@ -129,9 +132,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             date__lte=fin
         )
         
-        print(f"[DEBUG] Factures dans la tranche horaire: {factures_in_range.count()}")
+        logger.debug(f"[DEBUG] Factures dans la tranche horaire: {factures_in_range.count()}")
         for f in factures_in_range:
-            print(f"  - Facture #{f.id}: {f.date}")
+            logger.debug(f"  - Facture #{f.id}: {f.date}")
         
         facture_produits = FactureProduit.objects.filter(
             facture__in=factures_in_range
@@ -140,7 +143,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             prix_vente=Avg('selling_price')
         ).order_by('-qte_vendu')
         
-        print(f"[VENTES PAR TRANCHE] Trouvé {facture_produits.count()} produits distincts")
+        logger.debug(f"[VENTES PAR TRANCHE] Trouvé {facture_produits.count()} produits distincts")
         
         # Format results with montant calculation
         results = []

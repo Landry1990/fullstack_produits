@@ -19,6 +19,8 @@ type PaymentModalProps = {
         tauxCouverture: number
         partPatient: number
         partAssurance: number
+        couponMontant?: number
+        loyaltyDeduction?: number
     }
     montantPaye: string
     setMontantPaye: (val: string) => void
@@ -87,9 +89,16 @@ export default function PaymentModal({
                 </div>
                 <div className="text-4xl font-light text-primary">
                     {isNewSale 
-                        ? Math.round(totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                        ? Math.round(totals.tauxCouverture > 0 
+                            ? totals.partPatient 
+                            : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                         : Math.round(Number(facturePourPaiement?.total_ttc))} F
                 </div>
+                {(totals.couponMontant && totals.couponMontant > 0) && (
+                    <div className="text-sm text-success font-medium mt-1">
+                        Dont coupon : -{Math.round(totals.couponMontant)} F
+                    </div>
+                )}
               </div>
 
 
@@ -260,7 +269,9 @@ export default function PaymentModal({
                                       setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                       // Calculer le reste à payer pour la prochaine entrée
                                       const totalAPayer = isNewSale 
-                                        ? (totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                                        ? (totals.tauxCouverture > 0 
+                                            ? totals.partPatient 
+                                            : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                                         : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                                       
                                       const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
@@ -281,7 +292,9 @@ export default function PaymentModal({
                             if (montantPaye && Number(montantPaye) > 0) {
                                 setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                 const totalAPayer = isNewSale 
-                                    ? (totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                                    ? (totals.tauxCouverture > 0 
+                                        ? totals.partPatient 
+                                        : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                                     : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                                 
                                 const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
@@ -298,7 +311,9 @@ export default function PaymentModal({
 
               {(() => {
                 const totalAPayer = isNewSale 
-                    ? (totals.tauxCouverture > 0 ? totals.partPatient : totals.totalTtc) 
+                    ? (totals.tauxCouverture > 0 
+                        ? totals.partPatient 
+                        : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                     : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                 const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 ? Number(montantPaye) : 0)
                 const rendu = totalVerse - totalAPayer

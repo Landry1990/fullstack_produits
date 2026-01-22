@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from .models import Produit, Rayon, Fournisseur, Commande
+from .models import Produit, Rayon, Fournisseur, Commande, Facture, FactureProduit, Client
+from decimal import Decimal
 
 # Create your tests here.
 
@@ -67,3 +68,6 @@ class CommandeAPITests(APITestCase):
 
         commande = Commande.objects.get()
         self.assertEqual(commande.fournisseur.id, self.fournisseur.id)
+
+
+

@@ -28,6 +28,9 @@ from ..serializers_optimized import CommandeListSerializer, CommandeDetailSerial
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
+import logging
+
+logger = logging.getLogger(__name__)
 
 def header_footer(canvas, doc, company_info, commande_info, total_achat):
     canvas.saveState()
@@ -208,9 +211,6 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 
                 # Mettre à jour le stock
                 produit.stock = old_stock + qty_received
-                
-                # Update Last Purchase Price (for Retrocession)
-                produit.last_purchase_price = item.price_cost
 
                 # Ajouter au dictionnaire pour suivi local
                 produits_dict[produit.id] = produit
@@ -252,14 +252,14 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             if produits_with_lots:
                 Produit.objects.bulk_update(
                     produits_with_lots, 
-                    ['pmp', 'stock', 'last_purchase_price'], 
+                    ['pmp', 'stock'], 
                     batch_size=100
                 )
             
             if produits_without_lots:
                 Produit.objects.bulk_update(
                     produits_without_lots, 
-                    ['stock', 'pmp', 'last_purchase_price'], 
+                    ['stock', 'pmp'], 
                     batch_size=100
                 )
         
@@ -673,8 +673,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                     
                 except Exception as e:
                     import traceback
-                    print(f"Erreur génération code-barres: {e}")
-                    print(traceback.format_exc())
+                    logger.error(f"Erreur génération code-barres: {e}", exc_info=True)
                     story.append(Paragraph(f"<b>{label_data['barcode']}</b>", style_tiny))
             
             # Espace plus grand après le code-barres
@@ -793,6 +792,90 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
             produit = commande_produit.produit
             produit.selling_price = selling_price
             produit.save(update_fields=['selling_price'])
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_sync(self, request):
+        """
+        Synchronise tous les produits d'une commande en une seule requête.
+        Remplace N requêtes PATCH par une seule requête bulk.
+        
+        Payload: { commande_id: int, produits: [...] }
+        """
+        commande_id = request.data.get('commande_id')
+        produits_data = request.data.get('produits', [])
+        
+        if not commande_id:
+            return Response({'error': 'commande_id requis'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            commande = Commande.objects.get(pk=commande_id)
+        except Commande.DoesNotExist:
+            return Response({'error': 'Commande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Get existing product IDs for this order
+        existing_items = {cp.id: cp for cp in commande.produits.all()}
+        existing_ids = set(existing_items.keys())
+        
+        # Track which IDs are in the new payload
+        payload_ids = set()
+        items_to_create = []
+        items_to_update = []
+        
+        for p in produits_data:
+            item_id = p.get('id')
+            produit_id = p.get('produit')
+            
+            # Build the data dict - only include fields that exist on CommandeProduit model
+            item_data = {
+                'commande': commande,
+                'produit_id': produit_id,
+                'quantity': int(p.get('quantity', 0)),
+                'unites_gratuites': int(p.get('unites_gratuites', 0)),
+                'price': Decimal(str(p.get('price', 0))),
+                'price_cost': Decimal(str(p.get('price_cost', p.get('price', 0)))),
+                'selling_price': Decimal(str(p.get('selling_price', 0))) if p.get('selling_price') else Decimal('0'),
+                'prix_euro': Decimal(str(p.get('prix_euro'))) if p.get('prix_euro') else None,
+                'lot': p.get('lot') or None,
+                'date_expiration': p.get('date_expiration') or None,
+            }
+            
+            if item_id and item_id in existing_ids:
+                # Update existing item
+                payload_ids.add(item_id)
+                existing_item = existing_items[item_id]
+                for key, value in item_data.items():
+                    if key != 'commande':  # Don't update commande FK
+                        setattr(existing_item, key, value)
+                items_to_update.append(existing_item)
+            else:
+                # Create new item
+                items_to_create.append(CommandeProduit(**item_data))
+        
+        # Bulk create new items
+        if items_to_create:
+            CommandeProduit.objects.bulk_create(items_to_create, batch_size=100)
+        
+        # Bulk update existing items
+        if items_to_update:
+            CommandeProduit.objects.bulk_update(
+                items_to_update,
+                ['quantity', 'unites_gratuites', 'price', 'price_cost', 'selling_price', 
+                 'prix_euro', 'lot', 'date_expiration', 'produit_id'],
+                batch_size=100
+            )
+        
+        # Delete items that are no longer in the payload
+        ids_to_delete = existing_ids - payload_ids
+        if ids_to_delete:
+            CommandeProduit.objects.filter(id__in=ids_to_delete).delete()
+        
+        return Response({
+            'status': 'success',
+            'created': len(items_to_create),
+            'updated': len(items_to_update),
+            'deleted': len(ids_to_delete)
+        })
 
 
 class AvoirViewSet(viewsets.ModelViewSet):

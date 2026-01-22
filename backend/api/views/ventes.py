@@ -88,6 +88,10 @@ def header_footer_facture(canvas, doc, company_info, facture_info, facture):
     
     canvas.restoreState()
 
+# Globals for session-based ticket numbering
+SESSION_TICKET_COUNTER = 0
+INVOICE_TICKET_MAP = {}
+
 class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for factures with optimized serializers.
@@ -109,6 +113,36 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     # Serializers optimisés
     list_serializer_class = FactureListSerializer
     detail_serializer_class = FactureDetailSerializer
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        
+        # Inject context-based ticket numbers
+        # Only for Caisse Centrale view (pending invoices)
+        status_filter = request.query_params.get('status__in', '')
+        
+        # Robust check: look for BROU and VAL in the string (handles encoding/order)
+        if 'BROU' in status_filter and 'VAL' in status_filter:
+            global SESSION_TICKET_COUNTER
+            global INVOICE_TICKET_MAP
+            
+            # Handle pagination
+            data_list = response.data['results'] if isinstance(response.data, dict) and 'results' in response.data else response.data
+            
+            if isinstance(data_list, list):
+                # Simply loop and assign/retrieve
+                for facture in data_list:
+                    # Only assign if not present
+                    facture_id = facture.get('id')
+                    if facture_id:
+                        if facture_id not in INVOICE_TICKET_MAP:
+                            SESSION_TICKET_COUNTER += 1
+                            INVOICE_TICKET_MAP[facture_id] = SESSION_TICKET_COUNTER
+                            print(f"DEBUG: Assigned Ticket #{SESSION_TICKET_COUNTER} to Invoice #{facture_id}")
+                        
+                        facture['session_ticket_number'] = INVOICE_TICKET_MAP[facture_id]
+        
+        return response
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

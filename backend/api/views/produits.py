@@ -98,6 +98,23 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
 
         return queryset
 
+    @action(detail=False, methods=['get'])
+    def for_import(self, request):
+        """
+        Endpoint optimisé pour l'import CSV.
+        Retourne TOUS les produits avec seulement les champs nécessaires pour la correspondance CIP.
+        Pas de pagination pour permettre la correspondance complète.
+        """
+        produits = Produit.objects.only(
+            'id', 'name', 'cip1', 'cip2', 'cip3',
+            'cost_price', 'selling_price', 'tva', 'taux_marge'
+        ).values(
+            'id', 'name', 'cip1', 'cip2', 'cip3',
+            'cost_price', 'selling_price', 'tva', 'taux_marge'
+        )
+        
+        return Response(list(produits))
+
     @action(detail=True, methods=['post'])
     def toggle_public(self, request, pk=None):
         """Action pour basculer rapidement la visibilité publique d'un produit."""

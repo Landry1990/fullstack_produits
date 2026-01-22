@@ -5,7 +5,8 @@ import { toast } from 'react-hot-toast'
 import DOMPurify from 'dompurify'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import type { Facture, TicketCaisse } from '../types'
+import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
+import PasswordConfirmModal from './PasswordConfirmModal'
 
 // Lazy load barcode component
 const Barcode = lazy(() => import('react-barcode'))
@@ -24,6 +25,17 @@ export default function CaisseCentralisee() {
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
+  
+  // États pour les coupons
+  const [coupons, setCoupons] = useState<CouponMonnaie[]>([])
+  const [isCouponPanelOpen, setIsCouponPanelOpen] = useState(false)
+  const [isGenererCouponModalOpen, setIsGenererCouponModalOpen] = useState(false)
+  const [nouveauCouponMontant, setNouveauCouponMontant] = useState('')
+  const [nouveauCouponNotes, setNouveauCouponNotes] = useState('')
+  const [searchCouponNumero, setSearchCouponNumero] = useState('')
+  const [couponTrouve, setCouponTrouve] = useState<CouponMonnaie | null>(null)
+  const [isDetailsCouponModalOpen, setIsDetailsCouponModalOpen] = useState(false)
+  const [isSudoModalOpen, setIsSudoModalOpen] = useState(false)
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
 
@@ -55,6 +67,107 @@ export default function CaisseCentralisee() {
     }
   }, [apiBaseUrl])
 
+
+  // Fonction pour récupérer les coupons (actifs + récemment utilisés)
+  const fetchCoupons = useCallback(async () => {
+    try {
+      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
+      // Récupérer tous les coupons récents (triés par date de création décroissante)
+      const response = await axios.get(`${endpoint}?ordering=-date_creation&page_size=50`)
+      setCoupons(response.data.results || response.data || [])
+    } catch (err) {
+      console.error('Erreur lors du chargement des coupons:', err)
+    }
+  }, [apiBaseUrl])
+
+  // Rafraîchissement automatique toutes les 20 secondes
+  useEffect(() => {
+    fetchFacturesEnAttente()
+    fetchCoupons()
+    const interval = setInterval(() => {
+      fetchFacturesEnAttente()
+      fetchCoupons()
+    }, 20000)
+    return () => clearInterval(interval)
+  }, [fetchFacturesEnAttente, fetchCoupons])
+
+  // Générer un nouveau coupon (après validation sudo)
+  const handleGenererCoupon = async () => {
+    if (!nouveauCouponMontant || Number(nouveauCouponMontant) <= 0) {
+      toast.error('Veuillez entrer un montant valide')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
+      const payload = {
+        montant: Number(nouveauCouponMontant),
+        notes: nouveauCouponNotes,
+        facture_origine: selectedFacture?.id || null
+      }
+      
+      const { data } = await axios.post<CouponMonnaie>(endpoint, payload)
+      toast.success(`Coupon #${data.numero} généré avec succès !`)
+      
+      setCoupons([data, ...coupons])
+      setIsGenererCouponModalOpen(false)
+      setNouveauCouponMontant('')
+      setNouveauCouponNotes('')
+      
+      // Ouvrir un aperçu pour impression
+      setCouponTrouve(data)
+      setIsDetailsCouponModalOpen(true)
+    } catch (err: any) {
+      console.error('Erreur génération coupon:', err)
+      toast.error(err.response?.data?.detail || "Erreur lors de la génération du coupon")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Utiliser un coupon
+  const handleUtiliserCoupon = async (couponId: number) => {
+    if (!window.confirm('Confirmer l\'utilisation de ce coupon ?')) return
+
+    setLoading(true)
+    try {
+      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/${couponId}/utiliser/` : `/api/coupons/${couponId}/utiliser/`
+      await axios.post(endpoint, { facture_id: selectedFacture?.id || null })
+      
+      toast.success('Coupon utilisé avec succès')
+      fetchCoupons()
+      setIsDetailsCouponModalOpen(false)
+      setCouponTrouve(null)
+      setSearchCouponNumero('')
+    } catch (err: any) {
+      console.error('Erreur utilisation coupon:', err)
+      toast.error(err.response?.data?.detail || "Erreur lors de l'utilisation du coupon")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Rechercher un coupon par numéro
+  const handleRechercherCoupon = async () => {
+    if (!searchCouponNumero) return
+
+    try {
+      const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
+      const response = await axios.get(`${endpoint}?search=${searchCouponNumero}`)
+      const results = response.data.results || response.data || []
+      
+      if (results.length > 0) {
+        setCouponTrouve(results[0])
+        setIsDetailsCouponModalOpen(true)
+      } else {
+        toast.error('Coupon introuvable')
+      }
+    } catch (err) {
+      console.error('Erreur recherche coupon:', err)
+      toast.error('Erreur lors de la recherche')
+    }
+  }
 
   // Rafraîchissement automatique toutes les 20 secondes
   useEffect(() => {
@@ -106,11 +219,13 @@ export default function CaisseCentralisee() {
         factureValidee = data
       }
 
-      // Déterminer si c'est un tiers payant et le montant réel à encaisser
-      const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
-      const montantAEncaisser = hasTiersPayant 
-        ? Number(factureValidee.part_client)
-        : Number(factureValidee.total_ttc)
+      // Déterminer le montant réel à encaisser (en tenant compte des paiements déjà effectués comme les coupons)
+      // Le backend calcule automatiquement reste_a_payer = total_ttc - paiements_deja_effectues
+      const montantAEncaisser = factureValidee.reste_a_payer !== undefined && factureValidee.reste_a_payer !== null
+        ? Number(factureValidee.reste_a_payer)
+        : (factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
+            ? Number(factureValidee.part_client)
+            : Number(factureValidee.total_ttc))
 
       // 2. Enregistrer les paiements (multiples ou simple)
       const paiementsAEnregistrer = paiements.length > 0 
@@ -127,6 +242,7 @@ export default function CaisseCentralisee() {
         }
 
         // Si tiers payant, marquer comme paiement de la part patient
+        const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
         if (hasTiersPayant) {
           paiementPayload.part_patient = paiement.montant
           paiementPayload.part_assurance = 0
@@ -277,14 +393,107 @@ export default function CaisseCentralisee() {
             </svg>
             Actualisation auto (20s)
           </div>
+          <button 
+            onClick={() => setIsCouponPanelOpen(!isCouponPanelOpen)}
+            className={`btn btn-lg gap-2 ${isCouponPanelOpen ? 'btn-primary' : 'btn-outline btn-primary'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            </svg>
+            Coupons ({coupons.filter(c => c.status === 'ACTIF').length} actifs)
+          </button>
           <div className="badge badge-lg badge-error">
             {facturesEnAttente.length} en attente
           </div>
         </div>
       </div>
 
-      {/* Liste des factures */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Panneau des Coupons (Sidebar Gauche) */}
+        {isCouponPanelOpen && (
+          <div className="w-80 bg-white border-r border-base-200 flex flex-col animate-fade-in-right">
+            <div className="p-4 border-b border-base-100 bg-base-50/50">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-bold text-lg flex items-center gap-2">
+                  <span className="text-primary"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg></span>
+                  Coupons
+                </h2>
+                <button 
+                  onClick={() => setIsGenererCouponModalOpen(true)}
+                  className="btn btn-sm btn-circle btn-primary"
+                  title="Générer un coupon"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                </button>
+              </div>
+
+              <div className="join w-full">
+                <input 
+                  type="text" 
+                  placeholder="Rechercher #..." 
+                  className="input input-sm input-bordered join-item flex-1"
+                  value={searchCouponNumero}
+                  onChange={(e) => setSearchCouponNumero(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleRechercherCoupon()}
+                />
+                <button 
+                  className="btn btn-sm join-item"
+                  onClick={handleRechercherCoupon}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+              {coupons.length === 0 ? (
+                <div className="text-center py-10 text-base-content/40 italic text-sm">
+                  Aucun coupon
+                </div>
+              ) : (
+                coupons.map(coupon => (
+                  <div 
+                    key={coupon.id} 
+                    className={`card compact border hover:shadow-md transition-all cursor-pointer ${
+                      coupon.status === 'ACTIF' ? 'bg-base-50 border-base-200' : 'bg-base-200/50 border-base-300'
+                    }`}
+                    onClick={() => { setCouponTrouve(coupon); setIsDetailsCouponModalOpen(true); }}
+                  >
+                    <div className="card-body p-3">
+                      <div className="flex justify-between items-start">
+                        <span className="font-mono text-xs font-bold text-base-content/60">#{coupon.numero}</span>
+                        <span className={`badge badge-sm ${
+                          coupon.status === 'ACTIF' ? 'badge-success' : 
+                          coupon.status === 'UTILISE' ? 'badge-neutral' :
+                          coupon.status === 'EXPIRE' ? 'badge-warning' : 'badge-error'
+                        }`}>
+                          {coupon.status_display || coupon.status}
+                        </span>
+                      </div>
+                      <div className={`text-xl font-black mt-1 ${coupon.status === 'ACTIF' ? 'text-primary' : 'text-base-content/50'}`}>
+                        {Math.round(Number(coupon.montant))} F
+                      </div>
+                      <div className="text-[10px] text-base-content/50 mt-1">
+                        Généré le {new Date(coupon.date_creation).toLocaleDateString('fr-FR')}
+                      </div>
+                      {/* Afficher les infos d'utilisation si le coupon est utilisé */}
+                      {coupon.status === 'UTILISE' && coupon.date_utilisation && (
+                        <div className="text-[10px] text-base-content/60 mt-1 pt-1 border-t border-base-300">
+                          <div>Utilisé le {new Date(coupon.date_utilisation).toLocaleDateString('fr-FR')} à {new Date(coupon.date_utilisation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                          {coupon.utilise_par_nom && (
+                            <div>Par: <span className="font-semibold">{coupon.utilise_par_nom}</span></div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-auto p-6">
         {facturesEnAttente.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-base-content/40">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,14 +506,16 @@ export default function CaisseCentralisee() {
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {facturesEnAttente
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date ascending
-              .map((facture, index) => (
+              .map((facture) => (
               <div
                 key={facture.id}
                 className="bg-white rounded-lg shadow-md border-2 border-base-200 hover:border-primary transition-all p-6"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="badge badge-lg badge-neutral font-bold">#{index + 1}</div>
+                    <div className="badge badge-lg badge-neutral font-bold">
+                      Vente #{ facture.session_ticket_number || '?' }
+                    </div>
                     <div>
                       <div className="text-xs text-base-content/60 uppercase tracking-wide">Facture</div>
                       <div className="text-2xl font-bold text-primary">#{facture.numero_facture}</div>
@@ -681,13 +892,72 @@ export default function CaisseCentralisee() {
                   const content = DOMPurify.sanitize(document.getElementById('ticket-preview')?.innerHTML || '');
                   const win = window.open('', '', 'height=600,width=400');
                   if (win && content) {
-                    win.document.write('<html><head><title>Ticket</title>');
-                    win.document.write('<style>body { font-family: monospace; padding: 20px; } .text-center { text-align: center; } .flex { display: flex; justify-content: space-between; } .font-bold { font-weight: bold; } .border-b-2 { border-bottom: 2px solid black; } .border-t-2 { border-top: 2px solid black; } .mb-4 { margin-bottom: 1rem; } .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }</style>');
-                    win.document.write('</head><body>');
+                    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Ticket de Caisse</title>
+  <style>
+    @media print {
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+      body {
+        margin: 0;
+        padding: 10mm 5mm;
+      }
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      width: 80mm;
+      margin: 0 auto;
+      padding: 10mm 5mm;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #000;
+      background: #fff;
+    }
+    .text-center { text-align: center; }
+    .flex { display: flex; justify-content: space-between; }
+    .font-bold { font-weight: bold; }
+    .border-b-2 { border-bottom: 2px solid black; }
+    .border-t-2 { border-top: 2px solid black; }
+    .border-t { border-top: 1px solid black; }
+    .border-dashed { border-style: dashed; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mt-1 { margin-top: 0.25rem; }
+    .mt-2 { margin-top: 0.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .pt-1 { padding-top: 0.25rem; }
+    .pt-2 { padding-top: 0.5rem; }
+    .pb-4 { padding-bottom: 1rem; }
+    .space-y-1 > * + * { margin-top: 0.25rem; }
+    .text-xs { font-size: 10px; }
+    .text-sm { font-size: 11px; }
+    .text-lg { font-size: 16px; }
+    .text-xl { font-size: 18px; }
+    .text-2xl { font-size: 20px; }
+    .text-3xl { font-size: 24px; }
+    .text-4xl { font-size: 28px; }
+    .font-black { font-weight: 900; }
+    .text-success { color: #10b981; }
+    .text-info { color: #3b82f6; }
+    .text-red-500 { color: #ef4444; }
+  </style>
+</head>
+<body>`);
                     win.document.write(content);
                     win.document.write('</body></html>');
                     win.document.close();
-                    win.print();
+                    // Attendre que le contenu soit chargé avant d'imprimer
+                    win.onload = () => {
+                      setTimeout(() => {
+                        win.print();
+                      }, 250);
+                    };
                   }
                 }}
               >
@@ -699,6 +969,284 @@ export default function CaisseCentralisee() {
           <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
         </div>
       )}
+
+      </div> {/* Fin du Flex Wrapper (Sidebar + Contenu) */}
+
+      {/* Modals pour les Coupons */}
+      {isGenererCouponModalOpen && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Générer un Coupon
+            </h3>
+            
+            <div className="form-control w-full mb-4">
+              <label className="label">
+                <span className="label-text">Montant à rendre (F)</span>
+              </label>
+              <input 
+                type="number" 
+                className="input input-bordered w-full text-2xl font-bold text-center" 
+                placeholder="Ex: 250"
+                value={nouveauCouponMontant}
+                onChange={(e) => setNouveauCouponMontant(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="form-control w-full mb-4">
+              <label className="label">
+                <span className="label-text">Notes (Optionnel)</span>
+              </label>
+              <textarea 
+                className="textarea textarea-bordered h-20" 
+                placeholder="Raison du coupon..."
+                value={nouveauCouponNotes}
+                onChange={(e) => setNouveauCouponNotes(e.target.value)}
+              ></textarea>
+            </div>
+
+            <div className="modal-action">
+              <button className="btn btn-ghost" onClick={() => setIsGenererCouponModalOpen(false)}>Annuler</button>
+              <button 
+                className="btn btn-primary gap-2" 
+                onClick={() => setIsSudoModalOpen(true)}
+                disabled={loading || !nouveauCouponMontant}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Valider (Mode Sudo)
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setIsGenererCouponModalOpen(false)}></div>
+        </div>
+      )}
+
+      {/* Modal Confirmation Sudo pour Coupon */}
+      <PasswordConfirmModal
+        isOpen={isSudoModalOpen}
+        onClose={() => setIsSudoModalOpen(false)}
+        onConfirm={handleGenererCoupon}
+        title="Validation par mot de passe"
+        message={`Confirmez la génération du coupon de ${nouveauCouponMontant} F.`}
+      />
+
+      {/* Modal Détails Coupon */}
+      {isDetailsCouponModalOpen && couponTrouve && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-sm border-2 border-primary">
+            <div className="text-center p-4 border-2 border-dashed border-base-300 rounded-xl bg-base-50">
+              <div className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-1">Coupon de Monnaie</div>
+              <div className="text-4xl font-black text-primary font-mono mb-2">#{couponTrouve.numero}</div>
+              <div className="text-3xl font-bold mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
+              <div className="divider"></div>
+              <div className="text-left space-y-2 text-xs">
+                <div className="flex justify-between"><span>Status:</span><span className={`badge badge-xs ${couponTrouve.status === 'ACTIF' ? 'badge-success' : 'badge-ghost'}`}>{couponTrouve.status_display}</span></div>
+                <div className="flex justify-between"><span>Généré par:</span><span>{couponTrouve.cree_par_nom || 'Système'}</span></div>
+                <div className="flex justify-between"><span>Date:</span><span>{new Date(couponTrouve.date_creation).toLocaleString()}</span></div>
+                {couponTrouve.notes && <div className="mt-2 p-2 bg-white rounded italic">"{couponTrouve.notes}"</div>}
+              </div>
+            </div>
+            <div className="modal-action flex justify-between gap-2">
+              <button 
+                className="btn btn-sm btn-outline"
+                onClick={() => {
+                  const win = window.open('', '', 'height=600,width=400');
+                  if (win) {
+                    const dateStr = new Date(couponTrouve.date_creation).toLocaleString('fr-FR', {
+                      day: '2-digit', month: '2-digit', year: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    });
+                    
+                    win.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Coupon de Monnaie</title>
+  <style>
+    @media print {
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+      body {
+        margin: 0;
+        padding: 10mm 5mm;
+      }
+    }
+    body {
+      font-family: 'Courier New', monospace;
+      width: 80mm;
+      margin: 0 auto;
+      padding: 10mm 5mm;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #000;
+      background: #fff;
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    .pharmacy-name {
+      font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .pharmacy-info {
+      font-size: 10px;
+      line-height: 1.3;
+    }
+    .coupon-box {
+      border: 2px dashed #000;
+      padding: 15px;
+      margin: 15px 0;
+      text-align: center;
+    }
+    .coupon-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    .coupon-number {
+      font-size: 24px;
+      font-weight: bold;
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+    }
+    .coupon-amount {
+      font-size: 32px;
+      font-weight: bold;
+      margin: 10px 0;
+      color: #000;
+    }
+    .info-section {
+      margin-top: 15px;
+      font-size: 10px;
+      text-align: left;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .info-label {
+      font-weight: bold;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid #000;
+      font-size: 9px;
+      margin-left: 5px;
+    }
+    .notes {
+      margin-top: 12px;
+      padding: 8px;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      font-size: 9px;
+      font-style: italic;
+      text-align: left;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      padding-top: 10px;
+      border-top: 1px solid #000;
+      font-size: 9px;
+    }
+    .warning {
+      font-size: 9px;
+      color: #666;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="pharmacy-name">${pharmacySettings.pharmacy_name || 'PHARMACIE'}</div>
+    <div class="pharmacy-info">
+      ${pharmacySettings.city ? `${pharmacySettings.city}` : ''}${pharmacySettings.country ? `, ${pharmacySettings.country}` : ''}<br>
+      ${pharmacySettings.phone ? `Tel: ${pharmacySettings.phone}` : ''}<br>
+      ${pharmacySettings.niu ? `NIU: ${pharmacySettings.niu}` : ''}<br>
+      ${pharmacySettings.registre_commerce ? `RC: ${pharmacySettings.registre_commerce}` : ''}
+    </div>
+  </div>
+  
+  <div class="coupon-box">
+    <div class="coupon-label">Coupon de Monnaie</div>
+    <div class="coupon-number">#${couponTrouve.numero}</div>
+    <div class="coupon-amount">${Math.round(Number(couponTrouve.montant)).toLocaleString('fr-FR')} F</div>
+  </div>
+  
+  <div class="info-section">
+    <div class="info-row">
+      <span class="info-label">Statut:</span>
+      <span>${couponTrouve.status_display || couponTrouve.status}<span class="status-badge">${couponTrouve.status}</span></span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Généré par:</span>
+      <span>${couponTrouve.cree_par_nom || 'Système'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Date:</span>
+      <span>${dateStr}</span>
+    </div>
+    ${couponTrouve.facture_origine ? `
+    <div class="info-row">
+      <span class="info-label">Facture origine:</span>
+      <span>#${couponTrouve.facture_origine}</span>
+    </div>
+    ` : ''}
+  </div>
+  
+  ${couponTrouve.notes ? `
+  <div class="notes">
+    <strong>Notes:</strong><br>
+    ${couponTrouve.notes}
+  </div>
+  ` : ''}
+  
+  <div class="warning">
+    ⚠️ Ce coupon est valable uniquement dans cette pharmacie
+  </div>
+  
+  <div class="footer">
+    ${pharmacySettings.ticket_footer_message || 'Merci de votre visite !'}
+  </div>
+</body>
+</html>`);
+                    win.document.close();
+                    // Attendre que le contenu soit chargé avant d'imprimer
+                    win.onload = () => {
+                      setTimeout(() => {
+                        win.print();
+                      }, 250);
+                    };
+                  }
+                }}
+              >Imprimer</button>
+              <div className="flex gap-2">
+                <button className="btn btn-sm btn-ghost" onClick={() => setIsDetailsCouponModalOpen(false)}>Fermer</button>
+                {couponTrouve.status === 'ACTIF' && (
+                  <button className="btn btn-sm btn-success text-white" onClick={() => handleUtiliserCoupon(couponTrouve.id)}>Utiliser</button>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setIsDetailsCouponModalOpen(false)}></div>
+        </div>
+      )}
     </div>
   )
 }
+

@@ -83,27 +83,39 @@ export function useCommandeActions({
 
     // Helper function to safely clean payload (avoid circular references) 
     const cleanPayload = (data: any): any => {
+        // Extract only serializable fields, avoiding React proxies and circular refs
+        const extractValue = (val: any, depth: number = 0): any => {
+            if (depth > 10) return undefined; // Prevent infinite recursion
+            if (val === null || val === undefined) return val;
+            if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return val;
+            if (Array.isArray(val)) {
+                return val.map(item => extractValue(item, depth + 1)).filter(v => v !== undefined);
+            }
+            if (typeof val === 'object') {
+                // Skip React elements, DOM nodes, functions, etc.
+                if (val.$$typeof || val.nodeType || typeof val === 'function') return undefined;
+
+                const clean: any = {};
+                for (const key of Object.keys(val)) {
+                    // Skip internal/private keys
+                    if (key.startsWith('_') || key.startsWith('$')) continue;
+                    const extracted = extractValue(val[key], depth + 1);
+                    if (extracted !== undefined) {
+                        clean[key] = extracted;
+                    }
+                }
+                return clean;
+            }
+            return undefined;
+        };
+
         try {
-            // JSON parse/stringify to remove any non-serializable references (proxies, window refs, etc.)
+            // First try simple approach
             return JSON.parse(JSON.stringify(data));
         } catch (e) {
-            console.error('cleanPayload failed, manually cleaning:', e);
-            // Manual fallback: extract only primitive/simple values
-            const clean: any = {};
-            for (const key of Object.keys(data)) {
-                const val = data[key];
-                if (val === null || val === undefined) {
-                    clean[key] = val;
-                } else if (typeof val === 'object' && val.constructor === Object) {
-                    clean[key] = cleanPayload(val);
-                } else if (Array.isArray(val)) {
-                    clean[key] = val.map((v: any) => typeof v === 'object' ? cleanPayload(v) : v);
-                } else if (['string', 'number', 'boolean'].includes(typeof val)) {
-                    clean[key] = val;
-                }
-                // Skip functions, symbols, etc.
-            }
-            return clean;
+            // Fallback to manual extraction
+            console.warn('cleanPayload using manual extraction');
+            return extractValue(data);
         }
     };
 
@@ -121,12 +133,20 @@ export function useCommandeActions({
             return;
         }
 
+        // Validation: En mode EDIT, on a besoin d'une commande existante
+        if (viewMode === 'EDIT' && !selectedCommande?.id) {
+            if (!isAutoSave) toast.error('Aucune commande sélectionnée pour la modification');
+            return; // Silent return for auto-save
+        }
+
         try {
             let commandeId = selectedCommande?.id;
 
             // Clean the command data to remove any non-serializable references
             const cleanedCommandeData = cleanPayload(commandeData);
-            if (!isAutoSave) console.log('Saving commande with data:', cleanedCommandeData);
+            if (!isAutoSave) {
+                // debug log removed
+            }
 
             // 1. Créer ou mettre à jour la commande
             if (viewMode === 'CREATE') {
@@ -147,62 +167,38 @@ export function useCommandeActions({
                 if (!isAutoSave) toast.success('Commande mise à jour');
             }
 
-            if (!commandeId) throw new Error("ID de commande manquant");
-
-            // 2. Gérer les produits
-            const commandeProduitsEndpoint = apiBaseUrl
-                ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
-                : '/api/commande-produits/';
-
-            // Récupérer les produits existants pour comparer
-            let existingProducts: { id: number }[] = [];
-
-            // Toujours récupérer les produits actuels pour être sûr de l'état
-            if (commandeId) {
-                const { data: currentOrder } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
-                existingProducts = currentOrder.produits ? currentOrder.produits.map((p: any) => ({ id: p.id })) : [];
+            if (!commandeId) {
+                // En auto-save, on retourne silencieusement si pas d'ID (cas de race condition)
+                if (isAutoSave) return;
+                throw new Error("ID de commande manquant");
             }
 
-            // Identifier les produits à supprimer (ceux qui ne sont plus dans commandeProduits)
-            const existingIds = new Set(existingProducts.map(ep => ep.id));
+            // 2. Gérer les produits via bulk_sync (une seule requête)
+            const bulkSyncEndpoint = apiBaseUrl
+                ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/bulk_sync/`
+                : '/api/commande-produits/bulk_sync/';
 
-            for (const p of commandeProduits) {
-                const payload = {
-                    commande: commandeId,
-                    produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
-                    quantity: parseInt(String(p.quantity)),
-                    unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
-                    price: parseFloat(String(p.price)).toFixed(2),
-                    price_cost: parseFloat(String(p.price)).toFixed(2), // Assumant price est cost
-                    selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(2) : '0.00',
-                    prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(2) : null,
-                    tva: parseFloat(String(p.tva || 18)).toFixed(2),
-                    marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
-                    lot: p.lot || null,
-                    date_expiration: parseMMYYToDate(p.date_expiration)
-                };
+            // Préparer les données pour bulk_sync
+            const produitsPayload = commandeProduits.map(p => ({
+                id: p.id && typeof p.id === 'number' && p.id < 1000000000 ? p.id : undefined, // Ignore temp IDs (timestamps)
+                produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                quantity: parseInt(String(p.quantity)),
+                unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
+                price: parseFloat(String(p.price)).toFixed(2),
+                price_cost: parseFloat(String(p.price)).toFixed(2),
+                selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(2) : '0.00',
+                prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(2) : null,
+                tva: parseFloat(String(p.tva || 18)).toFixed(2),
+                marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
+                lot: p.lot || null,
+                date_expiration: parseMMYYToDate(p.date_expiration)
+            }));
 
-                // Fix: Check if ID is a real existing ID in the backend, not a temp timestamp
-                // Using existingIds check is safer than just p.id
-                if (p.id && existingIds.has(p.id)) {
-                    // Update existing line
-                    await axios.patch(`${commandeProduitsEndpoint}${p.id}/`, payload);
-                } else {
-                    // Create new line (ignore temporary p.id)
-                    await axios.post(commandeProduitsEndpoint, payload);
-                }
-            }
+            await axios.post(bulkSyncEndpoint, {
+                commande_id: commandeId,
+                produits: produitsPayload
+            });
 
-            // Handle deletions if needed (lines present in DB but not in current list)
-            // Only logical if we are in EDIT mode effectively (which we are if commandeId exists)
-            if (commandeId) {
-                const currentIds = new Set(commandeProduits.filter(p => p.id && existingIds.has(p.id)).map(p => p.id));
-                for (const exist of existingProducts) {
-                    if (!currentIds.has(exist.id)) {
-                        await axios.delete(`${commandeProduitsEndpoint}${exist.id}/`);
-                    }
-                }
-            }
 
             if (!isAutoSave) {
                 fetchCommandes();

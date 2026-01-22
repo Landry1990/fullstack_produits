@@ -529,9 +529,55 @@ class Facture(models.Model):
             self.part_client = self.total_ttc
 
         if save:
-            # On update uniquement les champs de totaux pour ├®viter de d├®clencher des signaux r├®cursifs inutiles
-            # ou d'├®craser d'autres changements concurrents
             self.save(update_fields=['total_ht', 'total_tva', 'total_ttc', 'part_client'])
+
+    def get_tva_analysis(self):
+        """
+        Calcule la répartition par taux de TVA.
+        Retourne une liste de dict : [{'taux': 19.25, 'base_ht': ..., 'montant_tva': ...}, ...]
+        Utilisé pour l'impression et les rapports.
+        Prend en compte la remise globale qui s'applique sur le TTC.
+        """
+        from decimal import Decimal
+        analysis = {}
+        
+        # 1. Calculer les totaux bruts par taux (avant remise globale)
+        for ligne in self.produits.all():
+            taux = ligne.tva
+            if taux not in analysis:
+                analysis[taux] = {'base_ht': Decimal('0.00'), 'montant_tva': Decimal('0.00')}
+            
+            # Prix unitaire TTC net de remise ligne
+            # ligne.selling_price est TTC. ligne.discount est un montant TTC unitaire.
+            pu_ttc_net = ligne.selling_price - ligne.discount
+            total_ttc_ligne = pu_ttc_net * ligne.quantity
+            
+            # Extraction HT/TVA brute pour cette ligne (avant remise globale)
+            if taux > 0:
+                ht_ligne = (total_ttc_ligne / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
+                tva_ligne = total_ttc_ligne - ht_ligne
+            else:
+                ht_ligne = total_ttc_ligne
+                tva_ligne = Decimal('0.00')
+                
+            analysis[taux]['base_ht'] += ht_ligne
+            analysis[taux]['montant_tva'] += tva_ligne
+
+        # 2. Appliquer la remise globale au prorata
+        # Si une remise globale existe, elle réduit la base imposable et la TVA proportionnellement
+        total_ttc_brut = sum(data['base_ht'] + data['montant_tva'] for data in analysis.values())
+        
+        if total_ttc_brut > 0 and self.remise > 0:
+             # Le total TTC final est (Brut - Remise)
+             total_ttc_net = total_ttc_brut - self.remise
+             # Ratio de réduction
+             ratio = total_ttc_net / total_ttc_brut
+             
+             for taux in analysis:
+                 analysis[taux]['base_ht'] = (analysis[taux]['base_ht'] * ratio).quantize(Decimal('0.01'))
+                 analysis[taux]['montant_tva'] = (analysis[taux]['montant_tva'] * ratio).quantize(Decimal('0.01'))
+
+        return analysis
 
 
     class Meta:
@@ -783,6 +829,7 @@ class Caisse(models.Model):
         ('virement', 'Virement'),
         ('om', 'Orange Money'),
         ('momo', 'Mobile Money'),
+        ('coupon', 'Coupon Monnaie'),
         ('en_compte', 'En compte'),
     ]
     
@@ -1575,3 +1622,52 @@ def preserve_supplier_name_on_delete(sender, instance, **kwargs):
     try:
         instance.avoirs.all().update(fournisseur_nom=nom)
     except: pass
+
+
+class CouponMonnaie(models.Model):
+    """
+    Coupon de monnaie pour gérer le manque de pièces.
+    Permet de donner un bon au client pour le reste non-rendu.
+    """
+    class Status(models.TextChoices):
+        ACTIF = 'ACTIF', 'Actif'
+        UTILISE = 'UTILISE', 'Utilisé'
+        EXPIRE = 'EXPIRE', 'Expiré'
+        ANNULE = 'ANNULE', 'Annulé'
+    
+    numero = models.CharField(max_length=10, unique=True, editable=False)  # Format: 0001, 0002...
+    montant = models.DecimalField(max_digits=10, decimal_places=0)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIF)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_utilisation = models.DateTimeField(null=True, blank=True)
+    
+    # Traçabilité
+    cree_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='coupons_crees')
+    utilise_par = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='coupons_utilises')
+    facture_origine = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='coupons_generes')
+    facture_utilisation = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='coupons_utilises')
+    
+    notes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = "Coupon Monnaie"
+        verbose_name_plural = "Coupons Monnaie"
+        ordering = ['-date_creation']
+    
+    def __str__(self):
+        return f"Coupon #{self.numero} - {self.montant} F"
+    
+    def save(self, *args, **kwargs):
+        if not self.numero:
+            # Auto-generate numero: 0001, 0002...
+            last = CouponMonnaie.objects.order_by('-id').first()
+            if last and last.numero:
+                try:
+                    next_num = int(last.numero) + 1
+                except ValueError:
+                    next_num = 1
+            else:
+                next_num = 1
+            self.numero = str(next_num).zfill(4)
+        super().save(*args, **kwargs)
+

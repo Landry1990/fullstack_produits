@@ -4,7 +4,7 @@ import axios from 'axios'
 import DOMPurify from 'dompurify'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture } from '../types'
+import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture, CouponMonnaie } from '../types'
 import { useProductSearch } from '../hooks/useProductSearch'
 import { useCart } from '../hooks/useCart'
 import { useFacturationClients } from '../hooks/useFacturationClients'
@@ -135,6 +135,10 @@ export default function Facturation() {
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
   const [error, setError] = useState<string | null>(null)
+  const [couponNumero, setCouponNumero] = useState('')
+  const [couponData, setCouponData] = useState<CouponMonnaie | null>(null)
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponError, setCouponError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
@@ -539,6 +543,53 @@ export default function Facturation() {
       setTimeout(() => searchInputRef.current?.focus(), 100)
   }
 
+  // Coupon handlers
+  const handleRechercherCoupon = async () => {
+    if (!couponNumero.trim()) return
+    
+    setCouponLoading(true)
+    setCouponError(null)
+    
+    try {
+      const couponsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
+      const response = await axios.get(couponsEndpoint, {
+        params: { numero: couponNumero.trim() }
+      })
+      
+      if (response.data.results && response.data.results.length > 0) {
+        const coupon = response.data.results[0]
+        
+        // Vérifier que le coupon est actif
+        if (coupon.status !== 'ACTIF') {
+          setCouponError(`Ce coupon n'est pas actif (${coupon.status_display || coupon.status})`)
+          setCouponData(null)
+          toast.error(`Coupon #${coupon.numero} non utilisable`)
+        } else {
+          setCouponData(coupon)
+          setCouponError(null)
+          toast.success(`Coupon #${coupon.numero} trouvé : ${Math.round(Number(coupon.montant))} F`)
+        }
+      } else {
+        setCouponError(`Coupon "${couponNumero}" introuvable`)
+        setCouponData(null)
+        toast.error('Coupon introuvable')
+      }
+    } catch (err: any) {
+      console.error('Erreur recherche coupon:', err)
+      setCouponError(err.response?.data?.detail || 'Erreur lors de la recherche')
+      setCouponData(null)
+      toast.error('Erreur lors de la recherche du coupon')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  const handleClearCoupon = () => {
+    setCouponNumero('')
+    setCouponData(null)
+    setCouponError(null)
+  }
+
 
 
 
@@ -597,6 +648,9 @@ export default function Facturation() {
     const finalTotalTtc = Math.max(0, totalTtcBase - loyaltyDeduction)
     const finalPartPatient = Math.max(0, partPatient - loyaltyDeduction)
 
+    // Coupon calculation
+    const couponMontant = couponData && couponData.status === 'ACTIF' ? Number(couponData.montant) : 0
+
     return {
       sousTotal,
       remiseMontant,
@@ -604,13 +658,14 @@ export default function Facturation() {
       totalTtc: finalTotalTtc,
       originalTotalTtc: totalTtcBase,
       loyaltyDeduction,
+      couponMontant,
       tauxCouverture,
       partAssurance,
       partPatient: finalPartPatient,
       currentPoints,
       pendingDiscountVal
     }
-  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients, pointsToUse, usePendingDiscount])
+  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients, pointsToUse, usePendingDiscount, couponData])
 
   const [isNewSale, setIsNewSale] = useState(false)
 
@@ -860,6 +915,35 @@ export default function Facturation() {
         await Promise.all(
           produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
         )
+      }
+
+      // 3. Appliquer le coupon si un numéro a été saisi (backend fait tout le travail)
+      if (couponNumero.trim()) {
+        try {
+          const couponsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
+          
+          // Chercher le coupon par numéro
+          const searchResponse = await axios.get(couponsEndpoint, {
+            params: { numero: couponNumero.trim() }
+          })
+          
+          if (searchResponse.data.results && searchResponse.data.results.length > 0) {
+            const coupon = searchResponse.data.results[0]
+            
+            // Appeler l'API utiliser (backend crée automatiquement le paiement)
+            const utiliserEndpoint = `${couponsEndpoint}${coupon.id}/utiliser/`
+            await axios.post(utiliserEndpoint, { facture_id: createdFacture.id })
+            
+            toast.success(`Coupon #${coupon.numero} appliqué (-${Math.round(Number(coupon.montant))} F)`)
+            setCouponNumero('') // Clear after use
+          } else {
+            toast.error(`Coupon "${couponNumero}" introuvable`)
+          }
+        } catch (err: any) {
+          console.error('Erreur application coupon:', err)
+          toast.error(err.response?.data?.detail || 'Erreur lors de l\'application du coupon')
+          // On continue quand même la vente (le coupon n'est pas critique)
+        }
       }
 
 
@@ -1850,6 +1934,17 @@ export default function Facturation() {
                 remiseMontant={totals.remiseMontant}
                 tvaAmount={totals.montantTva}
                 totalTTC={totals.totalTtc}
+                couponNumero={couponNumero}
+                setCouponNumero={setCouponNumero}
+                couponData={couponData}
+                couponLoading={couponLoading}
+                couponError={couponError}
+                onRechercherCoupon={handleRechercherCoupon}
+                onClearCoupon={handleClearCoupon}
+                couponMontant={totals.couponMontant}
+                tauxCouverture={totals.tauxCouverture}
+                partAssurance={totals.partAssurance}
+                partPatient={totals.partPatient}
             />
 
             {/* Retrocession Toggle (Near Actions) */}

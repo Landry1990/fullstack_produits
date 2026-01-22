@@ -79,7 +79,7 @@ class FactureListSerializer(serializers.ModelSerializer):
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name',
-            'date', 'status', 'status_display', 'type',
+            'date', 'status', 'status_display',
             'total_ht', 'total_ttc', 'remise'
         ]
     
