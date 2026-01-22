@@ -1190,7 +1190,8 @@ class MouvementStock(models.Model):
         SORTIE = 'SORTIE', 'Sortie (Vente)'
         RETOUR = 'RETOUR', 'Retour (Annulation)'
         AJUSTEMENT = 'AJUSTEMENT', 'Ajustement Inventaire'
-        TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entr├®e)'
+        AVOIR = 'AVOIR', 'Avoir (Retour Fournisseur)'
+        TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entrée)'
         TRANSFORMATION_SORTIE = 'TRANSFORMATION_SORTIE', 'Transformation (Sortie)'
 
     produit = models.ForeignKey('Produit', on_delete=models.SET_NULL, null=True, blank=True, related_name='mouvements_stock')

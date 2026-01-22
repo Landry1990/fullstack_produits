@@ -267,12 +267,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         # Mettre à jour le stock
         for item in items:
             produit = product_map.get(item.produit_id)
+            lots_updated = False
             
-            # 1. Mise à jour du stock global
-            produit.stock = F('stock') - item.quantity
-            produit.save(update_fields=['stock'])
-            
-            # 2. Gestion des lots pour les VENTES (qty > 0)
+            # 1. Gestion des lots pour les VENTES (qty > 0)
             if item.quantity > 0:
                 quantity_to_allocate = item.quantity
                 
@@ -299,6 +296,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     )
                     target_lot.quantity_remaining -= quantity_to_allocate
                     target_lot.save()
+                    lots_updated = True
 
                 # CAS 2: Pas de lot spécifique -> FIFO/FEFO standard
                 else:
@@ -321,6 +319,16 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         lot.quantity_remaining -= quantity_from_lot
                         lot.save()
                         quantity_to_allocate -= quantity_from_lot
+                        lots_updated = True
+            
+            # 2. Mise à jour du stock global
+            if produit.use_lot_management and lots_updated:
+                # Pour les produits avec gestion par lots, recalculer depuis les lots
+                produit.calculate_stock_from_lots()
+            else:
+                # Pour les produits sans lots ou retours, décrémenter manuellement
+                produit.stock = F('stock') - item.quantity
+                produit.save(update_fields=['stock'])
 
         # --- GESTION FIDELITE ---
         if facture.client and facture.client.client_type != 'PROFESSIONNEL' and facture.client.is_loyalty_member:

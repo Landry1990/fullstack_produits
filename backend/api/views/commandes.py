@@ -931,15 +931,30 @@ class AvoirViewSet(viewsets.ModelViewSet):
                             ligne.date_expiration = lot.date_expiration
                         ligne.save()
                     
-                    # Always update general product stock
-                    produit.stock -= ligne.quantity
-                    produit.save()
+                    # Update general product stock
+                    if produit.use_lot_management and ligne.stock_lot:
+                        # For lot-managed products, recalculate stock from lots
+                        produit.calculate_stock_from_lots()
+                    else:
+                        # For non-lot products, decrement manually
+                        produit.stock -= ligne.quantity
+                        produit.save()
                     
-                    # Créer historique de stock (NEGATIF pour sortie)
+                    # Créer le mouvement de stock pour l'historique
                     lot_info = f" - Lot: {ligne.stock_lot.lot}" if ligne.stock_lot else ""
+                    MouvementStock.objects.create(
+                        produit=produit,
+                        type_mouvement=MouvementStock.TypeMouvement.AVOIR,
+                        quantite=-ligne.quantity,  # Négatif car sortie de stock
+                        stock_apres=produit.stock,
+                        user=request.user,
+                        description=f"Avoir {avoir.numero} - {avoir.fournisseur.name if avoir.fournisseur else 'Fournisseur'}{lot_info}"
+                    )
+                    
+                    # Log audit (backup)
                     log_audit(
                         user=request.user,
-                        action='STOCK_ADJ', # Use standard action code
+                        action='STOCK_ADJ',
                         model_name='Avoir',
                         object_id=avoir.numero,
                         description=f"Validation Avoir {avoir.numero}",
