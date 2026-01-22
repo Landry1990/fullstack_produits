@@ -83,8 +83,25 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # Update product stock
         produit = lot.produit
-        produit.stock = F('stock') - quantity_to_remove
-        produit.save(update_fields=['stock'])
+        if produit.use_lot_management:
+            # Recalculate stock from all lots
+            produit.calculate_stock_from_lots()
+        else:
+            produit.stock = F('stock') - quantity_to_remove
+            produit.save(update_fields=['stock'])
+        
+        # Refresh to get actual stock value for MouvementStock
+        produit.refresh_from_db()
+        
+        # Create MouvementStock for traceability
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.AVOIR,
+            quantite=-quantity_to_remove,
+            stock_apres=produit.stock,
+            user=request.user,
+            description=f"Sortie périmés - Lot {lot.lot}: {reason}"
+        )
         
         # Log Audit
         log_audit(
