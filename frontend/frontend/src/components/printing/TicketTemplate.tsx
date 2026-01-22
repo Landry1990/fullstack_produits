@@ -35,7 +35,8 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         'virement': 'Virement',
         'om': 'Orange Money',
         'momo': 'Mobile Money',
-        'en_compte': 'En compte'
+        'en_compte': 'En compte',
+        'coupon': 'Coupon de Monnaie'
       };
       return labels[mode] || mode?.toUpperCase() || 'N/A';
   };

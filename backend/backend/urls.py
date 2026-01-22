@@ -17,7 +17,7 @@ from api.views import (
     StockAdjustmentViewSet, ClotureCaisseViewSet, HistoriqueVentesViewSet,
     HistoriqueAchatsViewSet, RapportViewSet, OrdonnancierViewSet,
     verify_password, PharmacySettingsView, ProductImportView,
-    FormeViewSet
+    FormeViewSet, CouponMonnaieViewSet
 )
 
 router = DefaultRouter()
@@ -56,6 +56,7 @@ router.register(r'historique-ventes', HistoriqueVentesViewSet, basename='histori
 router.register(r'historique-achats', HistoriqueAchatsViewSet, basename='historiqueachats')
 router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 router.register(r'formes', FormeViewSet, basename='forme')
+router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 
 
 urlpatterns = [

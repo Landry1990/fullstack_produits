@@ -19,6 +19,7 @@ import { useCommandeActions } from '../hooks/useCommandeActions';
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
+import { useFormes } from '../hooks/useProduits';
 
 
 
@@ -76,6 +77,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   
   const { data: fournisseurs = [] } = useCommandeFournisseurs();
   const { data: rayons = [] } = useCommandeRayons();
+  const { data: formes = [] } = useFormes();
 
   // Derived state from React Query
   const commandes = useMemo(() => commandesData?.results || [], [commandesData]);
@@ -123,6 +125,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isImporting, setIsImporting] = useState(false); // Flag pour désactiver auto-save pendant l'import CSV
 
 
 
@@ -241,8 +244,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
   useEffect(() => {
+    // Skip auto-save si import CSV en cours
+    if (isImporting) return;
+    
     if (viewMode === 'CREATE' || viewMode === 'EDIT') {
-        // Debounce de 1.5 secondes pour éviter de spammer l'API
+        // Auto-save toutes les 5 minutes (300000ms) au lieu de 1.5s
         const timer = setTimeout(async () => {
              // Conditions pour sauvegarde automatique:
              // 1. Avoir des produits
@@ -266,7 +272,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                  setSaving(false);
                  setLastSaved(new Date());
              }
-        }, 1500);
+        }, 300000); // 5 minutes
         return () => clearTimeout(timer);
     }
   }, [
@@ -749,11 +755,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Charger TOUS les produits depuis l'API pour la correspondance CIP
+    // Désactiver l'auto-save pendant l'import
+    setIsImporting(true);
+
+    // Charger TOUS les produits depuis l'endpoint optimisé pour l'import CSV
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
     const produitsEndpoint = apiBaseUrl
-      ? `${apiBaseUrl}/api/produits/?page_size=10000`
-      : '/api/produits/?page_size=10000';
+      ? `${apiBaseUrl}/api/produits/for_import/`
+      : '/api/produits/for_import/';
 
     let allProducts: ProduitModel[] = [];
     try {
@@ -763,19 +772,36 @@ export default function Commandes({ forcedType }: CommandesProps) {
     } catch (err) {
       toast.error("Erreur lors du chargement des produits pour l'import CSV");
       console.error(err);
+      setIsImporting(false);
       return;
     }
+
+    // Fonction helper pour normaliser un CIP (supprime les zéros inutiles, espaces, caractères spéciaux)
+    const normalizeCip = (cip: string | null | undefined): string => {
+      if (!cip) return '';
+      // Supprimer espaces, tirets, points
+      let normalized = cip.trim().replace(/[\s\-\.]/g, '');
+      // Optionnel: supprimer les zéros en tête pour les codes purement numériques
+      // Si le code est numérique, on compare aussi sans les zéros en tête
+      return normalized.toUpperCase();
+    };
 
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      if (!text) return;
+      if (!text) {
+        setIsImporting(false);
+        return;
+      }
 
       const lines = text.split(/\r\n|\n/);
       let currentList = [...commandeProduits];
       let productsFound = 0;
       let productsNotFound = 0;
       const notFoundCips: string[] = [];
+
+      // Debug: Afficher quelques produits pour vérifier les CIP disponibles
+
 
       lines.forEach(line => {
         if (!line.trim()) return;
@@ -784,13 +810,31 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
         const qty = parseInt(qtyStr) || 1;
         const cleanCip = cip.trim();
+        const normalizedSearchCip = normalizeCip(cleanCip);
 
-        // Recherche par CIP (1, 2 ou 3) - comparaison normalisée
-        const product = allProducts.find(p => 
-          p.cip1?.trim() === cleanCip || 
-          p.cip2?.trim() === cleanCip || 
-          p.cip3?.trim() === cleanCip
-        );
+        // Recherche par CIP (1, 2 ou 3) - comparaison normalisée et flexible
+        const product = allProducts.find(p => {
+          const norm1 = normalizeCip(p.cip1);
+          const norm2 = normalizeCip(p.cip2);
+          const norm3 = normalizeCip(p.cip3);
+          
+          // Comparaison exacte normalisée
+          if (norm1 === normalizedSearchCip || norm2 === normalizedSearchCip || norm3 === normalizedSearchCip) {
+            return true;
+          }
+          
+          // Comparaison sans les zéros en tête pour les codes numériques
+          const numericSearch = normalizedSearchCip.replace(/^0+/, '');
+          if (numericSearch && (
+            norm1.replace(/^0+/, '') === numericSearch ||
+            norm2.replace(/^0+/, '') === numericSearch ||
+            norm3.replace(/^0+/, '') === numericSearch
+          )) {
+            return true;
+          }
+          
+          return false;
+        });
 
         if (product) {
             productsFound++;
@@ -823,7 +867,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                 currentList.push(newCommandeProduit);
             }
         } else {
-            console.warn(`Produit avec CIP ${cleanCip} non trouvé.`);
+            console.warn(`[CSV Import] CIP non trouvé: "${cleanCip}" (normalisé: "${normalizeCip(cleanCip)}")`);
             notFoundCips.push(cleanCip);
             productsNotFound++;
         }
@@ -839,6 +883,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
       
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = '';
+      
+      // Réactiver l'auto-save après l'import
+      setIsImporting(false);
     };
     reader.readAsText(file);
   };
@@ -1452,6 +1499,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         onCreated={handleProduitCreated}
         rayons={rayons}
         fournisseurs={fournisseurs}
+        formes={formes}
         title="Créer un nouveau produit"
       />
 

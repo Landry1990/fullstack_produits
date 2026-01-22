@@ -86,17 +86,11 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('=== ORDONNANCE MODAL DEBUG ===' );
-    console.log('handleSubmit called');
-    console.log('formData:', formData);
-    console.log('formData.patient_nom:', formData.patient_nom);
-    console.log('formData.prescripteur_nom:', formData.prescripteur_nom);
-    console.log('formData.lignes:', formData.lignes);
-    console.log('formData.lignes.length:', formData.lignes?.length);
-    console.log('About to call onSave...');
+
+
+
     try {
       await onSave(formData);
-      console.log('onSave completed successfully');
     } catch (err) {
       console.error('onSave threw an error:', err);
       throw err;

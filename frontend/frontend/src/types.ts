@@ -212,6 +212,9 @@ export interface Facture {
   produits: FactureProduit[]
   is_remise_auto?: boolean
   part_client?: string | number | null
+  reste_a_payer?: string
+  paiements?: any[]
+  session_ticket_number?: number
 }
 
 export interface TicketCaisse {
@@ -497,3 +500,21 @@ export interface PharmacySettings {
   font_family?: string
   website?: string
 }
+
+export interface CouponMonnaie {
+  id: number
+  numero: string
+  montant: string
+  status: 'ACTIF' | 'UTILISE' | 'EXPIRE' | 'ANNULE'
+  status_display: string
+  date_creation: string
+  date_utilisation?: string | null
+  cree_par?: number
+  cree_par_nom?: string
+  utilise_par?: number
+  utilise_par_nom?: string
+  facture_origine?: number | null
+  facture_utilisation?: number | null
+  notes?: string
+}
+

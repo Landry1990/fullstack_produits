@@ -67,3 +67,24 @@ export default tseslint.config([
   },
 ])
 ```
+
+## Testing
+
+This project uses [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) for unit and component testing.
+
+### Running Tests
+
+- Run all tests:
+  ```bash
+  npm run test
+  ```
+
+- Run tests in watch mode (default):
+  ```bash
+  npm run test
+  ```
+
+- Run tests once (CI mode):
+  ```bash
+  npm run test -- --run
+  ```

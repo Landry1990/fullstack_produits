@@ -9,7 +9,7 @@ from .models import (
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
-    Ordonnancier, LigneOrdonnancier, PharmacySettings
+    Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -351,7 +351,7 @@ class FactureSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
             'ayant_droit', 'ayant_droit_details',
-            'date', 'status', 'status_display', 'type', 'produits', 
+            'date', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
             'is_remise_auto', 'part_client', 'paiements'
@@ -715,7 +715,7 @@ class FacturePrintSerializer(serializers.ModelSerializer):
     class Meta:
         model = Facture
         fields = [
-            'id', 'numero_facture', 'date', 'status', 'type',
+            'id', 'numero_facture', 'date', 'status',
             'client', 'client_name_override', 
             'total_ht', 'total_tva', 'total_ttc', 'remise',
             'vendeur_nom', 'produits',
@@ -750,54 +750,9 @@ class FacturePrintSerializer(serializers.ModelSerializer):
     def get_tva_analysis(self, obj):
         """
         Calcule la répartition par taux de TVA.
-        Retourne une liste : [{ taux: '19.25', ht: 1000, tva: 192.5, ttc: 1192.5 }, ...]
+        Utilise la méthode centralisée du modèle.
         """
-        analysis = {}
-        
-        # On itère sur les produits pour regrouper par taux de TVA
-        # Note: ceci est une reconstruction, l'idéal serait de stocker ces totaux,
-        # mais pour l'impression on peut recalculer.
-        
-        # Pour gérer correctement la remise globale, on doit l'appliquer au prorata
-        # ou alors afficher les montants bruts et la remise à part.
-        # Le modèle utilisateur montre un tableau de TVA en bas.
-        # Dans Facture.calculate_totals on a la logique de répartition.
-        
-        # On va refaire un calcul simple basé sur les lignes
-        for ligne in obj.produits.all():
-            taux = ligne.tva
-            if taux not in analysis:
-                analysis[taux] = {'base_ht': Decimal(0), 'montant_tva': Decimal(0)}
-            
-            # Montant HT de la ligne après remise ligne (discount)
-            # ligne.selling_price est TTC.
-            # ligne.discount est un montant TTC unitaire.
-            
-            # Prix unitaire TTC net
-            pu_ttc_net = ligne.selling_price - ligne.discount
-            total_ttc_ligne = pu_ttc_net * ligne.quantity
-            
-            # Si remise globale sur la facture, on l'applique ici ?
-            # Pour l'affichage "analyse TVA", il vaut mieux montrer les valeurs nettes de remise ligne,
-            # et gérer la remise globale séparément dans les totaux finaux, 
-            # SAUF si la remise globale affecte la base d'imposition (ce qui est le cas fiscalement).
-            
-            # Appliquer la remise globale au prorata
-            ratio_remise_globale = Decimal(1)
-            if obj.total_ttc > 0 and (obj.total_ttc + obj.remise) > 0:
-                 # Ratio = Total TTC Net / Total TTC Brut
-                 # Si obj.remise est le montant de la remise
-                 total_brut_facture = obj.total_ttc + obj.remise
-                 ratio_remise_globale = obj.total_ttc / total_brut_facture
-            
-            total_ttc_ligne_net = total_ttc_ligne * ratio_remise_globale
-            
-            # Retrouver le HT
-            ht_ligne = (total_ttc_ligne_net / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
-            tva_ligne = total_ttc_ligne_net - ht_ligne
-            
-            analysis[taux]['base_ht'] += ht_ligne
-            analysis[taux]['montant_tva'] += tva_ligne
+        return obj.get_tva_analysis()
 
         return [
             {
@@ -812,3 +767,33 @@ class FacturePrintSerializer(serializers.ModelSerializer):
         # TODO: Implémenter la conversion chiffres -> lettres si besoin
         # Pour l'instant on retourne une chaîne vide ou on utilise une lib
         return ""
+
+
+class CouponMonnaieSerializer(serializers.ModelSerializer):
+    """Serializer pour les coupons de monnaie (bons de reste)."""
+    cree_par_nom = serializers.SerializerMethodField()
+    utilise_par_nom = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = CouponMonnaie
+        fields = [
+            'id', 'numero', 'montant', 'status', 'status_display',
+            'date_creation', 'date_utilisation',
+            'cree_par', 'cree_par_nom', 'utilise_par', 'utilise_par_nom',
+            'facture_origine', 'facture_utilisation', 'notes'
+        ]
+        read_only_fields = ['id', 'numero', 'date_creation', 'date_utilisation']
+    
+    def get_cree_par_nom(self, obj):
+        if obj.cree_par:
+            full_name = f"{obj.cree_par.first_name} {obj.cree_par.last_name}".strip()
+            return full_name or obj.cree_par.username
+        return ''
+    
+    def get_utilise_par_nom(self, obj):
+        if obj.utilise_par:
+            full_name = f"{obj.utilise_par.first_name} {obj.utilise_par.last_name}".strip()
+            return full_name or obj.utilise_par.username
+        return ''
+

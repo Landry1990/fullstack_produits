@@ -48,14 +48,14 @@ export default function StatistiquesFournisseur() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      console.log(`Fetching stats from ${dateDebut} to ${dateFin}`);
+
       const response = await axios.get(`${apiBaseUrl}/api/statistiques/ca_par_fournisseur/`, {
         params: {
           date_debut: dateDebut,
           date_fin: dateFin
         }
       });
-      console.log("Stats received:", response.data);
+
       setStats(response.data);
     } catch (error) {
       console.error("Erreur lors du chargement des statistiques", error);
