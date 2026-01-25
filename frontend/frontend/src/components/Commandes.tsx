@@ -20,6 +20,7 @@ import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
 import { useFormes } from '../hooks/useProduits';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -42,6 +43,7 @@ interface CommandesProps {
 export default function Commandes({ forcedType }: CommandesProps) {
   const confirm = useConfirm()
   const { user } = useAuth();
+  const navigate = useNavigate(); // For navigation to Avoirs
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
 
   const { settings: pharmacySettings } = usePharmacySettings();
@@ -195,6 +197,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
       user
   });
 
+  // Reset selection when selectedCommande changes
+  useEffect(() => {
+      setSelectedRows(new Set());
+  }, [selectedCommande]);
+
   // Sync selected commande with list
   useEffect(() => {
     if (selectedCommande && !commandes.some(c => c.id === selectedCommande.id)) {
@@ -241,7 +248,35 @@ export default function Commandes({ forcedType }: CommandesProps) {
      if (selectedCommande) handleImprimerReception(selectedCommande);
   }
 
+  const handleCreateAvoirFromCommande = () => {
+    if (!selectedCommande) return;
+    
+    // Preparer les donnees pour Avoirs.tsx
+    // Filtrer les produits si une sélection existe
+    const produitsSource = selectedCommande.produits || [];
+    const produitsAvoir = (selectedRows.size > 0 
+        ? produitsSource.filter((_, idx) => selectedRows.has(idx))
+        : produitsSource
+    ).map(p => ({
+            id: typeof p.produit === 'object' ? p.produit.id : p.produit,
+            name: (p as any).produit_nom,
+            cip: (p.produit as any)?.cip1 || (p as any).produit_cip || '',
+            purchase_price: p.price, // Cost price
+            quantity: 0, // Default to 0 to force user to input returned qty
+            received_qty: p.quantity,
+            lot: p.lot,
+            expiration: p.date_expiration
+        }));
 
+    const avoirData = {
+        fournisseur: selectedCommande.fournisseur,
+        fournisseur_nom: selectedCommande.fournisseur_nom, // Assuming this exists or fetch from list
+        source_commande: selectedCommande.id,
+        produits: produitsAvoir
+    };
+
+    navigate('/app/avoirs', { state: { createFromCommande: avoirData } });
+  }
 
   useEffect(() => {
     // Skip auto-save si import CSV en cours
@@ -1245,6 +1280,20 @@ export default function Commandes({ forcedType }: CommandesProps) {
                       ↩️ Annuler Réception
                     </button>
                   )}
+                  {/* Bouton Créer Avoir (Visible uniquement si commande clôturée) */}
+                  {selectedCommande.status === 'CLOT' && (
+                       <button
+                          type="button"
+                          className="btn btn-warning btn-sm btn-outline gap-1"
+                          onClick={handleCreateAvoirFromCommande}
+                          title="Créer un avoir / retour fournisseur à partir de cette commande"
+                       >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          {selectedRows.size > 0 ? `Retour (${selectedRows.size})` : 'Retour / Avoir'}
+                       </button>
+                  )}
              </div>
           </div>
 
@@ -1331,13 +1380,28 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
           {/* Liste des produits (Read Only) */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col max-h-[calc(100vh-350px)]">
+            <div className="overflow-y-auto flex-1">
             {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
               <p className="text-base-content/70 text-center py-8 text-sm">Aucun produit dans cette commande.</p>
             ) : (
-                <table className="table table-zebra">
+                <table className="table table-zebra table-pin-rows">
                   <thead className="bg-base-200">
                     <tr>
+                      <th className="w-10">
+                        <input 
+                            type="checkbox" 
+                            className="checkbox checkbox-xs"
+                            checked={selectedRows.size === selectedCommande.produits.length && selectedCommande.produits.length > 0}
+                            onChange={() => {
+                                if (selectedRows.size === selectedCommande.produits.length) {
+                                    setSelectedRows(new Set());
+                                } else {
+                                    setSelectedRows(new Set(selectedCommande.produits.map((_, i) => i)));
+                                }
+                            }}
+                        />
+                      </th>
                       <th className="cursor-pointer" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
                         Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                       </th>
@@ -1358,16 +1422,15 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   </thead>
                   <tbody>
                     {[...(selectedCommande.produits || [])]
-                      .map(p => {
+                      .map((p, originalIndex) => {
                         const produitData = (typeof p.produit === 'object') 
                           ? p.produit 
                           : produitsList.find(prod => prod.id === p.produit);
                         
-                        // Use produit_nom from backend if available, otherwise fallback to resolving from produitsList
                         const produitName = (p as any).produit_nom || (produitData?.name || `Produit #${p.produit}`);
                         const cip = (p as any).produit_cip || produitData?.cip1 || '-';
                         
-                        return { ...p, produitName, cip };
+                        return { ...p, produitName, cip, originalIndex };
                       })
                       .sort((a, b) => {
                         let comparison = 0;
@@ -1380,7 +1443,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         }
                         return detailSortOrder === 'asc' ? comparison : -comparison;
                       })
-                      .map(p => {
+                      .map((p) => {
                         // First check if produit is already an object from backend
                         let produitData: ProduitModel | undefined;
                         if (typeof p.produit === 'object') {
@@ -1397,7 +1460,16 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         const isDeleted = p.produit === null;
 
                         return (
-                        <tr key={p.id} className="hover">
+                        <tr key={p.id} className="hover" onClick={() => toggleRowSelection(p.originalIndex)}>
+                          <td>
+                            <input 
+                                type="checkbox" 
+                                className="checkbox checkbox-xs"
+                                checked={selectedRows.has(p.originalIndex)}
+                                onChange={() => toggleRowSelection(p.originalIndex)}
+                                onClick={(e) => e.stopPropagation()} 
+                            />
+                          </td>
                           <td className={`font-bold ${isDeleted ? 'italic' : ''}`}>
                               {p.produitName}
                               {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
@@ -1425,6 +1497,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   </tbody>
                 </table>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -1474,6 +1547,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
             updateCommandeProduitField={updateCommandeProduitField}
             handleTableFieldKeyDown={handleTableFieldKeyDown}
             onRemoveProduct={removeProductFromCommande}
+            onCreateAvoir={handleCreateAvoirFromCommande}
         />
       )}
 

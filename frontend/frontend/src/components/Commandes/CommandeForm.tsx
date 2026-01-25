@@ -9,7 +9,7 @@ interface FieldConfig {
 
 interface CommandeFormProps {
     // View State
-    viewMode: 'CREATE' | 'EDIT';
+    viewMode: 'CREATE' | 'EDIT' | 'DETAILS';
     selectedCommande: Commande | null;
     
     // Form Data
@@ -66,6 +66,7 @@ interface CommandeFormProps {
     ) => void;
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
     onRemoveProduct: (index: number) => void;
+    onCreateAvoir?: () => void; // Optional handler for creating credit note
 }
 
 export default function CommandeForm({
@@ -110,8 +111,9 @@ export default function CommandeForm({
     openTransferModal,
     updateCommandeProduitField,
     handleTableFieldKeyDown,
-    onRemoveProduct
-
+    onRemoveProduct,
+    onCreateAvoir
+ 
 }: CommandeFormProps) {
     return (
         <div className="flex flex-col h-[calc(100vh-100px)]">
@@ -214,6 +216,20 @@ export default function CommandeForm({
                     >
                       + Nouveau produit
                     </button>
+                    {/* Bouton Créer Avoir (Visible uniquement si commande clôturée et handler fourni) */}
+                    {selectedCommande?.status === 'CLOT' && onCreateAvoir && (
+                         <button
+                            type="button"
+                            className="btn btn-warning btn-sm btn-outline gap-1"
+                            onClick={onCreateAvoir}
+                            title="Créer un avoir / retour fournisseur à partir de cette commande"
+                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            Retour / Avoir
+                         </button>
+                    )}
                   </div>
                 </div>
               </div>
