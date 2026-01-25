@@ -38,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const can_delete_fournisseur = sessionStorage.getItem('can_delete_fournisseur') === 'true';
     const can_delete_commande = sessionStorage.getItem('can_delete_commande') === 'true';
     const can_close_commande = sessionStorage.getItem('can_close_commande') === 'true';
+    const can_generate_coupon = sessionStorage.getItem('can_generate_coupon') === 'true';
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
@@ -53,7 +54,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         can_adjust_stock,
         can_delete_fournisseur,
         can_delete_commande,
-        can_close_commande
+        can_close_commande,
+        can_generate_coupon,
+        profile: {
+          can_generate_coupon,
+          can_close_commande,
+          role: 'VENDEUR' // Default
+        }
       });
       // On configure axios pour inclure ce token dans toutes les futures requêtes HTTP
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
@@ -75,8 +82,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.setItem('can_delete_product', String(userData.can_delete_product || false));
     sessionStorage.setItem('can_adjust_stock', String(userData.can_adjust_stock || false));
     sessionStorage.setItem('can_delete_fournisseur', String(userData.can_delete_fournisseur || false));
-    sessionStorage.setItem('can_delete_commande', String(userData.can_delete_commande || false));
-    sessionStorage.setItem('can_close_commande', String(userData.can_close_commande || false));
+    sessionStorage.setItem('can_delete_commande', String(userData.can_delete_commande || userData.profile?.can_delete_commande || false));
+    sessionStorage.setItem('can_close_commande', String(userData.can_close_commande || userData.profile?.can_close_commande || false));
+    sessionStorage.setItem('can_generate_coupon', String(userData.can_generate_coupon || userData.profile?.can_generate_coupon || false));
     
     // 2. On met à jour l'état de l'application
     setUser(userData);
@@ -100,6 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('can_delete_fournisseur');
     sessionStorage.removeItem('can_delete_commande');
     sessionStorage.removeItem('can_close_commande');
+    sessionStorage.removeItem('can_generate_coupon');
     
     // 2. On remet l'utilisateur à null
     setUser(null);

@@ -389,7 +389,87 @@ export default function Avoirs() {
         fetchAvoirs()
         if (viewMode === 'DETAILS') setViewMode('LIST')
     } catch (err: any) {
-        toast.error('Erreur: ' + (err.response?.data?.error || err.message))
+    } finally {
+        setLoading(false)
+    }
+  }
+
+  // Handle Line Closing
+  const handleToggleCloture = async (ligneId: number, currentStatus: boolean | undefined) => {
+    // Optimistic update
+    const newStatus = !currentStatus
+    
+    // Helper to update state
+    const updateState = (status: boolean) => {
+        // Update detail view
+        setSelectedAvoir(prev => {
+            if (!prev) return null
+            return {
+                ...prev,
+                produits: prev.produits?.map(p => 
+                    p.id === ligneId ? { ...p, est_cloture: status } : p
+                ) || []
+            }
+        })
+        
+        // Update list view (for persistence when navigating back)
+        setAvoirs(prev => prev.map(a => {
+            if (a.id === selectedAvoir?.id) {
+                return {
+                    ...a,
+                    produits: a.produits?.map(p => 
+                        p.id === ligneId ? { ...p, est_cloture: status } : p
+                    )
+                }
+            }
+            return a
+        }))
+    }
+
+    updateState(newStatus)
+
+    try {
+        await axios.patch(`${ligneAvoirsEndpoint}${ligneId}/`, { est_cloture: newStatus })
+        toast.success(newStatus ? 'Ligne clôturée' : 'Ligne réouverte')
+    } catch (err) {
+        console.error(err)
+        toast.error("Erreur lors de la mise à jour")
+        updateState(!newStatus) // Revert
+    }
+  }
+
+  // Handle Bulk Closing
+  const handleToggleAllCloture = async () => {
+    if (!selectedAvoir || !selectedAvoir.produits) return
+    
+    // Determine target status: if all closed, open all. Otherwise, close all.
+    const allClosed = selectedAvoir.produits.every(p => p.est_cloture)
+    const targetStatus = !allClosed
+    
+    if (!confirm(targetStatus ? "Tout clôturer ?" : "Tout réouvrir ?")) return
+
+    setLoading(true)
+    try {
+        // Parallel requests
+        await Promise.all(selectedAvoir.produits.map(p => 
+            axios.patch(`${ligneAvoirsEndpoint}${p.id}/`, { est_cloture: targetStatus })
+        ))
+        
+        // Update states
+        const updateFn = (p: LigneAvoir) => ({ ...p, est_cloture: targetStatus })
+        
+        setSelectedAvoir(prev => prev ? ({ ...prev, produits: prev.produits?.map(updateFn) }) : null)
+        
+        setAvoirs(prev => prev.map(a => 
+            a.id === selectedAvoir.id 
+                ? { ...a, produits: a.produits?.map(updateFn) }
+                : a
+        ))
+        
+        toast.success(targetStatus ? 'Tout clôturé' : 'Tout réouvert')
+    } catch (err) {
+        console.error(err)
+        toast.error("Erreur lors de l'action de masse")
     } finally {
         setLoading(false)
     }
@@ -859,19 +939,43 @@ export default function Avoirs() {
                             <th className="text-right">Prix</th>
                             <th>Lot</th>
                             <th className="text-right">Total</th>
+                            {selectedAvoir.status === 'VALIDEE' && (
+                                <th className="text-center">
+                                    <button 
+                                        className="btn btn-xs btn-ghost font-bold" 
+                                        onClick={handleToggleAllCloture}
+                                        title="Tout Clôturer / Tout Réouvrir"
+                                    >
+                                        État (Tout)
+                                    </button>
+                                </th>
+                            )}
                         </tr>
                     </thead>
                     <tbody>
                         {selectedAvoir.produits?.map(p => (
-                            <tr key={p.id}>
+                            <tr key={p.id} className={p.est_cloture ? 'bg-base-200 opacity-60' : ''}>
                                 <td>
-                                    <div className="font-bold">{p.produit_nom}</div>
+                                    <div className={`font-bold ${p.est_cloture ? 'line-through decoration-gray-400' : ''}`}>{p.produit_nom}</div>
                                     <div className="text-xs text-gray-500">{p.produit_cip}</div>
                                 </td>
                                 <td className="text-right text-error font-bold">-{p.quantity}</td>
                                 <td className="text-right">{Number(p.price).toLocaleString()} F</td>
                                 <td>{p.lot} <span className="text-xs text-gray-400">{p.date_expiration}</span></td>
                                 <td className="text-right text-error">-{Number(p.total).toLocaleString()} F</td>
+                                {selectedAvoir.status === 'VALIDEE' && (
+                                    <td className="text-center">
+                                        <label className="cursor-pointer label justify-center">
+                                            <span className="label-text mr-2 text-xs">{p.est_cloture ? 'Clôturé' : 'En cours'}</span> 
+                                            <input 
+                                                type="checkbox" 
+                                                className="checkbox checkbox-xs checkbox-primary" 
+                                                checked={!!p.est_cloture}
+                                                onChange={() => handleToggleCloture(p.id, p.est_cloture)}
+                                            />
+                                        </label>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
@@ -879,6 +983,7 @@ export default function Avoirs() {
                          <tr className="bg-base-100 font-bold">
                             <td colSpan={4} className="text-right">TOTAL</td>
                             <td className="text-right text-error text-lg">-{Number(selectedAvoir.total_ht).toLocaleString()} F</td>
+                            {selectedAvoir.status === 'VALIDEE' && <td></td>}
                         </tr>
                     </tfoot>
                 </table>

@@ -88,9 +88,10 @@ def header_footer_facture(canvas, doc, company_info, facture_info, facture):
     
     canvas.restoreState()
 
-# Globals for session-based ticket numbering
+# Globals for session-based ticket numbering with daily reset
 SESSION_TICKET_COUNTER = 0
 INVOICE_TICKET_MAP = {}
+SESSION_TICKET_DATE = None  # Tracks the date for daily reset
 
 class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -125,6 +126,15 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         if 'BROU' in status_filter and 'VAL' in status_filter:
             global SESSION_TICKET_COUNTER
             global INVOICE_TICKET_MAP
+            global SESSION_TICKET_DATE
+            
+            # Daily reset: Check if the date has changed
+            today = date.today()
+            if SESSION_TICKET_DATE != today:
+                SESSION_TICKET_COUNTER = 0
+                INVOICE_TICKET_MAP = {}
+                SESSION_TICKET_DATE = today
+                print(f"DEBUG: Daily reset - Ticket counter reset for {today}")
             
             # Handle pagination
             data_list = response.data['results'] if isinstance(response.data, dict) and 'results' in response.data else response.data

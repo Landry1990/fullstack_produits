@@ -4,6 +4,10 @@ def apply_multiterm_search(queryset, search_query, search_fields):
     """
     Applique une recherche multi-termes sur un queryset.
     
+    Comportement:
+    - Recherche simple (un mot, ex: "DOLI"): cherche les produits qui COMMENCENT par ce mot
+    - Recherche multi-termes (ex: "DOLI 500"): cherche les produits qui CONTIENNENT tous les termes
+    
     Args:
         queryset: Le queryset Django à filtrer
         search_query: La chaîne de recherche (ex: "doli 500")
@@ -16,6 +20,7 @@ def apply_multiterm_search(queryset, search_query, search_fields):
         return queryset
         
     terms = search_query.split()
+    is_single_term = len(terms) == 1
     
     for term in terms:
         # Chaque terme doit matcher au moins un des champs (OR entre champs)
@@ -32,9 +37,17 @@ def apply_multiterm_search(queryset, search_query, search_fields):
                  if parts[-1] in known_lookups:
                      lookup = clean_field
                  else:
-                     lookup = f"{clean_field}__icontains"
+                     # Recherche simple = préfixe, recherche multi = contient
+                     if is_single_term:
+                         lookup = f"{clean_field}__istartswith"
+                     else:
+                         lookup = f"{clean_field}__icontains"
             else:
-                lookup = f"{clean_field}__icontains"
+                # Recherche simple = préfixe, recherche multi = contient
+                if is_single_term:
+                    lookup = f"{clean_field}__istartswith"
+                else:
+                    lookup = f"{clean_field}__icontains"
                 
             term_query |= Q(**{lookup: term})
         

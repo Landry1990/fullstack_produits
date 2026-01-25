@@ -50,7 +50,7 @@ class RapportViewSet(viewsets.ViewSet):
         marge_brute = ca_ht - cout_achat_total
         marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')
         
-        # 4. Encaissements réels effectués pendant le mois
+        # 4. Encaissements réels (Cash flow)
         encaissements = Caisse.objects.filter(
             date_paiement__gte=date_debut,
             date_paiement__lt=date_fin,
@@ -69,6 +69,22 @@ class RapportViewSet(viewsets.ViewSet):
             }
             for enc in encaissements
         ]
+
+        # 4b. Ventes à crédit (En compte)
+        ventes_credit = Caisse.objects.filter(
+            date_paiement__gte=date_debut,
+            date_paiement__lt=date_fin,
+            statut='completee',
+            mode_paiement='en_compte'
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+
+        # 4c. Coupons utilisés (Réductions)
+        # On regarde les coupons utilisés sur les factures de la période
+        from api.models import CouponMonnaie
+        coupons_total = CouponMonnaie.objects.filter(
+            facture_utilisation__in=factures,
+            status='UTILISE'
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
         
         # 5. Créances à percevoir (GLOBAL : toutes les factures avec reste à payer)
         # Alignement avec CreanceViewSet : inclure VALIDEE et PAYEE
@@ -273,6 +289,8 @@ class RapportViewSet(viewsets.ViewSet):
                 'marge_pct': round(marge_pct, 2)
             },
             'encaissements': encaissements_data,
+            'ventes_credit': ventes_credit,
+            'coupons_total': coupons_total,
             'creances_a_percevoir': total_creances,
             'creances': {
                 'total': total_creances,
@@ -552,7 +570,28 @@ class RapportViewSet(viewsets.ViewSet):
         enc_rows.append(['TOTAL', format_currency(total_enc)])
         t_enc = Table(enc_rows, colWidths=[5*cm, 3*cm])
         t_enc.setStyle(compact_table_style())
+        t_enc = Table(enc_rows, colWidths=[5*cm, 3*cm])
+        t_enc.setStyle(compact_table_style())
         story.append(t_enc)
+        
+        # Ajout section Crédits et Coupons pour équilibrer le CA
+        if data.get('ventes_credit', 0) > 0 or data.get('coupons_total', 0) > 0:
+            extra_rows = []
+            if data.get('ventes_credit', 0) > 0:
+                extra_rows.append(['Ventes à Crédit', format_currency(data['ventes_credit'])])
+            if data.get('coupons_total', 0) > 0:
+                extra_rows.append(['Coupons', format_currency(data['coupons_total'])])
+            
+            # Total explicatif (Enc + Credit + Coupons should match CA approx)
+            total_expl = sum(e['montant'] for e in data['encaissements']) + data.get('ventes_credit', 0) + data.get('coupons_total', 0)
+            extra_rows.append(['TOTAL EXPLIQUÉ', format_currency(total_expl)])
+            
+            t_extra = Table(extra_rows, colWidths=[5*cm, 3*cm])
+            t_extra.setStyle(compact_table_style())
+            # Petit espacement avant d'ajouter
+            story.append(Spacer(1, 2))
+            story.append(t_extra)
+
         story.append(Spacer(1, 4))
         
         # Mouvements Caisse (si existants)
