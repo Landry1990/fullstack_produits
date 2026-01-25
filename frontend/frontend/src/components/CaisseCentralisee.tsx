@@ -36,6 +36,9 @@ export default function CaisseCentralisee() {
   const [couponTrouve, setCouponTrouve] = useState<CouponMonnaie | null>(null)
   const [isDetailsCouponModalOpen, setIsDetailsCouponModalOpen] = useState(false)
   const [isSudoModalOpen, setIsSudoModalOpen] = useState(false)
+  
+  // Coupon à appliquer sur la vente en cours (déduction du montant à payer)
+  const [couponApplique, setCouponApplique] = useState<CouponMonnaie | null>(null)
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
 
@@ -53,7 +56,11 @@ export default function CaisseCentralisee() {
         facturesList.map(async (facture: Facture) => {
           try {
             const detailResponse = await axios.get(`${facturesEndpoint}${facture.id}/`)
-            return detailResponse.data
+            // Preserve session_ticket_number from list response (assigned by backend)
+            return { 
+              ...detailResponse.data, 
+              session_ticket_number: facture.session_ticket_number 
+            }
           } catch (err) {
             console.error(`Failed to fetch details for invoice ${facture.id}:`, err)
             return facture // Fallback to list data
@@ -126,25 +133,34 @@ export default function CaisseCentralisee() {
     }
   }
 
-  // Utiliser un coupon
-  const handleUtiliserCoupon = async (couponId: number) => {
-    if (!window.confirm('Confirmer l\'utilisation de ce coupon ?')) return
+  // Appliquer un coupon à la vente (déduction du montant à payer)
+  const handleAppliquerCoupon = (coupon: CouponMonnaie) => {
+    if (coupon.status !== 'ACTIF') {
+      toast.error('Ce coupon n\'est pas actif')
+      return
+    }
+    setCouponApplique(coupon)
+    setIsDetailsCouponModalOpen(false)
+    setCouponTrouve(null)
+    setSearchCouponNumero('')
+    toast.success(`Coupon #${coupon.numero} appliqué (-${coupon.montant} F)`)
+  }
+  
+  // Retirer le coupon appliqué
+  const handleRetirerCoupon = () => {
+    setCouponApplique(null)
+    toast('Coupon retiré', { icon: '🗑️' })
+  }
 
-    setLoading(true)
+  // Utiliser réellement le coupon (appelé après encaissement réussi)
+  const utiliserCouponApresEncaissement = async (couponId: number, factureId: number) => {
     try {
       const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/${couponId}/utiliser/` : `/api/coupons/${couponId}/utiliser/`
-      await axios.post(endpoint, { facture_id: selectedFacture?.id || null })
-      
-      toast.success('Coupon utilisé avec succès')
+      await axios.post(endpoint, { facture_id: factureId })
       fetchCoupons()
-      setIsDetailsCouponModalOpen(false)
-      setCouponTrouve(null)
-      setSearchCouponNumero('')
     } catch (err: any) {
       console.error('Erreur utilisation coupon:', err)
-      toast.error(err.response?.data?.detail || "Erreur lors de l'utilisation du coupon")
-    } finally {
-      setLoading(false)
+      // Ne pas bloquer - le paiement a réussi
     }
   }
 
@@ -180,9 +196,14 @@ export default function CaisseCentralisee() {
   const handleEncaisser = (facture: Facture) => {
     setSelectedFacture(facture)
     // Suggest part_client if available and positive, otherwise total_ttc
-    const amountToPay = (facture.part_client !== null && Number(facture.part_client) >= 0) 
+    let amountToPay = (facture.part_client !== null && Number(facture.part_client) >= 0) 
       ? Number(facture.part_client) 
       : Number(facture.total_ttc)
+    
+    // Déduire le coupon si appliqué
+    if (couponApplique) {
+      amountToPay = Math.max(0, amountToPay - Number(couponApplique.montant))
+    }
     
     setMontantPaye(Math.round(amountToPay).toString())
     setModePaiement('especes')
@@ -280,6 +301,12 @@ export default function CaisseCentralisee() {
 
       // 7. Rafraîchir la liste
       await fetchFacturesEnAttente()
+      
+      // 8. Si un coupon était appliqué, le marquer comme utilisé
+      if (couponApplique) {
+        await utiliserCouponApresEncaissement(couponApplique.id, factureFinale.id)
+        setCouponApplique(null) // Reset pour la prochaine vente
+      }
 
       toast.success(`Facture #${factureFinale.numero_facture} encaissée avec succès !`)
     } catch (err: any) {
@@ -402,6 +429,17 @@ export default function CaisseCentralisee() {
             </svg>
             Coupons ({coupons.filter(c => c.status === 'ACTIF').length} actifs)
           </button>
+          {/* Indicateur de coupon appliqué */}
+          {couponApplique && (
+            <div className="badge badge-lg badge-success gap-2 animate-pulse">
+              <span>Coupon #{couponApplique.numero}: -{couponApplique.montant} F</span>
+              <button 
+                onClick={handleRetirerCoupon}
+                className="btn btn-xs btn-circle btn-ghost"
+                title="Retirer le coupon"
+              >×</button>
+            </div>
+          )}
           <div className="badge badge-lg badge-error">
             {facturesEnAttente.length} en attente
           </div>
@@ -421,7 +459,8 @@ export default function CaisseCentralisee() {
                 <button 
                   onClick={() => setIsGenererCouponModalOpen(true)}
                   className="btn btn-sm btn-circle btn-primary"
-                  title="Générer un coupon"
+                  title={user?.is_superuser || user?.profile?.can_generate_coupon ? "Générer un coupon" : "Permission requise"}
+                  disabled={!user?.is_superuser && !user?.profile?.can_generate_coupon}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                 </button>
@@ -445,49 +484,65 @@ export default function CaisseCentralisee() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
+            <div className="flex-1 overflow-y-auto">
               {coupons.length === 0 ? (
                 <div className="text-center py-10 text-base-content/40 italic text-sm">
                   Aucun coupon
                 </div>
               ) : (
-                coupons.map(coupon => (
-                  <div 
-                    key={coupon.id} 
-                    className={`card compact border hover:shadow-md transition-all cursor-pointer ${
-                      coupon.status === 'ACTIF' ? 'bg-base-50 border-base-200' : 'bg-base-200/50 border-base-300'
-                    }`}
-                    onClick={() => { setCouponTrouve(coupon); setIsDetailsCouponModalOpen(true); }}
-                  >
-                    <div className="card-body p-3">
-                      <div className="flex justify-between items-start">
-                        <span className="font-mono text-xs font-bold text-base-content/60">#{coupon.numero}</span>
-                        <span className={`badge badge-sm ${
-                          coupon.status === 'ACTIF' ? 'badge-success' : 
-                          coupon.status === 'UTILISE' ? 'badge-neutral' :
-                          coupon.status === 'EXPIRE' ? 'badge-warning' : 'badge-error'
-                        }`}>
-                          {coupon.status_display || coupon.status}
-                        </span>
-                      </div>
-                      <div className={`text-xl font-black mt-1 ${coupon.status === 'ACTIF' ? 'text-primary' : 'text-base-content/50'}`}>
-                        {Math.round(Number(coupon.montant))} F
-                      </div>
-                      <div className="text-[10px] text-base-content/50 mt-1">
-                        Généré le {new Date(coupon.date_creation).toLocaleDateString('fr-FR')}
-                      </div>
-                      {/* Afficher les infos d'utilisation si le coupon est utilisé */}
-                      {coupon.status === 'UTILISE' && coupon.date_utilisation && (
-                        <div className="text-[10px] text-base-content/60 mt-1 pt-1 border-t border-base-300">
-                          <div>Utilisé le {new Date(coupon.date_utilisation).toLocaleDateString('fr-FR')} à {new Date(coupon.date_utilisation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
-                          {coupon.utilise_par_nom && (
-                            <div>Par: <span className="font-semibold">{coupon.utilise_par_nom}</span></div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
+                <table className="table table-xs table-zebra w-full">
+                  <thead className="sticky top-0 bg-base-100 z-10">
+                    <tr>
+                      <th className="text-xs">N°</th>
+                      <th className="text-xs text-right">Montant</th>
+                      <th className="text-xs">Date</th>
+                      <th className="text-xs">Utilisé par</th>
+                      <th className="text-xs text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {coupons.map(coupon => (
+                      <tr 
+                        key={coupon.id} 
+                        className={`cursor-pointer hover:bg-primary/10 transition-colors ${
+                          coupon.status !== 'ACTIF' ? 'opacity-60' : ''
+                        }`}
+                        onClick={() => { setCouponTrouve(coupon); setIsDetailsCouponModalOpen(true); }}
+                        title={coupon.status === 'UTILISE' && coupon.date_utilisation 
+                          ? `Utilisé le ${new Date(coupon.date_utilisation).toLocaleDateString('fr-FR')} à ${new Date(coupon.date_utilisation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${coupon.utilise_par_nom ? ` par ${coupon.utilise_par_nom}` : ''}`
+                          : ''
+                        }
+                      >
+                        <td className="font-mono text-xs font-bold">
+                          #{coupon.numero}
+                        </td>
+                        <td className={`text-right font-bold ${coupon.status === 'ACTIF' ? 'text-primary' : 'text-base-content/50'}`}>
+                          {Math.round(Number(coupon.montant))} F
+                        </td>
+                        <td className="text-[10px] text-base-content/60">
+                          {new Date(coupon.date_creation).toLocaleDateString('fr-FR')}
+                        </td>
+                        <td className="text-[10px] text-base-content/60">
+                          {coupon.status === 'UTILISE' && coupon.utilise_par_nom 
+                            ? coupon.utilise_par_nom 
+                            : coupon.status === 'UTILISE' 
+                              ? <span className="italic">N/A</span> 
+                              : '-'
+                          }
+                        </td>
+                        <td className="text-center">
+                          <span className={`badge badge-xs ${
+                            coupon.status === 'ACTIF' ? 'badge-success' : 
+                            coupon.status === 'UTILISE' ? 'badge-neutral' :
+                            coupon.status === 'EXPIRE' ? 'badge-warning' : 'badge-error'
+                          }`}>
+                            {coupon.status === 'ACTIF' ? '✓' : coupon.status === 'UTILISE' ? '✗' : '!'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>
@@ -567,12 +622,16 @@ export default function CaisseCentralisee() {
                     {(facture.part_client !== null && Number(facture.part_client) >= 0) 
                       ? 'Part Client' 
                       : 'Montant TTC'}
+                    {couponApplique && ' (Coupon appliqué)'}
                   </span>
                   <span className="text-3xl font-bold text-success">
                     {Math.round(
-                      (facture.part_client !== null && Number(facture.part_client) >= 0)
-                        ? Number(facture.part_client)
-                        : Number(facture.total_ttc)
+                      Math.max(0, 
+                        ((facture.part_client !== null && Number(facture.part_client) >= 0)
+                          ? Number(facture.part_client)
+                          : Number(facture.total_ttc)) 
+                        - (couponApplique ? Number(couponApplique.montant) : 0)
+                      )
                     )} F
                   </span>
                 </div>
@@ -632,11 +691,19 @@ export default function CaisseCentralisee() {
               <div className="text-sm text-base-content/60">Total à payer</div>
               <div className="text-4xl font-bold text-primary">
                 {Math.round(
-                  (selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
-                    ? Number(selectedFacture.part_client)
-                    : Number(selectedFacture.total_ttc)
+                  Math.max(0,
+                    ((selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
+                      ? Number(selectedFacture.part_client)
+                      : Number(selectedFacture.total_ttc))
+                    - (couponApplique ? Number(couponApplique.montant) : 0)
+                  )
                 )} F
               </div>
+              {couponApplique && (
+                <div className="badge badge-success mt-2 gap-1">
+                  <span>Coupon #{couponApplique.numero}: -{couponApplique.montant} F</span>
+                </div>
+              )}
               {(selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0) && (
                  <div className="badge badge-info mt-2">Part Client (Tiers Payant actif)</div>
               )}
@@ -1236,14 +1303,14 @@ export default function CaisseCentralisee() {
                 }}
               >Imprimer</button>
               <div className="flex gap-2">
-                <button className="btn btn-sm btn-ghost" onClick={() => setIsDetailsCouponModalOpen(false)}>Fermer</button>
+                <button className="btn btn-sm btn-ghost" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}>Fermer</button>
                 {couponTrouve.status === 'ACTIF' && (
-                  <button className="btn btn-sm btn-success text-white" onClick={() => handleUtiliserCoupon(couponTrouve.id)}>Utiliser</button>
+                  <button className="btn btn-sm btn-success text-white" onClick={() => handleAppliquerCoupon(couponTrouve)}>Appliquer</button>
                 )}
               </div>
             </div>
           </div>
-          <div className="modal-backdrop" onClick={() => setIsDetailsCouponModalOpen(false)}></div>
+          <div className="modal-backdrop" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}></div>
         </div>
       )}
     </div>

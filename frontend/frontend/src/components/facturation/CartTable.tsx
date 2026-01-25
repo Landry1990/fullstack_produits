@@ -1,5 +1,6 @@
 import React from 'react'
 import type { LigneFacture, ProduitModel } from '../../types'
+import { differenceInDays, parseISO } from 'date-fns'
 
 interface CartTableProps {
   lignesFacture: LigneFacture[]
@@ -103,10 +104,24 @@ export default function CartTable({
             </td>
             <td className="text-center py-1 hidden md:table-cell">
               <div className="text-xs text-base-content/60">
-                {ligne.lotId && ligne.lotExpiration 
-                  ? formatDate(ligne.lotExpiration)
-                  : formatDate(ligne.produit.expire_date)
-                }
+                {(() => {
+                    const dateStr = ligne.lotId && ligne.lotExpiration ? ligne.lotExpiration : ligne.produit.expire_date
+                    if (!dateStr) return '-'
+                    
+                    const isExp = differenceInDays(parseISO(dateStr), new Date()) <= 0
+                    const isNear = differenceInDays(parseISO(dateStr), new Date()) <= 90
+                    
+                    return (
+                        <span className={`
+                            ${isExp ? 'text-error font-bold' : ''} 
+                            ${isNear && !isExp ? 'text-warning font-medium' : ''}
+                        `}>
+                            {formatDate(dateStr)}
+                            {isExp && <span title="Périmé"> ⚠️</span>}
+                            {!isExp && isNear && <span title="Bientôt périmé"> ⏳</span>}
+                        </span>
+                    )
+                })()}
               </div>
             </td>
             <td className="text-center py-1">

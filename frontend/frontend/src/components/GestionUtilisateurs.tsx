@@ -23,6 +23,7 @@ interface User {
     can_delete_fournisseur?: boolean;
     can_delete_commande?: boolean;
     can_close_commande?: boolean;
+    can_generate_coupon?: boolean;
   };
 }
 
@@ -76,6 +77,7 @@ export default function GestionUtilisateurs() {
     can_delete_fournisseur: false,
     can_delete_commande: false,
     can_close_commande: false,
+    can_generate_coupon: false,
   });
 
   useEffect(() => {
@@ -109,6 +111,7 @@ export default function GestionUtilisateurs() {
       updates.can_delete_fournisseur = true;
       updates.can_delete_commande = true;
       updates.can_close_commande = true;
+      updates.can_generate_coupon = true;
       updates.allowed_menus = AVAILABLE_MENUS.map(m => m.key);
     } else if (role === 'CAISSIER') {
       updates.is_superuser = false;
@@ -120,6 +123,7 @@ export default function GestionUtilisateurs() {
       updates.can_delete_fournisseur = false;
       updates.can_delete_commande = false;
       updates.can_close_commande = false;
+      updates.can_generate_coupon = false;
       updates.allowed_menus = ['ventes', 'facturation', 'caisse', 'clients', 'produits'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
@@ -131,6 +135,7 @@ export default function GestionUtilisateurs() {
       updates.can_delete_fournisseur = false;
       updates.can_delete_commande = false;
       updates.can_close_commande = false;
+      updates.can_generate_coupon = false;
       // Vendeur a accès à la caisse pour les rappels seulement (sera géré dans CaisseCentralisee)
       updates.allowed_menus = ['facturation', 'caisse', 'produits', 'clients', 'rayons'];
     }
@@ -158,6 +163,7 @@ export default function GestionUtilisateurs() {
         can_delete_fournisseur: user.profile?.can_delete_fournisseur || false,
         can_delete_commande: user.profile?.can_delete_commande || false,
         can_close_commande: user.profile?.can_close_commande || false,
+        can_generate_coupon: user.profile?.can_generate_coupon || false,
       });
     } else {
       setEditingUser(null);
@@ -178,6 +184,7 @@ export default function GestionUtilisateurs() {
         can_delete_fournisseur: false,
         can_delete_commande: false,
         can_close_commande: false,
+        can_generate_coupon: false,
       });
       handleRoleChange('VENDEUR'); // Initialize defaults
     }
@@ -571,6 +578,16 @@ export default function GestionUtilisateurs() {
                       onChange={e => setFormData({...formData, can_close_commande: e.target.checked})}
                     />
                     <span className="label-text text-sm">Clôturer Commandes</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs checkbox-warning"
+                      checked={formData.can_generate_coupon}
+                      onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Générer des Coupons</span>
                   </label>
                 </div>
               </div>

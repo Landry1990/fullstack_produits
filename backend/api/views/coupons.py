@@ -21,13 +21,23 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """
         Filtre les coupons par statut si demandé.
-        Le filtre status est appliqué AVANT la recherche pour garantir que seuls les coupons actifs sont retournés.
+        Si 'search' contient uniquement des chiffres, on fait une correspondance exacte sur le numéro.
         """
         queryset = super().get_queryset()
         status_param = self.request.query_params.get('status')
         if status_param:
             # Filtrer par statut AVANT la recherche
             queryset = queryset.filter(status=status_param)
+        
+        # Si le paramètre search est un numéro, faire une recherche exacte
+        search_param = self.request.query_params.get('search')
+        if search_param:
+            # Nettoyer le numéro (enlever # si présent)
+            clean_numero = search_param.strip().lstrip('#')
+            # Si c'est un numéro (que des chiffres), chercher exactement ce numéro
+            if clean_numero.isdigit():
+                queryset = queryset.filter(numero=clean_numero)
+        
         return queryset
     
     def perform_create(self, serializer):
@@ -72,23 +82,9 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
         coupon.utilise_par = request.user
         if facture:
             coupon.facture_utilisation = facture
-            
-            # [FIX] Créer le paiement correspondant au coupon pour solder la facture
-            try:
-                Caisse.objects.create(
-                    facture=facture,
-                    mode_paiement='coupon',
-                    montant=coupon.montant,
-                    user=request.user,
-                    statut='completee',
-                    reference=f"COUPON-{coupon.numero}",
-                    part_patient=None,
-                    part_assurance=None
-                )
-                logger.info(f"Paiement Caisse créé pour le coupon #{coupon.numero} (Montant: {coupon.montant})")
-            except Exception as e:
-                logger.error(f"ERREUR lors de la création du paiement Caisse pour le coupon: {e}")
-                # On ne bloque pas l'utilisation du coupon, mais c'est grave
+            # Note: Le coupon réduit le montant à payer, il n'est PAS un paiement
+            # Le frontend doit déduire le montant du coupon du total à encaisser
+            logger.info(f"Coupon #{coupon.numero} associé à la facture {facture.id} - Montant: {coupon.montant} F")
 
         
         # Sauvegarder et rafraîchir depuis la base de données

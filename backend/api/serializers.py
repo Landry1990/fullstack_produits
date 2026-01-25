@@ -17,7 +17,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = [
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
-            'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande'
+            'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
+            'can_generate_coupon'
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
@@ -63,6 +64,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_delete_fournisseur = profile_data.get('can_delete_fournisseur', False)
             profile.can_delete_commande = profile_data.get('can_delete_commande', False)
             profile.can_close_commande = profile_data.get('can_close_commande', False)
+            profile.can_generate_coupon = profile_data.get('can_generate_coupon', False)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
             
@@ -93,6 +95,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_delete_fournisseur = profile_data.get('can_delete_fournisseur', profile.can_delete_fournisseur)
             profile.can_delete_commande = profile_data.get('can_delete_commande', profile.can_delete_commande)
             profile.can_close_commande = profile_data.get('can_close_commande', profile.can_close_commande)
+            profile.can_generate_coupon = profile_data.get('can_generate_coupon', profile.can_generate_coupon)
             profile.role = profile_data.get('role', profile.role)
             profile.save()
             

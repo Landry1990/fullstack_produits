@@ -372,6 +372,7 @@ export interface LigneAvoir {
   lot: string
   date_expiration: string
   total: string
+  est_cloture?: boolean
 }
 
 export interface Promis {
@@ -454,7 +455,23 @@ export interface User {
   is_superuser: boolean;
   token?: string;
   allowed_menus?: string[];
-  // Permissions
+
+  // Profile nested object (backend structure)
+  profile?: {
+    role?: string;
+    allowed_menus?: string[];
+    can_do_returns?: boolean;
+    can_sell_negative_stock?: boolean;
+    can_cash_out?: boolean;
+    can_delete_product?: boolean;
+    can_adjust_stock?: boolean;
+    can_delete_fournisseur?: boolean;
+    can_delete_commande?: boolean;
+    can_close_commande?: boolean;
+    can_generate_coupon?: boolean;
+  };
+
+  // Legacy flat permissions (kept for compatibility if used elsewhere)
   can_do_returns?: boolean;
   can_sell_negative_stock?: boolean;
   can_cash_out?: boolean;
@@ -463,6 +480,7 @@ export interface User {
   can_delete_commande?: boolean;
   can_close_commande?: boolean;
   can_delete_fournisseur?: boolean;
+  can_generate_coupon?: boolean;
 }
 
 export interface LigneFacture {

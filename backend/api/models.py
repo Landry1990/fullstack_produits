@@ -24,7 +24,8 @@ class Profile(models.Model):
     can_adjust_stock = models.BooleanField(default=False, verbose_name="Ajuster le stock manuellement")
     can_delete_fournisseur = models.BooleanField(default=False, verbose_name="Supprimer des fournisseurs")
     can_delete_commande = models.BooleanField(default=False, verbose_name="Supprimer des commandes")
-    can_close_commande = models.BooleanField(default=False, verbose_name="Cl├┤turer des commandes")
+    can_close_commande = models.BooleanField(default=False, verbose_name="Clôturer des commandes")
+    can_generate_coupon = models.BooleanField(default=False, verbose_name="Générer des coupons")
 
     ROLE_CHOICES = [
         ('PHARMACIEN', 'Pharmacien'),
@@ -370,7 +371,13 @@ class Produit(models.Model):
     dernier_vente = models.DateField(
         blank=True, 
         null=True,
-        help_text="Date de la derni├¿re vente"
+        help_text="Date de la dernière vente"
+    )
+    
+    # Vitrine - Disponibilité en ligne
+    is_public = models.BooleanField(
+        default=False,
+        help_text="Produit visible sur la vitrine en ligne"
     )
 
     def save(self, *args, **kwargs):
@@ -823,13 +830,12 @@ class RelevePaiement(models.Model):
 
 class Caisse(models.Model):
     MODES_PAIEMENT = [
-        ('especes', 'Esp├¿ces'),
-        ('cheque', 'Ch├¿que'),
+        ('especes', 'Espèces'),
+        ('cheque', 'Chèque'),
         ('carte', 'Carte'),
         ('virement', 'Virement'),
         ('om', 'Orange Money'),
         ('momo', 'Mobile Money'),
-        ('coupon', 'Coupon Monnaie'),
         ('en_compte', 'En compte'),
     ]
     
@@ -1159,6 +1165,9 @@ class LigneAvoir(models.Model):
     lot = models.CharField(max_length=100, blank=True)
     date_expiration = models.DateField(null=True, blank=True)
     
+    # Nouveau champ pour la clôture administrative
+    est_cloture = models.BooleanField(default=False, help_text="Indique si cette ligne est administrativement clôturée")
+
     class Meta:
         verbose_name = "Ligne d'avoir"
         verbose_name_plural = "Lignes d'avoir"
