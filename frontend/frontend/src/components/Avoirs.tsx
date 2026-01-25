@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot } from '../types'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
+import { useLocation } from 'react-router-dom'
 
 export default function Avoirs() {
   const [avoirs, setAvoirs] = useState<Avoir[]>([])
@@ -108,12 +109,9 @@ export default function Avoirs() {
       setAvoirs(Array.isArray(avoirsData) ? avoirsData : (avoirsData.results || []))
     } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
-             // Silence error or show toast, using state only if needed
              console.error(err)
-             // setError(err.response?.data?.message ?? err.message ?? 'Erreur lors du chargement')
         } else {
              console.error(err)
-             // setError('Erreur inconnue')
         }
     } finally {
       setLoading(false)
@@ -123,6 +121,45 @@ export default function Avoirs() {
   useEffect(() => {
     fetchAvoirs(debouncedListSearch)
   }, [fetchAvoirs, debouncedListSearch])
+
+  // Handle Navigation State (Create from Commande)
+  const location = useLocation();
+  
+  useEffect(() => {
+      if (location.state && (location.state as any).createFromCommande) {
+          const data = (location.state as any).createFromCommande;
+          
+          handleCreateNew();
+          
+          // Pre-fill fields
+          if (data.fournisseur) {
+              setSelectedFournisseurId(String(data.fournisseur));
+              setFournisseurSearch(data.fournisseur_nom || '');
+          }
+          
+          // Set Type based on typical return scenario (default PERIME, can be changed)
+          setTypeAvoir('PERIME'); 
+          setObservations(`Retour suite à commande #${data.source_commande}`);
+          
+          // Pre-fill lines
+          if (Array.isArray(data.produits)) {
+              const newLignes: LigneAvoir[] = data.produits.map((p: any, idx: number) => ({
+                  id: Date.now() + idx,
+                  avoir: 0,
+                  produit: { id: p.id, name: p.name, cip1: p.cip, stock: 0 } as any, // Minimal product object
+                  quantity: p.quantity || 0, // Should be 0 or returned qty
+                  price: p.purchase_price || '0',
+                  lot: p.lot || '',
+                  date_expiration: p.expiration || '',
+                  total: '0'
+              }));
+              setLignes(newLignes);
+          }
+          
+          // Clear state to avoid re-triggering on refresh (optional, but good practice)
+          window.history.replaceState({}, document.title);
+      }
+  }, [location.state]);
 
   // Handlers
   const handleCreateNew = () => {

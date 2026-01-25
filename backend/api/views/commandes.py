@@ -430,12 +430,15 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             "tel": "697268949"
         }
 
+        # Date de réception : Utiliser la date de clôture si disponible, sinon maintenant (fallback)
+        date_reception_str = commande.date_cloture.strftime("%d/%m/%Y") if commande.date_cloture else datetime.now().strftime("%d/%m/%Y")
+
         commande_info = {
             "commande_id": commande.id,
             "fournisseur_name": commande.fournisseur.name,
             "fournisseur_address": commande.fournisseur.address,
             "date_commande": commande.date.strftime("%d/%m/%Y"),
-            "date_reception": datetime.now().strftime("%d/%m/%Y")
+            "date_reception": date_reception_str
         }
 
         doc = BaseDocTemplate(buffer, pagesize=letter, topMargin=2.5*inch, bottomMargin=1*inch)
@@ -529,7 +532,11 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             
             # Récupérer le lot de la commande (priorité) ou générer un par défaut
             lot_info = item.lot if item.lot else f"LOT-{commande.id}-{produit.id}"
-            date_entree = commande.date.strftime('%d/%m/%Y') if commande.date else ""
+            
+            # Utiliser la date de clôture (réception effective) si disponible, sinon date commande
+            ref_date = commande.date_cloture if commande.date_cloture else commande.date
+            date_entree = ref_date.strftime('%d/%m/%Y') if ref_date else ""
+            
             fournisseur_name = commande.fournisseur.name if commande.fournisseur else ""
             invoice_ref = commande.numero_facture if commande.numero_facture else ""
             
