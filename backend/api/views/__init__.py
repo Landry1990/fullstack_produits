@@ -2,6 +2,7 @@ from .produits import (
     ProduitViewSet, CategorieViewSet, FournisseurViewSet, 
     CategoriesListView, CategoriesDetailView
 )
+from .groupes import GroupeViewSet
 from .clients import ClientViewSet, AyantDroitViewSet
 from .commandes import (
     CommandeViewSet, CommandeProduitViewSet, AvoirViewSet, LigneAvoirViewSet, 
@@ -35,7 +36,7 @@ from ..ordonnancier_view import OrdonnancierViewSet
 # Expose all for import from api.views
 __all__ = [
     'ProduitViewSet', 'CategorieViewSet', 'FournisseurViewSet',
-    'CategoriesListView', 'CategoriesDetailView',
+    'CategoriesListView', 'CategoriesDetailView', 'GroupeViewSet',
     'ClientViewSet', 'AyantDroitViewSet',
     'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet', 
     'PromisViewSet', 'generer_suggestions_commande',

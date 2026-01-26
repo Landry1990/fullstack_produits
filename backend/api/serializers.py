@@ -9,7 +9,8 @@ from .models import (
     Inventaire, LigneInventaire, MouvementCaisse, Avoir, LigneAvoir,
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
-    Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie
+    Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
+    Groupe
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -173,15 +174,82 @@ class ClientSerializer(serializers.ModelSerializer):
                     
         return instance
 
+class GroupeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Groupe
+        fields = ['id', 'nom', 'description']
+
 class ProduitSerializer(serializers.ModelSerializer):
-    rayon_name = serializers.CharField(source='rayon.name', read_only=True)
-    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    rayon_nom = serializers.CharField(source='rayon.name', read_only=True)
+    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
+    groupe_nom = serializers.CharField(source='groupe.nom', read_only=True)
+    stock = serializers.IntegerField(read_only=True)
+    valeur_stock = serializers.SerializerMethodField()
+    next_expiring_date = serializers.SerializerMethodField()
+    stock_lots = serializers.SerializerMethodField()
 
     class Meta:
         model = Produit
-        fields = '__all__'
+        fields = [
+            'id', 'rayon', 'rayon_nom', 'fournisseur', 'fournisseur_nom', 'forme', 'forme_nom',
+            'groupe', 'groupe_nom',
+            'name', 'description', 
+            'stock', 'stock_alert', 'cip1', 'cip2', 'cip3',
+            'cost_price', 'selling_price', 'expire_date', 
+            'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
+            'stock_lots', 'requires_prescription', 'surveillance_category',
+            'dernier_achat', 'dernier_vente', 'is_public',
+            'taux_marge', 'pourcentage_marge'
+        ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
+
+    def get_valeur_stock(self, obj):
+        # Calcul de la valeur totale du stock pour ce produit
+        # Si gestion par lot, somme des valeurs des lots
+        if obj.use_lot_management:
+            from django.db.models import F, DecimalField
+            total_value = obj.stock_lots.aggregate(
+                total=Sum(F('quantity_remaining') * F('price_cost'), output_field=DecimalField())
+            )['total']
+            return total_value if total_value is not None else Decimal('0.00')
+        # Sinon, stock * prix d'achat
+        return obj.stock * obj.cost_price if obj.stock is not None and obj.cost_price is not None else Decimal('0.00')
+
+    def get_stock_lots(self, obj):
+        if obj.use_lot_management:
+            # Retourne les lots avec stock > 0, triés par date d'expiration
+            return StockLotSerializer(obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'), many=True).data
+        return []
+
+    def get_next_expiring_date(self, obj):
+        """
+        Retourne la date d'expiration la plus proche :
+        1. Soit celle définie directement sur le produit (si produit simple)
+        2. Soit celle du lot qui expire le plus tôt (si gestion par lot)
+        """
+        # Priorité à la date directe si présente (produit simple) ou gestion hybride
+        direct_date = obj.expire_date
+        
+        # Si gestion par lots, chercher le lot le plus proche ayant du stock
+        # Note: On pourrait aussi regarder TOUS les lots (même stock 0 ?) -> Non, seulement stock dispo pertinent
+        min_lot_date = None
+        if obj.use_lot_management:
+            # On utilise related_name par defaut 'stocklot_set' ou on suppose 'stock_lots' ?
+            # Verifions le model StockLot, il a un FK vers Produit.
+            # L'accès inverse est 'stock_lots' (défini dans models.py).
+            lot = obj.stock_lots.filter(
+                quantity_remaining__gt=0, 
+                date_expiration__isnull=False
+            ).order_by('date_expiration').first()
+            
+            if lot:
+                min_lot_date = lot.date_expiration
+        
+        # Logique de fusion : prendre le plus urgent des deux (ou celui qui existe)
+        if direct_date and min_lot_date:
+            return min(direct_date, min_lot_date)
+        return direct_date or min_lot_date
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()

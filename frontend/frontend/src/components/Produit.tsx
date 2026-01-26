@@ -14,6 +14,7 @@ import {
   useRayons,
   useFournisseurs,
   useFormes,
+  useGroupes,
   useProduitAchats,
   useProduitLots,
   useProduitAdjustments,
@@ -63,6 +64,7 @@ export default function Produit() {
   const { data: rayons = [] } = useRayons();
   const { data: fournisseurs = [] } = useFournisseurs();
   const { data: formes = [] } = useFormes();
+  const { data: groupes = [] } = useGroupes();
 
   // Derived state for pagination and list
   const produits = useMemo(() => produitsData?.results || [], [produitsData]);
@@ -640,13 +642,13 @@ export default function Produit() {
                   <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">{totalCount}</span>
                 )}
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 <button 
-                  className="btn btn-xs btn-ghost" 
+                  className="btn btn-sm btn-outline gap-2" 
                   onClick={() => setIsImporting(true)} 
                   title="Importer CSV/Excel"
                 >
-                  📄
+                  📂 Importer Catalogue
                 </button>
                 {isImporting && (
                   <ImportProductsModal
@@ -656,8 +658,8 @@ export default function Produit() {
                     }}
                   />
                 )}
-                <button className="btn btn-xs btn-primary" onClick={() => setIsCreateModalOpen(true)} title="Créer">
-                  ➕
+                <button className="btn btn-sm btn-primary gap-2" onClick={() => setIsCreateModalOpen(true)}>
+                  ➕ Créer un produit
                 </button>
               </div>
             </div>
@@ -2020,6 +2022,7 @@ export default function Produit() {
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}
+        groupes={groupes}
       />
     </div>
   )
