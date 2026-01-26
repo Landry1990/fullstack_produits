@@ -55,6 +55,11 @@ export interface ProduitModel {
   tva?: string
   forme?: number | null
   forme_nom?: string
+  groupe?: number | null
+  groupe_nom?: string
+  famille_risque?: number | null
+  famille_risque_nom?: string
+  famille_risque_niveau?: 'STANDARD' | 'HAUT'
   rotation_moyenne?: string
   taux_marge?: string
   pourcentage_marge?: string
@@ -475,6 +480,8 @@ export interface User {
     can_delete_commande?: boolean;
     can_close_commande?: boolean;
     can_generate_coupon?: boolean;
+    can_modify_price?: boolean;
+    max_discount_rate?: number;
   };
 
   // Legacy flat permissions (kept for compatibility if used elsewhere)

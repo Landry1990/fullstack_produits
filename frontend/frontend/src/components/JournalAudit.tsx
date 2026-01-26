@@ -14,6 +14,9 @@ const ACTION_TYPES = [
   { value: 'INV_VALID', label: 'Validation facture' },
   { value: 'INV_CRE', label: 'Création inventaire' },
   { value: 'INV_VAL', label: 'Validation inventaire' },
+
+  { value: 'ORD_RECV', label: 'Réception commande' },
+  { value: 'ORD_CNCL', label: 'Annulation réception' },
   { value: 'CREATE', label: 'Création' },
   { value: 'UPDATE', label: 'Modification' },
   { value: 'DELETE', label: 'Suppression' },
@@ -136,9 +139,11 @@ const JournalAudit: React.FC = () => {
             return { badge: 'badge-warning', icon: '✏️', bg: 'bg-yellow-50' };
           case 'DELETE':
           case 'INV_CANCEL':
+          case 'ORD_CNCL':
           case 'INV_DEL':
             return { badge: 'badge-error', icon: '🗑️', bg: 'bg-red-50' };
           case 'CLOTURE':
+          case 'ORD_RECV':
             return { badge: 'badge-info', icon: '💰', bg: 'bg-blue-50' };
           case 'INV_VALID':
           case 'INV_VAL':

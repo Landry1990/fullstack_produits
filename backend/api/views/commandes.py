@@ -287,6 +287,23 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         # 2.5 Mettre à jour la date de dernier achat pour tous les produits
         today = date.today()
         # Important: utiliser l'ID du produit dans la liste product_ids
+        # Log Audit
+        total_amount = sum(item.quantity * item.price for item in items)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.ORDER_RECEIVE,
+            model_name='Commande',
+            object_id=commande.id,
+            description=f"Réception Commande #{commande.id} - {commande.fournisseur.name if commande.fournisseur else 'Inconnu'}",
+            details={
+                'commande_id': commande.id,
+                'fournisseur': commande.fournisseur.name if commande.fournisseur else 'N/A',
+                'items_count': items.count(),
+                'total_amount': float(total_amount)
+            },
+            request=request
+        )
+
         Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
 
         return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
@@ -392,12 +409,19 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         commande.save(update_fields=['status', 'date_cloture'])
         
         # Log audit
+        # Log audit
         log_audit(
-            request.user,
-            'ANN_RECEP',  # Max 10 chars pour le champ action
-            'Commande',
-            str(commande.id),
-            f"Annulation réception: stock retiré, {deleted_lots_count} lots supprimés"
+            user=request.user,
+            action=AuditLog.Action.ORDER_CANCEL,
+            model_name='Commande',
+            object_id=commande.id,
+            description=f"Annulation réception commande #{commande.id}: stock retiré, {deleted_lots_count} lots supprimés",
+            details={
+                 'commande_id': commande.id,
+                 'produits_affectes': len(produits_dict),
+                 'lots_supprimes': deleted_lots_count
+            },
+            request=request
         )
         
         return Response({

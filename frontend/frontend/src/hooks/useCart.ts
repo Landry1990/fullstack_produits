@@ -36,6 +36,29 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
             const { data: fullProduit } = await axios.get<ProduitModel>(`${produitsEndpoint}${produit.id}/`)
 
             setLignesFacture(prevLignes => {
+                // REDUNDANCY / INTERACTION CHECK
+                if (fullProduit.famille_risque) {
+                    const conflict = prevLignes.find(l =>
+                        l.produit.id !== fullProduit.id && // Don't warn for itself (redundancy of quantity is fine)
+                        l.produit.famille_risque === fullProduit.famille_risque
+                    )
+
+                    if (conflict) {
+                        // Trigger toast outside of render cycle
+                        setTimeout(() => {
+                            toast.error(
+                                `⚠️ Interaction / Redondance\n${fullProduit.name} est de la même famille (${fullProduit.famille_risque_nom}) que ${conflict.produit.name} déjà présent.`,
+                                {
+                                    duration: 6000,
+                                    position: 'top-center',
+                                    style: { border: '2px solid #fbbd23', background: '#fff', color: '#333', maxWidth: '400px' },
+                                    icon: '⚠️'
+                                }
+                            )
+                        }, 100)
+                    }
+                }
+
                 const existingLigne = prevLignes.find(ligne => ligne.produit.id === fullProduit.id)
 
                 if (existingLigne) {

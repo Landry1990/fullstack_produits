@@ -50,7 +50,17 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
             try {
                 const response = await axios.get(clientsEndpoint)
                 const clientsData = Array.isArray(response.data) ? response.data : response.data.results
-                setClients(clientsData || [])
+                const loadedClients = clientsData || []
+                setClients(loadedClients)
+
+                // Select "CLIENTS DIVERS" by default if it exists
+                const clientsDivers = loadedClients.find((c: Client) =>
+                    c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
+                    c.name.trim().toUpperCase() === 'CLIENT DIVERS'
+                )
+                if (clientsDivers) {
+                    setSelectedClient(clientsDivers.id)
+                }
             } catch (error) {
                 console.error('Erreur chargement clients:', error)
                 toast.error('Impossible de charger la liste des clients')

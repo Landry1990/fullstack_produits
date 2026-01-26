@@ -416,14 +416,28 @@ export default function Dashboard() {
                   <div className="text-sm text-base-content/60 text-center py-2">Aucune alerte de stock</div>
                 ) : (
                   lowStockItems.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-error/5 border border-error/10">
+                    <div key={i} className={`flex items-center justify-between p-2 rounded-lg border ${item.stock <= 0 ? 'bg-error/5 border-error/10' : 'bg-warning/5 border-warning/10'}`}>
                       <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-error"></div>
-                        <span className="text-sm font-medium text-base-content">{item.name}</span>
+                        <div className={`w-2 h-2 rounded-full ${item.stock <= 0 ? 'bg-error' : 'bg-warning'}`}></div>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium text-base-content">{item.name}</span>
+                            {(item as any).status && (item as any).status !== 'Rupture' && (
+                                <span className="text-[10px] text-base-content/60 font-medium uppercase tracking-wide">
+                                    {(item as any).status}
+                                </span>
+                            )}
+                        </div>
                       </div>
-                      <span className="text-xs font-bold text-error">
-                        {item.stock <= 0 ? 'Rupture' : `Reste: ${item.stock}`}
-                      </span>
+                      <div className="flex flex-col items-end">
+                            <span className={`text-xs font-bold ${item.stock <= 0 ? 'text-error' : 'text-warning'}`}>
+                                {item.stock <= 0 ? 'Rupture' : `Reste: ${item.stock}`}
+                            </span>
+                            {(item as any).days_remaining > 0 && item.stock > 0 && (
+                                <span className="text-[10px] opacity-70">
+                                    Couverture: {Math.round((item as any).days_remaining)}j
+                                </span>
+                            )}
+                      </div>
                     </div>
                   ))
                 )}

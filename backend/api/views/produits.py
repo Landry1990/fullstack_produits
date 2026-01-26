@@ -96,6 +96,11 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         if forme_id:
             queryset = queryset.filter(forme_id=forme_id)
 
+        # Filtrage par Groupe
+        groupe_id = self.request.query_params.get('groupe')
+        if groupe_id:
+            queryset = queryset.filter(groupe_id=groupe_id)
+            
         return queryset
 
     @action(detail=False, methods=['get'])
@@ -172,7 +177,7 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         if old_price != new_price:
             log_audit(
                 user=self.request.user,
-                action='PRICE_CHG', # Custom or standard action
+                action=AuditLog.Action.PRICE_CHANGE, # Custom or standard action
                 model_name='Produit',
                 object_id=instance.id,
                 description=f"Changement prix {instance.name}: {old_price:.0f} -> {new_price:.0f}",
@@ -201,7 +206,7 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             # Log successful deletion
             log_audit(
                 user=request.user,
-                action='DELETE',
+                action=AuditLog.Action.DELETE,
                 model_name='Produit',
                 object_id=produit_id,
                 description=f"Suppression produit: {produit_nom}",

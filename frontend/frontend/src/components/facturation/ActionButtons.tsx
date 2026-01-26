@@ -69,10 +69,10 @@ export default function ActionButtons({
             onClick={onPayment}
             disabled={!isValid}
             className="btn btn-primary w-full md:w-auto gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow"
-            title="Valider et encaisser (F1)"
+            title="Valider et encaisser (Ctrl+Entrée)"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
-            <span className="font-bold">Encaisser (F1)</span>
+            <span className="font-bold">Encaisser (Ctrl+Enter)</span>
           </button>
         </div>
       </div>

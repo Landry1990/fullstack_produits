@@ -106,7 +106,7 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         # Log Audit
         log_audit(
             user=request.user,
-            action='STOCK_ADJ',
+            action=AuditLog.Action.STOCK_ADJUST,
             model_name='StockLot',
             object_id=lot.id,
             description=f"Sortie périmés: {quantity_to_remove} unités (Lot {lot.lot})",
@@ -552,7 +552,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             # Log Audit transaction
             log_audit(
                 user=request.user,
-                action='STOCK_ADJ',
+                action=AuditLog.Action.STOCK_ADJUST,
                 model_name='Transformation',
                 object_id=relation.id,
                 description=f"Transformation: {quantite} {source.name} -> {quantite_dest} {destination.name}",

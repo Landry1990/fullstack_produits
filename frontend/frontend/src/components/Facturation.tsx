@@ -293,9 +293,6 @@ export default function Facturation() {
   } | null>(null);
 
   useEffect(() => {
-    if (successInfo && successInfo.status !== 'PAY') {
-      setMontantPaye(Math.round(Number(successInfo.total_ttc)).toString())
-    }
   }, [successInfo])
 
   // Charger un devis depuis localStorage si présent (navigation depuis Ventes)
@@ -527,6 +524,39 @@ export default function Facturation() {
           setIsPaymentModalOpen(true)
       }
   }
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // F2: Focus Project Search Input
+      if (e.key === 'F2') {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+
+      // F4: Focus Quantity (Last Item)
+      if (e.key === 'F4') {
+        e.preventDefault()
+        if (lignesFacture.length > 0) {
+          const lastItem = lignesFacture[lignesFacture.length - 1]
+          const input = quantityInputsRef.current.get(lastItem.produit.id)
+          if (input) {
+            input.focus()
+            input.select()
+          }
+        }
+      }
+
+      // CTRL+ENTER: Payment
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault()
+        handlePaymentClick()
+      }
+    }
+
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown)
+  }, [lignesFacture, handlePaymentClick])
 
   // Produits are already filtered by the hook
   const filteredProduits = produits

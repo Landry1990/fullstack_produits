@@ -19,7 +19,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
-            'can_generate_coupon'
+            'can_generate_coupon', 'can_modify_price', 'max_discount_rate'
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
@@ -97,6 +97,8 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_delete_commande = profile_data.get('can_delete_commande', profile.can_delete_commande)
             profile.can_close_commande = profile_data.get('can_close_commande', profile.can_close_commande)
             profile.can_generate_coupon = profile_data.get('can_generate_coupon', profile.can_generate_coupon)
+            profile.can_modify_price = profile_data.get('can_modify_price', profile.can_modify_price)
+            profile.max_discount_rate = profile_data.get('max_discount_rate', profile.max_discount_rate)
             profile.role = profile_data.get('role', profile.role)
             profile.save()
             
@@ -184,6 +186,8 @@ class ProduitSerializer(serializers.ModelSerializer):
     fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
     forme_nom = serializers.CharField(source='forme.nom', read_only=True)
     groupe_nom = serializers.CharField(source='groupe.nom', read_only=True)
+    famille_risque_nom = serializers.CharField(source='famille_risque.nom', read_only=True)
+    famille_risque_niveau = serializers.CharField(source='famille_risque.niveau_risque', read_only=True)
     stock = serializers.IntegerField(read_only=True)
     valeur_stock = serializers.SerializerMethodField()
     next_expiring_date = serializers.SerializerMethodField()
@@ -193,7 +197,7 @@ class ProduitSerializer(serializers.ModelSerializer):
         model = Produit
         fields = [
             'id', 'rayon', 'rayon_nom', 'fournisseur', 'fournisseur_nom', 'forme', 'forme_nom',
-            'groupe', 'groupe_nom',
+            'groupe', 'groupe_nom', 'famille_risque', 'famille_risque_nom', 'famille_risque_niveau',
             'name', 'description', 
             'stock', 'stock_alert', 'cip1', 'cip2', 'cip3',
             'cost_price', 'selling_price', 'expire_date', 
