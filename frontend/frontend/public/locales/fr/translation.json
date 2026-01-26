@@ -200,5 +200,313 @@
             "print_ticket": "Imprimer le Ticket",
             "print_invoice": "Imprimer la Facture A4"
         }
+    },
+    "clients": {
+        "title": "Clients",
+        "subtitle": "Gestion de la clientèle",
+        "actions": {
+            "create": "Créer",
+            "edit": "Modifier",
+            "delete": "Supprimer",
+            "fidelity_config": "Configuration Fidélité",
+            "add_beneficiary": "Ajouter",
+            "remove_beneficiary": "Supprimer",
+            "cancel": "Annuler",
+            "confirm": "Confirmer"
+        },
+        "filters": {
+            "search_placeholder": "Rechercher...",
+            "no_results": "Aucun client trouvé",
+            "select_prompt_title": "Sélectionnez un client",
+            "select_prompt_subtitle": "ou créez-en un nouveau"
+        },
+        "types": {
+            "title": "Type de Client",
+            "individual": "Particulier",
+            "professional": "Professionnel"
+        },
+        "fields": {
+            "name": "Nom complet",
+            "name_placeholder": "Ex: Jean Dupont",
+            "phone": "Téléphone",
+            "phone_placeholder": "Ex: 0123456789",
+            "email": "Adresse email",
+            "email_placeholder": "Ex: jean.dupont@email.com",
+            "address": "Adresse complète",
+            "address_placeholder": "Ex: 123 Rue de la Paix",
+            "internal_id": "Matricule Interne"
+        },
+        "fidelity": {
+            "program_title": "Programme de Fidélité",
+            "program_desc": "Permet le cumul de points et les remises.",
+            "points": "Points",
+            "discount": "Remise",
+            "auto_discount": "Remise automatique (%)",
+            "auto_discount_hint": "Appliquée sur toutes les ventes",
+            "status_active": "Activé",
+            "status_inactive": "Désactivé"
+        },
+        "finance": {
+            "title": "Finance",
+            "pro_info_title": "Informations Professionnelles",
+            "credit_limit": "Plafond de crédit (F)",
+            "debt": "Dette",
+            "coverage": "Couverture",
+            "coverage_rate": "Taux de couverture assurance (%)",
+            "coverage_hint": "Pour tiers payant"
+        },
+        "beneficiaries": {
+            "title": "Ayants Droit",
+            "name": "Nom",
+            "id": "Matricule",
+            "empty": "Aucun ayant droit ajouté",
+            "placeholder_name": "Nom de l'ayant droit",
+            "placeholder_id": "Matricule"
+        },
+        "sections": {
+            "contact": "Coordonnées",
+            "programs": "Programmes"
+        },
+        "modals": {
+            "create_title": "Ajouter un nouveau client",
+            "edit_title": "Modifier le client",
+            "delete_confirm": "Supprimer le client \"{{name}}\" ?"
+        },
+        "messages": {
+            "create_success": "Client créé avec succès",
+            "update_success": "Client mis à jour avec succès",
+            "delete_success": "Client supprimé avec succès",
+            "error_create": "Erreur lors de la création du client",
+            "error_update": "Erreur lors de la mise à jour du client",
+            "error_delete": "Erreur lors de la suppression du client",
+            "network_error": "Erreur réseau",
+            "unknown_error": "Erreur inconnue"
+        }
+    },
+    "products": {
+        "title": "Gestion des Produits",
+        "create_title": "Nouveau produit",
+        "edit_title": "Modifier le produit",
+        "stats": {
+            "total": "Total",
+            "low_stock": "Stock Faible",
+            "out_of_stock": "Rupture"
+        },
+        "actions": {
+            "create": "Créer un produit",
+            "refresh": "Actualiser",
+            "rotation": "Rotation",
+            "reset": "Réinitialiser",
+            "labels": "Étiquettes",
+            "delete": "Supprimer",
+            "edit": "Modifier",
+            "adjust_stock": "Ajuster stock",
+            "bulk_delete": "Supprimer",
+            "bulk_rayon": "Rayon",
+            "bulk_provider": "Fournisseur",
+            "deselect": "Désélectionner",
+            "selected": "sélectionné(s)",
+            "confirm": "Confirmer"
+        },
+        "filters": {
+            "search_placeholder": "Nom ou CIP...",
+            "rayon_placeholder": "Rayon",
+            "provider_placeholder": "Fournisseur"
+        },
+        "table": {
+            "cip": "CIP",
+            "product": "Produit",
+            "stock": "Stock",
+            "empty": "Aucun produit"
+        },
+        "detail": {
+            "cip": "CIP",
+            "tabs": {
+                "general": "Général",
+                "price": "Prix",
+                "purchases": "Achats",
+                "lots": "Lots",
+                "adjustments": "Ajust.",
+                "stats": "Stats",
+                "movements": "Mvts"
+            },
+            "general": {
+                "description": "Description",
+                "rayon": "Rayon",
+                "provider": "Fournisseur",
+                "min_max": "Stock min / max",
+                "alert_threshold": "Seuil alerte",
+                "expiration": "Date expiration",
+                "last_purchase": "Dernier achat",
+                "last_sale": "Dernière vente",
+                "lot_management": "Gestion par lots",
+                "prescription": "Ordonnance requise",
+                "surveillance": "Surveillance",
+                "enabled": "Activée",
+                "disabled": "Désactivée",
+                "yes": "Oui",
+                "no": "Non"
+            },
+            "price": {
+                "cost": "Prix Revient",
+                "selling": "Prix Vente",
+                "vat": "TVA",
+                "margin_percent": "% Marge",
+                "margin_coeff": "Coef. Marge",
+                "rotation": "Rotation Moy.",
+                "per_month": "/mois"
+            },
+            "purchases": {
+                "date": "Date",
+                "provider": "Fournisseur",
+                "qty": "Qté",
+                "price": "Prix",
+                "lot": "Lot",
+                "exp": "Exp.",
+                "empty": "Aucun achat enregistré"
+            },
+            "lots": {
+                "lot": "Lot",
+                "expiration": "Expiration",
+                "stock": "Stock",
+                "price": "Prix",
+                "status": "Statut",
+                "empty": "Aucun lot disponible",
+                "exhausted": "Épuisé",
+                "available": "Dispo"
+            },
+            "adjustments": {
+                "date": "Date",
+                "user": "User",
+                "before": "Avant",
+                "after": "Après",
+                "delta": "Δ",
+                "reason": "Motif",
+                "empty": "Aucun ajustement enregistré"
+            },
+            "stats": {
+                "month": "Mois",
+                "qty_sold": "Qté V",
+                "qty_ordered": "Qté C",
+                "nb_clients": "Nb C",
+                "empty": "Aucune statistique disponible"
+            },
+            "movements": {
+                "date": "Date",
+                "type": "Type",
+                "qty": "Qté",
+                "stock_after": "Stock",
+                "details": "Détails",
+                "user": "User",
+                "empty": "Aucun mouvement enregistré"
+            }
+        },
+        "messages": {
+            "loading": "Chargement des produits...",
+            "delete_confirm_title": "Supprimer le produit",
+            "delete_confirm_body": "Voulez-vous vraiment supprimer le produit \"{{name}}\" ?\n\nCette action est irréversible.",
+            "delete_success": "Produit supprimé avec succès",
+            "update_success": "Produit mis à jour",
+            "bulk_delete_title": "Suppression groupée",
+            "bulk_delete_body": "Supprimer {{count}} produit(s) sélectionné(s) ?",
+            "bulk_update_success": "{{count}} produit(s) mis à jour",
+            "labels_prompt": "Nombre d'étiquettes pour {{name}} ?",
+            "recalculate_title": "Recalculer les rotations",
+            "recalculate_body": "Voulez-vous recalculer la rotation moyenne pour TOUS les produits ?\n\nCela peut prendre quelques secondes.",
+            "recalculate_success": "Recalcul des rotations effectué",
+            "stock_update_warning": "Le stock ne peut pas être modifié ici.",
+            "bulk_rayon_change_title": "Changer le rayon",
+            "bulk_rayon_change_body": "Affecter {{count}} produit(s) au rayon \"{{name}}\" ?",
+            "bulk_provider_change_title": "Changer le fournisseur",
+            "bulk_provider_change_body": "Affecter {{count}} produit(s) au fournisseur \"{{name}}\" ?",
+            "password_confirm_delete_title": "Confirmer la suppression",
+            "password_confirm_delete_body": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive de ce produit.",
+            "password_confirm_adjust_title": "Confirmer l'ajustement de stock",
+            "password_confirm_adjust_body": "Vous allez modifier le stock de \"{{name}}\" : {{oldStock}} → {{newStock}}",
+            "invalid_quantity": "Quantité invalide",
+            "generation_error": "Erreur lors de la génération des étiquettes",
+            "access_denied_delete": "Accès refusé : Vous n'avez pas la permission de supprimer des produits.",
+            "access_denied_adjust": "Accès refusé",
+            "input_quantity_error": "Veuillez saisir la nouvelle quantité"
+        }
+    },
+    "sales": {
+        "title": "Historique des Ventes",
+        "subtitle": "Consultez et gérez l'historique de toutes les factures",
+        "total_invoices": "Total Factures",
+        "drafts": "Brouillons (Page)",
+        "cash_report": "Rapport Caisse",
+        "invoice_details": "Produits de la facture",
+        "ticket_preview": "Aperçu du Ticket",
+        "refund_title": "Remboursement / Annulation",
+        "actions": {
+            "generate_report": "Générer le rapport",
+            "print_ticket": "Imprimer Ticket",
+            "print_invoice": "Imprimer Facture",
+            "view_details": "Voir détails",
+            "edit_invoice": "Modifier / Rappeler dans Facturation",
+            "cancel_refund": "Annuler / Rembourser",
+            "confirm_refund": "Confirmer Remboursement",
+            "cancel": "Annuler",
+            "close": "Fermer",
+            "hide_report": "Masquer Rapport",
+            "delete_drafts": "Vider Brouillons"
+        },
+        "filters": {
+            "search_placeholder": "Rechercher client, n° facture...",
+            "all": "Toutes",
+            "validated": "Validées",
+            "cancelled": "Annulées",
+            "start_date": "Début",
+            "end_date": "Fin"
+        },
+        "table": {
+            "invoice_number": "N° Facture",
+            "client": "Client",
+            "date": "Date",
+            "status": "Statut",
+            "cancellation_reason": "Motif Annulation",
+            "discount": "Remise",
+            "amount_ttc": "Montant TTC",
+            "actions": "Actions"
+        },
+        "fields": {
+            "product": "Produit",
+            "unit_price": "Prix Unitaire",
+            "quantity": "Quantité",
+            "total": "Total",
+            "subtotal_ht": "Sous-total HT",
+            "vat": "TVA",
+            "total_ttc": "Total TTC"
+        },
+        "refund": {
+            "invoice_concerned": "Facture concernée",
+            "refund_amount": "Montant à rembourser (Négatif)",
+            "refund_mode": "Mode de remboursement",
+            "refund_reason": "Référence / Motif (Optionnel)"
+        },
+        "payment_modes": {
+            "cash": "Espèces",
+            "card": "Carte Bancaire",
+            "check": "Chèque",
+            "transfer": "Virement",
+            "orange_money": "Orange Money",
+            "mobile_money": "Mobile Money",
+            "account": "En compte"
+        },
+        "messages": {
+            "no_results": "Aucune facture trouvée",
+            "no_invoices": "Aucune facture enregistrée",
+            "refund_success": "Facture annulée et remboursement enregistré avec succès.",
+            "refund_error": "Erreur lors de l'enregistrement du remboursement.",
+            "delete_drafts_confirm": "Êtes-vous sûr de vouloir supprimer toutes les factures brouillons ? Cette action est irréversible.",
+            "delete_drafts_success": "facture(s) brouillon supprimée(s) avec succès.",
+            "delete_drafts_error": "Erreur lors de la suppression des factures brouillons.",
+            "date_error": "La date/heure de début doit être antérieure à la date/heure de fin.",
+            "no_products": "Aucune ligne de produit pour cette facture.",
+            "prompt_client_name": "Nom du client pour la facture :",
+            "error_loading_quote": "Impossible de charger le devis",
+            "cash_report_error": "Erreur lors du calcul de la caisse par tranche horaire."
+        }
     }
 }

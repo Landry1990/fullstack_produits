@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo, type FormEvent } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 
 import type { Client } from '../types';
 import LoyaltyConfigModal from './LoyaltyConfigModal';
@@ -38,10 +40,11 @@ const emptyForm: Omit<ExtendedClient, 'id'> = {
 };
 
 export default function Clients() {
+  const { t } = useTranslation();
   const [clients, setClients] = useState<ExtendedClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<ExtendedClient | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // const [error, setError] = useState<string | null>(null); // Removed in favor of toast
   
   // View/Navigation State - REPLACED with Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -82,7 +85,7 @@ export default function Clients() {
 
   async function fetchClients() {
     setLoading(true);
-    setError(null);
+    // setError(null);
     try {
       const response = await axios.get(clientsEndpoint);
       // Handle both paginated and non-paginated responses
@@ -91,9 +94,9 @@ export default function Clients() {
     } catch (err: unknown) {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau');
+        toast.error(err.response?.data?.message ?? err.message ?? t('clients.messages.network_error'));
       } else {
-        setError('Erreur inconnue lors du chargement des clients');
+        toast.error(t('clients.messages.unknown_error'));
       }
     } finally {
       setLoading(false);
@@ -142,7 +145,7 @@ export default function Clients() {
   }
 
   function formatBackendErrors(data: unknown): string {
-    if (data == null) return 'Erreur inconnue du serveur'
+    if (data == null) return t('clients.messages.unknown_error')
     if (typeof data === 'string') return data
     if (typeof data === 'object') {
       try {
@@ -192,7 +195,7 @@ export default function Clients() {
 
   async function handleAddClient(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
+    // setError(null);
     setIsSubmitting(true);
     try {
       // Create Client with nested Ayants Droit
@@ -209,12 +212,13 @@ export default function Clients() {
       setSelectedClient(refreshedClient);
       setNewClient(emptyForm);
       setIsCreateModalOpen(false);
+      toast.success(t('clients.messages.create_success'));
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data ?? err.message
-        setError(typeof detail === 'string' ? detail : formatBackendErrors(detail))
+        toast.error(typeof detail === 'string' ? detail : formatBackendErrors(detail))
       } else {
-        setError("Erreur inconnue lors de l'ajout du client")
+        toast.error(t('clients.messages.error_create'))
       }
       console.error('Erreur lors de l\'ajout du client:', err);
     } finally {
@@ -252,12 +256,13 @@ export default function Clients() {
       );
       setSelectedClient(updatedClient);
       setIsEditModalOpen(false);
+      toast.success(t('clients.messages.update_success'));
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data ?? err.message
-        setError(typeof detail === 'string' ? detail : formatBackendErrors(detail))
+        toast.error(typeof detail === 'string' ? detail : formatBackendErrors(detail))
       } else {
-        setError("Erreur inconnue lors de la modification du client")
+        toast.error(t('clients.messages.error_update'))
       }
       console.error(err);
     } finally {
@@ -267,16 +272,17 @@ export default function Clients() {
 
   async function handleDeleteClient() {
     if (!selectedClient) return;
-    if (window.confirm(`Supprimer le client "${selectedClient.name}" ?`)) {
+    if (window.confirm(t('clients.modals.delete_confirm', { name: selectedClient.name }))) {
       try {
         await axios.delete(`${clientsEndpoint}${selectedClient.id}/`);
         setClients(prev => prev.filter(c => c.id !== selectedClient.id));
         setSelectedClient(null);
+        toast.success(t('clients.messages.delete_success'));
       } catch (err: unknown) {
         if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau')
+          toast.error(err.response?.data?.message ?? err.message ?? t('clients.messages.network_error'))
         } else {
-          setError('Erreur inconnue lors de la suppression du client')
+          toast.error(t('clients.messages.error_delete'))
         }
         console.error(err);
       }
@@ -288,14 +294,14 @@ export default function Clients() {
       {/* LEFT PANEL: CLIENT LIST (1/3) */}
       <div className="w-1/3 border-r border-base-200 bg-base-100 flex flex-col">
           {/* Header & Search */}
-          <div className="p-4 border-b border-base-200 flex flex-col gap-3 bg-base-100 relative z-10 shrink-0">
+           <div className="p-4 border-b border-base-200 flex flex-col gap-3 bg-base-100 relative z-10 shrink-0">
              <div className="flex justify-between items-center">
-                <h2 className="font-bold text-xl">Clients</h2>
+                <h2 className="font-bold text-xl">{t('clients.title')}</h2>
                 <div className="flex gap-1">
                    <button 
                       className="btn btn-sm btn-ghost btn-square text-secondary" 
                       onClick={() => setIsLoyaltyConfigOpen(true)}
-                      title="Configuration Fidélité"
+                      title={t('clients.actions.fidelity_config')}
                    >
                       💎
                    </button>
@@ -303,7 +309,7 @@ export default function Clients() {
                       className="btn btn-sm btn-primary" 
                       onClick={handleOpenCreateModal}
                    >
-                      + Créer
+                      + {t('clients.actions.create')}
                    </button>
                 </div>
              </div>
@@ -311,7 +317,7 @@ export default function Clients() {
                 <input 
                    type="text" 
                    className="input input-bordered w-full pl-9" 
-                   placeholder="Rechercher..." 
+                   placeholder={t('clients.filters.search_placeholder')} 
                    value={searchTerm}
                    onChange={e => setSearchTerm(e.target.value)}
                 />
@@ -334,7 +340,7 @@ export default function Clients() {
                             <div className="flex justify-between w-full">
                                <span className="font-bold text-base">{client.name}</span>
                                <span className={`badge badge-sm ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
-                                  {client.client_type === 'PROFESSIONNEL' ? 'Pro' : 'Part'}
+                                  {client.client_type === 'PROFESSIONNEL' ? t('clients.types.professional') : t('clients.types.individual')}
                                </span>
                             </div>
                             <div className="flex justify-between w-full text-sm opacity-70">
@@ -345,7 +351,7 @@ export default function Clients() {
                    ))}
                    {filteredClients.length === 0 && (
                       <div className="text-center p-8 text-base-content/50 text-sm">
-                         Aucun client trouvé
+                         {t('clients.filters.no_results')}
                       </div>
                    )}
                 </ul>
@@ -376,13 +382,13 @@ export default function Clients() {
                         className="btn btn-ghost btn-sm text-secondary"
                         onClick={() => handleOpenEditModal(selectedClient)}
                       >
-                         ✏️ Modifier
+                         ✏️ {t('clients.actions.edit')}
                       </button>
                       <button 
                         className="btn btn-ghost btn-sm text-error"
                         onClick={handleDeleteClient}
                       >
-                         🗑️ Supprimer
+                         🗑️ {t('clients.actions.delete')}
                       </button>
                   </div>
                </div>
@@ -395,14 +401,14 @@ export default function Clients() {
                        {/* Section 1: Coordonnées & Adresse */}
                        <div className="card bg-white shadow-sm border border-base-200">
                           <div className="card-body p-4">
-                             <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">Coordonnées</h3>
+                             <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">{t('clients.sections.contact')}</h3>
                              <div className="space-y-3 text-sm">
                                 <div className="flex flex-col">
-                                   <span className="font-bold text-xs opacity-60">Adresse</span>
-                                   <span className="whitespace-pre-wrap">{selectedClient.address || 'Non renseignée'}</span>
+                                   <span className="font-bold text-xs opacity-60">{t('clients.fields.address')}</span>
+                                   <span className="whitespace-pre-wrap">{selectedClient.address || '-'}</span>
                                 </div>
                                 <div className="flex flex-col">
-                                   <span className="font-bold text-xs opacity-60">Matricule Interne</span>
+                                   <span className="font-bold text-xs opacity-60">{t('clients.fields.internal_id')}</span>
                                    <span className="font-mono">#{selectedClient.id}</span>
                                 </div>
                              </div>
@@ -413,12 +419,12 @@ export default function Clients() {
                        {selectedClient.client_type === 'PARTICULIER' && (
                           <div className="card bg-white shadow-sm border border-base-200">
                              <div className="card-body p-4">
-                                <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">Programmes</h3>
+                                <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">{t('clients.sections.programs')}</h3>
                                 <div className="grid grid-cols-2 gap-4">
                                    <div className="flex items-center gap-3">
                                       <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-xl">💎</div>
                                       <div>
-                                         <div className="text-xs opacity-60">Points</div>
+                                         <div className="text-xs opacity-60">{t('clients.fidelity.points')}</div>
                                          <div className="font-bold text-accent text-lg">{selectedClient.points_fidelite || 0}</div>
                                       </div>
                                    </div>
@@ -426,14 +432,14 @@ export default function Clients() {
                                        <div className="flex items-center gap-3">
                                           <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-xl">🎁</div>
                                           <div>
-                                             <div className="text-xs opacity-60">Remise</div>
+                                             <div className="text-xs opacity-60">{t('clients.fidelity.discount')}</div>
                                              <div className="font-bold text-warning text-lg">-{Number(selectedClient.pending_discount)}%</div>
                                           </div>
                                        </div>
                                    )}
                                    <div className="col-span-2">
                                       <div className="flex justify-between items-center bg-base-50 p-2 rounded">
-                                         <span className="text-xs font-semibold">Remise Auto.</span>
+                                         <span className="text-xs font-semibold">{t('clients.fidelity.auto_discount')}</span>
                                          <span className="badge badge-sm">{selectedClient.remise_automatique || 0}%</span>
                                       </div>
                                    </div>
@@ -448,20 +454,20 @@ export default function Clients() {
                              {/* Finance */}
                              <div className="card bg-white shadow-sm border border-base-200">
                                 <div className="card-body p-4">
-                                   <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">Finance</h3>
-                                   <div className="grid grid-cols-3 gap-2 text-center">
+                                   <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">{t('clients.finance.title')}</h3>
+                                    <div className="grid grid-cols-3 gap-2 text-center">
                                       <div className="bg-base-50 p-2 rounded">
-                                         <div className="text-xs opacity-60">Plafond</div>
+                                         <div className="text-xs opacity-60">{t('clients.finance.credit_limit')}</div>
                                          <div className="font-bold">{Number(selectedClient.plafond || 0).toLocaleString()} F</div>
                                       </div>
                                       <div className="bg-base-50 p-2 rounded">
-                                         <div className="text-xs opacity-60">Dette</div>
+                                         <div className="text-xs opacity-60">{t('clients.finance.debt')}</div>
                                          <div className={`font-bold ${Number(selectedClient.current_debt) > Number(selectedClient.plafond) ? 'text-error' : 'text-success'}`}>
                                             {Number(selectedClient.current_debt || 0).toLocaleString()} F
                                          </div>
                                       </div>
                                       <div className="bg-base-50 p-2 rounded">
-                                         <div className="text-xs opacity-60">Couverture</div>
+                                         <div className="text-xs opacity-60">{t('clients.finance.coverage')}</div>
                                          <div className="font-bold text-info">{Number(selectedClient.taux_couverture || 0)}%</div>
                                       </div>
                                    </div>
@@ -472,7 +478,7 @@ export default function Clients() {
                              <div className="card bg-white shadow-sm border border-base-200">
                                 <div className="card-body p-4">
                                    <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">
-                                      Ayants Droit ({selectedClient.ayants_droit?.length || 0})
+                                      {t('clients.beneficiaries.title')} ({selectedClient.ayants_droit?.length || 0})
                                    </h3>
                                    <div className="overflow-y-auto max-h-40">
                                       <table className="table table-xs">
@@ -485,7 +491,7 @@ export default function Clients() {
                                                    </tr>
                                                 ))
                                             ) : (
-                                                <tr><td className="text-center text-base-content/50 py-4">Aucun ayant droit</td></tr>
+                                                <tr><td className="text-center text-base-content/50 py-4">{t('clients.beneficiaries.empty')}</td></tr>
                                             )}
                                          </tbody>
                                       </table>
@@ -502,8 +508,8 @@ export default function Clients() {
                 <div className="w-24 h-24 bg-base-200 rounded-full flex items-center justify-center text-4xl mb-4">
                    👥
                 </div>
-                <p className="text-lg font-medium">Sélectionnez un client</p>
-                <p className="text-sm">ou créez-en un nouveau</p>
+                <p className="text-lg font-medium">{t('clients.filters.select_prompt_title')}</p>
+                <p className="text-sm">{t('clients.filters.select_prompt_subtitle')}</p>
             </div>
          )}
       </div>
@@ -512,12 +518,12 @@ export default function Clients() {
       {isCreateModalOpen && (
         <dialog className="modal modal-open">
           <div className="modal-box w-11/12 max-w-3xl">
-            <h3 className="font-bold text-lg mb-4">Ajouter un nouveau client</h3>
+            <h3 className="font-bold text-lg mb-4">{t('clients.modals.create_title')}</h3>
              <form onSubmit={handleAddClient} className="flex flex-col gap-4">
                 {/* Type Client */}
                 <div className="form-control">
                     <label className="label cursor-pointer justify-start gap-4">
-                        <span className="label-text font-semibold">Type de Client:</span>
+                        <span className="label-text font-semibold">{t('clients.types.title')}:</span>
                         <label className="label cursor-pointer gap-2">
                             <input 
                                 type="radio" 
@@ -526,7 +532,7 @@ export default function Clients() {
                                 checked={newClient.client_type === 'PARTICULIER'}
                                 onChange={() => setNewClient({...newClient, client_type: 'PARTICULIER'})} 
                             />
-                            <span className="label-text">Particulier</span>
+                            <span className="label-text">{t('clients.types.individual')}</span>
                         </label>
                         <label className="label cursor-pointer gap-2">
                             <input 
@@ -536,18 +542,18 @@ export default function Clients() {
                                 checked={newClient.client_type === 'PROFESSIONNEL'}
                                 onChange={() => setNewClient({...newClient, client_type: 'PROFESSIONNEL'})} 
                             />
-                            <span className="label-text">Professionnel</span>
+                            <span className="label-text">{t('clients.types.professional')}</span>
                         </label>
                     </label>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label className="form-control w-full">
-                       <span className="label-text font-medium">Nom complet *</span>
+                       <span className="label-text font-medium">{t('clients.fields.name')} *</span>
                        <input type="text" placeholder="Ex: Jean Dupont" value={newClient.name} onChange={e => setNewClient({...newClient, name: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
                     </label>
                     <label className="form-control w-full">
-                       <span className="label-text font-medium">Téléphone *</span>
+                       <span className="label-text font-medium">{t('clients.fields.phone')} *</span>
                        <input type="tel" placeholder="Ex: 0123456789" value={newClient.phone} onChange={e => setNewClient({...newClient, phone: e.target.value})} className="input input-bordered w-full" required disabled={isSubmitting}/>
                     </label>
                 </div>
@@ -566,11 +572,11 @@ export default function Clients() {
                     <div className="form-control bg-base-200 rounded-lg p-3">
                         <label className="label cursor-pointer justify-between">
                             <div>
-                                <span className="label-text font-bold text-secondary flex items-center gap-2">💎 Programme de Fidélité</span>
-                                <div className="text-xs opacity-60 mt-1">Permet le cumul de points et les remises.</div>
+                                <span className="label-text font-bold text-secondary flex items-center gap-2">💎 {t('clients.fidelity.program_title')}</span>
+                                <div className="text-xs opacity-60 mt-1">{t('clients.fidelity.program_desc')}</div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="label-text text-xs">{newClient.is_loyalty_member !== false ? 'Activé' : 'Désactivé'}</span>
+                                <span className="label-text text-xs">{newClient.is_loyalty_member !== false ? t('clients.fidelity.status_active') : t('clients.fidelity.status_inactive')}</span>
                                 <input 
                                     type="checkbox" 
                                     className="toggle toggle-secondary" 
@@ -584,8 +590,8 @@ export default function Clients() {
 
                 <label className="form-control w-full">
                     <div className="label">
-                        <span className="label-text font-medium">Remise automatique (%)</span>
-                        <span className="label-text-alt text-success">Appliquée sur toutes les ventes</span>
+                        <span className="label-text font-medium">{t('clients.fidelity.auto_discount')}</span>
+                        <span className="label-text-alt text-success">{t('clients.fidelity.auto_discount_hint')}</span>
                     </div>
                     <input 
                         type="number" 
@@ -601,17 +607,17 @@ export default function Clients() {
 
                 {newClient.client_type === 'PROFESSIONNEL' && (
                     <div className="bg-base-200 p-4 rounded-lg space-y-4">
-                        <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
+                        <h4 className="font-bold text-secondary">{t('clients.finance.pro_info_title')}</h4>
                         
                         <label className="form-control w-full">
-                            <span className="label-text font-medium">Plafond de crédit (F)</span>
+                            <span className="label-text font-medium">{t('clients.finance.credit_limit')}</span>
                             <input type="number" value={newClient.plafond} onChange={e => setNewClient({...newClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
                         </label>
                         
                         <label className="form-control w-full">
                             <div className="label">
-                                <span className="label-text font-medium">Taux de couverture assurance (%)</span>
-                                <span className="label-text-alt text-info">Pour tiers payant</span>
+                                <span className="label-text font-medium">{t('clients.finance.coverage_rate')}</span>
+                                <span className="label-text-alt text-info">{t('clients.finance.coverage_hint')}</span>
                             </div>
                             <input 
                                 type="number" 
@@ -624,33 +630,33 @@ export default function Clients() {
                             />
                         </label>
 
-                        <div className="divider">Ayants Droit</div>
+                        <div className="divider">{t('clients.beneficiaries.title')}</div>
                         
                         <div className="flex gap-2 items-end">
                             <label className="form-control flex-1">
-                                <span className="label-text text-xs">Nom</span>
-                                <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
+                                <span className="label-text text-xs">{t('clients.beneficiaries.name')}</span>
+                                <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder={t('clients.beneficiaries.placeholder_name')}/>
                             </label>
                             <label className="form-control flex-1">
-                                <span className="label-text text-xs">Matricule</span>
-                                <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
+                                <span className="label-text text-xs">{t('clients.beneficiaries.id')}</span>
+                                <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder={t('clients.beneficiaries.placeholder_id')}/>
                             </label>
-                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(false)}>Ajouter</button>
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(false)}>{t('clients.actions.add_beneficiary')}</button>
                         </div>
 
                         <div className="overflow-x-auto">
                             <table className="table table-xs bg-base-100">
-                                <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
+                                <thead><tr><th>{t('clients.beneficiaries.name')}</th><th>{t('clients.beneficiaries.id')}</th><th>Action</th></tr></thead>
                                 <tbody>
                                     {newClient.ayants_droit?.map((ad, idx) => (
                                         <tr key={idx}>
                                             <td>{ad.nom}</td>
                                             <td>{ad.matricule}</td>
-                                            <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, false)}>Supprimer</button></td>
+                                            <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, false)}>{t('clients.actions.remove_beneficiary')}</button></td>
                                         </tr>
                                     ))}
                                     {(!newClient.ayants_droit || newClient.ayants_droit.length === 0) && (
-                                        <tr><td colSpan={3} className="text-center text-base-content/50">Aucun ayant droit ajouté</td></tr>
+                                        <tr><td colSpan={3} className="text-center text-base-content/50">{t('clients.beneficiaries.empty')}</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -659,9 +665,9 @@ export default function Clients() {
                 )}
 
                 <div className="modal-action">
-                    <button type="button" className="btn btn-ghost" onClick={() => setIsCreateModalOpen(false)} disabled={isSubmitting}>Annuler</button>
+                    <button type="button" className="btn btn-ghost" onClick={() => setIsCreateModalOpen(false)} disabled={isSubmitting}>{t('clients.actions.cancel')}</button>
                     <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                        {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : 'Ajouter'}
+                        {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : t('clients.actions.create')}
                     </button>
                 </div>
              </form>
@@ -674,11 +680,11 @@ export default function Clients() {
       {isEditModalOpen && editingClient && (
         <dialog className="modal modal-open">
             <div className="modal-box w-11/12 max-w-3xl">
-                <h3 className="font-bold text-lg mb-4">Modifier le client</h3>
+                <h3 className="font-bold text-lg mb-4">{t('clients.modals.edit_title')}</h3>
                 <form onSubmit={handleEditClient} className="flex flex-col gap-4">
                      <div className="form-control">
                         <label className="label cursor-pointer justify-start gap-4">
-                            <span className="label-text font-semibold">Type de Client:</span>
+                            <span className="label-text font-semibold">{t('clients.types.title')}:</span>
                             <label className="label cursor-pointer gap-2">
                                 <input 
                                     type="radio" 
@@ -687,7 +693,7 @@ export default function Clients() {
                                     checked={editingClient.client_type === 'PARTICULIER'}
                                     onChange={() => setEditingClient({...editingClient, client_type: 'PARTICULIER'})} 
                                 />
-                                <span className="label-text">Particulier</span>
+                                <span className="label-text">{t('clients.types.individual')}</span>
                             </label>
                             <label className="label cursor-pointer gap-2">
                                 <input 
@@ -697,29 +703,29 @@ export default function Clients() {
                                     checked={editingClient.client_type === 'PROFESSIONNEL'}
                                     onChange={() => setEditingClient({...editingClient, client_type: 'PROFESSIONNEL'})} 
                                 />
-                                <span className="label-text">Professionnel</span>
+                                <span className="label-text">{t('clients.types.professional')}</span>
                             </label>
                         </label>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <label className="form-control w-full">
-                            <span className="label-text font-medium">Nom complet *</span>
+                            <span className="label-text font-medium">{t('clients.fields.name')} *</span>
                             <input type="text" value={editingClient.name} onChange={e => setEditingClient({...editingClient, name: e.target.value})} className="input input-bordered w-full" required/>
                         </label>
                         <label className="form-control w-full">
-                            <span className="label-text font-medium">Téléphone *</span>
+                            <span className="label-text font-medium">{t('clients.fields.phone')} *</span>
                             <input type="tel" value={editingClient.phone} onChange={e => setEditingClient({...editingClient, phone: e.target.value})} className="input input-bordered w-full" required/>
                         </label>
                     </div>
                     
                     <label className="form-control w-full">
-                        <span className="label-text font-medium">Adresse email *</span>
+                        <span className="label-text font-medium">{t('clients.fields.email')} *</span>
                         <input type="email" value={editingClient.email} onChange={e => setEditingClient({...editingClient, email: e.target.value})} className="input input-bordered w-full" required/>
                     </label>
 
                     <label className="form-control w-full">
-                        <span className="label-text font-medium">Adresse complète *</span>
+                        <span className="label-text font-medium">{t('clients.fields.address')} *</span>
                         <textarea value={editingClient.address} onChange={e => setEditingClient({...editingClient, address: e.target.value})} className="textarea textarea-bordered w-full h-20 resize-none" required/>
                     </label>
 
@@ -727,11 +733,11 @@ export default function Clients() {
                         <div className="form-control bg-base-200 rounded-lg p-3">
                             <label className="label cursor-pointer justify-between">
                                 <div>
-                                    <span className="label-text font-bold text-secondary flex items-center gap-2">💎 Programme de Fidélité</span>
-                                    <div className="text-xs opacity-60 mt-1">Permet le cumul de points et les remises.</div>
+                                    <span className="label-text font-bold text-secondary flex items-center gap-2">💎 {t('clients.fidelity.program_title')}</span>
+                                    <div className="text-xs opacity-60 mt-1">{t('clients.fidelity.program_desc')}</div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="label-text text-xs">{editingClient.is_loyalty_member !== false ? 'Activé' : 'Désactivé'}</span>
+                                    <span className="label-text text-xs">{editingClient.is_loyalty_member !== false ? t('clients.fidelity.status_active') : t('clients.fidelity.status_inactive')}</span>
                                     <input 
                                         type="checkbox" 
                                         className="toggle toggle-secondary" 
@@ -745,8 +751,8 @@ export default function Clients() {
 
                     <label className="form-control w-full">
                         <div className="label">
-                            <span className="label-text font-medium">Remise automatique (%)</span>
-                            <span className="label-text-alt text-success">Appliquée sur toutes les ventes</span>
+                            <span className="label-text font-medium">{t('clients.fidelity.auto_discount')}</span>
+                            <span className="label-text-alt text-success">{t('clients.fidelity.auto_discount_hint')}</span>
                         </div>
                         <input 
                             type="number" 
@@ -761,17 +767,17 @@ export default function Clients() {
 
                     {editingClient.client_type === 'PROFESSIONNEL' && (
                         <div className="bg-base-200 p-4 rounded-lg space-y-4">
-                            <h4 className="font-bold text-secondary">Informations Professionnelles</h4>
+                            <h4 className="font-bold text-secondary">{t('clients.finance.pro_info_title')}</h4>
                             
                             <label className="form-control w-full">
-                                <span className="label-text font-medium">Plafond de crédit (F)</span>
+                                <span className="label-text font-medium">{t('clients.finance.credit_limit')}</span>
                                 <input type="number" value={editingClient.plafond} onChange={e => setEditingClient({...editingClient, plafond: e.target.value})} className="input input-bordered w-full" min="0"/>
                             </label>
                             
                             <label className="form-control w-full">
                                 <div className="label">
-                                    <span className="label-text font-medium">Taux de couverture assurance (%)</span>
-                                    <span className="label-text-alt text-info">Pour tiers payant</span>
+                                    <span className="label-text font-medium">{t('clients.finance.coverage_rate')}</span>
+                                    <span className="label-text-alt text-info">{t('clients.finance.coverage_hint')}</span>
                                 </div>
                                 <input 
                                     type="number" 
@@ -784,29 +790,29 @@ export default function Clients() {
                                 />
                             </label>
 
-                            <div className="divider">Ayants Droit</div>
+                            <div className="divider">{t('clients.beneficiaries.title')}</div>
                             
                             <div className="flex gap-2 items-end">
                                 <label className="form-control flex-1">
-                                    <span className="label-text text-xs">Nom</span>
-                                    <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder="Nom de l'ayant droit"/>
+                                    <span className="label-text text-xs">{t('clients.beneficiaries.name')}</span>
+                                    <input type="text" value={tempAyantDroit.nom} onChange={e => setTempAyantDroit({...tempAyantDroit, nom: e.target.value})} className="input input-bordered input-sm" placeholder={t('clients.beneficiaries.placeholder_name')}/>
                                 </label>
                                 <label className="form-control flex-1">
-                                    <span className="label-text text-xs">Matricule</span>
-                                    <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder="Matricule"/>
+                                    <span className="label-text text-xs">{t('clients.beneficiaries.id')}</span>
+                                    <input type="text" value={tempAyantDroit.matricule} onChange={e => setTempAyantDroit({...tempAyantDroit, matricule: e.target.value})} className="input input-bordered input-sm" placeholder={t('clients.beneficiaries.placeholder_id')}/>
                                 </label>
-                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(true)}>Ajouter</button>
+                                <button type="button" className="btn btn-secondary btn-sm" onClick={() => addAyantDroitToForm(true)}>{t('clients.actions.add_beneficiary')}</button>
                             </div>
 
                             <div className="overflow-x-auto">
                                 <table className="table table-xs bg-base-100">
-                                    <thead><tr><th>Nom</th><th>Matricule</th><th>Action</th></tr></thead>
+                                    <thead><tr><th>{t('clients.beneficiaries.name')}</th><th>{t('clients.beneficiaries.id')}</th><th>Action</th></tr></thead>
                                     <tbody>
                                         {editingClient.ayants_droit?.map((ad, idx) => (
                                             <tr key={idx}>
                                                 <td>{ad.nom}</td>
                                                 <td>{ad.matricule}</td>
-                                                <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, true)}>Supprimer</button></td>
+                                                <td><button type="button" className="btn btn-ghost btn-xs text-error" onClick={() => removeAyantDroitFromForm(idx, true)}>{t('clients.actions.remove_beneficiary')}</button></td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -816,8 +822,8 @@ export default function Clients() {
                     )}
 
                     <div className="modal-action">
-                        <button type="button" className="btn btn-ghost" onClick={() => setIsEditModalOpen(false)}>Annuler</button>
-                        <button type="submit" className="btn btn-primary">Enregistrer</button>
+                        <button type="button" className="btn btn-ghost" onClick={() => setIsEditModalOpen(false)}>{t('clients.actions.cancel')}</button>
+                        <button type="submit" className="btn btn-primary">{t('clients.actions.create')}</button>
                     </div>
                 </form>
             </div>

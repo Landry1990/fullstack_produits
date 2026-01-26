@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import DOMPurify from 'dompurify'
@@ -7,6 +8,7 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import { TicketTemplate } from './printing/TicketTemplate'
 
 export default function Ventes() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [factures, setFactures] = useState<Facture[]>([])
   const [loading, setLoading] = useState(true)
@@ -196,7 +198,7 @@ export default function Ventes() {
       if (!results || results.length === 0) {
         setTicketCaisse(null)
         setShowTicketPreview(false)
-        setError('Aucun ticket de caisse trouvé pour cette facture.')
+        setError(t('sales.messages.no_results'))
         return
       }
 
@@ -220,7 +222,7 @@ export default function Ventes() {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Erreur lors de la récupération du ticket de caisse.')
       } else {
-        setError('Erreur lors de la récupération du ticket de caisse.')
+        setError(t('sales.messages.no_results')) // Using generic or specific error if needed
       }
     }
   }
@@ -237,7 +239,7 @@ export default function Ventes() {
     
     if (isGenericClient) {
       // Demander le nom du client
-      clientName = window.prompt('Nom du client pour la facture:', '')
+      clientName = window.prompt(t('sales.messages.prompt_client_name'), '')
       if (clientName === null) return // Annulation
     }
     
@@ -278,7 +280,7 @@ export default function Ventes() {
         statut: 'completee'
       })
 
-      setSuccessMessage('Facture annulée et remboursement enregistré avec succès.')
+      setSuccessMessage(t('sales.messages.refund_success'))
       setShowRefundModal(false)
       setRefundFacture(null)
       // Rafraîchir les données
@@ -291,7 +293,7 @@ export default function Ventes() {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Erreur lors de l\'enregistrement du remboursement.')
       } else {
-        setError('Erreur lors de l\'enregistrement du remboursement.')
+        setError(t('sales.messages.refund_error'))
       }
       console.error('Erreur remboursement:', err)
     } finally {
@@ -307,7 +309,7 @@ export default function Ventes() {
 
 
   const handleDeleteBrouillons = async () => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer toutes les factures brouillons ? Cette action est irréversible.')) {
+    if (!confirm(t('sales.messages.delete_drafts_confirm'))) {
       return
     }
 
@@ -317,7 +319,7 @@ export default function Ventes() {
 
     try {
       const response = await axios.delete(`${facturesEndpoint}supprimer_brouillons/`)
-      setSuccessMessage(response.data.detail || `${response.data.count} facture(s) brouillon supprimée(s) avec succès.`)
+      setSuccessMessage(response.data.detail || t('sales.messages.delete_drafts_success', { count: response.data.count, defaultValue: `${response.data.count} facture(s) brouillon supprimée(s) avec succès.` }))
       // Rafraîchir la liste des factures
       await fetchFactures()
       // Effacer le message de succès après 5 secondes
@@ -326,7 +328,7 @@ export default function Ventes() {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Erreur lors de la suppression des factures brouillons.')
       } else {
-        setError('Erreur lors de la suppression des factures brouillons.')
+        setError(t('sales.messages.delete_drafts_error'))
       }
       console.error('Erreur lors de la suppression des factures brouillons:', err)
     } finally {
@@ -356,7 +358,7 @@ export default function Ventes() {
       navigate('/app/facturation')
     } catch (err) {
       console.error('Erreur lors du chargement du devis:', err)
-      setError('Impossible de charger le devis')
+      setError(t('sales.messages.error_loading_quote', { defaultValue: 'Impossible de charger le devis' }))
     }
   }, [facturesEndpoint])
 
@@ -366,7 +368,7 @@ export default function Ventes() {
     const dateFinObj = new Date(dateFin)
     
     if (dateDebutObj >= dateFinObj) {
-      setError("La date/heure de début doit être antérieure à la date/heure de fin.")
+      setError(t('sales.messages.date_error'))
       return
     }
 
@@ -384,7 +386,7 @@ export default function Ventes() {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.detail || 'Erreur lors du calcul de la caisse par tranche horaire.')
       } else {
-        setError('Erreur lors du calcul de la caisse par tranche horaire.')
+        setError(t('sales.messages.cash_report_error', { defaultValue: 'Erreur lors du calcul de la caisse par tranche horaire.' }))
       }
       console.error('Erreur lors du calcul de la caisse:', err)
     } finally {
@@ -418,19 +420,19 @@ export default function Ventes() {
       {/* Header & Stats */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">Historique des Ventes</h1>
-          <p className="text-base-content/70 text-sm">Consultez et gérez l'historique de toutes les factures</p>
+          <h1 className="text-2xl font-bold text-base-content">{t('sales.title')}</h1>
+          <p className="text-base-content/70 text-sm">{t('sales.subtitle')}</p>
         </div>
         
         <div className="bg-white rounded-lg shadow-sm border border-base-200 px-4 py-2 flex items-center gap-6">
           <div className="flex flex-col items-center">
-            <span className="text-xs uppercase tracking-wider font-bold opacity-50">Total Factures</span>
+            <span className="text-xs uppercase tracking-wider font-bold opacity-50">{t('sales.total_invoices')}</span>
             <span className="text-xl font-bold text-primary">{totalCount}</span>
           </div>
           
           {brouillonsCount > 0 && (
             <div className="flex flex-col items-center border-l pl-6 border-base-200">
-              <span className="text-xs uppercase tracking-wider font-bold text-warning">Brouillons (Page)</span>
+              <span className="text-xs uppercase tracking-wider font-bold text-warning">{t('sales.drafts')}</span>
               <span className="text-xl font-bold text-warning">{brouillonsCount}</span>
             </div>
           )}
@@ -464,7 +466,7 @@ export default function Ventes() {
             </div>
             <input
               type="text"
-              placeholder="Rechercher client, n° facture..."
+              placeholder={t('sales.filters.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="input input-sm input-bordered pl-9 w-full focus:outline-none focus:border-primary"
@@ -477,19 +479,19 @@ export default function Ventes() {
                 className={`join-item btn btn-sm ${filterStatus === 'all' ? 'btn-active font-bold' : ''}`}
                 onClick={() => setFilterStatus('all')}
               >
-                Toutes
+                {t('sales.filters.all')}
               </button>
               <button 
                 className={`join-item btn btn-sm ${filterStatus === 'validated' ? 'btn-success text-white' : ''}`}
                 onClick={() => setFilterStatus('validated')}
               >
-                Validées
+                {t('sales.filters.validated')}
               </button>
               <button 
                 className={`join-item btn btn-sm ${filterStatus === 'cancelled' ? 'btn-error text-white' : ''}`}
                 onClick={() => setFilterStatus('cancelled')}
               >
-                Annulées
+                {t('sales.filters.cancelled')}
               </button>
             </div>
 
@@ -498,7 +500,7 @@ export default function Ventes() {
               className={`btn btn-sm gap-2 ${showCaisseTranches ? 'btn-primary' : 'btn-outline'}`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              {showCaisseTranches ? 'Masquer Rapport' : 'Rapport Caisse'}
+              {showCaisseTranches ? t('sales.actions.hide_report') : t('sales.actions.generate_report')}
             </button>
             
             {brouillonsCount > 0 && (
@@ -508,7 +510,7 @@ export default function Ventes() {
                 className="btn btn-sm btn-error text-white gap-2"
               >
                 {deletingBrouillons ? <span className="loading loading-spinner loading-xs"></span> : <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
-                Vider Brouillons
+                {t('sales.actions.delete_drafts')}
               </button>
             )}
           </div>
@@ -520,13 +522,13 @@ export default function Ventes() {
           <div className="bg-base-50 px-6 py-3 border-b flex justify-between items-center">
             <h2 className="font-bold text-base-content flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Rapport de Caisse
+              {t('sales.cash_report')}
             </h2>
           </div>
           <div className="p-6">
             <div className="flex flex-col md:flex-row gap-6 items-end">
               <div className="form-control flex-1">
-                <label className="label"><span className="label-text font-medium text-xs uppercase">Début</span></label>
+                <label className="label"><span className="label-text font-medium text-xs uppercase">{t('sales.filters.start_date')}</span></label>
                 <div className="flex gap-1">
                   <input
                     type="date"
@@ -545,7 +547,7 @@ export default function Ventes() {
                 </div>
               </div>
               <div className="form-control flex-1">
-                <label className="label"><span className="label-text font-medium text-xs uppercase">Fin</span></label>
+                <label className="label"><span className="label-text font-medium text-xs uppercase">{t('sales.filters.end_date')}</span></label>
                 <div className="flex gap-1">
                   <input
                     type="date"
@@ -568,13 +570,13 @@ export default function Ventes() {
                 disabled={loadingCaisse || new Date(dateDebut) >= new Date(dateFin)}
                 className="btn btn-primary btn-sm w-full md:w-auto"
               >
-                {loadingCaisse ? <span className="loading loading-spinner"></span> : 'Générer le rapport'}
+                {loadingCaisse ? <span className="loading loading-spinner"></span> : t('sales.actions.generate_report')}
               </button>
             </div>
 
             {new Date(dateDebut) >= new Date(dateFin) && (
               <div className="alert alert-warning mt-4 text-sm py-2 rounded-lg">
-                <span>La date de début doit être antérieure à la date de fin.</span>
+                <span>{t('sales.messages.date_error')}</span>
               </div>
             )}
 
@@ -607,14 +609,14 @@ export default function Ventes() {
           <table className="table table-xs w-full table-pin-rows">
             <thead className="bg-base-100/80 backdrop-blur text-base-content/70 z-10">
               <tr>
-                <th>N° Facture</th>
-                <th>Client</th>
-                <th>Date</th>
-                <th>Statut</th>
-                {filterStatus === 'cancelled' && <th>Motif Annulation</th>}
-                <th className="text-right">Remise</th>
-                <th className="text-right">Montant TTC</th>
-                <th className="text-center">Actions</th>
+                <th>{t('sales.table.invoice_number')}</th>
+                <th>{t('sales.table.client')}</th>
+                <th>{t('sales.table.date')}</th>
+                <th>{t('sales.table.status')}</th>
+                {filterStatus === 'cancelled' && <th>{t('sales.table.cancellation_reason')}</th>}
+                <th className="text-right">{t('sales.table.discount')}</th>
+                <th className="text-right">{t('sales.table.amount_ttc')}</th>
+                <th className="text-center">{t('sales.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -623,7 +625,7 @@ export default function Ventes() {
                   <td colSpan={filterStatus === 'cancelled' ? 8 : 7} className="text-center py-12 text-base-content/50">
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-3xl">📭</span>
-                        <span>{searchQuery ? 'Aucune facture trouvée' : 'Aucune facture enregistrée'}</span>
+                        <span>{searchQuery ? t('sales.messages.no_results') : t('sales.messages.no_invoices')}</span>
                     </div>
                   </td>
                 </tr>
@@ -682,7 +684,7 @@ export default function Ventes() {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleViewProducts(facture); }}
                           className="btn btn-xs btn-ghost btn-square text-primary"
-                          title="Voir détails"
+                          title={t('sales.actions.view_details')}
                         >
                           👁️
                         </button>
@@ -691,7 +693,7 @@ export default function Ventes() {
                           <button
                             onClick={(e) => { e.stopPropagation(); handleOpenDevisInFacturation(facture); }}
                             className="btn btn-xs btn-ghost btn-square text-success"
-                            title="Modifier / Rappeler dans Facturation"
+                            title={t('sales.actions.edit_invoice')}
                           >
                             ✏️
                           </button>
@@ -699,7 +701,7 @@ export default function Ventes() {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleOpenRefundModal(facture); }}
                           className={`btn btn-xs btn-ghost btn-square ${facture.status === 'ANN' ? 'opacity-0 cursor-default' : 'text-error'}`}
-                          title={facture.status === 'ANN' ? 'Déjà annulée' : "Annuler / Rembourser"}
+                          title={facture.status === 'ANN' ? 'Déjà annulée' : t('sales.actions.cancel_refund')}
                           disabled={facture.status === 'ANN'}
                         >
                           {facture.status !== 'ANN' && '↩️'}
@@ -726,7 +728,7 @@ export default function Ventes() {
                   disabled={page === 1} 
                   onClick={() => setPage(page - 1)}
                 >
-                  ← Précédent
+                  ← {t('common.prev', { defaultValue: 'Précédent' })}
                 </button>
                 <div className="px-2 py-1 bg-white rounded border border-base-200">
                   <span className="font-semibold">Page {page}</span>
@@ -737,7 +739,7 @@ export default function Ventes() {
                   disabled={page >= totalPages} 
                   onClick={() => setPage(page + 1)}
                 >
-                  Suivant →
+                  {t('common.next', { defaultValue: 'Suivant' })} →
                 </button>
               </div>
             )}
@@ -749,7 +751,7 @@ export default function Ventes() {
         <div className="modal modal-open">
           <div className="modal-box max-w-4xl">
             <h3 className="font-bold text-lg mb-4">
-              Produits de la facture {selectedFacture.numero_facture || `Brouillon ${selectedFacture.id}`}
+              {t('sales.invoice_details')} {selectedFacture.numero_facture || t('sales.draft_label', { id: selectedFacture.id, defaultValue: `Brouillon ${selectedFacture.id}` })}
             </h3>
             
             {loadingDetails ? (
@@ -761,10 +763,10 @@ export default function Ventes() {
                 <div className="mb-4 p-4 bg-base-200 rounded-lg">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-semibold">Client:</span> {selectedFacture.client_name || 'N/A'}
+                      <span className="font-semibold">{t('sales.table.client')}:</span> {selectedFacture.client_name || 'N/A'}
                     </div>
                     <div>
-                      <span className="font-semibold">Date:</span> {new Date(selectedFacture.date).toLocaleString('fr-FR')}
+                      <span className="font-semibold">{t('sales.table.date')}:</span> {new Date(selectedFacture.date).toLocaleString('fr-FR')}
                     </div>
                   </div>
                 </div>
@@ -774,10 +776,10 @@ export default function Ventes() {
                     <table className="table table-zebra w-full table-xs">
                       <thead>
                         <tr>
-                          <th>Produit</th>
-                          <th className="text-right">Prix Unitaire</th>
-                          <th className="text-right">Quantité</th>
-                          <th className="text-right">Total</th>
+                          <th>{t('sales.fields.product')}</th>
+                          <th className="text-right">{t('sales.fields.unit_price')}</th>
+                          <th className="text-right">{t('sales.fields.quantity')}</th>
+                          <th className="text-right">{t('sales.fields.total')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -800,21 +802,21 @@ export default function Ventes() {
                       </tbody>
                       <tfoot className="bg-base-100 font-bold text-sm">
                         <tr>
-                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 pb-1">Sous-total HT:</td>
+                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 pb-1">{t('sales.fields.subtotal_ht')}:</td>
                             <td className="text-right border-b-0 pb-1">{Math.round(Number(selectedFacture.total_ht)).toLocaleString('fr-FR')} F</td>
                         </tr>
                         {Number(selectedFacture.remise) > 0 && (
                             <tr>
-                                <td colSpan={3} className="text-right font-normal text-error border-b-0 py-1">Remise:</td>
+                                <td colSpan={3} className="text-right font-normal text-error border-b-0 py-1">{t('sales.table.discount')}:</td>
                                 <td className="text-right text-error border-b-0 py-1">-{Math.round(Number(selectedFacture.remise)).toLocaleString('fr-FR')} F</td>
                             </tr>
                         )}
                         <tr>
-                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 py-1">TVA:</td>
+                            <td colSpan={3} className="text-right font-normal text-base-content/70 border-b-0 py-1">{t('sales.fields.vat')}:</td>
                             <td className="text-right border-b-0 py-1">{Math.round(Number(selectedFacture.total_tva)).toLocaleString('fr-FR')} F</td>
                         </tr>
                         <tr className="text-lg">
-                          <td colSpan={3} className="text-right pt-2 border-t border-base-300">Total TTC:</td>
+                          <td colSpan={3} className="text-right pt-2 border-t border-base-300">{t('sales.fields.total_ttc')}:</td>
                   <td className="text-right pt-2 border-t border-base-300 text-primary">{Math.round(Number(selectedFacture.total_ttc)).toLocaleString('fr-FR')} F</td>
                         </tr>
                       </tfoot>
@@ -822,7 +824,7 @@ export default function Ventes() {
                   </div>
                 ) : (
                   <div className="py-8 text-center text-base-content/50">
-                    Aucune ligne de produit pour cette facture.
+                    {t('sales.messages.no_products')}
                   </div>
                 )}
                 
@@ -837,13 +839,13 @@ export default function Ventes() {
                       {ticketCaisse.paiements_details.map((paiement: any, idx: number) => {
                         const getModeLabel = (mode: string) => {
                           const labels: { [key: string]: string } = {
-                            'especes': 'Espèces',
-                            'carte': 'Carte',
-                            'cheque': 'Chèque',
-                            'virement': 'Virement',
-                            'om': 'Orange Money',
-                            'momo': 'Mobile Money',
-                            'en_compte': 'En compte'
+                            'especes': t('sales.payment_modes.cash'),
+                            'carte': t('sales.payment_modes.card'),
+                            'cheque': t('sales.payment_modes.check'),
+                            'virement': t('sales.payment_modes.transfer'),
+                            'om': t('sales.payment_modes.orange_money'),
+                            'momo': t('sales.payment_modes.mobile_money'),
+                            'en_compte': t('sales.payment_modes.account')
                           }
                           return labels[mode] || mode.toUpperCase()
                         }
@@ -878,7 +880,7 @@ export default function Ventes() {
                     }}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Imprimer Ticket
+                    {t('sales.actions.print_ticket')}
                   </button>
                   
                   <button 
@@ -886,10 +888,10 @@ export default function Ventes() {
                     onClick={handlePrintInvoice}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
-                    Imprimer Facture
+                    {t('sales.actions.print_invoice')}
                   </button>
                </div>
-              <button className="btn" onClick={() => setSelectedFacture(null)}>Fermer</button>
+              <button className="btn" onClick={() => setSelectedFacture(null)}>{t('sales.actions.close')}</button>
             </div>
           </div>
         </div>
@@ -901,7 +903,7 @@ export default function Ventes() {
         <div className="modal modal-open">
           <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
              <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
-              <h3 className="font-bold text-lg">Aperçu du Ticket</h3>
+              <h3 className="font-bold text-lg">{t('sales.ticket_preview')}</h3>
               <button 
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={() => setShowTicketPreview(false)}
@@ -922,7 +924,7 @@ export default function Ventes() {
                 className="btn btn-ghost btn-sm"
                 onClick={() => setShowTicketPreview(false)}
               >
-                Fermer
+                {t('sales.actions.close')}
               </button>
               <button 
                 className="btn btn-primary btn-sm"
@@ -958,7 +960,7 @@ export default function Ventes() {
                   }
                 }}
               >
-                Imprimer
+                {t('sales.actions.print_ticket')}
               </button>
             </div>
           </div>
@@ -971,7 +973,7 @@ export default function Ventes() {
         <div className="modal modal-open">
           <div className="modal-box max-w-md">
             <div className="flex justify-between items-center mb-4 border-b pb-2">
-              <h3 className="font-bold text-lg text-error">Remboursement / Annulation</h3>
+              <h3 className="font-bold text-lg text-error">{t('sales.refund_title')}</h3>
               <button 
                 className="btn btn-sm btn-circle btn-ghost"
                 onClick={() => setShowRefundModal(false)}
@@ -988,7 +990,7 @@ export default function Ventes() {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Facture concernée</span>
+                  <span className="label-text font-medium">{t('sales.refund.invoice_concerned')}</span>
                 </label>
                 <input 
                   type="text" 
@@ -1000,7 +1002,7 @@ export default function Ventes() {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Montant à rembourser (Négatif)</span>
+                  <span className="label-text font-medium">{t('sales.refund.refund_amount')}</span>
                 </label>
                 <input 
                   type="number" 
@@ -1014,23 +1016,23 @@ export default function Ventes() {
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Mode de remboursement</span>
+                  <span className="label-text font-medium">{t('sales.refund.refund_mode')}</span>
                 </label>
                 <select 
                   value={refundMode} 
                   onChange={(e) => setRefundMode(e.target.value)}
                   className="select select-bordered w-full"
                 >
-                  <option value="especes">Espèces</option>
-                  <option value="cheque">Chèque</option>
-                  <option value="carte">Carte Bancaire</option>
-                  <option value="virement">Virement</option>
+                  <option value="especes">{t('sales.payment_modes.cash')}</option>
+                  <option value="cheque">{t('sales.payment_modes.check')}</option>
+                  <option value="carte">{t('sales.payment_modes.card')}</option>
+                  <option value="virement">{t('sales.payment_modes.transfer')}</option>
                 </select>
               </div>
 
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">Référence / Motif (Optionnel)</span>
+                  <span className="label-text font-medium">{t('sales.refund.refund_reason')}</span>
                 </label>
                 <input 
                   type="text" 
@@ -1047,14 +1049,14 @@ export default function Ventes() {
                   className="btn" 
                   onClick={() => setShowRefundModal(false)}
                 >
-                  Annuler
+                  {t('sales.actions.cancel')}
                 </button>
                 <button 
                   type="submit" 
                   className="btn btn-error text-white"
                   disabled={loading}
                 >
-                  {loading ? <span className="loading loading-spinner"></span> : 'Confirmer Remboursement'}
+                  {loading ? <span className="loading loading-spinner"></span> : t('sales.actions.confirm_refund')}
                 </button>
               </div>
             </form>
