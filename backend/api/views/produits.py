@@ -765,7 +765,7 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 'pourcentage_ca': float(pourcentage_ca or 0),
                 'pourcentage_cumule': float((pourcentage_cumule * 100).quantize(Decimal('0.01'))) if pourcentage_cumule is not None else 0.0,
                 'categorie': categorie,
-                'en_rupture': item['produit__stock'] <= 0
+                'en_rupture': (item['produit__stock'] or 0) <= 0
             })
         
         # Compter les produits sans ventes (catégorie C) - OPTIMISATION: seulement compter, pas charger

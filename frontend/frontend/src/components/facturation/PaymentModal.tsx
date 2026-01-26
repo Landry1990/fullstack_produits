@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import type { Facture } from '../../types'
+import { useTranslation } from 'react-i18next'
 
 type PaymentItem = {
     mode: string // Relaxed to match broader usage in Facturation.tsx
@@ -54,6 +55,7 @@ export default function PaymentModal({
     useManualClient,
     paymentInputRef
 }: PaymentModalProps) {
+    const { t } = useTranslation()
 
     useEffect(() => {
         if (isOpen) {
@@ -69,7 +71,7 @@ export default function PaymentModal({
         <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
           <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-50">
-            <h3 className="font-bold text-lg">Paiement</h3>
+            <h3 className="font-bold text-lg">{t('facturation.payment.modal_title')}</h3>
             <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
           </div>
 
@@ -85,7 +87,7 @@ export default function PaymentModal({
               
               <div className="text-center mb-6">
                 <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">
-                    {isNewSale && totals.tauxCouverture > 0 ? "Reste à charge (Part Patient)" : "Total à payer"}
+                    {isNewSale && totals.tauxCouverture > 0 ? t('facturation.totals.part_patient') : t('facturation.payment.amount_due')}
                 </div>
                 <div className="text-4xl font-light text-primary">
                     {isNewSale 
@@ -116,7 +118,7 @@ export default function PaymentModal({
                     {/* Part Patient */}
                     <div className="bg-white rounded-lg p-3 border border-success/20">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-success">Part Patient ({100 - totals.tauxCouverture}%)</span>
+                        <span className="text-sm font-medium text-success">{t('facturation.totals.part_patient')} ({100 - totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-success">{Math.round(totals.partPatient)} F</span>
                       </div>
                       <div className="form-control w-full space-y-2">
@@ -125,7 +127,7 @@ export default function PaymentModal({
                                 <div className="bg-base-50 rounded p-2 space-y-1 mb-2">
                                     {paiements.map((p, idx) => (
                                         <div key={idx} className="flex justify-between items-center text-xs p-1 px-2 bg-white rounded border border-base-200">
-                                            <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'Autre'}</span>
+                                            <span>{p.mode === 'especes' ? t('facturation.payment.modes.especes') : p.mode === 'carte' ? t('facturation.payment.modes.carte') : p.mode === 'om' ? t('facturation.payment.modes.mobile') : p.mode === 'momo' ? t('facturation.payment.modes.mobile') : p.mode === 'cheque' ? t('facturation.payment.modes.cheque') : 'Autre'}</span>
                                             <div className="flex items-center gap-2">
                                                 <span className="font-mono font-bold">{p.montant} F</span>
                                                 <button 
@@ -150,10 +152,10 @@ export default function PaymentModal({
                                 onChange={(e) => setModePaiement(e.target.value as any)}
                                 className="select select-bordered select-sm w-full"
                                 >
-                                <option value="especes">Espèces</option>
-                                <option value="cheque">Chèque</option>
-                                <option value="carte">Carte</option>
-                                <option value="virement">Virement</option>
+                                <option value="especes">{t('facturation.payment.modes.especes')}</option>
+                                <option value="cheque">{t('facturation.payment.modes.cheque')}</option>
+                                <option value="carte">{t('facturation.payment.modes.carte')}</option>
+                                <option value="virement">{t('facturation.payment.modes.virement')}</option>
                                 <option value="om">Orange Money</option>
                                 <option value="momo">Mobile Money</option>
                                 </select>
@@ -200,10 +202,9 @@ export default function PaymentModal({
                       </div>
                     </div>
                     
-                    {/* Part Assurance */}
                     <div className="bg-white rounded-lg p-3 border border-info/20">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-info">Part Assurance ({totals.tauxCouverture}%)</span>
+                        <span className="text-sm font-medium text-info">{t('facturation.totals.part_assurance')} ({totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-info">{Math.round(totals.partAssurance)} F</span>
                       </div>
                       <div className="text-xs text-base-content/60 mt-1">
@@ -222,14 +223,14 @@ export default function PaymentModal({
                         onChange={(e) => setModePaiement(e.target.value as any)}
                         className="select select-bordered w-full"
                     >
-                        <option value="especes">Espèces</option>
-                        <option value="cheque">Chèque</option>
-                        <option value="carte">Carte</option>
-                        <option value="virement">Virement</option>
+                        <option value="especes">{t('facturation.payment.modes.especes')}</option>
+                        <option value="cheque">{t('facturation.payment.modes.cheque')}</option>
+                        <option value="carte">{t('facturation.payment.modes.carte')}</option>
+                        <option value="virement">{t('facturation.payment.modes.virement')}</option>
                         <option value="om">Orange Money</option>
                         <option value="momo">Mobile Money</option>
                         <option value="en_compte" disabled={selectedClient === null || useManualClient}>
-                            En compte {selectedClient === null || useManualClient ? '(Client requis)' : ''}
+                            {t('facturation.payment.modes.credit')} {selectedClient === null || useManualClient ? `(${t('facturation.client.select_label')} requis)` : ''}
                         </option>
                     </select>
                   </div>
@@ -239,7 +240,7 @@ export default function PaymentModal({
                     <div className="bg-base-50 rounded-lg p-2 space-y-1">
                         {paiements.map((p, idx) => (
                             <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
-                                <span>{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'virement' ? 'Virement' : p.mode === 'om' ? 'Orange Money' : p.mode === 'momo' ? 'Mobile Money' : p.mode === 'cheque' ? 'Chèque' : 'En compte'}</span>
+                                <span>{p.mode === 'especes' ? t('facturation.payment.modes.especes') : p.mode === 'carte' ? t('facturation.payment.modes.carte') : p.mode === 'virement' ? t('facturation.payment.modes.virement') : p.mode === 'om' ? t('facturation.payment.modes.mobile') : p.mode === 'momo' ? t('facturation.payment.modes.mobile') : p.mode === 'cheque' ? t('facturation.payment.modes.cheque') : t('facturation.payment.modes.credit')}</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{p.montant} F</span>
                                     <button 
@@ -320,12 +321,12 @@ export default function PaymentModal({
                 return (
                   <div className="flex flex-col gap-1">
                       <div className="flex justify-between text-sm">
-                          <span>Total versé:</span>
+                          <span>{t('facturation.payment.amount_paid')}:</span>
                           <span className="font-bold">{Math.round(totalVerse)} F</span>
                       </div>
                       {rendu > 0 && (
                         <div className="alert bg-success/10 text-success border-success/20 py-2 px-3 shadow-sm flex justify-between items-center">
-                            <span className="text-sm font-medium">Monnaie à rendre</span>
+                            <span className="text-sm font-medium">{t('facturation.payment.change_due')}</span>
                             <span className="text-xl font-bold">{rendu.toFixed(0)} F</span>
                         </div>
                       )}
@@ -334,9 +335,9 @@ export default function PaymentModal({
               })()}
 
               <div className="pt-4 flex gap-3">
-                <button type="button" className="btn btn-ghost flex-1" onClick={onClose}>Annuler (Esc)</button>
+                <button type="button" className="btn btn-ghost flex-1" onClick={onClose}>{t('facturation.payment.cancel')} (Esc)</button>
                 <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner"></span> : 'Caisse Centrale'}
+                  {loading ? <span className="loading loading-spinner"></span> : t('facturation.payment.validate')}
                 </button>
               </div>
             </form>

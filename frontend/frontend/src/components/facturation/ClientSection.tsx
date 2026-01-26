@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Client, AyantDroit } from '../../types'
 
 interface ClientSectionProps {
@@ -62,6 +63,7 @@ export default function ClientSection({
   ayantDroitSociete,
   setAyantDroitSociete
 }: ClientSectionProps) {
+  const { t } = useTranslation()
   
   const [highlightedClientIndex, setHighlightedClientIndex] = useState(-1)
   const clientSearchRef = useRef<HTMLDivElement>(null)
@@ -117,7 +119,7 @@ export default function ClientSection({
   return (
     <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm border border-base-200 w-full md:w-64 lg:w-80 shrink-0">
       <div className="flex items-center justify-between mb-2">
-        <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">Client (F4)</label>
+        <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">{t('facturation.client.label')}</label>
         <button
           type="button"
           onClick={() => {
@@ -128,9 +130,9 @@ export default function ClientSection({
             }
           }}
           className="btn btn-xs btn-ghost"
-          title={useManualClient ? "Sélectionner dans la liste" : "Saisir manuellement"}
+          title={useManualClient ? t('facturation.client.select_list_tooltip') : t('facturation.client.manual_input_tooltip')}
         >
-          {useManualClient ? '📋 Liste' : '✏️ Saisir'}
+          {useManualClient ? t('facturation.client.list_button') : t('facturation.client.manual_button')}
         </button>
       </div>
       {useManualClient ? (
@@ -138,7 +140,7 @@ export default function ClientSection({
           type="text"
           value={manualClientName}
           onChange={(e) => setManualClientName(e.target.value)}
-          placeholder="Nom du client..."
+          placeholder={t('facturation.client.manual_placeholder')}
           className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
         />
       ) : (
@@ -157,7 +159,7 @@ export default function ClientSection({
               setHighlightedClientIndex(-1)
             }}
             onKeyDown={handleKeyDown}
-            placeholder="🔍 Rechercher un client..."
+            placeholder={t('facturation.client.search_placeholder')}
             className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors pr-8"
           />
           {selectedClient && (
@@ -168,7 +170,7 @@ export default function ClientSection({
                 setClientSearch('')
               }}
               className="absolute right-2 top-1/2 -translate-y-1/2 text-base-content/50 hover:text-error"
-              title="Effacer"
+              title={t('facturation.client.clear_tooltip')}
             >
               ✕
             </button>
@@ -201,13 +203,13 @@ export default function ClientSection({
                   ))}
                   {clientSearch && filteredClients.length < clients.length && (
                     <div className="px-3 py-2 text-xs text-base-content/50 border-t">
-                      {filteredClients.length} résultat(s) sur {clients.length}
+                      {t('facturation.client.results_count', { count: filteredClients.length, total: clients.length })}
                     </div>
                   )}
                 </>
               ) : (
                 <div className="px-3 py-3 text-center">
-                  <div className="text-sm text-base-content/50 mb-2">Aucun client trouvé</div>
+                  <div className="text-sm text-base-content/50 mb-2">{t('facturation.client.no_results')}</div>
                   <button 
                     type="button"
                     onClick={() => {
@@ -216,7 +218,7 @@ export default function ClientSection({
                     }}
                     className="btn btn-primary btn-sm gap-1"
                   >
-                    ➕ Créer "{clientSearch}"
+                    {t('facturation.client.create_button')} "{clientSearch}"
                   </button>
                 </div>
               )}
@@ -230,7 +232,7 @@ export default function ClientSection({
         <div className="mt-3 pt-3 border-t border-base-200">
           <div className="flex items-center justify-between mb-2">
             <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
-              Ayant Droit <span className="text-error">*</span>
+              {t('facturation.client.ayant_droit.label')} <span className="text-error">*</span>
             </label>
             {ayantsDroitList.length > 0 && (
               <button
@@ -245,9 +247,9 @@ export default function ClientSection({
                   }
                 }}
                 className="btn btn-xs btn-ghost"
-                title={showNewAyantDroit ? "Sélectionner existant" : "Nouveau"}
+                title={showNewAyantDroit ? t('facturation.client.ayant_droit.select_existing_tooltip') : t('facturation.client.ayant_droit.new_tooltip')}
               >
-                {showNewAyantDroit ? '📋 Existant' : '➕ Nouveau'}
+                {showNewAyantDroit ? t('facturation.client.ayant_droit.existing_button') : t('facturation.client.ayant_droit.new_button')}
               </button>
             )}
           </div>
@@ -258,23 +260,23 @@ export default function ClientSection({
                 type="text"
                 value={ayantDroitNom}
                 onChange={(e) => setAyantDroitNom(e.target.value)}
-                placeholder="Nom de l'ayant droit *"
+                placeholder={t('facturation.client.ayant_droit.name_placeholder')}
                 className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
               />
               <input
                 type="text"
                 value={ayantDroitMatricule}
                 onChange={(e) => setAyantDroitMatricule(e.target.value)}
-                placeholder="Matricule *"
+                placeholder={t('facturation.client.ayant_droit.matricule_placeholder')}
                 className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
               />
               <input
                 type="text"
                 value={ayantDroitSociete}
                 onChange={(e) => setAyantDroitSociete(e.target.value)}
-                placeholder="Société (optionnel)"
+                placeholder={t('facturation.client.ayant_droit.societe_placeholder')}
                 className="input input-bordered w-full input-xs bg-base-50 focus:bg-white transition-colors"
-              />
+                />
             </div>
           ) : (
             <select
@@ -282,7 +284,7 @@ export default function ClientSection({
               onChange={(e) => setSelectedAyantDroit(e.target.value ? Number(e.target.value) : null)}
               className="select select-bordered w-full select-xs bg-base-50 focus:bg-white transition-colors"
             >
-              <option value="">Sélectionner un ayant droit...</option>
+              <option value="">{t('facturation.client.ayant_droit.select_placeholder')}</option>
               {Array.isArray(ayantsDroitList) && ayantsDroitList.map((ad) => (
                 <option key={ad?.id || Math.random()} value={ad?.id || ''}>
                   {ad?.nom || 'N/A'} ({ad?.matricule || 'N/A'}){ad?.societe ? ` - ${ad.societe}` : ''}

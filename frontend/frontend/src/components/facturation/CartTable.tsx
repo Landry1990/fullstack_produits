@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { LigneFacture, ProduitModel } from '../../types'
 import { differenceInDays, parseISO } from 'date-fns'
 import { useAuth } from '../../context/AuthContext'
@@ -26,6 +27,7 @@ export default function CartTable({
   onReturnFocus
 }: CartTableProps) {
   const { user } = useAuth()
+  const { t } = useTranslation()
   
   // Permission Checks
   const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
@@ -57,7 +59,7 @@ export default function CartTable({
         <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-        <p className="font-light">Commencez par ajouter des produits (F2)</p>
+        <p className="font-light">{t('facturation.cart.empty')}</p>
       </div>
     )
   }
@@ -66,12 +68,12 @@ export default function CartTable({
     <table className="table table-pin-rows table-sm w-full">
       <thead>
         <tr className="bg-base-50 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-          <th className="bg-base-50 pl-2 md:pl-4">Produit</th>
-          <th className="bg-base-50 text-right w-16 md:w-20">Qté</th>
-          <th className="bg-base-50 text-right w-20 md:w-24">Prix</th>
-          <th className="bg-base-50 text-right w-14 md:w-16 hidden sm:table-cell">Remise</th>
-          <th className="bg-base-50 text-center w-24 hidden md:table-cell">Péremption</th>
-          <th className="bg-base-50 text-right w-20 md:w-28 pr-2 md:pr-4">Total</th>
+          <th className="bg-base-50 pl-2 md:pl-4">{t('facturation.cart.headers.product')}</th>
+          <th className="bg-base-50 text-right w-16 md:w-20">{t('facturation.cart.headers.qty')}</th>
+          <th className="bg-base-50 text-right w-20 md:w-24">{t('facturation.cart.headers.price')}</th>
+          <th className="bg-base-50 text-right w-14 md:w-16 hidden sm:table-cell">{t('facturation.cart.headers.discount')}</th>
+          <th className="bg-base-50 text-center w-24 hidden md:table-cell">{t('facturation.cart.headers.stock')}</th>
+          <th className="bg-base-50 text-right w-20 md:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
           <th className="bg-base-50 w-8"></th>
         </tr>
       </thead>
@@ -160,6 +162,7 @@ export default function CartTable({
                 onClick={() => removeLigne(ligne.produit.id)}
                 className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
               >
+                <span className="sr-only">{t('facturation.cart.actions.remove')}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
             </td>

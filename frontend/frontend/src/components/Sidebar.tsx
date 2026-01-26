@@ -3,104 +3,107 @@ import { useAuth } from '../context/AuthContext';
 import { useSidebar } from '../context/SidebarContext';
 import PharmaCrossLogo from './PharmaCrossLogo';
 
+import { useTranslation } from 'react-i18next';
+
 export default function Sidebar() {
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const { isOpen, toggleSidebar, closeSidebar } = useSidebar();
   
   const allMenuItems = [
-    { path: '/app', label: 'Tableau de bord', key: 'dashboard', icon: (
+    { path: '/app', label: t('sidebar.dashboard'), key: 'dashboard', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
     )},
     { 
-      label: 'Ventes', 
+      label: t('sidebar.ventes.title'), 
       key: 'ventes', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/ventes', label: 'Consultation', key: 'ventes' },
-        { path: '/app/historique-ventes', label: 'Historique par Jour', key: 'ventes' },
-        { path: '/app/journal-caisse', label: 'Journal de Caisse', key: 'ventes' },
-        { path: '/app/historique-clotures', label: 'Historique Clôtures', key: 'ventes' },
-        { path: '/app/ordonnancier', label: 'Ordonnancier', key: 'ventes' },
-        { path: '/app/caisse-centralisee', label: 'Caisse Centralisée', key: 'caisse' }
+        { path: '/app/ventes', label: t('sidebar.ventes.consultation'), key: 'ventes' },
+        { path: '/app/historique-ventes', label: t('sidebar.ventes.historique'), key: 'ventes' },
+        { path: '/app/journal-caisse', label: t('sidebar.ventes.journal'), key: 'ventes' },
+        { path: '/app/historique-clotures', label: t('sidebar.ventes.clotures'), key: 'ventes' },
+        { path: '/app/ordonnancier', label: t('sidebar.ventes.ordonnancier'), key: 'ventes' },
+        { path: '/app/caisse-centralisee', label: t('sidebar.ventes.caisse_centralisee'), key: 'caisse' }
       ]
     },
-    { path: '/app/facturation', label: 'Facturation', key: 'facturation', icon: (
+    { path: '/app/facturation', label: t('sidebar.facturation'), key: 'facturation', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
     )},
-    { path: '/app/produits', label: 'Produits', key: 'produits', icon: (
+    { path: '/app/produits', label: t('sidebar.produits'), key: 'produits', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )},
-    { path: '/app/vitrine', label: 'Ma Vitrine (Web)', key: 'produits', icon: (
+    { path: '/app/vitrine', label: t('sidebar.vitrine'), key: 'produits', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
     )},
     { 
-      label: 'Commandes', 
+      label: t('sidebar.commandes.title'), 
       key: 'commandes', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/locales', label: 'Locales - Consultation', key: 'commandes' },
-        { path: '/app/historique-achats/locales', label: 'Locales - Historique', key: 'commandes' },
-        { path: '/app/commandes/directes', label: 'Directes - Consultation', key: 'commandes' },
-        { path: '/app/historique-achats/directes', label: 'Directes - Historique', key: 'commandes' }
+        { path: '/app/commandes/locales', label: t('sidebar.commandes.local_consult'), key: 'commandes' },
+        { path: '/app/historique-achats/locales', label: t('sidebar.commandes.local_hist'), key: 'commandes' },
+        { path: '/app/commandes/directes', label: t('sidebar.commandes.direct_consult'), key: 'commandes' },
+        { path: '/app/historique-achats/directes', label: t('sidebar.commandes.direct_hist'), key: 'commandes' }
       ]
     },
-    { path: '/app/fournisseurs', label: 'Fournisseurs', key: 'fournisseurs', icon: (
+    { path: '/app/fournisseurs', label: t('sidebar.fournisseurs'), key: 'fournisseurs', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
     )},
-    { path: '/app/clients', label: 'Clients', key: 'clients', icon: (
+    { path: '/app/clients', label: t('sidebar.clients'), key: 'clients', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
     )},
-    { path: '/app/creances', label: 'Créances', key: 'creances', icon: (
+    { path: '/app/creances', label: t('sidebar.creances'), key: 'creances', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
     )},
     { 
-      label: 'Stock', 
+      label: t('sidebar.stock.title'), 
       key: 'stock', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
       ),
       submenus: [
-        { path: '/app/inventaire', label: 'Inventaire', key: 'inventaire' },
-        { path: '/app/journal-ajustements', label: 'Journal Ajustements', key: 'inventaire' },
-        { path: '/app/stock-analysis', label: 'Analyse Stock', key: 'inventaire' },
-        { path: '/app/avoirs', label: 'Avoirs', key: 'avoirs' },
-        { path: '/app/promis', label: 'Promis', key: 'promis' },
-        { path: '/app/transformations', label: 'Transformations', key: 'inventaire' },
-        { path: '/app/perimes', label: 'Périmés', key: 'inventaire' },
-        { path: '/app/formes', label: 'Formes', key: 'formes' },
-        { path: '/app/groupes', label: 'Groupes', key: 'groupes' },
-        { path: '/app/rayons', label: 'Rayons', key: 'rayons' }
+        { path: '/app/inventaire', label: t('sidebar.stock.inventaire'), key: 'inventaire' },
+        { path: '/app/journal-ajustements', label: t('sidebar.stock.journal'), key: 'inventaire' },
+        { path: '/app/stock-analysis', label: t('sidebar.stock.analyse'), key: 'inventaire' },
+        { path: '/app/avoirs', label: t('sidebar.stock.avoirs'), key: 'avoirs' },
+        { path: '/app/promis', label: t('sidebar.stock.promis'), key: 'promis' },
+        { path: '/app/transformations', label: t('sidebar.stock.transformations'), key: 'inventaire' },
+        { path: '/app/perimes', label: t('sidebar.stock.perimes'), key: 'inventaire' },
+        { path: '/app/formes', label: t('sidebar.stock.formes'), key: 'formes' },
+        { path: '/app/groupes', label: t('sidebar.stock.groupes'), key: 'groupes' },
+        { path: '/app/rayons', label: t('sidebar.stock.rayons'), key: 'rayons' }
       ]
     },
     { 
-      label: 'Statistiques', 
+      label: t('sidebar.statistiques.title'), 
       key: 'statistiques', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
       ),
       submenus: [
-        { path: '/app/centre-rapports', label: 'Centre de Rapports', key: 'statistiques' },
-        { path: '/app/analyse-abc', label: 'Analyse ABC', key: 'statistiques' },
-        { path: '/app/statistiques', label: 'Produits', key: 'statistiques' },
-        { path: '/app/statistiques-fournisseurs', label: 'Fournisseurs', key: 'statistiques' },
-        { path: '/app/rapports-mensuels', label: 'Rapport Mensuel', key: 'statistiques' }
+        { path: '/app/centre-rapports', label: t('sidebar.statistiques.rapports'), key: 'statistiques' },
+        { path: '/app/analyse-abc', label: t('sidebar.statistiques.abc'), key: 'statistiques' },
+        { path: '/app/statistiques', label: t('sidebar.statistiques.produits'), key: 'statistiques' },
+        { path: '/app/statistiques-fournisseurs', label: t('sidebar.statistiques.fournisseurs'), key: 'statistiques' },
+        { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques' }
       ]
     },
     {
-      label: 'Paramètres',
+      label: t('sidebar.parametres.title'),
       key: 'settings',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/invoice-settings', label: 'Configuration Facture', key: 'settings' },
-        { path: '/app/pharmacy-settings', label: 'Informations Pharmacie', key: 'settings' },
-        { path: '/app/settings/labels', label: 'Templates d\'Étiquettes', key: 'settings' },
-        { path: '/app/settings/printers', label: 'Configuration Imprimantes', key: 'settings' }
+        { path: '/app/invoice-settings', label: t('sidebar.parametres.facture'), key: 'settings' },
+        { path: '/app/pharmacy-settings', label: t('sidebar.parametres.pharmacie'), key: 'settings' },
+        { path: '/app/settings/labels', label: t('sidebar.parametres.etiquettes'), key: 'settings' },
+        { path: '/app/settings/printers', label: t('sidebar.parametres.imprimantes'), key: 'settings' }
       ]
     },
   ];
@@ -124,7 +127,7 @@ export default function Sidebar() {
   if (user?.is_superuser) {
     menuItems.push({
       path: '/app/utilisateurs',
-      label: 'Utilisateurs',
+      label: t('sidebar.utilisateurs'),
       key: 'utilisateurs',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -132,7 +135,7 @@ export default function Sidebar() {
     });
     menuItems.push({
       path: '/app/journal-audit',
-      label: "Journal d'Audit",
+      label: t('sidebar.audit'),
       key: 'audit',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -250,8 +253,22 @@ export default function Sidebar() {
           className="btn btn-sm btn-ghost w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          Déconnexion
+          {t('sidebar.logout')}
         </button>
+        <div className="mt-4 flex gap-2 justify-center">
+            <button 
+                className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`}
+                onClick={() => i18n.changeLanguage('fr')}
+            >
+                FR
+            </button>
+            <button 
+                className={`btn btn-xs ${i18n.language === 'en' ? 'btn-primary' : 'btn-ghost text-white/50'}`}
+                onClick={() => i18n.changeLanguage('en')}
+            >
+                EN
+            </button>
+        </div>
       </div>
     </aside>
     </>
