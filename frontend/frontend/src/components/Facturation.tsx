@@ -24,6 +24,8 @@ import { TicketTemplate } from './printing/TicketTemplate'
 // Lazy load barcode component (kept if needed elsewhere, otherwise remove)
 const Barcode = lazy(() => import('react-barcode'))
 
+import { useTranslation } from 'react-i18next'
+
 
 
 type FactureProduitPayload = {
@@ -41,6 +43,7 @@ type FactureProduitPayload = {
 
 
 export default function Facturation() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { settings: pharmacySettings } = usePharmacySettings()
   
@@ -1773,26 +1776,27 @@ export default function Facturation() {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedClient, isPaymentModalOpen, showTicketPreview, successInfo])
+  }, [selectedClient, useManualClient, isPaymentModalOpen, showTicketPreview, successInfo, showStockResolution, showPendingSales, showClientCreateModal, showOrdonnanceModal, lignesFacture.length, handlePaymentClick])
 
   return (
     <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
       {/* Header Minimaliste */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-base-200 bg-white shrink-0">
         <div>
-          <h1 className="text-xl font-light tracking-tight text-base-content">Facturation</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-base-content">{t('facturation.title')}</h1>
+          <p className="text-xs sm:text-sm text-base-content/80">{t('facturation.subtitle')}</p>
           <div className="flex gap-4 text-xs text-base-content/50 mt-1">
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Client</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F9</kbd> Encaisser</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Esc</kbd> Annuler</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> {t('facturation.shortcuts.search')}</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> {t('facturation.shortcuts.client')}</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F9</kbd> {t('facturation.shortcuts.pay')}</span>
+            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Esc</kbd> {t('facturation.shortcuts.cancel')}</span>
           </div>
         </div>
         <div className="text-sm font-medium text-base-content/60">
           {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </div>
       </div>
-      
+
       {/* Modification Mode Banner */}
       {isModificationMode && modificationInvoiceId && (
         <div className="alert alert-warning shadow-lg mx-3 md:mx-4 lg:mx-6 mt-2">
@@ -1800,33 +1804,33 @@ export default function Facturation() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div className="flex-1">
-            <h3 className="font-bold">Mode Modification</h3>
+            <h3 className="font-bold">{t('facturation.modification_mode.title')}</h3>
             <div className="text-xs flex flex-wrap gap-4">
-              <span>Facture originale: <strong>{Math.round(originalTotalTtc).toLocaleString('fr-FR')} F</strong></span>
-              <span>Nouveau total: <strong>{Math.round(totals.totalTtc).toLocaleString('fr-FR')} F</strong></span>
+              <span>{t('facturation.modification_mode.original_total')}: <strong>{Math.round(originalTotalTtc).toLocaleString('fr-FR')} F</strong></span>
+              <span>{t('facturation.modification_mode.new_total')}: <strong>{Math.round(totals.totalTtc).toLocaleString('fr-FR')} F</strong></span>
               {totals.totalTtc !== originalTotalTtc && (
                 <span className={totals.totalTtc > originalTotalTtc ? 'text-success font-bold' : 'text-error font-bold'}>
-                  Différence: {totals.totalTtc > originalTotalTtc ? '+' : ''}{Math.round(totals.totalTtc - originalTotalTtc).toLocaleString('fr-FR')} F
-                  {totals.totalTtc > originalTotalTtc ? ' (à encaisser)' : ' (à rembourser)'}
+                  {t('facturation.modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{Math.round(totals.totalTtc - originalTotalTtc).toLocaleString('fr-FR')} F
+                  {totals.totalTtc > originalTotalTtc ? ` (${t('facturation.modification_mode.to_collect')})` : ` (${t('facturation.modification_mode.to_refund')})`}
                 </span>
               )}
             </div>
           </div>
-          <button 
+          <button
             className="btn btn-sm btn-ghost"
             onClick={() => {
               setIsModificationMode(false)
               setModificationInvoiceId(null)
               setOriginalTotalTtc(0)
               setLignesFacture([])
-              toast('Mode modification annulé', { icon: '✖️' })
+              toast(t('facturation.modification_mode.cancelled'), { icon: '✖️' })
             }}
           >
-            Annuler
+            {t('common.cancel')}
           </button>
         </div>
       )}
-      
+
       {/* Notifications */}
       {/* Notifications (Toasts) */}
       {(error || successInfo) && (
@@ -1835,7 +1839,7 @@ export default function Facturation() {
             <div role="alert" className="alert alert-error shadow-lg max-w-md animate-in fade-in slide-in-from-right-5 duration-300">
               <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <div>
-                <h3 className="font-bold">Erreur</h3>
+                <h3 className="font-bold">{t('common.error')}</h3>
                 <div className="text-xs">{error}</div>
               </div>
               <button className="btn btn-sm btn-ghost btn-circle" onClick={() => setError(null)}>✕</button>
@@ -1847,35 +1851,35 @@ export default function Facturation() {
               <div className="flex items-center gap-2 w-full">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <div className="flex-1">
-                  <h3 className="font-bold">Vente enregistrée !</h3>
-                  <div className="text-xs">Facture <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F</div>
+                  <h3 className="font-bold">{t('facturation.sale_recorded')} !</h3>
+                  <div className="text-xs">{t('facturation.invoice')} <span className="font-mono font-bold">{successInfo.numero_facture}</span> • {Math.round(Number(successInfo.total_ttc))} F</div>
                 </div>
                 <button className="btn btn-sm btn-ghost btn-circle self-start" onClick={() => setSuccessInfo(null)}>✕</button>
               </div>
-              
+
               <div className="flex flex-wrap gap-2 w-full justify-end mt-1">
-                  {successInfo.status !== 'PAY' && (
-                      <button className="btn btn-sm btn-primary" onClick={() => ouvrirModalPaiement(successInfo)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-                        </svg>
-                        Payer
-                      </button>
-                  )}
-                  {successInfo.status === 'PAY' && ticketCaisse && (
-                      <button className="btn btn-sm btn-info text-white" onClick={() => setShowTicketPreview(true)}>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v4.072c.421.424.688 1.006.688 1.653 0 .647-.267 1.23-.688 1.653v4.072c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-4.072c-.421-.424-.688-1.006-.688-1.653 0-.647.267-1.23.688-1.653V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
-                        </svg>
-                        Ticket
-                      </button>
-                  )}
-                  <button className="btn btn-sm btn-outline" onClick={() => handleImprimerFacture(successInfo)}>
+                {successInfo.status !== 'PAY' && (
+                  <button className="btn btn-sm btn-primary" onClick={() => ouvrirModalPaiement(successInfo)}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                     </svg>
-                    A4
+                    {t('common.pay')}
                   </button>
+                )}
+                {successInfo.status === 'PAY' && ticketCaisse && (
+                  <button className="btn btn-sm btn-info text-white" onClick={() => setShowTicketPreview(true)}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v4.072c.421.424.688 1.006.688 1.653 0 .647-.267 1.23-.688 1.653v4.072c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-4.072c-.421-.424-.688-1.006-.688-1.653 0-.647.267-1.23.688-1.653V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                    </svg>
+                    {t('common.ticket')}
+                  </button>
+                )}
+                <button className="btn btn-sm btn-outline" onClick={() => handleImprimerFacture(successInfo)}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 mr-1">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                  </svg>
+                  A4
+                </button>
               </div>
             </div>
           )}
@@ -1886,127 +1890,125 @@ export default function Facturation() {
       <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4 lg:p-6 gap-4 lg:gap-6">
         {/* Top Section: Client & Search */}
         <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
-            {/* Client Selection */}
-            <ClientSection
-                clients={clients}
-                filteredClients={filteredClients}
-                useManualClient={useManualClient}
-                setUseManualClient={setUseManualClient}
-                manualClientName={manualClientName}
-                setManualClientName={setManualClientName}
-                selectedClient={selectedClient}
-                setSelectedClient={setSelectedClient}
-                clientSearch={clientSearch}
-                setClientSearch={setClientSearch}
-                showClientDropdown={showClientDropdown}
-                setShowClientDropdown={setShowClientDropdown}
-                onOpenCreateClient={(initialName) => {
-                    setNewClientForm(prev => ({ ...prev, name: initialName }))
-                    setShowClientCreateModal(true)
-                }}
-                ayantsDroitList={ayantsDroitList}
-                selectedAyantDroit={selectedAyantDroit}
-                setSelectedAyantDroit={setSelectedAyantDroit}
-                showNewAyantDroit={showNewAyantDroit}
-                setShowNewAyantDroit={setShowNewAyantDroit}
-                ayantDroitNom={ayantDroitNom}
-                setAyantDroitNom={setAyantDroitNom}
-                ayantDroitMatricule={ayantDroitMatricule}
-                setAyantDroitMatricule={setAyantDroitMatricule}
-                ayantDroitSociete={ayantDroitSociete}
-                setAyantDroitSociete={setAyantDroitSociete}
-            />
+          {/* Client Selection */}
+          <ClientSection
+            clients={clients}
+            filteredClients={filteredClients}
+            useManualClient={useManualClient}
+            setUseManualClient={setUseManualClient}
+            manualClientName={manualClientName}
+            setManualClientName={setManualClientName}
+            selectedClient={selectedClient}
+            setSelectedClient={setSelectedClient}
+            clientSearch={clientSearch}
+            setClientSearch={setClientSearch}
+            showClientDropdown={showClientDropdown}
+            setShowClientDropdown={setShowClientDropdown}
+            onOpenCreateClient={(initialName) => {
+              setNewClientForm(prev => ({ ...prev, name: initialName }))
+              setShowClientCreateModal(true)
+            }}
+            ayantsDroitList={ayantsDroitList}
+            selectedAyantDroit={selectedAyantDroit}
+            setSelectedAyantDroit={setSelectedAyantDroit}
+            showNewAyantDroit={showNewAyantDroit}
+            setShowNewAyantDroit={setShowNewAyantDroit}
+            ayantDroitNom={ayantDroitNom}
+            setAyantDroitNom={setAyantDroitNom}
+            ayantDroitMatricule={ayantDroitMatricule}
+            setAyantDroitMatricule={setAyantDroitMatricule}
+            ayantDroitSociete={ayantDroitSociete}
+            setAyantDroitSociete={setAyantDroitSociete}
+          />
 
-            {/* Product Search */}
-            {/* Product Search */}
-            <ProductSearchSection
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                searchLoading={searchLoading}
-                filteredProduits={filteredProduits}
-                addProduitToFacture={(p) => addProduitToFacture(p, { isRetrocession })}
-                searchInputRef={searchInputRef}
-            />
+          {/* Product Search */}
+          <ProductSearchSection
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchLoading={searchLoading}
+            filteredProduits={filteredProduits}
+            addProduitToFacture={(p) => addProduitToFacture(p, { isRetrocession })}
+            searchInputRef={searchInputRef}
+            placeholder={t('facturation.search_placeholder')}
+          />
         </div>
 
         {/* Bottom Section: Cart/Invoice Details */}
         <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
-                <h2 className="font-bold text-lg text-base-content">Panier</h2>
-                <div className="badge badge-ghost font-mono">{lignesFacture.length} articles</div>
-            </div>
+          <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
+            <h2 className="font-bold text-lg text-base-content">{t('facturation.cart_title')}</h2>
+            <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation.items_count', { count: lignesFacture.length })}</div>
+          </div>
 
-            {/* Table */}
-            <div className="flex-1 overflow-x-auto overflow-y-auto">
-                <CartTable 
-                    lignesFacture={lignesFacture}
-                    updateQuantite={updateQuantite}
-                    updatePrix={updatePrix}
-                    updateRemiseProduit={updateRemiseProduit}
-                    removeLigne={removeLigne}
-                    onOpenLotModal={(product, currentLotId) => setLotModal({
-                        isOpen: true,
-                        product,
-                        currentLotId
-                    })}
-                    quantityInputsRef={quantityInputsRef}
-                    onReturnFocus={() => searchInputRef.current?.focus()}
-                />
-            </div>
-
-            {/* Footer Totals */}
-            <TotalsSection
-                totalHT={totals.sousTotal}
-                remiseGlobale={remise}
-                setRemiseGlobale={setRemise}
-                remiseMode={remiseMode}
-                setRemiseMode={setRemiseMode}
-                remiseMontant={totals.remiseMontant}
-                tvaAmount={totals.montantTva}
-                totalTTC={totals.totalTtc}
-                couponNumero={couponNumero}
-                setCouponNumero={setCouponNumero}
-                couponData={couponData}
-                couponLoading={couponLoading}
-                couponError={couponError}
-                onRechercherCoupon={handleRechercherCoupon}
-                onClearCoupon={handleClearCoupon}
-                couponMontant={totals.couponMontant}
-                tauxCouverture={totals.tauxCouverture}
-                partAssurance={totals.partAssurance}
-                partPatient={totals.partPatient}
+          {/* Table */}
+          <div className="flex-1 overflow-x-auto overflow-y-auto">
+            <CartTable
+              lignesFacture={lignesFacture}
+              updateQuantite={updateQuantite}
+              updatePrix={updatePrix}
+              updateRemiseProduit={updateRemiseProduit}
+              removeLigne={removeLigne}
+              onOpenLotModal={(product, currentLotId) => setLotModal({
+                isOpen: true,
+                product,
+                currentLotId
+              })}
+              quantityInputsRef={quantityInputsRef}
+              onReturnFocus={() => searchInputRef.current?.focus()}
             />
+          </div>
 
-            {/* Retrocession Toggle (Near Actions) */}
-            <div className="px-4 pb-2 flex justify-end">
-                <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200">
-                        <input
-                        type="checkbox"
-                        id="retrocession-toggle-bottom"
-                        checked={isRetrocession}
-                        onChange={(e) => setIsRetrocession(e.target.checked)}
-                        className="checkbox checkbox-xs checkbox-warning"
-                        />
-                        <label htmlFor="retrocession-toggle-bottom" className="text-xs font-bold text-yellow-800 cursor-pointer select-none uppercase tracking-wide">
-                            Mode Rétrocession (SUDO)
-                        </label>
-                </div>
+          {/* Footer Totals */}
+          <TotalsSection
+            totalHT={totals.sousTotal}
+            remiseGlobale={remise}
+            setRemiseGlobale={setRemise}
+            remiseMode={remiseMode}
+            setRemiseMode={setRemiseMode}
+            remiseMontant={totals.remiseMontant}
+            tvaAmount={totals.montantTva}
+            totalTTC={totals.totalTtc}
+            couponNumero={couponNumero}
+            setCouponNumero={setCouponNumero}
+            couponData={couponData}
+            couponLoading={couponLoading}
+            couponError={couponError}
+            onRechercherCoupon={handleRechercherCoupon}
+            onClearCoupon={handleClearCoupon}
+            couponMontant={totals.couponMontant}
+            tauxCouverture={totals.tauxCouverture}
+            partAssurance={totals.partAssurance}
+            partPatient={totals.partPatient}
+            onOpenOrdonnanceModal={() => setShowOrdonnanceModal(true)}
+            ordonnanceData={tempOrdonnanceData}
+          />
+
+          {/* Retrocession Toggle (Near Actions) */}
+          <div className="px-4 pb-2 flex justify-end">
+            <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200">
+              <input
+                type="checkbox"
+                id="retrocession-toggle-bottom"
+                checked={isRetrocession}
+                onChange={(e) => setIsRetrocession(e.target.checked)}
+                className="checkbox checkbox-xs checkbox-warning"
+              />
+              <label htmlFor="retrocession-toggle-bottom" className="text-xs font-bold text-yellow-800 cursor-pointer select-none uppercase tracking-wide">
+                {t('facturation.retrocession_mode')}
+              </label>
             </div>
+          </div>
 
-            {/* Action Buttons */}
-            <ActionButtons
-                onPayment={handlePaymentClick}
-                onProforma={handleProforma}
-                onSuspend={mettreEnAttente}
-                onViewPending={() => setShowPendingSales(true)}
-                pendingCount={ventesEnAttente.length}
-                onCancel={() => {
-                   if (window.confirm('Voulez-vous vraiment annuler cette facture ?')) {
-                       annulerVente()
-                   }
-                }}
-                isValid={lignesFacture.length > 0}
-            />
+          {/* Action Buttons */}
+          <ActionButtons
+            onPayment={handlePaymentClick}
+            onProforma={handleProforma}
+            onSuspend={mettreEnAttente}
+            onViewPending={() => setShowPendingSales(true)}
+            pendingCount={ventesEnAttente.length}
+            onCancel={annulerVente}
+            isValid={lignesFacture.length > 0}
+          />
         </div>
       </div>
 
@@ -2035,19 +2037,19 @@ export default function Facturation() {
         <div className="modal modal-open">
           <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
             <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
-              <h3 className="font-bold text-lg">Ticket de Caisse</h3>
+              <h3 className="font-bold text-lg">{t('common.receipt')}</h3>
               <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>
             </div>
-            
+
             <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4" id="ticket-preview-container">
-               <div id="ticket-preview">
-                  <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
-               </div>
+              <div id="ticket-preview">
+                <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
+              </div>
             </div>
-            
+
             <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>Fermer (Esc)</button>
-              <button 
+              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>{t('common.close')} (Esc)</button>
+              <button
                 className="btn btn-primary btn-sm"
                 onClick={() => {
                   const content = DOMPurify.sanitize(document.getElementById('ticket-preview')?.innerHTML || '');
@@ -2061,13 +2063,13 @@ export default function Facturation() {
                     win.document.close();
                     win.focus();
                     setTimeout(() => {
-                        win.print();
-                        win.close();
+                      win.print();
+                      win.close();
                     }, 250);
                   }
                 }}
               >
-                Imprimer
+                {t('common.print')}
               </button>
             </div>
           </div>
@@ -2079,81 +2081,80 @@ export default function Facturation() {
       {/* Stock Resolution Modal (Promis vs Force) */}
       <dialog className={`modal ${showStockResolution ? 'modal-open' : ''}`}>
         <div className="modal-box w-[600px] max-w-full">
-            <h3 className="font-bold text-lg text-warning">Résolution des Stocks Insuffisants</h3>
-            <div className="py-4">
-                 <div className="alert alert-warning text-sm py-2 mb-4">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                     <span>
-                        Certains articles dépassent le stock disponible. Veuillez indiquer lesquels sont des "Promis" (Reliquats à livrer).
-                        Les articles non cochés seront forcés en stock négatif.
-                     </span>
-                 </div>
-
-                 <div className="overflow-x-auto">
-                     <table className="table table-compact w-full">
-                         <thead>
-                             <tr>
-                                 <th>Produit</th>
-                                 <th className="text-right">Demande</th>
-                                 <th className="text-right">Stock</th>
-                                 <th className="text-right">Manquant</th>
-                                 <th className="text-center">Promis ?</th>
-                             </tr>
-                         </thead>
-                         <tbody>
-                             {stockResolutionItems.map((item, _) => {
-                                 const manquant = Math.max(0, item.quantity - item.stock)
-                                 const isSelected = promisSelections.has(item.product.id)
-                                 
-                                 return (
-                                     <tr key={item.product.id}>
-                                         <td className="font-medium">{item.product.name}</td>
-                                         <td className="text-right font-bold">{item.quantity}</td>
-                                         <td className="text-right">{item.stock}</td>
-                                         <td className="text-right text-error font-bold">{manquant}</td>
-                                         <td className="text-center">
-                                             <input 
-                                                 type="checkbox" 
-                                                 className="checkbox checkbox-warning"
-                                                 checked={isSelected}
-                                                 onChange={(e) => {
-                                                     const newSet = new Set(promisSelections)
-                                                     if (e.target.checked) newSet.add(item.product.id)
-                                                     else newSet.delete(item.product.id)
-                                                     setPromisSelections(newSet)
-                                                 }}
-                                             />
-                                         </td>
-                                     </tr>
-                                 )
-                             })}
-                         </tbody>
-                     </table>
-                 </div>
-
-                 <div className="form-control w-full mt-4">
-                    <label className="label">
-                        <span className="label-text">Téléphone Client (pour ticket Promis)</span>
-                    </label>
-                    <input
-                        type="text"
-                        value={promisPhone}
-                        onChange={(e) => setPromisPhone(e.target.value)}
-                        placeholder="Numéro de téléphone..."
-                        className="input input-bordered w-full"
-                    />
-                </div>
+          <h3 className="font-bold text-lg text-warning">{t('facturation.stock_resolution.title')}</h3>
+          <div className="py-4">
+            <div className="alert alert-warning text-sm py-2 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <span>
+                {t('facturation.stock_resolution.message')}
+              </span>
             </div>
-            
-            <div className="modal-action flex justify-between">
-                <button className="btn btn-ghost" onClick={() => setShowStockResolution(false)}>Annuler et Modifier Panier</button>
-                <button 
-                    className="btn btn-primary"
-                    onClick={handleStockResolutionConfirm}
-                >
-                    Valider et Encaisser
-                </button>
+
+            <div className="overflow-x-auto">
+              <table className="table table-compact w-full">
+                <thead>
+                  <tr>
+                    <th>{t('common.product')}</th>
+                    <th className="text-right">{t('facturation.stock_resolution.demand')}</th>
+                    <th className="text-right">{t('facturation.stock_resolution.stock')}</th>
+                    <th className="text-right">{t('facturation.stock_resolution.missing')}</th>
+                    <th className="text-center">{t('facturation.stock_resolution.promised')} ?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stockResolutionItems.map((item, _) => {
+                    const manquant = Math.max(0, item.quantity - item.stock)
+                    const isSelected = promisSelections.has(item.product.id)
+
+                    return (
+                      <tr key={item.product.id}>
+                        <td className="font-medium">{item.product.name}</td>
+                        <td className="text-right font-bold">{item.quantity}</td>
+                        <td className="text-right">{item.stock}</td>
+                        <td className="text-right text-error font-bold">{manquant}</td>
+                        <td className="text-center">
+                          <input
+                            type="checkbox"
+                            className="checkbox checkbox-warning"
+                            checked={isSelected}
+                            onChange={(e) => {
+                              const newSet = new Set(promisSelections)
+                              if (e.target.checked) newSet.add(item.product.id)
+                              else newSet.delete(item.product.id)
+                              setPromisSelections(newSet)
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
+
+            <div className="form-control w-full mt-4">
+              <label className="label">
+                <span className="label-text">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
+              </label>
+              <input
+                type="text"
+                value={promisPhone}
+                onChange={(e) => setPromisPhone(e.target.value)}
+                placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
+                className="input input-bordered w-full"
+              />
+            </div>
+          </div>
+
+          <div className="modal-action flex justify-between">
+            <button className="btn btn-ghost" onClick={() => setShowStockResolution(false)}>{t('facturation.stock_resolution.cancel_and_edit_cart')}</button>
+            <button
+              className="btn btn-primary"
+              onClick={handleStockResolutionConfirm}
+            >
+              {t('facturation.stock_resolution.validate_and_cash')}
+            </button>
+          </div>
         </div>
       </dialog>
 
@@ -2162,20 +2163,20 @@ export default function Facturation() {
         <div className="modal modal-open">
           <div className="modal-box max-w-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">Ventes en Attente</h3>
+              <h3 className="font-bold text-lg">{t('facturation.pending_sales.title')}</h3>
               <button onClick={() => setShowPendingSales(false)} className="btn btn-sm btn-circle btn-ghost">✕</button>
             </div>
 
             {ventesEnAttente.length === 0 ? (
               <div className="text-center py-8 text-base-content/40">
-                Aucune vente en attente
+                {t('facturation.pending_sales.no_sales')}
               </div>
             ) : (
               <div className="space-y-3">
                 {ventesEnAttente.map((vente, idx) => {
                   const total = vente.lignes.reduce((sum, ligne) => sum + ligne.total_ligne, 0)
-                  const remiseMontant = vente.remiseMode === 'montant' 
-                    ? parseFloat(vente.remise) 
+                  const remiseMontant = vente.remiseMode === 'montant'
+                    ? parseFloat(vente.remise)
                     : total * (parseFloat(vente.remise) / 100)
                   const totalNet = total - remiseMontant
 
@@ -2187,11 +2188,11 @@ export default function Facturation() {
                             <div className="flex items-center gap-2 mb-2">
                               <div className="badge badge-info badge-sm">#{idx + 1}</div>
                               <span className="font-semibold">
-                                {vente.clientName || vente.manualClientName || 'Client non spécifié'}
+                                {vente.clientName || vente.manualClientName || t('facturation.pending_sales.unspecified_client')}
                               </span>
                             </div>
                             <div className="text-sm text-base-content/60 space-y-1">
-                              <div>{vente.lignes.length} article{vente.lignes.length > 1 ? 's' : ''}</div>
+                              <div>{t('facturation.pending_sales.items_count', { count: vente.lignes.length })}</div>
                               <div className="font-medium text-primary">{Math.round(totalNet)} FCFA</div>
                               <div className="text-xs opacity-50">
                                 {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -2199,17 +2200,17 @@ export default function Facturation() {
                             </div>
                           </div>
                           <div className="flex flex-col gap-2">
-                            <button 
+                            <button
                               onClick={() => restaurerVente(vente.id)}
                               className="btn btn-primary btn-sm"
                             >
-                              Restaurer
+                              {t('common.restore')}
                             </button>
-                            <button 
+                            <button
                               onClick={() => supprimerVenteEnAttente(vente.id)}
                               className="btn btn-error btn-outline btn-sm"
                             >
-                              Supprimer
+                              {t('common.delete')}
                             </button>
                           </div>
                         </div>
@@ -2227,18 +2228,18 @@ export default function Facturation() {
       {/* Confirmation Modal */}
       <dialog className={`modal ${confirmModal?.isOpen ? 'modal-open' : ''}`}>
         <div className="modal-box">
-          <h3 className="font-bold text-lg text-warning">⚠️ Confirmation</h3>
+          <h3 className="font-bold text-lg text-warning">⚠️ {t('common.confirmation')}</h3>
           <p className="py-4">{confirmModal?.message}</p>
           <div className="modal-action">
-            <button className="btn" onClick={() => setConfirmModal(null)}>Annuler</button>
-            <button 
-                className="btn btn-error" 
-                onClick={() => { 
-                    if (confirmModal?.onConfirm) confirmModal.onConfirm(); 
-                    setConfirmModal(null); 
-                }}
+            <button className="btn" onClick={() => setConfirmModal(null)}>{t('common.cancel')}</button>
+            <button
+              className="btn btn-error"
+              onClick={() => {
+                if (confirmModal?.onConfirm) confirmModal.onConfirm();
+                setConfirmModal(null);
+              }}
             >
-                Confirmer
+              {t('common.confirm')}
             </button>
           </div>
         </div>
@@ -2246,12 +2247,12 @@ export default function Facturation() {
       </dialog>
       {/* Lot Selection Modal */}
       {lotModal.isOpen && (
-        <LotSelectionModal 
-            isOpen={lotModal.isOpen}
-            onClose={() => setLotModal({ ...lotModal, isOpen: false })}
-            produit={lotModal.product}
-            onSelectLot={handleLotSelect}
-            currentLotId={lotModal.currentLotId}
+        <LotSelectionModal
+          isOpen={lotModal.isOpen}
+          onClose={() => setLotModal({ ...lotModal, isOpen: false })}
+          produit={lotModal.product}
+          onSelectLot={handleLotSelect}
+          currentLotId={lotModal.currentLotId}
         />
       )}
 
@@ -2260,40 +2261,40 @@ export default function Facturation() {
         <dialog className="modal modal-open">
           <div className="modal-box max-w-lg">
             <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              ➕ Nouveau Client
-              <span className="badge badge-sm badge-primary">{newClientForm.client_type}</span>
+              ➕ {t('facturation.create_client.title')}
+              <span className="badge badge-sm badge-primary">{newClientForm.client_type === 'PARTICULIER' ? t('facturation.create_client.individual') : t('facturation.create_client.professional')}</span>
             </h3>
-            
+
             <form onSubmit={handleCreateClient} className="space-y-4">
               {/* Type de client */}
               <div className="flex gap-4">
                 <label className="label cursor-pointer gap-2">
-                  <input 
-                    type="radio" 
-                    className="radio radio-primary radio-sm" 
+                  <input
+                    type="radio"
+                    className="radio radio-primary radio-sm"
                     checked={newClientForm.client_type === 'PARTICULIER'}
                     onChange={() => setNewClientForm(prev => ({ ...prev, client_type: 'PARTICULIER' }))}
                   />
-                  <span className="label-text">Particulier</span>
+                  <span className="label-text">{t('facturation.create_client.individual')}</span>
                 </label>
                 <label className="label cursor-pointer gap-2">
-                  <input 
-                    type="radio" 
-                    className="radio radio-secondary radio-sm" 
+                  <input
+                    type="radio"
+                    className="radio radio-secondary radio-sm"
                     checked={newClientForm.client_type === 'PROFESSIONNEL'}
                     onChange={() => setNewClientForm(prev => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
                   />
-                  <span className="label-text">Professionnel</span>
+                  <span className="label-text">{t('facturation.create_client.professional')}</span>
                 </label>
               </div>
 
               {/* Infos de base */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="form-control">
-                  <label className="label py-1"><span className="label-text text-xs">Nom *</span></label>
-                  <input 
-                    type="text" 
-                    value={newClientForm.name} 
+                  <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.name')} *</span></label>
+                  <input
+                    type="text"
+                    value={newClientForm.name}
                     onChange={e => setNewClientForm(prev => ({ ...prev, name: e.target.value }))}
                     className="input input-bordered input-sm w-full" 
                     placeholder="Nom complet" 
@@ -2301,10 +2302,10 @@ export default function Facturation() {
                     />
                 </div>
                 <div className="form-control">
-                  <label className="label py-1"><span className="label-text text-xs">Téléphone *</span></label>
-                  <input 
-                    type="tel" 
-                    value={newClientForm.phone} 
+                  <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.phone')} *</span></label>
+                  <input
+                    type="tel"
+                    value={newClientForm.phone}
                     onChange={e => setNewClientForm(prev => ({ ...prev, phone: e.target.value }))}
                     className="input input-bordered input-sm w-full" 
                     placeholder="0612345678" 

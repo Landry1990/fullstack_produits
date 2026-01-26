@@ -1,0 +1,204 @@
+{
+    "sidebar": {
+        "dashboard": "Tableau de bord",
+        "ventes": {
+            "title": "Ventes",
+            "consultation": "Consultation",
+            "historique": "Historique par Jour",
+            "journal": "Journal de Caisse",
+            "clotures": "Historique Clôtures",
+            "ordonnancier": "Ordonnancier",
+            "caisse_centralisee": "Caisse Centralisée"
+        },
+        "facturation": "Facturation",
+        "produits": "Produits",
+        "vitrine": "Ma Vitrine (Web)",
+        "commandes": {
+            "title": "Commandes",
+            "local_consult": "Locales - Consultation",
+            "local_hist": "Locales - Historique",
+            "direct_consult": "Directes - Consultation",
+            "direct_hist": "Directes - Historique"
+        },
+        "fournisseurs": "Fournisseurs",
+        "clients": "Clients",
+        "creances": "Créances",
+        "stock": {
+            "title": "Stock",
+            "inventaire": "Inventaire",
+            "journal": "Journal Ajustements",
+            "analyse": "Analyse Stock",
+            "avoirs": "Avoirs",
+            "promis": "Promis",
+            "transformations": "Transformations",
+            "perimes": "Périmés",
+            "formes": "Formes",
+            "groupes": "Groupes",
+            "rayons": "Rayons"
+        },
+        "statistiques": {
+            "title": "Statistiques",
+            "rapports": "Centre de Rapports",
+            "abc": "Analyse ABC",
+            "produits": "Produits",
+            "fournisseurs": "Fournisseurs",
+            "mensuel": "Rapport Mensuel"
+        },
+        "parametres": {
+            "title": "Paramètres",
+            "facture": "Configuration Facture",
+            "pharmacie": "Informations Pharmacie",
+            "etiquettes": "Templates d'Étiquettes",
+            "imprimantes": "Configuration Imprimantes"
+        },
+        "utilisateurs": "Utilisateurs",
+        "audit": "Journal d'Audit",
+        "logout": "Déconnexion"
+    },
+    "dashboard": {
+        "title": "Tableau de bord",
+        "subtitle": "Aperçu de l'activité de la pharmacie",
+        "stats": {
+            "revenue": "Chiffre d'affaires",
+            "revenue_details": "Dont {{amount}} F de remises",
+            "receivables": "Créances Clients",
+            "receivables_pending": "en attente",
+            "stock_value": "Valeur Stock",
+            "stock_value_sub": "Prix d'achat",
+            "stock_value_details": "valorisation",
+            "stock_alerts": "Alertes Stock",
+            "stock_alerts_sub": "en rupture ou faible"
+        },
+        "actions": {
+            "title": "Actions Rapides",
+            "new_invoice": "Nouvelle Facture",
+            "manage_products": "Gérer Produits",
+            "new_client": "Nouveau Client"
+        },
+        "charts": {
+            "revenue_evolution": "Évolution du Chiffre d'Affaires (7 derniers jours)",
+            "sales_trend": "Tendance des Ventes (7 derniers jours)"
+        },
+        "ug": {
+            "title": "Statistiques UG par Fournisseur",
+            "subtitle": "Valorisation des unités gratuites acquises, vendues et restantes",
+            "provider": "Fournisseur",
+            "acquired": "Val. Acquise",
+            "sold": "Val. Vendue",
+            "remaining": "Val. Restante",
+            "total": "TOTAL"
+        },
+        "alerts": {
+            "promis_title": "Promis Disponibles",
+            "deliver_promis": "Livrer les Promis",
+            "stock_title": "Alertes Stock",
+            "no_stock_alerts": "Aucune alerte de stock",
+            "view_all_stock": "Voir tout le stock",
+            "expiry_title": "Péremption Proche",
+            "expiry_period": "Période d'alerte",
+            "no_expiry_alerts": "Aucun lot proche de la péremption",
+            "manage_expiry": "Gérer les Périmés",
+            "rupture": "Rupture",
+            "rupture_imminent": "Rupture imminente",
+            "rupture_in": "Rupture dans {{days}}j",
+            "remaining_stock": "Reste: {{count}}",
+            "coverage": "Couverture: {{days}}j",
+            "expired": "Expiré!",
+            "days_left": "{{count}}j"
+        }
+    },
+    "facturation": {
+        "title": "Facturation",
+        "subtitle": "Création de facture",
+        "search_placeholder": "Scanner un code-barres ou rechercher un produit (Nom, CIP...)",
+        "search_label": "Rechercher un produit (F2)",
+        "search_min_chars": "Tapez au moins 2 caractères",
+        "search_no_results": "Aucun produit trouvé",
+        "create_client": {
+            "title": "Nouveau Client",
+            "individual": "Particulier",
+            "professional": "Professionnel / Assurance",
+            "name": "Nom complet",
+            "phone": "Téléphone"
+        },
+        "client": {
+            "label": "Client (F4)",
+            "select_list_tooltip": "Sélectionner dans la liste",
+            "manual_input_tooltip": "Saisir manuellement",
+            "list_button": "📋 Liste",
+            "manual_button": "✏️ Saisir",
+            "manual_placeholder": "Nom du client...",
+            "search_placeholder": "🔍 Rechercher un client...",
+            "clear_tooltip": "Effacer",
+            "no_results": "Aucun client trouvé",
+            "create_button": "➕ Créer",
+            "results_count": "{{count}} résultat(s) sur {{total}}",
+            "ayant_droit": {
+                "label": "Ayant Droit",
+                "select_existing_tooltip": "Sélectionner existant",
+                "new_tooltip": "Nouveau",
+                "existing_button": "📋 Existant",
+                "new_button": "➕ Nouveau",
+                "name_placeholder": "Nom de l'ayant droit *",
+                "matricule_placeholder": "Matricule *",
+                "societe_placeholder": "Société (optionnel)",
+                "select_placeholder": "Sélectionner un ayant droit..."
+            }
+        },
+        "actions": {
+            "reset_tooltip": "Réinitialiser la facture (Esc)",
+            "cancel": "Annuler",
+            "suspend_tooltip": "Mettre en attente pour plus tard",
+            "suspend": "Mettre en attente",
+            "suspend_short": "Attente",
+            "view_pending_tooltip": "Voir les ventes en attente",
+            "pending": "En attente",
+            "proforma_tooltip": "Générer une facture proforma",
+            "proforma": "Proforma",
+            "pay_tooltip": "Valider et encaisser (Ctrl+Entrée)",
+            "pay": "Encaisser (Ctrl+Enter)",
+            "validate": "Encaisser / Valider",
+            "clear": "Vider le panier"
+        },
+        "cart": {
+            "headers": {
+                "product": "Produit",
+                "qty": "Qté",
+                "price": "P.U.",
+                "total": "Total",
+                "stock": "Stock",
+                "discount": "Remise"
+            },
+            "empty": "Le panier est vide. Scannez un produit ou utilisez la recherche.",
+            "actions": {
+                "remove": "Supprimer la ligne"
+            }
+        },
+        "totals": {
+            "subtotal": "Sous-total HT",
+            "discount": "Remise Globale",
+            "tva": "TVA",
+            "total_ttc": "Total TTC",
+            "part_patient": "Part Patient / Net à payer",
+            "part_assurance": "Part Assurance"
+        },
+        "payment": {
+            "modal_title": "Paiement",
+            "amount_due": "Reste à payer",
+            "amount_paid": "Montant versé",
+            "change_due": "Monnaie à rendre",
+            "modes": {
+                "especes": "Espèces",
+                "cheque": "Chèque",
+                "carte": "Carte Bancaire",
+                "virement": "Virement",
+                "mobile": "Mobile Money",
+                "credit": "Crédit Client"
+            },
+            "validate": "Valider le Paiement",
+            "cancel": "Annuler",
+            "print_ticket": "Imprimer le Ticket",
+            "print_invoice": "Imprimer la Facture A4"
+        }
+    }
+}

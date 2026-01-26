@@ -21,7 +21,10 @@ import {
   useExpiringLots 
 } from '../hooks/useDashboard';
 
+import { useTranslation } from 'react-i18next';
+
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [expirationMonths, setExpirationMonths] = useState(1); // Délai par défaut: 1 mois
   const navigate = useNavigate();
 
@@ -105,8 +108,8 @@ export default function Dashboard() {
       {/* Header - Mobile Optimized */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-base-content">Tableau de bord</h1>
-          <p className="text-xs sm:text-sm text-base-content/80">Aperçu de l'activité de la pharmacie</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-base-content">{t('dashboard.title')}</h1>
+          <p className="text-xs sm:text-sm text-base-content/80">{t('dashboard.subtitle')}</p>
         </div>
         <div className="text-xs sm:text-sm font-medium text-base-content/80 bg-base-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-sm border border-base-200">
           {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -117,25 +120,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {stats && [
           { 
-            title: "Chiffre d'affaires", 
+            title: t('dashboard.stats.revenue'), 
             value: `${Math.round(stats.revenue?.value || 0).toLocaleString('fr-FR')} F`, 
             change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
             icon: "💰", 
             color: "bg-emerald-100 text-emerald-700", 
             isPositive: (stats.revenue?.change || 0) >= 0,
-            details: `Dont ${Math.round(stats.discount?.value || 0).toLocaleString('fr-FR')} F de remises`
+            details: t('dashboard.stats.revenue_details', { amount: Math.round(stats.discount?.value || 0).toLocaleString('fr-FR') })
           },
-          { title: "Créances Clients", value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
+          { title: t('dashboard.stats.receivables'), value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
 
-          { title: "Valeur Stock", value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: "Prix d'achat", icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
+          { title: t('dashboard.stats.stock_value'), value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
         ].map((stat: any, index) => {
           const content = (
             <div className={`card-body p-3 sm:p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-base-content/70">{stat.title}</p>
                 <h3 className="text-lg sm:text-2xl font-bold text-base-content mt-1 truncate">{stat.value}</h3>
-                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === 'Valeur Stock' ? 'text-base-content/60' : stat.title === 'Créances Clients' ? 'text-orange-600' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
-                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{stat.title === 'Alertes Stock' ? 'en rupture ou faible' : stat.title === 'Valeur Stock' ? 'valorisation' : stat.title === 'Créances Clients' ? 'en attente' : 'vs hier'}</span>
+                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === t('dashboard.stats.stock_alerts') || stat.title === 'Valeur Stock' || stat.title === t('dashboard.stats.stock_value') ? 'text-base-content/60' : stat.title === 'Créances Clients' || stat.title === t('dashboard.stats.receivables') ? 'text-orange-600' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
+                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{stat.title === 'Alertes Stock' || stat.title === t('dashboard.stats.stock_alerts') ? t('dashboard.stats.stock_alerts_sub') : stat.title === 'Valeur Stock' || stat.title === t('dashboard.stats.stock_value') ? t('dashboard.stats.stock_value_details') : stat.title === 'Créances Clients' || stat.title === t('dashboard.stats.receivables') ? t('dashboard.stats.receivables_pending') : 'vs hier'}</span>
                 </span>
                 {stat.details && (
                   <div className="text-xs text-base-content/50 mt-1 font-medium hidden sm:block">
@@ -185,8 +188,8 @@ export default function Dashboard() {
           <div className="card-body p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="card-title text-lg font-bold text-base-content">Statistiques UG par Fournisseur</h2>
-                <p className="text-xs text-base-content/60 mt-1">Valorisation des unités gratuites acquises, vendues et restantes</p>
+                <h2 className="card-title text-lg font-bold text-base-content">{t('dashboard.ug.title')}</h2>
+                <p className="text-xs text-base-content/60 mt-1">{t('dashboard.ug.subtitle')}</p>
               </div>
               <div className="badge badge-primary badge-lg gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -200,10 +203,10 @@ export default function Dashboard() {
               <table className="table table-zebra w-full text-sm">
                 <thead>
                   <tr className="bg-base-200/50">
-                    <th className="font-bold">Fournisseur</th>
-                    <th className="font-bold text-right text-purple-700">Val. Acquise</th>
-                    <th className="font-bold text-right text-green-700">Val. Vendue</th>
-                    <th className="font-bold text-right text-blue-700">Val. Restante</th>
+                    <th className="font-bold">{t('dashboard.ug.provider')}</th>
+                    <th className="font-bold text-right text-purple-700">{t('dashboard.ug.acquired')}</th>
+                    <th className="font-bold text-right text-green-700">{t('dashboard.ug.sold')}</th>
+                    <th className="font-bold text-right text-blue-700">{t('dashboard.ug.remaining')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -221,10 +224,10 @@ export default function Dashboard() {
                       </td>
                     </tr>
                   ))}
-                  {/* Total Row */}
+                   {/* Total Row */}
                   {(ugStats as any).results.length > 0 && (
                      <tr className="bg-base-200 font-bold border-t-2 border-base-300">
-                       <td>TOTAL</td>
+                       <td>{t('dashboard.ug.total')}</td>
                        <td className="text-right text-purple-700">
                          {Math.round((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0)).toLocaleString('fr-FR')} F
                        </td>
@@ -249,7 +252,7 @@ export default function Dashboard() {
           {/* Revenue Bar Chart */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <h2 className="card-title text-lg font-bold text-base-content mb-4">Évolution du Chiffre d'Affaires (7 derniers jours)</h2>
+              <h2 className="card-title text-lg font-bold text-base-content mb-4">{t('dashboard.charts.revenue_evolution')}</h2>
               {revenueChart && (
                   <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={chartData}>
@@ -296,7 +299,7 @@ export default function Dashboard() {
           {/* Revenue Line Chart (Trend) */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <h2 className="card-title text-lg font-bold text-base-content mb-4">Tendance des Ventes (7 derniers jours)</h2>
+              <h2 className="card-title text-lg font-bold text-base-content mb-4">{t('dashboard.charts.sales_trend')}</h2>
                {revenueChart && (
                   <ResponsiveContainer width="100%" height={250}>
                     <LineChart data={chartData}>
@@ -350,19 +353,19 @@ export default function Dashboard() {
           {/* Quick Actions - Touch-friendly */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-3 sm:p-4">
-              <h2 className="card-title text-base sm:text-lg font-bold text-base-content mb-3 sm:mb-4">Actions Rapides</h2>
+              <h2 className="card-title text-base sm:text-lg font-bold text-base-content mb-3 sm:mb-4">{t('dashboard.actions.title')}</h2>
               <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 <Link to="/facturation" className="btn btn-primary w-full justify-start gap-2 sm:gap-3 text-white shadow-md hover:shadow-lg transition-all min-h-12 sm:min-h-10">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-                  Nouvelle Facture
+                  {t('dashboard.actions.new_invoice')}
                 </Link>
                 <Link to="/produits" className="btn btn-outline btn-primary w-full justify-start gap-2 sm:gap-3 hover:bg-primary/10 min-h-12 sm:min-h-10">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                  Gérer Produits
+                  {t('dashboard.actions.manage_products')}
                 </Link>
                 <Link to="/clients" className="btn btn-outline btn-primary w-full justify-start gap-2 sm:gap-3 hover:bg-primary/10 min-h-12 sm:min-h-10">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                  Nouveau Client
+                  {t('dashboard.actions.new_client')}
                 </Link>
               </div>
             </div>
@@ -376,7 +379,7 @@ export default function Dashboard() {
                   className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => navigate('/app/promis')}
                 >
-                  <h2 className="card-title text-lg font-bold text-green-700">📦 Promis Disponibles</h2>
+                  <h2 className="card-title text-lg font-bold text-green-700">📦 {t('dashboard.alerts.promis_title')}</h2>
                   <span className="badge badge-success text-white badge-sm">{promisDisponibles.length}</span>
                 </div>
                 <div className="space-y-2">
@@ -387,13 +390,13 @@ export default function Dashboard() {
                         <span className="text-xs text-base-content/60">{p.client} • {p.quantite} unité(s)</span>
                       </div>
                       <span className="badge badge-ghost text-xs whitespace-nowrap ml-2">
-                        {p.jours_attente}j
+                        {t('dashboard.alerts.days_left', { count: p.jours_attente })}
                       </span>
                     </div>
                   ))}
                 </div>
                 <Link to="/app/promis" className="btn btn-success btn-sm w-full mt-2 text-white">
-                  Livrer les Promis
+                  {t('dashboard.alerts.deliver_promis')}
                 </Link>
               </div>
             </div>
@@ -406,14 +409,14 @@ export default function Dashboard() {
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/app/centre-rapports?report=alertes_stock')}
               >
-                <h2 className="card-title text-lg font-bold text-base-content">Alertes Stock</h2>
+                <h2 className="card-title text-lg font-bold text-base-content">{t('dashboard.alerts.stock_title')}</h2>
                 {stats && (stats.low_stock?.value || 0) > 0 && (
                   <span className="badge badge-error text-white badge-sm">{stats.low_stock?.value || 0}</span>
                 )}
               </div>
               <div className="space-y-3">
                 {lowStockItems.length === 0 ? (
-                  <div className="text-sm text-base-content/60 text-center py-2">Aucune alerte de stock</div>
+                  <div className="text-sm text-base-content/60 text-center py-2">{t('dashboard.alerts.no_stock_alerts')}</div>
                 ) : (
                   lowStockItems.map((item, i) => (
                     <div key={i} className={`flex items-center justify-between p-2 rounded-lg border ${item.stock <= 0 ? 'bg-error/5 border-error/10' : 'bg-warning/5 border-warning/10'}`}>
@@ -421,7 +424,7 @@ export default function Dashboard() {
                         <div className={`w-2 h-2 rounded-full ${item.stock <= 0 ? 'bg-error' : 'bg-warning'}`}></div>
                         <div className="flex flex-col">
                             <span className="text-sm font-medium text-base-content">{item.name}</span>
-                            {(item as any).status && (item as any).status !== 'Rupture' && (
+                            {(item as any).status && (item as any).status !== 'Rupture' && (item as any).status !== t('dashboard.alerts.rupture') && (
                                 <span className="text-[10px] text-base-content/60 font-medium uppercase tracking-wide">
                                     {(item as any).status}
                                 </span>
@@ -430,11 +433,11 @@ export default function Dashboard() {
                       </div>
                       <div className="flex flex-col items-end">
                             <span className={`text-xs font-bold ${item.stock <= 0 ? 'text-error' : 'text-warning'}`}>
-                                {item.stock <= 0 ? 'Rupture' : `Reste: ${item.stock}`}
+                                {item.stock <= 0 ? t('dashboard.alerts.rupture') : t('dashboard.alerts.remaining_stock', { count: item.stock })}
                             </span>
                             {(item as any).days_remaining > 0 && item.stock > 0 && (
                                 <span className="text-[10px] opacity-70">
-                                    Couverture: {Math.round((item as any).days_remaining)}j
+                                    {t('dashboard.alerts.coverage', { days: Math.round((item as any).days_remaining) })}
                                 </span>
                             )}
                       </div>
@@ -447,7 +450,7 @@ export default function Dashboard() {
                 className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10"
                 onClick={(e) => e.stopPropagation()}
               >
-                Voir tout le stock
+                {t('dashboard.alerts.view_all_stock')}
               </Link>
             </div>
           </div>
@@ -462,7 +465,7 @@ export default function Dashboard() {
                 className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/app/perimes')}
               >
-                <h2 className="card-title text-lg font-bold text-base-content">Péremption Proche</h2>
+                <h2 className="card-title text-lg font-bold text-base-content">{t('dashboard.alerts.expiry_title')}</h2>
                 {expiringLots.length > 0 && (
                   <span className="badge badge-error text-white badge-sm">{expiringLots.length}</span>
                 )}
@@ -471,7 +474,7 @@ export default function Dashboard() {
               {/* Period Selector */}
               <div className="form-control mb-4">
                 <label className="label py-1">
-                  <span className="label-text text-xs">Période d'alerte</span>
+                  <span className="label-text text-xs">{t('dashboard.alerts.expiry_period')}</span>
                 </label>
                 <select 
                   className="select select-bordered select-sm w-full"
@@ -489,7 +492,7 @@ export default function Dashboard() {
 
               <div className="space-y-3 max-h-80 overflow-y-auto">
                 {expiringLots.length === 0 ? (
-                  <div className="text-sm text-base-content/60 text-center py-2">Aucun lot proche de la péremption</div>
+                  <div className="text-sm text-base-content/60 text-center py-2">{t('dashboard.alerts.no_expiry_alerts')}</div>
                 ) : (
                   expiringLots.map((lot) => {
                     const daysUntilExpiry = lot.date_expiration 
@@ -527,7 +530,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <span className={`badge ${badgeClass} text-xs font-bold whitespace-nowrap ml-2`}>
-                          {daysUntilExpiry <= 0 ? 'Expiré!' : `${daysUntilExpiry}j`}
+                          {daysUntilExpiry <= 0 ? t('dashboard.alerts.expired') : t('dashboard.alerts.days_left', { count: daysUntilExpiry })}
                         </span>
                       </div>
                     );
@@ -535,7 +538,7 @@ export default function Dashboard() {
                 )}
               </div>
               <Link to="/app/perimes" className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10">
-                Gérer les Périmés
+                {t('dashboard.alerts.manage_expiry')}
               </Link>
             </div>
           </div>

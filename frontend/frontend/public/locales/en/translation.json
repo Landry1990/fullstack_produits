@@ -1,0 +1,204 @@
+{
+    "sidebar": {
+        "dashboard": "Dashboard",
+        "ventes": {
+            "title": "Sales",
+            "consultation": "Consultation",
+            "historique": "Daily History",
+            "journal": "Cash Journal",
+            "clotures": "Closing History",
+            "ordonnancier": "Prescriptions",
+            "caisse_centralisee": "Centralized Register"
+        },
+        "facturation": "Billing",
+        "produits": "Products",
+        "vitrine": "Web Storefront",
+        "commandes": {
+            "title": "Orders",
+            "local_consult": "Local - Consultation",
+            "local_hist": "Local - History",
+            "direct_consult": "Direct - Consultation",
+            "direct_hist": "Direct - History"
+        },
+        "fournisseurs": "Suppliers",
+        "clients": "Customers",
+        "creances": "Receivables",
+        "stock": {
+            "title": "Inventory",
+            "inventaire": "Stock Take",
+            "journal": "Adjustment Journal",
+            "analyse": "Stock Analysis",
+            "avoirs": "Returns",
+            "promis": "Promised Items",
+            "transformations": "Transformations",
+            "perimes": "Expired Items",
+            "formes": "Forms",
+            "groupes": "Groups",
+            "rayons": "Shelves"
+        },
+        "statistiques": {
+            "title": "Statistics",
+            "rapports": "Report Center",
+            "abc": "ABC Analysis",
+            "produits": "Products",
+            "fournisseurs": "Suppliers",
+            "mensuel": "Monthly Report"
+        },
+        "parametres": {
+            "title": "Settings",
+            "facture": "Invoice Config",
+            "pharmacie": "Pharmacy Info",
+            "etiquettes": "Label Templates",
+            "imprimantes": "Printer Config"
+        },
+        "utilisateurs": "Users",
+        "audit": "Audit Log",
+        "logout": "Logout"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "subtitle": "Overview of pharmacy activity",
+        "stats": {
+            "revenue": "Revenue",
+            "revenue_details": "Incl. {{amount}} F discounts",
+            "receivables": "Receivables",
+            "receivables_pending": "pending",
+            "stock_value": "Stock Value",
+            "stock_value_sub": "Purchase Price",
+            "stock_value_details": "valuation",
+            "stock_alerts": "Stock Alerts",
+            "stock_alerts_sub": "out of stock or low"
+        },
+        "actions": {
+            "title": "Quick Actions",
+            "new_invoice": "New Invoice",
+            "manage_products": "Manage Products",
+            "new_client": "New Customer"
+        },
+        "charts": {
+            "revenue_evolution": "Revenue Evolution (Last 7 Days)",
+            "sales_trend": "Sales Trend (Last 7 Days)"
+        },
+        "ug": {
+            "title": "Free Units (UG) by Supplier",
+            "subtitle": "Valuation of free units acquired, sold, and remaining",
+            "provider": "Supplier",
+            "acquired": "Val. Acquired",
+            "sold": "Val. Sold",
+            "remaining": "Val. Remaining",
+            "total": "TOTAL"
+        },
+        "alerts": {
+            "promis_title": "Promised Items Available",
+            "deliver_promis": "Deliver Items",
+            "stock_title": "Stock Alerts",
+            "no_stock_alerts": "No stock alerts",
+            "view_all_stock": "View all stock",
+            "expiry_title": "High Expiry Risk",
+            "expiry_period": "Alert Period",
+            "no_expiry_alerts": "No items expiring soon",
+            "manage_expiry": "Manage Expired",
+            "rupture": "Out of Stock",
+            "rupture_imminent": "Imminent OOS",
+            "rupture_in": "OOS in {{days}}d",
+            "remaining_stock": "Remains: {{count}}",
+            "coverage": "Coverage: {{days}}d",
+            "expired": "Expired!",
+            "days_left": "{{count}}d"
+        }
+    },
+    "facturation": {
+        "title": "Billing",
+        "subtitle": "Invoice Creation",
+        "search_placeholder": "Scan barcode or search product (Name, CIP...)",
+        "search_label": "Search Product (F2)",
+        "search_min_chars": "Type at least 2 chars",
+        "search_no_results": "No product found",
+        "create_client": {
+            "title": "New Client",
+            "individual": "Individual",
+            "professional": "Professional / Insurance",
+            "name": "Full Name",
+            "phone": "Phone"
+        },
+        "client": {
+            "label": "Client (F4)",
+            "select_list_tooltip": "Select from list",
+            "manual_input_tooltip": "Manual input",
+            "list_button": "List",
+            "manual_button": " Input",
+            "manual_placeholder": "Client name...",
+            "search_placeholder": "🔍 Search client...",
+            "clear_tooltip": "Clear",
+            "no_results": "No client found",
+            "create_button": "Create",
+            "results_count": "{{count}} result(s) of {{total}}",
+            "ayant_droit": {
+                "label": "Beneficiary",
+                "select_existing_tooltip": "Select existing",
+                "new_tooltip": "New",
+                "existing_button": "📋 Existing",
+                "new_button": "New",
+                "name_placeholder": "Beneficiary name *",
+                "matricule_placeholder": "Registration number *",
+                "societe_placeholder": "Company (optional)",
+                "select_placeholder": "Select a beneficiary..."
+            }
+        },
+        "actions": {
+            "reset_tooltip": "Reset invoice (Esc)",
+            "cancel": "Cancel",
+            "suspend_tooltip": "Put on hold for later",
+            "suspend": "Suspend",
+            "suspend_short": "Hold",
+            "view_pending_tooltip": "View pending sales",
+            "pending": "Pending",
+            "proforma_tooltip": "Generate proforma invoice",
+            "proforma": "Proforma",
+            "pay_tooltip": "Validate and pay (Ctrl+Enter)",
+            "pay": "Pay (Ctrl+Enter)",
+            "validate": "Validate",
+            "clear": "Clear cart"
+        },
+        "cart": {
+            "headers": {
+                "product": "Product",
+                "qty": "Qty",
+                "price": "U.P.",
+                "total": "Total",
+                "stock": "Stock",
+                "discount": "Discount"
+            },
+            "empty": "Cart is empty. Scan a product or use search.",
+            "actions": {
+                "remove": "Remove line"
+            }
+        },
+        "totals": {
+            "subtotal": "Subtotal",
+            "discount": "Global Discount",
+            "tva": "VAT",
+            "total_ttc": "Total",
+            "part_patient": "Patient Share",
+            "part_assurance": "Insurance Share"
+        },
+        "payment": {
+            "modal_title": "Payment",
+            "amount_due": "Amount Due",
+            "amount_paid": "Amount Paid",
+            "change_due": "Change Due",
+            "modes": {
+                "especes": "Cash",
+                "cheque": "Check",
+                "carte": "Credit Card",
+                "virement": "Transfer",
+                "mobile": "Mobile Money",
+                "credit": "Customer Credit"
+            },
+            "validate": "Validate Payment",
+            "cancel": "Cancel",
+            "print_ticket": "Print Ticket",
+            "print_invoice": "Print Invoice A4"
+        }
+    }
+}

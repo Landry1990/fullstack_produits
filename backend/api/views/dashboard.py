@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Sum, Count, Avg, F, Q, DecimalField
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce, Cast
+from django.db.models.functions import TruncDay, TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -303,10 +303,7 @@ class StatistiquesViewSet(viewsets.ViewSet):
             action=AuditLog.Action.INVOICE_CANCEL,
             timestamp__gte=start_date
         ).values('user').annotate(
-            count=Count('id'),
-            total_amount=Sum(
-                Cast(F('details__amount'), output_field=DecimalField())
-            )
+            count=Count('id')
         ).filter(count__gte=threshold).order_by('-count')
         
         results = []
@@ -324,10 +321,10 @@ class StatistiquesViewSet(viewsets.ViewSet):
             # Note: total_amount might need cleaner extraction depending on DB/Django version JSONField support
             # For now returning count is the MVP
             results.append({
-                'user': name,
-                'count': c['count'],
-                'period_days': days,
-                'threshold': threshold
+                'Utilisateur': name,
+                'Nombre Annulations': c['count'],
+                'Période (jours)': days,
+                'Seuil': threshold
             })
             
         return Response(results)

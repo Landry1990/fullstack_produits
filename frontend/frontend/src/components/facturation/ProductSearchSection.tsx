@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { ProduitModel } from '../../types'
 import { useSearchNavigation } from '../../hooks/useSearchNavigation'
 
@@ -9,6 +10,7 @@ interface ProductSearchSectionProps {
   filteredProduits: ProduitModel[]
   addProduitToFacture: (product: ProduitModel) => void
   searchInputRef: React.RefObject<HTMLInputElement | null>
+  placeholder?: string
 }
 
 export default function ProductSearchSection({
@@ -17,8 +19,10 @@ export default function ProductSearchSection({
   searchLoading,
   filteredProduits,
   addProduitToFacture,
-  searchInputRef
+  searchInputRef,
+  placeholder
 }: ProductSearchSectionProps) {
+  const { t } = useTranslation()
 
   // Wrapper that clears search after adding product
   const handleAddProduit = (produit: ProduitModel) => {
@@ -35,12 +39,12 @@ export default function ProductSearchSection({
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative">
-      <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">Rechercher un produit (F2)</label>
+      <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0 mb-2">{t('facturation.search_label', { defaultValue: 'Rechercher un produit (F2)' })}</label>
       <div className="relative">
         <input
           ref={searchInputRef}
           type="text"
-          placeholder="Tapez pour rechercher un produit..."
+          placeholder={placeholder || t('facturation.search_placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -54,7 +58,7 @@ export default function ProductSearchSection({
         <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
           {filteredProduits.length === 0 ? (
             <div className="text-center py-8 text-base-content/40 text-sm">
-              {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? 'Tapez au moins 2 caractères' : 'Aucun produit trouvé'}
+              {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation.search_min_chars', { defaultValue: 'Tapez au moins 2 caractères' }) : t('facturation.search_no_results', { defaultValue: 'Aucun produit trouvé' })}
             </div>
           ) : (
             <div className="max-h-96 overflow-y-auto space-y-1 p-1">
