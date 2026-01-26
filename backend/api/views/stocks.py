@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import F, Sum, DecimalField
+from django.db.models import F, Sum, DecimalField, Case, When, Value
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -126,7 +126,8 @@ class InventaireViewSet(viewsets.ModelViewSet):
              return Response({'detail': 'Cet inventaire est déjà validé.'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Mettre à jour le stock pour chaque ligne
-        lignes = inventaire.lignes.select_related('produit', 'stock_lot').all()
+        # Use select_for_update to lock related products and lots
+        lignes = inventaire.lignes.select_related('produit', 'stock_lot').select_for_update().all()
         for ligne in lignes:
             produit = ligne.produit
             
@@ -333,12 +334,20 @@ class StatsUGViewSet(viewsets.GenericViewSet):
             'fournisseur__name'
         ).annotate(
             ug_recues=Sum('quantity_free'),
-            ug_restantes=Sum(F('quantity_remaining') * F('quantity_free') / F('quantity_initial'), 
-                           output_field=DecimalField()),
+            ug_restantes=Sum(
+                Case(
+                    When(quantity_initial=0, then=Value(0)),
+                    default=F('quantity_remaining') * F('quantity_free') / F('quantity_initial')
+                ),
+                output_field=DecimalField()
+            ),
             valeur_acquise=Sum(F('quantity_free') * F('price_cost'), 
                                 output_field=DecimalField()),
             valeur_restante=Sum(
-                (F('quantity_remaining') * F('quantity_free') / F('quantity_initial')) * F('price_cost'),
+                Case(
+                    When(quantity_initial=0, then=Value(0)),
+                    default=(F('quantity_remaining') * F('quantity_free') / F('quantity_initial')) * F('price_cost')
+                ),
                 output_field=DecimalField()
             )
         ).order_by('-ug_recues')
@@ -392,7 +401,7 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         ug_en_stock = 0
         
         for lot in lots:
-            if lot.quantity_remaining > 0:
+            if lot.quantity_remaining > 0 and lot.quantity_initial > 0:
                 ug_remaining_in_lot = int((lot.quantity_remaining / lot.quantity_initial) * lot.quantity_free)
                 ug_en_stock += ug_remaining_in_lot
             else:
@@ -424,7 +433,13 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         total_ug_stock = StockLot.objects.filter(quantity_remaining__gt=0).aggregate(
-            total=Sum(F('quantity_remaining') * F('quantity_free') / F('quantity_initial'), output_field=DecimalField())
+            total=Sum(
+                Case(
+                    When(quantity_initial=0, then=Value(0)),
+                    default=F('quantity_remaining') * F('quantity_free') / F('quantity_initial')
+                ),
+                output_field=DecimalField()
+            )
         )['total'] or 0
         
         ug_mois = CommandeProduit.objects.filter(
