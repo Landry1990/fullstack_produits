@@ -69,7 +69,7 @@ export default function ProductSearchSection({
                   key={produit.id}
                   {...itemProps}
                   onClick={() => {
-                    if ((produit.stock ?? 0) > 0) {
+                    if ((produit.stock_rayon ?? produit.stock ?? 0) > 0) {
                       handleAddProduit(produit) // Use wrapper
                     }
                   }}
@@ -77,15 +77,16 @@ export default function ProductSearchSection({
                   className={`
                     group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
                     ${itemProps.className ? 'shadow-md' : 'hover:bg-base-100'}
-                    ${(produit.stock ?? 0) === 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                    ${(produit.stock_rayon ?? produit.stock ?? 0) <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate text-sm">{produit.name}</div>
                     <div className="text-xs flex gap-3 mt-0.5 opacity-80">
-                      <span className={(produit.stock ?? 0) === 0 ? 'text-error font-bold' : ''}>
-                        Stock: {produit.stock}
+                      <span className={(produit.stock_rayon ?? 0) <= 0 ? 'text-error font-bold' : ''}>
+                        Rayon: {produit.stock_rayon ?? produit.stock}
                       </span>
+                      <span>(Total: {produit.stock})</span>
                       <span>{produit.selling_price} F</span>
                     </div>
                   </div>

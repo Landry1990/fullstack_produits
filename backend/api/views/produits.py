@@ -169,8 +169,8 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         instance = serializer.instance
         old_price = instance.selling_price
         
-        # Save updates
-        serializer.save()
+        # Save updates and trigger cache invalidation via mixin
+        super().perform_update(serializer)
         
         # Check if price changed
         new_price = serializer.instance.selling_price
@@ -994,6 +994,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone']
+    pagination_class = None
 
     @action(detail=True, methods=['get'])
     def catalogue(self, request, pk=None):

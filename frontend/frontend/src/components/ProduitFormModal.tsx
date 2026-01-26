@@ -3,21 +3,6 @@ import type { FormEvent } from 'react';
 import axios from 'axios';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  onCreated: (produit: ProduitModel) => void;
-  produitsEndpoint: string;
-  rayonsEndpoint: string;
-  fournisseursEndpoint: string;
-  initialData?: Partial<ProduitForm>;
-  title?: string;
-  rayons: Rayon[];
-  fournisseurs: Fournisseur[];
-  formes: Forme[];
-  groupes: Groupe[];
-}
-
 interface ProduitFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -60,6 +45,9 @@ export default function ProduitFormModal({
     stock_alert: '',
     stock_minimum: '',
     stock_maximum: '',
+    stock_reserve: '0',
+    stock_rayon_min: '',
+    rayon_capacity: '',
     rayon: '',
     fournisseur: '',
     forme: '',
@@ -69,33 +57,6 @@ export default function ProduitFormModal({
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rayonsData, setRayons] = useState<Rayon[]>([]); // State pour les rayons
-  const [fournisseursData, setFournisseurs] = useState<Fournisseur[]>([]); // State pour les fournisseurs
-
-  useEffect(() => {
-    // Reset form when modal opens with new initial data
-    setForm({
-      name: '',
-      description: '',
-      stock: '',
-      cost_price: '',
-      selling_price: '',
-      cip1: '',
-      cip2: '',
-      cip3: '',
-      expire_date: '',
-      stock_alert: '',
-      stock_minimum: '',
-      stock_maximum: '',
-      rayon: '',
-      fournisseur: '',
-      forme: '',
-      groupe: '',
-      tva: '19.25',
-      ...initialData,
-    });
-    setError(null); // Clear errors when modal is reopened
-  }, [open, initialData]);
 
   // Calcul des marges en temps réel
   const costPrice = parseFloat(form.cost_price) || 0;
@@ -112,19 +73,6 @@ export default function ProduitFormModal({
     pourcMarge = ((sellingPrice - costPrice) / sellingPrice) * 100;
   }
 
-  useEffect(() => {
-    if (open) {
-      // Assurez-vous que les endpoints sont passés en props ou définis ici
-      axios.get(rayonsEndpoint).then(res => {
-        const data = res.data;
-        setRayons(Array.isArray(data) ? data : (data.results || []));
-      });
-      axios.get(fournisseursEndpoint).then(res => {
-         const data = res.data;
-         setFournisseurs(Array.isArray(data) ? data : (data.results || []));
-      });
-    }
-  }, [open, rayonsEndpoint, fournisseursEndpoint]);
 
   function formatBackendErrors(data: unknown): string {
     if (data == null) return 'Erreur inconnue du serveur';
@@ -164,10 +112,13 @@ export default function ProduitFormModal({
         stock_alert: form.stock_alert ? parseInt(form.stock_alert, 10) : 0,
         stock_minimum: form.stock_minimum ? parseInt(form.stock_minimum, 10) : 0,
         stock_maximum: form.stock_maximum ? parseInt(form.stock_maximum, 10) : 0,
-        rayon: form.rayon ? parseInt(form.rayon, 10) : undefined,
-        fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : undefined,
-        forme: form.forme ? parseInt(form.forme, 10) : undefined,
-        groupe: form.groupe ? parseInt(form.groupe, 10) : undefined,
+        stock_reserve: form.stock_reserve ? parseInt(form.stock_reserve, 10) : 0,
+        stock_rayon_min: form.stock_rayon_min ? parseInt(form.stock_rayon_min, 10) : null,
+        rayon_capacity: form.rayon_capacity ? parseInt(form.rayon_capacity, 10) : null,
+        rayon: form.rayon ? parseInt(form.rayon, 10) : null,
+        fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : null,
+        forme: form.forme ? parseInt(form.forme, 10) : null,
+        groupe: form.groupe ? parseInt(form.groupe, 10) : null,
         tva: form.tva || '19.25',
         requires_prescription: form.requires_prescription || false,
         surveillance_category: form.surveillance_category || 'NONE',
@@ -307,6 +258,34 @@ export default function ProduitFormModal({
               <input type="number" className="input input-bordered w-full" value={form.stock_maximum}
                 onChange={(e) => setForm((p) => ({ ...p, stock_maximum: e.target.value }))} min={0} step={1} />
             </label>
+          </div>
+
+          <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Configuration Stock & Rayon</div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-base-100 p-4 rounded-lg border border-base-200">
+             <label className="form-control w-full">
+               <div className="label">
+                 <span className="label-text font-semibold">Stock Réserve</span>
+                 <span className="label-text-alt text-info tooltip" data-tip="Quantité bloquée en réserve (non vendable directement)">ℹ️</span>
+               </div>
+               <input type="number" className="input input-bordered w-full" value={form.stock_reserve}
+                 onChange={(e) => setForm((p) => ({ ...p, stock_reserve: e.target.value }))} min={0} step={1} />
+             </label>
+             <label className="form-control w-full">
+               <div className="label">
+                 <span className="label-text">Seuil Min. Rayon</span>
+                 <span className="label-text-alt text-info tooltip" data-tip="Seuil déclenchant une alerte de réapprovisionnement rayon">ℹ️</span>
+               </div>
+               <input type="number" className="input input-bordered w-full" value={form.stock_rayon_min}
+                 onChange={(e) => setForm((p) => ({ ...p, stock_rayon_min: e.target.value }))} min={0} step={1} />
+             </label>
+             <label className="form-control w-full">
+               <div className="label">
+                 <span className="label-text">Capacité Rayon</span>
+                 <span className="label-text-alt text-info tooltip" data-tip="Capacité maximale du rayon pour ce produit">ℹ️</span>
+               </div>
+               <input type="number" className="input input-bordered w-full" value={form.rayon_capacity}
+                 onChange={(e) => setForm((p) => ({ ...p, rayon_capacity: e.target.value }))} min={0} step={1} />
+             </label>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <label className="form-control w-full"><div className="label"><span className="label-text">Forme</span></div>

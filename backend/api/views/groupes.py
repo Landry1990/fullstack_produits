@@ -12,3 +12,4 @@ class GroupeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nom', 'description']
+    pagination_class = None

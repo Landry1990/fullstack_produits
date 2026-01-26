@@ -204,7 +204,9 @@ class ProduitSerializer(serializers.ModelSerializer):
             'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
             'stock_lots', 'requires_prescription', 'surveillance_category',
             'dernier_achat', 'dernier_vente', 'is_public',
-            'taux_marge', 'pourcentage_marge'
+            'taux_marge', 'pourcentage_marge',
+            'stock_reserve', 'stock_rayon_min', 'rayon_capacity',
+            'stock_rayon', 'stock_disponible_vente'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
