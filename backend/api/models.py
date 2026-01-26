@@ -314,12 +314,22 @@ class Forme(models.Model):
     def __str__(self):
         return self.nom
 
+class Groupe(models.Model):
+    """Model representing a product group."""
+    id = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return self.nom
+
 class Produit(models.Model):
     """Model representing a product."""
     id = models.AutoField(primary_key=True)
     rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
-    forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits') 
+    forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
+    groupe = models.ForeignKey('Groupe', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     stock = models.IntegerField()

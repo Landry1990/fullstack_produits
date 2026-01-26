@@ -46,8 +46,7 @@ export const useProduits = (filters: ProduitFilters) => {
     return useQuery({
         queryKey: ['produits', filters],
         queryFn: async () => {
-            const params = new URLSearchParams();
-            if (filters.search) params.append('search', filters.search);
+            // Return empty result if no search term (User requirement: empty by default)
             if (filters.page) params.append('page', filters.page.toString());
             // Note: rayon and fournisseur filtering currently happens client-side in the original component, 
             // but if the API supports it, we should add it here. 
@@ -67,6 +66,7 @@ export const useProduits = (filters: ProduitFilters) => {
             return response.data;
         },
         placeholderData: (previousData) => previousData,
+        enabled: !!filters.search && filters.search.length > 0, // Only fetch if search is active
     });
 };
 
@@ -117,6 +117,19 @@ export const useFormes = () => {
         staleTime: 1000 * 60 * 30, // 30 mins
     });
 };
+
+// Hooks pour les Groupes
+export function useGroupes() {
+    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
+    return useQuery({
+        queryKey: ['groupes'],
+        queryFn: async () => {
+            const response = await axios.get(`${apiBaseUrl}/api/groupes/`)
+            return response.data.results || response.data
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+}
 
 // Sub-resources requiring product ID
 

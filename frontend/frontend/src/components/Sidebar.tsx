@@ -72,6 +72,7 @@ export default function Sidebar() {
         { path: '/app/transformations', label: 'Transformations', key: 'inventaire' },
         { path: '/app/perimes', label: 'Périmés', key: 'inventaire' },
         { path: '/app/formes', label: 'Formes', key: 'formes' },
+        { path: '/app/groupes', label: 'Groupes', key: 'groupes' },
         { path: '/app/rayons', label: 'Rayons', key: 'rayons' }
       ]
     },

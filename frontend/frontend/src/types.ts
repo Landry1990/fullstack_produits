@@ -4,6 +4,12 @@ export interface Forme {
   description?: string;
 }
 
+export interface Groupe {
+  id: number;
+  nom: string;
+  description?: string;
+}
+
 export interface Rayon {
   id: number;
   name: string;

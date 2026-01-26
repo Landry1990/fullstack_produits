@@ -13,6 +13,7 @@ import GestionUtilisateurs from './components/GestionUtilisateurs'
 import Vitrine from './components/Vitrine'
 import Inventaire from './components/Inventaire'
 import Formes from './components/Formes'
+import Groupes from './components/Groupes'
 import Login from './components/Login'
 import StatistiquesFournisseur from './components/StatistiquesFournisseur'
 import JournalCaisse from './components/JournalCaisse'
@@ -112,6 +113,7 @@ const router = createBrowserRouter([
           { path: 'clients', element: <Clients /> },
           { path: 'inventaire', element: <Inventaire /> },
           { path: 'formes', element: <Formes /> },
+          { path: 'groupes', element: <Groupes /> },
           { path: 'rayons', element: <Categories /> },
           { path: 'facturation', element: <Facturation /> },
           { path: 'caisse-centralisee', element: <CaisseCentralisee /> },

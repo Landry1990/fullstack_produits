@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
 import axios from 'axios';
-import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme } from '../types';
+import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onCreated: (produit: ProduitModel) => void;
   produitsEndpoint: string;
-  rayonsEndpoint: string; // Ajout du endpoint des rayons
-  fournisseursEndpoint: string; // Ajout du endpoint des fournisseurs
+  rayonsEndpoint: string;
+  fournisseursEndpoint: string;
   initialData?: Partial<ProduitForm>;
   title?: string;
   rayons: Rayon[];
   fournisseurs: Fournisseur[];
   formes: Forme[];
+  groupes: Groupe[];
 }
 
 interface ProduitFormModalProps {
@@ -22,13 +23,14 @@ interface ProduitFormModalProps {
   onClose: () => void;
   onCreated: (produit: ProduitModel) => void;
   produitsEndpoint: string;
-  rayonsEndpoint: string; // Ajout du endpoint des rayons
-  fournisseursEndpoint: string; // Ajout du endpoint des fournisseurs
+  rayonsEndpoint: string;
+  fournisseursEndpoint: string;
   initialData?: Partial<ProduitForm>;
   title?: string;
   rayons: Rayon[];
   fournisseurs: Fournisseur[];
   formes: Forme[];
+  groupes?: Groupe[]; // Optional to avoid breaking
 }
 
 export default function ProduitFormModal({
@@ -36,15 +38,16 @@ export default function ProduitFormModal({
   onClose,
   onCreated,
   produitsEndpoint,
-  rayonsEndpoint, // Récupération du endpoint des rayons
-  fournisseursEndpoint, // Récupération du endpoint des fournisseurs
+  rayonsEndpoint,
+  fournisseursEndpoint,
   initialData,
   title = "Créer un nouveau produit",
   rayons = [],
   fournisseurs = [],
   formes = [],
+  groupes = [],
 }: ProduitFormModalProps) {
-  const [form, setForm] = useState<ProduitForm>({
+  const [form, setForm] = useState<ProduitForm & { groupe?: string }>({
     name: '',
     description: '',
     stock: '',
@@ -60,6 +63,7 @@ export default function ProduitFormModal({
     rayon: '',
     fournisseur: '',
     forme: '',
+    groupe: '',
     tva: '19.25',
     ...initialData,
   });
@@ -86,6 +90,7 @@ export default function ProduitFormModal({
       rayon: '',
       fournisseur: '',
       forme: '',
+      groupe: '',
       tva: '19.25',
       ...initialData,
     });
@@ -162,6 +167,7 @@ export default function ProduitFormModal({
         rayon: form.rayon ? parseInt(form.rayon, 10) : undefined,
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : undefined,
         forme: form.forme ? parseInt(form.forme, 10) : undefined,
+        groupe: form.groupe ? parseInt(form.groupe, 10) : undefined,
         tva: form.tva || '19.25',
         requires_prescription: form.requires_prescription || false,
         surveillance_category: form.surveillance_category || 'NONE',
@@ -308,6 +314,13 @@ export default function ProduitFormModal({
                 onChange={(e) => setForm((p) => ({ ...p, forme: e.target.value }))}>
                 <option value="">—</option>
                 {formes.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
+              </select>
+            </label>
+            <label className="form-control w-full"><div className="label"><span className="label-text">Groupe</span></div>
+              <select className="select select-bordered w-full" value={form.groupe}
+                onChange={(e) => setForm((p) => ({ ...p, groupe: e.target.value }))}>
+                <option value="">—</option>
+                {groupes.map(g => <option key={g.id} value={g.id}>{g.nom}</option>)}
               </select>
             </label>
             <label className="form-control w-full"><div className="label"><span className="label-text">Rayon</span></div>

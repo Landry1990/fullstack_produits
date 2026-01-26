@@ -13,6 +13,7 @@ from .views import (
 )
 from .views.formes import FormeViewSet
 from .views.coupons import CouponMonnaieViewSet
+from .views.groupes import GroupeViewSet
 from .views.auth import verify_password
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
@@ -50,6 +51,7 @@ router.register(r'stock-adjustments', StockAdjustmentViewSet, basename='stockadj
 router.register(r'historique-ventes', HistoriqueVentesViewSet, basename='historiqueventes')
 router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 router.register(r'formes', FormeViewSet, basename='forme')
+router.register(r'groupes', GroupeViewSet, basename='groupe')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 
 

@@ -5,6 +5,7 @@ import type { ProduitModel, LigneFacture } from '../types'
 import { normalizeNumberInput } from '../utils/formatters'
 import { useAuth } from '../context/AuthContext'
 import { differenceInDays, parseISO } from 'date-fns'
+import { showExpirationToast } from '../utils/toastUtils'
 
 interface UseCartOptions {
     apiBaseUrl?: string
@@ -96,17 +97,16 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
             }
 
             // PEREMPTION CHECK
-            if (fullProduit.expire_date) {
-                const daysUntilExpiration = differenceInDays(parseISO(fullProduit.expire_date), new Date())
-                if (daysUntilExpiration <= 0) {
-                    toast.error(`⚠️ ATTENTION : Ce produit est PÉRIMÉ depuis ${Math.abs(daysUntilExpiration)} jours !`, { duration: 5000 })
-                } else if (daysUntilExpiration <= 90) { // 3 months warning
-                    toast(`⚠️ Attention : Péremption proche dans ${daysUntilExpiration} jours`, {
-                        icon: '⏳',
-                        style: { border: '1px solid #f59e0b', padding: '16px', color: '#713200' },
-                        duration: 4000
-                    })
-                }
+            // Use calculated property from serializer (next_expiring_date) if available, fallback to expire_date
+            const expirationToCheck = (fullProduit as any).next_expiring_date || fullProduit.expire_date;
+
+            console.log('CHECK PEREMPTION:', fullProduit.name, expirationToCheck, fullProduit.use_lot_management);
+
+
+
+            if (expirationToCheck) {
+                const daysUntilExpiration = differenceInDays(parseISO(expirationToCheck), new Date())
+                showExpirationToast(daysUntilExpiration)
             }
 
         } catch (err) {
