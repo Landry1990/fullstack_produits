@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useEffect } from 'react' // Keep useEffect for scroll/focus management if needed, but remove data fetching ones
+import { useTranslation } from 'react-i18next';
 import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm';
@@ -29,6 +30,7 @@ import {
 export default function Produit() {
   // Hook de confirmation
   const confirm = useConfirm()
+  const { t } = useTranslation();
   
   const { user } = useAuth();
   
@@ -156,12 +158,12 @@ export default function Produit() {
   }
 
   const handleGenerateLabels = async (produit: ProduitModel) => {
-    const quantityStr = prompt(`Nombre d'étiquettes pour ${produit.name} ?`, "1")
+    const quantityStr = prompt(t('products.messages.labels_prompt', { name: produit.name }), "1")
     if (!quantityStr) return
     
     const quantity = parseInt(quantityStr, 10)
     if (isNaN(quantity) || quantity <= 0) {
-      toast.error("Quantité invalide")
+      toast.error(t('products.messages.invalid_quantity'))
       return
     }
 
@@ -179,7 +181,7 @@ export default function Produit() {
       link.remove()
     } catch (err) {
       console.error('Erreur génération étiquettes:', err)
-      toast.error('Erreur lors de la génération des étiquettes')
+      toast.error(t('products.messages.generation_error'))
     }
   }
 
@@ -187,7 +189,7 @@ export default function Produit() {
     try {
       await deleteProduitMutation.mutateAsync(produitId);
       setSelectedProduit(null)
-      toast.success('Produit supprimé avec succès')
+      toast.success(t('products.messages.delete_success'))
     } catch (err) {
       toast.error('Erreur lors de la suppression')
       console.error(err)
@@ -197,22 +199,22 @@ export default function Produit() {
   const handleDeleteProduit = async (produit: ProduitModel) => {
     // Permission Check
     if (!user?.is_superuser && !user?.can_delete_product) {
-        toast.error("Accès refusé : Vous n'avez pas la permission de supprimer des produits.")
+        toast.error(t('products.messages.access_denied_delete'))
         return
     }
 
     const confirmed = await confirm({
-      title: 'Supprimer le produit',
-      message: `Voulez-vous vraiment supprimer le produit "${produit.name}" ?\n\nCette action est irréversible.`,
+      title: t('products.messages.delete_confirm_title'),
+      message: t('products.messages.delete_confirm_body', { name: produit.name }),
       variant: 'danger',
-      confirmText: 'Supprimer'
+      confirmText: t('products.actions.delete')
     })
     if (!confirmed) return
     
     // Trigger Password Modal
     setPasswordModalConfig({
-        title: "Confirmer la suppression",
-        message: "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive de ce produit."
+        title: t('products.messages.password_confirm_delete_title'),
+        message: t('products.messages.password_confirm_delete_body')
     })
     setPendingAction(() => () => executeDeleteProduit(produit.id))
     setIsPasswordModalOpen(true)
@@ -220,17 +222,17 @@ export default function Produit() {
 
   const handleRecalculateRotation = async () => {
     const confirmed = await confirm({
-      title: 'Recalculer les rotations',
-      message: 'Voulez-vous recalculer la rotation moyenne pour TOUS les produits ?\n\nCela peut prendre quelques secondes.',
+      title: t('products.messages.recalculate_title'),
+      message: t('products.messages.recalculate_body'),
       variant: 'info',
-      confirmText: 'Recalculer'
+      confirmText: t('products.actions.recalculate_confirm') || 'Recalculer'
     })
     if (!confirmed) return
     
     setActionLoading(true)
     try {
       await recalculateRotationMutation.mutateAsync();
-      toast.success('Recalcul des rotations effectué')
+      toast.success(t('products.messages.recalculate_success'))
       refetchProduits();
     } catch (err) {
       toast.error('Erreur lors du recalcul')
@@ -273,7 +275,7 @@ export default function Produit() {
     
     const newStock = parseInt(editForm.stock || '0', 10)
     if (newStock !== selectedProduit.stock) {
-      toast.error('⚠️ Le stock ne peut pas être modifié ici.', { duration: 6000 })
+      toast.error('⚠️ ' + t('products.messages.stock_update_warning'), { duration: 6000 })
       setEditForm(prev => ({ ...prev, stock: String(selectedProduit.stock) }))
       return
     }
@@ -306,7 +308,7 @@ export default function Produit() {
       const updatedProduit = await updateProduitMutation.mutateAsync({ id: selectedProduit.id, data: payload })
       setSelectedProduit(updatedProduit)
       setIsEditModalOpen(false)
-      toast.success('Produit mis à jour')
+      toast.success(t('products.messages.update_success'))
     } catch (err) {
       toast.error('Erreur lors de la mise à jour')
       console.error(err)
@@ -349,20 +351,24 @@ export default function Produit() {
 
     // Permission Check
     if (!user?.is_superuser && !user?.can_adjust_stock) {
-        toast.error("Accès refusé")
+        toast.error(t('products.messages.access_denied_adjust'))
         return
     }
     
     if (!adjustmentForm.new_quantity) {
-      toast.error('Veuillez saisir la nouvelle quantité')
+      toast.error(t('products.messages.input_quantity_error'))
       return
     }
     
     setIsAdjustmentModalOpen(false)
     
     setPasswordModalConfig({
-        title: "Confirmer l'ajustement de stock",
-        message: `Vous allez modifier le stock de "${selectedProduit.name}" : ${selectedProduit.stock} → ${adjustmentForm.new_quantity}`
+        title: t('products.messages.password_confirm_adjust_title'),
+        message: t('products.messages.password_confirm_adjust_body', { 
+          name: selectedProduit.name, 
+          oldStock: selectedProduit.stock, 
+          newStock: adjustmentForm.new_quantity 
+        })
     })
     setPendingAction(() => executeStockAdjustment)
     setIsPasswordModalOpen(true)
@@ -399,10 +405,10 @@ export default function Produit() {
 
   const handleBulkDelete = async () => {
     const confirmed = await confirm({
-      title: 'Suppression groupée',
-      message: `Supprimer ${selectedProductIds.length} produit(s) sélectionné(s) ?`,
+      title: t('products.messages.bulk_delete_title'),
+      message: t('products.messages.bulk_delete_body', { count: selectedProductIds.length }),
       variant: 'danger',
-      confirmText: `Supprimer`
+      confirmText: t('products.actions.bulk_delete')
     })
     if (!confirmed) return
     
@@ -428,7 +434,7 @@ export default function Produit() {
       }
       
       if (successCount > 0 && errorCount === 0) {
-        toast.success(`${successCount} produit(s) supprimé(s)`)
+        toast.success(`${successCount} ${t('products.messages.delete_success')}`) // Simplified
       } else {
         toast(`${successCount} supprimé(s), ${errorCount} échec(s)`, { icon: '⚠️' })
       }
@@ -442,10 +448,10 @@ export default function Produit() {
   const handleBulkChangeRayon = async (rayonId: number) => {
     const rayonName = rayons.find(r => r.id === rayonId)?.name || 'sélectionné'
     const confirmed = await confirm({
-      title: 'Changer le rayon',
-      message: `Affecter ${selectedProductIds.length} produit(s) au rayon "${rayonName}" ?`,
+      title: t('products.messages.bulk_rayon_change_title'),
+      message: t('products.messages.bulk_rayon_change_body', { count: selectedProductIds.length, name: rayonName }),
       variant: 'info',
-      confirmText: 'Confirmer'
+      confirmText: t('products.actions.confirm')
     })
     if (!confirmed) return
 
@@ -461,7 +467,7 @@ export default function Produit() {
       }
 
       if (successCount > 0) {
-        toast.success(`${successCount} produit(s) mis à jour`)
+        toast.success(t('products.messages.bulk_update_success', { count: successCount }))
         refetchProduits()
         setSelectedProductIds([])
       }
@@ -475,10 +481,10 @@ export default function Produit() {
   const handleBulkChangeFournisseur = async (fournisseurId: number) => {
     const fournisseurName = fournisseurs.find(f => f.id === fournisseurId)?.name || 'sélectionné'
     const confirmed = await confirm({
-      title: 'Changer le fournisseur',
-      message: `Affecter ${selectedProductIds.length} produit(s) au fournisseur "${fournisseurName}" ?`,
+      title: t('products.messages.bulk_provider_change_title'),
+      message: t('products.messages.bulk_provider_change_body', { count: selectedProductIds.length, name: fournisseurName }),
       variant: 'info',
-      confirmText: 'Confirmer'
+      confirmText: t('products.actions.confirm')
     })
     if (!confirmed) return
 
@@ -494,7 +500,7 @@ export default function Produit() {
       }
 
       if (successCount > 0) {
-        toast.success(`${successCount} produit(s) mis à jour`)
+        toast.success(t('products.messages.bulk_update_success', { count: successCount }))
         refetchProduits()
         setSelectedProductIds([])
       }
@@ -591,7 +597,7 @@ export default function Produit() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="mt-4 text-base-content/70">Chargement des produits...</p>
+          <p className="mt-4 text-base-content/70">{t('products.messages.loading')}</p>
         </div>
       </div>
     )
@@ -602,22 +608,22 @@ export default function Produit() {
       {/* Header compact */}
       <div className="flex justify-between items-center shrink-0">
         <div className="flex items-center gap-3">
-          <h1 className="text-lg font-bold">📦 Gestion des Produits</h1>
+          <h1 className="text-lg font-bold">📦 {t('products.title')}</h1>
         </div>
         <div className="flex gap-1">
           <button
             onClick={handleRecalculateRotation}
             className="btn btn-xs btn-ghost"
             disabled={actionLoading}
-            title="Recalculer la rotation"
+            title={t('products.actions.rotation')}
           >
-            🔄 Rotation
+            🔄 {t('products.actions.rotation')}
           </button>
           <button
             onClick={() => refetchProduits()}
             className="btn btn-xs btn-ghost"
             disabled={loading || actionLoading}
-            title="Actualiser"
+            title={t('products.actions.refresh')}
           >
             {loading || actionLoading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
           </button>
@@ -644,7 +650,7 @@ export default function Produit() {
           <div className="p-3 border-b bg-white shrink-0 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-slate-800">Produits</h2>
+                <h2 className="text-sm font-bold text-slate-800">{t('products.table.product')}s</h2>
                 {loading ? (
                   <span className="loading loading-spinner loading-xs text-primary"></span>
                 ) : (
@@ -654,7 +660,7 @@ export default function Produit() {
               <div className="flex gap-2">
 
                 <button className="btn btn-sm btn-primary gap-2" onClick={() => setIsCreateModalOpen(true)}>
-                  ➕ Créer un produit
+                  ➕ {t('products.actions.create')}
                 </button>
               </div>
             </div>
@@ -668,7 +674,7 @@ export default function Produit() {
               </div>
               <input
                 type="text"
-                placeholder="Nom ou CIP..."
+                placeholder={t('products.filters.search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="input input-xs input-bordered w-full pl-7 bg-slate-50 focus:bg-white h-7 text-xs"
@@ -682,7 +688,7 @@ export default function Produit() {
                 onChange={(e) => setFilterRayon(e.target.value)}
                 className="select select-xs select-bordered flex-1 min-w-0 text-xs h-7"
               >
-                <option value="">Rayon</option>
+                <option value="">{t('products.filters.rayon_placeholder')}</option>
                 {rayons.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
               </select>
               <select
@@ -690,7 +696,7 @@ export default function Produit() {
                 onChange={(e) => setFilterFournisseur(e.target.value)}
                 className="select select-xs select-bordered flex-1 min-w-0 text-xs h-7"
               >
-                <option value="">Fournisseur</option>
+                <option value="">{t('products.filters.provider_placeholder')}</option>
                 {fournisseurs.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
               </select>
               {(searchQuery || filterRayon || filterFournisseur) && (
@@ -701,7 +707,7 @@ export default function Produit() {
                     setFilterRayon('')
                     setFilterFournisseur('')
                   }}
-                  title="Réinitialiser"
+                  title={t('products.actions.reset')}
                 >
                   ✕
                 </button>
@@ -718,7 +724,7 @@ export default function Produit() {
             ) : filteredProduits.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4">
                 <span className="text-xl">📭</span>
-                <span className="text-xs mt-1">Aucun produit</span>
+                <span className="text-xs mt-1">{t('products.table.empty')}</span>
               </div>
             ) : (
               <table className="table table-xs table-pin-rows w-full">
@@ -821,11 +827,11 @@ export default function Produit() {
           {selectedProductIds.length > 0 && (
             <div className="p-2 border-t bg-primary/5 shrink-0 space-y-2">
               <div className="flex items-center justify-between text-xs font-semibold text-primary">
-                <span>✓ {selectedProductIds.length} sélectionné(s)</span>
+                <span>✓ {selectedProductIds.length} {t('products.actions.selected')}</span>
                 <button 
                   className="btn btn-xs btn-ghost"
                   onClick={() => setSelectedProductIds([])}
-                  title="Désélectionner"
+                  title={t('products.actions.deselect')}
                 >
                   ✕
                 </button>
@@ -833,7 +839,7 @@ export default function Produit() {
               <div className="flex gap-1 flex-wrap">
                 <div className="dropdown dropdown-top dropdown-end">
                   <label tabIndex={0} className="btn btn-xs btn-outline btn-primary gap-1">
-                    📁 Rayon ▼
+                    📁 {t('products.actions.bulk_rayon')} ▼
                   </label>
                   <ul tabIndex={0} className="dropdown-content z-50 menu p-1 shadow bg-base-100 rounded-box w-40 max-h-48 overflow-auto">
                     {rayons.map(r => (
@@ -845,7 +851,7 @@ export default function Produit() {
                 </div>
                 <div className="dropdown dropdown-top dropdown-end">
                   <label tabIndex={0} className="btn btn-xs btn-outline btn-secondary gap-1">
-                    🏭 Fournisseur ▼
+                    🏭 {t('products.actions.bulk_provider')} ▼
                   </label>
                   <ul tabIndex={0} className="dropdown-content z-50 menu p-1 shadow bg-base-100 rounded-box w-48 max-h-48 overflow-auto">
                     {fournisseurs.map(f => (
@@ -860,7 +866,7 @@ export default function Produit() {
                   onClick={handleBulkDelete}
                   disabled={loading}
                 >
-                  🗑️ Supprimer
+                  🗑️ {t('products.actions.bulk_delete')}
                 </button>
               </div>
             </div>
@@ -885,39 +891,39 @@ export default function Produit() {
                         (selectedProduit.stock ?? 0) <= 0 ? 'badge-error' :
                         (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :
                         'badge-success'
-                      }`}>Stock: {selectedProduit.stock ?? 0}</span>
+                      }`}>{t('products.table.stock')}: {selectedProduit.stock ?? 0}</span>
                     </div>
                     <h2 className="text-2xl font-black text-slate-800 uppercase">{selectedProduit.name}</h2>
                     <p className="text-sm text-slate-500 font-mono mt-1">
-                      CIP: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
+                      {t('products.detail.cip')}: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
                     </p>
                   </div>
                   <div className="flex gap-1">
                     <button 
                       className="btn btn-sm btn-ghost text-slate-400 hover:text-warning" 
                       onClick={handleOpenAdjustmentModal}
-                      title="Ajuster stock"
+                      title={t('products.actions.adjust_stock')}
                     >
                       📊
                     </button>
                     <button 
                       className="btn btn-sm btn-ghost text-slate-400 hover:text-primary" 
                       onClick={() => handleOpenEditModal(selectedProduit)}
-                      title="Modifier"
+                      title={t('products.actions.edit')}
                     >
                       ✏️
                     </button>
                     <button 
                       className="btn btn-sm btn-ghost text-slate-400 hover:text-secondary" 
                       onClick={() => handleGenerateLabels(selectedProduit)}
-                      title="Étiquettes"
+                      title={t('products.actions.labels')}
                     >
                       🏷️
                     </button>
                     <button 
                       className="btn btn-sm btn-ghost text-slate-400 hover:text-error" 
                       onClick={() => handleDeleteProduit(selectedProduit)}
-                      title="Supprimer"
+                      title={t('products.actions.delete')}
                     >
                       🗑️
                     </button>
@@ -928,25 +934,25 @@ export default function Produit() {
               {/* Onglets */}
               <div role="tablist" className="tabs tabs-boxed bg-slate-100 rounded-none px-4 pt-2 shrink-0">
                 <a role="tab" className={`tab ${activeTab === 'general' ? 'tab-active' : ''}`} onClick={() => setActiveTab('general')}>
-                  Général
+                  {t('products.detail.tabs.general')}
                 </a>
                 <a role="tab" className={`tab ${activeTab === 'prix' ? 'tab-active' : ''}`} onClick={() => setActiveTab('prix')}>
-                  Prix
+                  {t('products.detail.tabs.price')}
                 </a>
                 <a role="tab" className={`tab ${activeTab === 'achats' ? 'tab-active' : ''}`} onClick={() => setActiveTab('achats')}>
-                  Achats
+                  {t('products.detail.tabs.purchases')}
                 </a>
                 <a role="tab" className={`tab ${activeTab === 'lots' ? 'tab-active' : ''}`} onClick={() => setActiveTab('lots')}>
-                  Lots
+                  {t('products.detail.tabs.lots')}
                 </a>
                 <a role="tab" className={`tab ${activeTab === 'ajustements' ? 'tab-active' : ''}`} onClick={() => setActiveTab('ajustements')}>
-                  Ajust.
+                  {t('products.detail.tabs.adjustments')}
                 </a>
                 <a role="tab" className={`tab ${activeTab === 'stats' ? 'tab-active' : ''}`} onClick={() => setActiveTab('stats')}>
-                  Stats
+                  {t('products.detail.tabs.stats')}
                 </a>
                 <a role="tab" className={`tab ${activeTab === 'mouvements' ? 'tab-active' : ''}`} onClick={() => setActiveTab('mouvements')}>
-                  📜 Mvts
+                  📜 {t('products.detail.tabs.movements')}
                 </a>
               </div>
 
@@ -957,50 +963,50 @@ export default function Produit() {
                     <table className="table table-sm">
                       <tbody>
                         <tr>
-                          <td className="font-semibold w-1/3">Description</td>
+                          <td className="font-semibold w-1/3">{t('products.detail.general.description')}</td>
                           <td className="uppercase">{selectedProduit.description || '-'}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Rayon</td>
+                          <td className="font-semibold">{t('products.detail.general.rayon')}</td>
                           <td><span className="badge badge-outline badge-sm">{selectedProduit.rayon_name || '-'}</span></td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Fournisseur</td>
+                          <td className="font-semibold">{t('products.detail.general.provider')}</td>
                           <td><span className="badge badge-ghost badge-sm">{selectedProduit.fournisseur_name || '-'}</span></td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Stock min / max</td>
+                          <td className="font-semibold">{t('products.detail.general.min_max')}</td>
                           <td>{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Seuil alerte</td>
+                          <td className="font-semibold">{t('products.detail.general.alert_threshold')}</td>
                           <td><span className="badge badge-warning badge-sm">{selectedProduit.stock_alert ?? 0}</span></td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Date expiration</td>
+                          <td className="font-semibold">{t('products.detail.general.expiration')}</td>
                           <td>{selectedProduit.expire_date ? (() => {
                             const d = new Date(selectedProduit.expire_date);
                             return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
                           })() : '-'}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Dernier achat</td>
+                          <td className="font-semibold">{t('products.detail.general.last_purchase')}</td>
                           <td>{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString('fr-FR') : '-'}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Dernière vente</td>
+                          <td className="font-semibold">{t('products.detail.general.last_sale')}</td>
                           <td>{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString('fr-FR') : '-'}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Gestion par lots</td>
-                          <td>{selectedProduit.use_lot_management ? '✅ Activée' : '❌ Désactivée'}</td>
+                          <td className="font-semibold">{t('products.detail.general.lot_management')}</td>
+                          <td>{selectedProduit.use_lot_management ? `✅ ${t('products.detail.general.enabled')}` : `❌ ${t('products.detail.general.disabled')}`}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Ordonnance requise</td>
-                          <td>{selectedProduit.requires_prescription ? '✅ Oui' : '❌ Non'}</td>
+                          <td className="font-semibold">{t('products.detail.general.prescription')}</td>
+                          <td>{selectedProduit.requires_prescription ? `✅ ${t('products.detail.general.yes')}` : `❌ ${t('products.detail.general.no')}`}</td>
                         </tr>
                         <tr>
-                          <td className="font-semibold">Surveillance</td>
+                          <td className="font-semibold">{t('products.detail.general.surveillance')}</td>
                           <td>{selectedProduit.surveillance_category === 'NONE' ? '-' : selectedProduit.surveillance_category}</td>
                         </tr>
                       </tbody>
@@ -1011,28 +1017,28 @@ export default function Produit() {
                 {activeTab === 'prix' && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                      <div className="stat-title text-sm">Prix Revient</div>
+                      <div className="stat-title text-sm">{t('products.detail.price.cost')}</div>
                       <div className="stat-value text-blue-600 text-xl">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR')} F</div>
                     </div>
                     <div className="stat bg-primary text-primary-content rounded-xl p-4">
-                      <div className="stat-title text-primary-content/80 text-sm">Prix Vente</div>
+                      <div className="stat-title text-primary-content/80 text-sm">{t('products.detail.price.selling')}</div>
                       <div className="stat-value text-xl">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</div>
                     </div>
                     <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                      <div className="stat-title text-sm">TVA</div>
+                      <div className="stat-title text-sm">{t('products.detail.price.vat')}</div>
                       <div className="stat-value text-lg">{selectedProduit.tva || '19.25'}%</div>
                     </div>
                     <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                      <div className="stat-title text-sm">% Marge</div>
+                      <div className="stat-title text-sm">{t('products.detail.price.margin_percent')}</div>
                       <div className="stat-value text-lg">{Number(selectedProduit.pourcentage_marge || 0).toFixed(2)}%</div>
                     </div>
                     <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                      <div className="stat-title text-sm">Coef. Marge</div>
+                      <div className="stat-title text-sm">{t('products.detail.price.margin_coeff')}</div>
                       <div className="stat-value text-lg">{Number(selectedProduit.taux_marge || 0).toFixed(2)}</div>
                     </div>
                     <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-                      <div className="stat-title text-sm">Rotation Moy.</div>
-                      <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(2)}<span className="text-sm"> /mois</span></div>
+                      <div className="stat-title text-sm">{t('products.detail.price.rotation')}</div>
+                      <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(2)}<span className="text-sm"> {t('products.detail.price.per_month')}</span></div>
                     </div>
                   </div>
                 )}
@@ -1042,17 +1048,17 @@ export default function Produit() {
                     <table className="table table-sm">
                       <thead>
                         <tr>
-                          <th>Date</th>
-                          <th>Fournisseur</th>
-                          <th className="text-right">Qté</th>
-                          <th className="text-right">Prix</th>
-                          <th>Lot</th>
-                          <th>Exp.</th>
+                          <th>{t('products.detail.purchases.date')}</th>
+                          <th>{t('products.detail.purchases.provider')}</th>
+                          <th className="text-right">{t('products.detail.purchases.qty')}</th>
+                          <th className="text-right">{t('products.detail.purchases.price')}</th>
+                          <th>{t('products.detail.purchases.lot')}</th>
+                          <th>{t('products.detail.purchases.exp')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {achats.length === 0 ? (
-                          <tr><td colSpan={6} className="text-center text-base-content/50">Aucun achat enregistré</td></tr>
+                          <tr><td colSpan={6} className="text-center text-base-content/50">{t('products.detail.purchases.empty')}</td></tr>
                         ) : (
                           achats.map(a => (
                             <tr key={a.id}>
@@ -1078,16 +1084,16 @@ export default function Produit() {
                     <table className="table table-sm">
                       <thead>
                         <tr>
-                          <th>Lot</th>
-                          <th>Expiration</th>
-                          <th className="text-right">Stock</th>
-                          <th className="text-right">Prix</th>
-                          <th>Statut</th>
+                          <th>{t('products.detail.lots.lot')}</th>
+                          <th>{t('products.detail.lots.expiration')}</th>
+                          <th className="text-right">{t('products.detail.lots.stock')}</th>
+                          <th className="text-right">{t('products.detail.lots.price')}</th>
+                          <th>{t('products.detail.lots.status')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {lots.length === 0 ? (
-                          <tr><td colSpan={5} className="text-center text-base-content/50">Aucun lot disponible</td></tr>
+                          <tr><td colSpan={5} className="text-center text-base-content/50">{t('products.detail.lots.empty')}</td></tr>
                         ) : (
                           lots.map(lot => {
                             const expirationDate = lot.date_expiration ? new Date(lot.date_expiration) : null
@@ -1118,9 +1124,9 @@ export default function Produit() {
                                 <td className="text-right">{lot.selling_price} F</td>
                                 <td>
                                   {lot.quantity_remaining === 0 ? (
-                                    <span className="badge badge-error badge-xs">Épuisé</span>
+                                    <span className="badge badge-error badge-xs">{t('products.detail.lots.exhausted')}</span>
                                   ) : (
-                                    <span className="badge badge-success badge-xs">Dispo</span>
+                                    <span className="badge badge-success badge-xs">{t('products.detail.lots.available')}</span>
                                   )}
                                 </td>
                               </tr>
@@ -1135,17 +1141,17 @@ export default function Produit() {
                 {activeTab === 'ajustements' && (
                   <div className="overflow-x-auto">
                     {adjustments.length === 0 ? (
-                      <p className="text-center text-base-content/50 py-4">Aucun ajustement enregistré</p>
+                      <p className="text-center text-base-content/50 py-4">{t('products.detail.adjustments.empty')}</p>
                     ) : (
                       <table className="table table-sm">
                         <thead>
                           <tr className="bg-base-200">
-                            <th>Date</th>
-                            <th>User</th>
-                            <th className="text-right">Avant</th>
-                            <th className="text-right">Après</th>
-                            <th className="text-center">Δ</th>
-                            <th>Motif</th>
+                            <th>{t('products.detail.adjustments.date')}</th>
+                            <th>{t('products.detail.adjustments.user')}</th>
+                            <th className="text-right">{t('products.detail.adjustments.before')}</th>
+                            <th className="text-right">{t('products.detail.adjustments.after')}</th>
+                            <th className="text-center">{t('products.detail.adjustments.delta')}</th>
+                            <th>{t('products.detail.adjustments.reason')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1176,17 +1182,17 @@ export default function Produit() {
                 {activeTab === 'stats' && (
                   <div className="overflow-x-auto max-h-80">
                     {monthlyStats.length === 0 ? (
-                      <p className="text-center text-base-content/50 py-4">Aucune statistique disponible</p>
+                      <p className="text-center text-base-content/50 py-4">{t('products.detail.stats.empty')}</p>
                     ) : (
                       <>
                         <table className="table table-sm">
                           <thead className="bg-base-200 sticky top-0">
                             <tr>
                               <th className="text-xs uppercase"></th>
-                              <th className="text-xs uppercase">Mois</th>
-                              <th className="text-xs uppercase text-right text-primary">Qté V</th>
-                              <th className="text-xs uppercase text-right text-warning">Qté C</th>
-                              <th className="text-xs uppercase text-right text-info">Nb C</th>
+                              <th className="text-xs uppercase">{t('products.detail.stats.month')}</th>
+                              <th className="text-xs uppercase text-right text-primary">{t('products.detail.stats.qty_sold')}</th>
+                              <th className="text-xs uppercase text-right text-warning">{t('products.detail.stats.qty_ordered')}</th>
+                              <th className="text-xs uppercase text-right text-info">{t('products.detail.stats.nb_clients')}</th>
                             </tr>
                           </thead>
                           <tbody>

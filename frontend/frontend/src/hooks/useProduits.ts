@@ -86,7 +86,7 @@ export const useProduit = (id: number | null) => {
 
 export const useRayons = () => {
     return useQuery({
-        queryKey: ['rayons'],
+        queryKey: ['rayons', 'all'],
         queryFn: async () => {
             const response = await axios.get<Rayon[] | { results: Rayon[] }>(categoriesEndpoint, { params: { page_size: 1000 } });
             if (Array.isArray(response.data)) return response.data;
@@ -98,7 +98,7 @@ export const useRayons = () => {
 
 export const useFournisseurs = () => {
     return useQuery({
-        queryKey: ['fournisseurs'],
+        queryKey: ['fournisseurs', 'all'],
         queryFn: async () => {
             const response = await axios.get<Fournisseur[] | { results: Fournisseur[] }>(fournisseursEndpoint, { params: { page_size: 1000 } });
             if (Array.isArray(response.data)) return response.data;
@@ -110,7 +110,7 @@ export const useFournisseurs = () => {
 
 export const useFormes = () => {
     return useQuery({
-        queryKey: ['formes'],
+        queryKey: ['formes', 'all'],
         queryFn: async () => {
             const response = await axios.get<Forme[] | { results: Forme[] }>(formesEndpoint, { params: { page_size: 1000 } });
             if (Array.isArray(response.data)) return response.data;
@@ -124,7 +124,7 @@ export const useFormes = () => {
 export function useGroupes() {
     const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
     return useQuery({
-        queryKey: ['groupes'],
+        queryKey: ['groupes', 'all'],
         queryFn: async () => {
             const response = await axios.get(`${apiBaseUrl}/api/groupes/`, { params: { page_size: 1000 } })
             return response.data.results || response.data

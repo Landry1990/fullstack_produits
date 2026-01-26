@@ -200,5 +200,312 @@
             "print_ticket": "Print Ticket",
             "print_invoice": "Print Invoice A4"
         }
+    },
+    "clients": {
+        "title": "Clients",
+        "subtitle": "Customer Management",
+        "actions": {
+            "create": "Create",
+            "edit": "Edit",
+            "delete": "Delete",
+            "fidelity_config": "Loyalty Config",
+            "add_beneficiary": "Add",
+            "remove_beneficiary": "Remove",
+            "cancel": "Cancel",
+            "confirm": "Confirm"
+        },
+        "filters": {
+            "search_placeholder": "Search...",
+            "no_results": "No clients found",
+            "select_prompt_title": "Select a client",
+            "select_prompt_subtitle": "or create a new one"
+        },
+        "types": {
+            "title": "Client Type",
+            "individual": "Individual",
+            "professional": "Professional"
+        },
+        "fields": {
+            "name": "Full Name",
+            "name_placeholder": "Ex: John Doe",
+            "phone": "Phone",
+            "phone_placeholder": "Ex: 0123456789",
+            "email": "Email Address",
+            "email_placeholder": "Ex: john.doe@email.com",
+            "address": "Full Address",
+            "address_placeholder": "Ex: 123 Peace Street",
+            "internal_id": "Internal ID"
+        },
+        "fidelity": {
+            "program_title": "Loyalty Program",
+            "program_desc": "Allows gathering points and discounts.",
+            "points": "Points",
+            "discount": "Discount",
+            "auto_discount": "Auto Discount (%)",
+            "auto_discount_hint": "Applied on all sales",
+            "status_active": "Enabled",
+            "status_inactive": "Disabled"
+        },
+        "finance": {
+            "title": "Finance",
+            "pro_info_title": "Professional Information",
+            "credit_limit": "Credit Limit (F)",
+            "debt": "Debt",
+            "coverage": "Coverage",
+            "coverage_rate": "Insurance Coverage Rate (%)",
+            "coverage_hint": "For third-party payment"
+        },
+        "beneficiaries": {
+            "title": "Beneficiaries",
+            "name": "Name",
+            "id": "ID Number",
+            "empty": "No beneficiaries added",
+            "placeholder_name": "Beneficiary Name",
+            "placeholder_id": "ID Number"
+        },
+        "sections": {
+            "contact": "Contact Info",
+            "programs": "Programs"
+        },
+        "modals": {
+            "create_title": "Add New Client",
+            "edit_title": "Edit Client",
+            "delete_confirm": "Delete client \"{{name}}\"?"
+        },
+        "messages": {
+            "create_success": "Client created successfully",
+            "update_success": "Client updated successfully",
+            "delete_success": "Client deleted successfully",
+            "error_create": "Error creating client",
+            "error_update": "Error updating client",
+            "error_delete": "Error deleting client",
+            "network_error": "Network error",
+            "unknown_error": "Unknown error"
+        }
+    },
+    "products": {
+        "title": "Product Management",
+        "create_title": "New Product",
+        "edit_title": "Edit Product",
+        "stats": {
+            "total": "Total",
+            "low_stock": "Low Stock",
+            "out_of_stock": "Out of Stock"
+        },
+        "actions": {
+            "create": "Create Product",
+            "refresh": "Refresh",
+            "rotation": "Rotation",
+            "reset": "Reset",
+            "labels": "Labels",
+            "delete": "Delete",
+            "edit": "Edit",
+            "adjust_stock": "Adjust Stock",
+            "bulk_delete": "Delete",
+            "bulk_rayon": "Shelf",
+            "bulk_provider": "Supplier",
+            "deselect": "Deselect",
+            "selected": "selected",
+            "confirm": "Confirm"
+        },
+        "filters": {
+            "search_placeholder": "Name or CIP...",
+            "rayon_placeholder": "Shelf",
+            "provider_placeholder": "Supplier"
+        },
+        "table": {
+            "cip": "CIP",
+            "product": "Product",
+            "stock": "Stock",
+            "empty": "No products found"
+        },
+        "detail": {
+            "cip": "CIP",
+            "tabs": {
+                "general": "General",
+                "price": "Price",
+                "purchases": "Purchases",
+                "lots": "Lots",
+                "adjustments": "Adjust.",
+                "stats": "Stats",
+                "movements": "Mvmts"
+            },
+            "general": {
+                "description": "Description",
+                "rayon": "Shelf",
+                "provider": "Supplier",
+                "min_max": "Min / Max Stock",
+                "alert_threshold": "Alert Threshold",
+                "expiration": "Expiration Date",
+                "last_purchase": "Last Purchase",
+                "last_sale": "Last Sale",
+                "lot_management": "Lot Management",
+                "prescription": "Prescription Req.",
+                "surveillance": "Surveillance",
+                "enabled": "Enabled",
+                "disabled": "Disabled",
+                "yes": "Yes",
+                "no": "No"
+            },
+            "price": {
+                "cost": "Cost Price",
+                "selling": "Selling Price",
+                "vat": "VAT",
+                "margin_percent": "Margin %",
+                "margin_coeff": "Margin Coeff.",
+                "rotation": "Avg. Rotation",
+                "per_month": "/month"
+            },
+            "purchases": {
+                "date": "Date",
+                "provider": "Supplier",
+                "qty": "Qty",
+                "price": "Price",
+                "lot": "Lot",
+                "exp": "Exp.",
+                "empty": "No purchases recorded"
+            },
+            "lots": {
+                "lot": "Lot",
+                "expiration": "Expiration",
+                "stock": "Stock",
+                "price": "Price",
+                "status": "Status",
+                "empty": "No lots available",
+                "exhausted": "Exhausted",
+                "available": "Avail."
+            },
+            "adjustments": {
+                "date": "Date",
+                "user": "User",
+                "before": "Before",
+                "after": "After",
+                "delta": "Δ",
+                "reason": "Reason",
+                "empty": "No adjustments recorded"
+            },
+            "stats": {
+                "month": "Month",
+                "qty_sold": "Sold Qty",
+                "qty_ordered": "Order Qty",
+                "nb_clients": "Client #"
+            },
+            "movements": {
+                "date": "Date",
+                "type": "Type",
+                "qty": "Qty",
+                "stock_after": "Stock",
+                "details": "Details",
+                "user": "User",
+                "empty": "No movements recorded"
+            }
+        },
+        "messages": {
+            "loading": "Loading products...",
+            "delete_confirm_title": "Delete Product",
+            "delete_confirm_body": "Are you sure you want to delete product \"{{name}}\"?\n\nThis action is irreversible.",
+            "delete_success": "Product deleted successfully",
+            "update_success": "Product updated",
+            "bulk_delete_title": "Bulk Delete",
+            "bulk_delete_body": "Delete {{count}} selected product(s)?",
+            "bulk_update_success": "{{count}} product(s) updated",
+            "labels_prompt": "Number of labels for {{name}}?",
+            "recalculate_title": "Recalculate Rotations",
+            "recalculate_body": "Recalculate average rotation for ALL products?\n\nThis may take a few seconds.",
+            "recalculate_success": "Rotation recalculation completed",
+            "stock_update_warning": "Stock cannot be modified here.",
+            "bulk_rayon_change_title": "Change Shelf",
+            "bulk_rayon_change_body": "Assign {{count}} product(s) to shelf \"{{name}}\"?",
+            "bulk_provider_change_title": "Change Supplier",
+            "bulk_provider_change_body": "Assign {{count}} product(s) to supplier \"{{name}}\"?",
+            "password_confirm_delete_title": "Confirm Deletion",
+            "password_confirm_delete_body": "This action is sensitive. Please enter your password to confirm the permanent deletion of this product.",
+            "password_confirm_adjust_title": "Confirm Stock Adjustment",
+            "password_confirm_adjust_body": "You are about to modify the stock of \"{{name}}\": {{oldStock}} → {{newStock}}",
+            "invalid_quantity": "Invalid Quantity",
+            "generation_error": "Error generating labels",
+            "access_denied_delete": "Access Denied: You do not have permission to delete products.",
+            "access_denied_adjust": "Access Denied",
+            "input_quantity_error": "Please enter the new quantity"
+        }
+    },
+    "sales": {
+        "title": "Sales History",
+        "subtitle": "View and manage history of all invoices",
+        "total_invoices": "Total Invoices",
+        "drafts": "Drafts (Page)",
+        "cash_report": "Cash Report",
+        "invoice_details": "Invoice Products",
+        "ticket_preview": "Ticket Preview",
+        "refund_title": "Refund / Cancellation",
+        "actions": {
+            "generate_report": "Generate Report",
+            "print_ticket": "Print Ticket",
+            "print_invoice": "Print Invoice",
+            "view_details": "View details",
+            "edit_invoice": "Edit / Recall in Billing",
+            "cancel_refund": "Cancel / Refund",
+            "confirm_refund": "Confirm Refund",
+            "cancel": "Cancel",
+            "close": "Close",
+            "hide_report": "Hide Report",
+            "delete_drafts": "Clear Drafts"
+        },
+        "filters": {
+            "search_placeholder": "Search client, invoice #...",
+            "all": "All",
+            "validated": "Validated",
+            "cancelled": "Cancelled",
+            "start_date": "Start",
+            "end_date": "End"
+        },
+        "table": {
+            "invoice_number": "Invoice #",
+            "client": "Client",
+            "date": "Date",
+            "status": "Status",
+            "cancellation_reason": "Cancellation Reason",
+            "discount": "Discount",
+            "amount_ttc": "Amount TTC",
+            "actions": "Actions"
+        },
+        "fields": {
+            "product": "Product",
+            "unit_price": "Unit Price",
+            "quantity": "Quantity",
+            "total": "Total",
+            "subtotal_ht": "Subtotal HT",
+            "vat": "VAT",
+            "total_ttc": "Total TTC"
+        },
+        "refund": {
+            "invoice_concerned": "Invoice Concerned",
+            "refund_amount": "Refund Amount (Negative)",
+            "refund_mode": "Refund Mode",
+            "refund_reason": "Reference / Reason (Optional)"
+        },
+        "payment_modes": {
+            "cash": "Cash",
+            "card": "Credit Card",
+            "check": "Check",
+            "transfer": "Transfer",
+            "orange_money": "Orange Money",
+            "mobile_money": "Mobile Money",
+            "account": "Account"
+        },
+        "messages": {
+            "no_results": "No invoice found",
+            "no_invoices": "No invoices recorded",
+            "refund_success": "Invoice cancelled and refund recorded successfully.",
+            "refund_error": "Error recording refund.",
+            "delete_drafts_confirm": "Are you sure you want to delete all draft invoices? This action is irreversible.",
+            "delete_drafts_success": "draft invoice(s) deleted successfully.",
+            "delete_drafts_error": "Error deleting draft invoices.",
+            "date_error": "Start date must be before end date.",
+            "no_products": "No product lines for this invoice.",
+            "prompt_client_name": "Client name for the invoice:",
+            "error_loading_quote": "Unable to load the quote",
+            "cash_report_error": "Error calculating cash report."
+        }
     }
 }
