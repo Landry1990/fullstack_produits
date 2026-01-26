@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Groupe, ProduitModel } from '../types';
+import ImportProductsModal from './products/ImportProductsModal';
 
 interface ScopedProduit extends ProduitModel {
   // Add any extra fields if needed for UI
@@ -28,6 +29,7 @@ export default function Groupes() {
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<ScopedProduit[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, ''),
@@ -255,9 +257,28 @@ export default function Groupes() {
       <div className="w-1/3 border-r border-base-200 bg-base-100 flex flex-col">
         <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-100 relative z-10">
           <h2 className="font-bold text-lg">Groupes</h2>
-          <button onClick={() => openModal()} className="btn btn-sm btn-primary">
-            + Créer
-          </button>
+          <div className="flex gap-2">
+            <button 
+              className="btn btn-sm btn-ghost"
+              onClick={() => setIsImporting(true)}
+              title="Importer Catalogue CSV/Excel"
+            >
+              📂 Importer
+            </button>
+            <button onClick={() => openModal()} className="btn btn-sm btn-primary">
+              + Créer
+            </button>
+          </div>
+          {isImporting && (
+             <ImportProductsModal
+               onClose={() => setIsImporting(false)}
+               onSuccess={() => {
+                 fetchGroupes();
+                 if (selectedGroupe) fetchProductsForGroupe(selectedGroupe.id);
+                 toast.success("Catalogue importé");
+               }}
+             />
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">

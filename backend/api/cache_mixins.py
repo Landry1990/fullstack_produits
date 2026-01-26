@@ -125,7 +125,8 @@ class CachedSearchMixin:
         """
         Override pour invalider le cache après création.
         """
-        instance = super().perform_create(serializer)
+        super().perform_create(serializer)
+        instance = serializer.instance
         # Invalider les caches de liste
         SearchCache.invalidate_all_products()
         return instance
@@ -134,17 +135,14 @@ class CachedSearchMixin:
         """
         Override pour invalider le cache après mise à jour.
         """
-        instance = super().perform_update(serializer)
+        super().perform_update(serializer)
+        instance = serializer.instance
+        
         # Invalider le cache de ce produit spécifique
         if hasattr(instance, 'id'):
             SearchCache.invalidate_product(instance.id)
-        # Invalider aussi les listes
-        try:
-            from django.core.cache import cache
-            cache.delete_pattern(f"{SearchCache.PREFIX_PRODUCT_SEARCH}:*")
-            cache.delete_pattern(f"{SearchCache.PREFIX_PRODUCT_LIST}:*")
-        except AttributeError:
-            pass
+        # Invalider les caches de liste (utilise invalidate_all_products pour gérer le fallback LocMemCache)
+        SearchCache.invalidate_all_products()
         return instance
     
     def perform_destroy(self, instance):

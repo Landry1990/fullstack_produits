@@ -47,6 +47,8 @@ export const useProduits = (filters: ProduitFilters) => {
         queryKey: ['produits', filters],
         queryFn: async () => {
             // Return empty result if no search term (User requirement: empty by default)
+            const params = new URLSearchParams();
+            if (filters.search) params.append('search', filters.search);
             if (filters.page) params.append('page', filters.page.toString());
             // Note: rayon and fournisseur filtering currently happens client-side in the original component, 
             // but if the API supports it, we should add it here. 
@@ -66,7 +68,7 @@ export const useProduits = (filters: ProduitFilters) => {
             return response.data;
         },
         placeholderData: (previousData) => previousData,
-        enabled: !!filters.search && filters.search.length > 0, // Only fetch if search is active
+        // enabled: true // Fetch by default
     });
 };
 
@@ -86,7 +88,7 @@ export const useRayons = () => {
     return useQuery({
         queryKey: ['rayons'],
         queryFn: async () => {
-            const response = await axios.get<Rayon[] | { results: Rayon[] }>(categoriesEndpoint);
+            const response = await axios.get<Rayon[] | { results: Rayon[] }>(categoriesEndpoint, { params: { page_size: 1000 } });
             if (Array.isArray(response.data)) return response.data;
             return response.data.results;
         },
@@ -98,7 +100,7 @@ export const useFournisseurs = () => {
     return useQuery({
         queryKey: ['fournisseurs'],
         queryFn: async () => {
-            const response = await axios.get<Fournisseur[] | { results: Fournisseur[] }>(fournisseursEndpoint);
+            const response = await axios.get<Fournisseur[] | { results: Fournisseur[] }>(fournisseursEndpoint, { params: { page_size: 1000 } });
             if (Array.isArray(response.data)) return response.data;
             return response.data.results;
         },
@@ -110,7 +112,7 @@ export const useFormes = () => {
     return useQuery({
         queryKey: ['formes'],
         queryFn: async () => {
-            const response = await axios.get<Forme[] | { results: Forme[] }>(formesEndpoint);
+            const response = await axios.get<Forme[] | { results: Forme[] }>(formesEndpoint, { params: { page_size: 1000 } });
             if (Array.isArray(response.data)) return response.data;
             return response.data.results;
         },
@@ -124,7 +126,7 @@ export function useGroupes() {
     return useQuery({
         queryKey: ['groupes'],
         queryFn: async () => {
-            const response = await axios.get(`${apiBaseUrl}/api/groupes/`)
+            const response = await axios.get(`${apiBaseUrl}/api/groupes/`, { params: { page_size: 1000 } })
             return response.data.results || response.data
         },
         staleTime: 5 * 60 * 1000,

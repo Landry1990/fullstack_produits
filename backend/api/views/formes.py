@@ -12,3 +12,4 @@ class FormeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nom', 'description']
+    pagination_class = None

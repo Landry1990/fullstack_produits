@@ -29,7 +29,9 @@ class ProduitListSerializer(serializers.ModelSerializer):
             'rayon_name', 'fournisseur_name', 'forme_nom', 'rotation_moyenne',
             'use_lot_management',
             'tva', 'cost_price', 'taux_marge',
-            'dernier_achat', 'dernier_vente'
+            'dernier_achat', 'dernier_vente',
+            'stock_reserve', 'stock_rayon_min', 'rayon_capacity',
+            'stock_rayon', 'stock_disponible_vente'
         ]
 
 
