@@ -664,3 +664,60 @@ class RapportViewSet(viewsets.ViewSet):
         response.write(pdf)
         return response
 
+    @action(detail=False, methods=['get'])
+    def stocks_morts(self, request):
+        """
+        Rapport des stocks dormants (Dead Stock).
+        Produits avec forte valeur en stock mais sans vente depuis X mois.
+        """
+        try:
+            min_value = Decimal(request.query_params.get('min_value', 100000))
+            months = int(request.query_params.get('months', 6))
+        except (ValueError, TypeError):
+             return Response({'error': 'Paramètres invalides'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Date limite : aujourd'hui - X mois
+        # Date limite : aujourd'hui - X mois
+        limit_date = (timezone.now() - timedelta(days=months*30)).date()
+        
+        # 1. Filtre de base : Stock positif
+        produits = Produit.objects.filter(stock__gt=0).select_related('rayon', 'fournisseur')
+        
+        results = []
+        for p in produits:
+            # Calcul valeur stock
+            valeur = (p.pmp or Decimal(0)) * p.stock
+            
+            # Filtre valeur min
+            if valeur < min_value:
+                continue
+                
+            # Filtre inactivité
+            # Si jamais vendu (None) ou vendu avant la date limite
+            dernier_vente = p.dernier_vente
+            
+            is_dead = False
+            if not dernier_vente:
+                is_dead = True
+            else:
+                if dernier_vente < limit_date:
+                    is_dead = True
+                    
+            if is_dead:
+                results.append({
+                    'id': p.id,
+                    'name': p.name,
+                    'cip': p.cip1,
+                    'stock': p.stock,
+                    'valeur': valeur,
+                    'pmp': p.pmp,
+                    'dernier_vente': dernier_vente,
+                    'rayon': p.rayon.name if p.rayon else '',
+                    'fournisseur': p.fournisseur.name if p.fournisseur else ''
+                })
+        
+        # Tri par valeur décroissante
+        results.sort(key=lambda x: x['valeur'], reverse=True)
+        
+        return Response(results)
+

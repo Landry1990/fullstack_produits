@@ -158,3 +158,52 @@ class RapportViewSet(viewsets.ViewSet):
             running_ttc = start_day_ttc
 
         return Response(resultats)
+
+    @action(detail=False, methods=['get'])
+    def stocks_morts(self, request):
+        """
+        Rapport des stocks dormants (Dead Stock).
+        Critères par défaut :
+        - Valeur Stock (PMP * Stock) > 100,000 FCFA
+        - Pas de vente depuis 6 mois (ou jamais vendu)
+        """
+        # Paramètres configurables via query params
+        min_value = request.query_params.get('min_value', 100000)
+        months_dormant = request.query_params.get('months', 6)
+        
+        try:
+            min_value = float(min_value)
+            months_dormant = int(months_dormant)
+        except ValueError:
+            return Response({'error': 'Paramètres invalides'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        limit_date = timezone.now().date() - timedelta(days=months_dormant*30)
+        
+        # Filtre:
+        # 1. Stock positif
+        # 2. Valeur stock > min_value
+        # 3. Dernier vente < limit_date OU jamais vendu
+        
+        produits = Produit.objects.filter(
+            stock__gt=0
+        ).annotate(
+            valeur_stock=F('stock') * F('pmp')
+        ).filter(
+            valeur_stock__gte=min_value
+        ).filter(
+            Q(dernier_vente__lt=limit_date) | Q(dernier_vente__isnull=True)
+        ).order_by('-valeur_stock')
+        
+        data = []
+        for p in produits:
+            data.append({
+                'id': p.id,
+                'name': p.name,
+                'stock': p.stock,
+                'pmp': p.pmp,
+                'valeur_stock': p.valeur_stock,
+                'dernier_vente': p.dernier_vente,
+                'selling_price': p.selling_price
+            })
+            
+        return Response(data)

@@ -27,6 +27,16 @@ class Profile(models.Model):
     can_close_commande = models.BooleanField(default=False, verbose_name="Clôturer des commandes")
     can_generate_coupon = models.BooleanField(default=False, verbose_name="Générer des coupons")
 
+    # Price & Discount Control
+    can_modify_price = models.BooleanField(default=False, verbose_name="Modifier le prix de vente")
+    max_discount_rate = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        default=0, 
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        verbose_name="Remise maximum (%)"
+    )
+
     ROLE_CHOICES = [
         ('PHARMACIEN', 'Pharmacien'),
         ('VENDEUR', 'Vendeur'),
@@ -323,6 +333,24 @@ class Groupe(models.Model):
     def __str__(self):
         return self.nom
 
+class FamilleRisque(models.Model):
+    """
+    Famille thérapeutique ou de risque (ex: AINS, Paracétamol).
+    Utilisé pour détecter les redondances ou surdosages lors de la vente.
+    """
+    id = models.AutoField(primary_key=True)
+    nom = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True, null=True)
+    
+    # Niveau de risque pour l'affichage (Low, Medium, High)
+    niveau_risque = models.CharField(max_length=20, default='STANDARD', choices=[
+        ('STANDARD', 'Standard'),
+        ('HAUT', 'Haut Risque'),
+    ])
+
+    def __str__(self):
+        return self.nom
+
 class Produit(models.Model):
     """Model representing a product."""
     id = models.AutoField(primary_key=True)
@@ -330,6 +358,7 @@ class Produit(models.Model):
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
     forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
     groupe = models.ForeignKey('Groupe', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
+    famille_risque = models.ForeignKey('FamilleRisque', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits', help_text="Famille pour contrôle interactions (ex: AINS)")
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     stock = models.IntegerField()
@@ -1354,6 +1383,8 @@ class AuditLog(models.Model):
         INVOICE_VALIDATE = 'INV_VALID', 'Validation facture'
         INVENTORY_CREATE = 'INV_CRE', 'Cr├®ation inventaire'
         INVENTORY_VALIDATE = 'INV_VAL', 'Validation inventaire'
+        ORDER_RECEIVE = 'ORD_RECV', 'R├®ception commande'
+        ORDER_CANCEL = 'ORD_CNCL', 'Annulation r├®ception'
 
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

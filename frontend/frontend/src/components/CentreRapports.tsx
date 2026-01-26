@@ -149,6 +149,28 @@ const QUERIES: QueryDefinition[] = [
         { key: 'ordering', label: 'Tri', type: 'text', default: '-tva' }
     ],
     resultType: 'table'
+  },
+  {
+    id: 'stocks_morts',
+    name: 'Stocks Dormants (Dead Stock)',
+    description: 'Produits à forte valeur (Argent qui dort) sans vente',
+    endpoint: '/api/rapports/stocks_morts/',
+    params: [
+        { key: 'min_value', label: 'Valeur Min (F)', type: 'number', default: 100000 },
+        { key: 'months', label: 'Mois sans vente', type: 'number', default: 6 }
+    ],
+    resultType: 'table'
+  },
+  {
+    id: 'alertes_annulations',
+    name: 'Alertes Annulations Suspectes',
+    description: 'Utilisateurs avec un taux d\'annulation élevé (> seuil)',
+    endpoint: '/api/statistiques/cancel_alerts/',
+    params: [
+        { key: 'threshold', label: 'Seuil annulations', type: 'number', default: 5 },
+        { key: 'days', label: 'Sur les derniers (jours)', type: 'number', default: 30 }
+    ],
+    resultType: 'table'
   }
 ]
 

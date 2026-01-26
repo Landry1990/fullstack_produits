@@ -1,6 +1,8 @@
 import React from 'react'
 import type { LigneFacture, ProduitModel } from '../../types'
 import { differenceInDays, parseISO } from 'date-fns'
+import { useAuth } from '../../context/AuthContext'
+import { toast } from 'react-hot-toast'
 
 interface CartTableProps {
   lignesFacture: LigneFacture[]
@@ -23,6 +25,21 @@ export default function CartTable({
   quantityInputsRef,
   onReturnFocus
 }: CartTableProps) {
+  const { user } = useAuth()
+  
+  // Permission Checks
+  const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
+  const maxDiscount = user?.is_superuser ? 100 : (Number(user?.profile?.max_discount_rate) || 0)
+
+  const handleRemiseChange = (produitId: number, value: string) => {
+      const numValue = parseFloat(value)
+      if (!isNaN(numValue) && numValue > maxDiscount) {
+          toast.error(`Remise limitée à ${maxDiscount}% pour votre profil`)
+          updateRemiseProduit(produitId, String(maxDiscount))
+      } else {
+          updateRemiseProduit(produitId, value)
+      }
+  }
   
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '-'
@@ -90,14 +107,16 @@ export default function CartTable({
                 type="text"
                 value={ligne.prix_unitaire}
                 onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+                className={`input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
+                disabled={!canModifyPrice}
+                title={!canModifyPrice ? "Modification de prix interdite" : ""}
               />
             </td>
             <td className="text-right py-1 hidden sm:table-cell">
               <input
                 type="text"
                 value={ligne.remise_produit}
-                onChange={(e) => updateRemiseProduit(ligne.produit.id, e.target.value)}
+                onChange={(e) => handleRemiseChange(ligne.produit.id, e.target.value)}
                 className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
                 placeholder="%"
               />

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from django.db.models import Sum, Count, Avg, F, Q, DecimalField
-from django.db.models.functions import TruncDay, TruncMonth, Coalesce
+from django.db.models.functions import TruncDay, TruncMonth, Coalesce, Cast
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -166,19 +166,46 @@ class DashboardViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def low_stock(self, request):
-        """Returns top 10 products with lowest stock relative to minimum (only active products)."""
-        products = Produit.objects.filter(
-            stock__lte=F('stock_minimum'),
-            rotation_moyenne__gt=0  # Exclure produits dormants sans rotation
-        ).order_by('stock')[:10]
+        """
+        Returns top 10 products with lowest coverage (Days Remaining).
+        Coverage = Stock / Average Daily Sales (rotation_moyenne).
+        Includes products already out of stock (Coverage = 0).
+        """
+        # On cherche les produits qui vont être en rupture bientôt (ex: < 5 jours)
+        # ou qui sont déjà en rupture.
+        # On utilise une annotation pour calculer les jours restants.
         
-        data = [{
-            'id': p.id,
-            'name': p.name,
-            'stock': p.stock,
-            'min_stock': p.stock_minimum,
-            'status': 'Rupture' if p.stock <= 0 else 'Critique'
-        } for p in products]
+        # Avoid division by zero: only take products with moving stock (rotation > 0)
+        products = Produit.objects.filter(
+            rotation_moyenne__gt=0
+        ).annotate(
+            days_remaining=F('stock') / F('rotation_moyenne')
+        ).filter(
+            Q(days_remaining__lte=5) | Q(stock__lte=0)
+        ).order_by('days_remaining')[:10]
+        
+        data = []
+        for p in products:
+            days = 0
+            if p.stock > 0 and p.rotation_moyenne > 0:
+                days = round(p.stock / p.rotation_moyenne, 1)
+            
+            status = 'Rupture'
+            if p.stock > 0:
+                if days <= 1:
+                    status = 'Rupture imminente'
+                else:
+                    status = f'Rupture dans {days}j'
+
+            data.append({
+                'id': p.id,
+                'name': p.name,
+                'stock': p.stock,
+                'min_stock': p.stock_minimum,
+                'rotation': p.rotation_moyenne,
+                'days_remaining': days,
+                'status': status
+            })
         
         return Response(data)
 
@@ -257,3 +284,50 @@ class StatistiquesViewSet(viewsets.ViewSet):
         ]
         
         return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def cancel_alerts(self, request):
+        """
+        Retourne la liste des utilisateurs ayant annulé plus de X factures
+        sur une période donnée.
+        """
+        from ..models import AuditLog, User
+        
+        threshold = int(request.query_params.get('threshold', 5))
+        days = int(request.query_params.get('days', 30))
+        
+        start_date = timezone.now() - timedelta(days=days)
+        
+        # Compter les annulations par utilisateur
+        cancellations = AuditLog.objects.filter(
+            action=AuditLog.Action.INVOICE_CANCEL,
+            timestamp__gte=start_date
+        ).values('user').annotate(
+            count=Count('id'),
+            total_amount=Sum(
+                Cast(F('details__amount'), output_field=DecimalField())
+            )
+        ).filter(count__gte=threshold).order_by('-count')
+        
+        results = []
+        for c in cancellations:
+            user_id = c['user']
+            if not user_id:
+                name = "Système / Inconnu"
+            else:
+                try:
+                    u = User.objects.get(pk=user_id)
+                    name = u.get_full_name() or u.username
+                except User.DoesNotExist:
+                    name = f"Utilisateur #{user_id}"
+            
+            # Note: total_amount might need cleaner extraction depending on DB/Django version JSONField support
+            # For now returning count is the MVP
+            results.append({
+                'user': name,
+                'count': c['count'],
+                'period_days': days,
+                'threshold': threshold
+            })
+            
+        return Response(results)

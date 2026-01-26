@@ -177,7 +177,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             # Log avant suppression car l'objet n'existera plus
             log_audit(
                 user=request.user,
-                action='INV_DEL',
+                action=AuditLog.Action.INVOICE_DELETE,
                 model_name='Facture',
                 object_id=numero or str(facture_id),
                 description=f"Suppression Facture {numero or '#' + str(facture_id)}",
@@ -489,23 +489,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             
         facture.save(update_fields=['status', 'notes', 'date_annulation'])
 
-        # Log Audit
-        log_audit(
-            user=request.user,
-            action='INV_CANCEL',
-            model_name='Facture',
-            object_id=facture.numero_facture,
-            description=f"Annulation Facture #{facture.numero_facture}",
-            details={
-                'facture_id': facture.id,
-                'numero': facture.numero_facture,
-                'amount': -float(facture.total_ttc), # Negative because cancelled
-                'montant': -float(facture.total_ttc),
-                'motif': motif,
-                'client': facture.client.name if facture.client else 'Passager'
-            },
-            request=request
-        )
+
 
         numero = facture.numero_facture or f"#{facture.id}"
         log_audit(
