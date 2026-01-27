@@ -16,29 +16,33 @@ class RapportViewSet(viewsets.ViewSet):
     """
     permission_classes = [IsAuthenticated]
 
-    def _get_rapport_data(self, date_debut, date_fin, mois_str):
-        """
-        Méthode helper pour calculer toutes les données du rapport.
-        Retourne un dictionnaire prêt à être sérialisé ou utilisé pour le PDF.
-        """
-        # 1. Récupérer les factures du mois (validées ou payées)
-        factures = Facture.objects.filter(
+    # ============== HELPER METHODS FOR RAPPORT ==============
+    
+    def _get_factures_periode(self, date_debut, date_fin):
+        """Récupère les factures validées/payées de la période."""
+        return Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
             date__lt=date_fin
-        ).prefetch_related('produits', 'produits__produit')
-        
-        # 2. Calculer CA TTC et HT
+        ).prefetch_related('produits', 'produits__produit', 'paiements')
+
+    def _calculate_ca_stats(self, factures):
+        """Calcule CA TTC, CA HT et nombre de ventes."""
         ca_ttc = Decimal('0.00')
         ca_ht = Decimal('0.00')
-        nb_ventes = factures.count()
         
         for facture in factures:
             ca_ttc += facture.total_ttc
-            # Soustraire la remise du HT pour être cohérent avec le TTC
             ca_ht += (facture.total_ht - facture.remise)
         
-        # 3. Calculer marge via allocations FIFO
+        return {
+            'ca_ttc': ca_ttc,
+            'ca_ht': ca_ht,
+            'nb_ventes': factures.count()
+        }
+
+    def _calculate_margin(self, factures):
+        """Calcule la marge brute via les allocations FIFO."""
         allocations = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=factures
         )
@@ -47,10 +51,19 @@ class RapportViewSet(viewsets.ViewSet):
         for alloc in allocations:
             cout_achat_total += alloc.cost_price * alloc.quantity
         
+        ca_ht = sum((f.total_ht - f.remise) for f in factures)
         marge_brute = ca_ht - cout_achat_total
         marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')
         
-        # 4. Encaissements réels (Cash flow)
+        return {
+            'cout_achat': cout_achat_total,
+            'marge_brute': marge_brute,
+            'marge_pct': round(marge_pct, 2)
+        }
+
+    def _calculate_encaissements(self, date_debut, date_fin, factures):
+        """Calcule les encaissements par mode, ventes à crédit et coupons."""
+        # Encaissements réels (Cash flow)
         encaissements = Caisse.objects.filter(
             date_paiement__gte=date_debut,
             date_paiement__lt=date_fin,
@@ -70,7 +83,7 @@ class RapportViewSet(viewsets.ViewSet):
             for enc in encaissements
         ]
 
-        # 4b. Ventes à crédit (En compte)
+        # Ventes à crédit
         ventes_credit = Caisse.objects.filter(
             date_paiement__gte=date_debut,
             date_paiement__lt=date_fin,
@@ -78,39 +91,56 @@ class RapportViewSet(viewsets.ViewSet):
             mode_paiement='en_compte'
         ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
 
-        # 4c. Coupons utilisés (Réductions)
-        # On regarde les coupons utilisés sur les factures de la période
+        # Coupons utilisés
         from api.models import CouponMonnaie
         coupons_total = CouponMonnaie.objects.filter(
             facture_utilisation__in=factures,
             status='UTILISE'
         ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
         
-        # 5. Créances à percevoir (GLOBAL : toutes les factures avec reste à payer)
-        # Alignement avec CreanceViewSet : inclure VALIDEE et PAYEE
+        return {
+            'encaissements': encaissements_data,
+            'ventes_credit': ventes_credit,
+            'coupons_total': coupons_total
+        }
+
+    def _calculate_creances(self):
+        """Calcule les créances globales à percevoir."""
         factures_avec_reste = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).prefetch_related('paiements')
         
         total_creances = Decimal('0.00')
         nb_factures_impayees = 0
+        
         for f in factures_avec_reste:
-            # Somme des paiements reçus (exclure en_compte, inclure uniquement les paiements completee)
-            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+            paye = f.paiements.filter(statut='completee').exclude(
+                mode_paiement='en_compte'
+            ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
             reste = f.total_ttc - paye
             if reste > 0:
                 total_creances += reste
                 nb_factures_impayees += 1
         
-        # 6. CA par taux de TVA (avec répartition proportionnelle)
-        ca_par_tva_stats = {} 
+        return {
+            'total': total_creances,
+            'nb_factures': nb_factures_impayees,
+            'creances_a_percevoir': total_creances  # Backward compatibility
+        }
+
+    def _calculate_ca_par_tva(self, factures):
+        """Calcule la répartition du CA par taux de TVA."""
+        ca_par_tva_stats = {}
+        
         for facture in factures:
             facture_ttc_brut = Decimal('0.00')
             lignes_stats = {}
+            
             for ligne in facture.produits.all():
                 taux = ligne.tva
                 montant_ligne_ttc = Decimal(str(ligne.quantity)) * Decimal(str(ligne.selling_price))
-                if taux not in lignes_stats: lignes_stats[taux] = Decimal('0.00')
+                if taux not in lignes_stats:
+                    lignes_stats[taux] = Decimal('0.00')
                 lignes_stats[taux] += montant_ligne_ttc
                 facture_ttc_brut += montant_ligne_ttc
             
@@ -119,6 +149,7 @@ class RapportViewSet(viewsets.ViewSet):
                 ratio = montant_ttc_brut / facture_ttc_brut if facture_ttc_brut > 0 else Decimal('0.00')
                 part_remise = remise_facture * ratio
                 ttc_net = montant_ttc_brut - part_remise
+                
                 if taux > 0:
                     ht_net = (ttc_net / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
                     tva_montant = ttc_net - ht_net
@@ -132,28 +163,31 @@ class RapportViewSet(viewsets.ViewSet):
                 ca_par_tva_stats[taux]['montant_tva'] += tva_montant
                 ca_par_tva_stats[taux]['ca_ttc'] += ttc_net
 
-        ca_par_tva = []
-        for taux in sorted(ca_par_tva_stats.keys(), reverse=True):
-            stats = ca_par_tva_stats[taux]
-            ca_par_tva.append({
+        return [
+            {
                 'taux': float(taux),
                 'ca_ht': stats['ca_ht'],
                 'montant_tva': stats['montant_tva'],
                 'ca_ttc': stats['ca_ttc']
-            })
+            }
+            for taux, stats in sorted(ca_par_tva_stats.items(), key=lambda x: x[0], reverse=True)
+        ]
 
-        # 7. Achats par fournisseur (Commandes - Avoirs)
+    def _calculate_achats_fournisseurs(self, date_debut, date_fin):
+        """Calcule les achats nets par fournisseur (Commandes - Avoirs)."""
         from api.models import Commande, Avoir
         
-        # A. Commandes validées (Entrées)
+        # Commandes clôturées
         commandes_mois = Commande.objects.filter(
             date__gte=date_debut,
             date__lt=date_fin,
             status='CLOT'
-        )
+        ).prefetch_related('produits')
+        
         achats_stats = {}
         for commande in commandes_mois:
-            if not commande.fournisseur: continue
+            if not commande.fournisseur:
+                continue
             fid = commande.fournisseur.id
             if fid not in achats_stats:
                 achats_stats[fid] = {
@@ -164,15 +198,11 @@ class RapportViewSet(viewsets.ViewSet):
                     'nb_avoirs': 0,
                     'montant_avoirs': Decimal('0.00')
                 }
-            # Utiliser le coût effectif (avec UG) ou le prix d'achat simple ? 
-            # Pour stats finacières: Montant facture fournisseur = Qty * Price
             cout_cmd = sum(cp.quantity * cp.price for cp in commande.produits.all())
             achats_stats[fid]['montant_total'] += cout_cmd
             achats_stats[fid]['nb_commandes'] += 1
             
-        # B. Avoirs validés (Retours)
-        # Convertir les datetime en date pour la comparaison si nécessaire, 
-        # mais Django gère généralement bien la comparaison DateTime vs Date
+        # Avoirs validés (retours)
         avoirs_mois = Avoir.objects.filter(
             date__gte=date_debut.date(),
             date__lt=date_fin.date(),
@@ -180,10 +210,10 @@ class RapportViewSet(viewsets.ViewSet):
         )
         
         for avoir in avoirs_mois:
-            if not avoir.fournisseur: continue
+            if not avoir.fournisseur:
+                continue
             fid = avoir.fournisseur.id
             if fid not in achats_stats:
-                # Cas rare: Avoir sans commande ce mois-ci
                 achats_stats[fid] = {
                     'fournisseur_id': fid,
                     'fournisseur_nom': avoir.fournisseur.name,
@@ -192,134 +222,179 @@ class RapportViewSet(viewsets.ViewSet):
                     'nb_avoirs': 0,
                     'montant_avoirs': Decimal('0.00')
                 }
-            
-            # Calcul montant HT de l'avoir
             montant_avoir = avoir.total_ht
-            
-            # Soustraire du total (Net Purchases)
             achats_stats[fid]['montant_total'] -= montant_avoir
             achats_stats[fid]['montant_avoirs'] += montant_avoir
             achats_stats[fid]['nb_avoirs'] += 1
             
-        achats_par_fournisseur = sorted(achats_stats.values(), key=lambda x: x['montant_total'], reverse=True)
+        return sorted(achats_stats.values(), key=lambda x: x['montant_total'], reverse=True)
 
-        # 8. Clients Pro - Aligned with créances calculation
-        factures_pro = factures.filter(client__client_type='PROFESSIONNEL').prefetch_related('paiements')
+    def _calculate_clients_pro(self, factures):
+        """Calcule les statistiques des clients professionnels."""
+        factures_pro = factures.filter(client__client_type='PROFESSIONNEL')
         ca_pro_total = sum(f.total_ttc for f in factures_pro)
         
-        # Calculate paid amount using same logic as créances
         montant_paye_pro = Decimal('0.00')
+        clients_pro_stats = {}
+        
         for f in factures_pro:
-            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+            paye = f.paiements.filter(statut='completee').exclude(
+                mode_paiement='en_compte'
+            ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
             montant_paye_pro += paye
+            
+            cid = f.client.id
+            if cid not in clients_pro_stats:
+                clients_pro_stats[cid] = {
+                    'client_id': cid,
+                    'client_nom': f.client.name,
+                    'ca_total': Decimal('0.00'),
+                    'montant_paye': Decimal('0.00')
+                }
+            clients_pro_stats[cid]['ca_total'] += f.total_ttc
+            clients_pro_stats[cid]['montant_paye'] += paye
         
         reste_a_payer_pro = ca_pro_total - montant_paye_pro
         taux_recouvrement_pro = (montant_paye_pro / ca_pro_total * 100) if ca_pro_total > 0 else Decimal('0.00')
         
-        clients_pro_stats = {}
-        for f in factures_pro:
-            cid = f.client.id
-            if cid not in clients_pro_stats:
-                clients_pro_stats[cid] = {'client_id': cid, 'client_nom': f.client.name, 'ca_total': Decimal('0.00'), 'montant_paye': Decimal('0.00')}
-            clients_pro_stats[cid]['ca_total'] += f.total_ttc
-            # Same logic as créances - filter by statut='completee' and exclude 'en_compte'
-            paye_f = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-            clients_pro_stats[cid]['montant_paye'] += paye_f
-            
         top_clients_pro = []
         for c in clients_pro_stats.values():
             c['reste_a_payer'] = c['ca_total'] - c['montant_paye']
             top_clients_pro.append(c)
-        top_clients_pro.sort(key=lambda x: x['reste_a_payer'], reverse=True)  # Sort by reste_a_payer instead
-        top_clients_pro = top_clients_pro[:10]
+        top_clients_pro.sort(key=lambda x: x['reste_a_payer'], reverse=True)
+        
+        return {
+            'ca_total': ca_pro_total,
+            'montant_paye': montant_paye_pro,
+            'reste_a_payer': reste_a_payer_pro,
+            'taux_recouvrement_pct': round(taux_recouvrement_pro, 2),
+            'nb_factures': factures_pro.count(),
+            'top_clients': top_clients_pro[:10]
+        }
 
-        # 9. UG
-        from api.models import CommandeProduit
+    def _calculate_unites_gratuites(self, date_debut, date_fin):
+        """Calcule les statistiques des unités gratuites reçues."""
         commandes_produits_ug = CommandeProduit.objects.filter(
             commande__date__gte=date_debut,
             commande__date__lt=date_fin,
             commande__status='CLOT',
             unites_gratuites__gt=0
-        )
+        ).select_related('produit')
+        
         valeur_ug_total = Decimal('0.00')
         qty_ug_total = 0
         ug_par_produit = {}
+        
         for cp in commandes_produits_ug:
             qty_gratuite = cp.unites_gratuites
             valeur = qty_gratuite * cp.produit.selling_price
             valeur_ug_total += valeur
             qty_ug_total += qty_gratuite
+            
             pid = cp.produit.id
-            if pid not in ug_par_produit: ug_par_produit[pid] = {'produit_id': pid, 'produit_nom': cp.produit.name, 'quantite_gratuite': 0, 'valeur_totale': Decimal('0.00')}
+            if pid not in ug_par_produit:
+                ug_par_produit[pid] = {
+                    'produit_id': pid,
+                    'produit_nom': cp.produit.name,
+                    'quantite_gratuite': 0,
+                    'valeur_totale': Decimal('0.00')
+                }
             ug_par_produit[pid]['quantite_gratuite'] += qty_gratuite
             ug_par_produit[pid]['valeur_totale'] += valeur
         
         top_ug = sorted(ug_par_produit.values(), key=lambda x: x['valeur_totale'], reverse=True)[:10]
-        pct_ug_du_ca = (valeur_ug_total / ca_ttc * 100) if ca_ttc > 0 else Decimal('0.00')
+        
+        return {
+            'valeur_totale': valeur_ug_total,
+            'quantite_totale': qty_ug_total,
+            'pct_du_ca': Decimal('0.00'),  # Will be calculated in main method
+            'nb_produits_distincts': len(ug_par_produit),
+            'top_produits': top_ug
+        }
 
-        # 10. Mouvements Caisse
+    def _calculate_mouvements_caisse(self, date_debut, date_fin):
+        """Calcule les entrées/sorties de caisse hors ventes."""
         from api.models import MouvementCaisse
-        mouvements = MouvementCaisse.objects.filter(date__gte=date_debut, date__lt=date_fin).select_related('user')
-        total_entrees_caisse = Decimal('0.00')
-        total_sorties_caisse = Decimal('0.00')
+        
+        mouvements = MouvementCaisse.objects.filter(
+            date__gte=date_debut,
+            date__lt=date_fin
+        ).select_related('user')
+        
+        total_entrees = Decimal('0.00')
+        total_sorties = Decimal('0.00')
         mouvements_data = []
+        
         for mvt in mouvements:
-            if mvt.type == 'ENTREE': total_entrees_caisse += mvt.montant
-            else: total_sorties_caisse += mvt.montant
+            if mvt.type == 'ENTREE':
+                total_entrees += mvt.montant
+            else:
+                total_sorties += mvt.montant
             mouvements_data.append({
-                'id': mvt.id, 'date': mvt.date, 'type': mvt.type, 
-                'montant': mvt.montant, 'motif': mvt.motif, 
+                'id': mvt.id,
+                'date': mvt.date,
+                'type': mvt.type,
+                'montant': mvt.montant,
+                'motif': mvt.motif,
                 'user': mvt.user.get_full_name() if mvt.user else 'Inconnu'
             })
+        
+        return {
+            'total_entrees': total_entrees,
+            'total_sorties': total_sorties,
+            'solde': total_entrees - total_sorties,
+            'liste': mouvements_data
+        }
 
+    # ============== MAIN RAPPORT METHOD ==============
+
+    def _get_rapport_data(self, date_debut, date_fin, mois_str):
+        """
+        Méthode principale pour calculer toutes les données du rapport.
+        Orchestrate les appels aux méthodes spécialisées.
+        """
+        # 1. Récupérer les factures une seule fois
+        factures = self._get_factures_periode(date_debut, date_fin)
+        
+        # 2. Calculer chaque section
+        ca_stats = self._calculate_ca_stats(factures)
+        marge = self._calculate_margin(factures)
+        encaissements = self._calculate_encaissements(date_debut, date_fin, factures)
+        creances = self._calculate_creances()
+        ca_par_tva = self._calculate_ca_par_tva(factures)
+        achats = self._calculate_achats_fournisseurs(date_debut, date_fin)
+        clients_pro = self._calculate_clients_pro(factures)
+        ug = self._calculate_unites_gratuites(date_debut, date_fin)
+        mouvements = self._calculate_mouvements_caisse(date_debut, date_fin)
+        
+        # 3. Calculer le % UG par rapport au CA
+        if ca_stats['ca_ttc'] > 0:
+            ug['pct_du_ca'] = round((ug['valeur_totale'] / ca_stats['ca_ttc'] * 100), 2)
+        
+        # 4. Assembler le résultat final
         return {
             'mois': mois_str,
             'periode': {
                 'debut': date_debut.isoformat(),
                 'fin': date_fin.isoformat()
             },
-            'ca': {
-                'ca_ttc': ca_ttc,
-                'ca_ht': ca_ht,
-                'nb_ventes': nb_ventes
-            },
-            'marge': {
-                'cout_achat': cout_achat_total,
-                'marge_brute': marge_brute,
-                'marge_pct': round(marge_pct, 2)
-            },
-            'encaissements': encaissements_data,
-            'ventes_credit': ventes_credit,
-            'coupons_total': coupons_total,
-            'creances_a_percevoir': total_creances,
+            'ca': ca_stats,
+            'marge': marge,
+            'encaissements': encaissements['encaissements'],
+            'ventes_credit': encaissements['ventes_credit'],
+            'coupons_total': encaissements['coupons_total'],
+            'creances_a_percevoir': creances['total'],
             'creances': {
-                'total': total_creances,
-                'nb_factures': nb_factures_impayees
+                'total': creances['total'],
+                'nb_factures': creances['nb_factures']
             },
             'ca_par_tva': ca_par_tva,
-            'achats_par_fournisseur': achats_par_fournisseur,
-            'clients_professionnels': {
-                'ca_total': ca_pro_total,
-                'montant_paye': montant_paye_pro,
-                'reste_a_payer': reste_a_payer_pro,
-                'taux_recouvrement_pct': round(taux_recouvrement_pro, 2),
-                'nb_factures': factures_pro.count(),
-                'top_clients': top_clients_pro
-            },
-            'unites_gratuites': {
-                'valeur_totale': valeur_ug_total,
-                'quantite_totale': qty_ug_total,
-                'pct_du_ca': round(pct_ug_du_ca, 2),
-                'nb_produits_distincts': len(ug_par_produit),
-                'top_produits': top_ug
-            },
-            'mouvements_caisse': {
-                'total_entrees': total_entrees_caisse,
-                'total_sorties': total_sorties_caisse,
-                'solde': total_entrees_caisse - total_sorties_caisse,
-                'liste': mouvements_data
-            }
+            'achats_par_fournisseur': achats,
+            'clients_professionnels': clients_pro,
+            'unites_gratuites': ug,
+            'mouvements_caisse': mouvements
         }
+
 
     @action(detail=False, methods=['get'])
     def valeur_stock_journalier(self, request):
