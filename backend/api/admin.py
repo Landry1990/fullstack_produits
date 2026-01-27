@@ -5,7 +5,13 @@ from .models import (
     Fournisseur,
     Client,
     Commande,
-    CommandeProduit
+    Commande,
+    CommandeProduit,
+    Substance,
+    DrugInteraction,
+    Forme,
+    Groupe,
+    FamilleRisque
 )
 
 class CommandeProduitInline(admin.TabularInline):
@@ -29,3 +35,8 @@ admin.site.register(Rayon)
 admin.site.register(Fournisseur)
 admin.site.register(Client)
 admin.site.register(CommandeProduit)
+admin.site.register(Substance)
+admin.site.register(DrugInteraction)
+admin.site.register(Forme)
+admin.site.register(Groupe)
+admin.site.register(FamilleRisque)

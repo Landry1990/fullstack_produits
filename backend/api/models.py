@@ -351,6 +351,45 @@ class FamilleRisque(models.Model):
     def __str__(self):
         return self.nom
 
+class Substance(models.Model):
+    """
+    Substance active (ex: Paracétamol, Ibuprofène).
+    Utilisé pour détecter les interactions et les redondances.
+    """
+    nom = models.CharField(max_length=255, unique=True)
+    code_cas = models.CharField(max_length=50, blank=True, null=True, help_text="Code CAS pour identification unique")
+
+    def __str__(self):
+        return self.nom
+
+    class Meta:
+        ordering = ['nom']
+
+class DrugInteraction(models.Model):
+    """
+    Interaction entre deux substances.
+    """
+    GRAVITY_CHOICES = [
+        ('PRECAUTION', 'Précaution d\'emploi'),
+        ('A_PRENDRE_EN_COMPTE', 'A prendre en compte'),
+        ('DECONSEILLE', 'Déconseillé'),
+        ('CONTRE_INDIQUE', 'Contre-indiqué'),
+    ]
+
+    substance_a = models.ForeignKey(Substance, on_delete=models.CASCADE, related_name='interactions_a')
+    substance_b = models.ForeignKey(Substance, on_delete=models.CASCADE, related_name='interactions_b')
+    gravity = models.CharField(max_length=20, choices=GRAVITY_CHOICES, default='PRECAUTION')
+    description = models.TextField(help_text="Description du risque et de la conduite à tenir")
+
+    class Meta:
+        unique_together = ('substance_a', 'substance_b')
+        verbose_name = "Interaction Médicamenteuse"
+        verbose_name_plural = "Interactions Médicamenteuses"
+
+    def __str__(self):
+        return f"{self.substance_a} + {self.substance_b} ({self.get_gravity_display()})"
+
+
 class Produit(models.Model):
     """Model representing a product."""
     id = models.AutoField(primary_key=True)
@@ -382,6 +421,11 @@ class Produit(models.Model):
     pmp = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Prix Moyen Pond├®r├®")
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    # Données Cliniques
+    code_atc = models.CharField(max_length=20, blank=True, null=True, help_text="Code ATC (Anatomique Thérapeutique Chimique)")
+    substance_active = models.CharField(max_length=255, blank=True, null=True, help_text="Nom de la substance active principale (Texte libre)")
+    substances = models.ManyToManyField(Substance, blank=True, related_name='produits', help_text="Substances actives structurées pour les interactions")
     
     # Ordonnancier - Champs pour identifier les m├®dicaments soumis ├á ordonnance
     requires_prescription = models.BooleanField(

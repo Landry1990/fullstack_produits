@@ -784,7 +784,7 @@ export default function Ventes() {
                       </thead>
                       <tbody>
                         {selectedFacture.produits.map((p, index) => {
-                           const produitNom = typeof p.produit === 'object' ? p.produit.name : (p.produit_nom ?? `Produit #${p.produit}`)
+                           const produitNom = (p.produit && typeof p.produit === 'object') ? p.produit.name : (p.produit_nom ?? `Produit #${p.produit}`)
                            const isDeleted = p.produit === null;
                            
                            return (

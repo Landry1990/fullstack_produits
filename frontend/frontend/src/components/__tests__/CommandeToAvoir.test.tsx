@@ -40,7 +40,7 @@ const mockProps = {
     
     commandeProduits: [],
     produitsList: [],
-    selectedRows: new Set(),
+    selectedRows: new Set<number>(),
     saving: false,
     lastSaved: null,
     fieldsConfig: [],

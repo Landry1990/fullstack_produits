@@ -20,6 +20,9 @@ import TotalsSection from './facturation/TotalsSection'
 import ActionButtons from './facturation/ActionButtons'
 import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
 import { TicketTemplate } from './printing/TicketTemplate'
+import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
+import { useClinicalCheck } from '../hooks/useClinicalCheck'
+import ClinicalAlerts from './clinical/ClinicalAlerts'
 
 // Lazy load barcode component (kept if needed elsewhere, otherwise remove)
 const Barcode = lazy(() => import('react-barcode'))
@@ -55,7 +58,13 @@ export default function Facturation() {
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
   
   // Ref for barcode callback (to avoid hook ordering issues)
-  const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean }) => void) | null>(null)
+  const addProductRef = useRef<((product: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => void) | null>(null)
+  
+  // Refs
+  const searchInputRef = useRef<HTMLInputElement>(null)
+  const clientSelectRef = useRef<HTMLSelectElement>(null)
+  const paymentInputRef = useRef<HTMLInputElement>(null)
+  const clientSearchRef = useRef<HTMLInputElement>(null)
 
   // Stabilize callbacks to prevent hook infinite loops
   const handleRequirePrescription = useCallback(() => {
@@ -80,6 +89,9 @@ export default function Facturation() {
       onRequirePrescription: handleRequirePrescription,
       quantityInputsRef
   })
+
+  // Clinical Check
+  const { alerts: clinicalAlerts } = useClinicalCheck(lignesFacture)
   
   // Keep ref updated with latest addProduit function
   addProductRef.current = addProduitToFacture
@@ -88,7 +100,7 @@ export default function Facturation() {
   const handleBarcodeMatch = useCallback((product: ProduitModel) => {
       // Auto-add scanned product to cart via ref
       if (addProductRef.current) {
-        addProductRef.current(product, { isRetrocession })
+        addProductRef.current(product, { isRetrocession, preventFocus: true })
         toast.success(`✅ ${product.name} ajouté (scan)`, { duration: 1500 })
       }
   }, [isRetrocession])
@@ -130,10 +142,14 @@ export default function Facturation() {
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL
   })
 
-  // Combined loading state
-  const isLoading = loading || cartLoading || clientsLoading || searchLoading
-
-
+  // usePendingSales Hook
+  const {
+      ventesEnAttente,
+      showPendingSales,
+      setShowPendingSales,
+      savePendingSale,
+      deletePendingSale
+  } = usePendingSales()
 
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
@@ -151,7 +167,6 @@ export default function Facturation() {
   const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
-
 
   // Lot Selection Modal State
   const [lotModal, setLotModal] = useState<{
@@ -192,102 +207,6 @@ export default function Facturation() {
   const [modificationInvoiceId, setModificationInvoiceId] = useState<number | null>(null)
   const [originalTotalTtc, setOriginalTotalTtc] = useState<number>(0)
 
-  // Router Location State Handling (Reload from CaisseCentralisee)
-  const location = useLocation()
-  const [hasProcessedReload, setHasProcessedReload] = useState(false)
-  
-  useEffect(() => {
-    if (location.state && location.state.mode === 'edit_reload' && !loading && !hasProcessedReload) {
-        const { cartData, client, remise: remiseState } = location.state
-        
-        // Restore Client
-        if (client && client.id) {
-            setSelectedClient(client.id)
-        }
-        
-        // Restore Remise
-        if (remiseState) {
-            setRemise(remiseState)
-        }
-
-        // Restore Cart
-        if (cartData && Array.isArray(cartData)) {
-            const restoredLignes: LigneFacture[] = cartData.map((item: any) => ({
-                produit: {
-                    id: item.id,
-                    name: item.name,
-                    selling_price: item.price,
-                    is_stock: true,
-                    stock: item.stock || 9999,
-                    cip: item.cip || '',
-                    tva: item.tva || 0
-                } as unknown as ProduitModel,
-                quantite: Number(item.quantity),
-                prix_unitaire: item.price,
-                remise_produit: item.discount || '0',
-                total_ligne: Number(item.quantity) * Number(item.price) * (1 - (Number(item.discount || 0) / 100)) 
-            }))
-            
-            setLignesFacture(restoredLignes)
-            toast.success('Facture rechargée pour modification')
-            
-            // Clear state and mark as processed
-            window.history.replaceState({}, document.title)
-            setHasProcessedReload(true)
-        }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state, hasProcessedReload])
-
-  // Retrocession Mode Effect - Dynamic Price Update
-  useEffect(() => {
-    if (lignesFacture.length > 0) {
-      setLignesFacture(prevLignes => prevLignes.map(ligne => {
-        let newPrice = '0'
-        
-        if (isRetrocession) {
-            // Mode Retrocession: Utiliser Last Purchase Price ou Cost Price
-            const lastPurchase = ligne.produit.last_purchase_price
-            const costPrice = ligne.produit.cost_price?.toString()
-            newPrice = lastPurchase ? String(lastPurchase) : (costPrice ? costPrice : '0')
-        } else {
-            // Mode Standard: Revenir au Selling Price
-            newPrice = ligne.produit.selling_price ? String(ligne.produit.selling_price) : '0'
-        }
-
-        return {
-          ...ligne,
-          prix_unitaire: newPrice,
-          total_ligne: Number(newPrice) * Number(ligne.quantite) * (1 - Number(ligne.remise_produit) / 100)
-        }
-      }))
-      
-      if (isRetrocession) {
-          toast('Mode Rétrocession: Prix mis à jour (Prix Achat)', { icon: '🔄', id: 'retro-price-update' })
-      } else {
-          toast('Mode Standard: Prix rétablis', { icon: '🔄', id: 'retro-price-update' })
-      }
-    }
-  }, [isRetrocession])
-
-
-
-  // Refs
-  const searchInputRef = useRef<HTMLInputElement>(null)
-  const clientSelectRef = useRef<HTMLSelectElement>(null)
-
-  const paymentInputRef = useRef<HTMLInputElement>(null)
-  // quantityInputsRef declared earlier (before useCart)
-
-  // usePendingSales Hook
-  const {
-      ventesEnAttente,
-      showPendingSales,
-      setShowPendingSales,
-      savePendingSale,
-      deletePendingSale
-  } = usePendingSales()
-  
   // Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -295,8 +214,54 @@ export default function Facturation() {
     onConfirm: () => void;
   } | null>(null);
 
-  useEffect(() => {
-  }, [successInfo])
+  // Keyboard Navigation Hook - NOW PLACED AFTER STATE DECLARATIONS
+  const hasItems = lignesFacture.length > 0;
+  
+  const handleValidateShortcut = useCallback(() => {
+    if (hasItems) {
+      handlePaymentClick()
+    } else {
+        toast.error(t('facturation.messages.cart_empty', { defaultValue: 'Panier vide' }))
+    }
+  }, [hasItems]) // Added dependency later
+
+  // Define handlers locally to avoid closure staleness if needed, 
+  // but hook takes them as props.
+  const handleIncrement = useCallback((index: number) => {
+    if (lignesFacture[index]) {
+       const pId = lignesFacture[index].produit.id
+       const currentQty = lignesFacture[index].quantite
+       updateQuantite(pId, currentQty + 1)
+    }
+  }, [lignesFacture, updateQuantite])
+
+  const handleDecrement = useCallback((index: number) => {
+    if (lignesFacture[index]) {
+       const pId = lignesFacture[index].produit.id
+       const currentQty = lignesFacture[index].quantite
+       if (currentQty > 1) {
+          updateQuantite(pId, currentQty - 1)
+       }
+    }
+  }, [lignesFacture, updateQuantite])
+
+  const handleDeleteLine = useCallback((index: number) => {
+    if (lignesFacture[index]) {
+       removeLigne(lignesFacture[index].produit.id)
+    }
+  }, [lignesFacture, removeLigne])
+
+  const { selectedIndex, setSelectedIndex } = useKeyboardNavigation({
+    listLength: lignesFacture.length,
+    onValidate: handleValidateShortcut,
+    onIncrement: handleIncrement,
+    onDecrement: handleDecrement,
+    onDelete: handleDeleteLine,
+    enabled: !isPaymentModalOpen && !showOrdonnanceModal && !showClientCreateModal && !lotModal.isOpen && !showStockResolution
+  })
+
+  // Combined loading state
+  const isLoading = loading || cartLoading || clientsLoading || searchLoading
 
   // Charger un devis depuis localStorage si présent (navigation depuis Ventes)
   useEffect(() => {
@@ -549,17 +514,44 @@ export default function Facturation() {
           }
         }
       }
+      
+      // Ctrl+F: Focus Client Search
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault()
+        clientSearchRef.current?.focus()
+      }
 
       // CTRL+ENTER: Payment
       if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault()
         handlePaymentClick()
       }
+      
+      // Escape: Global Cancel / Close Modals
+      if (e.key === 'Escape') {
+        // Priority: Close top-most modal
+        if (showTicketPreview) { setShowTicketPreview(false); return }
+        if (isPaymentModalOpen) { setIsPaymentModalOpen(false); return }
+        if (showOrdonnanceModal) { setShowOrdonnanceModal(false); return }
+        if (lotModal.isOpen) { setLotModal({...lotModal, isOpen: false}); return }
+        if (showClientCreateModal) { setShowClientCreateModal(false); return }
+        if (showStockResolution) { setShowStockResolution(false); return }
+        if (confirmModal) { setConfirmModal(null); return }
+        
+        // If searching client, clear search?
+        if (document.activeElement === clientSearchRef.current) {
+            clientSearchRef.current?.blur()
+        }
+      }
     }
 
     window.addEventListener('keydown', handleGlobalKeyDown)
     return () => window.removeEventListener('keydown', handleGlobalKeyDown)
-  }, [lignesFacture, handlePaymentClick])
+  }, [
+    lignesFacture, handlePaymentClick, 
+    showTicketPreview, isPaymentModalOpen, showOrdonnanceModal, 
+    lotModal.isOpen, showClientCreateModal, showStockResolution, confirmModal
+  ])
 
   // Produits are already filtered by the hook
   const filteredProduits = produits
@@ -1892,6 +1884,7 @@ export default function Facturation() {
         <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
           {/* Client Selection */}
           <ClientSection
+            inputRef={clientSearchRef}
             clients={clients}
             filteredClients={filteredClients}
             useManualClient={useManualClient}
@@ -1935,6 +1928,10 @@ export default function Facturation() {
 
         {/* Bottom Section: Cart/Invoice Details */}
         <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+          
+          {/* Clinical Alerts Banner */}
+          <ClinicalAlerts alerts={clinicalAlerts} />
+
           <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
             <h2 className="font-bold text-lg text-base-content">{t('facturation.cart_title')}</h2>
             <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation.items_count', { count: lignesFacture.length })}</div>
@@ -1955,6 +1952,8 @@ export default function Facturation() {
               })}
               quantityInputsRef={quantityInputsRef}
               onReturnFocus={() => searchInputRef.current?.focus()}
+              selectedIndex={selectedIndex}
+              onSelectLine={setSelectedIndex}
             />
           </div>
 
