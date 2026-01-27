@@ -3,22 +3,21 @@ import Sidebar from './Sidebar'
 import { SidebarProvider, useSidebar } from '../context/SidebarContext'
 
 function LayoutContent() {
-  const { isOpen, closeSidebar } = useSidebar()
+  const { isOpen, closeSidebar, isZenithMode, isMidnightTheme } = useSidebar()
 
   return (
-    <div className="flex min-h-screen bg-base-200">
-      <Sidebar />
+    <div className={`flex min-h-screen ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300`}>
+      {!isZenithMode && <Sidebar />}
       
       {/* Overlay pour fermer la sidebar sur mobile */}
-      {isOpen && (
+      {isOpen && !isZenithMode && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={closeSidebar}
         />
       )}
       
-      
-      <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden overflow-y-auto h-screen">
+      <main className={`flex-1 overflow-x-hidden overflow-y-auto h-screen ${isZenithMode ? 'p-0' : 'p-4 md:p-6 lg:p-8'} transition-all duration-300`}>
         <div className="max-w-full h-full">
           <Outlet />
         </div>

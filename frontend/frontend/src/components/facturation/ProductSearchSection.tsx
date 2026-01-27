@@ -11,6 +11,7 @@ interface ProductSearchSectionProps {
   addProduitToFacture: (product: ProduitModel) => void
   searchInputRef: React.RefObject<HTMLInputElement | null>
   placeholder?: string
+  onQuantityShortcut?: (qty: number) => void
 }
 
 export default function ProductSearchSection({
@@ -20,7 +21,8 @@ export default function ProductSearchSection({
   filteredProduits,
   addProduitToFacture,
   searchInputRef,
-  placeholder
+  placeholder,
+  onQuantityShortcut
 }: ProductSearchSectionProps) {
   const { t } = useTranslation()
 
@@ -31,11 +33,22 @@ export default function ProductSearchSection({
   }
 
   // Hook for keyboard navigation (ArrowUp, ArrowDown, Enter)
-  const { getItemProps, handleKeyDown } = useSearchNavigation(
+  const { getItemProps, handleKeyDown: handleNavKeyDown } = useSearchNavigation(
     filteredProduits,
     handleAddProduit, // Use wrapper
     { resetOnSelect: true, searchInputRef }
   )
+
+  const onInternalKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // If * is pressed and searchQuery is a number, trigger quantity shortcut
+    if ((e.key === '*' || e.key === 'Multiply') && searchQuery && !isNaN(Number(searchQuery))) {
+      e.preventDefault();
+      onQuantityShortcut?.(Number(searchQuery));
+      setSearchQuery('');
+      return;
+    }
+    handleNavKeyDown(e);
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative">
@@ -47,7 +60,7 @@ export default function ProductSearchSection({
           placeholder={placeholder || t('facturation.search_placeholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onKeyDown={onInternalKeyDown}
           className="input input-bordered w-full pl-12 text-lg h-14 bg-base-50 focus:bg-white transition-colors focus:ring-2 focus:ring-primary/20"
         />
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>

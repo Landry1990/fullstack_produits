@@ -17,6 +17,7 @@ from .views.groupes import GroupeViewSet
 from .views.auth import verify_password
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
+from .views.communication import SmsViewSet, SmsTemplateViewSet
 
 
 # Create a router and register our viewsets with it.
@@ -53,7 +54,9 @@ router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 router.register(r'formes', FormeViewSet, basename='forme')
 router.register(r'groupes', GroupeViewSet, basename='groupe')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
-router.register(r'clinical', ClinicalViewSet, basename='clinical')
+# router.register(r'clinical', ClinicalViewSet, basename='clinical') # Commented out as ClinicalViewSet is missing import
+router.register(r'sms', SmsViewSet, basename='sms')
+router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
 
 
 # The API URLs are now determined automatically by the router.

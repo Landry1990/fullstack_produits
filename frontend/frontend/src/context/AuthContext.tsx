@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
 import type { User } from '../types';
+import { safeStorage } from '../utils/storage';
 
 // Définition du type pour le contexte d'authentification
 // Ce sont les données et fonctions qui seront accessibles partout dans l'application via useAuth()
@@ -24,21 +25,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Effet qui s'exécute une seule fois au chargement de l'application (mount)
   useEffect(() => {
-    // On tente de récupérer les infos de connexion depuis le sessionStorage du navigateur
-    // Cela permet de garder l'utilisateur connecté tant que l'onglet est ouvert
-    const token = sessionStorage.getItem('authToken');
-    const username = sessionStorage.getItem('username');
-    const is_superuser = sessionStorage.getItem('is_superuser') === 'true';
-    const allowed_menus = JSON.parse(sessionStorage.getItem('allowed_menus') || '[]');
-    const can_do_returns = sessionStorage.getItem('can_do_returns') === 'true';
-    const can_sell_negative_stock = sessionStorage.getItem('can_sell_negative_stock') === 'true';
-    const can_cash_out = sessionStorage.getItem('can_cash_out') === 'true';
-    const can_delete_product = sessionStorage.getItem('can_delete_product') === 'true';
-    const can_adjust_stock = sessionStorage.getItem('can_adjust_stock') === 'true';
-    const can_delete_fournisseur = sessionStorage.getItem('can_delete_fournisseur') === 'true';
-    const can_delete_commande = sessionStorage.getItem('can_delete_commande') === 'true';
-    const can_close_commande = sessionStorage.getItem('can_close_commande') === 'true';
-    const can_generate_coupon = sessionStorage.getItem('can_generate_coupon') === 'true';
+    // On tente de récupérer les infos de connexion depuis le stockage sécurisé
+    const token = safeStorage.getItem('authToken');
+    const username = safeStorage.getItem('username');
+    const is_superuser = safeStorage.getItem('is_superuser') === 'true';
+    const allowed_menus = JSON.parse(safeStorage.getItem('allowed_menus') || '[]');
+    const can_do_returns = safeStorage.getItem('can_do_returns') === 'true';
+    const can_sell_negative_stock = safeStorage.getItem('can_sell_negative_stock') === 'true';
+    const can_cash_out = safeStorage.getItem('can_cash_out') === 'true';
+    const can_delete_product = safeStorage.getItem('can_delete_product') === 'true';
+    const can_adjust_stock = safeStorage.getItem('can_adjust_stock') === 'true';
+    const can_delete_fournisseur = safeStorage.getItem('can_delete_fournisseur') === 'true';
+    const can_delete_commande = safeStorage.getItem('can_delete_commande') === 'true';
+    const can_close_commande = safeStorage.getItem('can_close_commande') === 'true';
+    const can_generate_coupon = safeStorage.getItem('can_generate_coupon') === 'true';
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
@@ -71,20 +71,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fonction de connexion appelée après un succès login (ex: depuis Login.tsx)
   const login = (userData: User) => {
-    // 1. On sauvegarde tout dans le sessionStorage (effacé à la fermeture du navigateur)
-    sessionStorage.setItem('authToken', userData.token || '');
-    sessionStorage.setItem('username', userData.username);
-    sessionStorage.setItem('is_superuser', String(userData.is_superuser));
-    sessionStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
-    sessionStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
-    sessionStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
-    sessionStorage.setItem('can_cash_out', String(userData.can_cash_out ?? true));
-    sessionStorage.setItem('can_delete_product', String(userData.can_delete_product || false));
-    sessionStorage.setItem('can_adjust_stock', String(userData.can_adjust_stock || false));
-    sessionStorage.setItem('can_delete_fournisseur', String(userData.can_delete_fournisseur || false));
-    sessionStorage.setItem('can_delete_commande', String(userData.can_delete_commande || userData.profile?.can_delete_commande || false));
-    sessionStorage.setItem('can_close_commande', String(userData.can_close_commande || userData.profile?.can_close_commande || false));
-    sessionStorage.setItem('can_generate_coupon', String(userData.can_generate_coupon || userData.profile?.can_generate_coupon || false));
+    // 1. On sauvegarde tout dans le stockage sécurisé
+    safeStorage.setItem('authToken', userData.token || '');
+    safeStorage.setItem('username', userData.username);
+    safeStorage.setItem('is_superuser', String(userData.is_superuser));
+    safeStorage.setItem('allowed_menus', JSON.stringify(userData.allowed_menus));
+    safeStorage.setItem('can_do_returns', String(userData.can_do_returns || false));
+    safeStorage.setItem('can_sell_negative_stock', String(userData.can_sell_negative_stock || false));
+    safeStorage.setItem('can_cash_out', String(userData.can_cash_out ?? true));
+    safeStorage.setItem('can_delete_product', String(userData.can_delete_product || false));
+    safeStorage.setItem('can_adjust_stock', String(userData.can_adjust_stock || false));
+    safeStorage.setItem('can_delete_fournisseur', String(userData.can_delete_fournisseur || false));
+    safeStorage.setItem('can_delete_commande', String(userData.can_delete_commande || userData.profile?.can_delete_commande || false));
+    safeStorage.setItem('can_close_commande', String(userData.can_close_commande || userData.profile?.can_close_commande || false));
+    safeStorage.setItem('can_generate_coupon', String(userData.can_generate_coupon || userData.profile?.can_generate_coupon || false));
     
     // 2. On met à jour l'état de l'application
     setUser(userData);
@@ -95,20 +95,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fonction de déconnexion
   const logout = () => {
-    // 1. On nettoie le sessionStorage
-    sessionStorage.removeItem('authToken');
-    sessionStorage.removeItem('username');
-    sessionStorage.removeItem('is_superuser');
-    sessionStorage.removeItem('allowed_menus');
-    sessionStorage.removeItem('can_do_returns');
-    sessionStorage.removeItem('can_sell_negative_stock');
-    sessionStorage.removeItem('can_cash_out');
-    sessionStorage.removeItem('can_delete_product');
-    sessionStorage.removeItem('can_adjust_stock');
-    sessionStorage.removeItem('can_delete_fournisseur');
-    sessionStorage.removeItem('can_delete_commande');
-    sessionStorage.removeItem('can_close_commande');
-    sessionStorage.removeItem('can_generate_coupon');
+    // 1. On nettoie le stockage
+    safeStorage.clear('session');
     
     // 2. On remet l'utilisateur à null
     setUser(null);

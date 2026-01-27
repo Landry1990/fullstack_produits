@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { safeStorage } from '../utils/storage';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Rayon, ProduitModel } from '../types';
@@ -39,7 +40,7 @@ export default function Categories() {
   const fetchRayons = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/categories/`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -57,7 +58,7 @@ export default function Categories() {
   const fetchProductsForRayon = async (rayonId: number) => {
     try {
       setProductsLoading(true);
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/produits/?rayon=${rayonId}`, {
          headers: { Authorization: `Token ${token}` }
       });
@@ -88,7 +89,7 @@ export default function Categories() {
 
   const handleSubmitRayon = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = sessionStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     
     const payload: any = {
       name: formData.name,
@@ -124,7 +125,7 @@ export default function Categories() {
     })
     if (!confirmed) return;
     
-    const token = sessionStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     try {
       await axios.delete(`${apiBaseUrl}/api/categories/${id}/`, {
         headers: { Authorization: `Token ${token}` }
@@ -169,7 +170,7 @@ export default function Categories() {
 
     setIsSearching(true);
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/produits/?search=${term}`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -187,7 +188,7 @@ export default function Categories() {
   const handleAddProductToRayon = async (product: ProduitModel) => {
     if (!selectedRayon) return;
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Update product's rayon
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, {
         rayon: selectedRayon.id
@@ -216,7 +217,7 @@ export default function Categories() {
     if (!confirmed) return;
 
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Set rayon to null
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, {
         rayon: null

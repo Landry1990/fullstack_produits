@@ -53,11 +53,18 @@ class DashboardViewSet(viewsets.ViewSet):
         if sales_yesterday > 0:
             sales_change = round(((sales_today - sales_yesterday) / sales_yesterday) * 100, 1)
         
-        # 3. Low stock count (only products with rotation > 0)
+        # 3. Low stock count (products with <= 15 days coverage based on monthly rotation)
+        # days_remaining = stock / (rotation_moyenne / 30)
+        # <= 15 days means: stock / (rotation / 30) <= 15 => stock * 30 / rotation <= 15 => stock <= rotation * 15 / 30 => stock <= rotation * 0.5
+        from django.db.models.functions import Cast
+        from django.db.models import FloatField
+        
         stock_critique = Produit.objects.filter(
-            Q(stock__lt=F('rotation_moyenne')) |
-            Q(stock__lte=F('stock_minimum')),
             rotation_moyenne__gt=0  # Exclure produits dormants
+        ).annotate(
+            days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
+        ).filter(
+            Q(days_remaining__lte=15) | Q(stock__lte=0) | Q(stock__lte=F('stock_minimum'))
         ).count()
         
         # 4. Receivables (Créances Clients) - Total unpaid amounts on validated invoices
@@ -205,41 +212,48 @@ class DashboardViewSet(viewsets.ViewSet):
     def low_stock(self, request):
         """
         Returns top 10 products with lowest coverage (Days Remaining).
-        Coverage = Stock / Average Daily Sales (rotation_moyenne).
+        Coverage = Stock / (rotation_moyenne / 30) = Stock * 30 / rotation_moyenne
+        NOTE: rotation_moyenne is MONTHLY (units sold per month), so we divide by 30 to get daily rate.
         Includes products already out of stock (Coverage = 0).
         """
-        # On cherche les produits qui vont être en rupture bientôt (ex: < 5 jours)
-        # ou qui sont déjà en rupture.
-        # On utilise une annotation pour calculer les jours restants.
+        from django.db.models.functions import Cast
+        from django.db.models import FloatField
         
         # Avoid division by zero: only take products with moving stock (rotation > 0)
+        # days_remaining = stock / (rotation_moyenne / 30) = stock * 30 / rotation_moyenne
         products = Produit.objects.filter(
             rotation_moyenne__gt=0
         ).annotate(
-            days_remaining=F('stock') / F('rotation_moyenne')
+            daily_rotation=Cast(F('rotation_moyenne'), FloatField()) / 30.0,
+            days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
         ).filter(
-            Q(days_remaining__lte=5) | Q(stock__lte=0)
+            Q(days_remaining__lte=15) | Q(stock__lte=0)  # Alert if <= 15 days coverage
         ).order_by('days_remaining')[:10]
         
         data = []
         for p in products:
             days = 0
             if p.stock > 0 and p.rotation_moyenne > 0:
-                days = round(p.stock / p.rotation_moyenne, 1)
+                # Convert monthly rotation to daily: rotation_moyenne / 30
+                daily_rotation = float(p.rotation_moyenne) / 30.0
+                days = round(p.stock / daily_rotation, 1) if daily_rotation > 0 else 0
             
             status = 'Rupture'
             if p.stock > 0:
-                if days <= 1:
+                if days <= 3:
                     status = 'Rupture imminente'
+                elif days <= 7:
+                    status = f'Critique ({days}j)'
                 else:
-                    status = f'Rupture dans {days}j'
+                    status = f'~{int(days)}j de stock'
 
             data.append({
                 'id': p.id,
                 'name': p.name,
                 'stock': p.stock,
                 'min_stock': p.stock_minimum,
-                'rotation': p.rotation_moyenne,
+                'rotation': float(p.rotation_moyenne),
+                'rotation_daily': round(float(p.rotation_moyenne) / 30.0, 2),
                 'days_remaining': days,
                 'status': status
             })

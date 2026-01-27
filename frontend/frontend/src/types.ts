@@ -75,11 +75,6 @@ export interface ProduitModel {
   dernier_achat?: string | null
   dernier_vente?: string | null
   last_purchase_price?: string | null
-  // Stock Reserve
-  stock_reserve?: number
-  stock_rayon_min?: number | null
-  rayon_capacity?: number | null
-  stock_rayon?: number
 }
 
 export interface ProduitForm {
@@ -101,9 +96,6 @@ export interface ProduitForm {
   tva: string
   requires_prescription?: boolean
   surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
-  stock_reserve: string
-  stock_rayon_min: string
-  rayon_capacity: string
 }
 
 export interface AchatProduit {

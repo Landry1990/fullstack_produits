@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { safeStorage } from '../utils/storage';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Groupe, ProduitModel } from '../types';
@@ -41,7 +42,7 @@ export default function Groupes() {
   const fetchGroupes = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/groupes/`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -59,7 +60,7 @@ export default function Groupes() {
   const fetchProductsForGroupe = async (groupeId: number) => {
     try {
       setProductsLoading(true);
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Using search param logic or maybe we need to filter on client side if API doesn't support specific filter yet?
       // But standard ModelViewSet filterset_fields usually works if configured.
       // We didn't enable filterset_fields in GroupeViewSet explicitly for 'produits' (reverse) but we can filter products by 'groupe'.
@@ -94,7 +95,7 @@ export default function Groupes() {
 
   const handleSubmitGroupe = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = sessionStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     
     const payload = {
       nom: formData.nom,
@@ -130,7 +131,7 @@ export default function Groupes() {
     })
     if (!confirmed) return;
     
-    const token = sessionStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     try {
       await axios.delete(`${apiBaseUrl}/api/groupes/${id}/`, {
         headers: { Authorization: `Token ${token}` }
@@ -175,7 +176,7 @@ export default function Groupes() {
 
     setIsSearching(true);
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/produits/?search=${term}`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -206,7 +207,7 @@ export default function Groupes() {
     }
 
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Update product's groupe
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, {
         groupe: selectedGroupe.id
@@ -235,7 +236,7 @@ export default function Groupes() {
     if (!confirmed) return;
 
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Set groupe to null
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, {
         groupe: null

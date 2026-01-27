@@ -117,7 +117,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         queryKey: ['products', 'search', debouncedSearch, autoLoad],
         queryFn: () => fetchProducts(debouncedSearch, autoLoad),
         enabled: shouldFetch,
-        staleTime: 1000 * 60 * 5, // Cache results for 5 minutes
+        staleTime: 0, // No cache for absolute real-time accuracy
         placeholderData: (previousData) => previousData, // Keep showing previous results while fetching new ones
     })
 

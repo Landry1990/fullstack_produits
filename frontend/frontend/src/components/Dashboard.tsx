@@ -28,16 +28,27 @@ export default function Dashboard() {
   const [expirationMonths, setExpirationMonths] = useState(1); // Délai par défaut: 1 mois
   const navigate = useNavigate();
 
-  // Queries
-  const { data: stats, isLoading: statsLoading, error: statsError } = useDashboardStats();
-  const { data: revenueChart, isLoading: chartLoading } = useRevenueChart();
-  const { data: lowStockItems = [] } = useLowStock();
+  // Queries with refetch functions
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useDashboardStats();
+  const { data: revenueChart, isLoading: chartLoading, refetch: refetchChart } = useRevenueChart();
+  const { data: lowStockItems = [], isFetching: lowStockFetching, refetch: refetchLowStock } = useLowStock();
   const { data: ugStats } = useUgStats();
   const { data: promisDisponibles = [] } = usePromisDisponibles();
-  const { data: expiringLots = [] } = useExpiringLots(expirationMonths);
+  const { data: expiringLots = [], refetch: refetchExpiring } = useExpiringLots(expirationMonths);
 
   const loading = statsLoading || chartLoading;
   const error = statsError ? 'Impossible de charger les données du tableau de bord.' : null;
+
+  // Refresh all dashboard data
+  const handleRefreshAll = async () => {
+    await Promise.all([
+      refetchStats(),
+      refetchChart(),
+      refetchLowStock(),
+      refetchExpiring()
+    ]);
+    toast.success('Données mises à jour', { icon: '🔄' });
+  };
 
   // Transform data for Recharts
   const chartData = useMemo(() => {
@@ -161,8 +172,7 @@ export default function Dashboard() {
                 isPositive: true
                 }
             ] : []),
-            { 
-                title: t('dashboard.stats.revenue'), 
+            { title: t('dashboard.stats.revenue'), 
                 value: `${Math.round(stats.revenue?.value || 0).toLocaleString('fr-FR')} F`, 
                 change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
                 icon: "💰", 
@@ -171,8 +181,7 @@ export default function Dashboard() {
                 details: t('dashboard.stats.revenue_details', { amount: Math.round(stats.discount?.value || 0).toLocaleString('fr-FR') })
             },
             { title: t('dashboard.stats.receivables'), value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
-            { title: t('dashboard.stats.stock_value'), value: `${Math.round(stats.stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
-            { title: t('dashboard.stats.stock_alerts'), value: `${stats.low_stock?.value || 0} produits`, change: t('dashboard.stats.stock_alerts_sub'), icon: "warning", color: "bg-red-100 text-red-700", isPositive: false }
+            { title: t('dashboard.stats.stock_value'), value: `${Math.round(stats.stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
            ]
         )).map((stat: any, index) => {
           const content = (
@@ -454,14 +463,29 @@ export default function Dashboard() {
           {/* Stock Alerts */}
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <div 
-                className="flex items-center justify-between mb-4 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate('/app/centre-rapports?report=alertes_stock')}
-              >
-                <h2 className="card-title text-lg font-bold text-base-content">{t('dashboard.alerts.stock_title')}</h2>
-                {stats && (stats.low_stock?.value || 0) > 0 && (
-                  <span className="badge badge-error text-white badge-sm">{stats.low_stock?.value || 0}</span>
-                )}
+              <div className="flex items-center justify-between mb-4">
+                <div 
+                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => navigate('/app/centre-rapports?report=alertes_stock')}
+                >
+                  <h2 className="card-title text-lg font-bold text-base-content">{t('dashboard.alerts.stock_title')}</h2>
+                  {stats && (stats.low_stock?.value || 0) > 0 && (
+                    <span className="badge badge-error text-white badge-sm">{stats.low_stock?.value || 0}</span>
+                  )}
+                </div>
+                <button 
+                  className="btn btn-ghost btn-xs btn-circle"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRefreshAll();
+                  }}
+                  disabled={lowStockFetching}
+                  title="Rafraîchir les données"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${lowStockFetching ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
               </div>
               <div className="space-y-3">
                 {lowStockItems.length === 0 ? (
@@ -494,13 +518,40 @@ export default function Dashboard() {
                   ))
                 )}
               </div>
-              <Link 
-                to="/produits" 
-                className="btn btn-ghost btn-sm w-full mt-2 text-error hover:bg-error/10"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {t('dashboard.alerts.view_all_stock')}
-              </Link>
+              <div className="flex gap-2 mt-3">
+                {lowStockItems.length > 0 && (
+                  <button 
+                    className="btn btn-primary btn-sm flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Navigate to Commandes with products pre-filled
+                      navigate('/app/commandes/locales', { 
+                        state: { 
+                          createFromStockAlert: {
+                            products: lowStockItems.map(item => ({
+                              id: item.id,
+                              name: item.name,
+                              stock: item.stock
+                            }))
+                          }
+                        }
+                      });
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Générer Commande
+                  </button>
+                )}
+                <Link 
+                  to="/produits" 
+                  className="btn btn-ghost btn-sm flex-1 text-error hover:bg-error/10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {t('dashboard.alerts.view_all_stock')}
+                </Link>
+              </div>
             </div>
           </div>
 

@@ -112,6 +112,13 @@
         "subtitle": "Création de facture",
         "search_placeholder": "Scanner un code-barres ou rechercher un produit (Nom, CIP...)",
         "search_label": "Rechercher un produit (F2)",
+        "items_count": "{{count}} article(s)",
+        "shortcuts": {
+            "search": "Recherche (F2)",
+            "client": "Client (F4)",
+            "pay": "Encaisser (Ctrl+Entrée)",
+            "cancel": "Réinitialiser (Echap)"
+        },
         "search_min_chars": "Tapez au moins 2 caractères",
         "search_no_results": "Aucun produit trouvé",
         "create_client": {
@@ -119,7 +126,14 @@
             "individual": "Particulier",
             "professional": "Professionnel / Assurance",
             "name": "Nom complet",
-            "phone": "Téléphone"
+            "phone": "Téléphone",
+            "email": "Email",
+            "address": "Adresse",
+            "pro_options": "Options professionnelles",
+            "credit_limit": "Plafond crédit",
+            "coverage": "Couverture (%)",
+            "cancel": "Annuler",
+            "submit": "Créer et sélectionner"
         },
         "client": {
             "label": "Client (F4)",
@@ -160,6 +174,7 @@
             "validate": "Encaisser / Valider",
             "clear": "Vider le panier"
         },
+        "cart_title": "Panier",
         "cart": {
             "headers": {
                 "product": "Produit",
@@ -182,6 +197,18 @@
             "part_patient": "Part Patient / Net à payer",
             "part_assurance": "Part Assurance"
         },
+        "stock_resolution": {
+            "title": "Résolution de Stock / Promis",
+            "message": "Certains produits demandés ont une quantité supérieure au stock disponible. Veuillez indiquer pour chaque produit si la quantité manquante doit être traitée comme un 'Promis' (le client reviendra le chercher) ou forcée (vente malgré stock négatif).",
+            "demand": "Demandé",
+            "stock": "Stock",
+            "missing": "Manquant",
+            "promised": "Promis ?",
+            "client_phone_for_promised_ticket": "Numéro de téléphone pour le ticket promis",
+            "phone_number_placeholder": "Ex: 77...",
+            "cancel_and_edit_cart": "Annuler et modifier panier",
+            "validate_and_cash": "Valider et Encaisser"
+        },
         "payment": {
             "modal_title": "Paiement",
             "amount_due": "Reste à payer",
@@ -193,6 +220,8 @@
                 "carte": "Carte Bancaire",
                 "virement": "Virement",
                 "mobile": "Mobile Money",
+                "momo": "Mobile Money",
+                "other": "Autre",
                 "credit": "Crédit Client"
             },
             "validate": "Valider le Paiement",
@@ -428,6 +457,58 @@
             "access_denied_delete": "Accès refusé : Vous n'avez pas la permission de supprimer des produits.",
             "access_denied_adjust": "Accès refusé",
             "input_quantity_error": "Veuillez saisir la nouvelle quantité"
+        }
+    },
+    "promis": {
+        "title": "Gestion des Promis",
+        "new_btn": "+ Nouveau Promis",
+        "filter_status": "Filtrer par statut",
+        "status_all": "Tous",
+        "status_att": "En attente",
+        "status_del": "Délivrés",
+        "status_ann": "Annulés",
+        "table": {
+            "date": "Date",
+            "client": "Client",
+            "phone": "Téléphone",
+            "product": "Produit",
+            "qty": "Qté",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "actions": {
+            "deliver": "Délivrer",
+            "cancel": "Annuler",
+            "print": "Imprimer",
+            "sms": "SMS",
+            "sms_send": "Envoyer 📨"
+        },
+        "modal": {
+            "title_new": "Nouveau Promis",
+            "title_sms": "Envoyer SMS à {{name}}",
+            "client_label": "Client",
+            "client_placeholder": "Nom du patient ou client...",
+            "phone_label": "Téléphone",
+            "phone_placeholder": "Numéro de téléphone (ex: 77...)",
+            "product_label": "Produit *",
+            "product_placeholder": "Rechercher un produit (Nom/CIP)...",
+            "qty_label": "Quantité *",
+            "notes_label": "Notes",
+            "notes_placeholder": "Instructions ou commentaires...",
+            "cancel": "Annuler",
+            "create": "Enregistrer",
+            "sms_number": "Numéro destinataire",
+            "sms_message": "Contenu du message"
+        },
+        "validation": {
+            "product_required": "Veuillez sélectionner un produit",
+            "client_required": "Client requis (sélection ou nom libre)",
+            "create_error": "Erreur lors de l'enregistrement"
+        },
+        "messages": {
+            "empty": "Aucun promis trouvé",
+            "delivered_on": "Livré le {{date}}",
+            "cancelled": "Annulé"
         }
     },
     "sales": {

@@ -72,12 +72,13 @@ export default function CartTable({
     <table className="table table-pin-rows table-sm w-full">
       <thead>
         <tr className="bg-base-50 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-          <th className="bg-base-50 pl-2 md:pl-4">{t('facturation.cart.headers.product')}</th>
-          <th className="bg-base-50 text-right w-16 md:w-20">{t('facturation.cart.headers.qty')}</th>
-          <th className="bg-base-50 text-right w-20 md:w-24">{t('facturation.cart.headers.price')}</th>
-          <th className="bg-base-50 text-right w-14 md:w-16 hidden sm:table-cell">{t('facturation.cart.headers.discount')}</th>
-          <th className="bg-base-50 text-center w-24 hidden md:table-cell">{t('facturation.cart.headers.stock')}</th>
-          <th className="bg-base-50 text-right w-20 md:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
+          <th className="bg-base-50 pl-2 md:pl-4 min-w-[120px]">{t('facturation.cart.headers.product')}</th>
+          <th className="bg-base-50 text-right w-12 sm:w-20">{t('facturation.cart.headers.qty')}</th>
+          <th className="bg-base-50 text-right w-16 sm:w-24">{t('facturation.cart.headers.price')}</th>
+          <th className="bg-base-50 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation.cart.headers.discount')}</th>
+          <th className="bg-base-50 text-center w-24 hidden xl:table-cell">{t('facturation.cart.headers.stock')}</th>
+          <th className="bg-base-50 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation.cart.headers.lot')}</th>
+          <th className="bg-base-50 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
           <th className="bg-base-50 w-8"></th>
         </tr>
       </thead>
@@ -110,7 +111,7 @@ export default function CartTable({
                     onReturnFocus()
                   }
                 }}
-                className="input input-ghost input-xs w-full text-right font-medium focus:bg-base-100 focus:text-primary"
+                className="input input-ghost input-xs sm:input-sm w-full text-right font-medium focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0"
               />
             </td>
             <td className="text-right py-1">
@@ -118,12 +119,12 @@ export default function CartTable({
                 type="text"
                 value={ligne.prix_unitaire}
                 onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                className={`input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
                 disabled={!canModifyPrice}
                 title={!canModifyPrice ? "Modification de prix interdite" : ""}
               />
             </td>
-            <td className="text-right py-1 hidden sm:table-cell">
+            <td className="text-right py-1 hidden lg:table-cell">
               <input
                 type="text"
                 value={ligne.remise_produit}
@@ -132,7 +133,7 @@ export default function CartTable({
                 placeholder="%"
               />
             </td>
-            <td className="text-center py-1 hidden md:table-cell">
+            <td className="text-center py-1 hidden xl:table-cell">
               <div className="text-xs text-base-content/60">
                 {(() => {
                     const dateStr = ligne.lotId && ligne.lotExpiration ? ligne.lotExpiration : ligne.produit.expire_date
@@ -169,7 +170,7 @@ export default function CartTable({
             <td className="text-center py-1">
               <button
                 onClick={() => removeLigne(ligne.produit.id)}
-                className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square opacity-0 group-hover:opacity-100 transition-opacity"
+                className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square sm:opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <span className="sr-only">{t('facturation.cart.actions.remove')}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm'
@@ -7,6 +8,7 @@ import { fr } from 'date-fns/locale'
 import type { Promis, ProduitModel, Client } from '../types'
 
 export default function PromisPage() {
+  const { t } = useTranslation()
   const confirm = useConfirm()
   const [promisList, setPromisList] = useState<Promis[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +31,15 @@ export default function PromisPage() {
   const [productSearch, setProductSearch] = useState('')
   const [clientSearch, setClientSearch] = useState('')
   const [saving, setSaving] = useState(false)
+  
+  // SMS Modal State
+  const [smsModal, setSmsModal] = useState({ 
+    isOpen: false, 
+    promis: null as Promis | null, 
+    message: '' 
+  })
+  const [sendingSms, setSendingSms] = useState(false)
+
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
   const promisEndpoint = `${apiBaseUrl}/api/promis/`
@@ -154,17 +165,17 @@ export default function PromisPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.produit) {
-      toast('Veuillez sélectionner un produit', { icon: '⚠️' })
+      toast(t('promis.validation.product_required'), { icon: '⚠️' })
       return
     }
     if (!formData.client && !formData.client_name.trim()) {
-      toast('Veuillez sélectionner un client ou entrer un nom', { icon: '⚠️' })
+      toast(t('promis.validation.client_required'), { icon: '⚠️' })
       return
     }
 
     setSaving(true)
     try {
-      await axios.post(promisEndpoint, {
+      const { data: newPromis } = await axios.post(promisEndpoint, {
         ...formData,
         client: formData.client || null
       })
@@ -179,9 +190,15 @@ export default function PromisPage() {
       })
       setProductSearch('')
       setClientSearch('')
+      setSearchQuery('') // Reset global search to ensure visibility
+      
+      // Update list immediately with new promis at the top
+      setPromisList(prev => [newPromis, ...prev])
+      
+      // Still fetch to be sure (background sync)
       fetchPromis()
     } catch (err) {
-      toast.error('Erreur lors de la création du promis')
+      toast.error(t('promis.validation.create_error'))
       console.error(err)
     } finally {
       setSaving(false)
@@ -212,9 +229,37 @@ export default function PromisPage() {
     }
   }
 
+  const openSmsModal = (p: Promis) => {
+    // Message par défaut
+    const msg = `Bonjour ${p.client_display}, votre produit ${p.produit_name} est disponible à la pharmacie PHARMA STOCK.`
+    setSmsModal({ isOpen: true, promis: p, message: msg })
+  }
+
+  const handleSendSms = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!smsModal.promis || !smsModal.message) return
+    
+    setSendingSms(true)
+    try {
+        await axios.post(`${apiBaseUrl}/api/sms/send/`, {
+            recipient: smsModal.promis.client_phone_display,
+            message: smsModal.message,
+            context_type: 'PROMIS',
+            context_id: smsModal.promis.id
+        })
+        toast.success("SMS envoyé avec succès")
+        setSmsModal({ isOpen: false, promis: null, message: '' })
+    } catch (err: any) {
+        toast.error("Erreur lors de l'envoi du SMS")
+        console.error(err)
+    } finally {
+        setSendingSms(false)
+    }
+  }
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Gestion des Promis</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('promis.title')}</h1>
       
       {error && (
         <div className="alert alert-error mb-4">
@@ -225,19 +270,19 @@ export default function PromisPage() {
       {/* Stats */}
       <div className="stats stats-vertical md:stats-horizontal shadow mb-6 w-full">
         <div className="stat">
-          <div className="stat-title">Total</div>
+          <div className="stat-title">{t('promis.status_all')}</div>
           <div className="stat-value text-primary">{stats.total}</div>
         </div>
         <div className="stat cursor-pointer hover:bg-base-200" onClick={() => setFilterStatus('ATT')}>
-          <div className="stat-title">En attente</div>
+          <div className="stat-title">{t('promis.status_att')}</div>
           <div className="stat-value text-warning">{stats.enAttente}</div>
         </div>
         <div className="stat cursor-pointer hover:bg-base-200" onClick={() => setFilterStatus('DEL')}>
-          <div className="stat-title">Délivrés</div>
+          <div className="stat-title">{t('promis.status_del')}</div>
           <div className="stat-value text-success">{stats.delivres}</div>
         </div>
         <div className="stat cursor-pointer hover:bg-base-200" onClick={() => setFilterStatus('ANN')}>
-          <div className="stat-title">Annulés</div>
+          <div className="stat-title">{t('promis.status_ann')}</div>
           <div className="stat-value text-error">{stats.annules}</div>
         </div>
       </div>
@@ -257,17 +302,24 @@ export default function PromisPage() {
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value as any)}
           >
-            <option value="ALL">Tous les statuts</option>
-            <option value="ATT">En attente</option>
-            <option value="DEL">Délivrés</option>
-            <option value="ANN">Annulés</option>
+            <option value="ALL">{t('promis.status_all')}</option>
+            <option value="ATT">{t('promis.status_att')}</option>
+            <option value="DEL">{t('promis.status_del')}</option>
+            <option value="ANN">{t('promis.status_ann')}</option>
           </select>
         </div>
+        <button 
+          className="btn btn-ghost btn-sm"
+          onClick={fetchPromis}
+          title={t('common.refresh', 'Actualiser')}
+        >
+          🔄
+        </button>
         <button 
           className="btn btn-primary btn-sm"
           onClick={() => setShowForm(true)}
         >
-          + Nouveau Promis
+          {t('promis.new_btn')}
         </button>
       </div>
 
@@ -275,15 +327,15 @@ export default function PromisPage() {
       {showForm && (
         <div className="modal modal-open">
           <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4">Nouveau Promis</h3>
+            <h3 className="font-bold text-lg mb-4">{t('promis.modal.title_new')}</h3>
             <form onSubmit={handleSubmit}>
               {/* Client search */}
               <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Client</span></label>
+                <label className="label"><span className="label-text">{t('promis.modal.client_label')}</span></label>
                 <input
                   type="text"
                   className="input input-bordered"
-                  placeholder="Rechercher ou entrer le nom du client..."
+                  placeholder={t('promis.modal.client_placeholder')}
                   value={clientSearch}
                   onChange={e => {
                     setClientSearch(e.target.value)
@@ -305,11 +357,11 @@ export default function PromisPage() {
 
               {/* Phone */}
               <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Téléphone</span></label>
+                <label className="label"><span className="label-text">{t('promis.modal.phone_label')}</span></label>
                 <input
                   type="text"
                   className="input input-bordered"
-                  placeholder="Numéro de téléphone"
+                  placeholder={t('promis.modal.phone_placeholder')}
                   value={formData.client_phone}
                   onChange={e => setFormData(prev => ({ ...prev, client_phone: e.target.value }))}
                 />
@@ -317,11 +369,11 @@ export default function PromisPage() {
 
               {/* Product search */}
               <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Produit *</span></label>
+                <label className="label"><span className="label-text">{t('promis.modal.product_label')}</span></label>
                 <input
                   type="text"
                   className="input input-bordered"
-                  placeholder="Rechercher un produit..."
+                  placeholder={t('promis.modal.product_placeholder')}
                   value={productSearch}
                   onChange={e => {
                     setProductSearch(e.target.value)
@@ -344,7 +396,7 @@ export default function PromisPage() {
 
               {/* Quantity */}
               <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Quantité *</span></label>
+                <label className="label"><span className="label-text">{t('promis.modal.qty_label')}</span></label>
                 <input
                   type="number"
                   min="1"
@@ -356,10 +408,10 @@ export default function PromisPage() {
 
               {/* Notes */}
               <div className="form-control mb-4">
-                <label className="label"><span className="label-text">Notes</span></label>
+                <label className="label"><span className="label-text">{t('promis.modal.notes_label')}</span></label>
                 <textarea
                   className="textarea textarea-bordered"
-                  placeholder="Notes optionnelles..."
+                  placeholder={t('promis.modal.notes_placeholder')}
                   value={formData.notes}
                   onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                 />
@@ -367,11 +419,11 @@ export default function PromisPage() {
 
               <div className="modal-action">
                 <button type="button" className="btn" onClick={() => setShowForm(false)}>
-                  Annuler
+                  {t('promis.modal.cancel')}
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving && <span className="loading loading-spinner loading-sm" />}
-                  Créer
+                  {t('promis.modal.create')}
                 </button>
               </div>
             </form>
@@ -388,19 +440,19 @@ export default function PromisPage() {
             </div>
           ) : filteredPromis.length === 0 ? (
             <div className="text-center text-base-content/60 py-8">
-              Aucun promis trouvé
+              {t('promis.messages.empty')}
             </div>
           ) : (
             <table className="table table-zebra">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Client</th>
-                  <th>Téléphone</th>
-                  <th>Produit</th>
-                  <th>Qté</th>
-                  <th>Statut</th>
-                  <th>Actions</th>
+                  <th>{t('promis.table.date')}</th>
+                  <th>{t('promis.table.client')}</th>
+                  <th>{t('promis.table.phone')}</th>
+                  <th>{t('promis.table.product')}</th>
+                  <th>{t('promis.table.qty')}</th>
+                  <th>{t('promis.table.status')}</th>
+                  <th>{t('promis.table.actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -423,24 +475,34 @@ export default function PromisPage() {
                           <button 
                             className="btn btn-success btn-xs"
                             onClick={() => handleDelivrer(p.id)}
-                            title="Marquer comme délivré"
+                            title={t('promis.actions.deliver')}
                           >
-                            ✓ Délivrer
+                            ✓ {t('promis.actions.deliver')}
                           </button>
                           <button 
                             className="btn btn-error btn-xs"
                             onClick={() => handleAnnuler(p.id)}
-                            title="Annuler et réintégrer le stock"
+                            title={t('promis.actions.cancel')}
                           >
-                            ✕ Annuler
+                            ✕ {t('promis.actions.cancel')}
                           </button>
                           <button 
                             className="btn btn-info btn-xs"
                             onClick={() => handlePrintTicket(p.id)}
-                            title="Imprimer ticket"
+                            title={t('promis.actions.print')}
                           >
                             🖨️
                           </button>
+                          {p.client_phone_display && (
+                            <button 
+                                className="btn btn-ghost btn-xs"
+                                onClick={() => openSmsModal(p)}
+                                title={t('promis.actions.sms')}
+                            >
+                                📱
+                            </button>
+                          )}
+
                         </div>
                       )}
                       {p.status === 'DEL' && p.date_livraison && (
@@ -459,6 +521,40 @@ export default function PromisPage() {
           )}
         </div>
       </div>
+
+      {/* SMS Modal */}
+      {smsModal.isOpen && (
+        <div className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="font-bold text-lg mb-4">{t('promis.modal.title_sms', { name: smsModal.promis?.client_display })}</h3>
+            <form onSubmit={handleSendSms}>
+              <div className="form-control mb-4">
+                <label className="label"><span className="label-text">{t('promis.modal.sms_number')}</span></label>
+                <input 
+                    type="text" 
+                    className="input input-bordered"
+                    value={smsModal.promis?.client_phone_display}
+                    readOnly
+                />
+              </div>
+              <div className="form-control mb-4">
+                <label className="label"><span className="label-text">{t('promis.modal.sms_message')}</span></label>
+                <textarea 
+                    className="textarea textarea-bordered h-24"
+                    value={smsModal.message}
+                    onChange={e => setSmsModal(prev => ({...prev, message: e.target.value}))}
+                />
+              </div>
+              <div className="modal-action">
+                <button type="button" className="btn" onClick={() => setSmsModal(prev => ({...prev, isOpen: false}))}>{t('promis.modal.cancel')}</button>
+                <button type="submit" className="btn btn-primary" disabled={sendingSms}>
+                    {sendingSms ? <span className="loading loading-spinner loading-sm"/> : t('promis.actions.sms_send')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

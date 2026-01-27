@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import type { LigneFacture } from '../types'
+import { safeStorage } from '../utils/storage'
 
 export type VenteEnAttente = {
     id: number
@@ -23,7 +24,7 @@ export type VenteEnAttente = {
 export function usePendingSales() {
     const [ventesEnAttente, setVentesEnAttente] = useState<VenteEnAttente[]>(() => {
         try {
-            const saved = localStorage.getItem('ventesEnAttente')
+            const saved = safeStorage.getItem('ventesEnAttente', 'local')
             return saved ? JSON.parse(saved) : []
         } catch {
             return []
@@ -31,9 +32,9 @@ export function usePendingSales() {
     })
     const [showPendingSales, setShowPendingSales] = useState(false)
 
-    // Save pending sales to localStorage whenever they change
+    // Save pending sales to storage whenever they change
     useEffect(() => {
-        localStorage.setItem('ventesEnAttente', JSON.stringify(ventesEnAttente))
+        safeStorage.setItem('ventesEnAttente', JSON.stringify(ventesEnAttente), 'local')
     }, [ventesEnAttente])
 
     const savePendingSale = useCallback((sale: Omit<VenteEnAttente, 'id' | 'timestamp'>) => {
