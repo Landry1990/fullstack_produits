@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import DOMPurify from 'dompurify'
 import type { Facture, TicketCaisse, CaisseParTranche } from '../types'
+import { safeStorage } from '../utils/storage'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import { TicketTemplate } from './printing/TicketTemplate'
 
@@ -351,8 +352,8 @@ export default function Ventes() {
         factureComplete = response.data
       }
       
-      // Stocker le devis dans localStorage pour qu'il puisse être chargé par Facturation
-      localStorage.setItem('devis_to_load', JSON.stringify(factureComplete))
+      // Stocker le devis dans safeStorage pour qu'il puisse être chargé par Facturation
+      safeStorage.setItem('devis_to_load', JSON.stringify(factureComplete), 'local')
       
       // Naviguer vers l'interface de facturation
       navigate('/app/facturation')

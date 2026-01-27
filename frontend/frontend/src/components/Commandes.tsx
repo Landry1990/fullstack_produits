@@ -20,7 +20,7 @@ import { useCommandeActions } from '../hooks/useCommandeActions';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
 import { useFormes } from '../hooks/useProduits';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 
 
@@ -44,6 +44,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const confirm = useConfirm()
   const { user } = useAuth();
   const navigate = useNavigate(); // For navigation to Avoirs
+  const location = useLocation(); // For receiving state from Dashboard
   const [selectedCommande, setSelectedCommande] = useState<Commande | null>(null)
 
   const { settings: pharmacySettings } = usePharmacySettings();
@@ -361,6 +362,74 @@ export default function Commandes({ forcedType }: CommandesProps) {
           }));
       }
   }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
+
+  // Handle Navigation State (Create from Stock Alerts in Dashboard)
+  useEffect(() => {
+    if (location.state && (location.state as any).createFromStockAlert) {
+      const data = (location.state as any).createFromStockAlert;
+      
+      // Switch to CREATE mode
+      setViewMode('CREATE');
+      setSelectedCommande(null);
+      setCommandeProduits([]);
+      
+      // Fetch full product details and pre-fill
+      const loadProducts = async () => {
+        if (!Array.isArray(data.products) || data.products.length === 0) return;
+        
+        const apiBase = import.meta.env.VITE_API_BASE_URL ?? '';
+        const produitsEndpoint = apiBase ? `${apiBase}/api/produits/` : '/api/produits/';
+        
+        const newLines: CommandeProduit[] = [];
+        
+        for (const p of data.products) {
+          try {
+            // Fetch full product data
+            const { data: fullProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${p.id}/`);
+            
+            // Calculate suggested quantity (e.g., reorder to double the min stock or a default)
+            const suggestedQty = Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
+            
+            newLines.push({
+              id: Date.now() + p.id, // Temp ID
+              produit: fullProduct,
+              quantity: suggestedQty,
+              unites_gratuites: 0,
+              price: fullProduct.cost_price || '0',
+              tva: fullProduct.tva || '0',
+              marge: fullProduct.taux_marge || '1.3',
+              selling_price: fullProduct.selling_price || '0',
+              lot: '',
+              date_expiration: '',
+            });
+          } catch (err) {
+            console.error(`Failed to fetch product ${p.id}:`, err);
+            // Use basic data if fetch fails
+            newLines.push({
+              id: Date.now() + p.id,
+              produit: { id: p.id, name: p.name, stock: p.stock } as any,
+              quantity: 10,
+              unites_gratuites: 0,
+              price: '0',
+              tva: '0',
+              marge: '1.3',
+              selling_price: '0',
+              lot: '',
+              date_expiration: '',
+            });
+          }
+        }
+        
+        setCommandeProduits(newLines);
+        toast.success(`${newLines.length} produit(s) ajouté(s) depuis les alertes stock`, { icon: '📦' });
+      };
+      
+      loadProducts();
+      
+      // Clear state to avoid re-triggering on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Raccourcis clavier globaux (Delete, Escape, Ctrl+A)
   useEffect(() => {

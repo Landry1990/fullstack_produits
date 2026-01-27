@@ -48,6 +48,9 @@ from .audit import (
     Ordonnancier, LigneOrdonnancier
 )
 
+# Communication
+from .communication import SmsLog, SmsTemplate
+
 # Signals for soft delete (preserving names before deletion)
 from .signals import (
     preserve_product_name_on_delete,
@@ -77,4 +80,6 @@ __all__ = [
     # Audit
     'ActivityLog', 'AuditLog', 'MouvementCaisse', 
     'Ordonnancier', 'LigneOrdonnancier',
+    # Communication
+    'SmsLog', 'SmsTemplate',
 ]

@@ -4,6 +4,7 @@
  */
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { safeStorage } from '../utils/storage';
 
 // Track si on a déjà montré le toast de session expirée
 let hasShownExpiredToast = false;
@@ -28,7 +29,7 @@ axios.interceptors.response.use(
                 });
 
                 // Nettoyer la session
-                sessionStorage.clear();
+                safeStorage.clear('session');
                 delete axios.defaults.headers.common['Authorization'];
 
                 // Rediriger vers login après un délai, UNIQUEMENT si on n'y est pas déjà

@@ -71,7 +71,7 @@ export default function Login() {
             </div>
             
             <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2 font-sans">
-              PharmaStock
+              Zenith
             </h1>
             <p className="text-sm text-gray-400 font-medium tracking-wide uppercase">
               Portail de Gestion Sécurisé
@@ -166,7 +166,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="mt-8 text-center text-xs text-gray-500">
-          © {new Date().getFullYear()} PharmaStock v2.0 - Tous droits réservés.
+          © {new Date().getFullYear()} Zenith v2.0 - Tous droits réservés.
         </p>
 
       </div>

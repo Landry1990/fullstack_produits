@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import InvoiceTemplate, { type InvoiceData, type PharmacySettings } from './InvoiceTemplate';
+import { safeStorage } from '../../utils/storage';
 
 const PrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -16,7 +17,7 @@ const PrintPage: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const token = sessionStorage.getItem('authToken');
+                const token = safeStorage.getItem('authToken');
                 if (!token) {
                     setError("Authentification requise");
                     setLoading(false);

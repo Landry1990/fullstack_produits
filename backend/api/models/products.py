@@ -190,9 +190,6 @@ class Produit(models.Model):
         help_text="Produit visible sur la vitrine en ligne"
     )
 
-    stock_reserve = models.IntegerField(default=0, help_text="Quantité en réserve (non disponible pour la vente directe)")
-    stock_rayon_min = models.IntegerField(null=True, blank=True, help_text="Seuil minimal pour le rayon")
-    rayon_capacity = models.IntegerField(null=True, blank=True, help_text="Capacité maximale du rayon")
 
     def save(self, *args, **kwargs):
         # Calcul automatique des marges
@@ -213,16 +210,6 @@ class Produit(models.Model):
             except (ValueError, TypeError):
                 pass
         super().save(*args, **kwargs)
-
-    @property
-    def stock_rayon(self):
-        """Calcul du stock disponible en rayon (Total - Réserve)"""
-        return max(0, self.stock - self.stock_reserve)
-
-    @property
-    def stock_disponible_vente(self):
-        """Alias pour le stock réellement vendable"""
-        return self.stock_rayon
 
     def __str__(self):
         return self.name

@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { safeStorage } from '../utils/storage';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Forme, ProduitModel } from '../types';
@@ -39,7 +40,7 @@ export default function Formes() {
   const fetchFormes = async () => {
     try {
       setLoading(true);
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/formes/`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -57,7 +58,7 @@ export default function Formes() {
   const fetchProductsForForme = async (formeId: number) => {
     try {
       setProductsLoading(true);
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Note: We need to ensure the backend supports filtering by forme.
       // Assuming we implemented filtering in ProduitViewSet or will do so.
       const res = await axios.get(`${apiBaseUrl}/api/produits/?forme=${formeId}`, {
@@ -90,7 +91,7 @@ export default function Formes() {
 
   const handleSubmitForme = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = sessionStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     
     const payload = {
       nom: formData.nom,
@@ -126,7 +127,7 @@ export default function Formes() {
     })
     if (!confirmed) return;
     
-    const token = sessionStorage.getItem('authToken');
+    const token = safeStorage.getItem('authToken');
     try {
       await axios.delete(`${apiBaseUrl}/api/formes/${id}/`, {
         headers: { Authorization: `Token ${token}` }
@@ -171,7 +172,7 @@ export default function Formes() {
 
     setIsSearching(true);
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/produits/?search=${term}`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -189,7 +190,7 @@ export default function Formes() {
   const handleAddProductToForme = async (product: ProduitModel) => {
     if (!selectedForme) return;
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Update product's forme
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, {
         forme: selectedForme.id
@@ -218,7 +219,7 @@ export default function Formes() {
     if (!confirmed) return;
 
     try {
-      const token = sessionStorage.getItem('authToken');
+      const token = safeStorage.getItem('authToken');
       // Set forme to null
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, {
         forme: null

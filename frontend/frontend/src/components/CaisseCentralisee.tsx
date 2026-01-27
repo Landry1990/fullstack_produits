@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
@@ -12,6 +13,7 @@ import PasswordConfirmModal from './PasswordConfirmModal'
 const Barcode = lazy(() => import('react-barcode'))
 
 export default function CaisseCentralisee() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { settings: pharmacySettings } = usePharmacySettings()
@@ -301,6 +303,11 @@ export default function CaisseCentralisee() {
 
       // 7. Rafraîchir la liste
       await fetchFacturesEnAttente()
+
+      // Invalidate product cache to refresh stock data (if on same machine)
+      queryClient.invalidateQueries({ queryKey: ['products'] })
+      
+      // 8. Si un coupon était appliqué, le marquer comme utilisé
       
       // 8. Si un coupon était appliqué, le marquer comme utilisé
       if (couponApplique) {

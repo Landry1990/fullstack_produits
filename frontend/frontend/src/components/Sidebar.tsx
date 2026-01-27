@@ -178,7 +178,7 @@ export default function Sidebar() {
       <div className="pharma-sidebar-header p-6 flex items-center gap-3">
         <PharmaCrossLogo size={48} />
         <div>
-          <h1 className="text-xl font-bold text-white">PharmaStock</h1>
+          <h1 className="text-xl font-bold text-white">Zenith</h1>
           <p className="text-xs text-green-400">Gestion Professionnelle</p>
         </div>
       </div>

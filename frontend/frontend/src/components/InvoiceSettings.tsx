@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { safeStorage } from '../utils/storage';
 
 interface InvoiceSettings {
     id?: number;
@@ -32,7 +33,7 @@ const InvoiceSettings: React.FC = () => {
 
     const fetchSettings = async () => {
         try {
-            const token = sessionStorage.getItem('authToken');
+            const token = safeStorage.getItem('authToken');
             const res = await axios.get(`${apiBaseUrl}/invoice-settings/`, {
                 headers: { Authorization: `Token ${token}` }
             });
@@ -48,7 +49,7 @@ const InvoiceSettings: React.FC = () => {
         setSaving(true);
         setMessage(null);
         try {
-            const token = sessionStorage.getItem('authToken');
+            const token = safeStorage.getItem('authToken');
             // Toujours utiliser PUT sur l'endpoint racine, le backend gère le singleton
             await axios.put(`${apiBaseUrl}/invoice-settings/`, settings, {
                 headers: { Authorization: `Token ${token}` }

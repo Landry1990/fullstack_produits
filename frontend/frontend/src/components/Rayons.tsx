@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { safeStorage } from '../utils/storage';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
@@ -26,7 +27,7 @@ export default function Rayons() {
   const fetchRayons = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = safeStorage.getItem('authToken');
       const res = await axios.get(`${apiBaseUrl}/api/categories/`, {
         headers: { Authorization: `Token ${token}` }
       });
@@ -45,7 +46,7 @@ export default function Rayons() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('authToken');
     
     // Prepare payload
     const payload: any = {
@@ -82,7 +83,7 @@ export default function Rayons() {
     })
     if (!confirmed) return;
     
-    const token = localStorage.getItem('token');
+    const token = safeStorage.getItem('authToken');
     try {
       await axios.delete(`${apiBaseUrl}/api/categories/${id}/`, {
         headers: { Authorization: `Token ${token}` }

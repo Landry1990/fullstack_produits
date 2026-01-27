@@ -10,7 +10,7 @@ from .models import (
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
-    Groupe
+    Groupe, SmsLog, SmsTemplate
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -204,9 +204,7 @@ class ProduitSerializer(serializers.ModelSerializer):
             'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
             'stock_lots', 'requires_prescription', 'surveillance_category',
             'dernier_achat', 'dernier_vente', 'is_public',
-            'taux_marge', 'pourcentage_marge',
-            'stock_reserve', 'stock_rayon_min', 'rayon_capacity',
-            'stock_rayon', 'stock_disponible_vente'
+            'taux_marge', 'pourcentage_marge'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
@@ -873,4 +871,28 @@ class CouponMonnaieSerializer(serializers.ModelSerializer):
             full_name = f"{obj.utilise_par.first_name} {obj.utilise_par.last_name}".strip()
             return full_name or obj.utilise_par.username
         return ''
+
+
+# Communication Serializers
+class SmsTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SmsTemplate
+        fields = '__all__'
+
+class SmsLogSerializer(serializers.ModelSerializer):
+    sent_by_name = serializers.CharField(source='sent_by.username', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    client_name = serializers.CharField(source='client.name', read_only=True)
+    promis_detail = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SmsLog
+        fields = '__all__'
+        read_only_fields = ['status', 'sent_at', 'provider_response', 'sent_by']
+
+    def get_promis_detail(self, obj):
+        if obj.promis:
+            return f"{obj.promis.produit_name} ({obj.promis.quantite})"
+        return None
 

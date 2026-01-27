@@ -1,34 +1,32 @@
-import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import axios from 'axios'
-import DOMPurify from 'dompurify'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import type { ProduitModel, Client, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture, CouponMonnaie } from '../types'
+import { useQueryClient } from '@tanstack/react-query'
+import type { ProduitModel, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture } from '../types'
 import { useProductSearch } from '../hooks/useProductSearch'
 import { useCart } from '../hooks/useCart'
 import { useFacturationClients } from '../hooks/useFacturationClients'
 import { usePendingSales } from '../hooks/usePendingSales'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import { normalizeNumberInput } from '../utils/formatters'
-import LotSelectionModal from './LotSelectionModal'
-import PaymentModal from './facturation/PaymentModal'
-import CartTable from './facturation/CartTable'
-import ClientSection from './facturation/ClientSection'
-import ProductSearchSection from './facturation/ProductSearchSection'
-import TotalsSection from './facturation/TotalsSection'
-import ActionButtons from './facturation/ActionButtons'
-import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
-import { TicketTemplate } from './printing/TicketTemplate'
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 import { useClinicalCheck } from '../hooks/useClinicalCheck'
 import ClinicalAlerts from './clinical/ClinicalAlerts'
-
-// Lazy load barcode component (kept if needed elsewhere, otherwise remove)
-const Barcode = lazy(() => import('react-barcode'))
+import DOMPurify from 'dompurify'
+import { useSidebar } from '../context/SidebarContext'
+import { safeStorage } from '../utils/storage'
+import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
 
 import { useTranslation } from 'react-i18next'
-
+import ClientSection from './facturation/ClientSection'
+import ProductSearchSection from './facturation/ProductSearchSection'
+import CartTable from './facturation/CartTable'
+import TotalsSection from './facturation/TotalsSection'
+import ActionButtons from './facturation/ActionButtons'
+import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
+import PaymentModal from './facturation/PaymentModal'
+import LotSelectionModal from './LotSelectionModal'
+import { TicketTemplate } from './printing/TicketTemplate'
 
 
 type FactureProduitPayload = {
@@ -42,13 +40,12 @@ type FactureProduitPayload = {
 }
 
 
-
-
-
 export default function Facturation() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const { settings: pharmacySettings } = usePharmacySettings()
+  const { isZenithMode, toggleZenithMode, isMidnightTheme, toggleMidnightTheme } = useSidebar()
   
   // Local loading state for non-hook operations (e.g. payment)
   const [loading, setLoading] = useState(false)
@@ -81,9 +78,7 @@ export default function Facturation() {
       updateRemiseProduit,
       updateLineLot,
       removeLigne,
-      clearCart,
-      cartStats,
-      loading: cartLoading
+      cartStats
   } = useCart({
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
       onRequirePrescription: handleRequirePrescription,
@@ -110,8 +105,7 @@ export default function Facturation() {
     produits, 
     loading: searchLoading, 
     searchQuery, 
-    setSearchQuery,
-    wasBarcodeScanned
+    setSearchQuery
   } = useProductSearch({ 
     minSearchLength: 2, 
     debounceMs: 200,
@@ -121,7 +115,6 @@ export default function Facturation() {
   // useFacturationClients Hook - Manages all client/AD logic
   const {
     clients,
-    loading: clientsLoading,
     selectedClient, setSelectedClient,
     manualClientName, setManualClientName,
     useManualClient, setUseManualClient,
@@ -154,10 +147,6 @@ export default function Facturation() {
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
   const [error, setError] = useState<string | null>(null)
-  const [couponNumero, setCouponNumero] = useState('')
-  const [couponData, setCouponData] = useState<CouponMonnaie | null>(null)
-  const [couponLoading, setCouponLoading] = useState(false)
-  const [couponError, setCouponError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
@@ -260,13 +249,11 @@ export default function Facturation() {
     enabled: !isPaymentModalOpen && !showOrdonnanceModal && !showClientCreateModal && !lotModal.isOpen && !showStockResolution
   })
 
-  // Combined loading state
-  const isLoading = loading || cartLoading || clientsLoading || searchLoading
 
-  // Charger un devis depuis localStorage si présent (navigation depuis Ventes)
+  // Charger un devis depuis safeStorage si présent (navigation depuis Ventes)
   useEffect(() => {
     const loadDevis = async () => {
-      const devisString = localStorage.getItem('devis_to_load')
+      const devisString = safeStorage.getItem('devis_to_load', 'local')
       if (!devisString) return
       
       try {
@@ -349,12 +336,12 @@ export default function Facturation() {
           toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
         }
         
-        // Nettoyer le localStorage
-        localStorage.removeItem('devis_to_load')
+        // Nettoyer le stockage
+        safeStorage.removeItem('devis_to_load', 'local')
       } catch (err) {
         console.error('Erreur lors du chargement du devis:', err)
         toast.error('Impossible de charger le devis')
-        localStorage.removeItem('devis_to_load')
+        safeStorage.removeItem('devis_to_load', 'local')
       }
     }
     
@@ -365,10 +352,6 @@ export default function Facturation() {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
   }, [])
-  // produitsEndpoint removed - products are loaded via useProductSearch hook
-  const clientsEndpoint = apiBaseUrl
-    ? `${apiBaseUrl}/api/clients/`
-    : '/api/clients/'
 
   const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
     if (axios.isAxiosError(err)) {
@@ -428,7 +411,10 @@ export default function Facturation() {
       // Apply Promis selections to the invoice lines
       const updatedLignes = lignesFacture.map(ligne => {
           if (promisSelections.has(ligne.produit.id)) {
-              const stock = ligne.produit.stock ?? 0
+              // Fix: Treat negative stock as 0. If we have 20 demanded and stock is -5, we need to promise 20, not 25.
+              // Wait, if stock is -5, it means we physically have 0. So promised quantity should be the full demanded quantity.
+              // Logic: PromisQty = Demanded - Available. Available = Max(0, Stock).
+              const stock = Math.max(0, ligne.produit.stock ?? 0)
               const promisQty = Math.max(0, ligne.quantite - stock)
               return {
                   ...ligne,
@@ -457,7 +443,7 @@ export default function Facturation() {
       // Check for out-of-stock items before payment
       if (!user?.can_sell_negative_stock) {
          // If user CANNOT sell negative stock, they MUST handle it.
-         // Effectively, they must use Promis or remove items.
+         // Effectivement, they must use Promis or remove items.
          // For now, we reuse the resolution modal but maybe enforce checks?
          // The requirement says "tous forcage de stock n'est pas promis".
          // Use existing logic for resolution.
@@ -480,8 +466,8 @@ export default function Facturation() {
           const client = clients.find(c => c.id === selectedClient)
           setPromisPhone(client?.phone || '')
 
-          // By default, do NOT select Promis (Force) - User must opt-in
-          setPromisSelections(new Set())
+          // Default: Select ALL items for Promis. User can uncheck to force sale.
+          setPromisSelections(new Set(items.map(i => i.product.id)))
 
           setShowStockResolution(true)
       } else {
@@ -515,10 +501,15 @@ export default function Facturation() {
         }
       }
       
-      // Ctrl+F: Focus Client Search
       if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
         clientSearchRef.current?.focus()
+      }
+
+      // Alt+Z: Toggle Zenith Mode
+      if (e.altKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault()
+        toggleZenithMode()
       }
 
       // CTRL+ENTER: Payment
@@ -568,52 +559,6 @@ export default function Facturation() {
       setTimeout(() => searchInputRef.current?.focus(), 100)
   }
 
-  // Coupon handlers
-  const handleRechercherCoupon = async () => {
-    if (!couponNumero.trim()) return
-    
-    setCouponLoading(true)
-    setCouponError(null)
-    
-    try {
-      const couponsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
-      const response = await axios.get(couponsEndpoint, {
-        params: { numero: couponNumero.trim() }
-      })
-      
-      if (response.data.results && response.data.results.length > 0) {
-        const coupon = response.data.results[0]
-        
-        // Vérifier que le coupon est actif
-        if (coupon.status !== 'ACTIF') {
-          setCouponError(`Ce coupon n'est pas actif (${coupon.status_display || coupon.status})`)
-          setCouponData(null)
-          toast.error(`Coupon #${coupon.numero} non utilisable`)
-        } else {
-          setCouponData(coupon)
-          setCouponError(null)
-          toast.success(`Coupon #${coupon.numero} trouvé : ${Math.round(Number(coupon.montant))} F`)
-        }
-      } else {
-        setCouponError(`Coupon "${couponNumero}" introuvable`)
-        setCouponData(null)
-        toast.error('Coupon introuvable')
-      }
-    } catch (err: any) {
-      console.error('Erreur recherche coupon:', err)
-      setCouponError(err.response?.data?.detail || 'Erreur lors de la recherche')
-      setCouponData(null)
-      toast.error('Erreur lors de la recherche du coupon')
-    } finally {
-      setCouponLoading(false)
-    }
-  }
-
-  const handleClearCoupon = () => {
-    setCouponNumero('')
-    setCouponData(null)
-    setCouponError(null)
-  }
 
 
 
@@ -625,10 +570,10 @@ export default function Facturation() {
     // Calculer la remise globale selon le mode
     let remiseMontant = 0
     if (remiseMode === 'montant') {
-      remiseMontant = Math.min(sousTotal, normalizeNumberInput(remise, { min: 0 }))
+      remiseMontant = Math.min(sousTotal, Number(remise))
     } else {
       // Mode taux (pourcentage)
-      const tauxRemise = normalizeNumberInput(remise, { min: 0, max: 100 })
+      const tauxRemise = Number(remise)
       remiseMontant = sousTotal * (tauxRemise / 100)
     }
     
@@ -649,7 +594,7 @@ export default function Facturation() {
       const client = clients.find(c => c.id === selectedClient)
       
       if (client?.client_type === 'PROFESSIONNEL' && client.taux_couverture !== undefined && client.taux_couverture !== null) {
-        tauxCouverture = normalizeNumberInput(client.taux_couverture, { min: 0, max: 100 })
+        tauxCouverture = Number(client.taux_couverture)
         if (tauxCouverture > 0) {
           partAssurance = Math.round(totalTtcBase * (tauxCouverture / 100))
           partPatient = totalTtcBase - partAssurance
@@ -673,9 +618,6 @@ export default function Facturation() {
     const finalTotalTtc = Math.max(0, totalTtcBase - loyaltyDeduction)
     const finalPartPatient = Math.max(0, partPatient - loyaltyDeduction)
 
-    // Coupon calculation
-    const couponMontant = couponData && couponData.status === 'ACTIF' ? Number(couponData.montant) : 0
-
     return {
       sousTotal,
       remiseMontant,
@@ -683,14 +625,13 @@ export default function Facturation() {
       totalTtc: finalTotalTtc,
       originalTotalTtc: totalTtcBase,
       loyaltyDeduction,
-      couponMontant,
       tauxCouverture,
       partAssurance,
       partPatient: finalPartPatient,
       currentPoints,
       pendingDiscountVal
     }
-  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients, pointsToUse, usePendingDiscount, couponData])
+  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients, pointsToUse, usePendingDiscount])
 
   const [isNewSale, setIsNewSale] = useState(false)
 
@@ -838,8 +779,8 @@ export default function Facturation() {
       if (isModificationMode && modificationInvoiceId) {
         // Préparer les données des produits pour l'endpoint modifier
         const produitsPayload = lignesFacture.map(ligne => {
-          const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
-          const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
+          const prixUnitaire = Number(ligne.prix_unitaire)
+          const remiseProduit = Number(ligne.remise_produit)
           const prixNet = prixUnitaire * (1 - remiseProduit / 100)
           
           return {
@@ -911,18 +852,20 @@ export default function Facturation() {
           tva: '0',
           ayant_droit: ayantDroitId, // Lier directement à la création
           part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null,
-          type: isRetrocession ? 'RETRO' : 'STD' // Add Retrocession Type
+          // type: isRetrocession ? 'RETRO' : 'STD' // Removed to avoid potential validation issues
         }
+        console.log('Sending Invoice Payload:', facturePayload)
         const { data } = await axios.post(facturesEndpoint, facturePayload)
         createdFacture = data
+        console.log('DEBUG: Invoice created, ID=', createdFacture.id)
       }
 
       // 2. Ajouter les produits (uniquement si nouvelle facture, pas pour devis existant)
       if (!devisIdToValidate) {
         const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => {
         // Calculer le prix unitaire net après remise produit
-        const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
-        const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
+        const prixUnitaire = Number(ligne.prix_unitaire)
+        const remiseProduit = Number(ligne.remise_produit)
         const prixNet = prixUnitaire * (1 - remiseProduit / 100)
         
         return {
@@ -940,42 +883,16 @@ export default function Facturation() {
         await Promise.all(
           produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
         )
+        console.log('DEBUG: Products added to invoice')
       }
 
-      // 3. Appliquer le coupon si un numéro a été saisi (backend fait tout le travail)
-      if (couponNumero.trim()) {
-        try {
-          const couponsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/'
-          
-          // Chercher le coupon par numéro
-          const searchResponse = await axios.get(couponsEndpoint, {
-            params: { numero: couponNumero.trim() }
-          })
-          
-          if (searchResponse.data.results && searchResponse.data.results.length > 0) {
-            const coupon = searchResponse.data.results[0]
-            
-            // Appeler l'API utiliser (backend crée automatiquement le paiement)
-            const utiliserEndpoint = `${couponsEndpoint}${coupon.id}/utiliser/`
-            await axios.post(utiliserEndpoint, { facture_id: createdFacture.id })
-            
-            toast.success(`Coupon #${coupon.numero} appliqué (-${Math.round(Number(coupon.montant))} F)`)
-            setCouponNumero('') // Clear after use
-          } else {
-            toast.error(`Coupon "${couponNumero}" introuvable`)
-          }
-        } catch (err: any) {
-          console.error('Erreur application coupon:', err)
-          toast.error(err.response?.data?.detail || 'Erreur lors de l\'application du coupon')
-          // On continue quand même la vente (le coupon n'est pas critique)
-        }
-      }
 
 
       // NOUVELLE LOGIQUE DE PAIEMENT
       // Vérifier si c'est un client professionnel avec 100% de couverture (tiers payant)
       const clientIsPro100 = clientObj?.client_type === 'PROFESSIONNEL' && totals.partPatient === 0 && totals.partAssurance > 0
       
+      console.log('DEBUG: clientIsPro100=', clientIsPro100, 'centralizedCashRegister=', centralizedCashRegister)
       if (clientIsPro100) {
         // Client professionnel à 100% : Validation + Paiement automatique "en_compte"
         toast('Client professionnel 100% - Validation automatique', { icon: 'ℹ️' })
@@ -1012,6 +929,31 @@ export default function Facturation() {
         setPaiements([])
         setLoading(false)
         
+        // === CRÉER LES PROMIS AVANT DE QUITTER (Client Pro 100%) ===
+        const promisLinesPro = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
+        for (const line of promisLinesPro) {
+            try {
+                const promisPayload = {
+                    facture: validatedFacture.id,
+                    client: validatedFacture.client,
+                    client_name: validatedFacture.client_name || (useManualClient ? manualClientName : ''),
+                    client_phone: line.promisPhone,
+                    produit: line.produit.id,
+                    quantite: line.promisQuantity,
+                    status: 'ATT'
+                }
+                const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
+                await axios.post<Promis>(promisEndpoint, promisPayload)
+                toast.success(`Promis créé pour ${line.produit.name} (${line.promisQuantity} unités)`)
+            } catch (err) {
+                console.error("Erreur création promis (Pro100):", err)
+                toast.error(`Erreur création promis pour ${line.produit.name}`)
+            }
+        }
+        
+        // Invalidate product cache to refresh stock data
+        queryClient.invalidateQueries({ queryKey: ['products'] })
+        
         return // Fin du traitement
       } else if (centralizedCashRegister) {
         // Mode Caisse Centralisée ACTIVE : Envoi en Caisse Centralisée (BROUILLON)
@@ -1036,6 +978,32 @@ export default function Facturation() {
         setPaiements([])
         setLoading(false)
         setIsPaymentModalOpen(false)
+        
+        // === CRÉER LES PROMIS AVANT DE QUITTER (même en mode Caisse Centralisée) ===
+        const promisLinesCC = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
+        
+        for (const line of promisLinesCC) {
+            try {
+                const promisPayload = {
+                    facture: createdFacture.id,
+                    client: createdFacture.client,
+                    client_name: createdFacture.client_name || (useManualClient ? manualClientName : ''),
+                    client_phone: line.promisPhone,
+                    produit: line.produit.id,
+                    quantite: line.promisQuantity,
+                    status: 'ATT'
+                }
+                const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
+                await axios.post<Promis>(promisEndpoint, promisPayload)
+                toast.success(`Promis créé pour ${line.produit.name} (${line.promisQuantity} unités)`)
+            } catch (err) {
+                console.error("Erreur création promis (CC):", err)
+                toast.error(`Erreur création promis pour ${line.produit.name}`)
+            }
+        }
+        
+        // Invalidate product cache to refresh stock data
+        queryClient.invalidateQueries({ queryKey: ['products'] })
         
         return // Stop execution (Do NOT validate)
       }
@@ -1161,6 +1129,7 @@ export default function Facturation() {
 
       // 7. Gérer les Promis (après paiement validé)
       const promisLines = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
+      
       const createdPromisIds: number[] = []
 
       for (const line of promisLines) {
@@ -1178,9 +1147,11 @@ export default function Facturation() {
               const { data: createdPromis } = await axios.post<Promis>(promisEndpoint, promisPayload)
               
               createdPromisIds.push(createdPromis.id)
+              toast.success(`Promis créé pour ${line.produit.name} (${line.promisQuantity} unités)`)
               
           } catch (err) {
               console.error("Erreur création promis:", err)
+              toast.error(`Erreur création promis pour ${line.produit.name}`)
           }
       }
 
@@ -1271,8 +1242,11 @@ export default function Facturation() {
       // Standard Clean (ordonnancier modal already handled during product selection)
       _resetSaleDataOnly()
       setIsPaymentModalOpen(false)
+      
+      // Invalidate product cache to refresh stock data
+      queryClient.invalidateQueries({ queryKey: ['products'] })
 
-    } catch (err) {
+    } catch (err: any) {
       // ROLLBACK STOCK IF NEEDED
       if (validatedFactureForRollback) {
         try {
@@ -1285,7 +1259,22 @@ export default function Facturation() {
            console.error("Critical: Failed to rollback invoice after payment failure", rollbackErr)
         }
       }
-      handleApiError(err, 'Une erreur est survenue lors de l\'enregistrement de la vente.')
+      console.error('Erreur validation facture (DÉTAILLÉE):', err);
+      let errorDetail = 'Une erreur est survenue lors de l\'enregistrement de la vente.';
+      if (err.response?.data) {
+          if (typeof err.response.data === 'string') {
+               errorDetail = err.response.data;
+          } else if (err.response.data.detail) {
+               errorDetail = err.response.data.detail;
+          } else {
+               errorDetail = JSON.stringify(err.response.data, null, 2);
+          }
+      } else if (err.message) {
+          errorDetail = err.message;
+      }
+      
+      setError(errorDetail); 
+      toast.error(errorDetail, { duration: 8000 });
     } finally {
       setLoading(false)
     }
@@ -1309,7 +1298,16 @@ export default function Facturation() {
       setTempOrdonnanceData(null) // Clear temp data
       // On ne clear pas error/successInfo ici si on veut les garder
   }
-  
+  const handleQuantityShortcut = useCallback((qty: number) => {
+    if (lignesFacture.length > 0) {
+      const lastLine = lignesFacture[lignesFacture.length - 1];
+      updateQuantite(lastLine.produit.id, qty);
+      toast.success(`Quantité mise à jour : ${qty} x ${lastLine.produit.name}`, { icon: '🔢' });
+    } else {
+      toast.error("Aucun produit dans le panier pour appliquer une quantité");
+    }
+  }, [lignesFacture, updateQuantite]);
+
   const handleOrdonnanceSave = async (data: OrdonnanceData) => {
     console.log('=== handleOrdonnanceSave DEBUG ===');
     console.log('Received data:', data);
@@ -1380,8 +1378,8 @@ export default function Facturation() {
       
       // 2. Add Products
       const produitsPayload = lignesFacture.map(ligne => {
-        const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 })
-        const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 })
+        const prixUnitaire = Number(ligne.prix_unitaire)
+        const remiseProduit = Number(ligne.remise_produit)
         const prixNet = prixUnitaire * (1 - remiseProduit / 100)
         
         return {
@@ -1580,11 +1578,6 @@ export default function Facturation() {
   }
 
   // === PENDING SALES MANAGEMENT ===
-  
-  // Save pending sales to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('ventesEnAttente', JSON.stringify(ventesEnAttente))
-  }, [ventesEnAttente])
 
   const mettreEnAttente = () => {
     // Validate
@@ -1764,28 +1757,61 @@ export default function Facturation() {
         return
       }
 
+      // Alt+Z: Toggle Zenith Mode
+      if (e.altKey && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault()
+        toggleZenithMode()
+        return
+      }
+
+      // /: Focus search input
+      if (e.key === '/') {
+          e.preventDefault()
+          searchInputRef.current?.focus()
+          return
+      }
+
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [selectedClient, useManualClient, isPaymentModalOpen, showTicketPreview, successInfo, showStockResolution, showPendingSales, showClientCreateModal, showOrdonnanceModal, lignesFacture.length, handlePaymentClick])
+  }, [selectedClient, useManualClient, isPaymentModalOpen, showTicketPreview, successInfo, showStockResolution, showPendingSales, showClientCreateModal, showOrdonnanceModal, lignesFacture.length, handlePaymentClick, toggleZenithMode])
 
   return (
     <div className="h-full flex flex-col bg-base-100 font-sans text-base-content overflow-hidden">
       {/* Header Minimaliste */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-base-200 bg-white shrink-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-base-content">{t('facturation.title')}</h1>
-          <p className="text-xs sm:text-sm text-base-content/80">{t('facturation.subtitle')}</p>
-          <div className="flex gap-4 text-xs text-base-content/50 mt-1">
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> {t('facturation.shortcuts.search')}</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> {t('facturation.shortcuts.client')}</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F9</kbd> {t('facturation.shortcuts.pay')}</span>
-            <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Esc</kbd> {t('facturation.shortcuts.cancel')}</span>
+      <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 border-b border-base-200 bg-white dark:bg-slate-900 shrink-0 shadow-sm transition-colors duration-300">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <h1 className="text-lg sm:text-2xl font-bold text-base-content uppercase tracking-tight truncate max-w-[120px] sm:max-w-none">{t('facturation.title')}</h1>
+          
+          <div className="flex items-center gap-1 sm:gap-2 border-l border-base-200 dark:border-slate-700 pl-2 sm:pl-4 ml-1 sm:ml-2">
+            {/* Zenith Mode Toggle */}
+            <button 
+                onClick={toggleZenithMode}
+                className={`btn btn-circle btn-sm ${isZenithMode ? 'btn-primary' : 'btn-ghost'}`}
+                title={isZenithMode ? "Quitter Mode Zenith" : "Mode Zenith (Alt+Z)"}
+            >
+                {isZenithMode ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+
+            {/* Midnight Theme Toggle */}
+            <button 
+                onClick={toggleMidnightTheme}
+                className={`btn btn-circle btn-sm ${isMidnightTheme ? 'btn-secondary text-white' : 'btn-ghost'}`}
+                title={isMidnightTheme ? "Thème Clair" : "Thème Midnight"}
+            >
+                {isMidnightTheme ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
           </div>
         </div>
-        <div className="text-sm font-medium text-base-content/60">
-          {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+        <div className="flex flex-col items-end shrink-0">
+          <div className="text-[10px] sm:text-sm font-medium text-base-content/60">
+            {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+          </div>
+          <div className="flex gap-2 sm:gap-4 text-[8px] sm:text-[10px] text-base-content/40 mt-1 uppercase font-bold tracking-tight">
+            <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">/</kbd> <span className="hidden xs:inline">{t('facturation.shortcuts.search')}</span></span>
+            <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">F9</kbd> <span className="hidden xs:inline">{t('facturation.shortcuts.pay')}</span></span>
+          </div>
         </div>
       </div>
 
@@ -1879,7 +1905,7 @@ export default function Facturation() {
       )}
 
       {/* Main Layout */}
-      <div className="flex-1 flex flex-col overflow-hidden p-3 md:p-4 lg:p-6 gap-4 lg:gap-6">
+      <div className="flex-1 flex flex-col overflow-y-auto sm:overflow-hidden p-2 sm:p-4 lg:p-6 gap-3 sm:gap-4 lg:gap-6">
         {/* Top Section: Client & Search */}
         <div className="w-full flex flex-col md:flex-row gap-4 shrink-0">
           {/* Client Selection */}
@@ -1923,11 +1949,12 @@ export default function Facturation() {
             addProduitToFacture={(p) => addProduitToFacture(p, { isRetrocession })}
             searchInputRef={searchInputRef}
             placeholder={t('facturation.search_placeholder')}
+            onQuantityShortcut={handleQuantityShortcut}
           />
         </div>
 
         {/* Bottom Section: Cart/Invoice Details */}
-        <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+        <div className="flex-none sm:flex-1 flex flex-col min-h-[400px] sm:min-h-0 bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden shrink-0 sm:shrink">
           
           {/* Clinical Alerts Banner */}
           <ClinicalAlerts alerts={clinicalAlerts} />
@@ -1967,36 +1994,12 @@ export default function Facturation() {
             remiseMontant={totals.remiseMontant}
             tvaAmount={totals.montantTva}
             totalTTC={totals.totalTtc}
-            couponNumero={couponNumero}
-            setCouponNumero={setCouponNumero}
-            couponData={couponData}
-            couponLoading={couponLoading}
-            couponError={couponError}
-            onRechercherCoupon={handleRechercherCoupon}
-            onClearCoupon={handleClearCoupon}
-            couponMontant={totals.couponMontant}
             tauxCouverture={totals.tauxCouverture}
             partAssurance={totals.partAssurance}
             partPatient={totals.partPatient}
             onOpenOrdonnanceModal={() => setShowOrdonnanceModal(true)}
             ordonnanceData={tempOrdonnanceData}
           />
-
-          {/* Retrocession Toggle (Near Actions) */}
-          <div className="px-4 pb-2 flex justify-end">
-            <div className="flex items-center space-x-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-200">
-              <input
-                type="checkbox"
-                id="retrocession-toggle-bottom"
-                checked={isRetrocession}
-                onChange={(e) => setIsRetrocession(e.target.checked)}
-                className="checkbox checkbox-xs checkbox-warning"
-              />
-              <label htmlFor="retrocession-toggle-bottom" className="text-xs font-bold text-yellow-800 cursor-pointer select-none uppercase tracking-wide">
-                {t('facturation.retrocession_mode')}
-              </label>
-            </div>
-          </div>
 
           {/* Action Buttons */}
           <ActionButtons
@@ -2007,6 +2010,8 @@ export default function Facturation() {
             pendingCount={ventesEnAttente.length}
             onCancel={annulerVente}
             isValid={lignesFacture.length > 0}
+            isRetrocession={isRetrocession}
+            setIsRetrocession={setIsRetrocession}
           />
         </div>
       </div>
@@ -2314,7 +2319,7 @@ export default function Facturation() {
               </div>
               
               <div className="form-control">
-                <label className="label py-1"><span className="label-text text-xs">Email *</span></label>
+                <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.email')} *</span></label>
                 <input 
                   type="email" 
                   value={newClientForm.email} 
@@ -2326,7 +2331,7 @@ export default function Facturation() {
               </div>
 
               <div className="form-control">
-                <label className="label py-1"><span className="label-text text-xs">Adresse *</span></label>
+                <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.address')} *</span></label>
                 <textarea 
                   value={newClientForm.address} 
                   onChange={e => setNewClientForm(prev => ({ ...prev, address: e.target.value }))}
@@ -2339,10 +2344,10 @@ export default function Facturation() {
               {/* Champs professionnels */}
               {newClientForm.client_type === 'PROFESSIONNEL' && (
                 <div className="bg-base-200 p-3 rounded-lg space-y-3">
-                  <h4 className="text-sm font-bold text-secondary">Options professionnelles</h4>
+                  <h4 className="text-sm font-bold text-secondary">{t('facturation.create_client.pro_options')}</h4>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="form-control">
-                      <label className="label py-1"><span className="label-text text-xs">Plafond crédit</span></label>
+                      <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.credit_limit')}</span></label>
                       <input 
                         type="number" 
                         value={newClientForm.plafond} 
@@ -2352,7 +2357,7 @@ export default function Facturation() {
                         />
                     </div>
                     <div className="form-control">
-                      <label className="label py-1"><span className="label-text text-xs">Couverture (%)</span></label>
+                      <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.coverage')}</span></label>
                       <input 
                         type="number" 
                         value={newClientForm.taux_couverture} 
@@ -2373,7 +2378,7 @@ export default function Facturation() {
                   className="btn btn-ghost" 
                   onClick={() => setShowClientCreateModal(false)}
                 >
-                  Annuler
+                  {t('facturation.create_client.cancel')}
                 </button>
                 <button 
                   type="submit" 
@@ -2383,7 +2388,7 @@ export default function Facturation() {
                   {isCreatingClient ? (
                     <span className="loading loading-spinner loading-sm"></span>
                   ) : (
-                      <> Créer et sélectionner</>
+                      <> {t('facturation.create_client.submit')}</>
                   )}
                 </button>
               </div>

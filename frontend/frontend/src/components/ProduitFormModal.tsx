@@ -45,9 +45,6 @@ export default function ProduitFormModal({
     stock_alert: '',
     stock_minimum: '',
     stock_maximum: '',
-    stock_reserve: '0',
-    stock_rayon_min: '',
-    rayon_capacity: '',
     rayon: '',
     fournisseur: '',
     forme: '',
@@ -112,9 +109,6 @@ export default function ProduitFormModal({
         stock_alert: form.stock_alert ? parseInt(form.stock_alert, 10) : 0,
         stock_minimum: form.stock_minimum ? parseInt(form.stock_minimum, 10) : 0,
         stock_maximum: form.stock_maximum ? parseInt(form.stock_maximum, 10) : 0,
-        stock_reserve: form.stock_reserve ? parseInt(form.stock_reserve, 10) : 0,
-        stock_rayon_min: form.stock_rayon_min ? parseInt(form.stock_rayon_min, 10) : null,
-        rayon_capacity: form.rayon_capacity ? parseInt(form.rayon_capacity, 10) : null,
         rayon: form.rayon ? parseInt(form.rayon, 10) : null,
         fournisseur: form.fournisseur ? parseInt(form.fournisseur, 10) : null,
         forme: form.forme ? parseInt(form.forme, 10) : null,
@@ -260,33 +254,6 @@ export default function ProduitFormModal({
             </label>
           </div>
 
-          <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Configuration Stock & Rayon</div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-base-100 p-4 rounded-lg border border-base-200">
-             <label className="form-control w-full">
-               <div className="label">
-                 <span className="label-text font-semibold">Stock Réserve</span>
-                 <span className="label-text-alt text-info tooltip" data-tip="Quantité bloquée en réserve (non vendable directement)">ℹ️</span>
-               </div>
-               <input type="number" className="input input-bordered w-full" value={form.stock_reserve}
-                 onChange={(e) => setForm((p) => ({ ...p, stock_reserve: e.target.value }))} min={0} step={1} />
-             </label>
-             <label className="form-control w-full">
-               <div className="label">
-                 <span className="label-text">Seuil Min. Rayon</span>
-                 <span className="label-text-alt text-info tooltip" data-tip="Seuil déclenchant une alerte de réapprovisionnement rayon">ℹ️</span>
-               </div>
-               <input type="number" className="input input-bordered w-full" value={form.stock_rayon_min}
-                 onChange={(e) => setForm((p) => ({ ...p, stock_rayon_min: e.target.value }))} min={0} step={1} />
-             </label>
-             <label className="form-control w-full">
-               <div className="label">
-                 <span className="label-text">Capacité Rayon</span>
-                 <span className="label-text-alt text-info tooltip" data-tip="Capacité maximale du rayon pour ce produit">ℹ️</span>
-               </div>
-               <input type="number" className="input input-bordered w-full" value={form.rayon_capacity}
-                 onChange={(e) => setForm((p) => ({ ...p, rayon_capacity: e.target.value }))} min={0} step={1} />
-             </label>
-          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <label className="form-control w-full"><div className="label"><span className="label-text">Forme</span></div>
               <select className="select select-bordered w-full" value={form.forme}

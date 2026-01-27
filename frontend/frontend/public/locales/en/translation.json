@@ -182,6 +182,18 @@
             "part_patient": "Patient Share",
             "part_assurance": "Insurance Share"
         },
+        "stock_resolution": {
+            "title": "Stock Resolution / Promised",
+            "message": "Some requested products have a quantity greater than available stock. Please indicate for each product if the missing quantity should be treated as a 'Promised Item' (client will pick it up later) or forced (sale despite negative stock).",
+            "demand": "Demand",
+            "stock": "Stock",
+            "missing": "Missing",
+            "promised": "Promised?",
+            "client_phone_for_promised_ticket": "Phone number for promised ticket",
+            "phone_number_placeholder": "Ex: 77...",
+            "cancel_and_edit_cart": "Cancel and edit cart",
+            "validate_and_cash": "Validate and Cash"
+        },
         "payment": {
             "modal_title": "Payment",
             "amount_due": "Amount Due",

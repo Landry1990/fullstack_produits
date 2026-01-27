@@ -180,7 +180,7 @@ export default function ClientSection({
           )}
           
           {/* Dropdown des résultats */}
-          {showClientDropdown && !selectedClient && (
+          {showClientDropdown && (clientSearch || !selectedClient) && (
             <div className="absolute z-50 mt-1 w-full bg-white border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto">
               {filteredClients.length > 0 ? (
                 <>
