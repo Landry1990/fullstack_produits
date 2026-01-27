@@ -85,19 +85,56 @@ class DashboardViewSet(viewsets.ViewSet):
         ).aggregate(total=Coalesce(Sum('remise'), Decimal('0')))['total']
         
         # 6. Stock value (Valeur totale du stock au PMP)
+        # 6. Stock value (Valeur totale du stock au PMP)
         stock_value = Produit.objects.aggregate(
             total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0'))
         )['total']
+
+        # 7. User specific stats (My Daily Stats - for Seller motivation)
+        user_daily_invoices = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            created_by=request.user
+        )
         
-        return Response({
-            'revenue': {'value': float(ca_today), 'change': revenue_change},
-            'sales': {'value': sales_today, 'change': sales_change},
-            'clients': {'value': Client.objects.count(), 'change': 0},
-            'low_stock': {'value': stock_critique, 'change': 0},
-            'receivables': {'value': float(receivables_data['total_debt'] or 0), 'count': receivables_data['count'] or 0},
-            'discount': {'value': float(discount_total), 'change': 0},
-            'stock_value': {'value': float(stock_value), 'change': 0}
-        })
+        user_ca_today = user_daily_invoices.aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        user_sales_count = user_daily_invoices.count()
+        user_avg_basket = Decimal('0')
+        if user_sales_count > 0:
+            user_avg_basket = user_ca_today / user_sales_count
+        
+        # Determine Role
+        role = 'PHARMACIEN' # Default fallback
+        try:
+            if hasattr(request.user, 'profile'):
+                role = request.user.profile.role
+        except Exception:
+            pass
+            
+        # Base response
+        response_data = {
+            'role': role,
+            'user_stats': {
+                'sales': float(user_ca_today),
+                'count': user_sales_count,
+                'avg_basket': float(user_avg_basket)
+            }
+        }
+        
+        # If Admin/Pharmacist, add full global stats
+        # If Seller/Cashier, we limit the data (privacy/focus)
+        if role not in ['VENDEUR', 'CAISSIER']:
+            response_data.update({
+                'revenue': {'value': float(ca_today), 'change': revenue_change},
+                'sales': {'value': sales_today, 'change': sales_change},
+                'clients': {'value': Client.objects.count(), 'change': 0},
+                'low_stock': {'value': stock_critique, 'change': 0},
+                'receivables': {'value': float(receivables_data['total_debt'] or 0), 'count': receivables_data['count'] or 0},
+                'discount': {'value': float(discount_total), 'change': 0},
+                'stock_value': {'value': float(stock_value), 'change': 0}
+            })
+            
+        return Response(response_data)
 
     @action(detail=False, methods=['get'])
     def recent_transactions(self, request):

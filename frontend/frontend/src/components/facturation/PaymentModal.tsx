@@ -46,13 +46,13 @@ export default function PaymentModal({
     montantPaye,
     setMontantPaye,
     modePaiement,
-    setModePaiement,
+    setModePaiement: _setModePaiement,
     paiements,
     setPaiements,
     onCompleteSale,
     onRegisterPayment,
-    selectedClient,
-    useManualClient,
+    selectedClient: _selectedClient,
+    useManualClient: _useManualClient,
     paymentInputRef
 }: PaymentModalProps) {
     const { t } = useTranslation()
@@ -145,20 +145,11 @@ export default function PaymentModal({
                             )}
 
                         <div className="flex gap-2 items-end">
-                            <div className="flex-1 hidden">
+                            <div className="flex-1">
                                 <label className="label py-0"> <span className="label-text text-xs">Mode</span> </label>
-                                <select
-                                value={modePaiement}
-                                onChange={(e) => setModePaiement(e.target.value as any)}
-                                className="select select-bordered select-sm w-full"
-                                >
-                                <option value="especes">{t('facturation.payment.modes.especes')}</option>
-                                <option value="cheque">{t('facturation.payment.modes.cheque')}</option>
-                                <option value="carte">{t('facturation.payment.modes.carte')}</option>
-                                <option value="virement">{t('facturation.payment.modes.virement')}</option>
-                                <option value="om">Orange Money</option>
-                                <option value="momo">Mobile Money</option>
-                                </select>
+                                <div className="text-sm font-medium py-1.5 px-2 bg-base-100 border border-base-200 rounded text-base-content/70">
+                                    Caisse Centrale
+                                </div>
                             </div>
                             <div className="flex-1">
                                 <label className="label py-0"> <span className="label-text text-xs">Montant</span> </label>
@@ -215,24 +206,13 @@ export default function PaymentModal({
                 </div>
               ) : (
                 <>
-                  {/* Standard payment mode for non-tiers payant */}
-                  <div className="form-control w-full hidden">
+                  <div className="form-control w-full">
                     <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
-                    <select
-                        value={modePaiement}
-                        onChange={(e) => setModePaiement(e.target.value as any)}
-                        className="select select-bordered w-full"
-                    >
-                        <option value="especes">{t('facturation.payment.modes.especes')}</option>
-                        <option value="cheque">{t('facturation.payment.modes.cheque')}</option>
-                        <option value="carte">{t('facturation.payment.modes.carte')}</option>
-                        <option value="virement">{t('facturation.payment.modes.virement')}</option>
-                        <option value="om">Orange Money</option>
-                        <option value="momo">Mobile Money</option>
-                        <option value="en_compte" disabled={selectedClient === null || useManualClient}>
-                            {t('facturation.payment.modes.credit')} {selectedClient === null || useManualClient ? `(${t('facturation.client.select_label')} requis)` : ''}
-                        </option>
-                    </select>
+                    <div className="p-3 bg-base-100 border border-base-300 rounded-lg text-sm font-medium flex items-center gap-2">
+                        <span className="badge badge-primary badge-xs"></span>
+                        Caisse Centrale
+                    </div>
+                    {/* Hidden input to maintain logic if needed, but we just use state 'especes' */}
                   </div>
 
                   {/* Liste des paiements multiples */}
@@ -240,7 +220,7 @@ export default function PaymentModal({
                     <div className="bg-base-50 rounded-lg p-2 space-y-1">
                         {paiements.map((p, idx) => (
                             <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
-                                <span>{p.mode === 'especes' ? t('facturation.payment.modes.especes') : p.mode === 'carte' ? t('facturation.payment.modes.carte') : p.mode === 'virement' ? t('facturation.payment.modes.virement') : p.mode === 'om' ? t('facturation.payment.modes.mobile') : p.mode === 'momo' ? t('facturation.payment.modes.mobile') : p.mode === 'cheque' ? t('facturation.payment.modes.cheque') : t('facturation.payment.modes.credit')}</span>
+                                <span>Caisse Centrale</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{p.montant} F</span>
                                     <button 

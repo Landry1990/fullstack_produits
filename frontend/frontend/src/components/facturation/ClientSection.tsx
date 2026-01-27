@@ -35,6 +35,7 @@ interface ClientSectionProps {
   setAyantDroitMatricule: (v: string) => void
   ayantDroitSociete: string
   setAyantDroitSociete: (v: string) => void
+  inputRef?: React.Ref<HTMLInputElement>
 }
 
 export default function ClientSection({
@@ -61,7 +62,8 @@ export default function ClientSection({
   ayantDroitMatricule,
   setAyantDroitMatricule,
   ayantDroitSociete,
-  setAyantDroitSociete
+  setAyantDroitSociete,
+  inputRef
 }: ClientSectionProps) {
   const { t } = useTranslation()
   
@@ -146,6 +148,7 @@ export default function ClientSection({
       ) : (
         <div ref={clientSearchRef} className="relative">
           <input
+            ref={inputRef}
             type="text"
             value={clientSearch || (selectedClientData ? selectedClientData.name : '')}
             onChange={(e) => {

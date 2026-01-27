@@ -117,28 +117,71 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {stats && [
-          { 
-            title: t('dashboard.stats.revenue'), 
-            value: `${Math.round(stats.revenue?.value || 0).toLocaleString('fr-FR')} F`, 
-            change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
-            icon: "💰", 
-            color: "bg-emerald-100 text-emerald-700", 
-            isPositive: (stats.revenue?.change || 0) >= 0,
-            details: t('dashboard.stats.revenue_details', { amount: Math.round(stats.discount?.value || 0).toLocaleString('fr-FR') })
-          },
-          { title: t('dashboard.stats.receivables'), value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
-
-          { title: t('dashboard.stats.stock_value'), value: `${Math.round((stats as any).stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
-        ].map((stat: any, index) => {
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER' ? 'xl:grid-cols-2' : 'xl:grid-cols-4'} gap-4`}>
+        {stats && (stats.role === 'VENDEUR' || stats.role === 'CAISSIER' ? (
+           // VIEW VENDEUR / CAISSIER (Restricted)
+           [
+             {
+              title: "MES VENTES (JOUR)",
+              value: `${Math.round(stats.user_stats?.sales || 0).toLocaleString('fr-FR')} F`,
+              change: `${stats.user_stats?.count || 0} ventes`,
+              icon: "👤",
+              color: "bg-indigo-100 text-indigo-700",
+              isPositive: true,
+              details: "Encaissements personnels"
+             },
+             {
+              title: "MON PANIER MOYEN",
+              value: `${Math.round(stats.user_stats?.avg_basket || 0).toLocaleString('fr-FR')} F`,
+              change: "Moyenne par client",
+              icon: "🛍️",
+              color: "bg-fuchsia-100 text-fuchsia-700",
+              isPositive: true
+             }
+           ]
+        ) : (
+           // VIEW PHARMACIEN / ADMIN (Full)
+           [
+            ...(stats.user_stats ? [
+                {
+                title: "MES VENTES (JOUR)",
+                value: `${Math.round(stats.user_stats.sales).toLocaleString('fr-FR')} F`,
+                change: `${stats.user_stats.count} ventes`,
+                icon: "👤",
+                color: "bg-indigo-100 text-indigo-700",
+                isPositive: true,
+                details: "Encaissements personnels"
+                },
+                {
+                title: "MON PANIER MOYEN",
+                value: `${Math.round(stats.user_stats.avg_basket).toLocaleString('fr-FR')} F`,
+                change: "Moyenne par client",
+                icon: "🛍️",
+                color: "bg-fuchsia-100 text-fuchsia-700",
+                isPositive: true
+                }
+            ] : []),
+            { 
+                title: t('dashboard.stats.revenue'), 
+                value: `${Math.round(stats.revenue?.value || 0).toLocaleString('fr-FR')} F`, 
+                change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
+                icon: "💰", 
+                color: "bg-emerald-100 text-emerald-700", 
+                isPositive: (stats.revenue?.change || 0) >= 0,
+                details: t('dashboard.stats.revenue_details', { amount: Math.round(stats.discount?.value || 0).toLocaleString('fr-FR') })
+            },
+            { title: t('dashboard.stats.receivables'), value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
+            { title: t('dashboard.stats.stock_value'), value: `${Math.round(stats.stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true },
+            { title: t('dashboard.stats.stock_alerts'), value: `${stats.low_stock?.value || 0} produits`, change: t('dashboard.stats.stock_alerts_sub'), icon: "warning", color: "bg-red-100 text-red-700", isPositive: false }
+           ]
+        )).map((stat: any, index) => {
           const content = (
             <div className={`card-body p-3 sm:p-4 flex flex-row items-center justify-between ${stat.link ? 'cursor-pointer hover:bg-base-200/30' : ''}`}>
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-base-content/70">{stat.title}</p>
                 <h3 className="text-lg sm:text-2xl font-bold text-base-content mt-1 truncate">{stat.value}</h3>
-                <span className={`text-xs font-medium ${stat.title === 'Alertes Stock' || stat.title === t('dashboard.stats.stock_alerts') || stat.title === 'Valeur Stock' || stat.title === t('dashboard.stats.stock_value') ? 'text-base-content/60' : stat.title === 'Créances Clients' || stat.title === t('dashboard.stats.receivables') ? 'text-orange-600' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
-                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{stat.title === 'Alertes Stock' || stat.title === t('dashboard.stats.stock_alerts') ? t('dashboard.stats.stock_alerts_sub') : stat.title === 'Valeur Stock' || stat.title === t('dashboard.stats.stock_value') ? t('dashboard.stats.stock_value_details') : stat.title === 'Créances Clients' || stat.title === t('dashboard.stats.receivables') ? t('dashboard.stats.receivables_pending') : 'vs hier'}</span>
+                <span className={`text-xs font-medium ${['Alertes Stock', t('dashboard.stats.stock_alerts'), 'Valeur Stock', t('dashboard.stats.stock_value')].includes(stat.title) ? 'text-base-content/60' : ['Créances Clients', t('dashboard.stats.receivables'), 'MON PANIER MOYEN'].includes(stat.title) ? 'text-primary' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
+                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{['Alertes Stock', t('dashboard.stats.stock_alerts')].includes(stat.title) ? '' : ['Valeur Stock', t('dashboard.stats.stock_value')].includes(stat.title) ? t('dashboard.stats.stock_value_details') : ['Créances Clients', t('dashboard.stats.receivables')].includes(stat.title) ? t('dashboard.stats.receivables_pending') : ['MES VENTES (JOUR)', 'MON PANIER MOYEN'].includes(stat.title) ? '' : 'vs hier'}</span>
                 </span>
                 {stat.details && (
                   <div className="text-xs text-base-content/50 mt-1 font-medium hidden sm:block">
@@ -164,6 +207,8 @@ export default function Dashboard() {
                 )}
                 {stat.icon === '💰' && <span className="text-2xl">💰</span>}
                 {stat.icon === '🏷️' && <span className="text-2xl">🏷️</span>}
+                {stat.icon === '👤' && <span className="text-2xl">👤</span>}
+                {stat.icon === '🛍️' && <span className="text-2xl">🛍️</span>}
               </div>
             </div>
           );
@@ -182,8 +227,8 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Section Unités Gratuites (UG) */}
-      {ugStats && (ugStats as any).results && (
+      {/* Section Unités Gratuites (UG) - Hide for VENDEUR */}
+      {ugStats && (ugStats as any).results && stats?.role !== 'VENDEUR' && stats?.role !== 'CAISSIER' && (
         <div className="card bg-base-100 shadow-sm border border-base-200 w-full xl:w-2/3">
           <div className="card-body p-4">
             <div className="flex items-center justify-between mb-4">
@@ -247,9 +292,10 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column: Charts & Transactions */}
+        {/* Left Column: Charts & Transactions - Hide charts for VENDEUR */}
         <div className="xl:col-span-2 space-y-6">
-          {/* Revenue Bar Chart */}
+          {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
+          /* Revenue Bar Chart */
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
               <h2 className="card-title text-lg font-bold text-base-content mb-4">{t('dashboard.charts.revenue_evolution')}</h2>
@@ -295,8 +341,10 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+          )}
 
-          {/* Revenue Line Chart (Trend) */}
+          {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
+          /* Revenue Line Chart (Trend) */
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
               <h2 className="card-title text-lg font-bold text-base-content mb-4">{t('dashboard.charts.sales_trend')}</h2>
@@ -344,6 +392,7 @@ export default function Dashboard() {
                )}
             </div>
           </div>
+          )}
 
 
         </div>

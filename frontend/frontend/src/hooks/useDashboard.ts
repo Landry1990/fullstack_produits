@@ -18,13 +18,19 @@ const promisEndpoint = apiBaseUrl
     : '/api/promis/disponibles/';
 
 interface DashboardStats {
-    revenue: { value: number; change: number };
-    sales: { value: number; change: number };
-    clients: { value: number; change: number };
-    low_stock: { value: number; change: number };
-    receivables: { value: number; count: number };
-    discount: { value: number; change: number };
+    role?: 'PHARMACIEN' | 'VENDEUR' | 'CAISSIER';
+    revenue?: { value: number; change: number };
+    sales?: { value: number; change: number };
+    clients?: { value: number; change: number };
+    low_stock?: { value: number; change: number };
+    receivables?: { value: number; count: number };
+    discount?: { value: number; change: number };
     stock_value?: { value: number };
+    user_stats?: {
+        sales: number;
+        count: number;
+        avg_basket: number;
+    };
 }
 
 interface RevenueChartData {

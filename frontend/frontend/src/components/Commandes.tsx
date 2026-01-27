@@ -16,7 +16,7 @@ import CommandeForm from './Commandes/CommandeForm'
 import TransferCommandeModal from './Commandes/TransferCommandeModal'
 import MergeCommandesModal from './Commandes/MergeCommandesModal'
 import { useCommandeActions } from '../hooks/useCommandeActions';
-import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
+// import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
 import { useFormes } from '../hooks/useProduits';
@@ -106,8 +106,10 @@ export default function Commandes({ forcedType }: CommandesProps) {
   
 
   
-  // Initialize Keyboard Navigation Hook
-  const { searchInputRef, fournisseurSelectRef } = useKeyboardNavigation({ viewMode });
+  // Initialize Keyboard Navigation Hook (Removed invalid usage, defining refs manually)
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
+  // const { searchInputRef, fournisseurSelectRef } = useKeyboardNavigation({ viewMode });
 
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref pour l'input file
 

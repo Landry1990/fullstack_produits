@@ -44,7 +44,7 @@ export default function Clients() {
   const [clients, setClients] = useState<ExtendedClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<ExtendedClient | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  // const [error, setError] = useState<string | null>(null); // Removed in favor of toast
+
   
   // View/Navigation State - REPLACED with Modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -85,7 +85,7 @@ export default function Clients() {
 
   async function fetchClients() {
     setLoading(true);
-    // setError(null);
+
     try {
       const response = await axios.get(clientsEndpoint);
       // Handle both paginated and non-paginated responses
@@ -195,7 +195,7 @@ export default function Clients() {
 
   async function handleAddClient(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    // setError(null);
+
     setIsSubmitting(true);
     try {
       // Create Client with nested Ayants Droit

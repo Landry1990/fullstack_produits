@@ -14,6 +14,8 @@ interface CartTableProps {
   onOpenLotModal: (product: ProduitModel, currentLotId: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
   onReturnFocus: () => void
+  selectedIndex?: number
+  onSelectLine?: (index: number) => void
 }
 
 export default function CartTable({
@@ -24,7 +26,9 @@ export default function CartTable({
   removeLigne,
   onOpenLotModal,
   quantityInputsRef,
-  onReturnFocus
+  onReturnFocus,
+  selectedIndex = -1,
+  onSelectLine
 }: CartTableProps) {
   const { user } = useAuth()
   const { t } = useTranslation()
@@ -78,8 +82,13 @@ export default function CartTable({
         </tr>
       </thead>
       <tbody>
-        {lignesFacture.map((ligne) => (
-          <tr key={ligne.produit.id} className="hover:bg-base-50/50 group border-b border-base-100 last:border-0">
+        {lignesFacture.map((ligne, index) => (
+          <tr 
+             key={ligne.produit.id} 
+             className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 cursor-pointer transition-colors duration-150 ${index === selectedIndex ? '!bg-blue-500/20 border-l-4 border-l-primary' : ''}`}
+             ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
+             onClick={() => onSelectLine?.(index)}
+          >
             <td className="pl-2 md:pl-4 py-1">
               <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
                 {ligne.produit.name}

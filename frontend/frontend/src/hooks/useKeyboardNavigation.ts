@@ -1,45 +1,75 @@
-
-import { useEffect, useRef, type RefObject } from 'react';
+import { useState, useCallback, useEffect } from 'react'
 
 interface UseKeyboardNavigationProps {
-    viewMode: 'LIST' | 'CREATE' | 'DETAILS' | 'EDIT';
+    listLength: number
+    onValidate?: () => void
+    onDelete?: (index: number) => void
+    onIncrement?: (index: number) => void
+    onDecrement?: (index: number) => void
+    enabled?: boolean
 }
 
-interface UseKeyboardNavigationReturn {
-    searchInputRef: RefObject<HTMLInputElement>;
-    fournisseurSelectRef: RefObject<HTMLSelectElement>;
-}
+export const useKeyboardNavigation = ({
+    listLength,
+    onValidate,
+    onDelete,
+    onIncrement,
+    onDecrement,
+    enabled = true
+}: UseKeyboardNavigationProps) => {
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1)
 
-export function useKeyboardNavigation({ viewMode }: UseKeyboardNavigationProps): UseKeyboardNavigationReturn {
-    const searchInputRef = useRef<HTMLInputElement>(null);
-    const fournisseurSelectRef = useRef<HTMLSelectElement>(null);
+    // Reset selection when list is empty
+    useEffect(() => {
+        if (listLength === 0) {
+            setSelectedIndex(-1)
+        } else if (selectedIndex >= listLength) {
+            setSelectedIndex(listLength - 1)
+        }
+    }, [listLength])
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (!enabled) return
+
+        // Navigation
+        if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            setSelectedIndex(prev => (prev < listLength - 1 ? prev + 1 : prev))
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev))
+        }
+        // Actions on selected item
+        else if (selectedIndex !== -1) {
+            if (e.key === '+' || e.key === 'Add') { // Numpad + or standard +
+                e.preventDefault()
+                onIncrement?.(selectedIndex)
+            } else if (e.key === '-' || e.key === 'Subtract') { // Numpad - or standard -
+                e.preventDefault()
+                onDecrement?.(selectedIndex)
+            } else if (e.key === 'Delete' || e.key === 'Backspace') {
+                // Avoid deleting if focusing an input (though enabled check should handle this usually)
+                if (document.activeElement?.tagName === 'INPUT') return
+
+                e.preventDefault()
+                onDelete?.(selectedIndex)
+            }
+        }
+
+        // Validation
+        if (e.key === 'F10' || (e.ctrlKey && e.key === 'Enter')) {
+            e.preventDefault()
+            onValidate?.()
+        }
+    }, [enabled, listLength, selectedIndex, onIncrement, onDecrement, onDelete, onValidate])
 
     useEffect(() => {
-        const handleGlobalKeyDown = (e: KeyboardEvent) => {
-            // Active only in CREATE or EDIT modes
-            if (viewMode !== 'CREATE' && viewMode !== 'EDIT') return;
-
-            // F2 : Focus Product Search
-            if (e.key === 'F2') {
-                e.preventDefault();
-                searchInputRef.current?.focus();
-                return;
-            }
-
-            // F4 : Focus Supplier Select
-            if (e.key === 'F4') {
-                e.preventDefault();
-                fournisseurSelectRef.current?.focus();
-                return;
-            }
-        };
-
-        window.addEventListener('keydown', handleGlobalKeyDown);
-        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-    }, [viewMode]);
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [handleKeyDown])
 
     return {
-        searchInputRef: searchInputRef as RefObject<HTMLInputElement>,
-        fournisseurSelectRef: fournisseurSelectRef as RefObject<HTMLSelectElement>
-    };
+        selectedIndex,
+        setSelectedIndex
+    }
 }

@@ -53,6 +53,7 @@ router.register(r'ordonnancier', OrdonnancierViewSet, basename='ordonnancier')
 router.register(r'formes', FormeViewSet, basename='forme')
 router.register(r'groupes', GroupeViewSet, basename='groupe')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
+router.register(r'clinical', ClinicalViewSet, basename='clinical')
 
 
 # The API URLs are now determined automatically by the router.

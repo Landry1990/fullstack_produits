@@ -29,7 +29,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
         return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise)
     }, [])
 
-    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean }) => {
+    const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => {
         setLoading(true)
         try {
             const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
@@ -96,15 +96,17 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                     }
 
                     // Focus logic
-                    setTimeout(() => {
-                        if (quantityInputsRef?.current) {
-                            const qtyInput = quantityInputsRef.current.get(fullProduit.id)
-                            if (qtyInput) {
-                                qtyInput.focus()
-                                qtyInput.select()
+                    if (!options?.preventFocus) {
+                        setTimeout(() => {
+                            if (quantityInputsRef?.current) {
+                                const qtyInput = quantityInputsRef.current.get(fullProduit.id)
+                                if (qtyInput) {
+                                    qtyInput.focus()
+                                    qtyInput.select()
+                                }
                             }
-                        }
-                    }, 50)
+                        }, 50)
+                    }
 
                     return [...prevLignes, nouvelleLigne]
                 }
