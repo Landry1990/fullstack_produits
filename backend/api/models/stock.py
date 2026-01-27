@@ -1,0 +1,240 @@
+# -*- coding: utf-8 -*-
+"""
+Stock-related models: StockLot, LotSequence, StockAdjustment, MouvementStock.
+"""
+from django.db import models
+from django.utils import timezone
+from django.core.cache import cache
+from django.contrib.auth.models import User
+from django.db.models.signals import pre_save, post_save, post_delete
+from django.dispatch import receiver
+
+
+class LotSequence(models.Model):
+    """
+    Modèle pour gérer la séquence atomique des numéros de lot.
+    Singleton : une seule instance (id=1) stocke le dernier numéro utilisé.
+    """
+    id = models.IntegerField(primary_key=True, default=1)
+    last_number = models.IntegerField(default=0, help_text="Dernier numéro de séquence utilisé")
+    
+    class Meta:
+        db_table = 'lot_sequence'
+    
+    def __str__(self):
+        return f"Lot Sequence: {self.last_number}"
+
+
+def generate_lot_number():
+    """
+    Génère un numéro de lot unique au format L01
+    Utilise Redis (cache) pour éviter le verrouillage global de la base de données.
+    """
+    CACHE_KEY = 'lot_sequence'
+    
+    try:
+        sequence = cache.incr(CACHE_KEY)
+    except ValueError:
+        last_number = 0
+        
+        # Import here to avoid circular imports
+        last_stock = StockLot.objects.order_by('-created_at', '-id').first()
+        
+        if last_stock and last_stock.lot and last_stock.lot.startswith('L'):
+            try:
+                last_number = int(last_stock.lot[1:])
+            except ValueError:
+                pass
+                
+        try:
+            seq_obj = LotSequence.objects.get(id=1)
+            if seq_obj.last_number > last_number:
+                last_number = seq_obj.last_number
+        except LotSequence.DoesNotExist:
+            pass
+            
+        cache.set(CACHE_KEY, last_number, timeout=None)
+        sequence = cache.incr(CACHE_KEY)
+        LotSequence.objects.update_or_create(id=1, defaults={'last_number': sequence})
+
+    return f'L{sequence:02d}'
+
+
+class StockLot(models.Model):
+    """
+    Représente un lot de stock reçu d'un fournisseur.
+    Permet la traçabilité FIFO et le calcul du CA par fournisseur.
+    """
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='stock_lots'
+    )
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    commande_produit = models.ForeignKey(
+        'CommandeProduit', on_delete=models.CASCADE, 
+        related_name='stock_lot', null=True, blank=True, 
+        help_text="Référence à la ligne de commande (si applicable)"
+    )
+    fournisseur = models.ForeignKey(
+        'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    fournisseur_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du fournisseur sauvegardé")
+    quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
+    quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
+    quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
+    quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
+    price_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, 
+        help_text="Prix d'achat unitaire effectif (ajusté avec UG)"
+    )
+    selling_price = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.00, 
+        help_text="Prix de vente lors de la réception"
+    )
+    lot = models.CharField(
+        max_length=20, blank=True, null=True, db_index=True, 
+        help_text="Numéro de lot auto-généré ou manuel"
+    )
+    date_expiration = models.DateField(blank=True, null=True)
+    date_reception = models.DateTimeField(help_text="Date de réception du lot (pour FIFO)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['date_reception']
+        indexes = [
+            models.Index(fields=['produit', 'date_reception']),
+            models.Index(fields=['produit', 'quantity_remaining']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['produit', 'lot'],
+                condition=models.Q(lot__isnull=False),
+                name='unique_produit_lot'
+            )
+        ]
+
+    def __str__(self):
+        ug_info = f" dont {self.quantity_free} UG" if self.quantity_free > 0 else ""
+        produit_name = self.produit.name if self.produit else self.produit_nom or "Produit inconnu"
+        return f"Lot {self.id} - {produit_name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
+
+
+class StockAdjustment(models.Model):
+    """Traçabilité des ajustements manuels de stock."""
+    
+    class ReasonType(models.TextChoices):
+        INVENTAIRE = 'INVENTAIRE', 'Ajustement inventaire'
+        CASSE = 'CASSE', 'Cassé'
+        VOL = 'VOL', 'Vol'
+        CONFUSION = 'CONFUSION', 'Confusion'
+        ERREUR_ENTREE = 'ERR_ENTREE', 'Erreur d\'entrée en stock'
+        AVARIE = 'AVARIE', 'Avarié'
+        USAGE_INTERNE = 'USAGE_INT', 'Usage interne'
+    
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='adjustments'
+    )
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    stock_lot = models.ForeignKey(
+        'StockLot', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='adjustments'
+    )
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    
+    quantity_before = models.IntegerField(help_text="Stock avant ajustement")
+    quantity_after = models.IntegerField(help_text="Stock après ajustement")
+    quantity_change = models.IntegerField(help_text="Différence (+/-)")
+    
+    reason_type = models.CharField(max_length=10, choices=ReasonType.choices)
+    reason_detail = models.TextField(blank=True, default='', help_text="Note optionnelle")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['produit', '-created_at']),
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        produit_name = self.produit.name if self.produit else self.produit_nom or "Produit inconnu"
+        return f"{produit_name}: {self.quantity_change:+d} ({self.get_reason_type_display()})"
+
+
+class MouvementStock(models.Model):
+    """
+    Historique de tous les mouvements de stock (Entrées, Sorties, Ajustements, Transformations)
+    """
+    class TypeMouvement(models.TextChoices):
+        ENTREE = 'ENTREE', 'Entrée (Commande)'
+        SORTIE = 'SORTIE', 'Sortie (Vente)'
+        RETOUR = 'RETOUR', 'Retour (Annulation)'
+        AJUSTEMENT = 'AJUSTEMENT', 'Ajustement Inventaire'
+        AVOIR = 'AVOIR', 'Avoir (Retour Fournisseur)'
+        TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entrée)'
+        TRANSFORMATION_SORTIE = 'TRANSFORMATION_SORTIE', 'Transformation (Sortie)'
+
+    produit = models.ForeignKey(
+        'Produit', on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='mouvements_stock'
+    )
+    produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    type_mouvement = models.CharField(max_length=30, choices=TypeMouvement.choices)
+    quantite = models.IntegerField(help_text="Quantité mouvementée (positive ou négative)")
+    stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock après mouvement (snapshot)")
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    date = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True)
+    
+    class Meta:
+        ordering = ['-date']
+        indexes = [
+            models.Index(fields=['produit', 'date']),
+        ]
+
+    def __str__(self):
+        produit_name = self.produit.name if self.produit else self.produit_nom or "Produit inconnu"
+        return f"{self.date} - {produit_name} - {self.type_mouvement} ({self.quantite})"
+
+
+# ============== SIGNALS ==============
+
+@receiver(pre_save, sender=StockLot)
+def auto_generate_lot_number(sender, instance, **kwargs):
+    """Génère automatiquement un numéro de lot si non fourni."""
+    if not instance.lot:
+        instance.lot = generate_lot_number()
+
+
+@receiver(post_save, sender=StockLot)
+def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
+    """
+    Synchronise le stock du produit quand un lot est créé ou modifié.
+    """
+    if instance.produit and instance.produit.use_lot_management:
+        from django.db.models import Sum
+        from .products import Produit
+        
+        total = instance.produit.stock_lots.aggregate(
+            Sum('quantity_remaining')
+        )['quantity_remaining__sum'] or 0
+        
+        if instance.produit.stock != total:
+            Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
+
+
+@receiver(post_delete, sender=StockLot)
+def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
+    """Synchronise le stock du produit quand un lot est supprimé."""
+    if instance.produit and instance.produit.use_lot_management:
+        from django.db.models import Sum
+        from .products import Produit
+        
+        total = instance.produit.stock_lots.aggregate(
+            Sum('quantity_remaining')
+        )['quantity_remaining__sum'] or 0
+        
+        Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
