@@ -42,6 +42,7 @@ export default function Produit() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('')
   const [filterRayon, setFilterRayon] = useState('')
   const [filterFournisseur, setFilterFournisseur] = useState('')
+  const [filterExclusive, setFilterExclusive] = useState(false)
 
   // Debounce de la recherche (300ms)
   useEffect(() => {
@@ -118,7 +119,8 @@ export default function Produit() {
     forme: '',
     use_lot_management: true,  // Default to true
     requires_prescription: false,
-    surveillance_category: 'NONE'
+    surveillance_category: 'NONE',
+    is_supplier_exclusive: false
   })
   
   // Formulaire d'ajustement de stock
@@ -258,7 +260,8 @@ export default function Produit() {
       forme: produit.forme ? String(produit.forme) : '',
       use_lot_management: produit.use_lot_management ?? true,
       requires_prescription: produit.requires_prescription ?? false,
-      surveillance_category: produit.surveillance_category || 'NONE'
+      surveillance_category: produit.surveillance_category || 'NONE',
+      is_supplier_exclusive: produit.is_supplier_exclusive ?? false
     })
     setIsEditModalOpen(true)
   }
@@ -293,7 +296,8 @@ export default function Produit() {
         forme: editForm.forme ? parseInt(editForm.forme, 10) : null,
         use_lot_management: editForm.use_lot_management,
         requires_prescription: editForm.requires_prescription || false,
-        surveillance_category: (editForm.surveillance_category || 'NONE') as "NONE" | "STANDARD" | "RENFORCEE"
+        surveillance_category: (editForm.surveillance_category || 'NONE') as "NONE" | "STANDARD" | "RENFORCEE",
+        is_supplier_exclusive: editForm.is_supplier_exclusive
       }
       
       const updatedProduit = await updateProduitMutation.mutateAsync({ id: selectedProduit.id, data: payload })
@@ -522,9 +526,13 @@ export default function Produit() {
     if (filterFournisseur) {
       list = list.filter(p => (p.fournisseur_name || '').toLowerCase() === filterFournisseur.toLowerCase())
     }
+
+    if (filterExclusive) {
+      list = list.filter(p => p.is_supplier_exclusive)
+    }
     
     return list.sort((a, b) => a.name.localeCompare(b.name))
-  }, [produits, debouncedSearchQuery, filterRayon, filterFournisseur])
+  }, [produits, debouncedSearchQuery, filterRayon, filterFournisseur, filterExclusive])
 
   // Navigation clavier avec flèches haut/bas et Entrée pour sélection
   useEffect(() => {
@@ -690,13 +698,23 @@ export default function Produit() {
                 <option value="">{t('products.filters.provider_placeholder')}</option>
                 {fournisseurs.map(f => <option key={f.id} value={f.name}>{f.name}</option>)}
               </select>
-              {(searchQuery || filterRayon || filterFournisseur) && (
+              
+              <button
+                className={`btn btn-xs h-7 w-7 btn-square ${filterExclusive ? 'btn-active btn-warning' : 'btn-ghost'}`}
+                onClick={() => setFilterExclusive(!filterExclusive)}
+                title="Afficher uniquement les produits exclusifs"
+              >
+                🔒
+              </button>
+
+              {(searchQuery || filterRayon || filterFournisseur || filterExclusive) && (
                 <button
                   className="btn btn-xs btn-ghost btn-square"
                   onClick={() => {
                     setSearchQuery('')
                     setFilterRayon('')
                     setFilterFournisseur('')
+                    setFilterExclusive(false)
                   }}
                   title={t('products.actions.reset')}
                 >
@@ -774,6 +792,9 @@ export default function Produit() {
                             title={produit.name}
                           >
                             {produit.name}
+                            {produit.is_supplier_exclusive && (
+                                <span className="ml-1 text-[10px] text-warning" title="Exclusivité Fournisseur">🔒</span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1881,6 +1902,18 @@ export default function Produit() {
                     <option key={f.id} value={f.id}>{f.name}</option>
                   ))}
                 </select>
+                <label className="label cursor-pointer justify-start gap-2 mt-1">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-xs checkbox-primary"
+                    checked={editForm.is_supplier_exclusive}
+                    onChange={(e) => setEditForm({...editForm, is_supplier_exclusive: e.target.checked})}
+                    disabled={!editForm.fournisseur} 
+                  />
+                  <span className={`label-text-alt ${!editForm.fournisseur ? 'text-base-content/30' : ''}`}>
+                    Exclusivité fournisseur
+                  </span>
+                </label>
               </div>
             </div>
 

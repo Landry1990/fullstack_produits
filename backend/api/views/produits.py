@@ -45,7 +45,7 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
     - Serializers: 50% smaller responses for lists
     """
     # Optimisation: select_related pour éviter les requêtes N+1 sur rayon et fournisseur
-    queryset = Produit.objects.select_related('rayon', 'fournisseur').order_by('name')
+    queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme').order_by('name')
     serializer_class = ProduitSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.OrderingFilter]  # Removed SearchFilter, using custom search

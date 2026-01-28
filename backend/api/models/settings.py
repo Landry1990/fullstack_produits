@@ -104,3 +104,30 @@ class InvoiceSettings(models.Model):
 
     def __str__(self):
         return "Invoice Configuration"
+
+
+class ConfigurationOption(models.Model):
+    """
+    Modèle générique pour stocker des listes de configuration dynamiques
+    (ex: Motifs d'ajustement, Motifs de retour, Coupures de monnaie)
+    """
+    class Type(models.TextChoices):
+        STOCK_ADJUSTMENT_REASON = 'STOCK_ADJ', 'Motif Ajustement Stock'
+        SUPPLIER_RETURN_REASON = 'SUPPLIER_RET', 'Motif Retour Fournisseur'
+        MONEY_DENOMINATION = 'MONEY_DENOM', 'Coupure Monnaie'
+
+    code = models.CharField(max_length=50, help_text="Code technique (ex: PERIME)")
+    label = models.CharField(max_length=200, help_text="Libellé affiché (ex: Produit Périmé)")
+    type = models.CharField(max_length=20, choices=Type.choices)
+    value = models.CharField(max_length=100, blank=True, null=True, help_text="Valeur optionnelle (ex: 10000 pour un billet)")
+    is_active = models.BooleanField(default=True)
+    order = models.IntegerField(default=0, help_text="Ordre d'affichage")
+    
+    class Meta:
+        verbose_name = "Option de Configuration"
+        verbose_name_plural = "Options de Configuration"
+        ordering = ['type', 'order', 'label']
+        unique_together = ['type', 'code']
+
+    def __str__(self):
+        return f"[{self.get_type_display()}] {self.label}"

@@ -23,7 +23,7 @@ import Avoirs from './components/Avoirs'
 import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 import InvoiceSettings from './components/InvoiceSettings'
-import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
+
 import JournalAudit from './components/JournalAudit'
 import JournalAjustements from './components/JournalAjustements'
 import Promis from './components/Promis'
@@ -38,6 +38,8 @@ import AnalyseABC from './components/AnalyseABC'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
+import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
+import ConfigurationOptions from './components/settings/ConfigurationOptions'
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -139,7 +141,9 @@ const router = createBrowserRouter([
           { path: 'historique-achats/directes', element: <HistoriqueAchats forcedType="DIR" /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
           { path: 'invoice-settings', element: <InvoiceSettings /> },
+
           { path: 'pharmacy-settings', element: <PharmacySettingsForm /> },
+          { path: 'settings/options', element: <ConfigurationOptions /> },
           { 
             path: 'journal-audit', 
             element: (

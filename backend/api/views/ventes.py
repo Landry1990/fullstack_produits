@@ -99,7 +99,17 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     - List view: Lightweight serializer (7 fields) - excludes products and payments
     - Detail view: Complete serializer with all products and payments
     """
-    queryset = Facture.objects.select_related('client', 'ayant_droit').prefetch_related('produits', 'paiements').all().order_by('-date')
+    # queryset = Facture.objects.select_related('client', 'ayant_droit').prefetch_related('produits', 'paiements').all().order_by('-date')
+    
+    def get_queryset(self):
+        # Base optimization for all views: select related foreign keys
+        queryset = Facture.objects.select_related('client', 'ayant_droit').order_by('-date')
+        
+        # Add prefetch only for detail view where products/payments are shown
+        if self.action == 'retrieve':
+            queryset = queryset.prefetch_related('produits', 'paiements')
+            
+        return queryset
     serializer_class = FactureSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]

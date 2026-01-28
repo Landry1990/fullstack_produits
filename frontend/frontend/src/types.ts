@@ -76,6 +76,7 @@ export interface ProduitModel {
   dernier_achat?: string | null
   dernier_vente?: string | null
   last_purchase_price?: string | null
+  is_supplier_exclusive?: boolean
 }
 
 export interface ProduitForm {
@@ -97,6 +98,7 @@ export interface ProduitForm {
   tva: string
   requires_prescription?: boolean
   surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
+  is_supplier_exclusive?: boolean
 }
 
 export interface AchatProduit {

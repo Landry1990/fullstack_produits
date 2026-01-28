@@ -609,7 +609,32 @@ export default function Commandes({ forcedType }: CommandesProps) {
     }
   }
 
-  function selectProduct(product: ProduitModel) {
+  async function selectProduct(product: ProduitModel) {
+    // Vérification Exclusivité Fournisseur
+    if (product.is_supplier_exclusive) {
+        let currentSupplierId: number | null = null;
+        
+        if (viewMode === 'CREATE' && newCommandeFournisseurId) {
+            currentSupplierId = parseInt(newCommandeFournisseurId, 10);
+        } else if ((viewMode === 'EDIT' || viewMode === 'DETAILS') && selectedCommande?.fournisseur) {
+            currentSupplierId = selectedCommande.fournisseur;
+        }
+
+        if (currentSupplierId && product.fournisseur && currentSupplierId !== product.fournisseur) {
+             const confirmed = await confirm({
+                 title: '⚠️ Produit Exclusif',
+                 message: `Ce produit est marqué comme exclusif au fournisseur "${product.fournisseur_name}".\n\nÊtes-vous sûr de vouloir le commander chez un autre fournisseur ?`,
+                 confirmText: 'Oui, ajouter quand même',
+                 cancelText: 'Annuler',
+                 variant: 'warning'
+             });
+
+             if (!confirmed) {
+                 return;
+             }
+        }
+    }
+
     // Vérifier si le produit existe déjà
     const existingIndex = commandeProduits.findIndex(
       p => (typeof p.produit === 'object' ? p.produit.id : p.produit) === product.id

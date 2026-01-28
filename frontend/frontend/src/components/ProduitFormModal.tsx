@@ -50,6 +50,7 @@ export default function ProduitFormModal({
     forme: '',
     groupe: '',
     tva: '19.25',
+    is_supplier_exclusive: false,
     ...initialData,
   });
   const [loading, setLoading] = useState(false);
@@ -116,6 +117,7 @@ export default function ProduitFormModal({
         tva: form.tva || '19.25',
         requires_prescription: form.requires_prescription || false,
         surveillance_category: form.surveillance_category || 'NONE',
+        is_supplier_exclusive: form.is_supplier_exclusive || false,
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
@@ -292,6 +294,26 @@ export default function ProduitFormModal({
               </select>
             </label>
           </div>
+          
+          {/* Supplier Exclusivity Checkbox */}
+          {form.fournisseur && (
+            <div className="form-control">
+              <label className="label cursor-pointer justify-start gap-4">
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-primary checkbox-sm"
+                  checked={form.is_supplier_exclusive || false}
+                  onChange={(e) => setForm((p) => ({ ...p, is_supplier_exclusive: e.target.checked }))}
+                />
+                <div>
+                  <span className="label-text font-medium">Exclusivité Fournisseur</span>
+                  <p className="text-xs text-base-content/60">
+                    Ce produit ne pourra être commandé que chez ce fournisseur.
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
           
           <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Ordonnance & Surveillance</div>
           

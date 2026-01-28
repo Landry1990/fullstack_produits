@@ -3,9 +3,46 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings, AuditLog
-from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer, PharmacySettingsSerializer
+from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings, AuditLog, ConfigurationOption
+from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer, PharmacySettingsSerializer, ConfigurationOptionSerializer
 from ..audit_helpers import log_audit
+
+# ... (existing classes)
+
+class ConfigurationOptionViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for dynamic configuration options.
+    """
+    queryset = ConfigurationOption.objects.all()
+    serializer_class = ConfigurationOptionSerializer
+    permission_classes = [permissions.IsAuthenticated] # Read allowed for all, Write restricted if needed elsewhere
+    filterset_fields = ['type', 'code', 'is_active']
+    ordering_fields = ['order', 'label']
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='ConfigurationOption',
+            object_id=obj.pk,
+            description=f"Création option {obj.type}: {obj.label}",
+            details=serializer.data,
+            request=self.request
+        )
+
+    def perform_update(self, serializer):
+        obj = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='ConfigurationOption',
+            object_id=obj.pk,
+            description=f"Mise à jour option {obj.type}: {obj.label}",
+            details=serializer.data,
+            request=self.request
+        )
+
 
 class LoyaltySettingViewSet(viewsets.ModelViewSet):
     """
@@ -105,7 +142,7 @@ class PharmacySettingsView(APIView):
                 action=AuditLog.Action.UPDATE,
                 model_name='PharmacySettings',
                 object_id=settings.pk,
-                description=f"Mise à jour des paramètres de la pharmacie: {settings.name}",
+                description=f"Mise à jour des paramètres de la pharmacie: {settings.pharmacy_name}",
                 details=serializer.data,
                 request=request
             )
