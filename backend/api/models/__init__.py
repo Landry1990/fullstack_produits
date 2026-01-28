@@ -10,7 +10,7 @@ Usage: from api.models import Produit, Facture, etc.
 from .users import Profile, create_user_profile, save_user_profile
 
 # Settings
-from .settings import LoyaltySetting, PharmacySettings, InvoiceSettings
+from .settings import LoyaltySetting, PharmacySettings, InvoiceSettings, ConfigurationOption
 
 # Products
 from .products import (
@@ -61,7 +61,7 @@ __all__ = [
     # Users
     'Profile',
     # Settings
-    'LoyaltySetting', 'PharmacySettings', 'InvoiceSettings',
+    'LoyaltySetting', 'PharmacySettings', 'InvoiceSettings', 'ConfigurationOption',
     # Products
     'Rayon', 'Forme', 'Groupe', 'FamilleRisque', 
     'Substance', 'DrugInteraction', 'Produit',

@@ -1,0 +1,17 @@
+django>=5.0
+djangorestframework
+django-cors-headers
+django-filter
+django-silk
+whitenoise
+gunicorn
+psycopg2-binary
+django-redis
+redis
+reportlab
+python-dateutil
+requests
+Pillow
+python-dotenv
+django-extensions
+sentry-sdk

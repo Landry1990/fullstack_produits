@@ -178,6 +178,7 @@ export default function Ventes() {
           
           setTicketCaisse({
             ...data[0],
+            facture: facture,
             paiements_details: paiementsDetails
           } as TicketCaisse)
         }
@@ -213,6 +214,7 @@ export default function Ventes() {
 
       setTicketCaisse({
         ...results[0],
+        facture: selectedFacture,
         paiements_details: paiementsDetails
       } as TicketCaisse)
       

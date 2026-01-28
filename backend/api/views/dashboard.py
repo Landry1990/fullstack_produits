@@ -68,22 +68,34 @@ class DashboardViewSet(viewsets.ViewSet):
         ).count()
         
         # 4. Receivables (Créances Clients) - Total unpaid amounts on validated invoices
-        # Aligned with rapport_mensuel calculation - iterate through each invoice
-        factures_for_receivables = Facture.objects.filter(
+        # Optimization: Use DB aggregation instead of iterating all invoices
+        from django.db.models import Case, When, Value
+        
+        # Calculate sum of payments for each invoice
+        # Only validated invoices, not fully paid? 
+        # Actually we check all VALIDEE/PAYEE because partial payment is possible on PAYEE? No usually Validée.
+        
+        # Aggregation of invoices that have remaining amount > 0
+        # We assume 'reste_a_payer' is not stored on Facture, so we calculate it.
+        # Total = total_ttc
+        # Paid = Sum(paiements) where status='completee' and mode != 'en_compte'
+        
+        receivables_agg = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related('paiements')
+        ).annotate(
+            paid_amount=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
+                Decimal('0')
+            ),
+            remaining=F('total_ttc') - F('paid_amount')
+        ).filter(
+            remaining__gt=0.5 # Filter dust
+        ).aggregate(
+            total_debt=Coalesce(Sum('remaining'), Decimal('0')),
+            count=Count('id')
+        )
         
-        total_receivables = Decimal('0')
-        count_unpaid = 0
-        for f in factures_for_receivables:
-            # Sum of real payments (exclude 'en_compte', include only 'completee')
-            paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
-            reste = f.total_ttc - paye
-            if reste > 0:
-                total_receivables += reste
-                count_unpaid += 1
-        
-        receivables_data = {'total_debt': total_receivables, 'count': count_unpaid}
+        receivables_data = {'total_debt': receivables_agg['total_debt'], 'count': receivables_agg['count']}
         
         # 5. Discount (Remises accordées AUJOURD'HUI)
         discount_total = Facture.objects.filter(
@@ -296,26 +308,37 @@ class DashboardViewSet(viewsets.ViewSet):
         """
         from ..models import Fournisseur
         
-        # We need to fetch all providers and calculate debt in python
-        # because solde_dette is a property that does logic on related sets
-        fournisseurs = Fournisseur.objects.all().prefetch_related(
-            'commande_set', 
-            'paiements_effectues'
-        )
+        # We calculate debt via annotation to avoid N+1 queries
+        # Debt = Sum(Commandes.total WHERE status=CLOT) - Sum(Paiements.montant)
+        
+        from ..models import Fournisseur
+        
+        suppliers_with_debt = Fournisseur.objects.annotate(
+            total_ordered=Coalesce(
+                Sum('commande__total', filter=Q(commande__status='CLOT')), 
+                Decimal('0')
+            ),
+            total_paid=Coalesce(
+                Sum('paiements_effectues__montant'), 
+                Decimal('0')
+            ),
+            calculated_debt=F('total_ordered') - F('total_paid')
+        ).filter(
+            calculated_debt__gt=0
+        ).values('id', 'name', 'phone', 'calculated_debt')
         
         data = []
         total_debt = Decimal('0.00')
         
-        for f in fournisseurs:
-            debt = f.solde_dette
-            if debt > 0:
-                total_debt += debt
-                data.append({
-                    'id': f.id,
-                    'name': f.name,
-                    'debt': float(debt),
-                    'phone': f.phone
-                })
+        for s in suppliers_with_debt:
+            debt = s['calculated_debt']
+            total_debt += debt
+            data.append({
+                'id': s['id'],
+                'name': s['name'],
+                'debt': float(debt),
+                'phone': s['phone']
+            })
                 
         # Sort by highest debt
         data.sort(key=lambda x: x['debt'], reverse=True)

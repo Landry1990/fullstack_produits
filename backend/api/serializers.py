@@ -10,7 +10,7 @@ from .models import (
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
-    Groupe, SmsLog, SmsTemplate, PaiementFournisseur
+    Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -215,7 +215,7 @@ class ProduitSerializer(serializers.ModelSerializer):
             'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
             'stock_lots', 'requires_prescription', 'surveillance_category',
             'dernier_achat', 'dernier_vente', 'is_public',
-            'taux_marge', 'pourcentage_marge'
+            'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
@@ -836,13 +836,12 @@ class FacturePrintSerializer(serializers.ModelSerializer):
     def get_tva_analysis(self, obj):
         """
         Calcule la répartition par taux de TVA.
-        Utilise la méthode centralisée du modèle.
+        Utilise la méthode centralisée du modèle et formate pour JSON.
         """
-        return obj.get_tva_analysis()
-
+        analysis = obj.get_tva_analysis()
         return [
             {
-                'taux': taux,
+                'taux': str(taux), # Convert key to string if it's Decimal
                 'base_ht': vals['base_ht'],
                 'montant_tva': vals['montant_tva']
             }
@@ -907,3 +906,10 @@ class SmsLogSerializer(serializers.ModelSerializer):
             return f"{obj.promis.produit_name} ({obj.promis.quantite})"
         return None
 
+
+class ConfigurationOptionSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    
+    class Meta:
+        model = ConfigurationOption
+        fields = '__all__'

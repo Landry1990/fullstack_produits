@@ -110,6 +110,10 @@ class Produit(models.Model):
     id = models.AutoField(primary_key=True)
     rayon = models.ForeignKey('Rayon', on_delete=models.SET_NULL, null=True, blank=True)
     fournisseur = models.ForeignKey('Fournisseur', on_delete=models.SET_NULL, null=True, blank=True)
+    is_supplier_exclusive = models.BooleanField(
+        default=False,
+        help_text="Si activé, ce produit ne peut être commandé que chez ce fournisseur."
+    )
     forme = models.ForeignKey('Forme', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
     groupe = models.ForeignKey('Groupe', on_delete=models.SET_NULL, null=True, blank=True, related_name='produits')
     famille_risque = models.ForeignKey(

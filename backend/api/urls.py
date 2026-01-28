@@ -9,7 +9,7 @@ from .views import (
     InvoiceConfigurationView, ClotureCaisseViewSet, StockAdjustmentViewSet,
     generer_suggestions_commande, HistoriqueVentesViewSet,
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView,
-    PharmacySettingsView, ProductImportView
+    PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -59,6 +59,7 @@ router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
 router.register(r'paiements-fournisseurs', PaiementFournisseurViewSet, basename='paiementfournisseur') # Force reload
+router.register(r'configuration-options', ConfigurationOptionViewSet, basename='configurationoption')
 
 
 # The API URLs are now determined automatically by the router.
@@ -71,4 +72,4 @@ urlpatterns = [
     path('products/import/', ProductImportView.as_view(), name='product-import'),
     # The API URLs are now determined automatically by the router.
     path('', include(router.urls)),
-]
+] 

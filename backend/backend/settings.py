@@ -33,10 +33,13 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # Token Auth
     'django_filters',  # Django Filter (templates & backends)
     'corsheaders',
+    'silk',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'silk.middleware.SilkyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -174,6 +177,17 @@ USE_TZ = False  # Désactivé pour travailler avec l'heure locale du système
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Whitenoise configuration for static files
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # CORS / CSRF configuration
 CORS_ALLOW_ALL_ORIGINS = True  # Accepte toutes les origines en développement
@@ -216,3 +230,38 @@ else:
             'LOCATION': 'unique-snowflake',
         }
     }
+
+
+# Silk Configuration
+SILK_PYTHON_PROFILER = True
+SILK_AUTHENTICATION = True
+SILK_AUTHORISATION = True
+
+# Sentry Configuration
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+SENTRY_DSN = os.getenv('SENTRY_DSN')
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+        ],
+        
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0 if DEBUG else 0.2,
+        
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True,
+        
+        # Set profiles_sample_rate to 1.0 to profile 100%
+        # of sampled transactions.
+        # We recommend adjusting this value in production.
+        profiles_sample_rate=1.0 if DEBUG else 0.2,
+    )
+

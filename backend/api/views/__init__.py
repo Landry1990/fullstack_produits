@@ -19,11 +19,10 @@ from .stocks import (
 )
 from .users import CustomAuthToken, UserViewSet
 from .auth import verify_password
-from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView
+from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView, ConfigurationOptionViewSet
 from .dashboard import DashboardViewSet, StatistiquesViewSet
 from .audit import AuditLogViewSet
 from .historique_ventes import HistoriqueVentesViewSet
-from .historique_achats import HistoriqueAchatsViewSet
 from .historique_achats import HistoriqueAchatsViewSet
 from .import_views import ProductImportView
 from .formes import FormeViewSet
@@ -48,11 +47,9 @@ __all__ = [
     'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
     'StockAnalysisUnsoldView', 'StockAnalysisOverstockView',
     'CustomAuthToken', 'UserViewSet', 'verify_password',
-    'LoyaltySettingViewSet', 'InvoiceConfigurationView', 'PharmacySettingsView',
+    'LoyaltySettingViewSet', 'InvoiceConfigurationView', 'PharmacySettingsView', 'ConfigurationOptionViewSet',
     'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',
     'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
-    'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
     'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet'
 ]
-
