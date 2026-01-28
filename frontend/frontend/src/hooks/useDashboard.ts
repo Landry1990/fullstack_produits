@@ -146,3 +146,14 @@ export const useExpiringLots = (months: number) => {
         staleTime: 1000 * 60 * 60, // 1 hour
     });
 };
+
+export const useSupplierDebts = () => {
+    return useQuery({
+        queryKey: ['dashboard', 'supplierDebts'],
+        queryFn: async () => {
+            const response = await axios.get(`${dashboardEndpoint}supplier_debts/`);
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+};

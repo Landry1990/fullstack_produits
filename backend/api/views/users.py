@@ -11,8 +11,9 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Profile as UserProfile, Client
+from ..models import Profile as UserProfile, Client, AuditLog
 from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer
+from ..audit_helpers import log_audit
 
 class CustomAuthToken(ObtainAuthToken):
     """
@@ -82,6 +83,58 @@ class UserViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return User.objects.all().order_by('username')
         return User.objects.filter(id=user.id)
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='User',
+            object_id=user.id,
+            description=f"Création utilisateur: {user.username}",
+            details={
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
+            },
+            request=self.request
+        )
+
+    def perform_update(self, serializer):
+        user = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='User',
+            object_id=user.id,
+            description=f"Mise à jour utilisateur: {user.username}",
+            details={
+                'username': user.username,
+                'email': user.email,
+                'is_staff': user.is_staff,
+                'is_superuser': user.is_superuser
+            },
+            request=self.request
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        user_id = instance.id
+        username = instance.username
+        
+        response = super().destroy(request, *args, **kwargs)
+        
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='User',
+            object_id=user_id,
+            description=f"Suppression utilisateur: {username}",
+            details={'username': username},
+            request=request
+        )
+        return response
 
     @action(detail=False, methods=['get'])
     def me(self, request):

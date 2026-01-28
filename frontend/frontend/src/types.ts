@@ -23,6 +23,7 @@ export interface Fournisseur {
   address: string;
   phone: string;
   email: string;
+  solde_dette?: string; // Dette totale (Factures CLOT - Paiements)
 }
 
 export interface AyantDroit {
@@ -141,6 +142,10 @@ export interface Commande {
   type?: 'LOC' | 'DIR'
   taux_change?: string
   frais_coefficient?: string
+  // Champs de paiement
+  montant_paye?: string
+  reste_a_payer?: string
+  statut_paiement?: 'PAYE' | 'PARTIEL' | 'IMPAYE' | 'NON_CONCERNE'
 }
 
 export interface LigneInventaire {
@@ -311,6 +316,22 @@ export interface Paiement {
     username: string
     full_name: string
   } | null
+}
+
+export interface PaiementFournisseur {
+  id: number;
+  fournisseur: number;
+  fournisseur_name?: string;
+  commande?: number | null;
+  commande_numero?: string | null;
+  montant: string;
+  date_paiement: string;
+  mode_paiement: 'ESP' | 'CHQ' | 'VIR' | 'AVOIR' | 'AUTRE';
+  reference?: string | null;
+  created_by?: number;
+  created_by_name?: string;
+  notes?: string;
+  created_at?: string;
 }
 
 export interface Creance {

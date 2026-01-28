@@ -12,6 +12,7 @@ from .views import (
     PharmacySettingsView, ProductImportView
 )
 from .views.formes import FormeViewSet
+from .views.paiements import PaiementFournisseurViewSet
 from .views.coupons import CouponMonnaieViewSet
 from .views.groupes import GroupeViewSet
 from .views.auth import verify_password
@@ -57,6 +58,7 @@ router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 # router.register(r'clinical', ClinicalViewSet, basename='clinical') # Commented out as ClinicalViewSet is missing import
 router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
+router.register(r'paiements-fournisseurs', PaiementFournisseurViewSet, basename='paiementfournisseur') # Force reload
 
 
 # The API URLs are now determined automatically by the router.

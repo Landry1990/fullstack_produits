@@ -20,7 +20,11 @@
             "direct_consult": "Directes - Consultation",
             "direct_hist": "Directes - Historique"
         },
-        "fournisseurs": "Fournisseurs",
+        "fournisseurs": {
+            "title": "Fournisseurs",
+            "list": "Liste & Contacts",
+            "finance": "Finance & Paiements"
+        },
         "clients": "Clients",
         "creances": "Créances",
         "stock": {

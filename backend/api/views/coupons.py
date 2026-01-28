@@ -3,8 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
-from ..models import CouponMonnaie, Facture, Caisse
+from ..models import CouponMonnaie, Facture, Caisse, AuditLog
 from ..serializers import CouponMonnaieSerializer
+from ..audit_helpers import log_audit
 
 class CouponMonnaieViewSet(viewsets.ModelViewSet):
     """
@@ -42,9 +43,25 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """
-        Associe l'utilisateur actuel comme créateur.
+        Associe l'utilisateur actuel comme créateur et log l'audit.
         """
-        serializer.save(cree_par=self.request.user)
+        coupon = serializer.save(cree_par=self.request.user)
+        
+        # Log Audit
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.OTHER, # We should ideally have a COUPON_CREATE action
+            model_name='CouponMonnaie',
+            object_id=coupon.id,
+            description=f"Création coupon #{coupon.numero}: {coupon.montant} F",
+            details={
+                'numero': coupon.numero,
+                'montant': float(coupon.montant),
+                'notes': coupon.notes,
+                'facture_origine': coupon.facture_origine.id if coupon.facture_origine else None
+            },
+            request=self.request
+        )
     
     @action(detail=True, methods=['post'])
     def utiliser(self, request, pk=None):

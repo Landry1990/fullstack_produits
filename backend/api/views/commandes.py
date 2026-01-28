@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import ProtectedError
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from django.http import HttpResponse
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
@@ -146,12 +147,13 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
         product_map = {p.id: p for p in locked_products}
         
-        # Préparer les lots de stock à créer en batch
         lots_to_create = []
         produits_to_update = []
         produits_dict = {}  # Pour éviter les doublons et suivre les mises à jour
         
         # Phase 1: Calculs en mémoire (pas de DB writes)
+        lots_dict = {} # Key: (produit_id, lot_number)
+        
         for item in items:
             # Calcul des quantités
             quantity_paid = item.quantity
@@ -167,31 +169,49 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             # Utiliser l'instance verrouillée du produit
             produit = product_map.get(item.produit_id)
             if not produit:
-                continue # Devrait pas arriver avec l'intégrité référentielle
+                continue
             
-            # 1. Préparer le lot de stock (si gestion par lots activée)
+            # 1. Gérer le lot de stock (si gestion par lots activée)
             if produit.use_lot_management:
-                # Auto-generate lot number if not provided
                 lot_number = item.lot
                 if not lot_number or lot_number.strip() == '':
-                    # Format: LOTXXX (using commande.id - same lot for all products in the order)
                     lot_number = f"LOT{commande.id:03d}"
                 
-                lot = StockLot(
-                    produit=produit,
-                    commande_produit=item,
-                    fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
-                    quantity_initial=total_qty,
-                    quantity_paid=quantity_paid,
-                    quantity_free=quantity_free,
-                    quantity_remaining=total_qty,
-                    price_cost=effective_cost,
-                    selling_price=produit.selling_price,
-                    lot=lot_number,
-                    date_expiration=item.date_expiration,
-                    date_reception=commande.date_cloture
-                )
-                lots_to_create.append(lot)
+                key = (produit.id, lot_number)
+                if key in lots_dict:
+                    # Fusionner avec le lot déjà préparé en mémoire pour cette commande
+                    existing_lot = lots_dict[key]
+                    
+                    # Nouveau coût moyen pondéré pour le lot (basé sur le coût d'achat)
+                    old_total = Decimal(existing_lot.quantity_initial)
+                    new_total = old_total + Decimal(total_qty)
+                    
+                    if new_total > 0:
+                        old_cost = Decimal(existing_lot.price_cost)
+                        val_old = old_total * old_cost
+                        val_new = Decimal(quantity_paid) * Decimal(item.price_cost)
+                        existing_lot.price_cost = (val_old + val_new) / new_total
+                    
+                    existing_lot.quantity_initial += total_qty
+                    existing_lot.quantity_paid += quantity_paid
+                    existing_lot.quantity_free += quantity_free
+                    existing_lot.quantity_remaining += total_qty
+                else:
+                    # Créer une nouvelle instance en mémoire
+                    lots_dict[key] = StockLot(
+                        produit=produit,
+                        commande_produit=item,
+                        fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
+                        quantity_initial=total_qty,
+                        quantity_paid=quantity_paid,
+                        quantity_free=quantity_free,
+                        quantity_remaining=total_qty,
+                        price_cost=effective_cost,
+                        selling_price=produit.selling_price,
+                        lot=lot_number,
+                        date_expiration=item.date_expiration,
+                        date_reception=commande.date_cloture
+                    )
             
             # 2. Calculer le nouveau PMP et stock
             # Éviter de traiter le même produit plusieurs fois (si plusieurs lignes pour même produit)
@@ -238,9 +258,47 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         # Phase 2: Écritures en base de données (bulk operations)
         
-        # 2.1 Créer tous les lots en une seule requête
-        if lots_to_create:
-            StockLot.objects.bulk_create(lots_to_create, batch_size=100)
+        # 2.1 Gérer les lots (Création ou Mise à jour si collision)
+        if lots_dict:
+            lots_to_create = []
+            lots_to_update = []
+            
+            # Vérifier les collisions avec des lots existants en une seule requête si possible
+            # Mais par sécurité et simplicité pour gérer les PMP de lots, on va faire un check par lot
+            for key, lot_data in lots_dict.items():
+                existing_db_lot = StockLot.objects.filter(produit_id=key[0], lot=key[1]).first()
+                if existing_db_lot:
+                    # Collision détectée avec un lot déjà en base : On fusionne
+                    old_total = Decimal(existing_db_lot.quantity_initial)
+                    new_total = old_total + Decimal(lot_data.quantity_initial)
+                    
+                    if new_total > 0:
+                        # PMP du lot
+                        val_old = old_total * Decimal(existing_db_lot.price_cost)
+                        val_new = Decimal(lot_data.quantity_initial) * Decimal(lot_data.price_cost)
+                        existing_db_lot.price_cost = (val_old + val_new) / new_total
+                    
+                    existing_db_lot.quantity_initial += lot_data.quantity_initial
+                    existing_db_lot.quantity_paid += lot_data.quantity_paid
+                    existing_db_lot.quantity_free += lot_data.quantity_free
+                    existing_db_lot.quantity_remaining += lot_data.quantity_remaining
+                    # Garder la date d'expiration la plus éloignée ou celle du nouveau lot ?
+                    # On garde l'existante ou on met à jour si la nouvelle est fournie
+                    if lot_data.date_expiration:
+                        existing_db_lot.date_expiration = lot_data.date_expiration
+                    
+                    lots_to_update.append(existing_db_lot)
+                else:
+                    lots_to_create.append(lot_data)
+            
+            if lots_to_create:
+                StockLot.objects.bulk_create(lots_to_create, batch_size=100)
+            if lots_to_update:
+                StockLot.objects.bulk_update(
+                    lots_to_update, 
+                    ['quantity_initial', 'quantity_paid', 'quantity_free', 'quantity_remaining', 'price_cost', 'date_expiration'],
+                    batch_size=100
+                )
         
         # 2.2 Mettre à jour tous les produits en batch
         if produits_to_update:
@@ -850,41 +908,54 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
         
         # Track which IDs are in the new payload
         payload_ids = set()
+        # Group and merge incoming data by (produit_id, lot)
+        merged_data = {}
+        for p in produits_data:
+            produit_id = p.get('produit')
+            lot = p.get('lot') or None
+            key = (produit_id, lot)
+            
+            if key not in merged_data:
+                merged_data[key] = {
+                    'id': p.get('id'),
+                    'produit_id': produit_id,
+                    'quantity': int(p.get('quantity', 0)),
+                    'unites_gratuites': int(p.get('unites_gratuites', 0)),
+                    'price': Decimal(str(p.get('price', 0))),
+                    'price_cost': Decimal(str(p.get('price_cost', p.get('price', 0)))),
+                    'selling_price': Decimal(str(p.get('selling_price', 0))) if p.get('selling_price') else Decimal('0'),
+                    'prix_euro': Decimal(str(p.get('prix_euro'))) if p.get('prix_euro') else None,
+                    'lot': lot,
+                    'date_expiration': p.get('date_expiration') or None,
+                }
+            else:
+                # Merge: accumulate quantities
+                merged_data[key]['quantity'] += int(p.get('quantity', 0))
+                merged_data[key]['unites_gratuites'] += int(p.get('unites_gratuites', 0))
+                # Keep existing ID if we already had one (prefer keeping the record)
+                if not merged_data[key]['id'] and p.get('id'):
+                    merged_data[key]['id'] = p.get('id')
+        
         items_to_create = []
         items_to_update = []
         
-        for p in produits_data:
-            item_id = p.get('id')
-            produit_id = p.get('produit')
-            
-            # Build the data dict - only include fields that exist on CommandeProduit model
-            item_data = {
-                'commande': commande,
-                'produit_id': produit_id,
-                'quantity': int(p.get('quantity', 0)),
-                'unites_gratuites': int(p.get('unites_gratuites', 0)),
-                'price': Decimal(str(p.get('price', 0))),
-                'price_cost': Decimal(str(p.get('price_cost', p.get('price', 0)))),
-                'selling_price': Decimal(str(p.get('selling_price', 0))) if p.get('selling_price') else Decimal('0'),
-                'prix_euro': Decimal(str(p.get('prix_euro'))) if p.get('prix_euro') else None,
-                'lot': p.get('lot') or None,
-                'date_expiration': p.get('date_expiration') or None,
-            }
+        for item_data in merged_data.values():
+            item_id = item_data.pop('id', None)
             
             if item_id and item_id in existing_ids:
                 # Update existing item
                 payload_ids.add(item_id)
                 existing_item = existing_items[item_id]
                 for key, value in item_data.items():
-                    if key != 'commande':  # Don't update commande FK
-                        setattr(existing_item, key, value)
+                    setattr(existing_item, key, value)
                 items_to_update.append(existing_item)
             else:
                 # Create new item
-                items_to_create.append(CommandeProduit(**item_data))
+                items_to_create.append(CommandeProduit(commande=commande, **item_data))
         
         # Bulk create new items
         if items_to_create:
+            StockLot.objects.filter(id__in=[]) # Placeholder to avoid issues if needed, but bulk_create is fine
             CommandeProduit.objects.bulk_create(items_to_create, batch_size=100)
         
         # Bulk update existing items
@@ -896,7 +967,7 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
                 batch_size=100
             )
         
-        # Delete items that are no longer in the payload
+        # Delete items that are no longer in the payload OR were merged away
         ids_to_delete = existing_ids - payload_ids
         if ids_to_delete:
             CommandeProduit.objects.filter(id__in=ids_to_delete).delete()

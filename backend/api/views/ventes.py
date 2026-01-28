@@ -1563,5 +1563,57 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
     ordering = ['-date']
     
     def perform_create(self, serializer):
-        """Automatically set the user to the currently authenticated user."""
-        serializer.save(user=self.request.user)
+        """Automatically set the user to the currently authenticated user and audit."""
+        mouvement = serializer.save(user=self.request.user)
+        
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.OTHER,
+            model_name='MouvementCaisse',
+            object_id=mouvement.id,
+            description=f"Mouvement caisse ({mouvement.type}): {mouvement.montant:.0f}F - {mouvement.motif}",
+            details={
+                'type': mouvement.type,
+                'montant': float(mouvement.montant),
+                'motif': mouvement.motif,
+                'description': mouvement.description
+            },
+            request=self.request
+        )
+
+    def perform_update(self, serializer):
+        mouvement = serializer.instance
+        old_montant = mouvement.montant
+        serializer.save()
+        
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='MouvementCaisse',
+            object_id=mouvement.id,
+            description=f"Modification mouvement caisse #{mouvement.id}",
+            details={
+                'old_montant': float(old_montant),
+                'new_montant': float(mouvement.montant),
+                'motif': mouvement.motif
+            },
+            request=self.request
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        mvmt_id = instance.id
+        mvmt_info = f"{instance.type} {instance.montant}F ({instance.motif})"
+        
+        response = super().destroy(request, *args, **kwargs)
+        
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='MouvementCaisse',
+            object_id=mvmt_id,
+            description=f"Suppression mouvement caisse: {mvmt_info}",
+            details={'info': mvmt_info},
+            request=request
+        )
+        return response

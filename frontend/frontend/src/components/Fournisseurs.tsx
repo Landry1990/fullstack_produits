@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import PasswordConfirmModal from './PasswordConfirmModal';
 import type { Fournisseur } from '../types';
+import FinanceFournisseurModal from './FinanceFournisseurModal';
 
 interface CatalogueItem {
   produit_id: number;
@@ -59,6 +60,28 @@ export default function Fournisseurs() {
   const [catalogueLoading, setCatalogueLoading] = useState<boolean>(false);
   const [catalogueSearch, setCatalogueSearch] = useState<string>('');
   const [showCatalogue, setShowCatalogue] = useState<boolean>(true);
+
+  const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
+
+  // Auto-refresh selectedFournisseur when list changes
+  useEffect(() => {
+    if (selectedFournisseur) {
+      const updated = fournisseurs.find(f => f.id === selectedFournisseur.id);
+      if (updated && updated !== selectedFournisseur) {
+        setSelectedFournisseur(updated);
+      }
+    }
+  }, [fournisseurs, selectedFournisseur]);
+
+  // Auto-refresh selectedFournisseur when list changes
+  useEffect(() => {
+    if (selectedFournisseur) {
+      const updated = fournisseurs.find(f => f.id === selectedFournisseur.id);
+      if (updated && updated !== selectedFournisseur) {
+        setSelectedFournisseur(updated);
+      }
+    }
+  }, [fournisseurs, selectedFournisseur]);
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -485,6 +508,33 @@ export default function Fournisseurs() {
                           </div>
                       </div>
                       
+                      <div className="pt-6 mt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                             <span className="w-8 h-8 rounded-lg bg-emerald-100/50 text-emerald-600 flex items-center justify-center text-sm">💰</span>
+                             Situation Financière
+                          </h3>
+                          <button 
+                            className="btn btn-sm btn-outline btn-primary gap-2"
+                            onClick={() => setIsFinanceModalOpen(true)}
+                          >
+                            Gérer les paiements
+                          </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Solde Dette</div>
+                              <div className={`text-2xl font-black font-mono ${Number(selectedFournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                                 {Number(selectedFournisseur.solde_dette || 0).toLocaleString('fr-FR')} F
+                              </div>
+                           </div>
+                           <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs italic">
+                              Historique disponible dans le gestionnaire
+                           </div>
+                        </div>
+                      </div>
+
                       <div className="pt-8 mt-4 border-t border-slate-100">
                         <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Référence interne</span>
@@ -797,6 +847,7 @@ export default function Fournisseurs() {
                   Informations de l'entreprise
                 </h4>
                 
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="form-control w-full">
                     <div className="label">
@@ -878,9 +929,6 @@ export default function Fournisseurs() {
                   type="submit" 
                   className="btn btn-primary"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                  </svg>
                   Enregistrer les modifications
                 </button>
               </div>
@@ -891,6 +939,19 @@ export default function Fournisseurs() {
           <button>close</button>
         </form>
       </dialog>
+
+      {/* Finance Modal */}
+      {selectedFournisseur && (
+          <FinanceFournisseurModal 
+            isOpen={isFinanceModalOpen}
+            onClose={() => {
+                setIsFinanceModalOpen(false);
+            }}
+            fournisseur={selectedFournisseur}
+            onSuccess={fetchFournisseurs}
+          />
+      )}
+
 
       {/* Sudo Mode Password Modal */}
       <PasswordConfirmModal
