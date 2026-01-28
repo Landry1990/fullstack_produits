@@ -451,14 +451,14 @@ export default function Facturation() {
 
       const problematicLines = lignesFacture.filter(l =>
           // Check if quantity > stock (and product manages stock)
-          l.quantite > (l.produit.stock_rayon ?? l.produit.stock ?? 0)
+          l.quantite > (l.produit.stock ?? 0)
       )
 
       if (problematicLines.length > 0) {
           const items = problematicLines.map(l => ({
               product: l.produit,
               quantity: l.quantite,
-              stock: l.produit.stock_rayon ?? l.produit.stock ?? 0
+              stock: l.produit.stock ?? 0
           }))
           setStockResolutionItems(items)
 

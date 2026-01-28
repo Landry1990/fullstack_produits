@@ -288,7 +288,46 @@ class DashboardViewSet(viewsets.ViewSet):
         return Response(alert_clients)
 
 
+    @action(detail=False, methods=['get'])
+    def supplier_debts(self, request):
+        """
+        Returns processed debt data for suppliers.
+        Calculates solde_dette for each supplier and returns those with positive debt.
+        """
+        from ..models import Fournisseur
+        
+        # We need to fetch all providers and calculate debt in python
+        # because solde_dette is a property that does logic on related sets
+        fournisseurs = Fournisseur.objects.all().prefetch_related(
+            'commande_set', 
+            'paiements_effectues'
+        )
+        
+        data = []
+        total_debt = Decimal('0.00')
+        
+        for f in fournisseurs:
+            debt = f.solde_dette
+            if debt > 0:
+                total_debt += debt
+                data.append({
+                    'id': f.id,
+                    'name': f.name,
+                    'debt': float(debt),
+                    'phone': f.phone
+                })
+                
+        # Sort by highest debt
+        data.sort(key=lambda x: x['debt'], reverse=True)
+        
+        return Response({
+            'total_debt': float(total_debt),
+            'suppliers': data
+        })
+
+
 class StatistiquesViewSet(viewsets.ViewSet):
+
     """
     ViewSet pour les statistiques avancées.
     """

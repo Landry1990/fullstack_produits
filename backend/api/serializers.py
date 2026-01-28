@@ -10,7 +10,7 @@ from .models import (
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
-    Groupe, SmsLog, SmsTemplate
+    Groupe, SmsLog, SmsTemplate, PaiementFournisseur
 )
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -112,6 +112,8 @@ class RayonSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class FournisseurSerializer(serializers.ModelSerializer):
+    solde_dette = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    
     class Meta:
         model = Fournisseur
         fields = '__all__'
@@ -180,6 +182,15 @@ class GroupeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Groupe
         fields = ['id', 'nom', 'description']
+
+class PaiementFournisseurSerializer(serializers.ModelSerializer):
+    fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
+    commande_numero = serializers.CharField(source='commande.numero_facture', read_only=True, allow_null=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = PaiementFournisseur
+        fields = '__all__'
 
 class ProduitSerializer(serializers.ModelSerializer):
     rayon_nom = serializers.CharField(source='rayon.name', read_only=True)

@@ -27,6 +27,7 @@ from .historique_achats import HistoriqueAchatsViewSet
 from .historique_achats import HistoriqueAchatsViewSet
 from .import_views import ProductImportView
 from .formes import FormeViewSet
+from .paiements import PaiementFournisseurViewSet
 from .coupons import CouponMonnaieViewSet
 
 # Import from parent api module (not yet migrated to views package)
@@ -38,6 +39,7 @@ __all__ = [
     'ProduitViewSet', 'CategorieViewSet', 'FournisseurViewSet',
     'CategoriesListView', 'CategoriesDetailView', 'GroupeViewSet',
     'ClientViewSet', 'AyantDroitViewSet',
+    'PaiementFournisseurViewSet',
     'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet', 
     'PromisViewSet', 'generer_suggestions_commande',
     'FactureViewSet', 'FactureProduitViewSet', 'CaisseViewSet', 'ClotureCaisseViewSet',

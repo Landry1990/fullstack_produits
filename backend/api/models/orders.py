@@ -47,6 +47,11 @@ class Commande(models.Model):
         default=Status.EN_PREPARATION,
     )
 
+    def save(self, *args, **kwargs):
+        if self.numero_facture:
+            self.numero_facture = self.numero_facture.upper()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Commande {self.id}"
     
@@ -56,7 +61,37 @@ class Commande(models.Model):
         total_value = self.produits.aggregate(
             total=Sum(F('quantity') * F('price'), output_field=DecimalField())
         )['total']
-        return total_value or "0.00"
+        return total_value or Decimal("0.00")
+
+    @property
+    def montant_paye(self):
+        """Somme des paiements enregistrés pour cette commande."""
+        return self.paiements.aggregate(
+            total=Sum('montant', output_field=DecimalField())
+        )['total'] or Decimal("0.00")
+
+    @property
+    def reste_a_payer(self):
+        """Montant restant à régler."""
+        total = Decimal(str(self.total))
+        paye = self.montant_paye
+        return max(Decimal("0.00"), total - paye)
+
+    @property
+    def statut_paiement(self):
+        """État du règlement de la facture."""
+        if self.status != self.Status.CLOTUREE:
+            return "NON_CONCERNE"
+        
+        reste = self.reste_a_payer
+        if reste <= 0:
+            return "PAYE"
+        
+        paye = self.montant_paye
+        if paye > 0:
+            return "PARTIEL"
+        
+        return "IMPAYE"
 
 
 class CommandeProduit(models.Model):

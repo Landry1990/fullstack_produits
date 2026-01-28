@@ -3,8 +3,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings
+from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings, AuditLog
 from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer, PharmacySettingsSerializer
+from ..audit_helpers import log_audit
 
 class LoyaltySettingViewSet(viewsets.ModelViewSet):
     """
@@ -20,6 +21,30 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
         if not self.queryset.exists():
             LoyaltySetting.objects.create()
         return super().list(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='LoyaltySetting',
+            object_id=obj.pk,
+            description="Mise à jour des paramètres de fidélité",
+            details=serializer.data,
+            request=self.request
+        )
+
+    def perform_update(self, serializer):
+        obj = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='LoyaltySetting',
+            object_id=obj.pk,
+            description="Mise à jour des paramètres de fidélité",
+            details=serializer.data,
+            request=self.request
+        )
 
     def get_object(self):
         # Always return the first object
@@ -45,6 +70,15 @@ class InvoiceConfigurationView(APIView):
         serializer = InvoiceSettingsSerializer(config, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='InvoiceSettings',
+                object_id=config.pk,
+                description="Mise à jour de la configuration des factures",
+                details=serializer.data,
+                request=request
+            )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -66,6 +100,15 @@ class PharmacySettingsView(APIView):
         serializer = PharmacySettingsSerializer(settings, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.UPDATE,
+                model_name='PharmacySettings',
+                object_id=settings.pk,
+                description=f"Mise à jour des paramètres de la pharmacie: {settings.name}",
+                details=serializer.data,
+                request=request
+            )
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

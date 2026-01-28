@@ -800,57 +800,96 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }
 
 
-  // Fonction pour mettre à jour un champ dans une ligne
   function updateCommandeProduitField(
     index: number,
     field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration' | 'prix_euro',
     value: string | number
   ) {
-    setCommandeProduits(prev => prev.map((item, i) => {
-      if (i === index) {
-        const newItem = { ...item, [field]: value };
-        
-        // AUTO-CALCUL: Euro -> FCFA
-        if (commandeType === 'DIR' && field === 'prix_euro') {
-             const pEuro = parseFloat(String(newItem.prix_euro || 0));
-             const rate = parseFloat(tauxChange || '655.957'); 
-             const coeff = parseFloat(fraisCoefficient || '1.0');
+    setCommandeProduits(prev => {
+      // 1. Appliquer la modification à la ligne cible
+      const updatedList = prev.map((item, i) => {
+        if (i === index) {
+            const newItem = { ...item, [field]: value };
+            
+            // AUTO-CALCUL: Euro -> FCFA
+            if (commandeType === 'DIR' && field === 'prix_euro') {
+                 const pEuro = parseFloat(String(newItem.prix_euro || 0));
+                 const rate = parseFloat(tauxChange || '655.957'); 
+                 const coeff = parseFloat(fraisCoefficient || '1.0');
 
-             if (!isNaN(pEuro) && !isNaN(rate)) {
-                 const priceFCFA = pEuro * rate;
-                 newItem.price = priceFCFA.toFixed(2); // Prix Achat (Base)
-                 
-                 // Prix de Revient (Cost Price) = Prix Achat * Coeff Frais
-                 if (!isNaN(coeff)) {
-                     newItem.price = (priceFCFA * coeff).toFixed(2); // Wait, usually 'price' in line item IS the cost price base. 
-                     // Let's assume 'price' is the landed cost for the system? 
-                     // Or 'price' is invoice price and 'cost_price' is landed?
-                     // In valid_validation logic: stock movement uses 'price'.
-                     // So 'price' should be the FINAL COST PRICE (Revient).
+                 if (!isNaN(pEuro) && !isNaN(rate)) {
+                     const priceFCFA = pEuro * rate;
+                     newItem.price = priceFCFA.toFixed(2);
+                     if (!isNaN(coeff)) {
+                         newItem.price = (priceFCFA * coeff).toFixed(2);
+                     }
                  }
-             }
-        }
+            }
 
-        // Recalculer selling_price si price ou marge change
-        if (field === 'price' || field === 'marge') {
-             const price = parseFloat(String(newItem.price || 0));
-             const marge = parseFloat(String(newItem.marge || 1));
-             if (!isNaN(price) && !isNaN(marge) && price > 0) {
-                 newItem.selling_price = (price * marge).toString();
-             }
+            // Recalculer selling_price si price ou marge change
+            if (field === 'price' || field === 'marge') {
+                 const price = parseFloat(String(newItem.price || 0));
+                 const marge = parseFloat(String(newItem.marge || 1));
+                 if (!isNaN(price) && !isNaN(marge) && price > 0) {
+                     newItem.selling_price = (price * marge).toString();
+                 }
+            }
+            // Recalculer marge si selling_price change
+            if (field === 'selling_price') {
+                 const price = parseFloat(String(newItem.price || 0));
+                 const selling = parseFloat(String(newItem.selling_price || 0));
+                 if (!isNaN(price) && !isNaN(selling) && price > 0) {
+                     newItem.marge = (selling / price).toString();
+                 }
+            }
+            return newItem;
         }
-        // Recalculer marge si selling_price change
-        if (field === 'selling_price') {
-             const price = parseFloat(String(newItem.price || 0));
-             const selling = parseFloat(String(newItem.selling_price || 0));
-             if (!isNaN(price) && !isNaN(selling) && price > 0) {
-                 newItem.marge = (selling / price).toString();
-             }
-        }
-        return newItem;
+        return item;
+      });
+
+      // 2. Détection de doublons (Produit + Lot)
+      // On ne fusionne que si la modification portait sur 'lot' ou 'quantity' (pour être réactif)
+      // et uniquement si le lot n'est pas vide (pour permettre plusieurs lignes sans lot au début)
+      const currentItem = updatedList[index];
+      const currentProduitId = typeof currentItem.produit === 'object' ? currentItem.produit.id : currentItem.produit;
+      const currentLot = (currentItem.lot || '').trim();
+
+      if (field === 'lot' && currentLot !== '') {
+          const targetIndex = updatedList.findIndex((item, i) => {
+              if (i === index) return false;
+              const pId = typeof item.produit === 'object' ? item.produit.id : item.produit;
+              return pId === currentProduitId && (item.lot || '').trim() === currentLot;
+          });
+
+          if (targetIndex !== -1) {
+              // Fusionner !
+              const targetItem = updatedList[targetIndex];
+              const mergedQty = (targetItem.quantity || 0) + (currentItem.quantity || 0);
+              const mergedUG = (targetItem.unites_gratuites || 0) + (currentItem.unites_gratuites || 0);
+              
+              const newList = updatedList.filter((_, i) => i !== index);
+              // Mettre à jour la ligne cible (on garde les prix de la ligne cible pour l'instant)
+              const finalIndex = targetIndex > index ? targetIndex - 1 : targetIndex;
+              newList[finalIndex] = {
+                  ...newList[finalIndex],
+                  quantity: mergedQty,
+                  unites_gratuites: mergedUG
+              };
+
+              toast.success(`Lots fusionnés pour ${typeof currentItem.produit === 'object' ? currentItem.produit.name : 'le produit'}`, { icon: '🔄' });
+              
+              // Déplacer le focus vers la ligne fusionnée
+              setTimeout(() => {
+                const targetInput = document.querySelector(`input[data-row="${finalIndex}"][data-field="0"]`) as HTMLInputElement;
+                targetInput?.focus();
+              }, 50);
+
+              return newList;
+          }
       }
-      return item;
-    }));
+
+      return updatedList;
+    });
   }
 
 

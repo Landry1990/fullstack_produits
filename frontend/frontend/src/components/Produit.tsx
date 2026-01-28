@@ -112,9 +112,6 @@ export default function Produit() {
     stock_alert: '',
     stock_minimum: '',
     stock_maximum: '',
-    stock_reserve: '0',
-    stock_rayon_min: '',
-    rayon_capacity: '',
     tva: '19.25',
     rayon: '',
     fournisseur: '',
@@ -255,9 +252,6 @@ export default function Produit() {
       stock_alert: String(produit.stock_alert ?? '0'),
       stock_minimum: String(produit.stock_minimum ?? '0'),
       stock_maximum: String(produit.stock_maximum ?? '0'),
-      stock_reserve: String(produit.stock_reserve ?? '0'),
-      stock_rayon_min: String(produit.stock_rayon_min ?? ''),
-      rayon_capacity: String(produit.rayon_capacity ?? ''),
       tva: produit.tva || '19.25',
       rayon: produit.rayon ? String(produit.rayon) : '',
       fournisseur: produit.fournisseur ? String(produit.fournisseur) : '',
@@ -293,9 +287,6 @@ export default function Produit() {
         stock_alert: parseInt(editForm.stock_alert || '0', 10),
         stock_minimum: parseInt(editForm.stock_minimum || '0', 10),
         stock_maximum: parseInt(editForm.stock_maximum || '0', 10),
-        stock_reserve: parseInt(editForm.stock_reserve || '0', 10),
-        stock_rayon_min: editForm.stock_rayon_min ? parseInt(editForm.stock_rayon_min, 10) : null,
-        rayon_capacity: editForm.rayon_capacity ? parseInt(editForm.rayon_capacity, 10) : null,
         tva: editForm.tva || '19.25',
         rayon: editForm.rayon ? parseInt(editForm.rayon, 10) : null,
         fournisseur: editForm.fournisseur ? parseInt(editForm.fournisseur, 10) : null,
@@ -1807,49 +1798,6 @@ export default function Produit() {
               </div>
             </div>
 
-            <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Configuration Stock & Rayon</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-base-100 p-4 rounded-lg border border-base-200">
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-semibold">Stock Réserve</span>
-                    <span className="label-text-alt text-info tooltip" data-tip="Quantité bloquée en réserve (non vendable directement)">ℹ️</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered w-full"
-                    value={editForm.stock_reserve}
-                    onChange={(e) => setEditForm({...editForm, stock_reserve: e.target.value})}
-                    min={0}
-                    step={1}
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Seuil Min. Rayon</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered w-full"
-                    value={editForm.stock_rayon_min}
-                    onChange={(e) => setEditForm({...editForm, stock_rayon_min: e.target.value})}
-                    min={0}
-                    step={1}
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">Capacité Rayon</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered w-full"
-                    value={editForm.rayon_capacity}
-                    onChange={(e) => setEditForm({...editForm, rayon_capacity: e.target.value})}
-                    min={0}
-                    step={1}
-                  />
-                </div>
-            </div>
 
             {/* Gestion par lots */}
             <div className="form-control">

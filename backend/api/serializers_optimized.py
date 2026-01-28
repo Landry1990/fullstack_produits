@@ -107,12 +107,17 @@ class CommandeListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     
+    montant_paye = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    reste_a_payer = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    statut_paiement = serializers.CharField(read_only=True)
+    
     class Meta:
         model = Commande
         fields = [
             'id', 'numero_facture', 'fournisseur', 'fournisseur_nom',
             'date', 'date_cloture', 'status', 'status_display', 'total',
-            'type', 'type_display', 'taux_change', 'frais_coefficient'
+            'type', 'type_display', 'taux_change', 'frais_coefficient',
+            'montant_paye', 'reste_a_payer', 'statut_paiement'
         ]
 
 

@@ -456,7 +456,7 @@ export default function CaisseCentralisee() {
       <div className="flex-1 flex overflow-hidden">
         {/* Panneau des Coupons (Sidebar Gauche) */}
         {isCouponPanelOpen && (
-          <div className="w-80 bg-white border-r border-base-200 flex flex-col animate-fade-in-right">
+          <div className="w-96 bg-white border-r border-base-200 flex flex-col animate-fade-in-right">
             <div className="p-4 border-b border-base-100 bg-base-50/50">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-bold text-lg flex items-center gap-2">
@@ -500,10 +500,9 @@ export default function CaisseCentralisee() {
                 <table className="table table-xs table-zebra w-full">
                   <thead className="sticky top-0 bg-base-100 z-10">
                     <tr>
-                      <th className="text-xs">N°</th>
-                      <th className="text-xs text-right">Montant</th>
-                      <th className="text-xs">Date</th>
-                      <th className="text-xs">Utilisé par</th>
+                      <th className="text-[10px] px-1">N° / Montant</th>
+                      <th className="text-[10px] px-1">Création</th>
+                      <th className="text-[10px] px-1">Utilisation</th>
                       <th className="text-xs text-center">Status</th>
                     </tr>
                   </thead>
@@ -515,27 +514,30 @@ export default function CaisseCentralisee() {
                           coupon.status !== 'ACTIF' ? 'opacity-60' : ''
                         }`}
                         onClick={() => { setCouponTrouve(coupon); setIsDetailsCouponModalOpen(true); }}
-                        title={coupon.status === 'UTILISE' && coupon.date_utilisation 
-                          ? `Utilisé le ${new Date(coupon.date_utilisation).toLocaleDateString('fr-FR')} à ${new Date(coupon.date_utilisation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}${coupon.utilise_par_nom ? ` par ${coupon.utilise_par_nom}` : ''}`
-                          : ''
-                        }
                       >
-                        <td className="font-mono text-xs font-bold">
-                          #{coupon.numero}
+                        <td className="px-1 py-1">
+                          <div className="font-mono text-[10px] font-bold">#{coupon.numero}</div>
+                          <div className={`font-bold text-[10px] ${coupon.status === 'ACTIF' ? 'text-primary' : 'text-base-content/50'}`}>
+                            {Math.round(Number(coupon.montant))} F
+                          </div>
                         </td>
-                        <td className={`text-right font-bold ${coupon.status === 'ACTIF' ? 'text-primary' : 'text-base-content/50'}`}>
-                          {Math.round(Number(coupon.montant))} F
+                        <td className="text-[10px] text-base-content/60 px-1 py-1">
+                          <div className="font-medium text-base-content whitespace-nowrap">{new Date(coupon.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(coupon.date_creation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                          <div className="truncate max-w-[80px]" title={coupon.cree_par_nom || 'Système'}>
+                            Par: {coupon.cree_par_nom || 'Système'}
+                          </div>
                         </td>
-                        <td className="text-[10px] text-base-content/60">
-                          {new Date(coupon.date_creation).toLocaleDateString('fr-FR')}
-                        </td>
-                        <td className="text-[10px] text-base-content/60">
-                          {coupon.status === 'UTILISE' && coupon.utilise_par_nom 
-                            ? coupon.utilise_par_nom 
-                            : coupon.status === 'UTILISE' 
-                              ? <span className="italic">N/A</span> 
-                              : '-'
-                          }
+                        <td className="text-[10px] text-base-content/60 px-1 py-1">
+                          {coupon.status === 'UTILISE' ? (
+                            <>
+                              <div className="font-medium text-base-content whitespace-nowrap">
+                                {new Date(coupon.date_utilisation!).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(coupon.date_utilisation!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                              <div className="truncate max-w-[80px]" title={coupon.utilise_par_nom || 'N/A'}>
+                                Par: {coupon.utilise_par_nom || 'N/A'}
+                              </div>
+                            </>
+                          ) : '-'}
                         </td>
                         <td className="text-center">
                           <span className={`badge badge-xs ${
@@ -1118,10 +1120,52 @@ export default function CaisseCentralisee() {
               <div className="text-3xl font-bold mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
               <div className="divider"></div>
               <div className="text-left space-y-2 text-xs">
-                <div className="flex justify-between"><span>Status:</span><span className={`badge badge-xs ${couponTrouve.status === 'ACTIF' ? 'badge-success' : 'badge-ghost'}`}>{couponTrouve.status_display}</span></div>
-                <div className="flex justify-between"><span>Généré par:</span><span>{couponTrouve.cree_par_nom || 'Système'}</span></div>
-                <div className="flex justify-between"><span>Date:</span><span>{new Date(couponTrouve.date_creation).toLocaleString()}</span></div>
-                {couponTrouve.notes && <div className="mt-2 p-2 bg-white rounded italic">"{couponTrouve.notes}"</div>}
+                <div className="flex justify-between">
+                  <span>Status:</span>
+                  <span className={`badge badge-xs ${
+                    couponTrouve.status === 'ACTIF' ? 'badge-success' : 
+                    couponTrouve.status === 'UTILISE' ? 'badge-neutral' : 'badge-ghost'
+                  }`}>
+                    {couponTrouve.status_display || couponTrouve.status}
+                  </span>
+                </div>
+                
+                <div className="divider my-1"></div>
+                
+                <div className="bg-base-100 p-2 rounded border border-base-200 space-y-1">
+                  <div className="font-bold text-[10px] uppercase opacity-50 mb-1">Création</div>
+                  <div className="flex justify-between">
+                    <span>Généré par:</span>
+                    <span className="font-medium">{couponTrouve.cree_par_nom || 'Système'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span>{new Date(couponTrouve.date_creation).toLocaleString('fr-FR')}</span>
+                  </div>
+                </div>
+
+                {couponTrouve.status === 'UTILISE' && (
+                  <div className="bg-success/5 p-2 rounded border border-success/20 space-y-1">
+                    <div className="font-bold text-[10px] uppercase text-success opacity-70 mb-1">Utilisation</div>
+                    <div className="flex justify-between">
+                      <span>Utilisé par:</span>
+                      <span className="font-medium">{couponTrouve.utilise_par_nom || 'N/A'}</span>
+                    </div>
+                    {couponTrouve.date_utilisation && (
+                      <div className="flex justify-between">
+                        <span>Date:</span>
+                        <span>{new Date(couponTrouve.date_utilisation).toLocaleString('fr-FR')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {couponTrouve.notes && (
+                  <div className="mt-2 p-2 bg-white rounded italic border border-base-200">
+                    <span className="font-bold not-italic opacity-50 block text-[10px] mb-1">Notes:</span>
+                    "{couponTrouve.notes}"
+                  </div>
+                )}
               </div>
             </div>
             <div className="modal-action flex justify-between gap-2">

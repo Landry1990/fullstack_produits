@@ -179,7 +179,7 @@ export default function CommandeForm({
                       placeholder="Ex: FAC-2024-001"
                       className="input input-bordered w-full input-sm bg-base-50 focus:bg-white"
                       value={numeroFacture}
-                      onChange={(e) => setNumeroFacture(e.target.value)}
+                      onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
                     />
                   </label>
 

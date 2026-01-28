@@ -2,8 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   XAxis,
@@ -18,7 +16,8 @@ import {
   useLowStock, 
   useUgStats, 
   usePromisDisponibles, 
-  useExpiringLots 
+  useExpiringLots,
+  useSupplierDebts
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
@@ -35,6 +34,7 @@ export default function Dashboard() {
   const { data: ugStats } = useUgStats();
   const { data: promisDisponibles = [] } = usePromisDisponibles();
   const { data: expiringLots = [], refetch: refetchExpiring } = useExpiringLots(expirationMonths);
+  const { data: supplierDebts } = useSupplierDebts();
 
   const loading = statsLoading || chartLoading;
   const error = statsError ? 'Impossible de charger les données du tableau de bord.' : null;
@@ -353,52 +353,62 @@ export default function Dashboard() {
           )}
 
           {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
-          /* Revenue Line Chart (Trend) */
+          /* Supplier Debts Section */
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <h2 className="card-title text-lg font-bold text-base-content mb-4">{t('dashboard.charts.sales_trend')}</h2>
-               {revenueChart && (
-                  <ResponsiveContainer width="100%" height={250}>
-                    <LineChart data={chartData}>
-                      <defs>
-                        <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                          <stop offset="0%" stopColor="#10b981" />
-                          <stop offset="100%" stopColor="#059669" />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis 
-                        dataKey="jour" 
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                        stroke="#9ca3af"
-                      />
-                      <YAxis 
-                        tick={{ fontSize: 12, fill: '#6b7280' }}
-                        stroke="#9ca3af"
-                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                        domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
-                      />
-                      <Tooltip 
-                        formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Chiffre d\'affaires']}
-                        contentStyle={{ 
-                          backgroundColor: '#fff',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                        }}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="montant" 
-                        stroke="url(#lineGradient)" 
-                        strokeWidth={3}
-                        dot={{ fill: '#10b981', r: 5 }}
-                        activeDot={{ r: 7, fill: '#059669' }}
-                        animationDuration={1000}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-               )}
+              <div className="flex items-center justify-between mb-4">
+                 <h2 className="card-title text-lg font-bold text-base-content flex items-center gap-2">
+                    <span className="text-xl">📉</span>
+                    Dettes Fournisseurs
+                 </h2>
+                 {supplierDebts?.total_debt > 0 && (
+                    <div className="badge badge-error text-white font-bold p-3">
+                        Total: {Math.round(supplierDebts.total_debt).toLocaleString('fr-FR')} F
+                    </div>
+                 )}
+              </div>
+              
+              {supplierDebts?.suppliers && supplierDebts.suppliers.length > 0 ? (
+                  <div className="overflow-x-auto max-h-60 overflow-y-auto">
+                    <table className="table table-xs sm:table-sm w-full">
+                        <thead className="sticky top-0 bg-base-100 z-10">
+                            <tr>
+                                <th>Fournisseur</th>
+                                <th className="text-right">Dette</th>
+                                <th className="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {supplierDebts.suppliers.map((supplier: any) => (
+                                <tr key={supplier.id} className="hover:bg-base-200/50">
+                                    <td className="font-medium">{supplier.name}</td>
+                                    <td className="text-right font-mono font-bold text-error">
+                                        {Math.round(supplier.debt).toLocaleString('fr-FR')} F
+                                    </td>
+                                    <td className="text-center">
+                                        <Link 
+                                            to="/app/fournisseurs" 
+                                            className="btn btn-ghost btn-xs text-primary"
+                                            title="Gérer les paiements"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            </svg>
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                  </div>
+              ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-base-content/50 gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-sm font-medium">Aucune dette fournisseur</p>
+                  </div>
+              )}
             </div>
           </div>
           )}

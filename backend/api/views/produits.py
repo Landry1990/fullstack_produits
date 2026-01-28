@@ -855,7 +855,7 @@ class CategorieViewSet(viewsets.ModelViewSet):
             produits = produits.exclude(stock=0)
         
         response = HttpResponse(content_type='application/pdf')
-        filename = f"stock_rayon_{rayon.name}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        filename = f"stock_{rayon.name}_{datetime.now().strftime('%Y%m%d')}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         buffer = io.BytesIO()

@@ -25,6 +25,29 @@ class Fournisseur(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def solde_dette(self):
+        """
+        Calcule la dette totale envers ce fournisseur.
+        Somme des totaux des commandes CLOTUREE - Somme des paiements effectues.
+        """
+        from django.db.models import Sum, F, DecimalField
+        from .orders import Commande
+        from .paiements import PaiementFournisseur
+        
+        # 1. Total des commandes clôturées
+        commandes = self.commande_set.filter(status=Commande.Status.CLOTUREE)
+        total_du = Decimal('0.00')
+        for cmd in commandes:
+            total_du += Decimal(str(cmd.total))
+            
+        # 2. Total des paiements effectués
+        total_paye = self.paiements_effectues.aggregate(
+            total=Sum('montant', output_field=DecimalField())
+        )['total'] or Decimal('0.00')
+        
+        return total_du - total_paye
+
 
 class Client(models.Model):
     """Model representing a client."""
