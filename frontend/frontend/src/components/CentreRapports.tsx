@@ -171,6 +171,17 @@ const QUERIES: QueryDefinition[] = [
         { key: 'days', label: 'Sur les derniers (jours)', type: 'number', default: 30 }
     ],
     resultType: 'table'
+  },
+  {
+    id: 'stats_vendeurs',
+    name: 'Stats par Vendeurs',
+    description: 'Classement des vendeurs par CA (hors caissiers)',
+    endpoint: '/api/rapports/stats_vendeurs/',
+    params: [
+      { key: 'date_debut', label: 'Début', type: 'datetime', required: true },
+      { key: 'date_fin', label: 'Fin', type: 'datetime', required: true }
+    ],
+    resultType: 'table'
   }
 ]
 

@@ -796,3 +796,93 @@ class RapportViewSet(viewsets.ViewSet):
         
         return Response(results)
 
+    @action(detail=False, methods=['get'])
+    def stats_vendeurs(self, request):
+        """
+        Statistiques de ventes par vendeur (hors caissiers).
+        Retourne : Nom vendeur, Nombre de ventes, Chiffre d'affaires.
+        """
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+
+        if not date_debut_str or not date_fin_str:
+            return Response(
+                {'error': 'Les paramètres date_debut et date_fin sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Gérer le format datetime complet (ISO 8601)
+            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+        except ValueError:
+            return Response({'error': 'Format de date invalide (ISO attendu).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filtrer TOUTES les factures valides sur la période (sans exclusion pour avoir le bon total)
+        factures = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__gte=date_debut,
+            date__lt=date_fin
+        ).select_related('created_by', 'created_by__profile')
+
+        # Agrégation par vendeur
+        stats = {}
+        autres_stats = {
+            'vendeur': 'Ventes Non Attribuées',
+            'nbre_ventes': 0,
+            'chiffre_affaires': Decimal('0.00')
+        }
+        
+        for f in factures:
+            # Identifier si C'est un vendeur valide ou "Autre"
+            is_vendeur = False
+            vendeur_nom = "Inconnu"
+            vendeur_id = None
+
+            if f.created_by:
+                # Vérifier le rôle
+                role = 'INCONNU'
+                if hasattr(f.created_by, 'profile') and f.created_by.profile:
+                    role = f.created_by.profile.role
+                
+                if role != 'CAISSIER':
+                    is_vendeur = True
+                    vendeur_id = f.created_by.id
+                    vendeur_nom = f.created_by.get_full_name() or f.created_by.username
+            
+            # Agrégation
+            if is_vendeur and vendeur_id:
+                if vendeur_id not in stats:
+                    stats[vendeur_id] = {
+                        'vendeur': vendeur_nom,
+                        'nbre_ventes': 0,
+                        'chiffre_affaires': Decimal('0.00')
+                    }
+                stats[vendeur_id]['nbre_ventes'] += 1
+                stats[vendeur_id]['chiffre_affaires'] += f.total_ttc
+            else:
+                # Caissiers ou factures sans créateur (Système/Import)
+                autres_stats['nbre_ventes'] += 1
+                autres_stats['chiffre_affaires'] += f.total_ttc
+
+        # Conversion en liste et tri par CA décroissant pour les vendeurs
+        results = list(stats.values())
+        results.sort(key=lambda x: x['chiffre_affaires'], reverse=True)
+        
+        # Ajouter la ligne "Autres" si non vide
+        if autres_stats['chiffre_affaires'] > 0 or autres_stats['nbre_ventes'] > 0:
+             results.append(autres_stats)
+
+        # Ajouter une ligne de TOTAL global
+        if results:
+            total_ventes = sum(r['nbre_ventes'] for r in results)
+            total_ca = sum(r['chiffre_affaires'] for r in results)
+            
+            results.append({
+                'vendeur': 'TOTAL',
+                'nbre_ventes': total_ventes,
+                'chiffre_affaires': total_ca
+            })
+
+        return Response(results)
+

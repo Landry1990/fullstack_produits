@@ -144,7 +144,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 SESSION_TICKET_COUNTER = 0
                 INVOICE_TICKET_MAP = {}
                 SESSION_TICKET_DATE = today
-                print(f"DEBUG: Daily reset - Ticket counter reset for {today}")
+
             
             # Handle pagination
             data_list = response.data['results'] if isinstance(response.data, dict) and 'results' in response.data else response.data
@@ -158,7 +158,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         if facture_id not in INVOICE_TICKET_MAP:
                             SESSION_TICKET_COUNTER += 1
                             INVOICE_TICKET_MAP[facture_id] = SESSION_TICKET_COUNTER
-                            print(f"DEBUG: Assigned Ticket #{SESSION_TICKET_COUNTER} to Invoice #{facture_id}")
+
                         
                         facture['session_ticket_number'] = INVOICE_TICKET_MAP[facture_id]
         

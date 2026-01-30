@@ -125,7 +125,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
             // Use calculated property from serializer (next_expiring_date) if available, fallback to expire_date
             const expirationToCheck = (fullProduit as any).next_expiring_date || fullProduit.expire_date;
 
-            console.log('CHECK PEREMPTION:', fullProduit.name, expirationToCheck, fullProduit.use_lot_management);
+
 
 
 

@@ -3,7 +3,7 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { useQueryClient } from '@tanstack/react-query'
-import type { ProduitModel, Facture, TicketCaisse, AyantDroit, Promis, LigneFacture } from '../types'
+import type { ProduitModel, Facture, TicketCaisse, LigneFacture } from '../types'
 import { useProductSearch } from '../hooks/useProductSearch'
 import { useCart } from '../hooks/useCart'
 import { useFacturationClients } from '../hooks/useFacturationClients'
@@ -11,33 +11,26 @@ import { usePendingSales } from '../hooks/usePendingSales'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 import { useClinicalCheck } from '../hooks/useClinicalCheck'
-import ClinicalAlerts from './clinical/ClinicalAlerts'
 import DOMPurify from 'dompurify'
 import { useSidebar } from '../context/SidebarContext'
 import { safeStorage } from '../utils/storage'
 import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
 
 import { useTranslation } from 'react-i18next'
-import ClientSection from './facturation/ClientSection'
-import ProductSearchSection from './facturation/ProductSearchSection'
-import CartTable from './facturation/CartTable'
+import { TicketTemplate } from './printing/TicketTemplate'
+import PaymentModal from './facturation/PaymentModal'
+import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
+import LotSelectionModal from './LotSelectionModal'
 import TotalsSection from './facturation/TotalsSection'
 import ActionButtons from './facturation/ActionButtons'
-import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
-import PaymentModal from './facturation/PaymentModal'
-import LotSelectionModal from './LotSelectionModal'
-import { TicketTemplate } from './printing/TicketTemplate'
+import CartTable from './facturation/CartTable'
+import ProductSearchSection from './facturation/ProductSearchSection'
+import ClientSection from './facturation/ClientSection'
+import ClinicalAlerts from './clinical/ClinicalAlerts'
+import { useSaleCompletion } from '../hooks/useSaleCompletion'
 
 
-type FactureProduitPayload = {
-  facture: number
-  produit: number
-  quantity: number
-  selling_price: string
-  discount?: string // NEW
-  lot?: string | null
-  date_expiration: string | null
-}
+// FactureProduitPayload removed as it's now handled by useSaleCompletion
 
 
 export default function Facturation() {
@@ -143,6 +136,27 @@ export default function Facturation() {
       savePendingSale,
       deletePendingSale
   } = usePendingSales()
+
+  // useSaleCompletion Hook
+  const { 
+    completeSale, 
+    loading: saleLoading
+  } = useSaleCompletion({
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
+    onSuccess: (result) => {
+      if (result.success && result.facture) {
+        setSuccessInfo(result.facture)
+        setTicketCaisse(result.ticketCaisse || null)
+        if (result.ticketCaisse) {
+           setShowTicketPreview(true)
+        }
+        _resetSaleDataOnly()
+        setIsPaymentModalOpen(false)
+        queryClient.invalidateQueries({ queryKey: ['produits'] })
+      }
+    },
+    onError: (msg) => setError(msg)
+  })
 
   const [remise, setRemise] = useState('0')
   const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
@@ -642,643 +656,45 @@ export default function Facturation() {
   }, [selectedClient, isNewSale])
 
   const handleCompleteSale = async () => {
-    if (!selectedClient) {
-      setError('Veuillez sélectionner un client')
-      return
-    }
-    if (lignesFacture.length === 0) {
-      setError('Veuillez ajouter au moins un produit')
-      return
-    }
-    // Validation du montant
-    const isTiersPayant = totals.tauxCouverture > 0 && totals.partAssurance > 0;
-    const montantAttendu = isTiersPayant ? totals.partPatient : totals.totalTtc;
+    // Collect all data for the hook
+    const params = {
+        selectedClient,
+        useManualClient,
+        manualClientName,
+        clients,
+        selectedAyantDroit,
+        ayantDroitNom,
+        ayantDroitMatricule,
+        ayantDroitSociete,
+        ayantsDroitList,
+        showNewAyantDroit,
+        lignesFacture,
+        totals: {
+            totalHt: totals.sousTotal,
+            totalTva: totals.montantTva,
+            totalTtc: totals.totalTtc,
+            remiseMontant: totals.remiseMontant,
+            tauxCouverture: totals.tauxCouverture,
+            partPatient: totals.partPatient,
+            partAssurance: totals.partAssurance
+        },
+        modePaiement,
+        montantPaye,
+        paiements,
+        reference,
+        couponNumero: '', // To be implemented if needed
+        usePendingDiscount,
+        pointsToUse,
+        isRetrocession,
+        centralizedCashRegister,
+        isModificationMode,
+        modificationInvoiceId,
+        devisIdToValidate,
+        tempOrdonnanceData
+    };
 
-    if (montantAttendu > 0) {
-        // On doit avoir soit un montant saisi positif, soit une liste de paiements (split) valide
-        const montantSaisi = Number(montantPaye);
-        const totalSplit = paiements.reduce((acc, p) => acc + p.montant, 0);
-        
-        if (paiements.length === 0 && (!montantPaye || montantSaisi <= 0)) {
-             setError('Veuillez entrer un montant valide')
-             return
-        }
-
-        // Si paiement partagé, vérifier le total
-        if (paiements.length > 0) {
-            // Tolérance de 1F pour les arrondis
-            if (Math.abs(totalSplit - montantAttendu) > 1 && Math.abs(totalSplit + montantSaisi - montantAttendu) > 1) {
-                 setError(`Le total des paiements (${totalSplit + montantSaisi} F) ne correspond pas au montant à payer (${montantAttendu} F)`)
-                 return
-            }
-        }
-    }
-
-    // Validation pour les clients professionnels : ayant droit obligatoire
-    if (!useManualClient && selectedClient) {
-      const client = clients.find(c => c.id === selectedClient)
-      if (client?.client_type === 'PROFESSIONNEL') {
-        // Si on est en mode "nouveau ayant droit" ou qu'il n'y a pas d'ayants droit existants
-        if (showNewAyantDroit || ayantsDroitList.length === 0) {
-          if (!ayantDroitNom || !ayantDroitMatricule) {
-            setError('Pour un client professionnel, veuillez renseigner le nom et le matricule de l\'ayant droit')
-            return
-          }
-        }
-        
-        // Validation du PLAFOND DE CRÉDIT (Credit Limit Check)
-        const plafond = Number(client.plafond || 0);
-        if (plafond > 0) {
-            const currentDebt = Number(client.current_debt || 0);
-            const newTotal = currentDebt + totals.totalTtc;
-            
-            if (newTotal > plafond) {
-                const message = `⚠️ PLAFOND DÉPASSÉ !\nDette actuelle: ${Math.round(currentDebt).toLocaleString()} F\nNouvelle facture: ${Math.round(totals.totalTtc).toLocaleString()} F\nTotal: ${Math.round(newTotal).toLocaleString()} F\nPlafond: ${Math.round(plafond).toLocaleString()} F`;
-                setError(message);
-                toast.error(`⚠️ Plafond crédit dépassé ! (${Math.round(plafond).toLocaleString()} F)`, { 
-                  duration: 6000,
-                  style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
-                });
-                return;
-            }
-        }
-      }
-    } else {
-          // Si on est en mode "sélection existant", vérifier qu'un ayant droit est sélectionné
-          if (!selectedAyantDroit) {
-            setError('Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau')
-            return
-      }
-    }
-
-
-
-
-    setLoading(true)
-    setError(null)
-    setSuccessInfo(null)
-    
-    const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-    const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/'
-    const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/'
-
-    let validatedFactureForRollback: Facture | null = null
-
-    try {
-      // 0. Préparer l'ayant droit (si nécessaire)
-      let ayantDroitId = selectedAyantDroit
-      const clientObj = clients.find(c => c.id === selectedClient)
-      
-      if (clientObj?.client_type === 'PROFESSIONNEL') {
-          // Cas lecture seule ou sélectionné : déjà dans ayantDroitId
-          
-          // Cas création nouveau
-          if (showNewAyantDroit || ayantsDroitList.length === 0) {
-              if (ayantDroitNom && ayantDroitMatricule) {
-                  try {
-                      // Vérifier d'abord dans la liste locale si un ayant droit avec ce matricule existe
-                      const existingLocal = Array.isArray(ayantsDroitList) 
-                        ? ayantsDroitList.find(ad => ad.matricule === ayantDroitMatricule)
-                        : null
-                      
-                      if (existingLocal) {
-                        // Utiliser l'ayant droit existant
-                        ayantDroitId = existingLocal.id || null
-                        setSelectedAyantDroit(existingLocal.id || null)
-                        setShowNewAyantDroit(false)
-                      } else {
-                        // Créer un nouveau
-                        const ayantsDroitEndpoint = apiBaseUrl 
-                          ? `${apiBaseUrl}/api/ayants-droit/` 
-                          : '/api/ayants-droit/'
-                        
-                        const ayantDroitPayload = {
-                          client: selectedClient,
-                          nom: ayantDroitNom,
-                          matricule: ayantDroitMatricule,
-                          societe: ayantDroitSociete || null
-                        }
-                        
-                        const { data: createdAyantDroit } = await axios.post<AyantDroit>(ayantsDroitEndpoint, ayantDroitPayload)
-                        ayantDroitId = createdAyantDroit.id || null
-                        
-                        // Note: La liste sera rechargée automatiquement lors de la prochaine sélection client
-                        // setAyantsDroitList(prev => Array.isArray(prev) ? [...prev, createdAyantDroit] : [createdAyantDroit])
-                        setSelectedAyantDroit(createdAyantDroit.id || null)
-                        setShowNewAyantDroit(false)
-                      }
-                  } catch (err) {
-                      console.error('Erreur lors de la création de l\'ayant droit:', err)
-                      throw new Error("Impossible de créer l'ayant droit. Veuillez réessayer.")
-                  }
-              }
-          }
-      }
-
-      // === MODE MODIFICATION: Factures validées/payées ===
-      if (isModificationMode && modificationInvoiceId) {
-        // Préparer les données des produits pour l'endpoint modifier
-        const produitsPayload = lignesFacture.map(ligne => {
-          const prixUnitaire = Number(ligne.prix_unitaire)
-          const remiseProduit = Number(ligne.remise_produit)
-          const prixNet = prixUnitaire * (1 - remiseProduit / 100)
-          
-          return {
-            produit: ligne.produit.id,
-            quantity: ligne.quantite,
-            selling_price: prixNet.toString(),
-            lot_id: ligne.lotId ? Number(ligne.lotId) : null
-          }
-        })
-        
-        // Appeler l'endpoint modifier
-        const modifierEndpoint = `${facturesEndpoint}${modificationInvoiceId}/modifier/`
-        const { data: modificationResult } = await axios.post(modifierEndpoint, {
-          produits: produitsPayload,
-          remise: totals.remiseMontant.toString(),
-          client: useManualClient ? null : selectedClient,
-          client_name_override: useManualClient ? manualClientName : null
-        })
-        
-        // Afficher le résultat
-        const difference = modificationResult.difference
-        if (difference > 0) {
-          toast.success(`Facture modifiée. Encaissement supplémentaire: ${Math.round(difference).toLocaleString('fr-FR')} F`)
-        } else if (difference < 0) {
-          toast.success(`Facture modifiée. Remboursement: ${Math.round(Math.abs(difference)).toLocaleString('fr-FR')} F`)
-        } else {
-          toast.success('Facture modifiée (même total)')
-        }
-        
-        // Réinitialiser l'état
-        setLignesFacture([])
-        setSelectedClient(null)
-        setUseManualClient(false)
-        setManualClientName('')
-        setRemise('0')
-        setRemiseMode('montant')
-        setIsModificationMode(false)
-        setModificationInvoiceId(null)
-        setOriginalTotalTtc(0)
-        setIsPaymentModalOpen(false)
-        setLoading(false)
-        
-        // Reset ayant droit state
-        setAyantDroitNom('')
-        setAyantDroitMatricule('')
-        setAyantDroitSociete('')
-        setSelectedAyantDroit(null)
-        setShowNewAyantDroit(false)
-        
-        return // Fin du traitement en mode modification
-      }
-
-      // === FLUX NORMAL: Créer la facture OU utiliser le devis existant ===
-      let createdFacture: Facture
-
-      if (devisIdToValidate) {
-        // On valide un devis existant - ne pas créer de nouvelle facture
-        const { data: existingFacture } = await axios.get<Facture>(`${facturesEndpoint}${devisIdToValidate}/`)
-        createdFacture = existingFacture
-        
-        // Reset le devisIdToValidate
-        setDevisIdToValidate(null)
-      } else {
-        // Flux normal : créer une nouvelle facture brouillon
-        const facturePayload = {
-          client: useManualClient ? null : selectedClient,
-          client_name_override: useManualClient ? manualClientName : null,
-          remise: totals.remiseMontant.toString(),
-          tva: '0',
-          ayant_droit: ayantDroitId, // Lier directement à la création
-          part_client: (clientObj?.client_type === 'PROFESSIONNEL' && totals.tauxCouverture > 0) ? totals.partPatient : null,
-          // type: isRetrocession ? 'RETRO' : 'STD' // Removed to avoid potential validation issues
-        }
-        console.log('Sending Invoice Payload:', facturePayload)
-        const { data } = await axios.post(facturesEndpoint, facturePayload)
-        createdFacture = data
-        console.log('DEBUG: Invoice created, ID=', createdFacture.id)
-      }
-
-      // 2. Ajouter les produits (uniquement si nouvelle facture, pas pour devis existant)
-      if (!devisIdToValidate) {
-        const produitsPayload: FactureProduitPayload[] = lignesFacture.map(ligne => {
-        // Calculer le prix unitaire net après remise produit
-        const prixUnitaire = Number(ligne.prix_unitaire)
-        const remiseProduit = Number(ligne.remise_produit)
-        const prixNet = prixUnitaire * (1 - remiseProduit / 100)
-        
-        return {
-          facture: createdFacture.id,
-          produit: ligne.produit.id,
-          quantity: Number(ligne.quantite),
-          selling_price: prixNet.toString(), // Envoyer le prix net au backend
-          discount: (prixUnitaire - prixNet).toFixed(2), // Envoyer le montant de la remise par unité
-          stock_lot: ligne.lotId ? Number(ligne.lotId) : null, // New field for specific lot
-          lot: null, // Legacy field
-          date_expiration: ligne.produit.expire_date || null,
-        }
-        })
-
-        await Promise.all(
-          produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
-        )
-        console.log('DEBUG: Products added to invoice')
-      }
-
-
-
-      // NOUVELLE LOGIQUE DE PAIEMENT
-      // Vérifier si c'est un client professionnel avec 100% de couverture (tiers payant)
-      const clientIsPro100 = clientObj?.client_type === 'PROFESSIONNEL' && totals.partPatient === 0 && totals.partAssurance > 0
-      
-      console.log('DEBUG: clientIsPro100=', clientIsPro100, 'centralizedCashRegister=', centralizedCashRegister)
-      if (clientIsPro100) {
-        // Client professionnel à 100% : Validation + Paiement automatique "en_compte"
-        toast('Client professionnel 100% - Validation automatique', { icon: 'ℹ️' })
-        
-        // 1. Valider la facture
-        const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
-        const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
-          use_pending_discount: usePendingDiscount,
-          points_to_use: pointsToUse
-        })
-        
-        // 2. Enregistrer le paiement "en_compte" (100% assurance)
-        await axios.post(caisseEndpoint, {
-          facture: validatedFacture.id,
-          mode_paiement: 'en_compte',
-          montant: totals.partAssurance,
-          reference: null,
-          statut: 'completee',
-          part_patient: 0,
-          part_assurance: totals.partAssurance
-        })
-        
-        // 3. Succès
-        toast.success(`Facture ${validatedFacture.numero_facture} validée (Tiers payant 100%)`)
-        
-        // Clear cart
-        setLignesFacture([])
-        setSelectedClient(null)
-        setUseManualClient(false)
-        setManualClientName('')
-        setRemise('0')
-        setRemiseMode('montant')
-        setMontantPaye('')
-        setPaiements([])
-        setLoading(false)
-        
-        // === CRÉER LES PROMIS AVANT DE QUITTER (Client Pro 100%) ===
-        const promisLinesPro = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
-        for (const line of promisLinesPro) {
-            try {
-                const promisPayload = {
-                    facture: validatedFacture.id,
-                    client: validatedFacture.client,
-                    client_name: validatedFacture.client_name || (useManualClient ? manualClientName : ''),
-                    client_phone: line.promisPhone,
-                    produit: line.produit.id,
-                    quantite: line.promisQuantity,
-                    status: 'ATT'
-                }
-                const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
-                await axios.post<Promis>(promisEndpoint, promisPayload)
-                toast.success(`Promis créé pour ${line.produit.name} (${line.promisQuantity} unités)`)
-            } catch (err) {
-                console.error("Erreur création promis (Pro100):", err)
-                toast.error(`Erreur création promis pour ${line.produit.name}`)
-            }
-        }
-        
-        // Invalidate product cache to refresh stock data
-        queryClient.invalidateQueries({ queryKey: ['products'] })
-        
-        return // Fin du traitement
-      } else if (centralizedCashRegister) {
-        // Mode Caisse Centralisée ACTIVE : Envoi en Caisse Centralisée (BROUILLON)
-        
-        // Si c'est un devis/proforma, mettre à jour son statut en BROUILLON
-        // pour qu'il apparaisse dans la caisse centralisée
-        if (createdFacture.status === 'PROF' || createdFacture.status === 'PROFORMA') {
-          await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, { status: 'BROU' })
-        }
-        
-        toast.success(`Vente envoyée à la Caisse Centralisée (Ticket #${createdFacture.id})`)
-        setSuccessInfo({ ...createdFacture, status: 'BROUILLON' })
-        
-        // Clear cart and state without validating
-        setLignesFacture([])
-        setSelectedClient(null)
-        setUseManualClient(false)
-        setManualClientName('')
-        setRemise('0')
-        setRemiseMode('montant')
-        setMontantPaye('')
-        setPaiements([])
-        setLoading(false)
-        setIsPaymentModalOpen(false)
-        
-        // === CRÉER LES PROMIS AVANT DE QUITTER (même en mode Caisse Centralisée) ===
-        const promisLinesCC = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
-        
-        for (const line of promisLinesCC) {
-            try {
-                const promisPayload = {
-                    facture: createdFacture.id,
-                    client: createdFacture.client,
-                    client_name: createdFacture.client_name || (useManualClient ? manualClientName : ''),
-                    client_phone: line.promisPhone,
-                    produit: line.produit.id,
-                    quantite: line.promisQuantity,
-                    status: 'ATT'
-                }
-                const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
-                await axios.post<Promis>(promisEndpoint, promisPayload)
-                toast.success(`Promis créé pour ${line.produit.name} (${line.promisQuantity} unités)`)
-            } catch (err) {
-                console.error("Erreur création promis (CC):", err)
-                toast.error(`Erreur création promis pour ${line.produit.name}`)
-            }
-        }
-        
-        // Invalidate product cache to refresh stock data
-        queryClient.invalidateQueries({ queryKey: ['products'] })
-        
-        return // Stop execution (Do NOT validate)
-      }
-      // Mode Caisse Centralisée DÉSACTIVÉE : Continuer vers le paiement direct
-
-      // 3. Valider la facture
-      // 3. Valider la facture
-      const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`
-      const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
-          use_pending_discount: usePendingDiscount,
-          points_to_use: pointsToUse
-      })
-      validatedFactureForRollback = validatedFacture
-
-      // 4. Enregistrer les paiements
-      // Déterminer si on utilise le tiers payant
-      const useTiersPayant = totals.tauxCouverture > 0 && totals.partAssurance > 0
-      
-      let paiementsList = []
-      
-      if (useTiersPayant) {
-        // Tiers payant: créer paiements
-        paiementsList = []
-        
-        // Part patient
-        if (totals.partPatient > 0) {
-            // Si des paiements multiples ont été définis (split payment)
-            if (paiements.length > 0) {
-                paiements.forEach(p => {
-                    paiementsList.push({
-                        mode: p.mode,
-                        montant: p.montant,
-                        part_patient: p.montant, // Tout ce qui est payé ici est pour la part patient
-                        part_assurance: null
-                    });
-                });
-                
-                // Ajouter aussi le montant courant s'il reste quelque chose dans l'input
-                if (montantPaye && Number(montantPaye) > 0) {
-                     paiementsList.push({
-                        mode: modePaiement,
-                        montant: Number(montantPaye),
-                        part_patient: Number(montantPaye),
-                        part_assurance: null
-                    });
-                }
-            } else {
-                // Paiement unique classique
-                paiementsList.push({
-                    mode: modePaiement,
-                    montant: totals.partPatient,
-                    part_patient: totals.partPatient,
-                    part_assurance: null
-                })
-            }
-        }
-        
-        // Part assurance (toujours en compte)
-        if (totals.partAssurance > 0) {
-          paiementsList.push({
-            mode: 'en_compte',
-            montant: totals.partAssurance,
-            part_patient: null,
-            part_assurance: totals.partAssurance
-          })
-        }
-      } else {
-        // Pas de tiers payant: utiliser la liste normale + montant courant
-        if (paiements.length > 0) {
-            paiementsList = paiements.map(p => ({ ...p, part_patient: null, part_assurance: null }));
-            if (montantPaye && Number(montantPaye) > 0) {
-                paiementsList.push({ mode: modePaiement, montant: Number(montantPaye), part_patient: null, part_assurance: null });
-            }
-        } else {
-             paiementsList = [{ mode: modePaiement, montant: Number(montantPaye), part_patient: null, part_assurance: null }];
-        }
-      }
-
-      let totalVerse = 0
-      const failedPayments: any[] = []
-      
-      // Promesse séquentielle ou parallèle pour les paiements
-      await Promise.all(paiementsList.map(async (paiement) => {
-          const paiementPayload: any = {
-            facture: validatedFacture.id,
-            mode_paiement: paiement.mode,
-            montant: paiement.montant,
-            reference: reference || null,
-            statut: 'completee',
-          }
-          
-          // Ajouter les champs tiers payant s'ils existent
-          if (paiement.part_patient !== null && paiement.part_patient !== undefined) {
-            paiementPayload.part_patient = paiement.part_patient
-          }
-          if (paiement.part_assurance !== null && paiement.part_assurance !== undefined) {
-            paiementPayload.part_assurance = paiement.part_assurance
-          }
-          
-          try {
-            await axios.post(caisseEndpoint, paiementPayload)
-            totalVerse += paiement.montant
-          } catch (paymentError) {
-            console.error('ERREUR CRITIQUE: Échec création paiement:', paymentError)
-            console.error('Payload:', paiementPayload)
-            failedPayments.push({ paiement, error: paymentError })
-            // Re-throw pour déclencher le rollback
-            throw new Error(`Échec enregistrement paiement ${paiement.mode}: ${paymentError}`)
-          }
-      }))
-      
-      // Vérifier qu'aucun paiement n'a échoué
-      if (failedPayments.length > 0) {
-        throw new Error(`${failedPayments.length} paiement(s) non enregistré(s)`)
-      }
-
-      // 5. Mettre à jour le statut de la facture à "PAYEE"
-      const factureUpdateEndpoint = `${facturesEndpoint}${validatedFacture.id}/`
-      await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
-
-      // 6. Récupérer la facture finale mise à jour
-      const { data: finalFacture } = await axios.get<Facture>(factureUpdateEndpoint)
-
-      // 7. Gérer les Promis (après paiement validé)
-      const promisLines = lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0)
-      
-      const createdPromisIds: number[] = []
-
-      for (const line of promisLines) {
-          try {
-              const promisPayload = {
-                  facture: finalFacture.id,
-                  client: finalFacture.client,
-                  client_name: finalFacture.client_name || (useManualClient ? manualClientName : ''),
-                  client_phone: line.promisPhone,
-                  produit: line.produit.id,
-                  quantite: line.promisQuantity,
-                  status: 'ATT'
-              }
-              const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
-              const { data: createdPromis } = await axios.post<Promis>(promisEndpoint, promisPayload)
-              
-              createdPromisIds.push(createdPromis.id)
-              toast.success(`Promis créé pour ${line.produit.name} (${line.promisQuantity} unités)`)
-              
-          } catch (err) {
-              console.error("Erreur création promis:", err)
-              toast.error(`Erreur création promis pour ${line.produit.name}`)
-          }
-      }
-
-      // Grouped Print
-      if (createdPromisIds.length > 0) {
-          try {
-              const printGroupEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/imprimer_ticket_groupe/` : '/api/promis/imprimer_ticket_groupe/'
-              
-              // Trigger download/print
-              await new Promise(resolve => setTimeout(resolve, 500))
-              
-              const response = await axios.post(printGroupEndpoint, { promis_ids: createdPromisIds }, { responseType: 'blob' })
-              const url = window.URL.createObjectURL(new Blob([response.data]))
-              const link = document.createElement('a')
-              link.href = url
-              link.setAttribute('download', `ticket_promis_groupe_${finalFacture.id}.pdf`)
-              document.body.appendChild(link)
-              link.click()
-              link.parentNode?.removeChild(link)
-          } catch (err) {
-              console.error("Erreur impression ticket promis groupé:", err)
-              setError("Erreur lors de l'impression du ticket Promis groupé")
-          }
-      }
-
-      // 8. Finaliser
-      const rendu = totalVerse - Number(finalFacture.total_ttc)
-
-      setSuccessInfo(finalFacture)
-
-      // trigger premium print
-      window.open(`/app/print-invoice/${finalFacture.id}`, '_blank')
-      
-      // Get client name for ticket
-      const clientName = useManualClient 
-        ? manualClientName 
-        : clients.find(c => c.id === selectedClient)?.name || 'Client'
-      
-      // Pour le ticket standard
-      setTicketCaisse({
-        id: 0, 
-        facture: finalFacture,
-        mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
-        montant: finalFacture.total_ttc,
-        montant_verse: totalVerse.toString(),
-        rendu: rendu.toString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        statut: 'completee',
-        date_paiement: new Date().toISOString(),
-        client_name: clientName,
-        paiements_details: paiementsList
-      } as TicketCaisse)
-      
-      // Save ordonnancier data if it was collected earlier
-      console.log('DEBUG: tempOrdonnanceData =', tempOrdonnanceData)
-      if (tempOrdonnanceData) {
-        console.log('DEBUG: Saving ordonnancier with', tempOrdonnanceData.lignes.length, 'lines')
-        try {
-          const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/'
-          
-          // Transform lignes to match backend format (produit instead of produit_id)
-          const lignesForBackend = tempOrdonnanceData.lignes.map(ligne => ({
-            produit: ligne.produit_id,  // Backend expects 'produit' (ID)
-            produit_nom: ligne.produit_nom,
-            quantite: ligne.quantite,
-            surveillance_category: ligne.surveillance_category
-          }))
-          
-          console.log('DEBUG: lignesForBackend =', lignesForBackend)
-          
-          await axios.post(ordonnancierEndpoint, {
-            patient_nom: tempOrdonnanceData.patient_nom,
-            prescripteur_nom: tempOrdonnanceData.prescripteur_nom,
-            facture: finalFacture.id,
-            lignes: lignesForBackend
-          })
-          toast.success("Ordonnancier enregistré")
-          setTempOrdonnanceData(null)
-        } catch (err) {
-          console.error("Erreur enregistrement ordonnancier:", err)
-          toast.error("Erreur lors de l'enregistrement de l'ordonnancier")
-        }
-      } else {
-        console.log('DEBUG: tempOrdonnanceData is null, skipping ordonnancier save')
-      }
-      
-      // Standard Clean (ordonnancier modal already handled during product selection)
-      _resetSaleDataOnly()
-      setIsPaymentModalOpen(false)
-      
-      // Invalidate product cache to refresh stock data
-      queryClient.invalidateQueries({ queryKey: ['products'] })
-
-    } catch (err: any) {
-      // ROLLBACK STOCK IF NEEDED
-      if (validatedFactureForRollback) {
-        try {
-           const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
-           await axios.post(`${facturesEndpoint}${validatedFactureForRollback.id}/annuler/`, {
-             motif: "Échec du paiement (Annulation automatique)"
-           })
-           console.log("Rollback successful: Invoice cancelled due to payment failure.")
-        } catch (rollbackErr) {
-           console.error("Critical: Failed to rollback invoice after payment failure", rollbackErr)
-        }
-      }
-      console.error('Erreur validation facture (DÉTAILLÉE):', err);
-      let errorDetail = 'Une erreur est survenue lors de l\'enregistrement de la vente.';
-      if (err.response?.data) {
-          if (typeof err.response.data === 'string') {
-               errorDetail = err.response.data;
-          } else if (err.response.data.detail) {
-               errorDetail = err.response.data.detail;
-          } else {
-               errorDetail = JSON.stringify(err.response.data, null, 2);
-          }
-      } else if (err.message) {
-          errorDetail = err.message;
-      }
-      
-      setError(errorDetail); 
-      toast.error(errorDetail, { duration: 8000 });
-    } finally {
-      setLoading(false)
-    }
-  }
+    await completeSale(params);
+  };
 
   // Helper pour vider les données de vente sans fermer les modals de succès éventuels
   const _resetSaleDataOnly = () => {
@@ -1309,8 +725,7 @@ export default function Facturation() {
   }, [lignesFacture, updateQuantite]);
 
   const handleOrdonnanceSave = async (data: OrdonnanceData) => {
-    console.log('=== handleOrdonnanceSave DEBUG ===');
-    console.log('Received data:', data);
+
     
     // Toujours enregistrer immédiatement dans l'API
     setLoading(true);
@@ -1332,11 +747,10 @@ export default function Facturation() {
             lignes: lignesForBackend
         };
         
-        console.log('API endpoint:', endpoint);
-        console.log('Payload being sent:', payload);
+
         
-        const response = await axios.post(endpoint, payload);
-        console.log('API Response:', response.data);
+        await axios.post(endpoint, payload);
+
         
         toast.success("Enregistré dans l'ordonnancier");
         setShowOrdonnanceModal(false);
@@ -2016,25 +1430,27 @@ export default function Facturation() {
         </div>
       </div>
 
-      <PaymentModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        loading={loading}
-        facturePourPaiement={facturePourPaiement}
-        isNewSale={isNewSale}
-        totals={totals}
-        montantPaye={montantPaye}
-        setMontantPaye={setMontantPaye}
-        modePaiement={modePaiement}
-        setModePaiement={setModePaiement}
-        paiements={paiements}
-        setPaiements={setPaiements}
-        onCompleteSale={handleCompleteSale}
-        onRegisterPayment={enregistrerPaiement}
-        selectedClient={selectedClient}
-        useManualClient={useManualClient}
-        paymentInputRef={paymentInputRef}
-      />
+      {isPaymentModalOpen && (
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          loading={saleLoading || loading}
+          facturePourPaiement={facturePourPaiement}
+          isNewSale={isNewSale}
+          totals={totals}
+          montantPaye={montantPaye}
+          setMontantPaye={setMontantPaye}
+          modePaiement={modePaiement}
+          setModePaiement={setModePaiement}
+          paiements={paiements}
+          setPaiements={setPaiements}
+          onCompleteSale={handleCompleteSale}
+          onRegisterPayment={() => enregistrerPaiement()}
+          selectedClient={selectedClient}
+          useManualClient={useManualClient}
+          paymentInputRef={paymentInputRef}
+        />
+      )}
 
       {/* Modal Ticket */}
       {showTicketPreview && ticketCaisse && (
