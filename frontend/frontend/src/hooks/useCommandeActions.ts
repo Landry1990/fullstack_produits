@@ -179,20 +179,33 @@ export function useCommandeActions({
                 : '/api/commande-produits/bulk_sync/';
 
             // Préparer les données pour bulk_sync
-            const produitsPayload = commandeProduits.map(p => ({
-                id: p.id && typeof p.id === 'number' && p.id < 1000000000 ? p.id : undefined, // Ignore temp IDs (timestamps)
-                produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
-                quantity: parseInt(String(p.quantity)),
-                unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
-                price: parseFloat(String(p.price)).toFixed(2),
-                price_cost: parseFloat(String(p.price)).toFixed(2),
-                selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(2) : '0.00',
-                prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(2) : null,
-                tva: parseFloat(String(p.tva || 18)).toFixed(2),
-                marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
-                lot: p.lot || null,
-                date_expiration: parseMMYYToDate(p.date_expiration)
-            }));
+            const produitsPayload = commandeProduits.map(p => {
+                const parseAndFormat = (val: string | number | undefined, defaultValue: string = '0.00'): string => {
+                    const parsed = parseFloat(String(val || 0));
+                    return isNaN(parsed) ? defaultValue : parsed.toFixed(2);
+                };
+
+                const parseEuro = (val: string | number | undefined): string | null => {
+                    if (!val) return null;
+                    const parsed = parseFloat(String(val));
+                    return isNaN(parsed) ? null : parsed.toFixed(2);
+                };
+
+                return {
+                    id: p.id && typeof p.id === 'number' && p.id < 1000000000 ? p.id : undefined, // Ignore temp IDs
+                    produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                    quantity: parseInt(String(p.quantity || 0)) || 0,
+                    unites_gratuites: parseInt(String(p.unites_gratuites || 0)) || 0,
+                    price: parseAndFormat(p.price),
+                    price_cost: parseAndFormat(p.price),
+                    selling_price: parseAndFormat(p.selling_price),
+                    prix_euro: parseEuro(p.prix_euro),
+                    tva: parseAndFormat(p.tva, '18.00'), // Default TVA if missing ? Or 0?
+                    marge: parseFloat(String(p.marge || 1.3)).toFixed(4) === 'NaN' ? '1.3000' : parseFloat(String(p.marge || 1.3)).toFixed(4),
+                    lot: p.lot || null,
+                    date_expiration: parseMMYYToDate(p.date_expiration)
+                };
+            });
 
             await axios.post(bulkSyncEndpoint, {
                 commande_id: commandeId,

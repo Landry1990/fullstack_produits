@@ -238,12 +238,12 @@ export default function CommandeForm({
               {commandeType === 'DIR' && (
                 <div className="bg-blue-50/50 rounded-xl p-4 shadow-sm border border-blue-100 mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                      <span className="badge badge-info badge-sm">COMMANDE DIRECTE (IMPORT)</span>
+                      <span className="badge badge-info badge-sm">COMMANDE DIRECTE (ETRANGER)</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label className="form-control w-full">
                       <div className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Taux de Change (XAF/€)</span>
+                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Taux de Change (XAF/Devise)</span>
                       </div>
                       <input 
                         type="number"

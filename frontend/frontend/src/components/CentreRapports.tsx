@@ -182,6 +182,17 @@ const QUERIES: QueryDefinition[] = [
       { key: 'date_fin', label: 'Fin', type: 'datetime', required: true }
     ],
     resultType: 'table'
+  },
+  {
+    id: 'produits_vendus_tva',
+    name: 'Produits Vendus (Soumis à TVA)',
+    description: 'Produits avec TVA > 0 vendus sur la période',
+    endpoint: '/api/rapports/rapport_tva_vendus/',
+    params: [
+      { key: 'date_debut', label: 'Début', type: 'date', required: true },
+      { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+    ],
+    resultType: 'table'
   }
 ]
 
@@ -216,6 +227,13 @@ const getCurrentDateTime = (): string => {
 
 const getTodayDate = (): string => {
   return new Date().toISOString().slice(0, 10)
+}
+
+// Helper pour parser les dates de manière sécurisée
+const safeDate = (dateStr: any): Date | null => {
+  if (!dateStr) return null
+  const d = new Date(dateStr)
+  return isNaN(d.getTime()) ? null : d
 }
 
 export default function CentreRapports() {
@@ -851,9 +869,11 @@ export default function CentreRapports() {
                         <label className="label py-1">
                           <span className="label-text text-xs">{param.label}</span>
                         </label>
+
+
                         {param.type === 'month' && (
                           <DatePicker
-                            selected={params[param.key] ? new Date(params[param.key] + '-01') : null}
+                            selected={safeDate(params[param.key] ? params[param.key] + '-01' : null)}
                             onChange={(date: Date | null) => {
                               if (date) {
                                 const formatted = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
@@ -869,7 +889,7 @@ export default function CentreRapports() {
                         )}
                         {param.type === 'date' && (
                           <DatePicker
-                            selected={params[param.key] ? new Date(params[param.key]) : null}
+                            selected={safeDate(params[param.key])}
                             onChange={(date: Date | null) => {
                               if (date) {
                                 const formatted = date.toISOString().slice(0, 10)
@@ -884,7 +904,7 @@ export default function CentreRapports() {
                         )}
                         {param.type === 'datetime' && (
                           <DatePicker
-                            selected={params[param.key] ? new Date(params[param.key]) : null}
+                            selected={safeDate(params[param.key])}
                             onChange={(date: Date | null) => {
                               if (date) {
                                 // Use local time format instead of toISOString() which converts to UTC

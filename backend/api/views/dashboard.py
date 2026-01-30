@@ -186,6 +186,51 @@ class DashboardViewSet(viewsets.ViewSet):
         })
 
     @action(detail=False, methods=['get'])
+    def hourly_traffic(self, request):
+        """Returns average hourly traffic (number of sales) over the last 30 days."""
+        from django.db.models.functions import ExtractHour
+        
+        today = timezone.now().date()
+        date_30_days_ago = today - timedelta(days=30)
+        
+        # Get sales for last 30 days grouped by hour
+        sales_by_hour = Facture.objects.filter(
+            date__date__gte=date_30_days_ago,
+            date__date__lte=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            hour=ExtractHour('date')
+        ).values('hour').annotate(
+            count=Count('id'),
+            total=Sum('total_ttc')
+        ).order_by('hour')
+        
+        # Initialize 24h data
+        traffic_data = {h: {'count': 0, 'total': 0} for h in range(24)}
+        
+        days_count = 30 # Fixed 30-day window average
+        
+        # Fill with actual data
+        for item in sales_by_hour:
+            hour = item['hour']
+            traffic_data[hour] = {
+                'count': float(item['count']) / days_count, # Average per day
+                'total': float(item['total'] or 0) / days_count # Average revenue per day
+            }
+            
+        # Format for frontend
+        response_data = [
+            {
+                'hour': f"{h:02d}h",
+                'sales_count': round(traffic_data[h]['count'], 2),
+                'revenue': round(traffic_data[h]['total'], 2)
+            }
+            for h in range(24)
+        ]
+        
+        return Response(response_data)
+
+    @action(detail=False, methods=['get'])
     def revenue_chart(self, request):
         """Returns daily revenue for the last 7 days in format expected by frontend."""
         end_date = timezone.now()
@@ -313,38 +358,48 @@ class DashboardViewSet(viewsets.ViewSet):
         
         from ..models import Fournisseur
         
-        suppliers_with_debt = Fournisseur.objects.annotate(
-            total_ordered=Coalesce(
-                Sum('commande__total', filter=Q(commande__status='CLOT')), 
-                Decimal('0')
-            ),
-            total_paid=Coalesce(
-                Sum('paiements_effectues__montant'), 
-                Decimal('0')
-            ),
-            calculated_debt=F('total_ordered') - F('total_paid')
-        ).filter(
-            calculated_debt__gt=0
-        ).values('id', 'name', 'phone', 'calculated_debt')
+        # Get all suppliers with potentially active debts
+        # We fetch all suppliers and calculate in Python to avoid Cartesian product issues with multiple Sum annotations
+        # given the complexity of the relationships (Fournisseur -> Commande -> CommandeProduit AND Fournisseur -> PaiementFournisseur)
+        
+        suppliers = Fournisseur.objects.prefetch_related(
+            'commande_set', 
+            'commande_set__produits', 
+            'paiements_effectues'
+        )
         
         data = []
-        total_debt = Decimal('0.00')
+        total_debt_global = Decimal('0.00')
         
-        for s in suppliers_with_debt:
-            debt = s['calculated_debt']
-            total_debt += debt
-            data.append({
-                'id': s['id'],
-                'name': s['name'],
-                'debt': float(debt),
-                'phone': s['phone']
-            })
-                
+        for s in suppliers:
+            # 1. Calculate Total Ordered (Sum of quantity * price for CLOT orders)
+            total_ordered = Decimal('0.00')
+            for cmd in s.commande_set.all():
+                if cmd.status == 'CLOT':
+                    # Use the property logic or manual sum
+                    for line in cmd.produits.all():
+                        total_ordered += (line.quantity * line.price)
+            
+            # 2. Calculate Total Paid
+            total_paid = sum((p.montant for p in s.paiements_effectues.all()), Decimal('0.00'))
+            
+            # 3. Debt
+            debt = total_ordered - total_paid
+            
+            if debt > 0:
+                total_debt_global += debt
+                data.append({
+                    'id': s.id,
+                    'name': s.name,
+                    'debt': float(debt),
+                    'phone': s.phone
+                })
+        
         # Sort by highest debt
         data.sort(key=lambda x: x['debt'], reverse=True)
         
         return Response({
-            'total_debt': float(total_debt),
+            'total_debt': float(total_debt_global),
             'suppliers': data
         })
 

@@ -11,7 +11,7 @@ from .views import (
     StatsUGViewSet, StockAnalysisUnsoldView, StockAnalysisOverstockView,
     PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet,
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
-    CategoriesListView, CategoriesDetailView
+    CategoriesListView, CategoriesDetailView, PromisViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -65,6 +65,7 @@ router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
 router.register(r'paiements-fournisseurs', PaiementFournisseurViewSet, basename='paiementfournisseur')
 router.register(r'configuration-options', ConfigurationOptionViewSet, basename='configurationoption')
+router.register(r'promis', PromisViewSet, basename='promis')
 
 
 # The API URLs are now determined automatically by the router.

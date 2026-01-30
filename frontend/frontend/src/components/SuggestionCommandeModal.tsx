@@ -339,7 +339,19 @@ export default function SuggestionCommandeModal({
                                                       </label>
                                                   </td>
                                                   <td>
-                                                      <div className="font-bold">{item.produit_nom}</div>
+                                                      <div className="font-bold relative">
+                                                          <span className="whitespace-normal">{item.produit_nom}</span>
+                                                          {item.is_supplier_exclusive && (
+                                                              <div 
+                                                                  className="tooltip tooltip-right z-50 inline-flex align-middle ml-2" 
+                                                                  data-tip={`Exclusivité: ${item.exclusive_fournisseur_nom || 'Fournisseur Spécifique'}`}
+                                                              >
+                                                                  <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
+                                                                    E
+                                                                  </span>
+                                                              </div>
+                                                          )}
+                                                      </div>
                                                       <div className="text-xs opacity-50">{item.produit_ref}</div>
                                                   </td>
                                                   <td className="text-center font-mono">{item.stock_actuel}</td>

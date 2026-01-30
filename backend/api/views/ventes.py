@@ -395,10 +395,13 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 if save_client:
                     client.save()
 
+        if not facture.created_by:
+            facture.created_by = request.user
+
         facture.status = Facture.Status.VALIDEE
         if not facture.numero_facture:
             facture.numero_facture = f"FAC-{facture.id:06d}"
-        facture.save(update_fields=['status', 'numero_facture'])
+        facture.save(update_fields=['status', 'numero_facture', 'created_by'])
         
         today = date.today()
         Produit.objects.filter(id__in=product_ids).update(dernier_vente=today)
