@@ -4,6 +4,8 @@ import { toast } from 'react-hot-toast';
 import {
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -13,6 +15,7 @@ import {
 import { 
   useDashboardStats, 
   useRevenueChart, 
+  useHourlyTraffic, 
   useLowStock, 
   useUgStats, 
   usePromisDisponibles, 
@@ -34,7 +37,8 @@ export default function Dashboard() {
   const { data: ugStats } = useUgStats();
   const { data: promisDisponibles = [] } = usePromisDisponibles();
   const { data: expiringLots = [], refetch: refetchExpiring } = useExpiringLots(expirationMonths);
-  const { data: supplierDebts } = useSupplierDebts();
+  const { data: supplierDebts, refetch: refetchSupplierDebts, isRefetching: isRefetchingSupplierDebts } = useSupplierDebts();
+  const { data: hourlyTraffic } = useHourlyTraffic();
 
   const loading = statsLoading || chartLoading;
   const error = statsError ? 'Impossible de charger les données du tableau de bord.' : null;
@@ -353,6 +357,45 @@ export default function Dashboard() {
           )}
 
           {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
+          /* Hourly Traffic Chart */
+          <div className="card bg-base-100 shadow-sm border border-base-200">
+            <div className="card-body p-4">
+              <h2 className="card-title text-lg font-bold text-base-content mb-4">Moyenne Fréquentation Horaire (30 jours)</h2>
+              {hourlyTraffic && (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <AreaChart data={hourlyTraffic} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorTraffic" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="hour" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px'
+                        }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="sales_count" 
+                        stroke="#8884d8" 
+                        fillOpacity={1} 
+                        fill="url(#colorTraffic)" 
+                        name="Ventes"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+          )}
+
+          {(!stats?.role || (stats.role !== 'VENDEUR' && stats.role !== 'CAISSIER')) && (
           /* Supplier Debts Section */
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
@@ -361,11 +404,24 @@ export default function Dashboard() {
                     <span className="text-xl">📉</span>
                     Dettes Fournisseurs
                  </h2>
-                 {supplierDebts?.total_debt > 0 && (
-                    <div className="badge badge-error text-white font-bold p-3">
-                        Total: {Math.round(supplierDebts.total_debt).toLocaleString('fr-FR')} F
-                    </div>
-                 )}
+                 <div className="flex items-center gap-2">
+                     {supplierDebts?.total_debt > 0 && (
+                        <div className="badge badge-error text-white font-bold p-3">
+                            Total: {Math.round(supplierDebts.total_debt).toLocaleString('fr-FR')} F
+                        </div>
+                     )}
+                     <button 
+                        className={`btn btn-ghost btn-sm btn-circle ${isRefetchingSupplierDebts ? 'loading' : ''}`}
+                        onClick={() => refetchSupplierDebts()}
+                        title="Actualiser les dettes"
+                     >
+                        {!isRefetchingSupplierDebts && (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        )}
+                     </button>
+                 </div>
               </div>
               
               {supplierDebts?.suppliers && supplierDebts.suppliers.length > 0 ? (

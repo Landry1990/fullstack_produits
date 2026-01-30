@@ -147,6 +147,23 @@ export const useExpiringLots = (months: number) => {
     });
 };
 
+export interface HourlyTrafficData {
+    hour: string;
+    sales_count: number;
+    revenue: number;
+}
+
+export const useHourlyTraffic = () => {
+    return useQuery({
+        queryKey: ['dashboard', 'hourlyTraffic'],
+        queryFn: async () => {
+            const response = await axios.get<HourlyTrafficData[]>(`${dashboardEndpoint}hourly_traffic/`);
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+};
+
 export const useSupplierDebts = () => {
     return useQuery({
         queryKey: ['dashboard', 'supplierDebts'],

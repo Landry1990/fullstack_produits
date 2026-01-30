@@ -153,7 +153,7 @@ export default function CommandeProductTable({
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Qté</th>
                     <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">UG</th>
                     {commandeType === 'DIR' && (
-                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">Prix €</th>
+                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">Prix Dev.</th>
                     )}
                     <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Achat HT</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">TVA</th>
@@ -181,22 +181,54 @@ export default function CommandeProductTable({
                         <td className="pl-4 py-2 md:py-3">
                         <div className="font-medium text-sm">
                             {(() => {
-                            // Try to get product name from different sources
+                            let name = '';
+                            let cip = '';
+                            let isExclusive = false;
+                            let supplierName = '';
+
+                            // Resolve Product Data
                             if (typeof p.produit === 'object' && p.produit.name) {
-                                return p.produit.name;
+                                name = p.produit.name;
+                                cip = p.produit.cip1 || '';
+                                isExclusive = p.produit.is_supplier_exclusive || false;
+                                supplierName = p.produit.fournisseur_name || '';
+                            } else {
+                                // Try to find in produitsList
+                                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                                const found = produitsList.find(prod => prod.id === produitId);
+                                if (found) {
+                                    name = found.name;
+                                    cip = found.cip1 || '';
+                                    isExclusive = found.is_supplier_exclusive || false;
+                                    supplierName = found.fournisseur_name || '';
+                                } else if ((p as any).produit_nom) {
+                                     // Fallback to flattened fields from API
+                                     name = (p as any).produit_nom;
+                                     // Try to find CIP in known fields or fallback to ref if it looks like a CIP
+                                     cip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref || ''; 
+                                     if (cip === name) cip = ''; // Avoid dupes if ref is name
+                                } else {
+                                    name = `Produit #${produitId}`;
+                                }
                             }
-                            // Check if there's a produit_nom field from API
-                            if ((p as any).produit_nom) {
-                                return (p as any).produit_nom;
-                            }
-                            // Try to find in produitsList
-                            const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
-                            const found = produitsList.find(prod => prod.id === produitId);
-                            if (found) {
-                                return found.name;
-                            }
-                            // Last resort: show ID
-                            return `Produit #${produitId}`;
+
+                            return (
+                                <div className="flex items-center gap-1 flex-wrap">
+                                    <span className="break-words max-w-[200px]">
+                                        {name}
+                                    </span>
+                                    {isExclusive && (
+                                        <div 
+                                            className="tooltip tooltip-right z-50 ml-1 inline-flex shrink-0" 
+                                            data-tip={`Exclusivité: ${supplierName || 'Fournisseur Spécifique'}`}
+                                        >
+                                            <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
+                                              E
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
                             })()}
                         </div>
                         </td>
@@ -204,10 +236,19 @@ export default function CommandeProductTable({
                         <td className="pl-2 py-2 md:py-3">
                             <span className="text-xs font-mono text-base-content/70">
                                 {(() => {
+                                    // 1. Try direct object
                                     if (typeof p.produit === 'object' && p.produit.cip1) return p.produit.cip1;
+                                    
+                                    // 2. Try lookup in list
                                     const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
                                     const found = produitsList.find(prod => prod.id === produitId);
-                                    return found?.cip1 || '-';
+                                    if (found && found.cip1) return found.cip1;
+                                    
+                                    // 3. Fallback to flat fields
+                                    const flatCip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref;
+                                    if (flatCip && flatCip !== (p as any).produit_nom) return flatCip;
+                                    
+                                    return '-';
                                 })()}
                             </span>
                         </td>
@@ -256,7 +297,7 @@ export default function CommandeProductTable({
                                 value={p.prix_euro || ''}
                                 onChange={(e) => updateCommandeProduitField(index, 'prix_euro', e.target.value)}
                                 className="input input-ghost input-sm text-base w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
-                                placeholder="€"
+                                placeholder="Dev."
                             />
                             </td>
                         )}

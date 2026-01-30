@@ -614,6 +614,7 @@ export default function Ventes() {
               <tr>
                 <th>{t('sales.table.invoice_number')}</th>
                 <th>{t('sales.table.client')}</th>
+                <th>Opérateur</th>
                 <th>{t('sales.table.date')}</th>
                 <th>{t('sales.table.status')}</th>
                 {filterStatus === 'cancelled' && <th>{t('sales.table.cancellation_reason')}</th>}
@@ -625,7 +626,7 @@ export default function Ventes() {
             <tbody>
               {factures.length === 0 ? (
                 <tr>
-                  <td colSpan={filterStatus === 'cancelled' ? 8 : 7} className="text-center py-12 text-base-content/50">
+                  <td colSpan={filterStatus === 'cancelled' ? 9 : 8} className="text-center py-12 text-base-content/50">
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-3xl">📭</span>
                         <span>{searchQuery ? t('sales.messages.no_results') : t('sales.messages.no_invoices')}</span>
@@ -649,6 +650,9 @@ export default function Ventes() {
                     </td>
                     <td>
                       <div className="font-bold text-sm">{facture.client_name || 'Client de passage'}</div>
+                    </td>
+                    <td className="text-sm">
+                      {facture.created_by_name || '-'}
                     </td>
                     <td className="text-xs text-base-content/70">
                       {formatDateFr(facture.date)}

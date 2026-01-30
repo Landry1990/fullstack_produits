@@ -207,3 +207,74 @@ class RapportViewSet(viewsets.ViewSet):
             })
             
         return Response(data)
+    @action(detail=False, methods=['get'])
+    def rapport_tva_vendus(self, request):
+        """
+        Rapport des produits vendus soumis à la TVA (> 0) sur une période.
+        """
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+
+        if not date_debut_str or not date_fin_str:
+            return Response(
+                {'error': 'Les paramètres date_debut et date_fin sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Handle both date only (YYYY-MM-DD) and datetime (ISO) inputs gracefully
+            if 'T' in date_debut_str:
+                date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            else:
+                date_debut = datetime.fromisoformat(date_debut_str)
+            
+            if 'T' in date_fin_str:
+                date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            else:
+                date_fin = datetime.fromisoformat(date_fin_str) + timedelta(days=1) - timedelta(seconds=1) # End of day if date provided
+                
+        except ValueError:
+            return Response({'error': 'Format de date invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # On filtre les FactureProduit
+        # 1. Facture Validee ou Payee
+        # 2. Date dans la plage
+        # 3. Produit avec TVA > 0
+        
+        lignes = FactureProduit.objects.filter(
+            facture__date__range=(date_debut, date_fin),
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            produit__tva__gt=0
+        ).values(
+            'produit__name', 'produit__cip1', 'produit__tva'
+        ).annotate(
+            total_qty=Sum('quantity'),
+            total_ttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
+        ).order_by('produit__name')
+        
+        data = []
+        for l in lignes:
+            tva_rate = l['produit__tva'] or Decimal(0)
+            ttc = l['total_ttc'] or Decimal(0)
+            qty = l['total_qty'] or 0
+            
+            # Calcul montant TVA: TTC - HT = TTC - (TTC / (1 + rate/100))
+            # = TTC * (1 - 1/(1 + rate/100))
+            # = TTC * (rate/100) / (1 + rate/100)
+            # = TTC * rate / (100 + rate)
+            
+            if tva_rate > 0:
+                montant_tva = (ttc * tva_rate) / (100 + tva_rate)
+            else:
+                montant_tva = Decimal(0)
+                
+            data.append({
+                'produit': l['produit__name'],
+                'cip': l['produit__cip1'],
+                'quantite': qty,
+                'taux_tva': f"{float(tva_rate)} %",
+                'total_ttc': round(ttc, 0),
+                'montant_tva': round(montant_tva, 0)
+            })
+            
+        return Response(data)

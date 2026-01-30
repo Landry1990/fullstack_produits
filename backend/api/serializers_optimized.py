@@ -71,6 +71,7 @@ class FactureListSerializer(serializers.ModelSerializer):
     Évite de charger tous les produits et paiements.
     """
     client_name = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -78,7 +79,7 @@ class FactureListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Facture
         fields = [
-            'id', 'numero_facture', 'client', 'client_name',
+            'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
             'date', 'status', 'status_display',
             'total_ht', 'total_ttc', 'remise'
         ]
@@ -87,6 +88,12 @@ class FactureListSerializer(serializers.ModelSerializer):
         if obj.client:
             return obj.client.name
         return obj.client_name_override or "Client de passage"
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            full_name = f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
+            return full_name or obj.created_by.username
+        return ''
 
 
 class FactureDetailSerializer(FactureSerializer):

@@ -1496,6 +1496,8 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
                 'tendance': 'N/A',
                 'urgence': 'urgent' if stock_actuel <= 0 else 'normal',
                 'couverture_jours': int((stock_actuel / ventes) * periode) if ventes > 0 else 999,
+                'is_supplier_exclusive': produit.is_supplier_exclusive,
+                'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
                 'raison': raison
             })
     
@@ -1664,6 +1666,8 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
                 'urgence': urgence,
                 'score_urgence': score_urgence,
                 'couverture_jours': int(couverture_jours),
+                'is_supplier_exclusive': produit.is_supplier_exclusive,
+                'exclusive_fournisseur_nom': produit.fournisseur.name if (produit.is_supplier_exclusive and produit.fournisseur) else None,
                 'raison': raison
             })
     

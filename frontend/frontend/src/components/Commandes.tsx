@@ -472,6 +472,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const fieldsConfig = [
     { name: 'quantity', editable: true },
     { name: 'unites_gratuites', editable: true }, // NEW
+    ...(commandeType === 'DIR' ? [{ name: 'prix_euro', editable: true }] : []),
     { name: 'price', editable: true },
     { name: 'tva', editable: true },
     { name: 'marge', editable: true },
@@ -1302,13 +1303,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
                 className={`tab ${activeTab === 'LOC' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('LOC')}
                 >
-                Commandes Locales
+                Commandes Grossistes (Locales)
                 </a> 
                 <a 
                 className={`tab ${activeTab === 'DIR' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('DIR')}
                 >
-                Commandes Directes
+                Commandes Directes (Etranger)
                 </a>
             </div>
           )}

@@ -11,13 +11,10 @@ import { usePendingSales } from '../hooks/usePendingSales'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 import { useClinicalCheck } from '../hooks/useClinicalCheck'
-import DOMPurify from 'dompurify'
 import { useSidebar } from '../context/SidebarContext'
 import { safeStorage } from '../utils/storage'
 import { Eye, EyeOff, Moon, Sun } from 'lucide-react'
-
 import { useTranslation } from 'react-i18next'
-import { TicketTemplate } from './printing/TicketTemplate'
 import PaymentModal from './facturation/PaymentModal'
 import OrdonnanceModal, { type OrdonnanceData } from './OrdonnanceModal'
 import LotSelectionModal from './LotSelectionModal'
@@ -27,6 +24,10 @@ import CartTable from './facturation/CartTable'
 import ProductSearchSection from './facturation/ProductSearchSection'
 import ClientSection from './facturation/ClientSection'
 import ClinicalAlerts from './clinical/ClinicalAlerts'
+import ClientCreateModal from './facturation/ClientCreateModal'
+import StockResolutionModal from './facturation/StockResolutionModal'
+import PendingSalesDrawer from './facturation/PendingSalesDrawer'
+import TicketPreviewModal from './facturation/TicketPreviewModal'
 import { useSaleCompletion } from '../hooks/useSaleCompletion'
 
 
@@ -1452,198 +1453,36 @@ export default function Facturation() {
         />
       )}
 
-      {/* Modal Ticket */}
-      {showTicketPreview && ticketCaisse && (
-        <div className="modal modal-open">
-          <div className="modal-box p-0 max-w-sm bg-white overflow-hidden">
-            <div className="bg-base-50 p-3 flex justify-between items-center border-b border-base-200">
-              <h3 className="font-bold text-lg">{t('common.receipt')}</h3>
-              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>
-            </div>
+      {/* Ticket Preview Modal */}
+      <TicketPreviewModal
+        isOpen={showTicketPreview}
+        onClose={() => setShowTicketPreview(false)}
+        ticket={ticketCaisse}
+        settings={pharmacySettings}
+      />
 
-            <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4" id="ticket-preview-container">
-              <div id="ticket-preview">
-                <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
-              </div>
-            </div>
-
-            <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
-              <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>{t('common.close')} (Esc)</button>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  const content = DOMPurify.sanitize(document.getElementById('ticket-preview')?.innerHTML || '');
-                  const win = window.open('', '', 'height=600,width=400');
-                  if (win && content) {
-                    win.document.write('<html><head><title>Ticket</title>');
-                    win.document.write('<style>@media print { @page { margin: 0; size: 80mm auto; } body { margin: 0; padding: 0; } } body { margin: 0; padding: 0; background: white; }</style>');
-                    win.document.write('</head><body>');
-                    win.document.write(content);
-                    win.document.write('</body></html>');
-                    win.document.close();
-                    win.focus();
-                    setTimeout(() => {
-                      win.print();
-                      win.close();
-                    }, 250);
-                  }
-                }}
-              >
-                {t('common.print')}
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
-        </div>
-      )}
-
-      {/* Promis / Force Stock Modal */}
-      {/* Stock Resolution Modal (Promis vs Force) */}
-      <dialog className={`modal ${showStockResolution ? 'modal-open' : ''}`}>
-        <div className="modal-box w-[600px] max-w-full">
-          <h3 className="font-bold text-lg text-warning">{t('facturation.stock_resolution.title')}</h3>
-          <div className="py-4">
-            <div className="alert alert-warning text-sm py-2 mb-4">
-              <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-              <span>
-                {t('facturation.stock_resolution.message')}
-              </span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="table table-compact w-full">
-                <thead>
-                  <tr>
-                    <th>{t('common.product')}</th>
-                    <th className="text-right">{t('facturation.stock_resolution.demand')}</th>
-                    <th className="text-right">{t('facturation.stock_resolution.stock')}</th>
-                    <th className="text-right">{t('facturation.stock_resolution.missing')}</th>
-                    <th className="text-center">{t('facturation.stock_resolution.promised')} ?</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stockResolutionItems.map((item, _) => {
-                    const manquant = Math.max(0, item.quantity - item.stock)
-                    const isSelected = promisSelections.has(item.product.id)
-
-                    return (
-                      <tr key={item.product.id}>
-                        <td className="font-medium">{item.product.name}</td>
-                        <td className="text-right font-bold">{item.quantity}</td>
-                        <td className="text-right">{item.stock}</td>
-                        <td className="text-right text-error font-bold">{manquant}</td>
-                        <td className="text-center">
-                          <input
-                            type="checkbox"
-                            className="checkbox checkbox-warning"
-                            checked={isSelected}
-                            onChange={(e) => {
-                              const newSet = new Set(promisSelections)
-                              if (e.target.checked) newSet.add(item.product.id)
-                              else newSet.delete(item.product.id)
-                              setPromisSelections(newSet)
-                            }}
-                          />
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="form-control w-full mt-4">
-              <label className="label">
-                <span className="label-text">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
-              </label>
-              <input
-                type="text"
-                value={promisPhone}
-                onChange={(e) => setPromisPhone(e.target.value)}
-                placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
-                className="input input-bordered w-full"
-              />
-            </div>
-          </div>
-
-          <div className="modal-action flex justify-between">
-            <button className="btn btn-ghost" onClick={() => setShowStockResolution(false)}>{t('facturation.stock_resolution.cancel_and_edit_cart')}</button>
-            <button
-              className="btn btn-primary"
-              onClick={handleStockResolutionConfirm}
-            >
-              {t('facturation.stock_resolution.validate_and_cash')}
-            </button>
-          </div>
-        </div>
-      </dialog>
+      {/* Stock Resolution Modal */}
+      <StockResolutionModal
+        isOpen={showStockResolution}
+        onClose={() => setShowStockResolution(false)}
+        stockResolutionItems={stockResolutionItems}
+        promisSelections={promisSelections}
+        setPromisSelections={setPromisSelections}
+        promisPhone={promisPhone}
+        setPromisPhone={setPromisPhone}
+        onConfirm={handleStockResolutionConfirm}
+      />
 
       {/* Pending Sales Drawer */}
-      {showPendingSales && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">{t('facturation.pending_sales.title')}</h3>
-              <button onClick={() => setShowPendingSales(false)} className="btn btn-sm btn-circle btn-ghost">✕</button>
-            </div>
+      <PendingSalesDrawer
+        isOpen={showPendingSales}
+        onClose={() => setShowPendingSales(false)}
+        ventesEnAttente={ventesEnAttente}
+        onRestore={restaurerVente}
+        onDelete={supprimerVenteEnAttente}
+      />
 
-            {ventesEnAttente.length === 0 ? (
-              <div className="text-center py-8 text-base-content/40">
-                {t('facturation.pending_sales.no_sales')}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {ventesEnAttente.map((vente, idx) => {
-                  const total = vente.lignes.reduce((sum, ligne) => sum + ligne.total_ligne, 0)
-                  const remiseMontant = vente.remiseMode === 'montant'
-                    ? parseFloat(vente.remise)
-                    : total * (parseFloat(vente.remise) / 100)
-                  const totalNet = total - remiseMontant
-
-                  return (
-                    <div key={vente.id} className="card bg-base-100 border border-base-200 shadow-sm">
-                      <div className="card-body p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="badge badge-info badge-sm">#{idx + 1}</div>
-                              <span className="font-semibold">
-                                {vente.clientName || vente.manualClientName || t('facturation.pending_sales.unspecified_client')}
-                              </span>
-                            </div>
-                            <div className="text-sm text-base-content/60 space-y-1">
-                              <div>{t('facturation.pending_sales.items_count', { count: vente.lignes.length })}</div>
-                              <div className="font-medium text-primary">{Math.round(totalNet)} FCFA</div>
-                              <div className="text-xs opacity-50">
-                                {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <button
-                              onClick={() => restaurerVente(vente.id)}
-                              className="btn btn-primary btn-sm"
-                            >
-                              {t('common.restore')}
-                            </button>
-                            <button
-                              onClick={() => supprimerVenteEnAttente(vente.id)}
-                              className="btn btn-error btn-outline btn-sm"
-                            >
-                              {t('common.delete')}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowPendingSales(false)}></div>
-        </div>
-      )}
+      {/* Confirmation Modal */}
 
       {/* Confirmation Modal */}
       <dialog className={`modal ${confirmModal?.isOpen ? 'modal-open' : ''}`}>
@@ -1676,145 +1515,15 @@ export default function Facturation() {
         />
       )}
 
-      {/* Modal Création Client */}
-      {showClientCreateModal && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-lg">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              ➕ {t('facturation.create_client.title')}
-              <span className="badge badge-sm badge-primary">{newClientForm.client_type === 'PARTICULIER' ? t('facturation.create_client.individual') : t('facturation.create_client.professional')}</span>
-            </h3>
-
-            <form onSubmit={handleCreateClient} className="space-y-4">
-              {/* Type de client */}
-              <div className="flex gap-4">
-                <label className="label cursor-pointer gap-2">
-                  <input
-                    type="radio"
-                    className="radio radio-primary radio-sm"
-                    checked={newClientForm.client_type === 'PARTICULIER'}
-                    onChange={() => setNewClientForm(prev => ({ ...prev, client_type: 'PARTICULIER' }))}
-                  />
-                  <span className="label-text">{t('facturation.create_client.individual')}</span>
-                </label>
-                <label className="label cursor-pointer gap-2">
-                  <input
-                    type="radio"
-                    className="radio radio-secondary radio-sm"
-                    checked={newClientForm.client_type === 'PROFESSIONNEL'}
-                    onChange={() => setNewClientForm(prev => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
-                  />
-                  <span className="label-text">{t('facturation.create_client.professional')}</span>
-                </label>
-              </div>
-
-              {/* Infos de base */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="form-control">
-                  <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.name')} *</span></label>
-                  <input
-                    type="text"
-                    value={newClientForm.name}
-                    onChange={e => setNewClientForm(prev => ({ ...prev, name: e.target.value }))}
-                    className="input input-bordered input-sm w-full" 
-                    placeholder="Nom complet" 
-                    required 
-                    />
-                </div>
-                <div className="form-control">
-                  <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.phone')} *</span></label>
-                  <input
-                    type="tel"
-                    value={newClientForm.phone}
-                    onChange={e => setNewClientForm(prev => ({ ...prev, phone: e.target.value }))}
-                    className="input input-bordered input-sm w-full" 
-                    placeholder="0612345678" 
-                    required 
-                    />
-                </div>
-              </div>
-              
-              <div className="form-control">
-                <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.email')} *</span></label>
-                <input 
-                  type="email" 
-                  value={newClientForm.email} 
-                  onChange={e => setNewClientForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="input input-bordered input-sm w-full" 
-                  placeholder="email@exemple.com" 
-                  required 
-                  />
-              </div>
-
-              <div className="form-control">
-                <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.address')} *</span></label>
-                <textarea 
-                  value={newClientForm.address} 
-                  onChange={e => setNewClientForm(prev => ({ ...prev, address: e.target.value }))}
-                  className="textarea textarea-bordered textarea-sm w-full h-16 resize-none" 
-                  placeholder="Adresse complète" 
-                  required 
-                  />
-              </div>
-
-              {/* Champs professionnels */}
-              {newClientForm.client_type === 'PROFESSIONNEL' && (
-                <div className="bg-base-200 p-3 rounded-lg space-y-3">
-                  <h4 className="text-sm font-bold text-secondary">{t('facturation.create_client.pro_options')}</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="form-control">
-                      <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.credit_limit')}</span></label>
-                      <input 
-                        type="number" 
-                        value={newClientForm.plafond} 
-                        onChange={e => setNewClientForm(prev => ({ ...prev, plafond: e.target.value }))}
-                        className="input input-bordered input-sm w-full" 
-                        min="0"
-                        />
-                    </div>
-                    <div className="form-control">
-                      <label className="label py-1"><span className="label-text text-xs">{t('facturation.create_client.coverage')}</span></label>
-                      <input 
-                        type="number" 
-                        value={newClientForm.taux_couverture} 
-                        onChange={e => setNewClientForm(prev => ({ ...prev, taux_couverture: e.target.value }))}
-                        className="input input-bordered input-sm w-full" 
-                        min="0" 
-                        max="100"
-                        />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="modal-action mt-6">
-                <button 
-                  type="button" 
-                  className="btn btn-ghost" 
-                  onClick={() => setShowClientCreateModal(false)}
-                >
-                  {t('facturation.create_client.cancel')}
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary gap-2"
-                  disabled={isCreatingClient}
-                >
-                  {isCreatingClient ? (
-                    <span className="loading loading-spinner loading-sm"></span>
-                  ) : (
-                      <> {t('facturation.create_client.submit')}</>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-          <form method="dialog" className="modal-backdrop" onClick={() => setShowClientCreateModal(false)}>
-            <button>close</button>
-          </form>
-        </dialog>
-      )}
+      {/* Client Creation Modal */}
+      <ClientCreateModal
+        isOpen={showClientCreateModal}
+        onClose={() => setShowClientCreateModal(false)}
+        newClientForm={newClientForm}
+        setNewClientForm={setNewClientForm}
+        isCreatingClient={isCreatingClient}
+        handleCreateClient={handleCreateClient}
+      />
 
       {/* Ordonnance Modal */}
       {showOrdonnanceModal && (

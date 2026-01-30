@@ -228,6 +228,7 @@ export interface Facture {
   total_tva: string
   total_ttc: string
   produits: FactureProduit[]
+  created_by_name?: string // Added operator name
   is_remise_auto?: boolean
   part_client?: string | number | null
   reste_a_payer?: string

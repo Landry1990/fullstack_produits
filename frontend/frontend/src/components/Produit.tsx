@@ -784,16 +784,23 @@ export default function Produit() {
                         </td>
                         <td className="py-1 px-2">
                           <div 
-                            className={`text-xs uppercase ${
+                            className={`text-xs uppercase flex items-center flex-wrap gap-1 ${
                               stock < 0 ? 'text-error font-bold' : 
                               stock === 0 ? 'text-slate-400 font-normal' : 
                               'text-slate-800 font-bold'
                             }`} 
                             title={produit.name}
                           >
-                            {produit.name}
+                            <span>{produit.name}</span>
                             {produit.is_supplier_exclusive && (
-                                <span className="ml-1 text-[10px] text-warning" title="Exclusivité Fournisseur">🔒</span>
+                                <div 
+                                    className="tooltip tooltip-right z-50 inline-flex shrink-0" 
+                                    data-tip={`Exclusivité: ${produit.fournisseur_name || 'Fournisseur Spécifique'}`}
+                                >
+                                    <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
+                                      E
+                                    </span>
+                                </div>
                             )}
                           </div>
                         </td>

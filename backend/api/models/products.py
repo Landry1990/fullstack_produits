@@ -196,6 +196,11 @@ class Produit(models.Model):
 
 
     def save(self, *args, **kwargs):
+        # Validation Exclusivité
+        if self.is_supplier_exclusive and not self.fournisseur:
+            from django.core.exceptions import ValidationError
+            raise ValidationError("Un produit ne peut être exclusif sans fournisseur attribué.")
+
         # Calcul automatique des marges
         if self.cost_price and self.selling_price:
             try:
