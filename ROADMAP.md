@@ -1,6 +1,6 @@
 # 🗓️ Feuille de Route - Prochaines Étapes
 
-**Date** : 25 Décembre 2024
+**Date** : 25 Décembre 2025
 
 ---
 
@@ -164,7 +164,7 @@ interface AnalyseABCParams {
 
 ---
 
-## ✅ Travaux Réalisés - 24 Décembre 2024
+## ✅ Travaux Réalisés - 24 Décembre 2025
 
 ### Système de Réassort Automatique
 - ✅ Commande unique "REASSORT_AUTO" qui se remplit automatiquement avec les ventes
@@ -187,4 +187,4 @@ interface AnalyseABCParams {
 
 ---
 
-**Dernière mise à jour** : 25 Décembre 2024, 00:24
+**Dernière mise à jour** : 25 Décembre 2025, 00:24

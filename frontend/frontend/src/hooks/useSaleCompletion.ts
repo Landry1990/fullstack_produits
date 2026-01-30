@@ -595,7 +595,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             await axios.post(`${facturesEndpoint}${factureId}/annuler/`, {
                 motif: "Échec du paiement (Annulation automatique)"
             });
-            console.log("Rollback successful: Invoice cancelled due to payment failure.");
+
         } catch (err) {
             console.error("Critical: Failed to rollback invoice after payment failure", err);
         }
