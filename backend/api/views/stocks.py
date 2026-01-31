@@ -191,6 +191,50 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         
         return Response({'status': 'Inventaire validé. Stocks mis à jour.'})
 
+    @action(detail=True, methods=['get', 'post'], url_path='lignes')
+    def lignes(self, request, pk=None):
+        """
+        GET: Liste les lignes d'un inventaire.
+        POST: Ajoute une nouvelle ligne à l'inventaire.
+        URL: /api/inventaires/{id}/lignes/
+        """
+        inventaire = self.get_object()
+        
+        if request.method == 'GET':
+            lignes = inventaire.lignes.select_related('produit', 'stock_lot').all()
+            serializer = LigneInventaireSerializer(lignes, many=True)
+            return Response(serializer.data)
+        
+        elif request.method == 'POST':
+            data = request.data.copy()
+            data['inventaire'] = inventaire.id
+            
+            # Si stock_lot est fourni, utiliser la quantité du lot comme stock_theorique
+            if 'stock_lot' in data and data['stock_lot']:
+                try:
+                    lot = StockLot.objects.get(id=data['stock_lot'])
+                    data['stock_theorique'] = lot.quantity_remaining
+                    if 'quantite_physique' not in data:
+                        data['quantite_physique'] = lot.quantity_remaining
+                except StockLot.DoesNotExist:
+                    return Response({'error': 'Lot non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # Mode PRODUIT GLOBAL: Utiliser le stock total
+                try:
+                    produit = Produit.objects.get(id=data['produit'])
+                    if 'stock_theorique' not in data:
+                        data['stock_theorique'] = produit.stock
+                    if 'quantite_physique' not in data:
+                        data['quantite_physique'] = data.get('quantite_comptee', produit.stock)
+                except Produit.DoesNotExist:
+                    return Response({'error': 'Produit non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            serializer = LigneInventaireSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=True, methods=['get'])
     def imprimer_etat(self, request, pk=None):

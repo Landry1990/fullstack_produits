@@ -26,6 +26,7 @@ from ..models import (
     MouvementCaisse, Produit, StockLot, LoyaltySetting, InvoiceSettings, AuditLog,
     RelevePaiement, MouvementStock
 )
+from ..services import PromotionService
 from ..serializers import (
     FactureSerializer, FactureProduitSerializer, CaisseSerializer, ClotureCaisseSerializer,
     CreanceSerializer, MouvementCaisseSerializer, FacturePrintSerializer
@@ -405,6 +406,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         today = date.today()
         Produit.objects.filter(id__in=product_ids).update(dernier_vente=today)
+        
+        # Apply promotions before calculating totals
+        PromotionService.apply_promotions_to_invoice(facture)
 
         facture.calculate_totals(save=True)
 
@@ -633,6 +637,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         facture.save()
         
         # 6. Recalculate totals
+        # 6. Recalculate totals
+        PromotionService.apply_promotions_to_invoice(facture)
         facture.calculate_totals(save=True)
         facture.refresh_from_db()
         new_total = facture.total_ttc

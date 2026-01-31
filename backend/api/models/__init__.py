@@ -56,6 +56,7 @@ from .communication import SmsLog, SmsTemplate
 from .signals import (
     preserve_product_name_on_delete,
 )
+from .promotions import Promotion, PromotionPackItem
 
 __all__ = [
     # Users
@@ -83,4 +84,6 @@ __all__ = [
     'Ordonnancier', 'LigneOrdonnancier',
     # Communication
     'SmsLog', 'SmsTemplate',
+    # Promotions
+    'Promotion', 'PromotionPackItem',
 ]

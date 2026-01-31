@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from decimal import Decimal
 from .models import (
     Produit, Rayon, Fournisseur, Client, Commande, 
@@ -10,8 +10,65 @@ from .models import (
     RelationTransformation, HistoriqueTransformation, MouvementStock,
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
-    Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption
+    Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
+    Promotion, PromotionPackItem
 )
+from .services import PromotionService
+
+class PromotionPackItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    class Meta:
+        model = PromotionPackItem
+        fields = ['product', 'product_name', 'quantity']
+
+class PromotionSerializer(serializers.ModelSerializer):
+    """Serializer pour la gestion des promotions"""
+    products_count = serializers.IntegerField(source='products.count', read_only=True)
+    rayons_count = serializers.IntegerField(source='rayons.count', read_only=True)
+    discount_type_display = serializers.CharField(source='get_discount_type_display', read_only=True)
+    pack_items = PromotionPackItemSerializer(many=True, required=False)
+    
+    class Meta:
+        model = Promotion
+        fields = '__all__'
+
+    def create(self, validated_data):
+        pack_items_data = validated_data.pop('pack_items', [])
+        products = validated_data.pop('products', [])
+        rayons = validated_data.pop('rayons', [])
+        
+        promotion = Promotion.objects.create(**validated_data)
+        
+        if products:
+            promotion.products.set(products)
+        if rayons:
+            promotion.rayons.set(rayons)
+            
+        for item in pack_items_data:
+            PromotionPackItem.objects.create(promotion=promotion, **item)
+            
+        return promotion
+
+    def update(self, instance, validated_data):
+        pack_items_data = validated_data.pop('pack_items', None)
+        products = validated_data.pop('products', None)
+        rayons = validated_data.pop('rayons', None)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        if products is not None:
+            instance.products.set(products)
+        if rayons is not None:
+            instance.rayons.set(rayons)
+            
+        if pack_items_data is not None:
+            instance.pack_items.all().delete()
+            for item in pack_items_data:
+                PromotionPackItem.objects.create(promotion=instance, **item)
+                
+        return instance
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -203,6 +260,7 @@ class ProduitSerializer(serializers.ModelSerializer):
     valeur_stock = serializers.SerializerMethodField()
     next_expiring_date = serializers.SerializerMethodField()
     stock_lots = serializers.SerializerMethodField()
+    active_promotion = serializers.SerializerMethodField()
 
     class Meta:
         model = Produit
@@ -215,56 +273,106 @@ class ProduitSerializer(serializers.ModelSerializer):
             'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
             'stock_lots', 'requires_prescription', 'surveillance_category',
             'dernier_achat', 'dernier_vente', 'is_public',
-            'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive'
+            'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
+            'active_promotion'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
     def get_valeur_stock(self, obj):
-        # Calcul de la valeur totale du stock pour ce produit
-        # Si gestion par lot, somme des valeurs des lots
-        if obj.use_lot_management:
-            from django.db.models import F, DecimalField
-            total_value = obj.stock_lots.aggregate(
-                total=Sum(F('quantity_remaining') * F('price_cost'), output_field=DecimalField())
-            )['total']
-            return total_value if total_value is not None else Decimal('0.00')
-        # Sinon, stock * prix d'achat
-        return obj.stock * obj.cost_price if obj.stock is not None and obj.cost_price is not None else Decimal('0.00')
+        try:
+            # Calcul de la valeur totale du stock pour ce produit
+            # Si gestion par lot, somme des valeurs des lots
+            if obj.use_lot_management:
+                from django.db.models import F, DecimalField
+                total_value = obj.stock_lots.aggregate(
+                    total=Sum(F('quantity_remaining') * F('price_cost'), output_field=DecimalField())
+                )['total']
+                return total_value if total_value is not None else Decimal('0.00')
+            # Sinon, stock * prix d'achat
+            return obj.stock * obj.cost_price if obj.stock is not None and obj.cost_price is not None else Decimal('0.00')
+        except Exception as e:
+            print(f"ERROR calculating value stock for product {obj.id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return Decimal('0.00')
 
     def get_stock_lots(self, obj):
-        if obj.use_lot_management:
-            # Retourne les lots avec stock > 0, triés par date d'expiration
-            return StockLotSerializer(obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'), many=True).data
-        return []
+        try:
+            if obj.use_lot_management:
+                # Retourne les lots avec stock > 0, triés par date d'expiration
+                return StockLotSerializer(obj.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'), many=True).data
+            return []
+        except Exception as e:
+            print(f"ERROR getting stock lots for product {obj.id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
 
     def get_next_expiring_date(self, obj):
-        """
-        Retourne la date d'expiration la plus proche :
-        1. Soit celle définie directement sur le produit (si produit simple)
-        2. Soit celle du lot qui expire le plus tôt (si gestion par lot)
-        """
-        # Priorité à la date directe si présente (produit simple) ou gestion hybride
-        direct_date = obj.expire_date
-        
-        # Si gestion par lots, chercher le lot le plus proche ayant du stock
-        # Note: On pourrait aussi regarder TOUS les lots (même stock 0 ?) -> Non, seulement stock dispo pertinent
-        min_lot_date = None
-        if obj.use_lot_management:
-            # On utilise related_name par defaut 'stocklot_set' ou on suppose 'stock_lots' ?
-            # Verifions le model StockLot, il a un FK vers Produit.
-            # L'accès inverse est 'stock_lots' (défini dans models.py).
-            lot = obj.stock_lots.filter(
-                quantity_remaining__gt=0, 
-                date_expiration__isnull=False
-            ).order_by('date_expiration').first()
+        try:
+            """
+            Retourne la date d'expiration la plus proche :
+            1. Soit celle définie directement sur le produit (si produit simple)
+            2. Soit celle du lot qui expire le plus tôt (si gestion par lot)
+            """
+            # Priorité à la date directe si présente (produit simple) ou gestion hybride
+            direct_date = obj.expire_date
             
-            if lot:
-                min_lot_date = lot.date_expiration
-        
-        # Logique de fusion : prendre le plus urgent des deux (ou celui qui existe)
-        if direct_date and min_lot_date:
-            return min(direct_date, min_lot_date)
-        return direct_date or min_lot_date
+            # Si gestion par lots, chercher le lot le plus proche ayant du stock
+            # Note: On pourrait aussi regarder TOUS les lots (même stock 0 ?) -> Non, seulement stock dispo pertinent
+            min_lot_date = None
+            if obj.use_lot_management:
+                # On utilise related_name par defaut 'stocklot_set' ou on suppose 'stock_lots' ?
+                # Verifions le model StockLot, il a un FK vers Produit.
+                # L'accès inverse est 'stock_lots' (défini dans models.py).
+                lot = obj.stock_lots.filter(
+                    quantity_remaining__gt=0, 
+                    date_expiration__isnull=False
+                ).order_by('date_expiration').first()
+                
+                if lot:
+                    min_lot_date = lot.date_expiration
+            
+            # Logique de fusion : prendre le plus urgent des deux (ou celui qui existe)
+            if direct_date and min_lot_date:
+                return min(direct_date, min_lot_date)
+            return direct_date or min_lot_date
+        except Exception as e:
+            print(f"ERROR getting next expiring date for product {obj.id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
+    def get_active_promotion(self, obj):
+        try:
+            """Retourne la meilleure promotion active pour une unité"""
+            # On simule une quantité de 1 pour voir la promo affichable
+            # Mais pour BUY_X_GET_Y, il faut voir la condition.
+            # On va retourner la première promo applicable trouvée, ou celle qui donne le meilleur avantage théorique.
+            # Simplification: on réutilise le service mais avec qty=1 pour voir si une promo existe,
+            # ou mieux, on liste les promos actives liées.
+            
+            # Optimisation: on pourrait précharger ça, mais ici on fait simple pour l'UI
+            # On cherche juste si une promo existe
+            promo = PromotionService.get_active_promotions().filter(
+                Q(products=obj) | Q(rayons=obj.rayon)
+            ).first()
+            
+            if promo:
+                return {
+                    'id': promo.id,
+                    'name': promo.name,
+                    'discount_type': promo.discount_type,
+                    'value': promo.value,
+                    'buy_quantity': promo.buy_quantity,
+                    'get_quantity': promo.get_quantity
+                }
+            return None
+        except Exception as e:
+            print(f"ERROR active promotion for product {obj.id}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()

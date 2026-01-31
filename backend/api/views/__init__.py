@@ -28,6 +28,7 @@ from .import_views import ProductImportView
 from .formes import FormeViewSet
 from .paiements import PaiementFournisseurViewSet
 from .coupons import CouponMonnaieViewSet
+from .promotions import PromotionViewSet
 
 # Import from parent api module (not yet migrated to views package)
 from ..rapport_view import RapportViewSet
@@ -51,5 +52,6 @@ __all__ = [
     'DashboardViewSet', 'StatistiquesViewSet',
     'AuditLogViewSet',
     'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
-    'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet'
+    'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet',
+    'PromotionViewSet'
 ]

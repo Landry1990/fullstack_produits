@@ -64,16 +64,19 @@ class Facture(models.Model):
     
     def calculate_totals(self, save=True):
         """Calcule les totaux HT, TVA et TTC ligne par ligne."""
-        aggregated = self.produits.aggregate(
-            total=Sum(F('quantity') * F('selling_price'), output_field=DecimalField())
-        )
-        total_ttc_brut = aggregated['total'] or Decimal('0.00')
+        # Calcul via boucle pour supporter les remises ligne
+        total_ttc_brut = Decimal('0.00')
         
         total_ht = Decimal('0.00')
         total_tva = Decimal('0.00')
         
         for ligne in self.produits.all():
-            ttc_ligne = ligne.quantity * ligne.selling_price
+            # Prix unitaire net = Selling Price - Unit Discount
+            prix_unitaire_net = ligne.selling_price - ligne.discount
+            if prix_unitaire_net < 0:
+                prix_unitaire_net = Decimal('0.00')
+
+            ttc_ligne = ligne.quantity * prix_unitaire_net
             
             if ligne.tva > 0:
                 ht_ligne = (ttc_ligne / (1 + ligne.tva / 100)).quantize(Decimal('0.01'))
@@ -84,6 +87,7 @@ class Facture(models.Model):
             
             total_ht += ht_ligne
             total_tva += tva_ligne
+            total_ttc_brut += ttc_ligne
         
         remise = Decimal(str(self.remise))
         total_ttc_apres_remise = total_ttc_brut - remise
@@ -158,6 +162,7 @@ class FactureProduit(models.Model):
     produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
     facture = models.ForeignKey(Facture, on_delete=models.CASCADE, related_name='produits')
     quantity = models.IntegerField()
+    free_quantity = models.IntegerField(default=0, help_text="Unités gratuites (Promotion)")
     selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(
         max_digits=10, decimal_places=2, default=0.00, 

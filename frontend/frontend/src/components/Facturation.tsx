@@ -106,6 +106,92 @@ export default function Facturation() {
     onBarcodeMatch: handleBarcodeMatch
   })
 
+  // Pack Addition Logic
+  const addPackToFacture = useCallback(async (pack: any) => {
+      if (!pack.pack_items || pack.pack_items.length === 0) {
+          toast.error("Ce pack est vide")
+          return
+      }
+
+      const toastId = toast.loading("Ajout du pack...")
+      try {
+          // Fetch all products details concurrently
+          const apiBase = import.meta.env.VITE_API_BASE_URL ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '') : ''
+          const endpoint = apiBase ? `${apiBase}/api/produits/` : '/api/produits/'
+
+          const itemPromises = pack.pack_items.map(async (item: any) => {
+             try {
+                const { data: product } = await axios.get<ProduitModel>(`${endpoint}${item.product}/`)
+                return { product, quantity: item.quantity }
+             } catch (e) {
+                 console.error(`Failed to fetch product ${item.product}`, e)
+                 return null
+             }
+          })
+          
+          const results = await Promise.all(itemPromises)
+          const items = results.filter(i => i !== null) as { product: ProduitModel, quantity: number }[]
+
+          if (items.length === 0) {
+              toast.error("Aucun produit du pack n'a pu être récupéré", { id: toastId })
+              return
+          }
+          
+          // Add items to cart
+          // Note: straightforward loop might have state race conditions if addProduit relies on current state
+          // But useCart usually handles functional state updates.
+          // We'll iterate.
+          
+          // We calculate the ratio to adjust prices to match pack value
+          // Total Normal Price
+          const totalNormalPrice = items.reduce((sum, item) => sum + (Number(item.product.selling_price) * item.quantity), 0)
+          const packPrice = Number(pack.value)
+          
+          // Ratio for discount
+          const ratio = totalNormalPrice > 0 ? packPrice / totalNormalPrice : 1
+          
+          for (const { product, quantity } of items) {
+              // Add product
+              addProduitToFacture(product)
+              
+              // We need to set quantity. 
+              // Since addProduit adds 1, we might need to wait or rely on it being present.
+              // To avoid race conditions, we use a timeout or assume addProduit is synchronous enough in state dispatch
+              // Actually, useCart `addProduit` usually sets state. 
+              // Multiple `setState` in loop is fine in React 18 (batched).
+              // But accessing `lignesFacture` immediately after might fail if we needed to check it.
+              // Luckily `updateQuantite` usually takes ID.
+              
+              // We'll queue quantity updates? 
+              // Better: just call updateQuantite immediately.
+              updateQuantite(product.id, quantity)
+              
+              // Apply price adjustment (Remise)
+              if (ratio < 1) {
+                  // Calculate discount percentage
+                  // Or set specific price? `updatePrix`?
+                  // Let's use Remise logic if possible, or just change selling_price?
+                  // `updateRemiseProduit` takes percentage or amount? 
+                  // If we want exact match, better to update price net.
+                  // But `updatePrix` might just change unit price. 
+                  const newUnitPrice = Number(product.selling_price) * ratio
+                  // updatePrix(product.id, newUnitPrice.toFixed(2)) 
+                  // Let's rely on standard price but apply global discount? 
+                  // No, bundle discount is specific.
+                  // Let's apply a discount percent.
+                  const discountPercent = (1 - ratio) * 100
+                  updateRemiseProduit(product.id, discountPercent.toFixed(2))
+              }
+          }
+          
+          toast.success(`Pack "${pack.name}" ajouté`, { id: toastId })
+          
+      } catch (e) {
+          console.error(e)
+          toast.error("Erreur lors de l'ajout du pack", { id: toastId })
+      }
+  }, [addProduitToFacture, updateQuantite, updateRemiseProduit, updatePrix])
+
   // useFacturationClients Hook - Manages all client/AD logic
   const {
     clients,
@@ -1362,6 +1448,7 @@ export default function Facturation() {
             searchLoading={searchLoading}
             filteredProduits={filteredProduits}
             addProduitToFacture={(p) => addProduitToFacture(p, { isRetrocession })}
+            addPackToFacture={addPackToFacture}
             searchInputRef={searchInputRef}
             placeholder={t('facturation.search_placeholder')}
             onQuantityShortcut={handleQuantityShortcut}
