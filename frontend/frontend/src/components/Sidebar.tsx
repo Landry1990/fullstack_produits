@@ -26,6 +26,7 @@ export default function Sidebar() {
         { path: '/app/journal-caisse', label: t('sidebar.ventes.journal'), key: 'ventes' },
         { path: '/app/historique-clotures', label: t('sidebar.ventes.clotures'), key: 'ventes' },
         { path: '/app/ordonnancier', label: t('sidebar.ventes.ordonnancier'), key: 'ventes' },
+        { path: '/app/promotions', label: 'Promotions', key: 'ventes' },
         { path: '/app/caisse-centralisee', label: t('sidebar.ventes.caisse_centralisee'), key: 'caisse' }
       ]
     },

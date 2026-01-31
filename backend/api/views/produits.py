@@ -120,6 +120,35 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         
         return Response(list(produits))
 
+    @action(detail=False, methods=['get'], url_path='by-cip/(?P<code>[^/.]+)')
+    def by_cip(self, request, code=None):
+        """
+        Recherche un produit par code CIP (CIP1, CIP2 ou CIP3).
+        Utilisé par l'application PDA inventaire pour le scan codes-barres.
+        
+        URL: /api/produits/by-cip/{code}/
+        """
+        if not code:
+            return Response(
+                {'detail': 'Code CIP requis'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Recherche dans CIP1, CIP2 et CIP3
+        produit = Produit.objects.filter(
+            Q(cip1=code) | Q(cip2=code) | Q(cip3=code)
+        ).select_related('rayon', 'fournisseur', 'forme').first()
+        
+        if not produit:
+            return Response(
+                {'detail': 'Produit non trouvé'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Utiliser le serializer détaillé pour retourner toutes les infos
+        serializer = ProduitDetailSerializer(produit)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def toggle_public(self, request, pk=None):
         """Action pour basculer rapidement la visibilité publique d'un produit."""

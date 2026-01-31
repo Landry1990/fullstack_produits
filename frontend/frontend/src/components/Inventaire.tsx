@@ -73,7 +73,7 @@ export default function InventaireComponent() {
   // API Base URL
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
   const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/inventaires/`;
-  const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/ligne-inventaires/`;
+  const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/lignes-inventaire/`;
   // produitsEndpoint removed - products are loaded via useProductSearch hook
 
   // === FETCH LIST ===
@@ -532,22 +532,59 @@ export default function InventaireComponent() {
                        />
                        {loadingSearch && <span className="absolute right-4 top-12 loading loading-spinner"></span>}
                   </div>
-                  {/* Dropdown Results */}
-                   {searchResults.length > 0 && (
-                      <ul className="menu bg-base-100 w-full shadow-xl rounded-box absolute top-24 z-50 border border-base-300 max-h-60 overflow-y-auto">
-                          {searchResults.map((p, idx) => (
-                              <li key={p.id}>
-                                  <a 
-                                      {...getItemProps(idx)}
-                                      onClick={() => handleProductSelect(p)}
-                                      className={`flex justify-between ${getItemProps(idx).className}`}
-                                  >
-                                      <span>{p.name} <span className="text-xs opacity-50">({p.cip1})</span></span>
-                                      <span className="badge badge-sm">Stock: {p.stock} {p.use_lot_management ? '(Lots)' : ''}</span>
-                                  </a>
-                              </li>
-                          ))}
-                      </ul>
+                  {/* Dropdown Results - Style similaire à ProductSearchSection de Facturation */}
+                  {searchQuery && (
+                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
+                          {searchResults.length === 0 ? (
+                              <div className="text-center py-8 text-base-content/40 text-sm">
+                                  {loadingSearch ? (
+                                      <span className="loading loading-spinner loading-sm"></span>
+                                  ) : searchQuery.length < 1 ? (
+                                      'Tapez au moins 1 caractère'
+                                  ) : (
+                                      'Aucun produit trouvé'
+                                  )}
+                              </div>
+                          ) : (
+                              <div className="max-h-96 overflow-y-auto space-y-1 p-1">
+                                  {searchResults.map((p, idx) => {
+                                      const itemProps = getItemProps(idx);
+                                      const hasStock = (p.stock ?? 0) > 0;
+                                      return (
+                                          <div 
+                                              key={p.id}
+                                              {...itemProps}
+                                              onClick={() => handleProductSelect(p)}
+                                              style={itemProps.style}
+                                              className={`
+                                                  group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
+                                                  ${itemProps.className ? 'shadow-md bg-primary/5' : 'hover:bg-base-100'}
+                                              `}
+                                          >
+                                              <div className="flex-1 min-w-0">
+                                                  <div className="font-medium truncate text-sm">{p.name}</div>
+                                                  <div className="text-xs flex gap-3 mt-0.5 opacity-80">
+                                                      <span className="font-mono text-gray-500">{p.cip1}</span>
+                                                      {p.rayon_name && <span className="text-gray-400">• {p.rayon_name}</span>}
+                                                  </div>
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                  <span className={`badge badge-sm ${hasStock ? 'badge-success' : 'badge-error'}`}>
+                                                      Stock: {p.stock}
+                                                  </span>
+                                                  {p.use_lot_management && (
+                                                      <span className="badge badge-sm badge-info">Lots</span>
+                                                  )}
+                                                  <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-primary">
+                                                      +
+                                                  </button>
+                                              </div>
+                                          </div>
+                                      );
+                                  })}
+                              </div>
+                          )}
+                      </div>
                   )}
               </div>
           )}
@@ -637,7 +674,7 @@ export default function InventaireComponent() {
                           })}
                           {lignes.length === 0 && (
                               <tr>
-                                  <td colSpan={6} className="text-center py-8 opacity-50">
+                              <td colSpan={8} className="text-center py-8 opacity-50">
                                       Scanner ou ajouter des produits pour commencer le comptage.
                                   </td>
                               </tr>
