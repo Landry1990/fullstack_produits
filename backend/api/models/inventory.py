@@ -13,14 +13,9 @@ class Inventaire(models.Model):
         EN_COURS = 'EN_COURS', 'En cours'
         VALIDEE = 'VALIDEE', 'Validée'
 
-    class Type(models.TextChoices):
-        PARTIEL = 'PARTIEL', 'Tournant / Partiel'
-        GENERAL = 'GENERAL', 'Général / Annuel'
-
     date = models.DateTimeField(default=timezone.now)
     description = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.EN_COURS)
-    inventory_type = models.CharField(max_length=20, choices=Type.choices, default=Type.PARTIEL)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='validated_inventaires')
     created_at = models.DateTimeField(auto_now_add=True)

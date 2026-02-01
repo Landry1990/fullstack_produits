@@ -189,41 +189,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         return super().get_permissions()
 
     def perform_create(self, serializer):
-        inv = serializer.save(created_by=self.request.user)
-
-        # Si Inventaire Général : Pré-remplissage avec tous les stocks > 0
-        if inv.inventory_type == 'GENERAL':
-            # 1. Gestion par Lots : Ajouter tous les lots positifs
-            lots = StockLot.objects.filter(quantity_remaining__gt=0).select_related('produit')
-            lignes_lots = []
-            for lot in lots:
-                lignes_lots.append(LigneInventaire(
-                    inventaire=inv,
-                    produit=lot.produit,
-                    produit_nom=lot.produit.name,
-                    stock_lot=lot,
-                    stock_theorique=lot.quantity_remaining,
-                    quantite_physique=lot.quantity_remaining, # Default to theo
-                    pmp_snapshot=lot.price_cost
-                ))
-            if lignes_lots:
-                LigneInventaire.objects.bulk_create(lignes_lots)
-
-            # 2. Produits Sans Lots (Global) : Ajouter ceux avec stock > 0
-            # Exclure ceux qui utilisent la gestion par lot (déjà traités ci-dessus)
-            produits_sans_lot = Produit.objects.filter(stock__gt=0, use_lot_management=False)
-            lignes_produits = []
-            for p in produits_sans_lot:
-                lignes_produits.append(LigneInventaire(
-                    inventaire=inv,
-                    produit=p,
-                    produit_nom=p.name,
-                    stock_theorique=p.stock,
-                    quantite_physique=p.stock, # Default to theo
-                    pmp_snapshot=p.cost_price
-                ))
-            if lignes_produits:
-                LigneInventaire.objects.bulk_create(lignes_produits)
+        serializer.save(created_by=self.request.user)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic

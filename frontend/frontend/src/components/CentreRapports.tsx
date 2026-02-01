@@ -785,7 +785,7 @@ export default function CentreRapports() {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-base-200 px-6 py-4 shrink-0">
+      <div className="bg-white border-b border-base-200 px-6 py-4 shrink-0 print:hidden">
         <h1 className="text-xl font-light text-base-content">Centre de Rapports</h1>
         <p className="text-sm text-base-content/50">Sélectionnez une requête, configurez les paramètres et affichez les résultats</p>
       </div>
@@ -793,7 +793,7 @@ export default function CentreRapports() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar - Liste des requêtes */}
-        <div className="w-72 bg-base-50 border-r border-base-200 flex flex-col shrink-0">
+        <div className="w-72 bg-base-50 border-r border-base-200 flex flex-col shrink-0 print:hidden">
           <div className="p-3 border-b border-base-200 bg-base-100">
             <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Liste des requêtes</div>
           </div>
@@ -830,7 +830,7 @@ export default function CentreRapports() {
                   </div>
                   
                   {/* Action Buttons */}
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex gap-2 shrink-0 print:hidden">
                     <button
                       onClick={() => executeQuery()}
                       disabled={loading}
@@ -845,7 +845,10 @@ export default function CentreRapports() {
                       )}
                       Écran
                     </button>
-                    <button className="btn btn-outline btn-sm gap-2" disabled>
+                    <button 
+                      className="btn btn-outline btn-sm gap-2" 
+                      onClick={() => window.print()}
+                    >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                       </svg>
