@@ -183,7 +183,6 @@ export interface Inventaire {
   total_valeur_theorique?: number;
   total_valeur_physique?: number;
   total_ecart_valeur?: number;
-  inventory_type?: 'PARTIEL' | 'GENERAL';
 }
 
 export interface Client {

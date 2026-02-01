@@ -1,0 +1,49 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { TrendingUp, Clock } from 'lucide-react';
+import type { CaisseParTranche } from '../../types';
+
+interface SalesSessionStatsProps {
+    session: CaisseParTranche | null;
+}
+
+export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session }) => {
+    const { t } = useTranslation();
+
+    if (!session) return null;
+
+    return (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-8 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-white/10 transition-all duration-500"></div>
+            
+            <div className="relative z-10">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-2 text-blue-100 bg-white/10 px-3 py-1 rounded-full text-xs font-medium backdrop-blur-sm">
+                        <TrendingUp className="w-3 h-3" />
+                         {t('sales.stats.session_total', { defaultValue: "Caisse Session" })}
+                    </div>
+                </div>
+
+                <div className="flex items-baseline gap-1 mb-2">
+                    <span className="text-3xl font-bold tracking-tight">
+                        {parseFloat(session.total_ttc).toLocaleString('fr-FR')}
+                    </span>
+                    <span className="text-xl font-medium text-blue-200">F</span>
+                </div>
+
+                <div className="flex flex-col gap-1 text-xs text-blue-100">
+                   <div className="flex items-center gap-1.5 opacity-80">
+                        <Clock className="w-3 h-3" />
+                        Tranche: {session.tranche}
+                   </div>
+                   <div className="opacity-80">
+                       {new Date(session.date_debut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {new Date(session.date_fin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                   </div>
+                   <div className="mt-1 font-medium bg-white/10 self-start px-2 py-0.5 rounded">
+                       {session.nombre_factures} ventes
+                   </div>
+                </div>
+            </div>
+        </div>
+    );
+};

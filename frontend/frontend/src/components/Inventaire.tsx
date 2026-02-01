@@ -178,11 +178,36 @@ export default function InventaireComponent() {
   const fetchStats = async (id: number) => {
       setLoadingStats(true);
       try {
-          const res = await axios.get(`${inventairesEndpoint}${id}/stats/`);
-          setInventoryStats(res.data);
+          // Calculer les stats localement depuis 'lignes'
+          // Note: On simule une requête async pour ne pas bloquer l'UI
+          await new Promise(r => setTimeout(r, 100));
+          
+          const linesWithVal = lignes.map(l => {
+               let price = parseFloat(l.pmp_snapshot || '0');
+               if (price === 0) price = parseFloat(l.produit_cost_price || '0');
+               if (price === 0 && l.produit && typeof l.produit === 'object' && l.produit.cost_price) {
+                   price = parseFloat(l.produit.cost_price);
+               }
+               return { ...l, val: l.ecart * price };
+          });
+          
+          const pertes = linesWithVal.filter(l => l.val < 0)
+              .sort((a, b) => a.val - b.val).slice(0, 10).map(l => ({
+                   produit_nom: typeof l.produit === 'object' ? l.produit.name : l.produit_nom,
+                   ecart: l.ecart,
+                   valeur: l.val
+               }));
+               
+          const rayonMap: Record<string, number> = {};
+          linesWithVal.forEach(l => {
+               const r = (typeof l.produit === 'object' ? l.produit.rayon_name : l.produit_rayon) || 'Autres';
+               rayonMap[r] = (rayonMap[r] || 0) + l.val;
+          });
+          const par_rayon = Object.entries(rayonMap).map(([k, v]) => ({ rayon: k, total: v })).sort((a, b) => a.total - b.total);
+          
+          setInventoryStats({ top_pertes: pertes, par_rayon });
       } catch (err) {
           console.error("Erreur stats", err);
-          toast.error("Impossible de charger les statistiques");
       } finally {
           setLoadingStats(false);
       }
@@ -902,6 +927,7 @@ export default function InventaireComponent() {
     doc.text(`TOTAL GLOBAL ÉCARTS (VALEUR): ${totalGlobal > 0 ? '+' : ''}${totalGlobal.toFixed(0)} F`, 14, currentY);
 
     doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
+    doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
   };
 
   const renderAnalysis = () => {
@@ -1298,7 +1324,8 @@ export default function InventaireComponent() {
               </div>
           )}
 
-          {/* Lines Table */}
+          {viewTab === 'ANALYSIS' ? renderAnalysis() : ( // WRAPPED DATA VIEW
+          /* Lines Table */
           <div className="card bg-base-100 shadow">
               <div className="overflow-x-auto">
                   {selectedLines.size > 0 ? (
@@ -1497,6 +1524,7 @@ export default function InventaireComponent() {
                   </div>
               </div>
           </div>
+          )} {/* End Data View */}
 
           {showLotModal && (
               <dialog className="modal modal-open">
