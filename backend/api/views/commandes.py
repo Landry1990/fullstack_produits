@@ -115,9 +115,73 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             raise e
 
 
+            if isinstance(e, ProtectedError) or "ProtectedError" in str(type(e)):
+                 raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
+            raise e
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
-    def cloturer(self, request, pk=None):
+    def merge(self, request, pk=None):
+        """
+        Fusionne une autre commande (source) DANS cette commande (cible).
+        - Les deux commandes doivent être EN_PREPARATION.
+        - Les lignes de la source sont déplacées vers la cible.
+        - Si un produit existe déjà dans la cible, les quantités sont additionnées.
+        - La commande source est ensuite SUPPRIMÉE.
+        """
+        target_commande = self.get_object()
+        source_id = request.data.get('source_commande_id')
+        
+        if not source_id:
+            return Response({'error': 'ID de la commande source requis'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            source_commande = Commande.objects.get(pk=source_id)
+        except Commande.DoesNotExist:
+            return Response({'error': 'Commande source introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Vérifications
+        if target_commande.id == source_commande.id:
+            return Response({'error': 'Impossible de fusionner une commande avec elle-même'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if target_commande.status != Commande.Status.EN_PREPARATION:
+            return Response({'error': 'La commande cible doit être EN_PREPARATION'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if source_commande.status != Commande.Status.EN_PREPARATION:
+            return Response({'error': 'La commande source doit être EN_PREPARATION'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Fusion des lignes
+        source_lines = source_commande.produits.all()
+        target_lines_map = {line.produit_id: line for line in target_commande.produits.all()}
+        
+        lines_moved = 0
+        lines_merged = 0
+        
+        for source_line in source_lines:
+            if source_line.produit_id in target_lines_map:
+                # Le produit existe déjà dans la cible : on additionne les quantités
+                target_line = target_lines_map[source_line.produit_id]
+                target_line.quantity += source_line.quantity
+                target_line.unites_gratuites += source_line.unites_gratuites
+                target_line.save()
+                lines_merged += 1
+            else:
+                # Le produit n'existe pas : on déplace la ligne
+                source_line.commande = target_commande
+                source_line.save()
+                lines_moved += 1
+        
+        # Supprimer la commande source (les lignes restantes ont été déplacées ou ne sont plus nécessaires)
+        # S'il reste des lignes (cas fusionné), on doit les supprimer avant de supprimer la commande
+        source_commande.produits.all().delete()
+        source_commande.delete()
+        
+        return Response({
+            'status': 'success',
+            'message': f'Fusion réussie : {lines_moved} lignes déplacées, {lines_merged} lignes fusionnées.',
+            'lines_moved': lines_moved,
+            'lines_merged': lines_merged
+        })
         """
         Clôture une commande, met à jour le stock et calcule le PMP.
         Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.

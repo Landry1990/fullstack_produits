@@ -5,11 +5,11 @@ Ce fichier contient des versions allégées des serializers pour améliorer
 les performances lors des listes paginées.
 """
 from rest_framework import serializers
-from .models import Produit, Facture, Client, Commande, StockLot
 from .serializers import (
     ProduitSerializer, FactureSerializer, ClientSerializer,
-    CommandeSerializer, StockLotSerializer
+    CommandeSerializer, StockLotSerializer, InventaireSerializer
 )
+from .models import Produit, Facture, Client, Commande, StockLot, Inventaire
 
 
 class ProduitListSerializer(serializers.ModelSerializer):
@@ -152,11 +152,36 @@ class StockLotListSerializer(serializers.ModelSerializer):
         ]
 
 
+
 class StockLotDetailSerializer(StockLotSerializer):
     """
     Serializer complet pour les détails d'un lot.
     """
     pass
+
+
+class InventaireListSerializer(serializers.ModelSerializer):
+    """
+    Serializer allégé pour la liste des inventaires.
+    Les totaux sont calculés via annotations SQL pour éviter N+1.
+    """
+    created_by_name = serializers.CharField(source='created_by.username', read_only=True)
+    
+    # Ces champs seront annotés dans le QuerySet
+    total_valeur_theorique = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True, coerce_to_string=False)
+    total_valeur_physique = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True, coerce_to_string=False)
+    total_ecart_valeur = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True, coerce_to_string=False)
+    
+    class Meta:
+        model = Inventaire  # Need to import Inventaire
+        fields = [
+            'id', 'date', 'description', 'status', 'created_by_name',
+            'total_valeur_theorique', 'total_valeur_physique', 'total_ecart_valeur'
+        ]
+
+class InventaireDetailSerializer(InventaireSerializer): # Need to import InventaireSerializer
+    pass
+
 
 
 # Mapping pour faciliter l'utilisation dans les ViewSets
@@ -180,6 +205,10 @@ SERIALIZER_MAPPING = {
     'StockLot': {
         'list': StockLotListSerializer,
         'detail': StockLotDetailSerializer,
+    },
+    'Inventaire': {
+        'list': InventaireListSerializer,
+        'detail': InventaireDetailSerializer,
     },
 }
 

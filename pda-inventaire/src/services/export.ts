@@ -1,6 +1,10 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { LigneInventaire, Inventaire, inventaireService } from './inventaire';
+import { Inventaire, inventaireService } from './inventaire';
+
+// Workaround pour les types si nécessaire, mais legacy devrait avoir les bonnes méthodes
+const FS = FileSystem;
+const Share = Sharing;
 
 class ExportService {
     /**
@@ -8,9 +12,7 @@ class ExportService {
      */
     async exportInventaireToCsv(inventaire: Inventaire): Promise<void> {
         try {
-            // 1. Récupérer toutes les lignes (pagination ?)
-            // Pour l'instant on suppose que getLignes renvoie tout ou on gère la pagination si besoin.
-            // Le service actuel renvoie tout pour l'instant.
+            // 1. Récupérer toutes les lignes
             const lignes = await inventaireService.getLignes(inventaire.id);
 
             if (lignes.length === 0) {
@@ -18,38 +20,35 @@ class ExportService {
             }
 
             // 2. Créer le contenu CSV
-            const headers = ['CIP', 'Produit', 'Quantité Comptée', 'Date Scan', 'Utilisateur'];
+            const headers = ['CIP', 'Produit', 'Quantité Comptée', 'Date Scan'];
             const rows = lignes.map(ligne => {
                 const cip = ligne.produit_cip || '';
-                // Échapper les guillemets dans le nom du produit
-                const nom = (ligne.produit_nom || ligne.produit_name || '').replace(/"/g, '""');
+                const nom = (ligne.produit_nom || ligne.produit_name || `Produit #${ligne.produit}`).replace(/"/g, '""');
                 const qte = ligne.quantite_comptee;
                 const date = ligne.scanned_at || new Date().toISOString();
-                // TODO: Si on avait l'info user, on la mettrait ici. Pour l'instant vide ou ID user createur inventaire
-                const user = '';
 
-                return `"${cip}","${nom}",${qte},"${date}","${user}"`;
+                return `"${cip}","${nom}",${qte},"${date}"`;
             });
 
             const csvContent = [headers.join(','), ...rows].join('\n');
 
             // 3. Sauvegarder dans un fichier temporaire
-            // Nom de fichier sécurisé
-            const safeRef = inventaire.reference.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            const refName = inventaire.reference || `inv_${inventaire.id}`;
+            const safeRef = refName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
             const fileName = `inventaire_${safeRef}_${inventaire.id}.csv`;
-            const fileUri = FileSystem.documentDirectory + fileName;
+            const fileUri = FS.documentDirectory + fileName;
 
-            await FileSystem.writeAsStringAsync(fileUri, csvContent, {
-                encoding: FileSystem.EncodingType.UTF8,
+            await FS.writeAsStringAsync(fileUri, csvContent, {
+                encoding: FS.EncodingType?.UTF8 || 'utf8',
             });
 
             // 4. Partager le fichier
-            const isAvailable = await Sharing.isAvailableAsync();
-            if (isAvailable) {
-                await Sharing.shareAsync(fileUri, {
+            const canShare = await Share.isAvailableAsync();
+            if (canShare) {
+                await Share.shareAsync(fileUri, {
                     mimeType: 'text/csv',
-                    dialogTitle: `Exporter Inventaire ${inventaire.reference}`,
-                    UTI: 'public.comma-separated-values-text' // Pour iOS
+                    dialogTitle: `Exporter Inventaire ${inventaire.reference || 'Inventaire'}`,
+                    UTI: 'public.comma-separated-values-text'
                 });
             } else {
                 throw new Error("Le partage n'est pas disponible sur cet appareil.");

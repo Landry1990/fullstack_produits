@@ -24,6 +24,9 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   
+  // Filtre: Mes inventaires vs Tous
+  const [filter, setFilter] = useState<'MINE' | 'ALL'>('MINE');
+  
   // Modal création inventaire
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newReference, setNewReference] = useState('');
@@ -121,8 +124,18 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
       <Text style={styles.cardDate}>
         Démarré le {new Date(item.date_debut).toLocaleDateString('fr-FR')}
       </Text>
+      {item.created_by !== user?.id && (
+         <Text style={styles.cardAuthor}>Par: {item.created_by}</Text>
+      )}
     </TouchableOpacity>
   );
+
+  const filteredInventaires = inventaires.filter(i => {
+    if (filter === 'MINE' && user) {
+        return i.created_by === user.id;
+    }
+    return true;
+  });
 
   if (loading) {
     return (
@@ -147,12 +160,27 @@ export default function HomeScreen({ onSelectInventaire, onLogout }: HomeScreenP
       </View>
 
       {/* Content */}
-      <Text style={styles.sectionTitle}>Inventaires en cours</Text>
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, filter === 'MINE' && styles.tabActive]} 
+          onPress={() => setFilter('MINE')}
+        >
+          <Text style={[styles.tabText, filter === 'MINE' && styles.tabTextActive]}>Mes Inventaires</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, filter === 'ALL' && styles.tabActive]} 
+          onPress={() => setFilter('ALL')}
+        >
+          <Text style={[styles.tabText, filter === 'ALL' && styles.tabTextActive]}>Tous</Text>
+        </TouchableOpacity>
+      </View>
 
-      {inventaires.length === 0 ? (
+      {filteredInventaires.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyText}>Aucun inventaire en cours</Text>
+          <Text style={styles.emptyText}>
+            {filter === 'MINE' ? 'Aucun inventaire trouvé' : 'Aucun inventaire en cours'}
+          </Text>
           <TouchableOpacity style={styles.createBtn} onPress={openCreateModal}>
             <Text style={styles.createBtnText}>➕ Créer un inventaire</Text>
           </TouchableOpacity>
@@ -427,5 +455,36 @@ const styles = StyleSheet.create({
   },
   btnDisabled: {
     opacity: 0.6,
+  },
+  // Tabs styles
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 24, // Espace augmenté
+    gap: 12,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16, // Augmenté pour cible tactile > 48dp
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: '#4f46e5',
+  },
+  tabText: {
+    color: '#ccc', // Contraste amélioré
+    fontSize: 18, // Police augmentée
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#fff',
+  },
+  cardAuthor: {
+    color: '#818cf8', // Contraste amélioré
+    fontSize: 14, // Police augmentée
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });

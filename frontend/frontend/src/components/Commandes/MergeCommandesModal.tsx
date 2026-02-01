@@ -19,7 +19,6 @@ export default function MergeCommandesModal({
     selectedOrderIds,
     fournisseurs,
     commandesEndpoint,
-    apiBaseUrl,
     onMergeSuccess
 }: MergeCommandesModalProps) {
     const [mergeTargetOrderId, setMergeTargetOrderId] = useState<number | null>(null);
@@ -66,41 +65,21 @@ export default function MergeCommandesModal({
         }
 
         try {
-            const commandeProduitsEndpoint = apiBaseUrl
-                ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commande-produits/`
-                : '/api/commande-produits/';
-
-            // Pour chaque commande source, déplacer ses produits vers la commande cible
+            // Utiliser l'action backend 'merge' pour chaque commande source
             for (const sourceOrderId of orderIdsToMerge) {
-                // Récupérer les détails complets de la commande source
-                // Note: On pourrait utiliser mergeOrdersDetails si on est sûr qu'ils sont à jour, 
-                // mais par sécurité on refetch ou on utilise ceux chargés.
-                // Ici on utilise ceux chargés dans mergeOrdersDetails
-                const sourceOrder = mergeOrdersDetails.find(c => c.id === sourceOrderId);
-                if (!sourceOrder) continue;
-
-                if (sourceOrder.produits) {
-                     for (const p of sourceOrder.produits) {
-                        // p is CommandeProduit so p.id is the line ID to update
-                        // p.id est l'ID de la ligne CommandeProduit.
-                        // On doit PATCHer la ligne CommandeProduit pour changer le champ 'commande'.
-                        await axios.patch(`${commandeProduitsEndpoint}${p.id}/`, {
-                            commande: mergeTargetOrderId
-                        });
-                    }
-                }
-
-                // Supprimer la commande source (maintenant vide)
-                await axios.delete(`${commandesEndpoint}${sourceOrderId}/`);
+                await axios.post(`${commandesEndpoint}${mergeTargetOrderId}/merge/`, {
+                    source_commande_id: sourceOrderId
+                });
             }
 
             // Notifier succès
             onMergeSuccess(orderIdsToMerge.length, mergeTargetOrderId);
             onClose();
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('Erreur lors de la fusion:', err);
-            toast.error('Erreur lors de la fusion des commandes.');
+            const msg = err.response?.data?.error || 'Erreur lors de la fusion des commandes.';
+            toast.error(msg);
         }
     };
 
