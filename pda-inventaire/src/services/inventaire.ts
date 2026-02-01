@@ -10,6 +10,7 @@ export interface Produit {
     stock: number;
     selling_price: number;
     purchase_price: number;
+    use_lot_management?: boolean;
     rayon?: { id: number; name: string };
 }
 
@@ -34,6 +35,7 @@ export interface LigneInventaire {
     quantite_comptee: number;
     ecart: number;
     lot_numero?: string;
+    lot_expiration?: string;
     scanned_at?: string;
 }
 
@@ -41,6 +43,7 @@ export interface CreateLigneInventaire {
     produit: number;
     quantite_comptee: number;
     lot_numero?: string;
+    lot_expiration?: string;
 }
 
 class InventaireService {
