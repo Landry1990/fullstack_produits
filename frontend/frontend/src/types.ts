@@ -254,6 +254,7 @@ export interface TicketCaisse {
     first_name?: string
     last_name?: string
   }
+  is_duplicate?: boolean
   paiements_details?: { mode?: string; mode_paiement?: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
 }
 

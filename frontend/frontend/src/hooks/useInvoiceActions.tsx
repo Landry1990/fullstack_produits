@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Facture } from '../types';
+import type { Facture, TicketCaisse } from '../types';
 import { safeStorage } from '../utils/storage';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { TicketTemplate } from '../components/printing/TicketTemplate';
+// import { renderToStaticMarkup } from 'react-dom/server';
+// import { TicketTemplate } from '../components/printing/TicketTemplate';
 
 interface UseInvoiceActionsProps {
     refreshFactures: () => void; // To refresh list after actions
@@ -14,17 +15,19 @@ interface UseInvoiceActionsProps {
 
 export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvoiceActionsProps) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
     // States for Modals
     const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null);
-    const [showRefundModal, setShowRefundModal] = useState(false);
     const [showProductDetailsModal, setShowProductDetailsModal] = useState(false);
     const [detailsLoading, setDetailsLoading] = useState(false);
 
     // Print states
     const [showClientNameModal, setShowClientNameModal] = useState(false);
     const [pendingPrintFacture, setPendingPrintFacture] = useState<Facture | null>(null);
+    const [showTicketModal, setShowTicketModal] = useState(false);
+    const [selectedTicket, setSelectedTicket] = useState<TicketCaisse | null>(null);
 
     // --- VIEW DETAILS ---
     const handleViewProducts = async (facture: Facture) => {
@@ -125,67 +128,94 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
     };
 
     // --- TICKET PREVIEW ---
-    const handleOpenTicketPreview = async (facture: Facture) => {
-        try {
-            // Need to fetch full details first (payments etc)
-            const token = safeStorage.getItem('authToken');
-            const res = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
-            const fullFacture = res.data;
+    const handlePrintTicket = async (facture: Facture) => {
+        let fullFacture = facture;
 
-            // Fetch settings
-            const settingsRes = await axios.get(`${apiBaseUrl}/invoice-settings/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
-            const settings = settingsRes.data;
-
-            const printWindow = window.open('', '', 'width=300,height=600');
-            if (printWindow) {
-                // Render component to static HTML
-                const htmlContent = renderToStaticMarkup(
-                    <TicketTemplate data={ fullFacture } settings = { settings } />
-                );
-
-                printWindow.document.write('<html><head><title>Ticket</title>');
-                // Add tailwind CDN for styling in popup (quick fix) or custom styles
-                printWindow.document.write('<script src="https://cdn.tailwindcss.com"></script>');
-                printWindow.document.write('</head><body>');
-                printWindow.document.write(htmlContent);
-                printWindow.document.write('</body></html>');
-                printWindow.document.close();
-                printWindow.focus();
-                // printWindow.print(); // Optional auto-print
+        // Charger détails si manquants
+        if (!facture.produits || facture.produits.length === 0) {
+            const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Chargement...' }));
+            try {
+                const token = safeStorage.getItem('authToken');
+                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
+                    headers: { Authorization: `Token ${token}` }
+                });
+                fullFacture = response.data;
+                toast.dismiss(toastId);
+            } catch (error) {
+                console.error("Erreur chargement pour ticket", error);
+                toast.error("Impossible de charger le détail.");
+                toast.dismiss(toastId);
+                return;
             }
-        } catch (err) {
-            console.error("Erreur ticket preview", err);
-            toast.error("Erreur ouverture ticket");
         }
+
+        // Construire l'objet TicketCaisse
+        // Note: On reconstruit un ticket approximatif car l'original n'est pas toujours persisté
+        // ou accessible directement ici sans endpoint dédié.
+        
+        // Déterminer le mode de paiement principal
+        let modePaiement: TicketCaisse['mode_paiement'] = 'especes'; // Defaut
+        if (fullFacture.paiements && fullFacture.paiements.length > 0) {
+            const pm = fullFacture.paiements[0].mode_paiement;
+             if (['especes', 'cheque', 'carte', 'virement', 'om', 'momo', 'en_compte'].includes(pm)) {
+                 modePaiement = pm as TicketCaisse['mode_paiement'];
+             } else {
+                 modePaiement = 'Mixte'; // Ou autre logique
+             }
+             if (fullFacture.paiements.length > 1) modePaiement = 'Mixte';
+        }
+
+        const ticket: TicketCaisse = {
+            id: fullFacture.session_ticket_number || fullFacture.id, // Utiliser num ticket session si dispo
+            facture: fullFacture,
+            facture_numero: fullFacture.numero_facture || undefined,
+            client_name: fullFacture.client_name || fullFacture.client_name_override || 'Passage',
+            mode_paiement: modePaiement,
+            montant: fullFacture.total_ttc,
+            statut: 'completee',
+            date_paiement: fullFacture.date,
+            montant_verse: fullFacture.total_ttc,
+            rendu: '0',
+            is_duplicate: true, // Marquer comme duplicata
+            user_details: {
+                id: 0,
+                // Utiliser le nom retourné par l'API (qui est maintenant ajouté au serializer)
+                username: fullFacture.created_by_name || 'Vendeur'
+            },
+            paiements_details: fullFacture.paiements || [] // Structure compatible ?
+        };
+
+        setSelectedTicket(ticket);
+        setShowTicketModal(true);
     };
 
-    // --- REFUNDS ---
-    const handleOpenRefundModal = (facture: Facture) => {
-        setSelectedFacture(facture);
-        setShowRefundModal(true);
-    };
+    // --- EDIT / MODIFY ---
+    const handleEditInvoice = async (facture: Facture) => {
+        let fullFacture = facture;
 
-    const handleConfirmRefund = async (reason: string) => {
-        if (!selectedFacture) return;
-        try {
-            const token = safeStorage.getItem('authToken');
-            await axios.post(`${apiBaseUrl}/factures/${selectedFacture.id}/annuler/`,
-                { motif: reason },
-                { headers: { Authorization: `Token ${token}` } }
-            );
-            toast.success(t('sales.messages.refund_success'));
-            refreshFactures();
-        } catch (error) {
-            console.error(error);
-            toast.error(t('sales.messages.refund_error'));
-        } finally {
-            setShowRefundModal(false);
-            setSelectedFacture(null);
+        // Si les produits ne sont pas complets, on charge le détail
+        if (!facture.produits || facture.produits.length === 0) {
+            const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Chargement...' }));
+            try {
+                const token = safeStorage.getItem('authToken');
+                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
+                    headers: { Authorization: `Token ${token}` }
+                });
+                fullFacture = response.data;
+                toast.dismiss(toastId);
+            } catch (error) {
+                console.error("Erreur chargement détails pour modification", error);
+                toast.error("Impossible de charger le détail de la vente.");
+                toast.dismiss(toastId);
+                return; // Stop if failed
+            }
         }
+
+        // Sauvegarder la facture complète pour le chargement dans Facturation
+        safeStorage.setItem('devis_to_load', JSON.stringify(fullFacture), 'local');
+        
+        // Rediriger vers la facturation
+        navigate('/app/facturation');
     };
 
     return {
@@ -193,19 +223,19 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
         modals: {
             selectedFacture,
             detailsLoading,
-            showRefundModal, setShowRefundModal,
             showProductDetailsModal, setShowProductDetailsModal,
             showClientNameModal, setShowClientNameModal,
-            pendingPrintFacture
+            pendingPrintFacture,
+            showTicketModal, setShowTicketModal,
+            selectedTicket
         },
         // Actions
         actions: {
             handleViewProducts,
             handlePrintInvoice,
             handleConfirmPrintClientName,
-            handleOpenTicketPreview,
-            handleOpenRefundModal,
-            handleConfirmRefund
+            handlePrintTicket, // New action
+            handleEditInvoice 
         }
     };
 };
