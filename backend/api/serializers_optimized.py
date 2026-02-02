@@ -101,7 +101,7 @@ class FactureDetailSerializer(FactureSerializer):
     Serializer complet pour les détails d'une facture.
     Inclut tous les produits et paiements.
     """
-    pass
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
 
 
 class CommandeListSerializer(serializers.ModelSerializer):

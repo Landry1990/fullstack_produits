@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Calendar, User, CreditCard } from 'lucide-react';
-import { Facture } from '../../../types';
+import type { Facture } from '../../../types';
 
 interface ProductDetailsModalProps {
     isOpen: boolean;

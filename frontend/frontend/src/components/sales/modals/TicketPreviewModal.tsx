@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Printer } from 'lucide-react';
-import { Facture } from '../../../types';
+import type { Facture } from '../../../types';
 import { TicketTemplate } from '../../printing/TicketTemplate';
 import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
 

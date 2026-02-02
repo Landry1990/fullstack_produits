@@ -118,9 +118,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         'status': ['exact', 'in'],
         'client': ['exact'],
         'date': ['gte', 'lte', 'date'],
-        'numero_facture': ['exact', 'icontains']
+        'numero_facture': ['exact', 'icontains'],
+        'created_by': ['exact'],
+        'produits__produit__name': ['icontains'],
     }
-    search_fields = ['numero_facture', 'client__name']
+    search_fields = ['numero_facture', 'client__name', 'produits__produit__name']
     
     # Serializers optimisés
     list_serializer_class = FactureListSerializer
@@ -687,6 +689,47 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'adjustment_created': adjustment_created
         })
 
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_delete(self, request):
+        """
+        Supprime plusieurs factures (brouillons ou annulées) via leur ID.
+        Payload: { "ids": [1, 2, 3] }
+        """
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Filtrer les factures supprimables (Brouillon ou Annulée)
+        factures_to_delete = Facture.objects.filter(
+            id__in=ids, 
+            status__in=[Facture.Status.BROUILLON, Facture.Status.ANNULEE]
+        )
+        
+        count = factures_to_delete.count()
+        deleted_ids = list(factures_to_delete.values_list('id', flat=True))
+        
+        if count == 0:
+             return Response({'detail': 'Aucune facture supprimable trouvée (doit être BROUILLON ou ANNULEE).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Audit Log
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.INVOICE_DELETE,
+            model_name='Facture',
+            object_id='BULK',
+            description=f"Suppression de {count} facture(s)",
+            details={'ids': deleted_ids},
+            request=request
+        )
+
+        factures_to_delete.delete()
+        
+        return Response({
+            'detail': f'{count} facture(s) supprimée(s).',
+            'deleted_ids': deleted_ids
+        })
+
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
     @transaction.atomic
     def supprimer_brouillons(self, request):
@@ -702,6 +745,54 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'count': count
         }, status=status.HTTP_200_OK)
 
+
+    @action(detail=False, methods=['get'])
+    def stats_jour(self, request):
+        """
+        Retourne les statistiques de vente du jour (Top Vendeur, Top Produit).
+        """
+        today = timezone.now().date()
+        
+        # 1. Top Vendeur (Chiffre d'Affaires)
+        top_vendeur = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).values('created_by__username', 'created_by__first_name', 'created_by__last_name').annotate(
+            total_vente=Sum('total_ttc'),
+            count=Count('id')
+        ).order_by('-total_vente').first()
+        
+        vendeur_data = None
+        if top_vendeur:
+            name = f"{top_vendeur['created_by__first_name']} {top_vendeur['created_by__last_name']}".strip()
+            if not name:
+                name = top_vendeur['created_by__username']
+            vendeur_data = {
+                'name': name,
+                'amount': top_vendeur['total_vente'],
+                'count': top_vendeur['count']
+            }
+
+        # 2. Top Produit (Quantité vendue)
+        # Note: On regarde les FactureProduit des factures valides du jour
+        top_produit = FactureProduit.objects.filter(
+            facture__date__date=today,
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).values('produit__name').annotate(
+            total_qty=Sum('quantity')
+        ).order_by('-total_qty').first()
+        
+        produit_data = None
+        if top_produit:
+            produit_data = {
+                'name': top_produit['produit__name'],
+                'quantity': top_produit['total_qty']
+            }
+
+        return Response({
+            'top_vendeur': vendeur_data,
+            'top_produit': produit_data
+        })
 
     @action(detail=True, methods=['get'])
     def imprimer_facture(self, request, pk=None):
@@ -1061,11 +1152,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
-            
+
+        # SEPARATION: Ventes (Clients normaux) vs Recouvrement (Clients Pros)
+        paiements_pro = transactions.filter(facture__client__client_type='PROFESSIONNEL')
+        paiements_standards = transactions.exclude(facture__client__client_type='PROFESSIONNEL')
+
+        # Calculer les montants séparés
+        montant_recouvrement = paiements_pro.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_ventes = paiements_standards.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
+        # Pour les détails par mode, on garde tout (c'est la caisse physique)
         modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(item['total']) for item in modes}
-        
-        total_ventes = Decimal(sum(details.values()))
 
         mouvements = MouvementCaisse.objects.all()
         if start_date:
@@ -1077,7 +1175,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             entrees=Coalesce(Sum('montant', filter=Q(type='ENTREE')), Value(0, output_field=DecimalField())),
             sorties=Coalesce(Sum('montant', filter=Q(type='SORTIE')), Value(0, output_field=DecimalField()))
         )
-        total_entrees = moves_aggregated['entrees']
+        # On ajoute le recouvrement pro aux entrées pour l'équilibre de caisse
+        total_entrees = moves_aggregated['entrees'] + montant_recouvrement
         total_sorties = moves_aggregated['sorties']
         
         total_theorique = total_ventes + total_entrees - total_sorties
@@ -1155,8 +1254,14 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
             
-        total_ventes = transactions.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        
+        # SEPARATION: Ventes (Clients normaux) vs Recouvrement (Clients Pros)
+        paiements_pro = transactions.filter(facture__client__client_type='PROFESSIONNEL')
+        paiements_standards = transactions.exclude(facture__client__client_type='PROFESSIONNEL')
+
+        # Calculer les montants séparés
+        montant_recouvrement = paiements_pro.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_ventes = paiements_standards.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
         modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(item['total']) for item in modes}
         
@@ -1165,7 +1270,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
             mouvements = mouvements.filter(date__gte=start_date)
         if end_date:
             mouvements = mouvements.filter(date__lte=end_date)
-        total_entrees = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        entrees_mouvements = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_entrees = entrees_mouvements + montant_recouvrement
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:

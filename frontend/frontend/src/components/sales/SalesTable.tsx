@@ -1,14 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, CreditCard, SearchX } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, CreditCard, SearchX, Receipt } from 'lucide-react';
 import type { Facture } from '../../types';
 
 interface SalesTableProps {
     factures: Facture[];
     onView: (facture: Facture) => void;
     onPrint: (facture: Facture) => void;
+    onPrintTicket: (facture: Facture) => void;
     onRefund: (facture: Facture) => void;
     onDelete: (id: number) => void;
+    onBulkDelete?: (ids: number[]) => void;
     loading: boolean;
 }
 
@@ -16,23 +18,46 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     factures,
     onView,
     onPrint,
+    onPrintTicket,
     onRefund,
     onDelete,
+    onBulkDelete,
     loading
 }) => {
     const { t } = useTranslation();
+    const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
 
-    // Helper functions (duplicated locally or imported if utility exists)
+    // Helper functions
     const formatDateFr = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toLocaleString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         });
+    };
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            // Select only drafts or cancellable? Or all?
+            // Usually select all visible.
+            setSelectedIds(factures.map(f => f.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelect = (id: number) => {
+        setSelectedIds(prev => 
+            prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+        );
+    };
+
+    const handleBulkDelete = () => {
+        if (onBulkDelete && selectedIds.length > 0) {
+            onBulkDelete(selectedIds);
+            setSelectedIds([]); // Reset after action trigger (optimistic)
+        }
     };
 
     if (loading) {
@@ -60,27 +85,61 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         <div className="overflow-x-auto">
             <table className="w-full">
                 <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-200 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                        <th className="px-6 py-4 rounded-tl-2xl">{t('sales.table.invoice_number')}</th>
+                    <tr className="bg-base-200 border-b border-base-300 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">
+                         <th className="px-4 py-4 w-10">
+                            <input 
+                                type="checkbox" 
+                                className="checkbox checkbox-xs checkbox-primary"
+                                onChange={handleSelectAll}
+                                checked={factures.length > 0 && selectedIds.length === factures.length}
+                            />
+                        </th>
+                        <th className="px-6 py-4 rounded-tl-2xl">
+                            {selectedIds.length > 0 ? (
+                                <span className="text-primary font-bold normal-case text-sm">
+                                    {selectedIds.length} sélectionné(s)
+                                </span>
+                            ) : t('sales.table.invoice_number')}
+                        </th>
                         <th className="px-6 py-4">{t('sales.table.client')}</th>
+                        <th className="px-6 py-4">{t('sales.table.operator', {defaultValue: "Vendeur"})}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
+                        <th className="px-6 py-4 text-center">{t('sales.table.discount', {defaultValue: "Remise"})}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.status')}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.payment_mode')}</th>
-                        <th className="px-6 py-4 text-right rounded-tr-2xl">{t('sales.table.actions')}</th>
+                        <th className="px-6 py-4 text-right rounded-tr-2xl">
+                             {selectedIds.length > 0 && onBulkDelete ? (
+                                <button 
+                                    onClick={handleBulkDelete}
+                                    className="btn btn-xs btn-error text-white gap-1 animate-in fade-in zoom-in"
+                                >
+                                    <Trash2 className="w-3 h-3" />
+                                    Supprimer ({selectedIds.length})
+                                </button>
+                            ) : t('sales.table.actions')}
+                        </th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-base-200">
                     {factures.map((facture) => (
                         <tr 
                             key={facture.id}
-                            className="group hover:bg-blue-50/30 transition-colors duration-150"
+                            className={`group transition-colors duration-150 ${selectedIds.includes(facture.id) ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-base-200/50'}`}
                         >
+                             <td className="px-4 py-4">
+                                <input 
+                                    type="checkbox" 
+                                    className="checkbox checkbox-xs checkbox-primary"
+                                    checked={selectedIds.includes(facture.id)}
+                                    onChange={() => handleSelect(facture.id)}
+                                />
+                            </td>
                             <td className="px-6 py-4">
                                 <div className="flex flex-col">
-                                    <span className="font-bold text-gray-900 flex items-center gap-2">
+                                    <span className="font-bold text-base-content flex items-center gap-2">
                                         #{facture.numero_facture || facture.id}
                                     </span>
-                                    <span className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                                    <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
                                         <Calendar className="w-3 h-3" />
                                         {formatDateFr(facture.date)}
                                     </span>
@@ -88,65 +147,89 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
                             <td className="px-6 py-4">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-600">
+                                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                         <User className="w-4 h-4" />
                                     </div>
                                     <div>
-                                        <div className="font-medium text-gray-900">
+                                        <div className="font-medium text-base-content">
                                             {facture.client_name || facture.client_name_override || t('common.passerby_client')}
                                         </div>
                                     </div>
                                 </div>
                             </td>
+                            <td className="px-6 py-4">
+                                <div className="text-sm text-base-content/70">
+                                    {facture.created_by_name || '-'}
+                                </div>
+                            </td>
                             <td className="px-6 py-4 text-center">
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 font-mono font-bold text-sm border border-gray-200 group-hover:bg-white group-hover:border-blue-200 group-hover:text-blue-700 group-hover:shadow-sm transition-all">
-                                    {parseFloat(facture.total_ttc).toLocaleString('fr-FR')} F
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-base-200 text-base-content font-mono font-bold text-sm border border-base-300 group-hover:bg-base-100 group-hover:border-primary/30 group-hover:text-primary group-hover:shadow-sm transition-all">
+                                    {parseFloat(facture.total_ttc).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
-                                    ${facture.status === 'PAY' ? 'bg-green-100 text-green-700 border border-green-100' : 
-                                    facture.status === 'ANN' ? 'bg-red-100 text-red-700 border border-red-100' :
-                                    facture.status === 'BROU' ? 'bg-gray-100 text-gray-600 border border-gray-200' :
-                                    'bg-yellow-100 text-yellow-700 border border-yellow-100'}`}
+                                {parseFloat(facture.remise) > 0 ? (
+                                    <span className="text-error font-medium">-{parseFloat(facture.remise).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</span>
+                                ) : (
+                                    <span className="text-base-content/30">-</span>
+                                )}
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border
+                                    ${facture.status === 'PAY' ? 'bg-success/10 text-success border-success/20' : 
+                                    facture.status === 'ANN' ? 'bg-error/10 text-error border-error/20' :
+                                    facture.status === 'BROU' ? 'bg-base-200 text-base-content/60 border-base-300' :
+                                    'bg-warning/10 text-warning border-warning/20'}`}
                                 >
                                     {facture.status_display}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
                                 {facture.paiements && facture.paiements.length > 0 ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-gray-50 text-gray-600 border border-gray-100">
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-base-200 text-base-content/70 border border-base-300">
                                         <CreditCard className="w-3 h-3" />
-                                        {/* Display only first payment mode or combine */}
                                         {facture.paiements[0].mode_paiement_display}
                                         {facture.paiements.length > 1 && ' (+)'}
                                     </span>
                                 ) : (
-                                    <span className="text-gray-400 text-xs italic">-</span>
+                                    <span className="text-base-content/30 text-xs italic">-</span>
                                 )}
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                     <button
                                         onClick={() => onView(facture)}
-                                        className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                        className="p-2 text-base-content/60 hover:text-secondary hover:bg-secondary/10 rounded-lg transition-all"
                                         title={t('common.details')}
                                     >
                                         <Eye className="w-4 h-4" />
                                     </button>
                                     
-                                    <button
-                                        onClick={() => onPrint(facture)}
-                                        className="p-2 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
-                                        title={t('common.print')}
-                                    >
-                                        <Printer className="w-4 h-4" />
-                                    </button>
+                            {/* Dropdown d'impression */}
+                                    <div className="dropdown dropdown-end dropdown-hover">
+                                        <div tabIndex={0} role="button" className="p-2 text-base-content/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title={t('common.print')}>
+                                            <Printer className="w-4 h-4" />
+                                        </div>
+                                        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-base-200">
+                                            <li>
+                                                <a onClick={() => onPrint(facture)} className="flex items-center gap-2">
+                                                    <Printer className="w-4 h-4" />
+                                                    Format A4
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a onClick={() => onPrintTicket(facture)} className="flex items-center gap-2">
+                                                    <Receipt className="w-4 h-4" />
+                                                    Ticket Caisse
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
 
                                     {facture.status !== 'ANN' && facture.status !== 'BROU' && (
                                         <button
                                             onClick={() => onRefund(facture)}
-                                            className="p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                                            className="p-2 text-base-content/60 hover:text-warning hover:bg-warning/10 rounded-lg transition-all"
                                             title={t('common.refund')}
                                         >
                                             <RotateCcw className="w-4 h-4" />
@@ -155,7 +238,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
 
                                     <button
                                         onClick={() => onDelete(facture.id)}
-                                        className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all group-hover:border-red-100"
+                                        className="p-2 text-base-content/60 hover:text-error hover:bg-error/10 rounded-lg transition-all"
                                         title={t('common.delete')}
                                     >
                                         <Trash2 className="w-4 h-4" />

@@ -69,6 +69,11 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
 
       {/* INFO */}
       <div className="mb-3 space-y-1 text-[11px]">
+        {ticket.is_duplicate && (
+            <div className="text-center bg-black text-white font-bold text-xs py-1 mb-2 rounded">
+                *** DUPLICATA ***
+            </div>
+        )}
         <div className="flex justify-between">
             <span className="font-semibold">Ticket N°:</span>
             <span>#{ticket.id}</span>

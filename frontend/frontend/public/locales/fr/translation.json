@@ -1,4 +1,18 @@
 {
+    "common": {
+        "loading": "Chargement...",
+        "details": "Détails",
+        "print": "Imprimer",
+        "refund": "Rembourser",
+        "delete": "Supprimer",
+        "cancel": "Annuler",
+        "save": "Enregistrer",
+        "passerby_client": "Client de passage",
+        "close": "Fermer",
+        "receipt": "Ticket de caisse",
+        "print_a4": "Facture A4",
+        "print_ticket": "Ticket Caisse"
+    },
     "sidebar": {
         "dashboard": "Tableau de bord",
         "ventes": {
@@ -516,8 +530,16 @@
         }
     },
     "sales": {
-        "title": "Historique des Ventes",
-        "subtitle": "Consultez et gérez l'historique de toutes les factures",
+        "title": "Ventes",
+        "subtitle": "Gérez vos ventes, factures et règlements",
+        "stats": {
+            "session_total": "Caisse Session"
+        },
+        "no_sales_found": "Aucune vente trouvée",
+        "try_different_filters": "Essayez de modifier les filtres",
+        "modals": {
+            "print_invoice": "Imprimer Facture"
+        },
         "total_invoices": "Total Factures",
         "drafts": "Brouillons (Page)",
         "cash_report": "Rapport Caisse",
@@ -538,16 +560,23 @@
             "delete_drafts": "Vider Brouillons"
         },
         "filters": {
-            "search_placeholder": "Rechercher client, n° facture...",
-            "all": "Toutes",
-            "validated": "Validées",
-            "cancelled": "Annulées",
+            "search_placeholder": "Rechercher une vente...",
+            "status_all": "Tous les statuts",
             "start_date": "Début",
             "end_date": "Fin"
         },
+        "status": {
+            "paid": "Payée",
+            "validated": "Validée",
+            "draft": "Brouillon",
+            "cancelled": "Annulée"
+        },
+        "delete_drafts": "Vider les brouillons",
         "table": {
             "invoice_number": "N° Facture",
             "client": "Client",
+            "amount": "Montant",
+            "payment_mode": "Mode Paiement",
             "date": "Date",
             "status": "Statut",
             "cancellation_reason": "Motif Annulation",

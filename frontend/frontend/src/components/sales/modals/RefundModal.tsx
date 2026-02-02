@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, AlertTriangle } from 'lucide-react';
-import { Facture } from '../../../types';
+import type { Facture } from '../../../types';
 
 interface RefundModalProps {
     isOpen: boolean;

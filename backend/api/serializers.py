@@ -509,6 +509,7 @@ class FactureSerializer(serializers.ModelSerializer):
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     is_remise_auto = serializers.SerializerMethodField()
     paiements = CaisseSerializer(many=True, read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
 
     def get_client_nom(self, obj):
         if obj.client:
@@ -548,7 +549,7 @@ class FactureSerializer(serializers.ModelSerializer):
             'date', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
-            'is_remise_auto', 'part_client', 'paiements'
+            'is_remise_auto', 'part_client', 'paiements', 'created_by_name'
         ]
 
 class StockLotSerializer(serializers.ModelSerializer):

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
-import { CaisseParTranche } from '../types';
+import type { CaisseParTranche } from '../types';
 import { safeStorage } from '../utils/storage';
 
 export const useCashSession = () => {
