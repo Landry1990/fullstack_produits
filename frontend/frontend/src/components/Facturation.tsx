@@ -90,7 +90,7 @@ export default function Facturation() {
       // Auto-add scanned product to cart via ref
       if (addProductRef.current) {
         addProductRef.current(product, { isRetrocession, preventFocus: true })
-        toast.success(`✅ ${product.name} ajouté (scan)`, { duration: 1500 })
+        toast.success(t('facturation.messages.scan_added', { name: product.name }), { duration: 1500 })
       }
   }, [isRetrocession])
 
@@ -109,11 +109,11 @@ export default function Facturation() {
   // Pack Addition Logic
   const addPackToFacture = useCallback(async (pack: any) => {
       if (!pack.pack_items || pack.pack_items.length === 0) {
-          toast.error("Ce pack est vide")
+          toast.error(t('facturation.messages.pack_empty'))
           return
       }
 
-      const toastId = toast.loading("Ajout du pack...")
+      const toastId = toast.loading(t('facturation.messages.adding_pack'))
       try {
           // Fetch all products details concurrently
           const apiBase = import.meta.env.VITE_API_BASE_URL ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '') : ''
@@ -133,7 +133,7 @@ export default function Facturation() {
           const items = results.filter(i => i !== null) as { product: ProduitModel, quantity: number }[]
 
           if (items.length === 0) {
-              toast.error("Aucun produit du pack n'a pu être récupéré", { id: toastId })
+              toast.error(t('facturation.messages.pack_items_error'), { id: toastId })
               return
           }
           
@@ -184,11 +184,11 @@ export default function Facturation() {
               }
           }
           
-          toast.success(`Pack "${pack.name}" ajouté`, { id: toastId })
+          toast.success(t('facturation.messages.pack_added', { name: pack.name }), { id: toastId })
           
       } catch (e) {
           console.error(e)
-          toast.error("Erreur lors de l'ajout du pack", { id: toastId })
+          toast.error(t('facturation.messages.pack_error'), { id: toastId })
       }
   }, [addProduitToFacture, updateQuantite, updateRemiseProduit, updatePrix])
 
@@ -311,7 +311,7 @@ export default function Facturation() {
     if (hasItems) {
       handlePaymentClick()
     } else {
-        toast.error(t('facturation.messages.cart_empty', { defaultValue: 'Panier vide' }))
+        toast.error(t('facturation.messages.cart_empty'))
     }
   }, [hasItems]) // Added dependency later
 

@@ -22,6 +22,7 @@
             "journal": "Journal de Caisse",
             "clotures": "Historique Clôtures",
             "ordonnancier": "Ordonnancier",
+            "promotions": "Promotions",
             "caisse_centralisee": "Caisse Centralisée"
         },
         "facturation": "Facturation",
@@ -29,10 +30,15 @@
         "vitrine": "Ma Vitrine (Web)",
         "commandes": {
             "title": "Commandes",
-            "local_consult": "Locales - Consultation",
-            "local_hist": "Locales - Historique",
-            "direct_consult": "Directes - Consultation",
-            "direct_hist": "Directes - Historique"
+            "local_title": "Commandes Grossistes (Locales)",
+            "direct_title": "Commandes Directes (Etranger)",
+            "new_current": "Nouvelle / En cours"
+        },
+        "commande": {
+            "local_title": "Commandes Grossistes (Locales)",
+            "direct_title": "Commandes Directes (Etranger)",
+            "new_current": "Nouvelle / En cours",
+            "history": "Historique Achats"
         },
         "fournisseurs": {
             "title": "Fournisseurs",
@@ -71,7 +77,543 @@
         },
         "utilisateurs": "Utilisateurs",
         "audit": "Journal d'Audit",
-        "logout": "Déconnexion"
+        "logout": "Déconnexion",
+        "app_subtitle": "Gestion Professionnelle",
+        "roles": {
+            "pharmacist": "Pharmacien",
+            "user": "Utilisateur"
+        }
+    },
+    "users": {
+        "title": "Gestion des Utilisateurs",
+        "new_user": "Nouvel Utilisateur",
+        "table": {
+            "user": "Utilisateur",
+            "role_access": "Rôle & Accès",
+            "special_permissions": "Permissions Spéciales",
+            "actions": "Actions"
+        },
+        "roles": {
+            "pharmacist": "Pharmacien (Admin Complet)",
+            "cashier": "Caissier (Facturation + Encaissement)",
+            "seller": "Vendeur (Vente uniquement, pas d'encaissement)"
+        },
+        "badges": {
+            "full_access": "Accès Total",
+            "cash_out": "Peut encaisser",
+            "negative_stock": "Stock Négatif",
+            "pharmacist": "Pharmacien (Admin)",
+            "seller": "Vendeur"
+        },
+        "modal": {
+            "edit_title": "Modifier Utilisateur",
+            "new_title": "Nouvel Utilisateur",
+            "basic_info": "Informations de base",
+            "access_permissions": "Accès et Permissions",
+            "authorized_menus": "Menus Autorisés",
+            "special_permissions": "Permissions Spéciales",
+            "security": "Sécurité",
+            "admin_note": "Le Pharmacien (Admin) a accès à tous les menus.",
+            "seller_warning": "⚠️ Un vendeur ne peut pas encaisser par définition.",
+            "cancel": "Annuler",
+            "save": "Enregistrer"
+        },
+        "form": {
+            "role": "Type de Compte (Rôle)",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe",
+            "password_hint": "(Laisser vide si inchangé)",
+            "firstname": "Prénom",
+            "lastname": "Nom",
+            "email": "Email"
+        },
+        "permissions": {
+            "cash_out": "Encaissement Autorisé",
+            "cash_out_desc": "Accès aux boutons de paiement",
+            "returns": "Autoriser les retours",
+            "negative_stock": "Vente hors stock (Forcer)",
+            "delete_product": "Supprimer Produits",
+            "adjust_stock": "Ajuster Stock Manuel",
+            "delete_provider": "Supprimer Fournisseurs",
+            "delete_order": "Supprimer Commandes",
+            "close_order": "Clôturer Commandes",
+            "generate_coupon": "Générer des Coupons"
+        },
+        "messages": {
+            "delete_confirm_title": "Supprimer l'utilisateur",
+            "delete_confirm": "Supprimer l'utilisateur \"{{username}}\" ?\n\nCette action est irréversible.",
+            "delete_btn": "Supprimer",
+            "sudo_title": "Confirmer la suppression",
+            "sudo_message": "La suppression d'un utilisateur est une action sensible. Veuillez saisir votre mot de passe pour confirmer.",
+            "deleted": "Utilisateur {{username}} supprimé",
+            "delete_error": "Erreur lors de la suppression de l'utilisateur",
+            "updated": "Utilisateur mis à jour",
+            "created": "Utilisateur créé",
+            "save_error": "Erreur lors de l'enregistrement",
+            "load_error": "Erreur lors du chargement des utilisateurs",
+            "access_denied": "Accès refusé. Réservé aux administrateurs."
+        }
+    },
+    "providers": {
+        "title": "Fournisseurs",
+        "search_placeholder": "Rechercher un fournisseur...",
+        "new_provider": "Nouveau",
+        "no_result": "Aucun résultat",
+        "empty_list": "Liste vide",
+        "table": {
+            "provider": "Fournisseur",
+            "phone": "Tél."
+        },
+        "details": {
+            "contact_address": "Adresse de contact",
+            "not_provided": "Non renseignée",
+            "direct_line": "Ligne directe",
+            "email": "Email professionnel",
+            "financial_situation": "Situation Financière",
+            "manage_payments": "Gérer les paiements",
+            "debt_balance": "Solde Dette",
+            "history_available": "Historique disponible dans le gestionnaire",
+            "internal_ref": "Référence interne",
+            "product_catalogue": "Catalogue Produits",
+            "products_ordered": "{{count}} produit commandé",
+            "products_ordered_plural": "{{count}} produits commandés",
+            "loading": "Chargement...",
+            "no_provider_selected": "Aucun fournisseur sélectionné",
+            "select_instruction": "Sélectionnez une entreprise dans la liste pour voir ses coordonnées"
+        },
+        "catalogue": {
+            "search_placeholder": "Rechercher dans le catalogue...",
+            "no_result": "Aucun résultat",
+            "empty": "Aucun produit commandé",
+            "headers": {
+                "cip": "CIP",
+                "product": "Produit",
+                "last_price": "Dern. Prix",
+                "last_order": "Dern. Cmd",
+                "margin": "Marge",
+                "total_qty": "Qté Tot.",
+                "stock": "Stock"
+            }
+        },
+        "form": {
+            "add_title": "Ajouter un nouveau fournisseur",
+            "edit_title": "Modifier le fournisseur",
+            "company_info": "Informations de l'entreprise",
+            "name": "Nom de l'entreprise",
+            "name_placeholder": "Ex: PharmaCorp SARL",
+            "phone": "Téléphone",
+            "phone_placeholder": "Ex: 0123456789",
+            "email": "Adresse email",
+            "email_placeholder": "Ex: contact@pharmacorp.com",
+            "address_section": "Adresse",
+            "address": "Adresse complète",
+            "address_placeholder": "Ex: 123 Avenue des Industries...",
+            "address_hint": "Séparez les lignes d'adresse par des retours à la ligne",
+            "cancel": "Annuler",
+            "add_btn": "Ajouter le fournisseur",
+            "save_btn": "Enregistrer les modifications",
+            "saving": "Enregistrement..."
+        },
+        "finance": {
+            "title": "Gestion Financière",
+            "new_payment": "Nouveau Paiement",
+            "amount": "Montant",
+            "payment_mode": "Mode de paiement",
+            "reference": "Référence (Optionnel)",
+            "reference_placeholder": "N° Chèque, Virement...",
+            "notes": "Notes",
+            "notes_placeholder": "Commentaire...",
+            "save_payment": "Enregistrer le paiement",
+            "history": "Historique des paiements",
+            "no_payments": "Aucun paiement enregistré",
+            "close": "Fermer",
+            "modes": {
+                "cash": "Espèces",
+                "check": "Chèque",
+                "transfer": "Virement",
+                "credit": "Avoir",
+                "other": "Autre"
+            },
+            "table": {
+                "date": "Date",
+                "mode": "Mode",
+                "reference": "Référence",
+                "amount": "Montant",
+                "action": "Action"
+            },
+            "delete_confirm": "Êtes-vous sûr de vouloir supprimer ce paiement ?"
+        },
+        "messages": {
+            "delete_success": "Fournisseur supprimé avec succès",
+            "delete_protected": "Impossible de supprimer : ce fournisseur est lié à des données existantes (commandes, produits).",
+            "delete_error": "Erreur lors de la suppression",
+            "access_denied_delete": "Accès refusé : Vous n'avez pas la permission de supprimer des fournisseurs.",
+            "delete_confirm_title": "Supprimer le fournisseur",
+            "delete_confirm_message": "Supprimer le fournisseur \"{{name}}\" ?\n\nCette action est irréversible.",
+            "delete_btn": "Supprimer",
+            "sudo_title": "Confirmer la suppression",
+            "sudo_message": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive."
+        }
+    },
+    "creances": {
+        "title": "Gestion des Créances",
+        "subtitle": "Suivi des ventes en compte - Clients professionnels",
+        "history_toggle": "Voir Historique",
+        "refresh": "Actualiser",
+        "filters": {
+            "client_label": "Client",
+            "client_placeholder": "Tous les clients",
+            "start_date": "Date Début",
+            "end_date": "Date Fin",
+            "search": "Rechercher",
+            "reset": "Réinitialiser",
+            "back_to_list": "Retour à la liste"
+        },
+        "stats": {
+            "total_invoices": "Total Factures",
+            "total_paid": "Total Payé",
+            "remaining": "Reste à Payer"
+        },
+        "client_list": {
+            "client": "Client",
+            "nb_invoices": "Nb Factures",
+            "total_amount": "Montant Total",
+            "already_paid": "Déjà Payé",
+            "remaining_due": "Reste à Payer",
+            "actions": "Actions",
+            "empty": "Aucun client avec des créances sur cette période"
+        },
+        "invoice_list": {
+            "selected_count": "{{count}} facture(s) sélectionnée(s)",
+            "pay_selection": "Régler la sélection",
+            "date": "Date",
+            "invoice_number": "N° Facture",
+            "beneficiary": "Ayant Droit",
+            "total": "Total",
+            "paid": "Payé",
+            "remaining": "Reste",
+            "status": "Statut",
+            "actions": "Actions",
+            "empty": "Aucune facture trouvée pour ce client"
+        },
+        "print_statement": "Imprimer le Relevé",
+        "client_label": "Client : {{name}}"
+    },
+    "stock": {
+        "inventaire": {
+            "title": "Gestion des Inventaires",
+            "create_btn": "Nouvel Inventaire",
+            "list_title": "Historique des Inventaires",
+            "stats_tab": "Ecarts & Valorisation",
+            "data_tab": "Saisie des Stocks",
+            "validation": {
+                "title": "Validation Inventaire",
+                "btn": "Valider l'Inventaire",
+                "confirm_msg": "Cette action est irréversible. Les stocks seront mis à jour.",
+                "validator_label": "Validé par",
+                "sudo_password": "Mot de passe Administrateur",
+                "success": "Inventaire validé avec succès",
+                "error": "Erreur lors de la validation"
+            },
+            "merge": {
+                "btn": "Fusionner",
+                "modal_title": "Fusion d'Inventaires",
+                "source_label": "Inventaire Source (sera supprimé)",
+                "confirm_msg": "Les lignes de l'inventaire source seront ajoutées à l'inventaire actif.",
+                "success": "Fusion réussie"
+            },
+            "table": {
+                "product": "Produit",
+                "cip": "CIP",
+                "lot": "Lot",
+                "qty_theo": "Qté Théo.",
+                "qty_phys": "Qté Phys.",
+                "gap": "Ecart",
+                "value": "Valeur",
+                "actions": "Actions"
+            },
+            "status": {
+                "draft": "En cours",
+                "validated": "Validé"
+            },
+            "empty_state": "Aucun inventaire en cours",
+            "delete_confirm": "Supprimer cet inventaire ?",
+            "product_exists": "Ce produit (ou ce lot) est déjà dans l'inventaire."
+        }
+    },
+    "orders": {
+        "title": "Gestion des Commandes",
+        "title_direct": "Gestion des Commandes Directes",
+        "tabs": {
+            "local": "Commandes Grossistes (Locales)",
+            "direct": "Commandes Directes (Etranger)"
+        },
+        "history": {
+            "title": "Historique des Achats",
+            "subtitle_local": " Locaux",
+            "subtitle_direct": " Directs (Import)",
+            "subtitle_daily": " par Jour",
+            "start_date": "Date début",
+            "end_date": "Date fin",
+            "provider_filter": "Fournisseur",
+            "all_providers": "Tous les fournisseurs",
+            "refresh": "Actualiser",
+            "columns": {
+                "date": "Date",
+                "nb_orders": "Nb Commandes",
+                "total_purchase": "Total Achat"
+            },
+            "no_data": "Aucun achat trouvé pour cette période",
+            "total": "TOTAL"
+        },
+        "list": {
+            "title": "Liste des Commandes",
+            "create_btn": "Créer",
+            "suggestions_btn": "Suggestions",
+            "sort_by": "Trier par",
+            "filter_by": "Filtrer",
+            "filters": {
+                "all": "Tous",
+                "prep": "En prép.",
+                "pending": "En attente",
+                "closed": "Clôturées"
+            },
+            "selection": {
+                "selected_count": "{{count}} commande(s) sélectionnée(s)",
+                "deselect": "Désélectionner",
+                "merge": "Fusionner"
+            },
+            "table": {
+                "id": "ID",
+                "invoice_number": "N° Facture",
+                "date": "Date",
+                "provider": "Fournisseur",
+                "status": "Statut",
+                "total": "Total (F)",
+                "actions": "Actions",
+                "view_details": "Voir Détails",
+                "empty": "Aucune commande trouvée"
+            },
+            "pagination": {
+                "showing": "{{count}} commande(s) affichée(s) sur {{total}} total",
+                "prev": "Précédent",
+                "next": "Suivant",
+                "page": "Page"
+            }
+        },
+        "form": {
+            "new_title": "Nouvelle Commande",
+            "edit_title": "Modifier Commande #{{id}}",
+            "shortcuts": {
+                "search": "Recherche",
+                "provider": "Fournisseur",
+                "select_all": "Select All"
+            },
+            "provider_label": "Fournisseur (F4) *",
+            "provider_placeholder": "Sélectionnez un fournisseur",
+            "invoice_label": "Numéro de facture",
+            "invoice_placeholder": "Ex: FAC-2024-001",
+            "export_btn": "Exporter CSV",
+            "import_btn": "Importer CSV",
+            "new_product_btn": "Nouveau produit",
+            "return_btn": "Retour / Avoir",
+            "direct_order_badge": "COMMANDE DIRECTE (ETRANGER)",
+            "exchange_rate": "Taux de Change (XAF/Devise)",
+            "coefficient": "Coefficient (Frais)",
+            "cost_price_formula": "Prix Revient = (Prix € * Taux) * Coeff",
+            "search_label": "Rechercher un produit (F2)",
+            "search_placeholder": "Tapez pour rechercher par nom ou CIP...",
+            "no_product_found": "Aucun produit trouvé",
+            "save_btn": "Enregistrer la commande",
+            "saving": "Enregistrement...",
+            "nav_help": "Utilisez Tab pour naviguer, Entrée pour valider",
+            "back_to_list": "Retour à la liste",
+            "search_results": {
+                "stock": "Stock",
+                "price": "Prix",
+                "cip": "CIP"
+            }
+        },
+        "product_table": {
+            "title": "Produits",
+            "saved_at": "Enregistré à {{time}}",
+            "total_ht": "Total HT",
+            "total_tva": "Total TVA",
+            "total_ttc": "Total TTC",
+            "selected_count": "{{count}} sélectionné(s)",
+            "delete_btn": "Supprimer",
+            "transfer_btn": "Transférer",
+            "exclusivity_tooltip": "Exclusivité : {{provider}}",
+            "specific_provider": "Fournisseur Spécifique",
+            "empty_state": "Commencez par rechercher et ajouter des produits (F2)",
+            "headers": {
+                "product": "Produit",
+                "cip": "CIP",
+                "qty": "Qté",
+                "ug": "UG",
+                "dev_price": "Prix Dev.",
+                "buy_price_ht": "Prix Achat HT",
+                "tva": "TVA",
+                "margin": "Marge",
+                "sell_price": "Prix Vente",
+                "lot": "Lot",
+                "exp_date": "Date Exp"
+            }
+        },
+        "details": {
+            "title": "Commande #{{id}}",
+            "edit": "Modifier",
+            "suspend": "Mettre en attente",
+            "resume": "Reprendre",
+            "close": "Clôturer",
+            "labels": "Étiquettes",
+            "delete": "Supprimer",
+            "print_receipt": "Imprimer Bon",
+            "cancel_reception": "Annuler Réception",
+            "return": "Retour / Avoir",
+            "id": "ID Commande",
+            "price_unit": "P.U.",
+            "invoice": "N° Facture",
+            "provider": "Fournisseur",
+            "date": "Date",
+            "status": "Statut",
+            "financial_summary": "Résumé Financier",
+            "ug_title": "Unités Gratuites (UG)",
+            "ug_message": "Cette commande contient {{count}} unité(s) gratuite(s)",
+            "empty_products": "Aucun produit dans cette commande."
+        },
+        "status": {
+            "prep": "En préparation",
+            "pending": "En attente",
+            "closed": "Clôturée"
+        },
+        "messages": {
+            "delete_error": "Impossible de supprimer des commandes clôturées",
+            "delete_success": "Commande supprimée",
+            "merge_error": "Fusion impossible",
+            "merge_success": "Commandes fusionnées",
+            "transfer_select_error": "Veuillez sélectionner au moins un produit à transférer",
+            "import_success": "Produits importés avec succès",
+            "import_error": "Erreur lors de l'import CSV",
+            "save_success": "Commande enregistrée",
+            "close_confirm": "Voulez-vous vraiment clôturer cette commande ? Cela mettra à jour le stock.",
+            "cancel_reception_confirm": "Attention: Annuler la réception retirera les produits du stock. Continuer ?",
+            "provider_required": "Veuillez sélectionner un fournisseur",
+            "no_selection": "Aucune commande sélectionnée pour la modification",
+            "create_success": "Commande #{{id}} créée",
+            "update_success": "Commande mise à jour",
+            "save_error": "Erreur lors de l'enregistrement de la commande",
+            "access_denied_delete": "Accès refusé : Vous n'avez pas la permission de supprimer des commandes.",
+            "password_confirm_delete_title": "Suppression de commande",
+            "password_confirm_delete_body": "Vous êtes sur le point de supprimer une commande. Confirmez votre mot de passe.",
+            "close_success": "Commande clôturée avec succès",
+            "password_confirm_close_title": "Confirmer la réception",
+            "password_confirm_close_body": "Cette action va mettre à jour le stock et les prix d'achat. Veuillez confirmer votre mot de passe.",
+            "status_update_success": "Statut mis à jour : {{status}}",
+            "cancel_reception_success": "Réception annulée : {{count}} produits affectés.",
+            "cancel_reception_error": "Seule une commande clôturée peut être annulée.",
+            "password_confirm_cancel_title": "Annuler la réception",
+            "password_confirm_cancel_body": "Cette action va retirer le stock ajouté lors de la clôture. Confirmez votre mot de passe.",
+            "print_error": "Erreur lors de l'impression"
+        }
+    },
+    "reports": {
+        "title": "Centre de Rapports",
+        "subtitle": "Sélectionnez une requête, configurez les paramètres et affichez les résultats",
+        "queries_title": "Liste des requêtes",
+        "execute": "Exécuter la requête",
+        "copy": "Copier (Excel)",
+        "params_title": "Paramètres",
+        "no_query_selected": "Aucune requête sélectionnée",
+        "select_query_prompt": "Sélectionnez une requête dans la liste de gauche pour commencer.",
+        "queries": {
+            "rapport_mensuel": {
+                "name": "Rapport Mensuel",
+                "description": "CA, marges, créances pour un mois donné"
+            },
+            "historique_client": {
+                "name": "Historique Client",
+                "description": "Tous les produits achetés par un client avec dates et quantités"
+            },
+            "ca_periode": {
+                "name": "CA par Période",
+                "description": "Chiffre d'affaires sur une période"
+            },
+            "alertes_stock": {
+                "name": "Alertes Stock",
+                "description": "Stock < Rotation Moyenne OU Stock <= Seuil Minimum"
+            },
+            "produits_perimes": {
+                "name": "Produits Périmés / Proches",
+                "description": "Produits périmés ou proches de la péremption"
+            },
+            "creances": {
+                "name": "Créances en Cours",
+                "description": "Factures avec solde restant à payer"
+            },
+            "historique_ventes": {
+                "name": "Ventes par Tranche Horaire",
+                "description": "Produits vendus sur une période donnée"
+            },
+            "produits_non_vendus": {
+                "name": "Produits Non Vendus",
+                "description": "Produits sans vente depuis X jours"
+            },
+            "stock_negatif": {
+                "name": "Stock Négatif",
+                "description": "Produits avec stock négatif ou faible, triés par quantité"
+            },
+            "valeur_stock_journalier": {
+                "name": "Valeur Stock Journalier",
+                "description": "Reconstitution historique de la valeur du stock, achats et ventes"
+            },
+            "produits_tva": {
+                "name": "Produits avec TVA",
+                "description": "Liste des produits soumis à la TVA (> 0%)"
+            },
+            "stocks_morts": {
+                "name": "Stocks Dormants (Dead Stock)",
+                "description": "Produits à forte valeur (Argent qui dort) sans vente"
+            },
+            "alertes_annulations": {
+                "name": "Alertes Annulations Suspectes",
+                "description": "Utilisateurs avec un taux d'annulation élevé (> seuil)"
+            },
+            "stats_vendeurs": {
+                "name": "Stats par Vendeurs",
+                "description": "Classement des vendeurs par CA (hors caissiers)"
+            },
+            "produits_vendus_tva": {
+                "name": "Produits Vendus (Soumis à TVA)",
+                "description": "Produits avec TVA > 0 vendus sur la période"
+            }
+        },
+        "params": {
+            "mois": "Mois",
+            "facture__client": "Client",
+            "date_debut": "Date début",
+            "date_fin": "Date fin",
+            "expiring_within_days": "Jours avant péremption",
+            "jours_sans_vente": "Jours sans vente",
+            "stock_lt": "Stock inférieur à",
+            "ordering": "Tri",
+            "tva_gt": "TVA supérieure à (%)",
+            "min_value": "Valeur Min (F)",
+            "months": "Mois sans vente",
+            "threshold": "Seuil annulations",
+            "days": "Sur les derniers (jours)",
+            "client_id": "Client"
+        },
+        "results": {
+            "title": "Résultats",
+            "execute_prompt": "Cliquez sur \"Exécuter\" pour voir les résultats",
+            "empty": "Aucun résultat",
+            "copy_success": "{{count}} éléments copiés ! Collez dans Excel.",
+            "copy_error": "Erreur lors de la copie",
+            "copy_no_result": "Aucun résultat à copier",
+            "execute_success": "Requête \"{{name}}\" exécutée",
+            "error_execution": "Erreur lors de l'exécution"
+        }
     },
     "dashboard": {
         "title": "Tableau de bord",
@@ -139,6 +681,15 @@
         },
         "search_min_chars": "Tapez au moins 2 caractères",
         "search_no_results": "Aucun produit trouvé",
+        "search": {
+            "tabs_products": "Produits",
+            "tabs_packs": "Packs",
+            "label_pack": "Rechercher un Pack",
+            "placeholder_pack": "Nom du pack...",
+            "no_results_pack": "Aucun pack trouvé",
+            "error_search_packs": "Erreur recherche packs",
+            "products_count": "produits"
+        },
         "create_client": {
             "title": "Nouveau Client",
             "individual": "Particulier",
@@ -246,6 +797,17 @@
             "cancel": "Annuler",
             "print_ticket": "Imprimer le Ticket",
             "print_invoice": "Imprimer la Facture A4"
+        },
+        "messages": {
+            "cart_empty": "Le panier est vide",
+            "pack_empty": "Ce pack est vide",
+            "adding_pack": "Ajout du pack...",
+            "pack_items_error": "Aucun produit du pack n'a pu être récupéré",
+            "pack_added": "Pack \"{{name}}\" ajouté",
+            "pack_error": "Erreur lors de l'ajout du pack",
+            "scan_added": "✅ {{name}} ajouté (scan)",
+            "price_modification_forbidden": "Modification de prix interdite",
+            "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil"
         }
     },
     "clients": {

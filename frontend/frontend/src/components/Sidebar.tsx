@@ -26,7 +26,7 @@ export default function Sidebar() {
         { path: '/app/journal-caisse', label: t('sidebar.ventes.journal'), key: 'ventes' },
         { path: '/app/historique-clotures', label: t('sidebar.ventes.clotures'), key: 'ventes' },
         { path: '/app/ordonnancier', label: t('sidebar.ventes.ordonnancier'), key: 'ventes' },
-        { path: '/app/promotions', label: 'Promotions', key: 'ventes' },
+        { path: '/app/promotions', label: t('sidebar.ventes.promotions'), key: 'ventes' },
         { path: '/app/caisse-centralisee', label: t('sidebar.ventes.caisse_centralisee'), key: 'caisse' }
       ]
     },
@@ -40,25 +40,25 @@ export default function Sidebar() {
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
     )},
     { 
-      label: "Commandes Grossistes (Locales)", 
+      label: t('sidebar.commandes.local_title'), 
       key: 'commandes_loc', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/locales', label: "Nouvelle / En cours", key: 'commandes' },
-        { path: '/app/historique-achats/locales', label: "Historique Achats", key: 'commandes' },
+        { path: '/app/commandes/locales', label: t('sidebar.commandes.new_current'), key: 'commandes' },
+        { path: '/app/historique-achats/locales', label: t('sidebar.commandes.history'), key: 'commandes' },
       ]
     },
     { 
-      label: "Commandes Directes (Etranger)", 
+      label: t('sidebar.commandes.direct_title'), 
       key: 'commandes_dir', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/directes', label: "Nouvelle / En cours", key: 'commandes' },
-        { path: '/app/historique-achats/directes', label: "Historique Achats", key: 'commandes' },
+        { path: '/app/commandes/directes', label: t('sidebar.commandes.new_current'), key: 'commandes' },
+        { path: '/app/historique-achats/directes', label: t('sidebar.commandes.history'), key: 'commandes' },
       ]
     },
     { path: '/app/fournisseurs', label: t('sidebar.fournisseurs.title'), key: 'fournisseurs', icon: (
@@ -189,7 +189,7 @@ export default function Sidebar() {
         <PharmaCrossLogo size={48} />
         <div>
           <h1 className="text-xl font-bold text-white">Zenith</h1>
-          <p className="text-xs text-green-400">Gestion Professionnelle</p>
+          <p className="text-xs text-green-400">{t('sidebar.app_subtitle')}</p>
         </div>
       </div>
       
@@ -254,7 +254,7 @@ export default function Sidebar() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
             <p className="text-xs text-white/60 truncate">
-              {user?.is_superuser ? 'Pharmacien' : 'Utilisateur'}
+              {user?.is_superuser ? t('sidebar.roles.pharmacist') : t('sidebar.roles.user')}
             </p>
           </div>
         </div>

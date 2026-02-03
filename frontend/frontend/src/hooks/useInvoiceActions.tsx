@@ -74,8 +74,14 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
 
     const handlePrintInvoice = (facture: Facture) => {
         // Logique de vérification si nom client nécessaire
+        // On vérifie si client_name est vide, null, ou contient "passage" ou "divers" (insensible à la casse)
+        const normalize = (str: string) => str?.toLowerCase().trim() || '';
+        const clientName = normalize(facture.client_name || '');
+        
         const isGenericClient = !facture.client_name_override && (
-            !facture.client_name || facture.client_name === 'Client de passage'
+            !clientName || 
+            clientName.includes('passage') || 
+            clientName.includes('divers')
         );
 
         if (isGenericClient) {
@@ -169,7 +175,7 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
             id: fullFacture.session_ticket_number || fullFacture.id, // Utiliser num ticket session si dispo
             facture: fullFacture,
             facture_numero: fullFacture.numero_facture || undefined,
-            client_name: fullFacture.client_name || fullFacture.client_name_override || 'Passage',
+            client_name: fullFacture.client_name_override || fullFacture.client_name || 'Passage',
             mode_paiement: modePaiement,
             montant: fullFacture.total_ttc,
             statut: 'completee',

@@ -1,5 +1,6 @@
 import React, { type FormEvent, type RefObject } from 'react';
 import type { Commande, Fournisseur, ProduitModel, CommandeProduit } from '../../types';
+import { useTranslation } from 'react-i18next';
 import CommandeProductTable from './CommandeProductTable';
 
 interface FieldConfig {
@@ -115,6 +116,7 @@ export default function CommandeForm({
     onCreateAvoir
  
 }: CommandeFormProps) {
+    const { t } = useTranslation();
     return (
         <div className="flex flex-col h-[calc(100vh-100px)]">
           <div className="flex items-center justify-between mb-4 shrink-0">
@@ -122,7 +124,7 @@ export default function CommandeForm({
                 <button 
                   onClick={handleBackToList}
                   className="btn btn-circle btn-ghost btn-sm"
-                  title="Retour à la liste"
+                  title={t('orders.form.back_to_list')}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -131,13 +133,13 @@ export default function CommandeForm({
                 <div>
                   <h3 className="font-bold text-base md:text-lg">
                       {viewMode === 'EDIT' && selectedCommande 
-                        ? `Modifier Commande #${selectedCommande.numero_facture || selectedCommande.id}` 
-                        : 'Nouvelle Commande'}
+                        ? t('orders.form.edit_title', { id: selectedCommande.numero_facture || selectedCommande.id })
+                        : t('orders.form.new_title')}
                   </h3>
                   <div className="flex gap-4 text-xs text-base-content/50 mt-1">
-                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> Recherche</span>
-                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> Fournisseur</span>
-                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Ctrl+A</kbd> Select All</span>
+                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F2</kbd> {t('orders.form.shortcuts.search')}</span>
+                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">F4</kbd> {t('orders.form.shortcuts.provider')}</span>
+                    <span className="flex items-center gap-1"><kbd className="kbd kbd-xs font-sans">Ctrl+A</kbd> {t('orders.form.shortcuts.select_all')}</span>
                   </div>
                 </div>
             </div>
@@ -156,7 +158,7 @@ export default function CommandeForm({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <label className="form-control w-full">
                     <div className="label py-1">
-                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Fournisseur (F4) *</span>
+                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.provider_label')}</span>
                     </div>
                     <select
                       ref={fournisseurSelectRef}
@@ -165,18 +167,18 @@ export default function CommandeForm({
                       onChange={(e) => setNewCommandeFournisseurId(e.target.value)}
                       required
                     >
-                      <option value="" disabled>Sélectionnez un fournisseur</option>
+                      <option value="" disabled>{t('orders.form.provider_placeholder')}</option>
                       {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                     </select>
                   </label>
                   
                   <label className="form-control w-full">
                     <div className="label py-1">
-                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Numéro de facture</span>
+                      <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.invoice_label')}</span>
                     </div>
                     <input 
                       type="text"
-                      placeholder="Ex: FAC-2024-001"
+                      placeholder={t('orders.form.invoice_placeholder')}
                       className="input input-bordered w-full input-sm bg-base-50 focus:bg-white"
                       value={numeroFacture}
                       onChange={(e) => setNumeroFacture(e.target.value.toUpperCase())}
@@ -187,7 +189,7 @@ export default function CommandeForm({
                     {/* Export Dropdown */}
                     <div className="dropdown dropdown-end">
                       <div tabIndex={0} role="button" className="btn btn-sm btn-ghost border-base-300">
-                        📤 Exporter CSV
+                        📤 {t('orders.form.export_btn')}
                       </div>
                       <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
                         <li><a onClick={() => handleCsvExport('UBIPHARM')}>Ubipharm (CIP1)</a></li>
@@ -207,14 +209,14 @@ export default function CommandeForm({
                       className="btn btn-secondary btn-sm"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      📂 Importer CSV
+                      📂 {t('orders.form.import_btn')}
                     </button>
                     <button
                       type="button"
                       className="btn btn-outline btn-sm"
                       onClick={() => setIsCreateProduitModalOpen(true)}
                     >
-                      + Nouveau produit
+                      + {t('orders.form.new_product_btn')}
                     </button>
                     {/* Bouton Créer Avoir (Visible uniquement si commande clôturée et handler fourni) */}
                     {selectedCommande?.status === 'CLOT' && onCreateAvoir && (
@@ -227,7 +229,7 @@ export default function CommandeForm({
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                             </svg>
-                            Retour / Avoir
+                            {t('orders.details.return')}
                          </button>
                     )}
                   </div>
@@ -238,12 +240,12 @@ export default function CommandeForm({
               {commandeType === 'DIR' && (
                 <div className="bg-blue-50/50 rounded-xl p-4 shadow-sm border border-blue-100 mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                      <span className="badge badge-info badge-sm">COMMANDE DIRECTE (ETRANGER)</span>
+                      <span className="badge badge-info badge-sm">{t('orders.form.direct_order_badge')}</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <label className="form-control w-full">
                       <div className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Taux de Change (XAF/Devise)</span>
+                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.exchange_rate')}</span>
                       </div>
                       <input 
                         type="number"
@@ -257,7 +259,7 @@ export default function CommandeForm({
                     
                     <label className="form-control w-full">
                       <div className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Coefficient (Frais)</span>
+                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.coefficient')}</span>
                       </div>
                       <input 
                         type="number"
@@ -268,7 +270,7 @@ export default function CommandeForm({
                         onChange={(e) => setFraisCoefficient(e.target.value)}
                       />
                       <div className="label py-0">
-                          <span className="label-text-alt text-xs opacity-60">Prix Revient = (Prix € * Taux) * Coeff</span>
+                          <span className="label-text-alt text-xs opacity-60">{t('orders.form.cost_price_formula')}</span>
                       </div>
                     </label>
                   </div>
@@ -278,13 +280,13 @@ export default function CommandeForm({
               {/* Recherche produit */}
               <div className="bg-white rounded-xl shadow-sm border border-base-200 p-4 relative">
                 <label className="label py-1 mb-2">
-                  <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">Rechercher un produit (F2)</span>
+                  <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.search_label')}</span>
                 </label>
                 <div className="relative">
                   <input 
                     ref={searchInputRef}
                     type="text" 
-                    placeholder="Tapez pour rechercher par nom ou CIP..."
+                    placeholder={t('orders.form.search_placeholder')}
                     className="input input-bordered w-full pl-12 text-base h-12 bg-base-50 focus:bg-white focus:ring-2 focus:ring-primary/20"
                     value={searchProduitQuery}
                       onChange={(e) => setSearchProduitQuery(e.target.value)}
@@ -300,7 +302,7 @@ export default function CommandeForm({
                   <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-96 overflow-y-auto z-50">
                     {filteredProduits.length === 0 ? (
                       <div className="text-center py-8 text-base-content/40 text-sm">
-                        Aucun produit trouvé
+                        {t('orders.form.no_product_found')}
                       </div>
                     ) : (
                       <div className="p-2 space-y-1">
@@ -320,10 +322,10 @@ export default function CommandeForm({
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate text-sm">{p.name}</div>
                               <div className="text-xs flex gap-3 mt-0.5 opacity-80">
-                                <span>Stock: {p.stock}</span>
-                                <span>Prix: {p.selling_price} F</span>
+                                <span>{t('orders.form.search_results.stock')}: {p.stock}</span>
+                                <span>{t('orders.form.search_results.price')}: {p.selling_price} F</span>
                                 {(p.cip1 || p.cip2 || p.cip3) && (
-                                  <span>CIP: {p.cip1 || p.cip2 || p.cip3}</span>
+                                  <span>{t('orders.form.search_results.cip')}: {p.cip1 || p.cip2 || p.cip3}</span>
                                 )}
                               </div>
                             </div>
@@ -364,7 +366,7 @@ export default function CommandeForm({
             
             <div className="mt-4 flex justify-between items-center shrink-0">
                 <div className="text-sm text-base-content/50">
-                    Utilisez <kbd className="kbd kbd-sm font-sans mx-1">Tab</kbd> pour naviguer, <kbd className="kbd kbd-sm font-sans mx-1">Entrée</kbd> pour valider
+                    {t('orders.form.nav_help')}
                 </div>
               <button 
                 type="submit" 
@@ -372,7 +374,7 @@ export default function CommandeForm({
                 disabled={saving || !newCommandeFournisseurId}
               >
                 {!saving && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>}
-                {saving ? 'Enregistrement...' : 'Enregistrer la commande'}
+                {saving ? t('orders.form.saving') : t('orders.form.save_btn')}
               </button>
             </div>
           </form> 

@@ -482,10 +482,10 @@ class CaisseSerializer(serializers.ModelSerializer):
         return None
     
     def get_client_name(self, obj):
-        if obj.facture.client:
-            return obj.facture.client.name
-        elif obj.facture.client_name_override:
+        if obj.facture.client_name_override:
             return obj.facture.client_name_override
+        elif obj.facture.client:
+            return obj.facture.client.name
         return "Client de passage"
     
     def get_is_creance_settlement(self, obj):
@@ -512,14 +512,18 @@ class FactureSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
 
     def get_client_nom(self, obj):
+        if obj.client_name_override:
+            return obj.client_name_override
         if obj.client:
             return obj.client.name
-        return obj.client_name_override or "Client de passage"
+        return "Client de passage"
     
     def get_client_name(self, obj):
+        if obj.client_name_override:
+            return obj.client_name_override
         if obj.client:
             return obj.client.name
-        return obj.client_name_override or "Client de passage"
+        return "Client de passage"
     
     def get_is_remise_auto(self, obj):
         """Indique si la facture a potentiellement bénéficié d'une remise automatique"""
@@ -617,9 +621,11 @@ class CreanceSerializer(serializers.ModelSerializer):
         ]
     
     def get_client_name(self, obj):
+        if obj.client_name_override:
+            return obj.client_name_override
         if obj.client:
             return obj.client.name
-        return obj.client_name_override or "Client de passage"
+        return "Client de passage"
     
     def get_montant_paye(self, obj):
         """Calcule le montant total payé (paiements réels uniquement, hors 'en_compte')"""

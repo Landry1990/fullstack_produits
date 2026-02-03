@@ -85,9 +85,11 @@ class FactureListSerializer(serializers.ModelSerializer):
         ]
     
     def get_client_name(self, obj):
+        if obj.client_name_override:
+            return obj.client_name_override
         if obj.client:
             return obj.client.name
-        return obj.client_name_override or "Client de passage"
+        return "Client de passage"
 
     def get_created_by_name(self, obj):
         if obj.created_by:
@@ -110,13 +112,15 @@ class CommandeListSerializer(serializers.ModelSerializer):
     Inclut les champs pour les commandes directes (type, taux_change, frais_coefficient).
     """
     fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
-    total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    # Use annotated fields for better performance
+    total = serializers.DecimalField(source='total_annotated', max_digits=12, decimal_places=2, read_only=True)
+    montant_paye = serializers.DecimalField(source='montant_paye_annotated', max_digits=12, decimal_places=2, read_only=True)
+    
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     type_display = serializers.CharField(source='get_type_display', read_only=True)
     
-    montant_paye = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    reste_a_payer = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
-    statut_paiement = serializers.CharField(read_only=True)
+    reste_a_payer = serializers.SerializerMethodField()
+    statut_paiement = serializers.SerializerMethodField()
     
     class Meta:
         model = Commande
@@ -126,6 +130,27 @@ class CommandeListSerializer(serializers.ModelSerializer):
             'type', 'type_display', 'taux_change', 'frais_coefficient',
             'montant_paye', 'reste_a_payer', 'statut_paiement'
         ]
+
+    def get_reste_a_payer(self, obj):
+        # Use annotated values if available
+        total = getattr(obj, 'total_annotated', obj.total)
+        paye = getattr(obj, 'montant_paye_annotated', obj.montant_paye)
+        return max(0, total - paye)
+
+    def get_statut_paiement(self, obj):
+        if obj.status != Commande.Status.CLOTUREE:
+            return "NON_CONCERNE"
+        
+        # Use annotated values
+        total = getattr(obj, 'total_annotated', obj.total)
+        paye = getattr(obj, 'montant_paye_annotated', obj.montant_paye)
+        reste = max(0, total - paye)
+        
+        if reste <= 0:
+            return "PAYE"
+        if paye > 0:
+            return "PARTIEL"
+        return "IMPAYE"
 
 
 class CommandeDetailSerializer(CommandeSerializer):

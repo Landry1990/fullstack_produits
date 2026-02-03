@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm'
 import { useAuth } from '../context/AuthContext';
 import type { ProduitModel, Commande, CommandeProduit } from '../types'
@@ -42,6 +43,7 @@ interface CommandesProps {
 
 export default function Commandes({ forcedType }: CommandesProps) {
   const confirm = useConfirm()
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate(); // For navigation to Avoirs
   const location = useLocation(); // For receiving state from Dashboard
@@ -237,7 +239,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   const onCloture = () => {
       if (selectedCommande) handleCloturerCommande(selectedCommande);
-  };
+  }
 
   const onMettreEnAttente = () => {
       if (selectedCommande) handleMettreEnAttente(selectedCommande);
@@ -1295,7 +1297,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
   return (
     <>
       <div className="flex flex-col items-center mb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-center mb-4">Gestion des Commandes</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-center mb-4">
+              {activeTab === 'DIR' ? t('orders.title_direct') : t('orders.title')}
+          </h1>
           
           {!forcedType && (
             <div className="tabs tabs-boxed">
@@ -1303,13 +1307,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
                 className={`tab ${activeTab === 'LOC' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('LOC')}
                 >
-                Commandes Grossistes (Locales)
+                {t('orders.tabs.local')}
                 </a> 
                 <a 
                 className={`tab ${activeTab === 'DIR' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('DIR')}
                 >
-                Commandes Directes (Etranger)
+                {t('orders.tabs.direct')}
                 </a>
             </div>
           )}
@@ -1370,50 +1374,50 @@ export default function Commandes({ forcedType }: CommandesProps) {
                      onClick={() => openEditView(selectedCommande)}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
-                    Modifier
+                    {t('orders.details.edit')}
                   </button>
                   <button 
                     className={`btn btn-sm ${selectedCommande.status === 'ATT' ? 'btn-info' : 'btn-warning'}`}
                     onClick={onMettreEnAttente}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
-                    {selectedCommande.status === 'ATT' ? 'Reprendre' : 'Mettre en attente'}
+                    {selectedCommande.status === 'ATT' ? t('orders.details.resume') : t('orders.details.suspend')}
                   </button>
                   <button 
                     className="btn btn-success btn-sm text-white"
                     onClick={onCloture}
                     disabled={selectedCommande.status === 'CLOT'}
                   >
-                    Clôturer
+                    {t('orders.details.close')}
                   </button>
                   <button
                     onClick={() => setShowPrintLabelsModal(true)}
                     className="btn btn-primary btn-sm"
                   >
-                    Étiquettes
+                    {t('orders.details.labels')}
                   </button>
                   
                   <button 
                     className="btn btn-error btn-outline btn-sm"
                     onClick={onDelete}
                   >
-                    Supprimer
+                    {t('orders.details.delete')}
                   </button>
                   <button 
                     className="btn btn-primary btn-outline btn-sm"
                     onClick={onImprimer}
                     disabled={selectedCommande.status !== 'CLOT'}
                   >
-                    Imprimer Bon
+                    {t('orders.details.print_receipt')}
                   </button>
                   {/* Bouton Annuler Réception - visible uniquement pour commandes clôturées */}
                   {selectedCommande.status === 'CLOT' && (
                     <button 
                       className="btn btn-warning btn-outline btn-sm gap-1"
                       onClick={onAnnulerReception}
-                      title="Annuler la réception et retirer le stock"
+                      title={t('orders.details.cancel_reception')}
                     >
-                      ↩️ Annuler Réception
+                      ↩️ {t('orders.details.cancel_reception')}
                     </button>
                   )}
                   {/* Bouton Créer Avoir (Visible uniquement si commande clôturée) */}
@@ -1422,12 +1426,12 @@ export default function Commandes({ forcedType }: CommandesProps) {
                           type="button"
                           className="btn btn-warning btn-sm btn-outline gap-1"
                           onClick={handleCreateAvoirFromCommande}
-                          title="Créer un avoir / retour fournisseur à partir de cette commande"
+                          title={t('orders.details.return')}
                        >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                           </svg>
-                          {selectedRows.size > 0 ? `Retour (${selectedRows.size})` : 'Retour / Avoir'}
+                          {selectedRows.size > 0 ? `${t('orders.details.return')} (${selectedRows.size})` : t('orders.details.return')}
                        </button>
                   )}
              </div>
@@ -1436,27 +1440,27 @@ export default function Commandes({ forcedType }: CommandesProps) {
           {/* Grid Info */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
             <div>
-                <div className="text-xs text-gray-500 uppercase">ID Commande</div>
+                <div className="text-xs text-gray-500 uppercase">{t('orders.details.id')}</div>
                 <div className="font-bold">{selectedCommande.id}</div>
             </div>
             <div>
-                <div className="text-xs text-gray-500 uppercase">N° Facture</div>
+                <div className="text-xs text-gray-500 uppercase">{t('orders.details.invoice')}</div>
                 <div className="font-bold">{selectedCommande.numero_facture || 'N/A'}</div>
             </div>
             <div>
-                <div className="text-xs text-gray-500 uppercase">Fournisseur</div>
+                <div className="text-xs text-gray-500 uppercase">{t('orders.details.provider')}</div>
                 <div className="font-bold">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
             </div>
             <div>
-                 <div className="text-xs text-gray-500 uppercase">Date</div>
+                 <div className="text-xs text-gray-500 uppercase">{t('orders.details.date')}</div>
                  <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</div>
             </div>
             <div>
-                 <div className="text-xs text-gray-500 uppercase">Statut</div>
+                 <div className="text-xs text-gray-500 uppercase">{t('orders.details.status')}</div>
                  <div><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></div>
             </div>
             <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
-                 <div className="text-xs text-gray-500 uppercase mb-1">Résumé Financier</div>
+                 <div className="text-xs text-gray-500 uppercase mb-1">{t('orders.details.financial_summary')}</div>
                  {(() => {
                     const stats = (selectedCommande.produits || []).reduce((acc, p) => {
                         const qty = Number(p.quantity || 0);
@@ -1501,9 +1505,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
                        <span className="text-success font-bold">UG</span>
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-success text-sm">Unités Gratuites (UG)</h4>
+                      <h4 className="font-semibold text-success text-sm">{t('orders.details.ug_title')}</h4>
                       <p className="text-xs text-base-content/70">
-                        Cette commande contient <span className="font-bold text-success">{totalUG}</span> unité{totalUG > 1 ? 's' : ''} gratuite{totalUG > 1 ? 's' : ''}
+                        {t('orders.details.ug_message', { count: totalUG })}
                       </p>
                     </div>
                   </div>
@@ -1519,7 +1523,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col max-h-[calc(100vh-350px)]">
             <div className="overflow-y-auto flex-1">
             {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
-              <p className="text-base-content/70 text-center py-8 text-sm">Aucun produit dans cette commande.</p>
+              <p className="text-base-content/70 text-center py-8 text-sm">{t('orders.details.empty_products')}</p>
             ) : (
                 <table className="table table-zebra table-pin-rows">
                   <thead className="bg-base-200">
@@ -1539,21 +1543,21 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         />
                       </th>
                       <th className="cursor-pointer" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
-                        Produit {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                        {t('orders.product_table.headers.product')} {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th>CIP</th>
-                      <th className="text-center">Stock</th>
+                      <th>{t('orders.product_table.headers.cip')}</th>
+                      <th className="text-center">{t('products.table.stock')}</th>
                       <th className="text-center">Rot.</th>
                       <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
-                        Qté {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                        {t('orders.product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th className="text-center bg-success/5">UG</th>
+                      <th className="text-center bg-success/5">{t('orders.product_table.headers.ug')}</th>
                       <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
-                        P.U. {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
+                        {t('orders.details.price_unit')} {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                       </th>
-                      <th>Lot</th>
-                      <th>Expiration</th>
-                      <th className="text-right">Sous-total</th>
+                      <th>{t('orders.product_table.headers.lot')}</th>
+                      <th>{t('orders.product_table.headers.exp_date')}</th>
+                      <th className="text-right">{t('orders.product_table.total_ht')}</th>
                     </tr>
                   </thead>
                   <tbody>

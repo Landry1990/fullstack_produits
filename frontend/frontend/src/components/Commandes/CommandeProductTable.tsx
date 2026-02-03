@@ -1,5 +1,6 @@
 import React from 'react';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 interface FieldConfig {
     name: string;
@@ -57,16 +58,17 @@ export default function CommandeProductTable({
     handleTableFieldKeyDown,
     onRemoveProduct
 }: CommandeProductTableProps) {
+    const { t } = useTranslation();
     return (
         <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-4">
                 <h2 className="font-bold text-sm md:text-base text-base-content">
-                Produits ({commandeProduits.length})
+                {t('orders.product_table.title', { count: commandeProduits.length })}
                 </h2>
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
-                    {saving && <span className="text-sm text-warning animate-pulse">Sauvegarde...</span>}
-                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">Enregistré à {lastSaved.toLocaleTimeString()}</span>}
+                    {saving && <span className="text-sm text-warning animate-pulse">{t('orders.form.saving')}</span>}
+                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders.product_table.saved_at', { time: lastSaved.toLocaleTimeString() })}</span>}
                     
                     {(() => {
                         const stats = commandeProduits.reduce((acc, p) => {
@@ -88,15 +90,15 @@ export default function CommandeProductTable({
                         return (
                             <div className="flex gap-2 text-xs md:text-sm">
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
-                                    <span className="text-[10px] text-base-content/60 uppercase">Total HT</span>
+                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_ht')}</span>
                                     <span className="font-bold">{stats.ht.toLocaleString('fr-FR')} F</span>
                                 </div>
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
-                                    <span className="text-[10px] text-base-content/60 uppercase">Total TVA</span>
+                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_tva')}</span>
                                     <span className="font-bold">{stats.tva.toLocaleString('fr-FR')} F</span>
                                 </div>
                                 <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
-                                    <span className="text-[10px] text-primary/70 uppercase">Total TTC</span>
+                                    <span className="text-[10px] text-primary/70 uppercase">{t('orders.product_table.total_ttc')}</span>
                                     <span className="font-bold text-primary">{totalTTC.toLocaleString('fr-FR')} F</span>
                                 </div>
                             </div>
@@ -106,13 +108,13 @@ export default function CommandeProductTable({
             </div>
             {selectedRows.size > 0 && (
                 <div className="flex items-center gap-2">
-                <span className="text-sm text-base-content/70">{selectedRows.size} sélectionné(s)</span>
+                <span className="text-sm text-base-content/70">{t('orders.product_table.selected_count', { count: selectedRows.size })}</span>
                 <button
                     type="button"
                     className="btn btn-error btn-xs"
                     onClick={deleteSelectedRows}
                 >
-                    Supprimer
+                    {t('orders.product_table.delete_btn')}
                 </button>
                 {/* Bouton Transférer - visible uniquement en mode EDIT sur commande PREP */}
                 {viewMode === 'EDIT' && selectedCommande?.status === 'PREP' && (
@@ -121,7 +123,7 @@ export default function CommandeProductTable({
                     className="btn btn-info btn-xs gap-1"
                     onClick={openTransferModal}
                     >
-                    ➡️ Transférer
+                    ➡️ {t('orders.product_table.transfer_btn')}
                     </button>
                 )}
                 </div>
@@ -134,7 +136,7 @@ export default function CommandeProductTable({
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p className="font-light">Commencez par rechercher et ajouter des produits (F2)</p>
+                <p className="font-light">{t('orders.product_table.empty_state')}</p>
                 </div>
             ) : (
                 <table className="table table-pin-rows w-full">
@@ -148,19 +150,19 @@ export default function CommandeProductTable({
                         onChange={toggleAllRows}
                         />
                     </th>
-                    <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">Produit</th>
-                    <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">CIP</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Qté</th>
-                    <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">UG</th>
+                    <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">{t('orders.product_table.headers.product')}</th>
+                    <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">{t('orders.product_table.headers.cip')}</th>
+                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.qty')}</th>
+                    <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">{t('orders.product_table.headers.ug')}</th>
                     {commandeType === 'DIR' && (
-                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">Prix Dev.</th>
+                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">{t('orders.product_table.headers.dev_price')}</th>
                     )}
-                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Achat HT</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">TVA</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">Marge</th>
-                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">Prix Vente</th>
-                    <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">Lot</th>
-                    <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">Date Exp</th>
+                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders.product_table.headers.buy_price_ht')}</th>
+                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.tva')}</th>
+                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.margin')}</th>
+                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders.product_table.headers.sell_price')}</th>
+                    <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">{t('orders.product_table.headers.lot')}</th>
+                    <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">{t('orders.product_table.headers.exp_date')}</th>
                     <th className="bg-base-200 w-10"></th>
                     </tr>
                 </thead>
@@ -220,7 +222,7 @@ export default function CommandeProductTable({
                                     {isExclusive && (
                                         <div 
                                             className="tooltip tooltip-right z-50 ml-1 inline-flex shrink-0" 
-                                            data-tip={`Exclusivité: ${supplierName || 'Fournisseur Spécifique'}`}
+                                            data-tip={t('orders.product_table.exclusivity_tooltip', { provider: supplierName || t('orders.product_table.specific_provider') })}
                                         >
                                             <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
                                               E

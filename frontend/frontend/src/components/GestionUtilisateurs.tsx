@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
@@ -47,6 +48,7 @@ const ROLES = [
 ];
 
 export default function GestionUtilisateurs() {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ export default function GestionUtilisateurs() {
       setUsers(Array.isArray(data) ? data : (data.results || []));
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Erreur lors du chargement des utilisateurs');
+      toast.error(t('users.messages.load_error'));
     } finally {
       setLoading(false);
     }
@@ -204,11 +206,11 @@ export default function GestionUtilisateurs() {
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
       await axios.delete(`/api/users/${userId}/`);
-      toast.success(`Utilisateur ${username} supprimé`);
+      toast.success(t('users.messages.deleted', { username }));
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast.error("Erreur lors de la suppression de l'utilisateur");
+      toast.error(t('users.messages.delete_error'));
     }
   };
 
@@ -222,17 +224,17 @@ export default function GestionUtilisateurs() {
 
   const handleDeleteUser = async (userId: number, username: string) => {
     const confirmed = await confirm({
-      title: 'Supprimer l\'utilisateur',
-      message: `Supprimer l'utilisateur "${username}" ?\n\nCette action est irréversible.`,
+      title: t('users.messages.delete_confirm_title'),
+      message: t('users.messages.delete_confirm', { username }),
       variant: 'danger',
-      confirmText: 'Supprimer'
+      confirmText: t('users.messages.delete_btn')
     });
     
     if (confirmed) {
       // Trigger Password Modal for sudo confirmation
       setPasswordModalConfig({
-        title: "Confirmer la suppression",
-        message: "La suppression d'un utilisateur est une action sensible. Veuillez saisir votre mot de passe pour confirmer."
+        title: t('users.messages.sudo_title'),
+        message: t('users.messages.sudo_message')
       });
       setPendingAction(() => () => executeDeleteUser(userId, username));
       setIsPasswordModalOpen(true);
@@ -265,33 +267,33 @@ export default function GestionUtilisateurs() {
       
       if (editingUser) {
         await axios.patch(`/api/users/${editingUser.id}/`, payload);
-        toast.success('Utilisateur mis à jour');
+        toast.success(t('users.messages.updated'));
       } else {
         await axios.post('/api/users/', payload);
-        toast.success('Utilisateur créé');
+        toast.success(t('users.messages.created'));
       }
       
       setModalOpen(false);
       fetchUsers();
     } catch (error) {
       console.error('Error saving user:', error);
-      toast.error('Erreur lors de l\'enregistrement');
+      toast.error(t('users.messages.save_error'));
     }
   };
 
   if (!currentUser?.is_superuser) {
-    return <div className="p-4 text-error">Accès refusé. Réservé aux administrateurs.</div>;
+    return <div className="p-4 text-error">{t('users.messages.access_denied')}</div>;
   }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary">Gestion des Utilisateurs</h1>
+        <h1 className="text-2xl font-bold text-primary">{t('users.title')}</h1>
         <button className="btn btn-primary" onClick={() => handleOpenModal()}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Nouvel Utilisateur
+          {t('users.new_user')}
         </button>
       </div>
 
@@ -299,10 +301,10 @@ export default function GestionUtilisateurs() {
         <table className="table w-full">
           <thead>
             <tr>
-              <th>Utilisateur</th>
-              <th>Rôle & Accès</th>
-              <th>Permissions Spéciales</th>
-              <th className="text-right">Actions</th>
+              <th>{t('users.table.user')}</th>
+              <th>{t('users.table.role_access')}</th>
+              <th>{t('users.table.special_permissions')}</th>
+              <th className="text-right">{t('users.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -328,14 +330,21 @@ export default function GestionUtilisateurs() {
                       user.is_superuser ? 'badge-primary' : 
                       user.profile?.role === 'CAISSIER' ? 'badge-secondary' : 'badge-ghost'
                     }`}>
-                      {user.is_superuser ? 'Pharmacien (Admin)' : user.profile?.role || 'Vendeur'}
+                      {user.is_superuser 
+                        ? t('users.badges.pharmacist') 
+                        : user.profile?.role === 'CAISSIER' 
+                            ? t('users.roles.cashier') 
+                            : t('users.roles.seller')}
                     </span>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {user.is_superuser ? (
-                        <span className="badge badge-outline badge-xs">Accès Total</span>
+                        <span className="badge badge-outline badge-xs">{t('users.badges.full_access')}</span>
                       ) : (
                         user.profile?.allowed_menus.map(menu => (
-                          <span key={menu} className="badge badge-outline badge-xs opacity-70">{menu}</span>
+                          <span key={menu} className="badge badge-outline badge-xs opacity-70">
+                            {/* Simple mapping for now, ideally use t(`sidebar.${menu}`) but structure varies */}
+                            {menu}
+                          </span>
                         ))
                       )}
                     </div>
@@ -360,14 +369,14 @@ export default function GestionUtilisateurs() {
                     className="btn btn-ghost btn-sm"
                     onClick={() => handleOpenModal(user)}
                   >
-                    Modifier
+                    {t('clients.actions.edit')}
                   </button>
                   {currentUser?.username !== user.username && (
                     <button 
                       className="btn btn-ghost btn-sm text-error"
                       onClick={() => handleDeleteUser(user.id, user.username)}
                     >
-                      Supprimer
+                      {t('clients.actions.delete')}
                     </button>
                   )}
                 </td>
@@ -383,30 +392,31 @@ export default function GestionUtilisateurs() {
           <div className="modal-box w-11/12 max-w-3xl">
             <button className="btn btn-sm btn-circle absolute right-2 top-2" onClick={() => setModalOpen(false)}>✕</button>
             <h3 className="font-bold text-lg mb-4">
-              {editingUser ? 'Modifier Utilisateur' : 'Nouvel Utilisateur'}
+              {editingUser ? t('users.modal.edit_title') : t('users.modal.new_title')}
             </h3>
             
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Left Column: Required Info */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm uppercase text-gray-500">Informations de base</h4>
+                <h4 className="font-semibold text-sm uppercase text-gray-500">{t('users.modal.basic_info')}</h4>
                 
                 <div className="form-control">
-                  <label className="label">Type de Compte (Rôle)</label>
+                  <label className="label">{t('users.form.role')}</label>
                   <select 
                     className="select select-bordered w-full select-primary font-bold"
                     value={formData.role}
                     onChange={(e) => handleRoleChange(e.target.value)}
                   >
-                    {ROLES.map(role => (
-                      <option key={role.value} value={role.value}>{role.label}</option>
-                    ))}
+                    {ROLES.map(role => {
+                         const roleKey = role.value === 'PHARMACIEN' ? 'pharmacist' : role.value === 'CAISSIER' ? 'cashier' : 'seller';
+                         return <option key={role.value} value={role.value}>{t(`users.roles.${roleKey}`)}</option>
+                    })}
                   </select>
                 </div>
 
                 <div className="form-control">
-                  <label className="label">Nom d'utilisateur</label>
+                  <label className="label">{t('users.form.username')}</label>
                   <input 
                     type="text" 
                     className="input input-bordered" 
@@ -418,8 +428,8 @@ export default function GestionUtilisateurs() {
                 
                 <div className="form-control">
                   <label className="label">
-                    Mot de passe
-                    {editingUser && <span className="label-text-alt text-warning ml-2">(Laisser vide si inchangé)</span>}
+                    {t('users.form.password')}
+                    {editingUser && <span className="label-text-alt text-warning ml-2">{t('users.form.password_hint')}</span>}
                   </label>
                   <input 
                     type="password" 
@@ -432,7 +442,7 @@ export default function GestionUtilisateurs() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div className="form-control">
-                    <label className="label text-xs">Prénom</label>
+                    <label className="label text-xs">{t('users.form.firstname')}</label>
                     <input 
                       type="text" 
                       className="input input-bordered input-sm" 
@@ -441,7 +451,7 @@ export default function GestionUtilisateurs() {
                     />
                   </div>
                   <div className="form-control">
-                    <label className="label text-xs">Nom</label>
+                    <label className="label text-xs">{t('users.form.lastname')}</label>
                     <input 
                       type="text" 
                       className="input input-bordered input-sm" 
@@ -452,7 +462,7 @@ export default function GestionUtilisateurs() {
                 </div>
                 
                 <div className="form-control">
-                  <label className="label text-xs">Email</label>
+                  <label className="label text-xs">{t('users.form.email')}</label>
                   <input 
                     type="email" 
                     className="input input-bordered input-sm" 
@@ -464,12 +474,26 @@ export default function GestionUtilisateurs() {
 
               {/* Right Column: Permissions */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm uppercase text-gray-500">Accès et Permissions</h4>
+                <h4 className="font-semibold text-sm uppercase text-gray-500">{t('users.modal.access_permissions')}</h4>
                 
                 <div className="bg-base-200 p-4 rounded-lg">
-                  <label className="label font-bold">Menus Autorisés</label>
+                  <label className="label font-bold">{t('users.modal.authorized_menus')}</label>
                   <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                    {AVAILABLE_MENUS.map(menu => (
+                    {AVAILABLE_MENUS.map(menu => {
+                       // Map menu keys to translation keys
+                       let label = menu.label;
+                       if (menu.key === 'dashboard') label = t('sidebar.dashboard');
+                       else if (menu.key === 'ventes') label = t('sidebar.ventes.title');
+                       else if (menu.key === 'facturation') label = t('sidebar.facturation');
+                       else if (menu.key === 'caisse') label = t('sidebar.ventes.caisse_centralisee');
+                       else if (menu.key === 'produits') label = t('sidebar.produits');
+                       else if (menu.key === 'commandes') label = t('sidebar.commandes.title');
+                       else if (menu.key === 'fournisseurs') label = t('sidebar.fournisseurs.title');
+                       else if (menu.key === 'clients') label = t('sidebar.clients');
+                       else if (menu.key === 'rayons') label = t('sidebar.stock.rayons');
+                       else if (menu.key === 'statistiques') label = t('sidebar.statistiques.title');
+
+                       return (
                       <label key={menu.key} className="label cursor-pointer justify-start gap-2 py-0">
                         <input 
                           type="checkbox" 
@@ -478,15 +502,15 @@ export default function GestionUtilisateurs() {
                           onChange={() => handleMenuToggle(menu.key)}
                           disabled={formData.is_superuser} // Admin has all menus
                         />
-                        <span className={`label-text text-sm ${formData.is_superuser ? 'opacity-50' : ''}`}>{menu.label}</span>
+                        <span className={`label-text text-sm ${formData.is_superuser ? 'opacity-50' : ''}`}>{label}</span>
                       </label>
-                    ))}
+                    )})}
                   </div>
-                  {formData.is_superuser && <div className="text-xs text-info mt-2">Le Pharmacien (Admin) a accès à tous les menus.</div>}
+                  {formData.is_superuser && <div className="text-xs text-info mt-2">{t('users.modal.admin_note')}</div>}
                 </div>
 
                 <div className="bg-base-200 p-4 rounded-lg space-y-2">
-                  <label className="label font-bold py-0">Permissions Spéciales</label>
+                  <label className="label font-bold py-0">{t('users.modal.special_permissions')}</label>
                   
                   <label className="label cursor-pointer justify-start gap-3 bg-base-100 p-2 rounded border border-base-300">
                     <input 
@@ -497,14 +521,14 @@ export default function GestionUtilisateurs() {
                       disabled={formData.is_superuser || formData.role === 'VENDEUR'} // Vendeur cannot cash out
                     />
                     <div className="flex flex-col">
-                      <span className="font-medium text-sm">Encaissement Autorisé</span>
-                      <span className="text-xs text-base-content/60">Accès aux boutons de paiement</span>
+                      <span className="font-medium text-sm">{t('users.permissions.cash_out')}</span>
+                      <span className="text-xs text-base-content/60">{t('users.permissions.cash_out_desc')}</span>
                     </div>
                   </label>
 
                   {formData.role === 'VENDEUR' && (
                     <div className="text-xs text-warning">
-                       ⚠️ Un vendeur ne peut pas encaisser par définition.
+                       {t('users.modal.seller_warning')}
                     </div>
                   )}
 
@@ -515,7 +539,7 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_do_returns}
                       onChange={e => setFormData({...formData, can_do_returns: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Autoriser les retours</span>
+                    <span className="label-text text-sm">{t('users.permissions.returns')}</span>
                   </label>
                   
                   <label className="label cursor-pointer justify-start gap-3">
@@ -525,10 +549,10 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_sell_negative_stock}
                       onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})}
                     />
-                    <span className="label-text text-sm font-bold text-warning">Vente hors stock (Forcer)</span>
+                    <span className="label-text text-sm font-bold text-warning">{t('users.permissions.negative_stock')}</span>
                   </label>
 
-                  <div className="divider my-1">Sécurité</div>
+                  <div className="divider my-1">{t('users.modal.security')}</div>
 
                   <label className="label cursor-pointer justify-start gap-3">
                     <input 
@@ -537,7 +561,7 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_delete_product}
                       onChange={e => setFormData({...formData, can_delete_product: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Supprimer Produits</span>
+                    <span className="label-text text-sm">{t('users.permissions.delete_product')}</span>
                   </label>
 
                   <label className="label cursor-pointer justify-start gap-3">
@@ -547,7 +571,7 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_adjust_stock}
                       onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Ajuster Stock Manuel</span>
+                    <span className="label-text text-sm">{t('users.permissions.adjust_stock')}</span>
                   </label>
 
                   <label className="label cursor-pointer justify-start gap-3">
@@ -557,7 +581,7 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_delete_fournisseur}
                       onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Supprimer Fournisseurs</span>
+                    <span className="label-text text-sm">{t('users.permissions.delete_provider')}</span>
                   </label>
 
                   <label className="label cursor-pointer justify-start gap-3">
@@ -567,7 +591,7 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_delete_commande}
                       onChange={e => setFormData({...formData, can_delete_commande: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Supprimer Commandes</span>
+                    <span className="label-text text-sm">{t('users.permissions.delete_order')}</span>
                   </label>
 
                   <label className="label cursor-pointer justify-start gap-3">
@@ -577,7 +601,7 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_close_commande}
                       onChange={e => setFormData({...formData, can_close_commande: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Clôturer Commandes</span>
+                    <span className="label-text text-sm">{t('users.permissions.close_order')}</span>
                   </label>
 
                   <label className="label cursor-pointer justify-start gap-3">
@@ -587,14 +611,14 @@ export default function GestionUtilisateurs() {
                       checked={formData.can_generate_coupon}
                       onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})}
                     />
-                    <span className="label-text text-sm">Générer des Coupons</span>
+                    <span className="label-text text-sm">{t('users.permissions.generate_coupon')}</span>
                   </label>
                 </div>
               </div>
 
               <div className="modal-action col-span-1 md:col-span-2">
-                <button type="button" className="btn" onClick={() => setModalOpen(false)}>Annuler</button>
-                <button type="submit" className="btn btn-primary px-8">Enregistrer</button>
+                <button type="button" className="btn" onClick={() => setModalOpen(false)}>{t('users.modal.cancel')}</button>
+                <button type="submit" className="btn btn-primary px-8">{t('users.modal.save')}</button>
               </div>
             </form>
           </div>

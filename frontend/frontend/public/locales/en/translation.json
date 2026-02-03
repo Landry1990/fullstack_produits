@@ -8,6 +8,7 @@
             "journal": "Cash Journal",
             "clotures": "Closing History",
             "ordonnancier": "Prescriptions",
+            "promotions": "Promotions",
             "caisse_centralisee": "Centralized Register"
         },
         "facturation": "Billing",
@@ -15,16 +16,21 @@
         "vitrine": "Web Storefront",
         "commandes": {
             "title": "Orders",
-            "local_consult": "Local - Consultation",
-            "local_hist": "Local - History",
-            "direct_consult": "Direct - Consultation",
-            "direct_hist": "Direct - History"
+            "local_title": "Wholesale Orders (Local)",
+            "direct_title": "Direct Orders (Foreign)",
+            "new_current": "New / In Progress"
+        },
+        "commande": {
+            "local_title": "Wholesale Orders (Local)",
+            "direct_title": "Direct Orders (Foreign)",
+            "new_current": "New / In Progress",
+            "history": "Purchase History"
         },
         "fournisseurs": "Suppliers",
         "clients": "Customers",
         "creances": "Receivables",
         "stock": {
-            "title": "Inventory",
+            "title": "Stock",
             "inventaire": "Stock Take",
             "journal": "Adjustment Journal",
             "analyse": "Stock Analysis",
@@ -53,7 +59,543 @@
         },
         "utilisateurs": "Users",
         "audit": "Audit Log",
-        "logout": "Logout"
+        "logout": "Logout",
+        "app_subtitle": "Professional Management",
+        "roles": {
+            "pharmacist": "Pharmacist",
+            "user": "User"
+        }
+    },
+    "users": {
+        "title": "User Management",
+        "new_user": "New User",
+        "table": {
+            "user": "User",
+            "role_access": "Role & Access",
+            "special_permissions": "Special Permissions",
+            "actions": "Actions"
+        },
+        "roles": {
+            "pharmacist": "Pharmacist (Full Admin)",
+            "cashier": "Cashier (Billing + Cashing)",
+            "seller": "Seller (Sales only, no cashing)"
+        },
+        "badges": {
+            "full_access": "Full Access",
+            "cash_out": "Can Cash Out",
+            "negative_stock": "Negative Stock",
+            "pharmacist": "Pharmacist (Admin)",
+            "seller": "Seller"
+        },
+        "modal": {
+            "edit_title": "Edit User",
+            "new_title": "New User",
+            "basic_info": "Basic Information",
+            "access_permissions": "Access & Permissions",
+            "authorized_menus": "Authorized Menus",
+            "special_permissions": "Special Permissions",
+            "security": "Security",
+            "admin_note": "Pharmacist (Admin) has access to all menus.",
+            "seller_warning": "⚠️ A seller cannot cash out by definition.",
+            "cancel": "Cancel",
+            "save": "Save"
+        },
+        "form": {
+            "role": "Account Type (Role)",
+            "username": "Username",
+            "password": "Password",
+            "password_hint": "(Leave empty if unchanged)",
+            "firstname": "First Name",
+            "lastname": "Last Name",
+            "email": "Email"
+        },
+        "permissions": {
+            "cash_out": "Cash Out Authorized",
+            "cash_out_desc": "Access to payment buttons",
+            "returns": "Allow Returns",
+            "negative_stock": "Sell Negative Stock (Force)",
+            "delete_product": "Delete Products",
+            "adjust_stock": "Manual Stock Adjustment",
+            "delete_provider": "Delete Providers",
+            "delete_order": "Delete Orders",
+            "close_order": "Close Orders",
+            "generate_coupon": "Generate Coupons"
+        },
+        "messages": {
+            "delete_confirm_title": "Delete User",
+            "delete_confirm": "Delete user \"{{username}}\"?\n\nThis action is irreversible.",
+            "delete_btn": "Delete",
+            "sudo_title": "Confirm Deletion",
+            "sudo_message": "Deleting a user is a sensitive action. Please enter your password to confirm.",
+            "deleted": "User {{username}} deleted",
+            "delete_error": "Error deleting user",
+            "updated": "User updated",
+            "created": "User created",
+            "save_error": "Error saving",
+            "load_error": "Error loading users",
+            "access_denied": "Access denied. Admins only."
+        }
+    },
+    "providers": {
+        "title": "Providers",
+        "search_placeholder": "Search for a provider...",
+        "new_provider": "New",
+        "no_result": "No result",
+        "empty_list": "Empty list",
+        "table": {
+            "provider": "Provider",
+            "phone": "Tel."
+        },
+        "details": {
+            "contact_address": "Contact Address",
+            "not_provided": "Not provided",
+            "direct_line": "Direct Line",
+            "email": "Professional Email",
+            "financial_situation": "Financial Situation",
+            "manage_payments": "Manage Payments",
+            "debt_balance": "Debt Balance",
+            "history_available": "History available in manager",
+            "internal_ref": "Internal Reference",
+            "product_catalogue": "Product Catalogue",
+            "products_ordered": "{{count}} product ordered",
+            "products_ordered_plural": "{{count}} products ordered",
+            "loading": "Loading...",
+            "no_provider_selected": "No provider selected",
+            "select_instruction": "Select a company from the list to view its details"
+        },
+        "catalogue": {
+            "search_placeholder": "Search in catalogue...",
+            "no_result": "No result",
+            "empty": "No products ordered",
+            "headers": {
+                "cip": "CIP",
+                "product": "Product",
+                "last_price": "Last Price",
+                "last_order": "Last Order",
+                "margin": "Margin",
+                "total_qty": "Total Qty",
+                "stock": "Stock"
+            }
+        },
+        "form": {
+            "add_title": "Add New Provider",
+            "edit_title": "Edit Provider",
+            "company_info": "Company Information",
+            "name": "Company Name",
+            "name_placeholder": "Ex: PharmaCorp Ltd",
+            "phone": "Phone",
+            "phone_placeholder": "Ex: 0123456789",
+            "email": "Email Address",
+            "email_placeholder": "Ex: contact@pharmacorp.com",
+            "address_section": "Address",
+            "address": "Full Address",
+            "address_placeholder": "Ex: 123 Industry Avenue...",
+            "address_hint": "Separate address lines with line breaks",
+            "cancel": "Cancel",
+            "add_btn": "Add Provider",
+            "save_btn": "Save Changes",
+            "saving": "Saving..."
+        },
+        "finance": {
+            "title": "Financial Management",
+            "new_payment": "New Payment",
+            "amount": "Amount",
+            "payment_mode": "Payment Mode",
+            "reference": "Reference (Optional)",
+            "reference_placeholder": "Check No., Transfer...",
+            "notes": "Notes",
+            "notes_placeholder": "Comment...",
+            "save_payment": "Save Payment",
+            "history": "Payment History",
+            "no_payments": "No payments recorded",
+            "close": "Close",
+            "modes": {
+                "cash": "Cash",
+                "check": "Check",
+                "transfer": "Transfer",
+                "credit": "Credit",
+                "other": "Other"
+            },
+            "table": {
+                "date": "Date",
+                "mode": "Mode",
+                "reference": "Reference",
+                "amount": "Amount",
+                "action": "Action"
+            },
+            "delete_confirm": "Are you sure you want to delete this payment?"
+        },
+        "messages": {
+            "delete_success": "Provider deleted successfully",
+            "delete_protected": "Cannot delete: this provider is linked to existing data (orders, products).",
+            "delete_error": "Error during deletion",
+            "access_denied_delete": "Access denied: You do not have permission to delete providers.",
+            "delete_confirm_title": "Delete Provider",
+            "delete_confirm_message": "Delete provider \"{{name}}\"?\n\nThis action is irreversible.",
+            "delete_btn": "Delete",
+            "sudo_title": "Confirm Deletion",
+            "sudo_message": "This is a sensitive action. Please enter your password to confirm permanent deletion."
+        }
+    },
+    "creances": {
+        "title": "Receivables Management",
+        "subtitle": "Account Sales Tracking - Professional Clients",
+        "history_toggle": "View History",
+        "refresh": "Refresh",
+        "filters": {
+            "client_label": "Client",
+            "client_placeholder": "All Clients",
+            "start_date": "Start Date",
+            "end_date": "End Date",
+            "search": "Search",
+            "reset": "Reset",
+            "back_to_list": "Back to List"
+        },
+        "stats": {
+            "total_invoices": "Total Invoices",
+            "total_paid": "Total Paid",
+            "remaining": "Remaining Due"
+        },
+        "client_list": {
+            "client": "Client",
+            "nb_invoices": "Inv. Count",
+            "total_amount": "Total Amount",
+            "already_paid": "Paid",
+            "remaining_due": "Due",
+            "actions": "Actions",
+            "empty": "No clients with receivables for this period"
+        },
+        "invoice_list": {
+            "selected_count": "{{count}} invoice(s) selected",
+            "pay_selection": "Pay Selection",
+            "date": "Date",
+            "invoice_number": "Invoice #",
+            "beneficiary": "Beneficiary",
+            "total": "Total",
+            "paid": "Paid",
+            "remaining": "Remaining",
+            "status": "Status",
+            "actions": "Actions",
+            "empty": "No invoices found for this client"
+        },
+        "print_statement": "Print Statement",
+        "client_label": "Client: {{name}}"
+    },
+    "stock": {
+        "inventaire": {
+            "title": "Stock Take Management",
+            "create_btn": "New Stock Take",
+            "list_title": "History",
+            "stats_tab": "Gaps & Valuation",
+            "data_tab": "Count Entry",
+            "validation": {
+                "title": "Validate Stock Take",
+                "btn": "Validate Stock Take",
+                "confirm_msg": "This action is irreversible. Stocks will be updated.",
+                "validator_label": "Validated by",
+                "sudo_password": "Admin Password",
+                "success": "Stock Take validated successfully",
+                "error": "Validation error"
+            },
+            "merge": {
+                "btn": "Merge",
+                "modal_title": "Merge Stock Takes",
+                "source_label": "Source Stock Take (will be deleted)",
+                "confirm_msg": "Source stock take lines will be added to active stock take.",
+                "success": "Merge successful"
+            },
+            "table": {
+                "product": "Product",
+                "cip": "CIP",
+                "lot": "Lot",
+                "qty_theo": "Theo. Qty",
+                "qty_phys": "Phys. Qty",
+                "gap": "Gap",
+                "value": "Value",
+                "actions": "Actions"
+            },
+            "status": {
+                "draft": "In Progress",
+                "validated": "Validated"
+            },
+            "empty_state": "No stock take in progress",
+            "delete_confirm": "Delete this stock take?",
+            "product_exists": "This product (or lot) is already in the stock take."
+        }
+    },
+    "orders": {
+        "title": "Orders Management",
+        "title_direct": "Direct Orders Management",
+        "tabs": {
+            "local": "Local Orders",
+            "direct": "Direct Orders (Foreign)"
+        },
+        "history": {
+            "title": "Purchase History",
+            "subtitle_local": " Local",
+            "subtitle_direct": " Direct (Import)",
+            "subtitle_daily": " Daily",
+            "start_date": "Start Date",
+            "end_date": "End Date",
+            "provider_filter": "Supplier",
+            "all_providers": "All Suppliers",
+            "refresh": "Refresh",
+            "columns": {
+                "date": "Date",
+                "nb_orders": "Order Count",
+                "total_purchase": "Total Purchase"
+            },
+            "no_data": "No purchases found for this period",
+            "total": "TOTAL"
+        },
+        "list": {
+            "title": "Orders List",
+            "create_btn": "Create",
+            "suggestions_btn": "Suggestions",
+            "sort_by": "Sort by",
+            "filter_by": "Filter",
+            "filters": {
+                "all": "All",
+                "prep": "Prep",
+                "pending": "Pending",
+                "closed": "Closed"
+            },
+            "selection": {
+                "selected_count": "{{count}} order(s) selected",
+                "deselect": "Deselect",
+                "merge": "Merge"
+            },
+            "table": {
+                "id": "ID",
+                "invoice_number": "Invoice #",
+                "date": "Date",
+                "provider": "Provider",
+                "status": "Status",
+                "total": "Total (F)",
+                "actions": "Actions",
+                "view_details": "View Details",
+                "empty": "No order found"
+            },
+            "pagination": {
+                "showing": "{{count}} order(s) shown on {{total}} total",
+                "prev": "Previous",
+                "next": "Next",
+                "page": "Page"
+            }
+        },
+        "form": {
+            "new_title": "New Order",
+            "edit_title": "Edit Order #{{id}}",
+            "shortcuts": {
+                "search": "Search",
+                "provider": "Provider",
+                "select_all": "Select All"
+            },
+            "provider_label": "Provider (F4) *",
+            "provider_placeholder": "Select a provider",
+            "invoice_label": "Invoice Number",
+            "invoice_placeholder": "Ex: INV-2024-001",
+            "export_btn": "Export CSV",
+            "import_btn": "Import CSV",
+            "new_product_btn": "New Product",
+            "return_btn": "Return / Credit Note",
+            "direct_order_badge": "DIRECT ORDER (FOREIGN)",
+            "exchange_rate": "Exchange Rate (XAF/Currency)",
+            "coefficient": "Coefficient (Fees)",
+            "cost_price_formula": "Cost Price = (Price € * Rate) * Coeff",
+            "search_label": "Search Product (F2)",
+            "search_placeholder": "Type to search by name or CIP...",
+            "no_product_found": "No product found",
+            "save_btn": "Save Order",
+            "saving": "Saving...",
+            "nav_help": "Use Tab to navigate, Enter to submit",
+            "back_to_list": "Back to list",
+            "search_results": {
+                "stock": "Stock",
+                "price": "Price",
+                "cip": "CIP"
+            }
+        },
+        "product_table": {
+            "title": "Products",
+            "saved_at": "Saved at {{time}}",
+            "total_ht": "Total HT",
+            "total_tva": "Total VAT",
+            "total_ttc": "Total TTC",
+            "selected_count": "{{count}} selected",
+            "delete_btn": "Delete",
+            "transfer_btn": "Transfer",
+            "exclusivity_tooltip": "Exclusivity: {{provider}}",
+            "specific_provider": "Specific Provider",
+            "empty_state": "Start by searching and adding products (F2)",
+            "headers": {
+                "product": "Product",
+                "cip": "CIP",
+                "qty": "Qty",
+                "ug": "Free Units",
+                "dev_price": "Dev. Price",
+                "buy_price_ht": "Buy Price HT",
+                "tva": "VAT",
+                "margin": "Margin",
+                "sell_price": "Sell Price",
+                "lot": "Lot",
+                "exp_date": "Exp Date"
+            }
+        },
+        "details": {
+            "title": "Order #{{id}}",
+            "edit": "Edit",
+            "suspend": "Suspend",
+            "resume": "Resume",
+            "close": "Close",
+            "labels": "Labels",
+            "delete": "Delete",
+            "print_receipt": "Print Receipt",
+            "cancel_reception": "Cancel Reception",
+            "return": "Return / Credit Note",
+            "id": "Order ID",
+            "price_unit": "U.P.",
+            "invoice": "Invoice #",
+            "provider": "Provider",
+            "date": "Date",
+            "status": "Status",
+            "financial_summary": "Financial Summary",
+            "ug_title": "Free Units (UG)",
+            "ug_message": "This order contains {{count}} free unit(s)",
+            "empty_products": "No products in this order."
+        },
+        "status": {
+            "prep": "Preparing",
+            "pending": "Pending",
+            "closed": "Closed"
+        },
+        "messages": {
+            "delete_error": "Cannot delete closed orders",
+            "delete_success": "Order deleted",
+            "merge_error": "Merge impossible",
+            "merge_success": "Orders merged",
+            "transfer_select_error": "Please select at least one product to transfer",
+            "import_success": "Products imported successfully",
+            "import_error": "Error during CSV import",
+            "save_success": "Order saved",
+            "close_confirm": "Are you sure you want to close this order? This will update stock.",
+            "cancel_reception_confirm": "Warning: Cancelling reception will remove products from stock. Continue?",
+            "provider_required": "Please select a provider",
+            "no_selection": "No order selected for modification",
+            "create_success": "Order #{{id}} created",
+            "update_success": "Order updated",
+            "save_error": "Error saving order",
+            "access_denied_delete": "Access denied: You do not have permission to delete orders.",
+            "password_confirm_delete_title": "Delete Order",
+            "password_confirm_delete_body": "You are about to delete an order. Confirm your password.",
+            "close_success": "Order closed successfully",
+            "password_confirm_close_title": "Confirm Reception",
+            "password_confirm_close_body": "This action will update stock and purchase prices. Please confirm your password.",
+            "status_update_success": "Status updated: {{status}}",
+            "cancel_reception_success": "Reception cancelled: {{count}} products affected.",
+            "cancel_reception_error": "Only a closed order can be cancelled.",
+            "password_confirm_cancel_title": "Cancel Reception",
+            "password_confirm_cancel_body": "This action will remove the stock added during closure. Confirm your password.",
+            "print_error": "Error while printing"
+        }
+    },
+    "reports": {
+        "title": "Reports Center",
+        "subtitle": "Select a query, configure parameters and view results",
+        "queries_title": "Query List",
+        "execute": "Execute Query",
+        "copy": "Copy (Excel)",
+        "params_title": "Parameters",
+        "no_query_selected": "No query selected",
+        "select_query_prompt": "Select a query from the left list to start.",
+        "queries": {
+            "rapport_mensuel": {
+                "name": "Monthly Report",
+                "description": "Revenue, margins, receivables for a given month"
+            },
+            "historique_client": {
+                "name": "Client History",
+                "description": "All products purchased by a client with dates and quantities"
+            },
+            "ca_periode": {
+                "name": "Revenue by Period",
+                "description": "Revenue over a specific period"
+            },
+            "alertes_stock": {
+                "name": "Stock Alerts",
+                "description": "Stock < Avg Rotation OR Stock <= Min Threshold"
+            },
+            "produits_perimes": {
+                "name": "Expired / Near Expiry Products",
+                "description": "Products expired or close to expiration date"
+            },
+            "creances": {
+                "name": "Current Receivables",
+                "description": "Invoices with remaining balance"
+            },
+            "historique_ventes": {
+                "name": "Sales by Time Range",
+                "description": "Products sold over a given period"
+            },
+            "produits_non_vendus": {
+                "name": "Unsold Products",
+                "description": "Products with no sales for X days"
+            },
+            "stock_negatif": {
+                "name": "Negative Stock",
+                "description": "Products with negative or low stock, sorted by quantity"
+            },
+            "valeur_stock_journalier": {
+                "name": "Daily Stock Value",
+                "description": "Historical reconstruction of stock value, purchases and sales"
+            },
+            "produits_tva": {
+                "name": "Products with VAT",
+                "description": "List of products subject to VAT (> 0%)"
+            },
+            "stocks_morts": {
+                "name": "Dead Stock",
+                "description": "High value products (sleeping money) with no sales"
+            },
+            "alertes_annulations": {
+                "name": "Suspicious Cancellation Alerts",
+                "description": "Users with high cancellation rate (> threshold)"
+            },
+            "stats_vendeurs": {
+                "name": "Seller Stats",
+                "description": "Seller ranking by revenue (excluding cashiers)"
+            },
+            "produits_vendus_tva": {
+                "name": "Sold Products (VAT)",
+                "description": "Products with VAT > 0 sold during period"
+            }
+        },
+        "params": {
+            "mois": "Month",
+            "facture__client": "Client",
+            "date_debut": "Start Date",
+            "date_fin": "End Date",
+            "expiring_within_days": "Days before expiry",
+            "jours_sans_vente": "Days without sales",
+            "stock_lt": "Stock less than",
+            "ordering": "Sort",
+            "tva_gt": "VAT greater than (%)",
+            "min_value": "Min Value (F)",
+            "months": "Months without sales",
+            "threshold": "Cancellation threshold",
+            "days": "Over last (days)",
+            "client_id": "Client"
+        },
+        "results": {
+            "title": "Results",
+            "execute_prompt": "Click \"Execute\" to view results",
+            "empty": "No results",
+            "copy_success": "{{count}} items copied! Paste into Excel.",
+            "copy_error": "Error copying",
+            "copy_no_result": "No results to copy",
+            "execute_success": "Query \"{{name}}\" executed",
+            "error_execution": "Error executing query"
+        }
     },
     "dashboard": {
         "title": "Dashboard",

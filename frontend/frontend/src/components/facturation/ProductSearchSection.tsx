@@ -75,7 +75,7 @@ export default function ProductSearchSection({
           }
       } catch (e) {
           console.error("Pack search error", e)
-          toast.error("Erreur recherche packs")
+          toast.error(t('facturation.search.error_search_packs'))
       } finally {
           setPackLoading(false)
       }
@@ -110,7 +110,7 @@ export default function ProductSearchSection({
     <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative flex flex-col gap-2">
       <div className="flex justify-between items-center">
             <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
-                {searchMode === 'products' ? t('facturation.search_label', { defaultValue: 'Rechercher un produit (F2)' }) : 'Rechercher un Pack'}
+                {searchMode === 'products' ? t('facturation.search_label', { defaultValue: 'Rechercher un produit (F2)' }) : t('facturation.search.label_pack')}
             </label>
             
             {/* Tabs */}
@@ -119,13 +119,13 @@ export default function ProductSearchSection({
                     className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'products' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => { setSearchMode('products'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
-                    <Pill size={14} /> Produits
+                    <Pill size={14} /> {t('facturation.search.tabs_products')}
                 </button>
                 <button 
                     className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'packs' ? 'bg-white shadow text-secondary' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => { setSearchMode('packs'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
-                    <Package size={14} /> Packs
+                    <Package size={14} /> {t('facturation.search.tabs_packs')}
                 </button>
             </div>
       </div>
@@ -134,7 +134,7 @@ export default function ProductSearchSection({
         <input
           ref={searchInputRef}
           type="text"
-          placeholder={searchMode === 'products' ? (placeholder || t('facturation.search_placeholder')) : "Nom du pack..."}
+          placeholder={searchMode === 'products' ? (placeholder || t('facturation.search_placeholder')) : t('facturation.search.placeholder_pack')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={onInternalKeyDown}
@@ -198,7 +198,7 @@ export default function ProductSearchSection({
           {searchMode === 'packs' && (
              packResults.length === 0 ? (
                 <div className="text-center py-8 text-base-content/40 text-sm">
-                {packLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? "Nom du pack..." : "Aucun pack trouvé"}
+                {packLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation.search.placeholder_pack') : t('facturation.search.no_results_pack')}
                 </div>
             ) : (
                 <div className="max-h-96 overflow-y-auto space-y-1 p-1">
@@ -218,7 +218,7 @@ export default function ProductSearchSection({
                     <div className="flex-1 min-w-0">
                         <div className="font-bold text-secondary text-sm">{pack.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                            {pack.value} F • {pack.products_count || pack.pack_items?.length || '?'} produits
+                            {pack.value} F • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation.search.products_count')}
                         </div>
                     </div>
                      <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-secondary">
