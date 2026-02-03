@@ -13,6 +13,8 @@ interface StockResolutionModalProps {
   setPromisSelections: (val: Set<number>) => void
   promisPhone: string
   setPromisPhone: (val: string) => void
+  promisClientName: string
+  setPromisClientName: (val: string) => void
   onConfirm: () => void
 }
 
@@ -24,6 +26,8 @@ export default function StockResolutionModal({
   setPromisSelections,
   promisPhone,
   setPromisPhone,
+  promisClientName,
+  setPromisClientName,
   onConfirm
 }: StockResolutionModalProps) {
   const { t } = useTranslation()
@@ -32,7 +36,7 @@ export default function StockResolutionModal({
 
   return (
     <dialog className="modal modal-open">
-      <div className="modal-box w-[600px] max-w-full">
+      <div className="modal-box w-11/12 max-w-4xl">
         <h3 className="font-bold text-lg text-warning">{t('facturation.stock_resolution.title')}</h3>
         <div className="py-4">
           <div className="alert alert-warning text-sm py-2 mb-4">
@@ -84,17 +88,32 @@ export default function StockResolutionModal({
             </table>
           </div>
 
-          <div className="form-control w-full mt-4">
-            <label className="label">
-              <span className="label-text">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
-            </label>
-            <input
-              type="text"
-              value={promisPhone}
-              onChange={(e) => setPromisPhone(e.target.value)}
-              placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
-              className="input input-bordered w-full"
-            />
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <div className="form-control w-full">
+                <label className="label">
+                <span className="label-text">{t('facturation.stock_resolution.client_name')} (Optionnel)</span>
+                </label>
+                <input
+                type="text"
+                value={promisClientName}
+                onChange={(e) => setPromisClientName(e.target.value)}
+                placeholder="Nom du client..."
+                className="input input-bordered w-full"
+                />
+            </div>
+            
+            <div className="form-control w-full">
+                <label className="label">
+                <span className="label-text">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
+                </label>
+                <input
+                type="text"
+                value={promisPhone}
+                onChange={(e) => setPromisPhone(e.target.value)}
+                placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
+                className="input input-bordered w-full"
+                />
+            </div>
           </div>
         </div>
 

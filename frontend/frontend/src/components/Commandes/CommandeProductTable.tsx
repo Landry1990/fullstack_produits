@@ -152,6 +152,7 @@ export default function CommandeProductTable({
                     </th>
                     <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">{t('orders.product_table.headers.product')}</th>
                     <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">{t('orders.product_table.headers.cip')}</th>
+                    <th className="bg-base-200 text-center w-24 font-semibold text-xs uppercase text-orange-600 bg-orange-50">Stock</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.qty')}</th>
                     <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">{t('orders.product_table.headers.ug')}</th>
                     {commandeType === 'DIR' && (
@@ -252,6 +253,12 @@ export default function CommandeProductTable({
                                     
                                     return '-';
                                 })()}
+                            </span>
+                        </td>
+                        {/* Stock Actuel */}
+                        <td className="text-center py-2 md:py-3 bg-orange-50/20">
+                            <span className={`text-xs font-bold px-2 py-1 rounded ${((p as any).produit_stock || 0) <= 0 ? 'text-error bg-error/10' : 'text-orange-600 bg-orange-100/50'}`}>
+                                {(p as any).produit_stock || 0}
                             </span>
                         </td>
                         {/* Quantity (0) */}

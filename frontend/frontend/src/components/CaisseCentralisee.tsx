@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -27,6 +27,12 @@ export default function CaisseCentralisee() {
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
+  // Étape du paiement: 'amount' = saisie montant, 'mode' = sélection mode
+  const [paymentStep, setPaymentStep] = useState<'amount' | 'mode'>('amount')
+  // Index du mode de paiement sélectionné (pour navigation clavier)
+  const [selectedModeIndex, setSelectedModeIndex] = useState(0)
+  // Ref pour focus automatique
+  const montantInputRef = useRef<HTMLInputElement>(null)
   
   // États pour les coupons
   const [coupons, setCoupons] = useState<CouponMonnaie[]>([])
@@ -39,8 +45,14 @@ export default function CaisseCentralisee() {
   const [isDetailsCouponModalOpen, setIsDetailsCouponModalOpen] = useState(false)
   const [isSudoModalOpen, setIsSudoModalOpen] = useState(false)
   
-  // Coupon à appliquer sur la vente en cours (déduction du montant à payer)
-  const [couponApplique, setCouponApplique] = useState<CouponMonnaie | null>(null)
+  
+  // Coupon à appliquer PAR VENTE (clé = factureId, valeur = coupon)
+  const [couponsParFacture, setCouponsParFacture] = useState<Record<number, CouponMonnaie>>({})
+  // Modal pour sélectionner un coupon pour une facture spécifique
+  const [factureForCoupon, setFactureForCoupon] = useState<Facture | null>(null)
+  
+  // État pour la navigation clavier (mouse killing)
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number>(0)
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
 
@@ -135,23 +147,42 @@ export default function CaisseCentralisee() {
     }
   }
 
-  // Appliquer un coupon à la vente (déduction du montant à payer)
-  const handleAppliquerCoupon = (coupon: CouponMonnaie) => {
+  // Appliquer un coupon à UNE vente spécifique
+  const handleAppliquerCouponAFacture = (coupon: CouponMonnaie, facture: Facture) => {
     if (coupon.status !== 'ACTIF') {
       toast.error('Ce coupon n\'est pas actif')
       return
     }
-    setCouponApplique(coupon)
+    // Vérifier si ce coupon est déjà appliqué à une autre facture
+    const existingFactureId = Object.keys(couponsParFacture).find(
+      id => couponsParFacture[Number(id)]?.id === coupon.id
+    )
+    if (existingFactureId && Number(existingFactureId) !== facture.id) {
+      toast.error('Ce coupon est déjà appliqué à une autre vente')
+      return
+    }
+    
+    setCouponsParFacture(prev => ({ ...prev, [facture.id]: coupon }))
+    setFactureForCoupon(null)
     setIsDetailsCouponModalOpen(false)
     setCouponTrouve(null)
-    setSearchCouponNumero('')
-    toast.success(`Coupon #${coupon.numero} appliqué (-${coupon.montant} F)`)
+    toast.success(`Coupon #${coupon.numero} appliqué à la vente #${facture.session_ticket_number || facture.numero_facture}`)
   }
   
-  // Retirer le coupon appliqué
-  const handleRetirerCoupon = () => {
-    setCouponApplique(null)
+  // Retirer le coupon d'une facture spécifique
+  const handleRetirerCouponDeFacture = (factureId: number) => {
+    setCouponsParFacture(prev => {
+      const updated = { ...prev }
+      delete updated[factureId]
+      return updated
+    })
     toast('Coupon retiré', { icon: '🗑️' })
+  }
+  
+  // Ouvrir le panneau pour sélectionner un coupon pour une facture
+  const openCouponSelectionForFacture = (facture: Facture) => {
+    setFactureForCoupon(facture)
+    setIsCouponPanelOpen(true)
   }
 
   // Utiliser réellement le coupon (appelé après encaissement réussi)
@@ -187,6 +218,18 @@ export default function CaisseCentralisee() {
     }
   }
 
+  // Focus automatique sur le champ montant quand le modal s'ouvre ou revient à l'étape montant
+  useEffect(() => {
+    if (isPaymentModalOpen && paymentStep === 'amount') {
+      // Petit délai pour que le DOM soit prêt
+      const timer = setTimeout(() => {
+        montantInputRef.current?.focus()
+        montantInputRef.current?.select()
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isPaymentModalOpen, paymentStep])
+
   // Rafraîchissement automatique toutes les 20 secondes
   useEffect(() => {
     fetchFacturesEnAttente()
@@ -194,25 +237,114 @@ export default function CaisseCentralisee() {
     return () => clearInterval(interval)
   }, [fetchFacturesEnAttente])
 
-  // Ouvrir la modale de paiement
-  const handleEncaisser = (facture: Facture) => {
+  // Trier les factures par numéro de ticket pour la navigation clavier
+  const sortedFactures = useMemo(() => 
+    [...facturesEnAttente].sort((a, b) => (a.session_ticket_number || 0) - (b.session_ticket_number || 0)),
+    [facturesEnAttente]
+  )
+
+  // Ouvrir la modale de paiement (useCallback pour les raccourcis clavier)
+  const handleEncaisser = useCallback((facture: Facture) => {
     setSelectedFacture(facture)
     // Suggest part_client if available and positive, otherwise total_ttc
     let amountToPay = (facture.part_client !== null && Number(facture.part_client) >= 0) 
       ? Number(facture.part_client) 
       : Number(facture.total_ttc)
     
-    // Déduire le coupon si appliqué
-    if (couponApplique) {
-      amountToPay = Math.max(0, amountToPay - Number(couponApplique.montant))
+    // Déduire le coupon si appliqué à cette facture spécifique
+    const couponPourCetteFacture = couponsParFacture[facture.id]
+    if (couponPourCetteFacture) {
+      amountToPay = Math.max(0, amountToPay - Number(couponPourCetteFacture.montant))
     }
     
     setMontantPaye(Math.round(amountToPay).toString())
     setModePaiement('especes')
     setReference('')
     setPaiements([]) // Reset multiple payments
+    setPaymentStep('amount') // Reset au mode saisie montant
     setIsPaymentModalOpen(true)
-  }
+  }, [couponsParFacture])
+
+  // Raccourcis clavier (mouse killing)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorer si une modale est ouverte ou si l'utilisateur tape dans un champ
+      if (isPaymentModalOpen || isGenererCouponModalOpen || isDetailsCouponModalOpen || isSudoModalOpen) {
+        // Escape pour fermer les modales
+        if (e.key === 'Escape') {
+          setIsPaymentModalOpen(false)
+          setIsGenererCouponModalOpen(false)
+          setIsDetailsCouponModalOpen(false)
+          setShowTicketPreview(false)
+        }
+        return
+      }
+      if (showTicketPreview && e.key === 'Escape') {
+        setShowTicketPreview(false)
+        return
+      }
+      
+      // Si l'utilisateur tape dans un input, ignorer
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Navigation avec flèches
+      if (e.key === 'ArrowDown' || e.key === 'j') {
+        e.preventDefault()
+        setSelectedRowIndex(prev => Math.min(prev + 1, sortedFactures.length - 1))
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        e.preventDefault()
+        setSelectedRowIndex(prev => Math.max(prev - 1, 0))
+      }
+      // Enter pour encaisser la vente sélectionnée
+      else if (e.key === 'Enter' && sortedFactures.length > 0) {
+        e.preventDefault()
+        const facture = sortedFactures[selectedRowIndex]
+        if (facture && ((user as any)?.can_cash_out || user?.is_superuser)) {
+          handleEncaisser(facture)
+        }
+      }
+      // C pour ouvrir le panneau des coupons
+      else if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault()
+        if (sortedFactures.length > 0) {
+          openCouponSelectionForFacture(sortedFactures[selectedRowIndex])
+        }
+      }
+      // R pour rafraîchir
+      else if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault()
+        fetchFacturesEnAttente()
+        fetchCoupons()
+        toast.success('Liste rafraîchie')
+      }
+      // Escape pour fermer le panneau coupons
+      else if (e.key === 'Escape') {
+        if (isCouponPanelOpen) {
+          setIsCouponPanelOpen(false)
+          setFactureForCoupon(null)
+        }
+      }
+      // 1-9 pour sélectionner directement une vente
+      else if (e.key >= '1' && e.key <= '9') {
+        const index = parseInt(e.key) - 1
+        if (index < sortedFactures.length) {
+          setSelectedRowIndex(index)
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [sortedFactures, selectedRowIndex, isPaymentModalOpen, isGenererCouponModalOpen, isDetailsCouponModalOpen, isSudoModalOpen, showTicketPreview, isCouponPanelOpen, user, handleEncaisser, openCouponSelectionForFacture, fetchFacturesEnAttente, fetchCoupons])
+
+  // Garder l'index valide quand la liste change
+  useEffect(() => {
+    if (selectedRowIndex >= facturesEnAttente.length && facturesEnAttente.length > 0) {
+      setSelectedRowIndex(facturesEnAttente.length - 1)
+    }
+  }, [facturesEnAttente.length, selectedRowIndex])
 
   // Enregistrer le paiement
   const enregistrerPaiement = async () => {
@@ -307,12 +439,16 @@ export default function CaisseCentralisee() {
       // Invalidate product cache to refresh stock data (if on same machine)
       queryClient.invalidateQueries({ queryKey: ['products'] })
       
-      // 8. Si un coupon était appliqué, le marquer comme utilisé
-      
-      // 8. Si un coupon était appliqué, le marquer comme utilisé
-      if (couponApplique) {
-        await utiliserCouponApresEncaissement(couponApplique.id, factureFinale.id)
-        setCouponApplique(null) // Reset pour la prochaine vente
+      // 8. Si un coupon était appliqué à cette facture, le marquer comme utilisé
+      const couponUtilise = couponsParFacture[factureFinale.id]
+      if (couponUtilise) {
+        await utiliserCouponApresEncaissement(couponUtilise.id, factureFinale.id)
+        // Retirer le coupon de la map
+        setCouponsParFacture(prev => {
+          const updated = { ...prev }
+          delete updated[factureFinale.id]
+          return updated
+        })
       }
 
       toast.success(`Facture #${factureFinale.numero_facture} encaissée avec succès !`)
@@ -436,15 +572,10 @@ export default function CaisseCentralisee() {
             </svg>
             Coupons ({coupons.filter(c => c.status === 'ACTIF').length} actifs)
           </button>
-          {/* Indicateur de coupon appliqué */}
-          {couponApplique && (
-            <div className="badge badge-lg badge-success gap-2 animate-pulse">
-              <span>Coupon #{couponApplique.numero}: -{couponApplique.montant} F</span>
-              <button 
-                onClick={handleRetirerCoupon}
-                className="btn btn-xs btn-circle btn-ghost"
-                title="Retirer le coupon"
-              >×</button>
+          {/* Indicateur: nombre de coupons appliqués aux ventes */}
+          {Object.keys(couponsParFacture).length > 0 && (
+            <div className="badge badge-lg badge-success gap-2">
+              <span>{Object.keys(couponsParFacture).length} coupon(s) appliqué(s)</span>
             </div>
           )}
           <div className="badge badge-lg badge-error">
@@ -567,125 +698,171 @@ export default function CaisseCentralisee() {
             <p className="text-sm mt-2">Les ventes validées par les vendeurs apparaîtront ici</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            {facturesEnAttente
-              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Sort by date ascending
-              .map((facture) => (
-              <div
-                key={facture.id}
-                className="bg-white rounded-lg shadow-md border-2 border-base-200 hover:border-primary transition-all p-6"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="badge badge-lg badge-neutral font-bold">
-                      Vente #{ facture.session_ticket_number || '?' }
-                    </div>
-                    <div>
-                      <div className="text-xs text-base-content/60 uppercase tracking-wide">Facture</div>
-                      <div className="text-2xl font-bold text-primary">#{facture.numero_facture}</div>
-                    </div>
-                  </div>
-                  <div className="badge badge-warning">En attente</div>
-                </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-base-content/60">Client:</span>
-                    <span className="font-medium">{facture.client_name || 'Client de passage'}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-base-content/60">Date:</span>
-                    <span className="font-medium">{new Date(facture.date).toLocaleString('fr-FR')}</span>
-                  </div>
-                  
-                  {/* Products Preview - Collapsible */}
-                  <details className="mt-3">
-                    <summary className="cursor-pointer text-xs text-primary hover:text-primary-focus flex items-center gap-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                      Voir les produits ({facture.produits?.length || 0})
-                    </summary>
-                    <div className="mt-2 bg-base-50 rounded p-2 space-y-1 max-h-40 overflow-y-auto">
-                      {facture.produits && facture.produits.length > 0 ? (
-                        facture.produits.map((p: any) => (
-                          <div key={p.id} className="flex justify-between text-xs bg-white p-2 rounded">
-                            <span className="font-medium">{p.produit_nom || `Produit #${p.produit}`}</span>
-                            <div className="flex items-center gap-2">
-                              <span className="text-base-content/60">×{p.quantity}</span>
-                              <span className="font-bold">{Math.round(p.quantity * Number(p.selling_price))} F</span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-xs text-center text-base-content/40 py-2">Aucun produit</div>
-                      )}
-                    </div>
-                  </details>
-                </div>
-
-                <div className="divider my-2"></div>
-
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-base-content/60">
-                    {(facture.part_client !== null && Number(facture.part_client) >= 0) 
-                      ? 'Part Client' 
-                      : 'Montant TTC'}
-                    {couponApplique && ' (Coupon appliqué)'}
-                  </span>
-                  <span className="text-3xl font-bold text-success">
-                    {Math.round(
-                      Math.max(0, 
+          <div className="overflow-x-auto">
+            <table className="table table-sm w-full">
+              <thead className="bg-base-200 sticky top-0 z-10">
+                <tr>
+                  <th>#Ticket</th>
+                  <th>Facture</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Produits</th>
+                  <th className="text-right">Montant</th>
+                  <th className="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedFactures.map((facture, index) => {
+                    // Récupérer le coupon appliqué à CETTE facture spécifique
+                    const couponPourCetteFacture = couponsParFacture[facture.id]
+                    const montantAPayer = Math.round(
+                      Math.max(0,
                         ((facture.part_client !== null && Number(facture.part_client) >= 0)
                           ? Number(facture.part_client)
-                          : Number(facture.total_ttc)) 
-                        - (couponApplique ? Number(couponApplique.montant) : 0)
+                          : Number(facture.total_ttc))
+                        - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
                       )
-                    )} F
-                  </span>
-                </div>
-                {(facture.part_client !== null && Number(facture.part_client) >= 0) && (
-                  <div className="flex justify-between items-center text-xs text-base-content/50 mb-2">
-                    <span>Total TTC</span>
-                    <span>{Math.round(Number(facture.total_ttc))} F (Tiers Payant)</span>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleModifier(facture)}
-                    className="btn btn-outline btn-warning flex-1"
-                    title="Modifier (Recharger dans la vente)"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
-                  
-                  <button
-                    onClick={() => handleAnnuler(facture)}
-                    className="btn btn-outline btn-error flex-1"
-                    title="Annuler la vente"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => handleEncaisser(facture)}
-                  disabled={!(user as any)?.can_cash_out && !(user?.is_superuser)}
-                  className="btn btn-success btn-block gap-2 text-white mt-2 disabled:bg-base-300 disabled:text-base-content/50"
-                  title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? "Vous n'êtes pas autorisé à encaisser" : "Encaisser la facture"}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Encaisser
-                </button>
-              </div>
-            ))}
+                    )
+                    const hasTiersPayant = facture.part_client !== null && Number(facture.part_client) >= 0
+                    const isSelected = index === selectedRowIndex
+                    
+                    return (
+                      <tr 
+                        key={facture.id} 
+                        className={`cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'bg-primary/10 border-l-4 border-primary font-medium' 
+                            : 'hover:bg-base-100'
+                        }`}
+                        onClick={() => setSelectedRowIndex(index)}
+                        onDoubleClick={() => {
+                          if ((user as any)?.can_cash_out || user?.is_superuser) {
+                            handleEncaisser(facture)
+                          }
+                        }}
+                      >
+                        <td>
+                          <span className="badge badge-neutral font-bold">
+                            {facture.session_ticket_number || '?'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="font-bold text-primary">#{facture.numero_facture}</div>
+                        </td>
+                        <td>
+                          <div className="font-medium">{facture.client_name || 'Passage'}</div>
+                          {hasTiersPayant && (
+                            <span className="badge badge-info badge-xs">Tiers Payant</span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="text-sm">
+                            {new Date(facture.date).toLocaleDateString('fr-FR')}
+                          </div>
+                          <div className="text-xs text-base-content/60">
+                            {new Date(facture.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="dropdown dropdown-hover dropdown-end">
+                            <label tabIndex={0} className="btn btn-sm btn-primary btn-outline gap-2 cursor-pointer">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                              <span className="font-bold">{facture.produits?.length || 0} produits</span>
+                            </label>
+                            <div tabIndex={0} className="dropdown-content z-[100] card shadow-2xl bg-white border-2 border-primary/20 p-4 w-96">
+                              <div className="text-base font-bold mb-3 border-b-2 border-primary pb-2 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                </svg>
+                                Produits ({facture.produits?.length || 0})
+                              </div>
+                              <div className="max-h-60 overflow-y-auto space-y-2">
+                                {facture.produits && facture.produits.length > 0 ? (
+                                  facture.produits.map((p: any) => (
+                                    <div key={p.id} className="flex justify-between items-center bg-base-100 p-3 rounded-lg hover:bg-base-200 transition-colors">
+                                      <span className="font-medium text-sm">{p.produit_nom || `Produit #${p.produit}`}</span>
+                                      <div className="flex items-center gap-3">
+                                        <span className="badge badge-neutral">×{p.quantity}</span>
+                                        <span className="font-bold text-success text-base">{Math.round(p.quantity * Number(p.selling_price))} F</span>
+                                      </div>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-sm text-base-content/40 text-center py-4">Aucun produit</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="text-right">
+                          <div className="font-bold text-lg text-success">{montantAPayer} F</div>
+                          {hasTiersPayant && (
+                            <div className="text-xs text-base-content/50">
+                              Total: {Math.round(Number(facture.total_ttc))} F
+                            </div>
+                          )}
+                          {couponPourCetteFacture && (
+                            <div className="badge badge-success badge-sm gap-1">
+                              <span>#{couponPourCetteFacture.numero}: -{couponPourCetteFacture.montant} F</span>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleRetirerCouponDeFacture(facture.id); }}
+                                className="btn btn-xs btn-circle btn-ghost"
+                              >×</button>
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <div className="flex gap-1 justify-center">
+                            <button
+                              onClick={() => handleModifier(facture)}
+                              className="btn btn-xs btn-outline btn-warning"
+                              title="Modifier"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleAnnuler(facture)}
+                              className="btn btn-xs btn-outline btn-error"
+                              title="Annuler"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                            {/* Bouton pour appliquer un coupon à cette vente */}
+                            {!couponPourCetteFacture && (
+                              <button
+                                onClick={() => openCouponSelectionForFacture(facture)}
+                                className="btn btn-xs btn-outline btn-secondary"
+                                title="Appliquer un coupon"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleEncaisser(facture)}
+                              disabled={!(user as any)?.can_cash_out && !(user?.is_superuser)}
+                              className="btn btn-xs btn-success text-white gap-1"
+                              title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? "Non autorisé" : "Encaisser"}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                              </svg>
+                              Encaisser
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -697,43 +874,31 @@ export default function CaisseCentralisee() {
             <h3 className="font-bold text-lg mb-4">Encaissement - Facture #{selectedFacture.numero_facture}</h3>
 
             <div className="text-center mb-6">
-              <div className="text-sm text-base-content/60">Total à payer</div>
-              <div className="text-4xl font-bold text-primary">
-                {Math.round(
+              {(() => {
+                const couponPourCetteFacture = couponsParFacture[selectedFacture.id]
+                const montantAffiche = Math.round(
                   Math.max(0,
                     ((selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
                       ? Number(selectedFacture.part_client)
                       : Number(selectedFacture.total_ttc))
-                    - (couponApplique ? Number(couponApplique.montant) : 0)
+                    - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
                   )
-                )} F
-              </div>
-              {couponApplique && (
-                <div className="badge badge-success mt-2 gap-1">
-                  <span>Coupon #{couponApplique.numero}: -{couponApplique.montant} F</span>
-                </div>
-              )}
+                )
+                return (
+                  <>
+                    <div className="text-sm text-base-content/60">Total à payer</div>
+                    <div className="text-4xl font-bold text-primary">{montantAffiche} F</div>
+                    {couponPourCetteFacture && (
+                      <div className="badge badge-success mt-2 gap-1">
+                        <span>Coupon #{couponPourCetteFacture.numero}: -{couponPourCetteFacture.montant} F</span>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
               {(selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0) && (
                  <div className="badge badge-info mt-2">Part Client (Tiers Payant actif)</div>
               )}
-            </div>
-
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text">Mode de paiement</span>
-              </label>
-              <select
-                value={modePaiement}
-                onChange={(e) => setModePaiement(e.target.value as any)}
-                className="select select-bordered w-full"
-              >
-                <option value="especes">Espèces</option>
-                <option value="cheque">Chèque</option>
-                <option value="carte">Carte</option>
-                <option value="virement">Virement</option>
-                <option value="om">Orange Money</option>
-                <option value="momo">Mobile Money</option>
-              </select>
             </div>
 
             {/* Liste des paiements ajoutés */}
@@ -746,7 +911,10 @@ export default function CaisseCentralisee() {
                     <div className="flex items-center gap-2">
                       <span className="font-bold">{p.montant} F</span>
                       <button 
-                        onClick={() => setPaiements(paiements.filter((_, i) => i !== idx))}
+                        onClick={() => {
+                          setPaiements(paiements.filter((_, i) => i !== idx))
+                          setPaymentStep('amount')
+                        }}
                         className="btn btn-ghost btn-xs text-error"
                       >✕</button>
                     </div>
@@ -758,76 +926,213 @@ export default function CaisseCentralisee() {
               </div>
             )}
 
-            <div className="flex gap-2 items-end mb-4">
-              <div className="form-control flex-1">
-                <label className="label">
-                  <span className="label-text">Montant</span>
-                </label>
-                <input
-                  type="number"
-                  value={montantPaye}
-                  onChange={(e) => setMontantPaye(e.target.value)}
-                  className="input input-bordered w-full text-2xl text-center"
-                  placeholder={
-                    (selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
-                      ? `Part Client: ${Math.round(Number(selectedFacture.part_client))} F`
-                      : `${Math.round(Number(selectedFacture.total_ttc))} F`
-                  }
-                  autoFocus={paiements.length === 0}
-                />
-              </div>
-              <button
-                onClick={() => {
-                  if (montantPaye && Number(montantPaye) > 0) {
-                    setPaiements([...paiements, { mode: modePaiement, montant: Number(montantPaye) }])
-                    const reste = Math.max(0, Number(selectedFacture.total_ttc) - paiements.reduce((acc, p) => acc + p.montant, 0) - Number(montantPaye))
-                    setMontantPaye(reste > 0 ? reste.toString() : '')
-                  }
-                }}
-                className="btn btn-primary"
-                disabled={!montantPaye || Number(montantPaye) <= 0}
-              >
-                ➕ Ajouter
-              </button>
-            </div>
-
-            {/* Calcul du rendu avec paiements multiples */}
+            {/* Flux intelligent de paiement */}
             {(() => {
-              const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 ? Number(montantPaye) : 0)
-              const amountToPay = (selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
+              const couponPourCetteFacture = couponsParFacture[selectedFacture.id]
+              const totalAPayer = Math.round(
+                Math.max(0,
+                  ((selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
                     ? Number(selectedFacture.part_client)
-                    : Number(selectedFacture.total_ttc)
-              const rendu = totalVerse - amountToPay
-              
-              return rendu > 0 && (
-                <div className="alert alert-success mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div>
-                    <div className="text-sm">Monnaie à rendre</div>
-                    <div className="text-xl font-bold">{rendu.toFixed(0)} F</div>
+                    : Number(selectedFacture.total_ttc))
+                  - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
+                )
+              )
+              const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0)
+              const resteAPayer = Math.max(0, totalAPayer - totalVerse)
+              const montantSaisi = Number(montantPaye) || 0
+              const montantCourant = paymentStep === 'amount' ? 0 : montantSaisi
+              const totalAvecCourant = totalVerse + montantCourant
+              const peutValider = totalAvecCourant >= totalAPayer || (paiements.length > 0 && resteAPayer === 0)
+
+              return (
+                <>
+                  {/* Reste à payer */}
+                  {resteAPayer > 0 && (
+                    <div className="alert alert-warning mb-4 py-2">
+                      <span className="font-bold">Reste à payer: {resteAPayer} F</span>
+                    </div>
+                  )}
+
+                  {/* Étape 1: Saisie du montant */}
+                  {paymentStep === 'amount' && (
+                    <div className="form-control w-full mb-4">
+                      <label className="label">
+                        <span className="label-text font-bold">1. Saisissez le montant puis appuyez sur Entrée</span>
+                      </label>
+                      <input
+                        ref={montantInputRef}
+                        type="number"
+                        value={montantPaye}
+                        onChange={(e) => setMontantPaye(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && montantPaye && Number(montantPaye) > 0) {
+                            e.preventDefault()
+                            setPaymentStep('mode')
+                          }
+                        }}
+                        className="input input-bordered input-lg w-full text-3xl text-center font-bold"
+                        placeholder={resteAPayer > 0 ? `${resteAPayer} F` : '0 F'}
+                        autoFocus
+                      />
+                      <label className="label">
+                        <span className="label-text-alt text-base-content/60">Appuyez sur Entrée après avoir saisi le montant</span>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Étape 2: Sélection du mode de paiement */}
+                  {paymentStep === 'mode' && (
+                    <div className="mb-4">
+                      <div className="text-sm text-base-content/70 mb-2 text-center">
+                        Montant: <span className="font-bold text-lg text-primary">{montantSaisi} F</span>
+                      </div>
+                      <label className="label">
+                        <span className="label-text font-bold">2. Utilisez ↑↓←→ et Entrée pour choisir le mode</span>
+                      </label>
+                      {(() => {
+                        const paymentModes = [
+                          { value: 'especes', label: '💵 Espèces' },
+                          { value: 'carte', label: '💳 Carte' },
+                          { value: 'cheque', label: '📝 Chèque' },
+                          { value: 'virement', label: '🏦 Virement' },
+                          { value: 'om', label: '🟠 OM' },
+                          { value: 'momo', label: '🟡 MoMo' },
+                        ]
+                        
+                        const selectMode = (modeValue: string) => {
+                          // Ajouter le paiement
+                          setPaiements([...paiements, { mode: modeValue, montant: montantSaisi }])
+                          // Calculer le reste
+                          const nouveauTotalVerse = totalVerse + montantSaisi
+                          const nouveauReste = Math.max(0, totalAPayer - nouveauTotalVerse)
+                          // Si reste, remettre en mode saisie avec le reste
+                          if (nouveauReste > 0) {
+                            setMontantPaye(nouveauReste.toString())
+                            setPaymentStep('amount')
+                            setSelectedModeIndex(0)
+                          } else {
+                            // Paiement complet
+                            setMontantPaye('')
+                          }
+                        }
+                        
+                        return (
+                          <div 
+                            className="grid grid-cols-2 gap-2"
+                            tabIndex={0}
+                            ref={(el) => el?.focus()}
+                            onKeyDown={(e) => {
+                              const cols = 2
+                              const rows = Math.ceil(paymentModes.length / cols)
+                              const currentRow = Math.floor(selectedModeIndex / cols)
+                              const currentCol = selectedModeIndex % cols
+                              
+                              if (e.key === 'ArrowRight') {
+                                e.preventDefault()
+                                setSelectedModeIndex(prev => Math.min(prev + 1, paymentModes.length - 1))
+                              } else if (e.key === 'ArrowLeft') {
+                                e.preventDefault()
+                                setSelectedModeIndex(prev => Math.max(prev - 1, 0))
+                              } else if (e.key === 'ArrowDown') {
+                                e.preventDefault()
+                                const newRow = Math.min(currentRow + 1, rows - 1)
+                                setSelectedModeIndex(Math.min(newRow * cols + currentCol, paymentModes.length - 1))
+                              } else if (e.key === 'ArrowUp') {
+                                e.preventDefault()
+                                const newRow = Math.max(currentRow - 1, 0)
+                                setSelectedModeIndex(newRow * cols + currentCol)
+                              } else if (e.key === 'Enter') {
+                                e.preventDefault()
+                                selectMode(paymentModes[selectedModeIndex].value)
+                              } else if (e.key >= '1' && e.key <= '6') {
+                                e.preventDefault()
+                                const idx = parseInt(e.key) - 1
+                                if (idx < paymentModes.length) {
+                                  selectMode(paymentModes[idx].value)
+                                }
+                              } else if (e.key === 'Escape' || e.key === 'Backspace') {
+                                e.preventDefault()
+                                setPaymentStep('amount')
+                                setSelectedModeIndex(0)
+                              }
+                            }}
+                          >
+                            {paymentModes.map((mode, idx) => (
+                              <button
+                                key={mode.value}
+                                type="button"
+                                onClick={() => selectMode(mode.value)}
+                                className={`btn btn-lg h-auto py-4 flex-col transition-all ${
+                                  idx === selectedModeIndex 
+                                    ? 'btn-primary ring-2 ring-primary ring-offset-2' 
+                                    : 'btn-outline'
+                                }`}
+                              >
+                                <span className="text-xl">{mode.label}</span>
+                                <kbd className="kbd kbd-xs opacity-50">{idx + 1}</kbd>
+                              </button>
+                            ))}
+                          </div>
+                        )
+                      })()}
+                      <button
+                        onClick={() => {
+                          setPaymentStep('amount')
+                          setSelectedModeIndex(0)
+                        }}
+                        className="btn btn-ghost btn-sm w-full mt-2"
+                      >
+                        ← Modifier le montant
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Monnaie à rendre */}
+                  {totalAvecCourant > totalAPayer && (
+                    <div className="alert alert-success mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <div className="text-sm">Monnaie à rendre</div>
+                        <div className="text-xl font-bold">{(totalAvecCourant - totalAPayer).toFixed(0)} F</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="modal-action">
+                    <button
+                      onClick={() => {
+                        setIsPaymentModalOpen(false)
+                        setPaymentStep('amount')
+                        setPaiements([])
+                      }}
+                      className="btn btn-ghost"
+                      disabled={loading}
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={enregistrerPaiement}
+                      className={`btn ${peutValider ? 'btn-success' : 'btn-disabled'}`}
+                      disabled={loading || !peutValider}
+                      ref={(el) => peutValider && el?.focus()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && peutValider && !loading) {
+                          e.preventDefault()
+                          enregistrerPaiement()
+                        }
+                      }}
+                    >
+                      {loading ? <span className="loading loading-spinner"></span> : (
+                        peutValider ? '✓ Valider le paiement (Entrée)' : `Reste ${resteAPayer} F`
+                      )}
+                    </button>
                   </div>
-                </div>
+                </>
               )
             })()}
-
-            <div className="modal-action">
-              <button
-                onClick={() => setIsPaymentModalOpen(false)}
-                className="btn btn-ghost"
-                disabled={loading}
-              >
-                Annuler
-              </button>
-              <button
-                onClick={enregistrerPaiement}
-                className="btn btn-primary"
-                disabled={loading}
-              >
-                {loading ? <span className="loading loading-spinner"></span> : 'Confirmer'}
-              </button>
-            </div>
           </div>
           <div className="modal-backdrop" onClick={() => setIsPaymentModalOpen(false)}></div>
         </div>
@@ -1355,8 +1660,11 @@ export default function CaisseCentralisee() {
               >Imprimer</button>
               <div className="flex gap-2">
                 <button className="btn btn-sm btn-ghost" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}>Fermer</button>
-                {couponTrouve.status === 'ACTIF' && (
-                  <button className="btn btn-sm btn-success text-white" onClick={() => handleAppliquerCoupon(couponTrouve)}>Appliquer</button>
+                {couponTrouve.status === 'ACTIF' && factureForCoupon && (
+                  <button className="btn btn-sm btn-success text-white" onClick={() => handleAppliquerCouponAFacture(couponTrouve, factureForCoupon)}>Appliquer à vente #{factureForCoupon.session_ticket_number}</button>
+                )}
+                {couponTrouve.status === 'ACTIF' && !factureForCoupon && (
+                  <div className="text-xs text-warning">Sélectionnez d'abord une vente pour appliquer le coupon</div>
                 )}
               </div>
             </div>

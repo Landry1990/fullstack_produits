@@ -68,7 +68,7 @@ class RapportViewSet(viewsets.ViewSet):
         ).annotate(
             jour=TruncDate('facture__date')
         ).values('jour').annotate(
-            ventes_ttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
+            ventes_ttc=Sum(F('quantity') * (F('selling_price') - F('discount')), output_field=DecimalField()),
             cout_ventes=Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField())
         ).order_by('-jour')
         
@@ -81,6 +81,16 @@ class RapportViewSet(viewsets.ViewSet):
         ).values('jour').annotate(
             achats_cout=Sum((F('quantity') + F('unites_gratuites')) * F('price_cost'), output_field=DecimalField()),
             achats_ttc_virtuel=Sum((F('quantity') + F('unites_gratuites')) * F('produit__selling_price'), output_field=DecimalField())
+        ).order_by('-jour')
+
+        # Global Discounts (Facture.remise)
+        remises = Facture.objects.filter(
+            date__date__gte=date_debut,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            jour=TruncDate('date')
+        ).values('jour').annotate(
+            total_remise=Sum('remise', output_field=DecimalField())
         ).order_by('-jour')
         
         # Indexer par date
@@ -101,6 +111,13 @@ class RapportViewSet(viewsets.ViewSet):
             if d not in mouvements_map: mouvements_map[d] = {'ventes_ttc': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0}
             mouvements_map[d]['achats_cout'] = a['achats_cout'] or 0
             mouvements_map[d]['achats_ttc'] = a['achats_ttc_virtuel'] or 0
+
+        # Apply Global Discounts
+        for r in remises:
+            d = r['jour']
+            if d in mouvements_map:
+                # Subtract global discount from Sales TTC
+                mouvements_map[d]['ventes_ttc'] -= (r['total_remise'] or 0)
             
         # 3. Back-casting
         resultats = []

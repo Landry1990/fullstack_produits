@@ -40,6 +40,10 @@ export default function PromisPage() {
   })
   const [sendingSms, setSendingSms] = useState(false)
 
+  // Selection state for bulk actions
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || ''
   const promisEndpoint = `${apiBaseUrl}/api/promis/`
@@ -141,6 +145,81 @@ export default function PromisPage() {
     } catch (err) {
       toast.error('Erreur lors de l\'annulation')
       console.error(err)
+    }
+  }
+
+  // Bulk actions
+  const handleBulkDelivrer = async () => {
+    if (selectedIds.size === 0) return
+    const confirmed = await confirm({
+      title: 'Livrer plusieurs promis',
+      message: `Marquer ${selectedIds.size} promis comme délivrés ?`,
+      variant: 'success',
+      confirmText: 'Délivrer tous'
+    })
+    if (!confirmed) return
+    
+    setBulkLoading(true)
+    try {
+      const { data } = await axios.post(`${promisEndpoint}bulk_delivrer/`, {
+        ids: Array.from(selectedIds)
+      })
+      toast.success(data.detail)
+      setSelectedIds(new Set())
+      fetchPromis()
+    } catch (err) {
+      toast.error('Erreur lors de la livraison en masse')
+      console.error(err)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  const handleBulkAnnuler = async () => {
+    if (selectedIds.size === 0) return
+    const confirmed = await confirm({
+      title: 'Annuler plusieurs promis',
+      message: `Annuler ${selectedIds.size} promis et réintégrer le stock ?\n\nCette action créera des entrées dans l'historique des produits.`,
+      variant: 'warning',
+      confirmText: 'Annuler tous'
+    })
+    if (!confirmed) return
+    
+    setBulkLoading(true)
+    try {
+      const { data } = await axios.post(`${promisEndpoint}bulk_annuler/`, {
+        ids: Array.from(selectedIds)
+      })
+      toast.success(data.detail)
+      setSelectedIds(new Set())
+      fetchPromis()
+    } catch (err) {
+      toast.error('Erreur lors de l\'annulation en masse')
+      console.error(err)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  // Selection helpers
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    const attPromis = filteredPromis.filter(p => p.status === 'ATT')
+    if (selectedIds.size === attPromis.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(attPromis.map(p => p.id)))
     }
   }
 
@@ -323,6 +402,37 @@ export default function PromisPage() {
         </button>
       </div>
 
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="alert alert-info flex justify-between items-center mb-4">
+          <span className="font-semibold">{selectedIds.size} promis sélectionné(s)</span>
+          <div className="flex gap-2">
+            <button 
+              className="btn btn-success btn-sm"
+              onClick={handleBulkDelivrer}
+              disabled={bulkLoading}
+            >
+              {bulkLoading && <span className="loading loading-spinner loading-xs" />}
+              ✓ Livrer tous
+            </button>
+            <button 
+              className="btn btn-error btn-sm"
+              onClick={handleBulkAnnuler}
+              disabled={bulkLoading}
+            >
+              {bulkLoading && <span className="loading loading-spinner loading-xs" />}
+              ✕ Annuler tous
+            </button>
+            <button 
+              className="btn btn-ghost btn-sm"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Désélectionner
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Form Modal */}
       {showForm && (
         <div className="modal modal-open">
@@ -446,6 +556,14 @@ export default function PromisPage() {
             <table className="table table-zebra">
               <thead>
                 <tr>
+                  <th>
+                    <input 
+                      type="checkbox"
+                      className="checkbox checkbox-sm"
+                      checked={selectedIds.size > 0 && selectedIds.size === filteredPromis.filter(p => p.status === 'ATT').length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th>{t('promis.table.date')}</th>
                   <th>{t('promis.table.client')}</th>
                   <th>{t('promis.table.phone')}</th>
@@ -457,7 +575,17 @@ export default function PromisPage() {
               </thead>
               <tbody>
                 {filteredPromis.map(p => (
-                  <tr key={p.id}>
+                  <tr key={p.id} className={selectedIds.has(p.id) ? 'bg-primary/10' : ''}>
+                    <td>
+                      {p.status === 'ATT' && (
+                        <input 
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          checked={selectedIds.has(p.id)}
+                          onChange={() => toggleSelection(p.id)}
+                        />
+                      )}
+                    </td>
                     <td>{format(new Date(p.date_promis), 'dd/MM/yyyy HH:mm', { locale: fr })}</td>
                     <td>{p.client_display}</td>
                     <td>{p.client_phone_display}</td>
@@ -467,20 +595,20 @@ export default function PromisPage() {
                     </td>
                     <td className="font-bold">{p.quantite}</td>
                     <td>
-                      <span className={getStatusBadge(p.status)}>{p.status_display}</span>
+                      <span className={`${getStatusBadge(p.status)} whitespace-nowrap`}>{p.status_display}</span>
                     </td>
                     <td>
                       {p.status === 'ATT' && (
-                        <div className="flex gap-1 flex-wrap">
+                        <div className="flex gap-2 flex-nowrap items-center">
                           <button 
-                            className="btn btn-success btn-xs"
+                            className="btn btn-success btn-xs whitespace-nowrap"
                             onClick={() => handleDelivrer(p.id)}
                             title={t('promis.actions.deliver')}
                           >
                             ✓ {t('promis.actions.deliver')}
                           </button>
                           <button 
-                            className="btn btn-error btn-xs"
+                            className="btn btn-error btn-xs whitespace-nowrap"
                             onClick={() => handleAnnuler(p.id)}
                             title={t('promis.actions.cancel')}
                           >

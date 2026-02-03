@@ -274,6 +274,7 @@ export default function Facturation() {
   const [stockResolutionItems, setStockResolutionItems] = useState<{product: ProduitModel, quantity: number, stock: number}[]>([])
   const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
   const [promisPhone, setPromisPhone] = useState('')
+  const [promisClientName, setPromisClientName] = useState('')
 
   // Ordonnancier Temporary Data Storage
   const [tempOrdonnanceData, setTempOrdonnanceData] = useState<OrdonnanceData | null>(null)
@@ -530,27 +531,57 @@ export default function Facturation() {
                   ...ligne,
                   isPromis: false,
                   promisQuantity: 0,
-                  promisPhone: undefined
               }
           }
       })
       setLignesFacture(updatedLignes)
+      
+      // Update Client Name if provided in modal and we are not using a specific DB client (or if we overrides)
+      if (promisClientName.trim() !== '') {
+          // If no client selected from DB, or if we were already in manual mode, update it
+          if (!selectedClient || useManualClient) {
+              setUseManualClient(true)
+              setManualClientName(promisClientName)
+              setSelectedClient(null) // Ensure we detach from DB client if we are setting a manual name that might differ
+          }
+      }
+
       setShowStockResolution(false)
       setIsNewSale(true)
       setIsPaymentModalOpen(true)
   }
 
-  const handlePaymentClick = () => {
+  const handlePaymentClick = async () => {
       // Check for out-of-stock items before payment
       if (!user?.can_sell_negative_stock) {
          // If user CANNOT sell negative stock, they MUST handle it.
-         // Effectivement, they must use Promis or remove items.
-         // For now, we reuse the resolution modal but maybe enforce checks?
-         // The requirement says "tous forcage de stock n'est pas promis".
-         // Use existing logic for resolution.
       }
 
-      const problematicLines = lignesFacture.filter(l =>
+      setLoading(true)
+      
+      // 1. Refresh Stock Data for ALL lines to ensure we don't rely on stale cache
+      // This solves the issue where previously loaded products might show outdated stock
+      const freshLinesPromises = lignesFacture.map(async (ligne) => {
+          try {
+              const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
+              const { data: freshProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${ligne.produit.id}/`)
+              return {
+                  ...ligne,
+                  produit: freshProduct // Update with fresh stock
+              }
+          } catch (e) {
+              console.error(`Failed to refresh stock for ${ligne.produit.name}`, e)
+              return ligne // Fallback to existing data
+          }
+      })
+
+      const freshLignes = await Promise.all(freshLinesPromises)
+      
+      // Update the cart state with fresh data so the UI reflects reality
+      setLignesFacture(freshLignes)
+      setLoading(false)
+
+      const problematicLines = freshLignes.filter(l =>
           // Check if quantity > stock (and product manages stock)
           l.quantite > (l.produit.stock ?? 0)
       )
@@ -563,9 +594,22 @@ export default function Facturation() {
           }))
           setStockResolutionItems(items)
 
+          // Auto-select all items for Promis by default
+          const allIds = new Set(items.map(i => i.product.id))
+          setPromisSelections(allIds)
+
           // Pre-select phone if available
           const client = clients.find(c => c.id === selectedClient)
           setPromisPhone(client?.phone || '')
+          
+          // Pre-select name if available
+          if (useManualClient) {
+              setPromisClientName(manualClientName)
+          } else if (client) {
+              setPromisClientName(client.name)
+          } else {
+              setPromisClientName('')
+          }
 
           // Default: Select ALL items for Promis. User can uncheck to force sale.
           setPromisSelections(new Set(items.map(i => i.product.id)))
@@ -575,7 +619,7 @@ export default function Facturation() {
           setIsNewSale(true)
           // Auto-fill montant with total to pay (Part Patient if Tiers Payant, else Total TTC)
           const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
-          setMontantPaye(Math.round(montantInitial).toString())
+          setMontantPaye(montantInitial.toString()) // Keep precision, don't round immediately for editing
           setIsPaymentModalOpen(true)
       }
   }
@@ -1010,6 +1054,69 @@ export default function Facturation() {
         date_paiement: new Date().toISOString(),
         paiements_details: paiementsList
       } as TicketCaisse)
+
+      // --- GESTION DES PROMIS (Manquant dans la version précédente) ---
+      // --- GESTION DES PROMIS (Manquant dans la version précédente) ---
+      const promisLines = lignesFacture.filter(
+          l => l.isPromis && l.promisQuantity && l.promisQuantity > 0
+      )
+      
+      if (promisLines.length > 0) {
+          const promisIds: number[] = []
+          const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
+
+          // 1. Création des Promis
+          for (const line of promisLines) {
+              console.log("DEBUG: Processing Promis line:", line)
+              // Si on est en mode "Client Manuel", on utilise le nom saisi.
+              // Sinon on utilise le client de la facture (qui peut être null ou 'Client divers')
+              const factureClient = factureUpdated.client as any // Cast to avoid TS error if types are mixed
+              const clientNameForPromis = promisClientName || (useManualClient ? manualClientName : (factureClient?.name || ''))
+              
+              const payload = {
+                  facture: factureUpdated.id,
+                  client: factureClient?.id || null, // ID client DB si dispo
+                  client_name: clientNameForPromis,          // Nom texte (crucial pour promis)
+                  client_phone: line.promisPhone || promisPhone,
+                  produit: line.produit.id,
+                  quantite: line.promisQuantity,
+                  status: 'ATT'
+              }
+              console.log("DEBUG: Promis Payload:", payload)
+
+              try {
+                  const { data: promisCreated } = await axios.post(promisEndpoint, payload)
+                  if (promisCreated && promisCreated.id) {
+                      promisIds.push(promisCreated.id)
+                  }
+              } catch (err) {
+                  console.error("Erreur création promis:", err)
+                  toast.error(`Erreur création promis pour ${line.produit.name}`)
+              }
+          }
+
+          // 2. Impression Ticket Groupé
+          if (promisIds.length > 0) {
+              toast.success(`${promisIds.length} article(s) enregistré(s) dans Promis !`)
+              
+              try {
+                  const printEndpoint = `${promisEndpoint}imprimer_ticket_groupe/`
+                  // Petit délai pour assurer que le backend a fini les écritures si nécessaire
+                  await new Promise(resolve => setTimeout(resolve, 500))
+
+                  const response = await axios.post(printEndpoint, { promis_ids: promisIds }, { responseType: 'blob' })
+                  const url = window.URL.createObjectURL(new Blob([response.data]))
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.setAttribute('download', `ticket_promis_groupe_${factureUpdated.id}.pdf`)
+                  document.body.appendChild(link)
+                  link.click()
+                  link.parentNode?.removeChild(link)
+              } catch (err) {
+                  console.error("Erreur impression ticket promis:", err)
+              }
+          }
+      }
 
       // Save ordonnancier data if it was collected earlier
       if (tempOrdonnanceData) {
@@ -1557,6 +1664,8 @@ export default function Facturation() {
         setPromisSelections={setPromisSelections}
         promisPhone={promisPhone}
         setPromisPhone={setPromisPhone}
+        promisClientName={promisClientName}
+        setPromisClientName={setPromisClientName}
         onConfirm={handleStockResolutionConfirm}
       />
 

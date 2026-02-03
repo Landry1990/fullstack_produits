@@ -319,6 +319,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     )
                     target_lot.quantity_remaining -= quantity_to_allocate
                     target_lot.save()
+                    
+                    # Update item lot name
+                    item.lot = target_lot.lot[:20] 
+                    item.save(update_fields=['lot'])
                     lots_updated = True
 
                 # CAS 2: Pas de lot spécifique -> FIFO/FEFO standard
@@ -328,6 +332,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         quantity_remaining__gt=0
                     ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
                     
+                    used_lots = []
                     for lot in available_lots:
                         if quantity_to_allocate <= 0:
                             break
@@ -341,8 +346,14 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         )
                         lot.quantity_remaining -= quantity_from_lot
                         lot.save()
+                        used_lots.append(lot.lot)
                         quantity_to_allocate -= quantity_from_lot
                         lots_updated = True
+
+                    if used_lots:
+                        # Join lots if multiple, truncate to 20 chars
+                        item.lot = ",".join(used_lots)[:20]
+                        item.save(update_fields=['lot'])
             
             # 2. Mise à jour du stock global
             if produit.use_lot_management and lots_updated:

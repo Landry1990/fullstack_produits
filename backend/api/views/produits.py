@@ -406,11 +406,14 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         ).order_by('-mois')
         
         # Agrégation des commandes (clôturées uniquement)
+        # IMPORTANT: Utiliser date_cloture (date de clôture) et non date (date de création)
+        # pour refléter le mois où le stock a été réellement reçu
         commandes = CommandeProduit.objects.filter(
             produit=produit,
-            commande__status='CLOT'
+            commande__status='CLOT',
+            commande__date_cloture__isnull=False  # S'assurer que date_cloture existe
         ).annotate(
-            mois=TruncMonth('commande__date')
+            mois=TruncMonth('commande__date_cloture')  # Date de clôture, pas de création
         ).values('mois').annotate(
             qte_c=Sum('quantity'),
             nb_c=Count('id', distinct=True)  # Distinct pour éviter les doublons

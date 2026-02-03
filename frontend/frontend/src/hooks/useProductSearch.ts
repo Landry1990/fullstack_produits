@@ -113,12 +113,11 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     // Determine if query should run
     const shouldFetch = autoLoad || (!!debouncedSearch && debouncedSearch.length >= minSearchLength)
 
-    const { data: produits = [], isLoading: loading, error, refetch } = useQuery({
+    const { data: produits = [], isLoading: loading, isFetching, error, refetch } = useQuery({
         queryKey: ['products', 'search', debouncedSearch, autoLoad],
         queryFn: () => fetchProducts(debouncedSearch, autoLoad),
         enabled: shouldFetch,
         staleTime: 0, // No cache for absolute real-time accuracy
-        placeholderData: (previousData) => previousData, // Keep showing previous results while fetching new ones
     })
 
     // Handle Barcode matching effect
@@ -126,7 +125,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
     // This replaces the logic inside the previous fetch function
     const hasHandledBarcode = useRef<string>('')
 
-    if (onBarcodeMatch && wasBarcodeScanned && !loading && produits.length === 1) {
+    if (onBarcodeMatch && wasBarcodeScanned && !loading && !isFetching && produits.length === 1) {
         // Prevent duplicate firing for the same search query
         if (hasHandledBarcode.current !== debouncedSearch) {
             const product = produits[0]

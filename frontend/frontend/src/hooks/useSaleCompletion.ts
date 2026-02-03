@@ -10,6 +10,8 @@ import type {
     Promis
 } from '../types';
 import { normalizeNumberInput } from '../utils/formatters';
+import { generatePromisTicket } from '../utils/promisPdf';
+import { usePharmacySettings } from './usePharmacySettings';
 
 // ============== TYPES ==============
 
@@ -215,6 +217,7 @@ function validateProfessionalClient(params: SaleCompletionParams, client: Client
  */
 export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
     const { apiBaseUrl = '', onSuccess, onError, onReset } = options;
+    const { settings: pharmacySettings } = usePharmacySettings();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -322,7 +325,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         const facturePayload = {
             client: params.useManualClient ? null : params.selectedClient,
             client_name_override: params.useManualClient ? params.manualClientName : null,
-            remise: params.totals.remiseMontant.toString(),
+            remise: (Number(params.totals.remiseMontant) || 0).toFixed(2),
             tva: '0',
             ayant_droit: ayantDroitId,
             part_client: (client?.client_type === 'PROFESSIONNEL' && params.totals.tauxCouverture > 0)
@@ -331,8 +334,15 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             type: params.isRetrocession ? 'RETRO' : 'STD'
         };
 
-        const { data } = await axios.post<Facture>(facturesEndpoint, facturePayload);
-        return data;
+        console.log("DEBUG: Creating Invoice Payload:", facturePayload);
+
+        try {
+            const { data } = await axios.post<Facture>(facturesEndpoint, facturePayload);
+            return data;
+        } catch (err: any) {
+            console.error("Facture Creation Error Details:", err.response?.data);
+            throw err;
+        }
     }, [facturesEndpoint]);
 
     /**
@@ -514,6 +524,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             l => l.isPromis && l.promisQuantity && l.promisQuantity > 0
         );
         const createdPromisIds: number[] = [];
+        const createdPromisList: any[] = []; // Store full objects for PDF
 
         for (const line of promisLines) {
             try {
@@ -529,32 +540,36 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
                 const { data } = await axios.post<Promis>(promisEndpoint, payload);
                 createdPromisIds.push(data.id);
+                // Enhance data with product name if missing in response (it might be in expanded relation, but let's be safe)
+                createdPromisList.push({
+                    ...data,
+                    produit_nom: line.produit.name,
+                    produit: line.produit // Keep full product for barcode
+                });
             } catch (err) {
                 console.error("Erreur création promis:", err);
             }
         }
 
-        // Print grouped tickets
-        if (createdPromisIds.length > 0) {
+        // Generate PDF on Frontend
+        if (createdPromisList.length > 0) {
             try {
-                const printEndpoint = `${promisEndpoint}imprimer_ticket_groupe/`;
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                const response = await axios.post(printEndpoint, { promis_ids: createdPromisIds }, { responseType: 'blob' });
-                const url = window.URL.createObjectURL(new Blob([response.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `ticket_promis_groupe_${finalFacture.id}.pdf`);
-                document.body.appendChild(link);
-                link.click();
-                link.parentNode?.removeChild(link);
+                generatePromisTicket({
+                    client_name: finalFacture.client_name || params.manualClientName || 'Client',
+                    client_phone: params.lignesFacture.find(l => l.promisPhone)?.promisPhone, // Try to find phone from lines
+                    items: createdPromisList,
+                    pharmacy: pharmacySettings,
+                    facture_id: finalFacture.numero_facture || finalFacture.id,
+                    is_paid: !params.centralizedCashRegister // If sent to central, it's not paid yet
+                });
             } catch (err) {
-                console.error("Erreur impression ticket promis:", err);
+                console.error("Erreur génération PDF promis:", err);
+                toast.error("Erreur lors de la génération du ticket Promis");
             }
         }
 
         return createdPromisIds;
-    }, [promisEndpoint]);
+    }, [promisEndpoint, pharmacySettings]);
 
     /**
      * Sauvegarder l'ordonnancier
@@ -691,6 +706,11 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 return result;
             }
 
+            // 3.5 Gérer les Promis et Ordonnancier (Avant check caisse centralisée)
+            // On le fait même si la vente part en caisse centralisée, car c'est une action de saisie
+            await createPromis(params, createdFacture);
+            await saveOrdonnancier(params.tempOrdonnanceData, createdFacture.id);
+
             // === CAISSE CENTRALISÉE ===
             if (params.centralizedCashRegister) {
                 if (createdFacture.status === 'PROF' || createdFacture.status === 'PROFORMA') {
@@ -728,11 +748,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             // 7. Récupérer la facture finale
             const { data: finalFacture } = await axios.get<Facture>(`${facturesEndpoint}${validatedFacture.id}/`);
 
-            // 8. Gérer les promis
-            await createPromis(params, finalFacture);
-
-            // 9. Sauvegarder l'ordonnancier
-            await saveOrdonnancier(params.tempOrdonnanceData, finalFacture.id);
+            // 10. Construire le résultat
 
             // 10. Construire le résultat
             const rendu = totalVerse - Number(finalFacture.total_ttc);

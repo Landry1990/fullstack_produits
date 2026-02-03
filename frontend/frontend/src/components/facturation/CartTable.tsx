@@ -1,7 +1,7 @@
+// Unused imports related to date formatting removed
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { LigneFacture, ProduitModel } from '../../types'
-import { differenceInDays, parseISO } from 'date-fns'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-hot-toast'
 
@@ -46,16 +46,6 @@ export default function CartTable({
           updateRemiseProduit(produitId, value)
       }
   }
-  
-  const formatDate = (dateStr: string | null | undefined) => {
-    if (!dateStr) return '-'
-    try {
-      const d = new Date(dateStr)
-      return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`
-    } catch {
-      return '-'
-    }
-  }
 
   if (lignesFacture.length === 0) {
     return (
@@ -76,7 +66,7 @@ export default function CartTable({
           <th className="bg-base-50 text-right w-12 sm:w-20">{t('facturation.cart.headers.qty')}</th>
           <th className="bg-base-50 text-right w-16 sm:w-24">{t('facturation.cart.headers.price')}</th>
           <th className="bg-base-50 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation.cart.headers.discount')}</th>
-          <th className="bg-base-50 text-center w-24 hidden xl:table-cell">{t('facturation.cart.headers.stock')}</th>
+          <th className="bg-base-50 text-center w-24 hidden md:table-cell">{t('facturation.cart.headers.stock')}</th>
           <th className="bg-base-50 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation.cart.headers.lot')}</th>
           <th className="bg-base-50 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
           <th className="bg-base-50 w-8"></th>
@@ -133,26 +123,12 @@ export default function CartTable({
                 placeholder="%"
               />
             </td>
-            <td className="text-center py-1 hidden xl:table-cell">
-              <div className="text-xs text-base-content/60">
-                {(() => {
-                    const dateStr = ligne.lotId && ligne.lotExpiration ? ligne.lotExpiration : ligne.produit.expire_date
-                    if (!dateStr) return '-'
-                    
-                    const isExp = differenceInDays(parseISO(dateStr), new Date()) <= 0
-                    const isNear = differenceInDays(parseISO(dateStr), new Date()) <= 90
-                    
-                    return (
-                        <span className={`
-                            ${isExp ? 'text-error font-bold' : ''} 
-                            ${isNear && !isExp ? 'text-warning font-medium' : ''}
-                        `}>
-                            {formatDate(dateStr)}
-                            {isExp && <span title="Périmé"> ⚠️</span>}
-                            {!isExp && isNear && <span title="Bientôt périmé"> ⏳</span>}
-                        </span>
-                    )
-                })()}
+            <td className="text-center py-1 hidden md:table-cell">
+              <div className={`font-mono font-bold ${
+                  (ligne.produit.stock ?? 0) <= 0 ? 'text-error' : 
+                  (ligne.produit.stock ?? 0) < 5 ? 'text-warning' : 'text-success'
+                }`}>
+                {ligne.produit.stock ?? 0}
               </div>
             </td>
             <td className="text-center py-1">

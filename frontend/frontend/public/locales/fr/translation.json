@@ -11,7 +11,12 @@
         "close": "Fermer",
         "receipt": "Ticket de caisse",
         "print_a4": "Facture A4",
-        "print_ticket": "Ticket Caisse"
+        "print_ticket": "Ticket Caisse",
+        "confirm": "Confirmer",
+        "confirmation": "Confirmation",
+        "pay": "Payer",
+        "error": "Erreur",
+        "refresh": "Actualiser"
     },
     "sidebar": {
         "dashboard": "Tableau de bord",
@@ -32,7 +37,8 @@
             "title": "Commandes",
             "local_title": "Commandes Grossistes (Locales)",
             "direct_title": "Commandes Directes (Etranger)",
-            "new_current": "Nouvelle / En cours"
+            "new_current": "Nouvelle / En cours",
+            "history": "Historique Achats"
         },
         "commande": {
             "local_title": "Commandes Grossistes (Locales)",
@@ -669,6 +675,8 @@
     },
     "facturation": {
         "title": "Facturation",
+        "sale_recorded": "Vente enregistrée",
+        "invoice": "Facture",
         "subtitle": "Création de facture",
         "search_placeholder": "Scanner un code-barres ou rechercher un produit (Nom, CIP...)",
         "search_label": "Rechercher un produit (F2)",
@@ -679,6 +687,7 @@
             "pay": "Encaisser (Ctrl+Entrée)",
             "cancel": "Réinitialiser (Echap)"
         },
+        "retrocession_mode": "Mode Rétrocession",
         "search_min_chars": "Tapez au moins 2 caractères",
         "search_no_results": "Aucun produit trouvé",
         "search": {
@@ -751,7 +760,8 @@
                 "price": "P.U.",
                 "total": "Total",
                 "stock": "Stock",
-                "discount": "Remise"
+                "discount": "Remise",
+                "lot": "Lot"
             },
             "empty": "Le panier est vide. Scannez un produit ou utilisez la recherche.",
             "actions": {
@@ -773,6 +783,7 @@
             "stock": "Stock",
             "missing": "Manquant",
             "promised": "Promis ?",
+            "client_name": "Nom du Client",
             "client_phone_for_promised_ticket": "Numéro de téléphone pour le ticket promis",
             "phone_number_placeholder": "Ex: 77...",
             "cancel_and_edit_cart": "Annuler et modifier panier",
