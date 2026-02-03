@@ -67,6 +67,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         ligne.produit.id === fullProduit.id
                             ? {
                                 ...ligne,
+                                produit: fullProduit, // Update product with fresh data (stock, prices, etc.)
                                 quantite: nouvelleQuantite,
                                 total_ligne: calculateLigneTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
                             }

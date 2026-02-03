@@ -113,7 +113,7 @@ export const usePromisDisponibles = () => {
                 return [];
             }
         },
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 2,
     });
 };
 

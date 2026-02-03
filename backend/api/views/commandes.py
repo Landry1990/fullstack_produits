@@ -130,10 +130,186 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                  raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
             raise e
 
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def cloturer(self, request, pk=None):
+        """
+        Clôture une commande, met à jour le stock et calcule le PMP.
+        Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.
+        
+        Optimisations:
+        - Prefetch des produits pour éviter les requêtes N+1
+        - Bulk create des lots de stock
+        - Bulk update des produits
+        """
+        commande = self.get_object()
+        if commande.status == Commande.Status.CLOTUREE:
+            return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Enregistrer la date de clôture (maintenant, en timezone local)
+        commande.date_cloture = timezone.now()
 
-            if isinstance(e, ProtectedError) or "ProtectedError" in str(type(e)):
-                 raise ValidationError("Impossible de supprimer : Des lots de cette commande ont déjà été vendus ou utilisés.")
-            raise e
+        # Prefetch tous les produits de la commande en une seule requête
+        items = commande.produits.select_related('produit', 'produit__fournisseur').all()
+        
+        if not items.exists():
+            return Response({'detail': 'Aucun produit dans cette commande.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # VERROUILLAGE: On récupère les IDs des produits pour les verrouiller
+        product_ids = [item.produit_id for item in items]
+        
+        # On verrouille les produits pour empêcher toute modification de stock (ex: vente concomitante)
+        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
+        product_map = {p.id: p for p in locked_products}
+        
+        # Préparer les lots de stock à créer en batch
+        lots_to_create = []
+        produits_to_update = []
+        produits_dict = {}  # Pour éviter les doublons et suivre les mises à jour
+        
+        # Phase 1: Calculs en mémoire (pas de DB writes)
+        for item in items:
+            # Calcul des quantités
+            quantity_paid = item.quantity
+            quantity_free = item.unites_gratuites
+            total_qty = quantity_paid + quantity_free
+            
+            # Calcul du coût effectif (le coût payé réparti sur toutes les unités)
+            if total_qty > 0:
+                effective_cost = (quantity_paid * item.price_cost) / total_qty
+            else:
+                effective_cost = item.price_cost
+            
+            # Utiliser l'instance verrouillée du produit
+            produit = product_map.get(item.produit_id)
+            if not produit:
+                continue # Devrait pas arriver avec l'intégrité référentielle
+            
+            # 1. Préparer le lot de stock (si gestion par lots activée)
+            if produit.use_lot_management:
+                # Auto-générer le numéro de lot si non fourni
+                lot_number = item.lot
+                if not lot_number:
+                    lot_number = f"CMD{commande.id}-{item.id}"
+                
+                lot = StockLot(
+                    produit=produit,
+                    commande_produit=item,
+                    fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
+                    quantity_initial=total_qty,
+                    quantity_paid=quantity_paid,
+                    quantity_free=quantity_free,
+                    quantity_remaining=total_qty,
+                    price_cost=effective_cost,
+                    selling_price=produit.selling_price,
+                    lot=lot_number,
+                    date_expiration=item.date_expiration,
+                    date_reception=commande.date_cloture
+                )
+                lots_to_create.append(lot)
+            
+            # 2. Calculer le nouveau PMP et stock
+            # Éviter de traiter le même produit plusieurs fois (si plusieurs lignes pour même produit)
+            if produit.id not in produits_dict:
+                old_stock = Decimal(produit.stock)
+                old_pmp = Decimal(produit.pmp)
+                qty_received = Decimal(total_qty)
+                cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
+                
+                new_total_qty = old_stock + qty_received
+                
+                if new_total_qty > 0:
+                    current_val = old_stock * old_pmp
+                    incoming_val = cout_total
+                    new_pmp = (current_val + incoming_val) / new_total_qty
+                    produit.pmp = new_pmp
+                
+                # Mettre à jour le stock
+                produit.stock = old_stock + qty_received
+                
+                # Ajouter au dictionnaire pour suivi local
+                produits_dict[produit.id] = produit
+                produits_to_update.append(produit)
+            else:
+                # Produit déjà traité dans cette boucle (autre ligne de commande), accumuler
+                existing_produit = produits_dict[produit.id]
+                
+                # On part des valeurs déjà modifiées en mémoire
+                current_stock = Decimal(existing_produit.stock)
+                current_pmp = Decimal(existing_produit.pmp)
+                
+                qty_received = Decimal(total_qty)
+                cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
+                
+                new_total_qty = current_stock + qty_received
+                
+                if new_total_qty > 0:
+                    current_val = current_stock * current_pmp
+                    incoming_val = cout_total
+                    new_pmp = (current_val + incoming_val) / new_total_qty
+                    existing_produit.pmp = new_pmp
+                
+                existing_produit.stock += Decimal(total_qty)
+        
+        # Phase 2: Écritures en base de données (bulk operations)
+        
+        # 2.1 Créer tous les lots en une seule requête
+        if lots_to_create:
+            StockLot.objects.bulk_create(lots_to_create, batch_size=100)
+        
+        # 2.2 Mettre à jour tous les produits en batch
+        if produits_to_update:
+            # Séparer les produits avec gestion de lots (update PMP only) 
+            # et sans gestion de lots (update stock + PMP)
+            produits_with_lots = [p for p in produits_to_update if p.use_lot_management]
+            produits_without_lots = [p for p in produits_to_update if not p.use_lot_management]
+            
+            if produits_with_lots:
+                Produit.objects.bulk_update(
+                    produits_with_lots, 
+                    ['pmp', 'stock'], 
+                    batch_size=100
+                )
+            
+            if produits_without_lots:
+                Produit.objects.bulk_update(
+                    produits_without_lots, 
+                    ['stock', 'pmp'], 
+                    batch_size=100
+                )
+        
+        # 2.3 Mettre à jour le statut et la date de clôture de la commande
+        # IMPORTANT: Mettre aussi la date de la commande à aujourd'hui (date de clôture)
+        commande.status = Commande.Status.CLOTUREE
+        commande.date = commande.date_cloture  # La commande est datée au jour de clôture
+        commande.save(update_fields=['status', 'date_cloture', 'date'])
+        
+        # 2.4 Mettre à jour la date de dernier achat pour tous les produits
+        today = date.today()
+        # Important: utiliser l'ID du produit dans la liste product_ids
+        Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
+
+        # 2.5 Créer les mouvements de stock (historique) avec la date de clôture (aujourd'hui)
+        from ..models import MouvementStock
+        mouvements_to_create = []
+        for item in items:
+            produit = product_map.get(item.produit_id)
+            if not produit:
+                continue
+            total_qty = item.quantity + item.unites_gratuites
+            mouvements_to_create.append(MouvementStock(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.ENTREE,
+                quantite=total_qty,
+                stock_apres=produit.stock,
+                user=request.user,
+                description=f"Réception commande #{commande.id} - Lot: {item.lot or 'N/A'} - Fournisseur: {commande.fournisseur.name if commande.fournisseur else 'N/A'}"
+            ))
+        
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
+
+        return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -1253,6 +1429,94 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             'detail': f'Promis #{promis.id} annulé. {promis.quantite} unité(s) réintégrée(s) au stock de {produit.name}.',
             'promis': PromisSerializer(promis).data,
             'nouveau_stock': produit.stock
+        })
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_delivrer(self, request):
+        """
+        Marquer plusieurs promis comme délivrés.
+        Payload: { "ids": [1, 2, 3] }
+        """
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        promis_list = Promis.objects.filter(id__in=ids, status=Promis.Status.EN_ATTENTE)
+        count = promis_list.count()
+        
+        if count == 0:
+            return Response({'detail': 'Aucun promis en attente trouvé.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Bulk update
+        promis_list.update(
+            status=Promis.Status.DELIVRE,
+            date_livraison=timezone.now()
+        )
+        
+        return Response({
+            'detail': f'{count} promis marqué(s) comme délivré(s).',
+            'count': count
+        })
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_annuler(self, request):
+        """
+        Annuler plusieurs promis et réintégrer le stock.
+        Payload: { "ids": [1, 2, 3] }
+        """
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        promis_list = Promis.objects.filter(
+            id__in=ids, 
+            status=Promis.Status.EN_ATTENTE
+        ).select_related('produit')
+        
+        count = promis_list.count()
+        if count == 0:
+            return Response({'detail': 'Aucun promis en attente trouvé.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Import for stock movement
+        from ..models import MouvementStock
+        
+        reintegrated = []
+        for promis in promis_list:
+            produit = promis.produit
+            
+            # Réintégrer le stock
+            if not produit.use_lot_management:
+                produit.stock += promis.quantite
+                produit.save(update_fields=['stock'])
+            
+            # Créer le mouvement de stock
+            MouvementStock.objects.create(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.RETOUR,
+                quantite=promis.quantite,
+                stock_apres=produit.stock,
+                user=request.user,
+                description=f"Réintégration stock - Annulation promis #{promis.id} (Client: {promis.client_display})"
+            )
+            
+            reintegrated.append({
+                'id': promis.id,
+                'produit': produit.name,
+                'quantite': promis.quantite
+            })
+        
+        # Bulk update status
+        promis_list.update(
+            status=Promis.Status.ANNULE,
+            notes=models.F('notes')  # Can't easily append in bulk, so just mark as cancelled
+        )
+        
+        return Response({
+            'detail': f'{count} promis annulé(s) et stock réintégré.',
+            'count': count,
+            'reintegrated': reintegrated
         })
 
     @action(detail=True, methods=['get'])
