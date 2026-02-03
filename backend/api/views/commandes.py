@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from django.db import transaction
-from django.db.models import ProtectedError
+from django.db.models import ProtectedError, F, Sum, DecimalField, Value
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.http import HttpResponse
@@ -92,7 +92,23 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     - List view: Lightweight serializer (8 fields)
     - Detail view: Complete serializer with all products
     """
-    queryset = Commande.objects.select_related('fournisseur').prefetch_related('produits__produit', 'produits__commande__fournisseur').order_by('-date')
+    from django.db.models.functions import Coalesce
+    from django.db.models import Value
+
+    # Optimisation: Annotations pour éviter le problème N+1 sur 'total' et 'montant_paye'
+    queryset = Commande.objects.select_related('fournisseur') \
+        .prefetch_related('produits__produit', 'produits__commande__fournisseur') \
+        .annotate(
+            total_annotated=Coalesce(
+                Sum(F('produits__quantity') * F('produits__price')), 
+                Value(0, output_field=DecimalField())
+            ),
+            montant_paye_annotated=Coalesce(
+                Sum('paiements__montant'), 
+                Value(0, output_field=DecimalField())
+            )
+        ).order_by('-date')
+        
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]

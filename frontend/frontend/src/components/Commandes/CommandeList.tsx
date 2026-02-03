@@ -1,4 +1,5 @@
 import type { Commande, Fournisseur } from '../../types';
+import { useTranslation } from 'react-i18next';
 
 export type SortKey = 'numero' | 'date' | 'fournisseur' | 'status';
 
@@ -64,6 +65,7 @@ export default function CommandeList({
   onOpenSuggestionModal,
   onViewDetails
 }: CommandeListProps) {
+  const { t } = useTranslation();
 
   // Fonction pour obtenir la classe CSS du badge de statut
   function getStatusBadgeClass(status: string): string {
@@ -86,88 +88,88 @@ export default function CommandeList({
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-lg md:text-xl font-bold">Liste des Commandes</h1>
+        <h1 className="text-lg md:text-xl font-bold">{t('orders.list.title')}</h1>
         <div className="flex gap-2 w-full md:w-auto">
             <button 
                 className="btn btn-secondary btn-sm" 
                 onClick={onOpenSuggestionModal}
             >
-                ✨ Suggestions
+                ✨ {t('orders.list.suggestions_btn')}
             </button>
-            <button className="btn btn-primary btn-sm" onClick={onOpenCreateView}>+ Créer</button>
+            <button className="btn btn-primary btn-sm" onClick={onOpenCreateView}>+ {t('orders.list.create_btn')}</button>
         </div>
       </div>
         
       {/* Tri et Filtres */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trier par:</span>
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('orders.list.sort_by')}:</span>
         <button 
           className={`btn btn-xs ${sortKey === 'numero' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => handleSortClick('numero')}
         >
-          N° {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
+          {t('orders.list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
         </button>
         <button 
           className={`btn btn-xs ${sortKey === 'date' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => handleSortClick('date')}
         >
-          Date {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+          {t('orders.list.table.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
         </button>
         <button 
           className={`btn btn-xs ${sortKey === 'fournisseur' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => handleSortClick('fournisseur')}
         >
-          Fournisseur {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
+          {t('orders.list.table.provider')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
         </button>
         <button 
           className={`btn btn-xs ${sortKey === 'status' ? 'btn-primary' : 'btn-ghost'}`}
           onClick={() => handleSortClick('status')}
         >
-          Statut {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+          {t('orders.list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
         </button>
         
         <div className="divider divider-horizontal mx-2"></div>
         
-        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtrer:</span>
+        <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('orders.list.filter_by')}:</span>
         <button 
           className={`btn btn-xs ${filterStatus === 'ALL' ? 'btn-neutral' : 'btn-ghost'}`}
           onClick={() => onFilterStatusChange('ALL')}
         >
-          Tous ({commandes.length})
+          {t('orders.list.filters.all')} ({commandes.length})
         </button>
         <button 
           className={`btn btn-xs gap-1 ${filterStatus === 'PREP' ? 'btn-info' : 'btn-ghost'}`}
           onClick={() => onFilterStatusChange('PREP')}
         >
           <span className="w-2 h-2 rounded-full bg-info"></span>
-          En prép. ({commandes.filter(c => c.status === 'PREP').length})
+          {t('orders.list.filters.prep')} ({commandes.filter(c => c.status === 'PREP').length})
         </button>
         <button 
           className={`btn btn-xs gap-1 ${filterStatus === 'ATT' ? 'btn-warning' : 'btn-ghost'}`}
           onClick={() => onFilterStatusChange('ATT')}
         >
           <span className="w-2 h-2 rounded-full bg-warning"></span>
-          En attente ({commandes.filter(c => c.status === 'ATT').length})
+          {t('orders.list.filters.pending')} ({commandes.filter(c => c.status === 'ATT').length})
         </button>
         <button 
           className={`btn btn-xs gap-1 ${filterStatus === 'CLOT' ? 'btn-success' : 'btn-ghost'}`}
           onClick={() => onFilterStatusChange('CLOT')}
         >
           <span className="w-2 h-2 rounded-full bg-success"></span>
-          Clôturées ({commandes.filter(c => c.status === 'CLOT').length})
+          {t('orders.list.filters.closed')} ({commandes.filter(c => c.status === 'CLOT').length})
         </button>
       </div>
 
       {/* Barre d'actions sélection multiple */}
       {selectedOrderIds.size > 0 && (
         <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
-          <span className="font-semibold text-sm">{selectedOrderIds.size} commande(s) sélectionnée(s)</span>
+          <span className="font-semibold text-sm">{t('orders.list.selection.selected_count', { count: selectedOrderIds.size })}</span>
           <button
             type="button"
             className="btn btn-sm btn-ghost"
             onClick={onToggleAllOrdersSelection} // Using toggle all to potentially deselect if logic matches, or create dedicated deselect
           >
-            Désélectionner
+            {t('orders.list.selection.deselect')}
           </button>
           
           <button
@@ -177,7 +179,7 @@ export default function CommandeList({
             disabled={!canMerge}
             title={mergeReason || ''}
           >
-            🔀 Fusionner
+            🔀 {t('orders.list.selection.merge')}
           </button>
         </div>
       )}
@@ -196,13 +198,13 @@ export default function CommandeList({
                   onChange={onToggleAllOrdersSelection}
                 />
               </th>
-              <th>ID</th>
-              <th>N° Facture</th>
-              <th>Date</th>
-              <th>Fournisseur</th>
-              <th>Statut</th>
-              <th className="text-right">Total (F)</th>
-              <th className="text-center">Actions</th>
+              <th>{t('orders.list.table.id')}</th>
+              <th>{t('orders.list.table.invoice_number')}</th>
+              <th>{t('orders.list.table.date')}</th>
+              <th>{t('orders.list.table.provider')}</th>
+              <th>{t('orders.list.table.status')}</th>
+              <th className="text-right">{t('orders.list.table.total')}</th>
+              <th className="text-center">{t('orders.list.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -240,14 +242,14 @@ export default function CommandeList({
                     className="btn btn-ghost btn-xs"
                     onClick={() => onViewDetails(commande)}
                   >
-                    Voir Détails
+                    {t('orders.list.table.view_details')}
                   </button>
                 </td>
               </tr>
             ))}
             {sortedCommandes.length === 0 && (
                 <tr>
-                    <td colSpan={8} className="text-center py-8 text-gray-400">Aucune commande trouvée</td>
+                    <td colSpan={8} className="text-center py-8 text-gray-400">{t('orders.list.table.empty')}</td>
                 </tr>
             )}
           </tbody>
@@ -257,7 +259,7 @@ export default function CommandeList({
       {/* Pagination & Footer info */}
       <div className="p-2 bg-white border-t rounded-b-lg shadow text-xs text-center text-base-content/50 flex flex-col items-center gap-2 mt-[-8px] mb-4">
           <div>
-            {commandes.length} commande{commandes.length > 1 ? 's' : ''} affichée{commandes.length > 1 ? 's' : ''} sur {totalCount} total
+            {t('orders.list.pagination.showing', { count: commandes.length, total: totalCount })}
           </div>
           
           {!loading && totalCount > 0 && (
@@ -267,10 +269,10 @@ export default function CommandeList({
                 disabled={page === 1} 
                 onClick={() => onPageChange(page - 1)}
               >
-                ← Précédent
+                ← {t('orders.list.pagination.prev')}
               </button>
               <div className="px-2 py-1 bg-white rounded border border-base-200">
-                <span className="font-semibold">Page {page}</span>
+                <span className="font-semibold">{t('orders.list.pagination.page')} {page}</span>
                 {totalPages > 1 && <span className="text-gray-500"> / {totalPages}</span>}
               </div>
               <button 
@@ -278,7 +280,7 @@ export default function CommandeList({
                 disabled={page >= totalPages} 
                 onClick={() => onPageChange(page + 1)}
               >
-                Suivant →
+                {t('orders.list.pagination.next')} →
               </button>
             </div>
           )}

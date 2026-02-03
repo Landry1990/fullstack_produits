@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
@@ -237,6 +238,7 @@ const safeDate = (dateStr: any): Date | null => {
 }
 
 export default function CentreRapports() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null)
   const [params, setParams] = useState<Record<string, any>>({})
@@ -786,8 +788,8 @@ export default function CentreRapports() {
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-base-200 px-6 py-4 shrink-0 print:hidden">
-        <h1 className="text-xl font-light text-base-content">Centre de Rapports</h1>
-        <p className="text-sm text-base-content/50">Sélectionnez une requête, configurez les paramètres et affichez les résultats</p>
+        <h1 className="text-xl font-light text-base-content">{t('reports.title')}</h1>
+        <p className="text-sm text-base-content/50">{t('reports.subtitle')}</p>
       </div>
       
       {/* Main Content */}
@@ -795,7 +797,7 @@ export default function CentreRapports() {
         {/* Sidebar - Liste des requêtes */}
         <div className="w-72 bg-base-50 border-r border-base-200 flex flex-col shrink-0 print:hidden">
           <div className="p-3 border-b border-base-200 bg-base-100">
-            <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">Liste des requêtes</div>
+            <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('reports.queries_title')}</div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {QUERIES.map(query => (
@@ -806,9 +808,9 @@ export default function CentreRapports() {
                   selectedQuery?.id === query.id ? 'bg-primary/10 border-l-4 border-l-primary' : ''
                 }`}
               >
-                <div className="font-medium text-sm">{query.name}</div>
-                {query.description && (
-                  <div className="text-xs text-base-content/50 mt-0.5">{query.description}</div>
+                <div className="font-medium text-sm">{t(`reports.queries.${query.id}.name`)}</div>
+                {t(`reports.queries.${query.id}.description`) && (
+                  <div className="text-xs text-base-content/50 mt-0.5">{t(`reports.queries.${query.id}.description`)}</div>
                 )}
               </button>
             ))}
@@ -823,9 +825,9 @@ export default function CentreRapports() {
               <div className="bg-white border-b border-base-200 p-4 shrink-0">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-lg font-bold">{selectedQuery.name}</h2>
-                    {selectedQuery.description && (
-                      <p className="text-sm text-base-content/60">{selectedQuery.description}</p>
+                    <h2 className="text-lg font-bold">{t(`reports.queries.${selectedQuery.id}.name`)}</h2>
+                    {t(`reports.queries.${selectedQuery.id}.description`) && (
+                      <p className="text-sm text-base-content/60">{t(`reports.queries.${selectedQuery.id}.description`)}</p>
                     )}
                   </div>
                   
@@ -843,7 +845,7 @@ export default function CentreRapports() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       )}
-                      Écran
+                      {t('reports.execute')}
                     </button>
                     <button 
                       className="btn btn-outline btn-sm gap-2" 
@@ -852,14 +854,14 @@ export default function CentreRapports() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                       </svg>
-                      Imprimer
+                      {t('common.print')}
                     </button>
                     <button 
                       className="btn btn-outline btn-sm gap-2"
                       onClick={copyToClipboard}
                       disabled={!results}
                     >
-                      📋 Copier
+                      📋 {t('reports.copy')}
                     </button>
                   </div>
                 </div>
@@ -870,7 +872,7 @@ export default function CentreRapports() {
                     {selectedQuery.params.map(param => (
                       <div key={param.key} className="form-control">
                         <label className="label py-1">
-                          <span className="label-text text-xs">{param.label}</span>
+                          <span className="label-text text-xs">{t(`reports.params.${param.key}`) || param.label}</span>
                         </label>
 
 
@@ -1016,7 +1018,7 @@ export default function CentreRapports() {
                   </div>
                 ) : results ? (
                   <div className="bg-white rounded-lg shadow-sm border border-base-200 p-4 flex flex-col h-full">
-                    <div className="text-xs text-base-content/50 mb-3 uppercase font-bold">Résultats</div>
+                    <div className="text-xs text-base-content/50 mb-3 uppercase font-bold">{t('reports.results.title')}</div>
                     
                     <div className="flex-1 overflow-auto">
                         {renderResults()}
@@ -1050,7 +1052,7 @@ export default function CentreRapports() {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-base-content/40">
                     <div className="text-6xl mb-4">📊</div>
-                    <div className="text-lg">Cliquez sur "Écran" pour exécuter la requête</div>
+                    <div className="text-lg">{t('reports.results.execute_prompt')}</div>
                   </div>
                 )}
               </div>
@@ -1058,7 +1060,7 @@ export default function CentreRapports() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-base-content/40">
               <div className="text-6xl mb-4">👈</div>
-              <div className="text-lg">Sélectionnez une requête dans la liste</div>
+              <div className="text-lg">{t('reports.select_query_prompt')}</div>
             </div>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import type { Commande, CommandeProduit, User } from '../types';
 
 interface UseCommandeActionsProps {
@@ -40,6 +41,7 @@ export function useCommandeActions({
     confirm,
     user
 }: UseCommandeActionsProps) {
+    const { t } = useTranslation();
 
     // Password Confirmation State
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -129,13 +131,13 @@ export function useCommandeActions({
         // Validation basique
         if (!commandeData.fournisseur) {
             // Pas de toast en auto-save pour ne pas spammer, sauf erreur critique
-            if (!isAutoSave) toast.error('Veuillez sélectionner un fournisseur');
+            if (!isAutoSave) toast.error(t('orders.messages.provider_required'));
             return;
         }
 
         // Validation: En mode EDIT, on a besoin d'une commande existante
         if (viewMode === 'EDIT' && !selectedCommande?.id) {
-            if (!isAutoSave) toast.error('Aucune commande sélectionnée pour la modification');
+            if (!isAutoSave) toast.error(t('orders.messages.no_selection'));
             return; // Silent return for auto-save
         }
 
@@ -152,7 +154,7 @@ export function useCommandeActions({
             if (viewMode === 'CREATE') {
                 const response = await axios.post<Commande>(commandesEndpoint, cleanedCommandeData);
                 commandeId = response.data.id;
-                if (!isAutoSave) toast.success(`Commande #${commandeId} créée`);
+                if (!isAutoSave) toast.success(t('orders.messages.create_success', { id: commandeId }));
 
                 // Important pour l'auto-save: mise à jour immédiate du mode et de la commande
                 if (isAutoSave) {
@@ -164,7 +166,7 @@ export function useCommandeActions({
 
             } else if (viewMode === 'EDIT' && commandeId) {
                 await axios.patch<Commande>(`${commandesEndpoint}${commandeId}/`, cleanedCommandeData);
-                if (!isAutoSave) toast.success('Commande mise à jour');
+                if (!isAutoSave) toast.success(t('orders.messages.update_success'));
             }
 
             if (!commandeId) {
@@ -223,7 +225,7 @@ export function useCommandeActions({
 
         } catch (err) {
             if (!isAutoSave) {
-                handleApiError(err, "Erreur lors de l'enregistrement de la commande");
+                handleApiError(err, t('orders.messages.save_error'));
             } else {
                 console.error("Erreur Auto-save:", err);
             }
@@ -234,33 +236,33 @@ export function useCommandeActions({
     const executeDelete = async (commandeId: number) => {
         try {
             await axios.delete(`${commandesEndpoint}${commandeId}/`);
-            toast.success("Commande supprimée");
+            toast.success(t('orders.messages.delete_success'));
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');
         } catch (err) {
-            handleApiError(err, "Erreur lors de la suppression de la commande");
+            handleApiError(err, t('orders.messages.delete_error'));
         }
     };
 
     const handleDeleteCommande = async (commande: Commande) => {
         // Permission Check
         if (!user?.is_superuser && !user?.can_delete_commande) {
-            toast.error("Accès refusé : Vous n'avez pas la permission de supprimer des commandes.");
+            toast.error(t('orders.messages.access_denied_delete'));
             return;
         }
 
         const confirmed = await confirm({
-            title: 'Supprimer la commande',
-            message: `Êtes-vous sûr de vouloir supprimer la commande #${commande.id} ?`,
+            title: t('orders.details.delete'), // "Supprimer la commande" title key reused or delete_btn
+            message: t('orders.messages.delete_confirm_body', { id: commande.id }),
             variant: 'danger',
-            confirmText: 'Supprimer'
+            confirmText: t('orders.details.delete')
         });
 
         if (confirmed) {
             setPasswordModalConfig({
-                title: "Suppression de commande",
-                message: "Vous êtes sur le point de supprimer une commande. Confirmez votre mot de passe."
+                title: t('orders.messages.password_confirm_delete_title'),
+                message: t('orders.messages.password_confirm_delete_body')
             });
             setPendingAction(() => () => executeDelete(commande.id));
             setIsPasswordModalOpen(true);
@@ -271,7 +273,7 @@ export function useCommandeActions({
     const executeCloture = async (commandeId: number) => {
         try {
             const response = await axios.post(`${commandesEndpoint}${commandeId}/cloturer/`);
-            toast.success(response.data.message || "Commande clôturée avec succès");
+            toast.success(response.data.message || t('orders.messages.close_success'));
 
             fetchCommandes();
 
@@ -280,21 +282,21 @@ export function useCommandeActions({
             setSelectedCommande(updated);
 
         } catch (err) {
-            handleApiError(err, "Erreur lors de la clôture");
+            handleApiError(err, "Erreur lors de la clôture"); // Could add specific key
         }
     };
 
     const handleCloturerCommande = async (commande: Commande) => {
         const confirmed = await confirm({
-            title: 'Clôturer la commande',
-            message: `Confirmez-vous la réception de la commande #${commande.id} ? Cela mettra à jour le stock.`,
-            confirmText: 'Confirmer la réception'
+            title: t('orders.details.close'),
+            message: t('orders.messages.close_confirm'),
+            confirmText: t('common.actions.confirm') // Reuse common confirm key or "Confirmer la réception" -> maybe orders.details.close?
         });
 
         if (confirmed) {
             setPasswordModalConfig({
-                title: "Confirmer la réception",
-                message: "Cette action va mettre à jour le stock et les prix d'achat. Veuillez confirmer votre mot de passe."
+                title: t('orders.messages.password_confirm_close_title'),
+                message: t('orders.messages.password_confirm_close_body')
             });
             setPendingAction(() => () => executeCloture(commande.id));
             setIsPasswordModalOpen(true);
@@ -306,7 +308,10 @@ export function useCommandeActions({
         try {
             const newStatus = commande.status === 'ATT' ? 'PREP' : 'ATT';
             await axios.patch(`${commandesEndpoint}${commande.id}/`, { status: newStatus });
-            toast.success(`Statut mis à jour : ${newStatus === 'ATT' ? 'En attente' : 'En préparation'}`);
+
+            // Translate status display
+            const statusDisplay = newStatus === 'ATT' ? t('orders.status.pending') : t('orders.status.prep');
+            toast.success(t('orders.messages.status_update_success', { status: statusDisplay }));
 
             const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
             setSelectedCommande(updated);
@@ -320,7 +325,7 @@ export function useCommandeActions({
     const executeAnnulerReception = async (commandeId: number) => {
         try {
             const response = await axios.post(`${commandesEndpoint}${commandeId}/annuler_reception/`);
-            toast.success(`Réception annulée : ${response.data.details?.produits_affectes || 0} produits affectés.`);
+            toast.success(t('orders.messages.cancel_reception_success', { count: response.data.details?.produits_affectes || 0 }));
 
             fetchCommandes();
             const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
@@ -332,13 +337,13 @@ export function useCommandeActions({
 
     const handleAnnulerReception = (commande: Commande) => {
         if (commande.status !== 'CLOT') {
-            toast.error("Seule une commande clôturée peut être annulée.");
+            toast.error(t('orders.messages.cancel_reception_error'));
             return;
         }
 
         setPasswordModalConfig({
-            title: "Annuler la réception",
-            message: "Cette action va retirer le stock ajouté lors de la clôture. Confirmez votre mot de passe."
+            title: t('orders.messages.password_confirm_cancel_title'),
+            message: t('orders.messages.password_confirm_cancel_body')
         });
         setPendingAction(() => () => executeAnnulerReception(commande.id));
         setIsPasswordModalOpen(true);
@@ -358,7 +363,7 @@ export function useCommandeActions({
             link.click();
             link.parentNode?.removeChild(link);
         } catch (err) {
-            handleApiError(err, "Erreur lors de l'impression");
+            handleApiError(err, t('orders.messages.print_error'));
         }
     };
 

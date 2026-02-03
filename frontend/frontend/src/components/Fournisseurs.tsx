@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, type FormEvent, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ const emptyForm: Omit<Fournisseur, 'id'> = {
 };
 
 export default function Fournisseurs() {
+  const { t } = useTranslation();
   const confirm = useConfirm()
   const { user } = useAuth();
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
@@ -154,7 +156,7 @@ export default function Fournisseurs() {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau');
       } else {
-        setError('Erreur inconnue lors du chargement des fournisseurs');
+        setError(t('providers.messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
       }
     } finally {
       setLoading(false);
@@ -230,7 +232,7 @@ export default function Fournisseurs() {
   }
 
   function formatBackendErrors(data: unknown): string {
-    if (data == null) return 'Erreur inconnue du serveur'
+    if (data == null) return t('common.unknown_error') || 'Erreur inconnue du serveur'
     if (typeof data === 'string') return data
     if (typeof data === 'object') {
       try {
@@ -263,7 +265,7 @@ export default function Fournisseurs() {
         const detail = err.response?.data ?? err.message
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail))
       } else {
-        setError("Erreur inconnue lors de l'ajout du fournisseur")
+        setError(t('providers.messages.save_error') || "Erreur inconnue lors de l'ajout du fournisseur")
       }
       console.error('Erreur lors de l\'ajout du fournisseur:', err);
     } finally {
@@ -289,7 +291,7 @@ export default function Fournisseurs() {
         const detail = err.response?.data ?? err.message
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail))
       } else {
-        setError("Erreur inconnue lors de la modification du fournisseur")
+        setError(t('providers.messages.save_error') || "Erreur inconnue lors de la modification du fournisseur")
       }
       console.error('Erreur lors de la modification du fournisseur:', err);
     }
@@ -300,18 +302,18 @@ export default function Fournisseurs() {
       await axios.delete(`${fournisseursEndpoint}${id}/`);
       setFournisseurs(prev => prev.filter(f => f.id !== id));
       setSelectedFournisseur(null);
-      toast.success('Fournisseur supprimé avec succès');
+      toast.success(t('providers.messages.delete_success'));
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         // Handle FK protect errors explicitly
         if (err.response?.status === 500 || (err.response?.data?.detail && String(err.response.data.detail).includes('protected'))) {
-             toast.error("Impossible de supprimer : ce fournisseur est lié à des données existantes (commandes, produits).");
+             toast.error(t('providers.messages.delete_protected'));
         } else {
-             const msg = err.response?.data?.message ?? err.message ?? 'Erreur réseau';
-             toast.error(`Erreur: ${msg}`);
+             const msg = err.response?.data?.message ?? err.message ?? t('common.network_error');
+             toast.error(`${t('common.error')}: ${msg}`);
         }
       } else {
-        toast.error('Erreur inconnue lors de la suppression');
+        toast.error(t('providers.messages.delete_error'));
       }
       console.error('Erreur lors de la suppression du fournisseur:', err);
     }
@@ -322,22 +324,22 @@ export default function Fournisseurs() {
     
     // Permission Check
     if (!user?.is_superuser && !user?.can_delete_fournisseur) {
-        toast.error("Accès refusé : Vous n'avez pas la permission de supprimer des fournisseurs.")
+        toast.error(t('providers.messages.access_denied_delete'))
         return
     }
     
     const confirmed = await confirm({
-      title: 'Supprimer le fournisseur',
-      message: `Supprimer le fournisseur "${selectedFournisseur.name}" ?\n\nCette action est irréversible.`,
+      title: t('providers.messages.delete_confirm_title'),
+      message: t('providers.messages.delete_confirm_message', { name: selectedFournisseur.name }),
       variant: 'danger',
-      confirmText: 'Supprimer'
+      confirmText: t('providers.messages.delete_btn')
     })
     
     if (confirmed) {
         // Trigger Password Modal
         setPasswordModalConfig({
-            title: "Confirmer la suppression",
-            message: "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive."
+            title: t('providers.messages.sudo_title'),
+            message: t('providers.messages.sudo_message')
         })
         setPendingAction(() => () => executeDeleteFournisseur(selectedFournisseur.id));
         setIsPasswordModalOpen(true);
@@ -376,7 +378,7 @@ export default function Fournisseurs() {
                     <input 
                        ref={searchInputRef}
                        type="text" 
-                       placeholder="Rechercher un fournisseur..." 
+                       placeholder={t('providers.search_placeholder')}
                        className="input input-sm input-bordered w-full pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-all h-9" 
                        value={searchTerm}
                        onChange={(e) => {
@@ -390,7 +392,7 @@ export default function Fournisseurs() {
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                    </svg>
-                   Nouveau
+                   {t('providers.new_provider')}
                  </button>
                </div>
             </div>
@@ -400,8 +402,8 @@ export default function Fournisseurs() {
                <table className="table table-xs table-pin-rows w-full">
                  <thead className="bg-[#f8fafc] text-[#64748b]">
                     <tr>
-                      <th className="py-2 px-2 font-semibold uppercase text-[10px] tracking-wider text-left">Fournisseur</th>
-                      <th className="py-2 px-2 font-semibold uppercase text-[10px] tracking-wider text-center">Tél.</th>
+                      <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-left">{t('providers.table.provider')}</th>
+                      <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-center">{t('providers.table.phone')}</th>
                     </tr>
                  </thead>
                  <tbody>
@@ -417,10 +419,10 @@ export default function Fournisseurs() {
                            onClick={() => selectFournisseur(fournisseur)}
                          >
                            <td className="py-1.5 px-2">
-                             <div className="font-semibold text-xs truncate max-w-[140px]" title={fournisseur.name}>{fournisseur.name}</div>
+                             <div className="font-semibold text-sm truncate max-w-[140px]" title={fournisseur.name}>{fournisseur.name}</div>
                            </td>
                            <td className="py-1.5 px-2 text-center">
-                             <span className="font-mono text-[10px] text-slate-500">{fournisseur.phone || '-'}</span>
+                             <span className="font-mono text-xs text-slate-500">{fournisseur.phone || '-'}</span>
                            </td>
                          </tr>
                       ))
@@ -429,7 +431,7 @@ export default function Fournisseurs() {
                         <td colSpan={2} className="text-center py-6 opacity-50">
                            <div className="flex flex-col items-center gap-1">
                              <span className="text-xl">📭</span>
-                             <span className="text-xs">{searchTerm ? 'Aucun résultat' : 'Liste vide'}</span>
+                             <span className="text-xs">{searchTerm ? t('providers.no_result') : t('providers.empty_list')}</span>
                            </div>
                         </td>
                       </tr>
@@ -474,9 +476,9 @@ export default function Fournisseurs() {
                                 </svg>
                               </div>
                               <div className="flex-1">
-                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Adresse de contact</div>
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers.details.contact_address')}</div>
                                   <div className="text-slate-700 font-medium whitespace-pre-wrap leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
-                                    {selectedFournisseur.address || 'Non renseignée'}
+                                    {selectedFournisseur.address || t('providers.details.not_provided')}
                                   </div>
                               </div>
                           </div>
@@ -489,7 +491,7 @@ export default function Fournisseurs() {
                                   </svg>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Ligne directe</div>
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers.details.direct_line')}</div>
                                     <div className="text-lg font-black text-slate-700 font-mono tracking-tight">{selectedFournisseur.phone || '-'}</div>
                                 </div>
                             </div>
@@ -501,7 +503,7 @@ export default function Fournisseurs() {
                                   </svg>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Email professionnel</div>
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers.details.email')}</div>
                                     <div className="text-slate-600 font-semibold break-all selection:bg-blue-100 underline decoration-blue-200 decoration-2 underline-offset-4">{selectedFournisseur.email || '-'}</div>
                                 </div>
                             </div>
@@ -512,19 +514,19 @@ export default function Fournisseurs() {
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-bold text-slate-800 flex items-center gap-2">
                              <span className="w-8 h-8 rounded-lg bg-emerald-100/50 text-emerald-600 flex items-center justify-center text-sm">💰</span>
-                             Situation Financière
+                             {t('providers.details.financial_situation')}
                           </h3>
                           <button 
                             className="btn btn-sm btn-outline btn-primary gap-2"
                             onClick={() => setIsFinanceModalOpen(true)}
                           >
-                            Gérer les paiements
+                            {t('providers.details.manage_payments')}
                           </button>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Solde Dette</div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('providers.details.debt_balance')}</div>
                               <div className={`text-2xl font-black font-mono ${Number(selectedFournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                                  {Number(selectedFournisseur.solde_dette || 0).toLocaleString('fr-FR')} F
                               </div>
@@ -537,7 +539,7 @@ export default function Fournisseurs() {
 
                       <div className="pt-8 mt-4 border-t border-slate-100">
                         <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Référence interne</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('providers.details.internal_ref')}</span>
                           <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">#{selectedFournisseur.id}</span>
                         </div>
                       </div>
@@ -555,9 +557,9 @@ export default function Fournisseurs() {
                               </svg>
                             </div>
                             <div>
-                              <h3 className="text-sm font-bold text-slate-800">Catalogue Produits</h3>
+                              <h3 className="text-sm font-bold text-slate-800">{t('providers.details.product_catalogue')}</h3>
                               <p className="text-[11px] text-slate-400">
-                                {catalogueLoading ? 'Chargement...' : `${catalogue.length} produit${catalogue.length > 1 ? 's' : ''} commandé${catalogue.length > 1 ? 's' : ''}`}
+                                {catalogueLoading ? t('providers.details.loading') : t('providers.details.products_ordered_plural', { count: catalogue.length })}
                               </p>
                             </div>
                           </div>
@@ -584,7 +586,7 @@ export default function Fournisseurs() {
                                 </div>
                                 <input 
                                   type="text" 
-                                  placeholder="Rechercher dans le catalogue..." 
+                                  placeholder={t('providers.catalogue.search_placeholder')}
                                   className="input input-sm input-bordered w-full pl-9 bg-white text-xs h-8" 
                                   value={catalogueSearch}
                                   onChange={(e) => setCatalogueSearch(e.target.value)}
@@ -602,7 +604,7 @@ export default function Fournisseurs() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                 </svg>
                                 <p className="text-xs font-medium">
-                                  {catalogueSearch ? 'Aucun résultat' : 'Aucun produit commandé'}
+                                  {catalogueSearch ? t('providers.catalogue.no_result') : t('providers.catalogue.empty')}
                                 </p>
                               </div>
                             ) : (
@@ -610,13 +612,13 @@ export default function Fournisseurs() {
                                 <table className="table table-xs w-full">
                                   <thead className="bg-slate-50">
                                     <tr>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase">CIP</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase">Produit</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">Dern. Prix</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">Dern. Cmd</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">Marge</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">Qté Tot.</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">Stock</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase">{t('providers.catalogue.headers.cip')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase">{t('providers.catalogue.headers.product')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">{t('providers.catalogue.headers.last_price')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers.catalogue.headers.last_order')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">{t('providers.catalogue.headers.margin')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers.catalogue.headers.total_qty')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers.catalogue.headers.stock')}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -687,8 +689,8 @@ export default function Fournisseurs() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
-                    <p className="font-bold text-slate-400">Aucun fournisseur sélectionné</p>
-                    <p className="text-sm text-slate-300 mt-1 max-w-[200px]">Sélectionnez une entreprise dans la liste pour voir ses coordonnées</p>
+                    <p className="font-bold text-slate-400">{t('providers.details.no_provider_selected')}</p>
+                    <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('providers.details.select_instruction')}</p>
                 </div>
              )}
          </div>
@@ -698,7 +700,7 @@ export default function Fournisseurs() {
       <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-2xl">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Ajouter un nouveau fournisseur</h3>
+            <h3 className="font-bold text-xl">{t('providers.form.add_title')}</h3>
             <button 
               type="button" 
               className="btn btn-sm btn-circle btn-ghost" 
@@ -713,17 +715,17 @@ export default function Fournisseurs() {
             {/* Informations de l'entreprise */}
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Informations de l'entreprise
+                {t('providers.form.company_info')}
               </h4>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <label className="form-control w-full">
                   <div className="label">
-                    <span className="label-text font-medium">Nom de l'entreprise *</span>
+                    <span className="label-text font-medium">{t('providers.form.name')} *</span>
                   </div>
                   <input 
                     type="text" 
-                    placeholder="Ex: PharmaCorp SARL" 
+                    placeholder={t('providers.form.name_placeholder')}
                     value={newFournisseur.name} 
                     onChange={e => setNewFournisseur(f => ({...f, name: e.target.value}))} 
                     className="input input-bordered w-full" 
@@ -734,11 +736,11 @@ export default function Fournisseurs() {
                 
                 <label className="form-control w-full">
                   <div className="label">
-                    <span className="label-text font-medium">Téléphone *</span>
+                    <span className="label-text font-medium">{t('providers.form.phone')} *</span>
                   </div>
                   <input 
                     type="tel" 
-                    placeholder="Ex: 0123456789" 
+                    placeholder={t('providers.form.phone_placeholder')}
                     value={newFournisseur.phone} 
                     onChange={e => setNewFournisseur(f => ({...f, phone: e.target.value}))} 
                     className="input input-bordered w-full" 
@@ -750,11 +752,11 @@ export default function Fournisseurs() {
               
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Adresse email *</span>
+                  <span className="label-text font-medium">{t('providers.form.email')} *</span>
                 </div>
                 <input 
                   type="email" 
-                  placeholder="Ex: contact@pharmacorp.com" 
+                  placeholder={t('providers.form.email_placeholder')}
                   value={newFournisseur.email} 
                   onChange={e => setNewFournisseur(f => ({...f, email: e.target.value}))} 
                   className="input input-bordered w-full" 
@@ -767,15 +769,15 @@ export default function Fournisseurs() {
             {/* Adresse */}
             <div className="space-y-4">
               <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                Adresse
+                {t('providers.form.address_section')}
               </h4>
               
               <label className="form-control w-full">
                 <div className="label">
-                  <span className="label-text font-medium">Adresse complète *</span>
+                  <span className="label-text font-medium">{t('providers.form.address')} *</span>
                 </div>
                 <textarea 
-                  placeholder="Ex: 123 Avenue des Industries&#10;75001 Paris, France" 
+                  placeholder={t('providers.form.address_placeholder')}
                   value={newFournisseur.address} 
                   onChange={e => setNewFournisseur(f => ({...f, address: e.target.value}))} 
                   className="textarea textarea-bordered w-full h-24 resize-none" 
@@ -783,7 +785,7 @@ export default function Fournisseurs() {
                   disabled={isSubmitting}
                 />
                 <div className="label">
-                  <span className="label-text-alt">Séparez les lignes d'adresse par des retours à la ligne</span>
+                  <span className="label-text-alt">{t('providers.form.address_hint')}</span>
                 </div>
               </label>
             </div>
@@ -796,7 +798,7 @@ export default function Fournisseurs() {
                 onClick={closeAddModal} 
                 disabled={isSubmitting}
               >
-                Annuler
+                {t('providers.form.cancel')}
               </button>
               <button 
                 type="submit" 
@@ -806,14 +808,14 @@ export default function Fournisseurs() {
                 {isSubmitting ? (
                   <>
                     <span className="loading loading-spinner loading-sm"></span>
-                    Enregistrement...
+                    {t('providers.form.saving')}
                   </>
                 ) : (
                   <>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Ajouter le fournisseur
+                    {t('providers.form.add_btn')}
                   </>
                 )}
               </button>
@@ -829,7 +831,7 @@ export default function Fournisseurs() {
       <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box max-w-2xl">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">Modifier le fournisseur</h3>
+            <h3 className="font-bold text-xl">{t('providers.form.edit_title')}</h3>
             <button 
               type="button" 
               className="btn btn-sm btn-circle btn-ghost" 
@@ -844,18 +846,18 @@ export default function Fournisseurs() {
               {/* Informations de l'entreprise */}
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Informations de l'entreprise
+                  {t('providers.form.company_info')}
                 </h4>
                 
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="form-control w-full">
                     <div className="label">
-                      <span className="label-text font-medium">Nom de l'entreprise *</span>
+                      <span className="label-text font-medium">{t('providers.form.name')} *</span>
                     </div>
                     <input 
                       type="text" 
-                      placeholder="Ex: PharmaCorp SARL" 
+                      placeholder={t('providers.form.name_placeholder')}
                       value={editingFournisseur.name} 
                       onChange={e => setEditingFournisseur(f => f ? {...f, name: e.target.value} : null)} 
                       className="input input-bordered w-full" 
@@ -865,11 +867,11 @@ export default function Fournisseurs() {
                   
                   <label className="form-control w-full">
                     <div className="label">
-                      <span className="label-text font-medium">Téléphone *</span>
+                      <span className="label-text font-medium">{t('providers.form.phone')} *</span>
                     </div>
                     <input 
                       type="tel" 
-                      placeholder="Ex: 0123456789" 
+                      placeholder={t('providers.form.phone_placeholder')}
                       value={editingFournisseur.phone} 
                       onChange={e => setEditingFournisseur(f => f ? {...f, phone: e.target.value} : null)} 
                       className="input input-bordered w-full" 
@@ -880,11 +882,11 @@ export default function Fournisseurs() {
                 
                 <label className="form-control w-full">
                   <div className="label">
-                    <span className="label-text font-medium">Adresse email *</span>
+                    <span className="label-text font-medium">{t('providers.form.email')} *</span>
                   </div>
                   <input 
                     type="email" 
-                    placeholder="Ex: contact@pharmacorp.com" 
+                    placeholder={t('providers.form.email_placeholder')}
                     value={editingFournisseur.email} 
                     onChange={e => setEditingFournisseur(f => f ? {...f, email: e.target.value} : null)} 
                     className="input input-bordered w-full" 
@@ -896,22 +898,22 @@ export default function Fournisseurs() {
               {/* Adresse */}
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  Adresse
+                  {t('providers.form.address_section')}
                 </h4>
                 
                 <label className="form-control w-full">
                   <div className="label">
-                    <span className="label-text font-medium">Adresse complète *</span>
+                    <span className="label-text font-medium">{t('providers.form.address')} *</span>
                   </div>
                   <textarea 
-                    placeholder="Ex: 123 Avenue des Industries&#10;75001 Paris, France" 
+                    placeholder={t('providers.form.address_placeholder')}
                     value={editingFournisseur.address} 
                     onChange={e => setEditingFournisseur(f => f ? {...f, address: e.target.value} : null)} 
                     className="textarea textarea-bordered w-full h-24 resize-none" 
                     required 
                   />
                   <div className="label">
-                    <span className="label-text-alt">Séparez les lignes d'adresse par des retours à la ligne</span>
+                    <span className="label-text-alt">{t('providers.form.address_hint')}</span>
                   </div>
                 </label>
               </div>
@@ -923,13 +925,13 @@ export default function Fournisseurs() {
                   className="btn btn-ghost" 
                   onClick={closeEditModal}
                 >
-                  Annuler
+                  {t('providers.form.cancel')}
                 </button>
                 <button 
                   type="submit" 
                   className="btn btn-primary"
                 >
-                  Enregistrer les modifications
+                  {t('providers.form.save_btn')}
                 </button>
               </div>
             </form>

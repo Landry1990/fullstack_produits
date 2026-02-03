@@ -3,6 +3,7 @@ import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
 import type { ProduitModel, Inventaire, LigneInventaire, StockLot } from '../types';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
@@ -32,6 +33,7 @@ interface InventoryStats {
 
 
 export default function InventaireComponent() {
+  const { t } = useTranslation()
   const confirm = useConfirm()
   // Modes: LIST, CREATE, EDIT
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT'>('LIST');
@@ -284,7 +286,7 @@ export default function InventaireComponent() {
   const handleDelete = async (id: number) => {
       const confirmed = await confirm({
         title: 'Supprimer l\'inventaire',
-        message: 'Supprimer cet inventaire ?',
+        message: t('stock.inventaire.delete_confirm'),
         variant: 'danger',
         confirmText: 'Supprimer'
       })
@@ -389,7 +391,7 @@ export default function InventaireComponent() {
       });
       
       if (exists) {
-          toast('Ce produit (ou ce lot) est déjà dans l\'inventaire.', { icon: '⚠️' });
+          toast(t('stock.inventaire.product_exists'), { icon: '⚠️' });
           setSearchQuery('');
           return;
       }
@@ -400,7 +402,7 @@ export default function InventaireComponent() {
           try {
               const res = await axios.post(inventairesEndpoint, {
                   date: dateInventaire,
-                  description: description || 'Nouvel Inventaire',
+                  description: description || t('stock.inventaire.create_btn'),
                   status: 'EN_COURS'
               });
               invId = res.data.id;
@@ -528,14 +530,14 @@ export default function InventaireComponent() {
           }
           
           await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`, payload);
-          toast.success("Inventaire validé avec succès !");
+          toast.success(t('stock.inventaire.validation.success'));
           setShowValidationModal(false);
           setSelectedValidator(null);
           setSudoPassword('');
           setViewMode('LIST');
           fetchInventaires();
       } catch (err: any) {
-          toast.error("Erreur lors de la validation");
+          toast.error(t('stock.inventaire.validation.error'));
           console.error(err);
       } finally {
           setSaving(false);
@@ -636,12 +638,12 @@ export default function InventaireComponent() {
       if (!targetId) return;
       
       const confirmed = await confirm({
-          title: 'Confirmer la fusion',
+          title: t('stock.inventaire.merge.modal_title'),
           message: isListMode 
             ? 'Fusionner les inventaires sélectionnés dans la CIBLE ?\nLes autres seront supprimés (lignes transférées).'
-            : 'Êtes-vous sûr de vouloir fusionner cet inventaire ?\nL\'inventaire source sera SUPPRIMÉ et ses lignes ajoutées ici.',
+            : t('stock.inventaire.merge.confirm_msg'),
           variant: 'warning',
-          confirmText: 'Oui, Fusionner'
+          confirmText: t('stock.inventaire.merge.btn')
       });
       if (!confirmed) return;
 
@@ -667,7 +669,7 @@ export default function InventaireComponent() {
               await axios.post(`${inventairesEndpoint}${activeInventaire?.id}/merge/`, {
                   source_inventaire_id: selectedMergeSource
               });
-              toast.success("Fusion réussie !");
+              toast.success(t('stock.inventaire.merge.success'));
               if (activeInventaire) handleEdit(activeInventaire);
           }
           

@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import type { Creance, Client } from '../types'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { useTranslation } from 'react-i18next'
 
 export default function Creances() {
+  const { t } = useTranslation()
   const [creances, setCreances] = useState<Creance[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(false)
@@ -417,13 +419,13 @@ export default function Creances() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-white shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-base-content">💳 Gestion des Créances</h1>
-          <p className="text-sm text-base-content/60 mt-1">Suivi des ventes en compte - Clients professionnels</p>
+          <h1 className="text-2xl font-bold text-base-content">💳 {t('creances.title')}</h1>
+          <p className="text-sm text-base-content/60 mt-1">{t('creances.subtitle')}</p>
         </div>
         <div className="flex gap-2">
              <div className="form-control">
                 <label className="label cursor-pointer gap-2">
-                    <span className="label-text text-xs font-bold uppercase">Voir Historique</span> 
+                    <span className="label-text text-xs font-bold uppercase">{t('creances.history_toggle')}</span> 
                     <input type="checkbox" className="toggle toggle-sm" checked={showHistory} onChange={(e) => { setShowHistory(e.target.checked); setSelectedIds([]); }} />
                 </label>
             </div>
@@ -433,7 +435,7 @@ export default function Creances() {
             disabled={loading}
             >
             {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
-            Actualiser
+            {t('creances.refresh')}
             </button>
         </div>
       </div>
@@ -457,19 +459,19 @@ export default function Creances() {
                   onClick={() => setSelectedClient('')}
                   className="btn btn-sm btn-outline gap-2 w-full"
                 >
-                  ⬅️ Retour à la liste
+                  ⬅️ {t('creances.filters.back_to_list')}
                 </button>
              ) : (
                 <>
                   <label className="label py-1">
-                    <span className="label-text text-xs font-bold uppercase">Client</span>
+                    <span className="label-text text-xs font-bold uppercase">{t('creances.filters.client_label')}</span>
                   </label>
                   <select
                     value={selectedClient}
                     onChange={(e) => setSelectedClient(e.target.value)}
                     className="select select-bordered select-sm w-full"
                   >
-                    <option value="">Tous les clients</option>
+                    <option value="">{t('creances.filters.client_placeholder')}</option>
                     {clients.map((client) => (
                       <option key={client.id} value={client.id}>
                         {client.name}
@@ -483,7 +485,7 @@ export default function Creances() {
           {/* Date début */}
           <div className="form-control w-40">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Date Début</span>
+              <span className="label-text text-xs font-bold uppercase">{t('creances.filters.start_date')}</span>
             </label>
             <input
               type="date"
@@ -496,7 +498,7 @@ export default function Creances() {
           {/* Date fin */}
           <div className="form-control w-40">
             <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Date Fin</span>
+              <span className="label-text text-xs font-bold uppercase">{t('creances.filters.end_date')}</span>
             </label>
             <input
               type="date"
@@ -509,9 +511,9 @@ export default function Creances() {
           {/* Boutons */}
           <div className="flex gap-2">
             <button onClick={handleSearch} className="btn btn-sm btn-primary">
-              🔍 Rechercher
+              🔍 {t('creances.filters.search')}
             </button>
-            <button onClick={handleResetFilters} className="btn btn-sm btn-ghost btn-square" title="Réinitialiser">
+            <button onClick={handleResetFilters} className="btn btn-sm btn-ghost btn-square" title={t('creances.filters.reset')}>
               ✕
             </button>
           </div>
@@ -521,10 +523,10 @@ export default function Creances() {
         {selectedClient && (
           <div className="mt-3 flex justify-between items-center bg-base-100 p-2 rounded-lg border border-base-200">
             <div className="font-bold text-lg">
-                Client : {clients.find(c => c.id.toString() === selectedClient.toString())?.name}
+                {t('creances.client_label', { name: clients.find(c => c.id.toString() === selectedClient.toString())?.name })}
             </div>
             <button onClick={handleImprimerReleve} className="btn btn-sm btn-accent gap-2">
-              🖨️ Imprimer le Relevé
+              🖨️ {t('creances.print_statement')}
             </button>
           </div>
         )}
@@ -534,13 +536,13 @@ export default function Creances() {
       <div className="px-6 py-3 bg-white border-b border-base-200 shrink-0">
         <div className="flex flex-wrap gap-4 text-sm">
           <div className="badge badge-lg badge-ghost gap-2">
-            💰 Total Factures: <span className="font-bold">{Math.round(totaux.total)} F</span>
+            💰 {t('creances.stats.total_invoices')}: <span className="font-bold">{Math.round(totaux.total)} F</span>
           </div>
           <div className="badge badge-lg badge-success gap-2">
-            ✅ Total Payé: <span className="font-bold">{Math.round(totaux.paye)} F</span>
+            ✅ {t('creances.stats.total_paid')}: <span className="font-bold">{Math.round(totaux.paye)} F</span>
           </div>
           <div className="badge badge-lg badge-warning gap-2">
-            ⏳ Reste à Payer: <span className="font-bold">{Math.round(totaux.reste)} F</span>
+            ⏳ {t('creances.stats.remaining')}: <span className="font-bold">{Math.round(totaux.reste)} F</span>
           </div>
         </div>
       </div>
@@ -562,10 +564,10 @@ export default function Creances() {
         {selectedClient && selectedIds.length > 0 && !showHistory && (
             <div className="px-6 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between">
                 <div className="text-sm font-semibold text-primary">
-                    {selectedIds.length} facture(s) sélectionnée(s)
+                    {t('creances.invoice_list.selected_count', { count: selectedIds.length })}
                 </div>
                 <button onClick={handleBulkPayment} className="btn btn-sm btn-primary">
-                    💰 Régler la sélection
+                    💰 {t('creances.invoice_list.pay_selection')}
                 </button>
             </div>
         )}
@@ -575,10 +577,10 @@ export default function Creances() {
         {selectedClient && selectedIds.length > 0 && !showHistory && (
             <div className="px-6 py-2 bg-primary/10 border-b border-primary/20 flex items-center justify-between shrink-0">
                 <div className="text-sm font-semibold text-primary">
-                    {selectedIds.length} facture(s) sélectionnée(s)
+                    {t('creances.invoice_list.selected_count', { count: selectedIds.length })}
                 </div>
                 <button onClick={handleBulkPayment} className="btn btn-sm btn-primary">
-                    💰 Régler la sélection
+                    💰 {t('creances.invoice_list.pay_selection')}
                 </button>
             </div>
         )}
@@ -593,19 +595,19 @@ export default function Creances() {
             // VUE SYNTHETIQUE (Liste des clients)
             clientsGroupes.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-base-content/40">
-                    <p className="text-lg">Aucun client avec des créances sur cette période</p>
+                    <p className="text-lg">{t('creances.client_list.empty')}</p>
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
                 <table className="table table-zebra table-xs w-full">
                     <thead>
                     <tr className="bg-base-200">
-                        <th className="uppercase">Client</th>
-                        <th className="uppercase text-right">Nb Factures</th>
-                        <th className="uppercase text-right">Montant Total</th>
-                        <th className="uppercase text-right">Déjà Payé</th>
-                        <th className="uppercase text-right">Reste à Payer</th>
-                        <th className="uppercase text-center">Actions</th>
+                        <th className="uppercase">{t('creances.client_list.client')}</th>
+                        <th className="uppercase text-right">{t('creances.client_list.nb_invoices')}</th>
+                        <th className="uppercase text-right">{t('creances.client_list.total_amount')}</th>
+                        <th className="uppercase text-right">{t('creances.client_list.already_paid')}</th>
+                        <th className="uppercase text-right">{t('creances.client_list.remaining_due')}</th>
+                        <th className="uppercase text-center">{t('creances.client_list.actions')}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -637,8 +639,8 @@ export default function Creances() {
             // VUE DETAILLEE (Liste des factures du client sélectionné)
             filteredCreances.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-base-content/40">
-                    <p className="text-lg">Aucune facture trouvée pour ce client</p>
-                    <button onClick={() => setSelectedClient('')} className="btn btn-link">Retour à la liste</button>
+                    <p className="text-lg">{t('creances.invoice_list.empty')}</p>
+                    <button onClick={() => setSelectedClient('')} className="btn btn-link">{t('creances.filters.back_to_list')}</button>
                 </div>
             ) : (
                 <>
@@ -646,10 +648,10 @@ export default function Creances() {
                 {selectedClient && selectedIds.length > 0 && !showHistory && (
                     <div className="mb-4 px-6 py-2 bg-primary/10 border border-primary/20 rounded-lg flex items-center justify-between shadow-sm">
                         <div className="text-sm font-semibold text-primary">
-                            {selectedIds.length} facture(s) sélectionnée(s)
+                            {t('creances.invoice_list.selected_count', { count: selectedIds.length })}
                         </div>
                         <button onClick={handleBulkPayment} className="btn btn-sm btn-primary gap-2">
-                            💰 Régler la sélection
+                            💰 {t('creances.invoice_list.pay_selection')}
                         </button>
                     </div>
                 )}
@@ -670,32 +672,32 @@ export default function Creances() {
                          )}
                         <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap cursor-pointer hover:bg-base-300 transition-colors w-32" onClick={() => handleSort('date')}>
                           <div className="flex items-center gap-1">
-                            Date {sortConfig.key === 'date' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
+                            {t('creances.invoice_list.date')} {sortConfig.key === 'date' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                           </div>
                         </th>
                         <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap cursor-pointer hover:bg-base-300 transition-colors w-32" onClick={() => handleSort('numero_facture')}>
                           <div className="flex items-center gap-1">
-                            N° Facture {sortConfig.key === 'numero_facture' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
+                            {t('creances.invoice_list.invoice_number')} {sortConfig.key === 'numero_facture' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                           </div>
                         </th>
-                        <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap">Ayant Droit</th>
+                        <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap">{t('creances.invoice_list.beneficiary')}</th>
                         <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-right cursor-pointer hover:bg-base-300 transition-colors w-36" onClick={() => handleSort('total_ttc')}>
                           <div className="flex items-center justify-end gap-1">
-                            Total {sortConfig.key === 'total_ttc' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
+                            {t('creances.invoice_list.total')} {sortConfig.key === 'total_ttc' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                           </div>
                         </th>
                         <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-right cursor-pointer hover:bg-base-300 transition-colors w-36" onClick={() => handleSort('montant_paye')}>
                           <div className="flex items-center justify-end gap-1">
-                            Payé {sortConfig.key === 'montant_paye' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
+                            {t('creances.invoice_list.paid')} {sortConfig.key === 'montant_paye' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                           </div>
                         </th>
                         <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-right cursor-pointer hover:bg-base-300 transition-colors w-36" onClick={() => handleSort('reste_a_payer')}>
                           <div className="flex items-center justify-end gap-1">
-                            Reste {sortConfig.key === 'reste_a_payer' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
+                            {t('creances.invoice_list.remaining')} {sortConfig.key === 'reste_a_payer' && <span className="text-primary">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>}
                           </div>
                         </th>
-                        <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-center w-24">Statut</th>
-                        <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-center w-20">Actions</th>
+                        <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-center w-24">{t('creances.invoice_list.status')}</th>
+                        <th className="py-2 px-3 text-xs font-semibold uppercase whitespace-nowrap text-center w-20">{t('creances.invoice_list.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>

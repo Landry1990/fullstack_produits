@@ -40,7 +40,7 @@ export default function CartTable({
   const handleRemiseChange = (produitId: number, value: string) => {
       const numValue = parseFloat(value)
       if (!isNaN(numValue) && numValue > maxDiscount) {
-          toast.error(`Remise limitée à ${maxDiscount}% pour votre profil`)
+          toast.error(t('facturation.messages.discount_limit_error', { rate: maxDiscount }))
           updateRemiseProduit(produitId, String(maxDiscount))
       } else {
           updateRemiseProduit(produitId, value)
@@ -121,7 +121,7 @@ export default function CartTable({
                 onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
                 className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
                 disabled={!canModifyPrice}
-                title={!canModifyPrice ? "Modification de prix interdite" : ""}
+                title={!canModifyPrice ? t('facturation.messages.price_modification_forbidden') : ""}
               />
             </td>
             <td className="text-right py-1 hidden lg:table-cell">

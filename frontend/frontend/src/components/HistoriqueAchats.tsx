@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface DailyPurchase {
   date: string;
@@ -19,6 +20,7 @@ interface HistoriqueAchatsProps {
 }
 
 const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [data, setData] = useState<DailyPurchase[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -84,14 +86,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">
-        Historique des Achats 
-        {forcedType === 'LOC' ? ' Locaux' : forcedType === 'DIR' ? ' Directs (Import)' : ' par Jour'}
+        {t('orders.history.title')} 
+        {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
       </h1>
 
       <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end">
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Date début</span>
+            <span className="label-text">{t('orders.history.start_date')}</span>
           </label>
           <input 
             type="date" 
@@ -102,7 +104,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         </div>
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Date fin</span>
+            <span className="label-text">{t('orders.history.end_date')}</span>
           </label>
           <input 
             type="date" 
@@ -114,14 +116,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         
         <div className="form-control min-w-[200px]">
           <label className="label">
-            <span className="label-text">Fournisseur</span>
+            <span className="label-text">{t('orders.history.provider_filter')}</span>
           </label>
           <select 
             className="select select-bordered"
             value={selectedSupplier}
             onChange={(e) => setSelectedSupplier(e.target.value)}
           >
-            <option value="">Tous les fournisseurs</option>
+            <option value="">{t('orders.history.all_providers')}</option>
             {suppliers.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
             ))}
@@ -129,7 +131,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         </div>
 
         <div className="form-control">
-             <button className="btn btn-primary" onClick={fetchHistory}>Actualiser</button>
+             <button className="btn btn-primary" onClick={fetchHistory}>{t('orders.history.refresh')}</button>
         </div>
       </div>
 
@@ -142,9 +144,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           <table className="table table-zebra w-full shadow-xl bg-base-100 rounded-box">
             <thead>
               <tr className="bg-base-200 text-base-content uppercase text-sm">
-                <th>Date</th>
-                <th className="text-right">Nb Commandes</th>
-                <th className="text-right">Total Achat</th>
+                <th>{t('orders.history.columns.date')}</th>
+                <th className="text-right">{t('orders.history.columns.nb_orders')}</th>
+                <th className="text-right">{t('orders.history.columns.total_purchase')}</th>
               </tr>
             </thead>
             <tbody>
@@ -158,14 +160,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
               {data.length === 0 && (
                 <tr>
                   <td colSpan={3} className="text-center p-8 text-base-content/50">
-                    Aucun achat trouvé pour cette période
+                    {t('orders.history.no_data')}
                   </td>
                 </tr>
               )}
             </tbody>
             <tfoot className="bg-base-200 font-bold text-base-content">
                 <tr>
-                    <td>TOTAL</td>
+                    <td>{t('orders.history.total')}</td>
                     <td className="text-right">{data.reduce((acc, row) => acc + row.nb_commandes, 0)}</td>
                     <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.total_achat, 0))}</td>
                 </tr>

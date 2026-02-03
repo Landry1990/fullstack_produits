@@ -214,13 +214,18 @@ function SimulateurClient() {
     const { data: results = [], isLoading } = useQuery({
         queryKey: ['vitrine-simulation', debouncedSearch],
         queryFn: async () => {
-             if (!debouncedSearch) return [];
-             const response = await axios.get('/api/produits/', { 
-                 params: { search: debouncedSearch, is_public: 'true' } 
-             });
+             // Si pas de recherche, on affiche les 20 premiers produits publics
+             const params: any = { is_public: 'true' };
+             if (debouncedSearch) {
+                 params.search = debouncedSearch;
+             } else {
+                 params.page_size = 20; // Limit default view
+             }
+             
+             const response = await axios.get('/api/produits/', { params });
              return response.data.results || response.data;
         },
-        enabled: debouncedSearch.length > 2
+        // Always enabled now
     });
 
     const addToCart = (product: Product) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Fournisseur } from '../types';
 import { useFinanceFournisseurs } from '../hooks/useFinanceFournisseurs';
 
@@ -10,6 +11,7 @@ interface FinanceFournisseurModalProps {
 }
 
 export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, onSuccess }: FinanceFournisseurModalProps) {
+    const { t } = useTranslation();
     const { 
         paiements, 
         loading, 
@@ -60,7 +62,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
     };
 
     const handleDelete = async (id: number) => {
-        if (window.confirm('Êtes-vous sûr de vouloir supprimer ce paiement ?')) {
+        if (window.confirm(t('providers.finance.delete_confirm'))) {
              await deletePaiement(id);
              if (onSuccess) onSuccess();
         }
@@ -74,11 +76,11 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 {/* Header */}
                 <div className="p-6 bg-slate-50 border-b flex-none flex justify-between items-center">
                     <div>
-                        <h3 className="font-bold text-2xl text-slate-800">Gestion Financière</h3>
+                        <h3 className="font-bold text-2xl text-slate-800">{t('providers.finance.title')}</h3>
                         <p className="text-slate-500 font-medium">{fournisseur.name}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Solde Dette</p>
+                        <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">{t('providers.details.debt_balance')}</p>
                         <p className={`text-2xl font-black font-mono ${ Number(fournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                             {Number(fournisseur.solde_dette || 0).toLocaleString('fr-FR')} F
                         </p>
@@ -91,11 +93,11 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                     <div className="w-1/3 border-r bg-white p-6 overflow-y-auto">
                         <h4 className="font-bold text-lg mb-6 flex items-center gap-2">
                              <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">₹</span>
-                             Nouveau Paiement
+                             {t('providers.finance.new_payment')}
                         </h4>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="form-control">
-                                <label className="label label-text font-medium">Montant</label>
+                                <label className="label label-text font-medium">{t('providers.finance.amount')}</label>
                                 <div className="relative">
                                     <input 
                                         type="number" 
@@ -111,36 +113,36 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                             </div>
 
                             <div className="form-control">
-                                <label className="label label-text font-medium">Mode de paiement</label>
+                                <label className="label label-text font-medium">{t('providers.finance.payment_mode')}</label>
                                 <select 
                                     className="select select-bordered w-full"
                                     value={modePaiement}
                                     onChange={(e) => setModePaiement(e.target.value)}
                                 >
-                                    <option value="ESP">Espèces</option>
-                                    <option value="CHQ">Chèque</option>
-                                    <option value="VIR">Virement</option>
-                                    <option value="AVOIR">Avoir</option>
-                                    <option value="AUTRE">Autre</option>
+                                    <option value="ESP">{t('providers.finance.modes.cash')}</option>
+                                    <option value="CHQ">{t('providers.finance.modes.check')}</option>
+                                    <option value="VIR">{t('providers.finance.modes.transfer')}</option>
+                                    <option value="AVOIR">{t('providers.finance.modes.credit')}</option>
+                                    <option value="AUTRE">{t('providers.finance.modes.other')}</option>
                                 </select>
                             </div>
 
                             <div className="form-control">
-                                <label className="label label-text font-medium">Référence (Optionnel)</label>
+                                <label className="label label-text font-medium">{t('providers.finance.reference')}</label>
                                 <input 
                                     type="text" 
                                     className="input input-bordered w-full" 
-                                    placeholder="N° Chèque, Virement..."
+                                    placeholder={t('providers.finance.reference_placeholder')}
                                     value={reference}
                                     onChange={(e) => setReference(e.target.value)}
                                 />
                             </div>
 
                             <div className="form-control">
-                                <label className="label label-text font-medium">Notes</label>
+                                <label className="label label-text font-medium">{t('providers.finance.notes')}</label>
                                 <textarea 
                                     className="textarea textarea-bordered h-24"
-                                    placeholder="Commentaire..."
+                                    placeholder={t('providers.finance.notes_placeholder')}
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                 ></textarea>
@@ -151,7 +153,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                 className="btn btn-primary w-full mt-4"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? <span className="loading loading-spinner"></span> : 'Enregistrer le paiement'}
+                                {isSubmitting ? <span className="loading loading-spinner"></span> : t('providers.finance.save_payment')}
                             </button>
                         </form>
                     </div>
@@ -159,7 +161,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                     {/* Right Panel: History */}
                     <div className="flex-1 bg-slate-50/50 flex flex-col overflow-hidden">
                         <div className="p-4 border-b bg-white/50 backdrop-blur shrink-0">
-                            <h4 className="font-bold text-slate-700">Historique des paiements</h4>
+                            <h4 className="font-bold text-slate-700">{t('providers.finance.history')}</h4>
                         </div>
                         <div className="flex-1 overflow-y-auto p-0 min-h-0">
                             {loading ? (
@@ -171,17 +173,17 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                     </svg>
-                                    <p>Aucun paiement enregistré</p>
+                                    <p>{t('providers.finance.no_payments')}</p>
                                 </div>
                             ) : (
                                 <table className="table table-pin-rows">
                                     <thead className="text-xs uppercase bg-slate-100 text-slate-500">
                                         <tr>
-                                            <th>Date</th>
-                                            <th>Mode</th>
-                                            <th>Référence</th>
-                                            <th className="text-right">Montant</th>
-                                            <th className="text-center">Action</th>
+                                            <th>{t('providers.finance.table.date')}</th>
+                                            <th>{t('providers.finance.table.mode')}</th>
+                                            <th>{t('providers.finance.table.reference')}</th>
+                                            <th className="text-right">{t('providers.finance.table.amount')}</th>
+                                            <th className="text-center">{t('providers.finance.table.action')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -196,9 +198,9 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                         paiement.mode_paiement === 'CHQ' ? 'badge-info bg-blue-100 text-blue-800 border-none' :
                                                         'badge-ghost'
                                                     }`}>
-                                                        {paiement.mode_paiement === 'ESP' ? 'Espèces' :
-                                                         paiement.mode_paiement === 'CHQ' ? 'Chèque' :
-                                                         paiement.mode_paiement === 'VIR' ? 'Virement' : 
+                                                        {paiement.mode_paiement === 'ESP' ? t('providers.finance.modes.cash') :
+                                                         paiement.mode_paiement === 'CHQ' ? t('providers.finance.modes.check') :
+                                                         paiement.mode_paiement === 'VIR' ? t('providers.finance.modes.transfer') : 
                                                          paiement.mode_paiement}
                                                     </span>
                                                 </td>
@@ -234,7 +236,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 </div>
             </div>
             <form method="dialog" className="modal-backdrop">
-                <button onClick={onClose}>Fermer</button>
+                <button onClick={onClose}>{t('providers.finance.close')}</button>
             </form>
         </dialog>
     );

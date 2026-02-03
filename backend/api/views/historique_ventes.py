@@ -138,7 +138,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         
         facture_produits = FactureProduit.objects.filter(
             facture__in=factures_in_range
-        ).select_related('produit').values('produit__id', 'produit__name', 'produit__stock').annotate(
+        ).select_related('produit').values('produit__id', 'produit__name', 'produit__stock', 'lot').annotate(
             qte_vendu=Sum('quantity'),
             prix_vente=Avg('selling_price')
         ).order_by('-qte_vendu')
@@ -154,6 +154,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             total_montant += montant
             results.append({
                 'nom': fp['produit__name'],
+                'lot': fp['lot'] or '-',
                 'qte_vendu': fp['qte_vendu'],
                 'prix_vente': round(float(fp['prix_vente']), 0),
                 'montant': round(montant, 0),
@@ -163,6 +164,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         # Add total row at the end
         results.append({
             'nom': 'TOTAL',
+            'lot': '-',
             'qte_vendu': sum(r['qte_vendu'] for r in results),
             'prix_vente': '-',
             'montant': round(total_montant, 0),
