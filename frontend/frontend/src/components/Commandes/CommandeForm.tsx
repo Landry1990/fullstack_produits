@@ -236,43 +236,34 @@ export default function CommandeForm({
                 </div>
               </div>
 
-              {/* Champs Spécifiques Commandes Directes */}
+              {/* Champs Spécifiques Commandes Directes - Compact */}
               {commandeType === 'DIR' && (
-                <div className="bg-blue-50/50 rounded-xl p-4 shadow-sm border border-blue-100 mb-4">
-                  <div className="flex items-center gap-2 mb-3">
-                      <span className="badge badge-info badge-sm">{t('orders.form.direct_order_badge')}</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label className="form-control w-full">
-                      <div className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.exchange_rate')}</span>
-                      </div>
+                <div className="bg-blue-50/50 rounded-lg px-4 py-2 shadow-sm border border-blue-100 mb-2">
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <span className="badge badge-info badge-sm shrink-0">{t('orders.form.direct_order_badge')}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-base-content/60">{t('orders.form.exchange_rate')}:</span>
                       <input 
                         type="number"
                         step="0.001"
                         placeholder="655.957"
-                        className="input input-bordered w-full input-sm bg-white"
+                        className="input input-bordered input-xs w-24 bg-white"
                         value={tauxChange}
                         onChange={(e) => setTauxChange(e.target.value)}
                       />
-                    </label>
-                    
-                    <label className="form-control w-full">
-                      <div className="label py-1">
-                        <span className="label-text text-xs font-bold text-base-content/50 uppercase tracking-wider">{t('orders.form.coefficient')}</span>
-                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-base-content/60">{t('orders.form.coefficient')}:</span>
                       <input 
                         type="number"
                         step="0.01"
                         placeholder="1.35"
-                        className="input input-bordered w-full input-sm bg-white"
+                        className="input input-bordered input-xs w-20 bg-white"
                         value={fraisCoefficient}
                         onChange={(e) => setFraisCoefficient(e.target.value)}
                       />
-                      <div className="label py-0">
-                          <span className="label-text-alt text-xs opacity-60">{t('orders.form.cost_price_formula')}</span>
-                      </div>
-                    </label>
+                    </div>
+                    <span className="text-xs text-base-content/40 hidden md:inline">{t('orders.form.cost_price_formula')}</span>
                   </div>
                 </div>
               )}

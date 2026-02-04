@@ -89,15 +89,14 @@ def header_footer(canvas, doc, company_info, commande_info, total_achat):
 class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
     API endpoint for commands with optimized serializers.
-    - List view: Lightweight serializer (8 fields)
+    - List view: Lightweight serializer (no products loaded)
     - Detail view: Complete serializer with all products
     """
     from django.db.models.functions import Coalesce
     from django.db.models import Value
 
-    # Optimisation: Annotations pour éviter le problème N+1 sur 'total' et 'montant_paye'
+    # Base queryset - optimized for LIST (no prefetch of products)
     queryset = Commande.objects.select_related('fournisseur') \
-        .prefetch_related('produits__produit', 'produits__commande__fournisseur') \
         .annotate(
             total_annotated=Coalesce(
                 Sum(F('produits__quantity') * F('produits__price')), 
@@ -119,6 +118,19 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     # Serializers optimisés
     list_serializer_class = CommandeListSerializer
     detail_serializer_class = CommandeDetailSerializer
+
+    def get_queryset(self):
+        """
+        Override to add prefetch_related only for detail views.
+        List view doesn't need product data.
+        """
+        qs = super().get_queryset()
+        
+        # Only prefetch products for detail views (retrieve, update, etc.)
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            qs = qs.prefetch_related('produits__produit', 'produits__commande__fournisseur')
+        
+        return qs
 
     def perform_destroy(self, instance):
         try:
@@ -191,6 +203,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 lot_number = item.lot
                 if not lot_number:
                     lot_number = f"CMD{commande.id}-{item.id}"
+                    # Sauvegarder le lot généré dans l'item pour l'historique
+                    item.lot = lot_number
                 
                 lot = StockLot(
                     produit=produit,
@@ -256,6 +270,10 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         # 2.1 Créer tous les lots en une seule requête
         if lots_to_create:
             StockLot.objects.bulk_create(lots_to_create, batch_size=100)
+            # Sauvegarder les numéros de lot auto-générés dans les items
+            items_with_lot = [item for item in items if item.lot]
+            if items_with_lot:
+                CommandeProduit.objects.bulk_update(items_with_lot, ['lot'], batch_size=100)
         
         # 2.2 Mettre à jour tous les produits en batch
         if produits_to_update:

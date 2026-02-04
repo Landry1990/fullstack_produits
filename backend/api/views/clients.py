@@ -1,4 +1,6 @@
 from rest_framework import viewsets, filters, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery
 from django.db.models.functions import Coalesce
@@ -57,6 +59,26 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     # Serializers optimisés
     list_serializer_class = ClientListSerializer
     detail_serializer_class = ClientDetailSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Par défaut, ne montrer que les clients actifs SEULEMENT pour la liste
+        # Pour le détail/update/actions, on veut pouvoir accéder même aux inactifs
+        if self.action == 'list' and not self.request.query_params.get('include_inactive'):
+            qs = qs.filter(is_active=True)
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        """Bascule le statut actif/inactif d'un client."""
+        client = self.get_object()
+        client.is_active = not client.is_active
+        client.save(update_fields=['is_active'])
+        return Response({
+            'status': 'success',
+            'is_active': client.is_active,
+            'message': f"Client {'réactivé' if client.is_active else 'masqué'}"
+        })
 
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""

@@ -43,6 +43,7 @@ export default function Produit() {
   const [filterRayon, setFilterRayon] = useState('')
   const [filterFournisseur, setFilterFournisseur] = useState('')
   const [filterExclusive, setFilterExclusive] = useState(false)
+  const [showInactive, setShowInactive] = useState(false)
 
   // Debounce de la recherche (300ms)
   useEffect(() => {
@@ -61,7 +62,8 @@ export default function Produit() {
     refetch: refetchProduits
   } = useProduits({
     search: debouncedSearchQuery,
-    page: page
+    page: page,
+    include_inactive: showInactive
   });
 
   const { data: rayons = [] } = useRayons();
@@ -238,6 +240,20 @@ export default function Produit() {
       console.error(err)
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleToggleActive = async (produit: ProduitModel) => {
+    try {
+      const response = await axios.post(`${produitsEndpoint}${produit.id}/toggle_active/`)
+      const isActive = response.data.is_active
+      toast.success(isActive ? 'Produit réactivé' : 'Produit masqué')
+      // Update local state
+      setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
+      refetchProduits()
+    } catch (err) {
+      toast.error('Erreur lors du changement de statut')
+      console.error(err)
     }
   }
 
@@ -707,7 +723,15 @@ export default function Produit() {
                 🔒
               </button>
 
-              {(searchQuery || filterRayon || filterFournisseur || filterExclusive) && (
+              <button
+                className={`btn btn-xs h-7 w-7 btn-square ${showInactive ? 'btn-active btn-neutral' : 'btn-ghost'}`}
+                onClick={() => setShowInactive(!showInactive)}
+                title={showInactive ? "Masquer les produits inactifs" : "Afficher les produits inactifs"}
+              >
+                {showInactive ? '👁️' : '🙈'}
+              </button>
+
+              {(searchQuery || filterRayon || filterFournisseur || filterExclusive || showInactive) && (
                 <button
                   className="btn btn-xs btn-ghost btn-square"
                   onClick={() => {
@@ -715,6 +739,7 @@ export default function Produit() {
                     setFilterRayon('')
                     setFilterFournisseur('')
                     setFilterExclusive(false)
+                    setShowInactive(false)
                   }}
                   title={t('products.actions.reset')}
                 >
@@ -945,6 +970,13 @@ export default function Produit() {
                       title={t('products.actions.delete')}
                     >
                       🗑️
+                    </button>
+                    <button 
+                      className={`btn btn-sm btn-ghost ${selectedProduit.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
+                      onClick={() => handleToggleActive(selectedProduit)}
+                      title={selectedProduit.is_active === false ? 'Réactiver le produit' : 'Masquer le produit'}
+                    >
+                      {selectedProduit.is_active === false ? '👁️' : '🙈'}
                     </button>
                   </div>
                 </div>

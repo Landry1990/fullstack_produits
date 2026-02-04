@@ -214,7 +214,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
     }
   }, [commandes, selectedCommande])
 
-  // Wrappers for Hook Actions to match UI Events
+  /**
+   * Sauvegarde la commande en cours (création ou modification).
+   * Valide que la commande contient au moins un produit avant de sauvegarder.
+   * @param e - Événement de soumission du formulaire
+   */
   const onSave = (e: FormEvent) => {
       e.preventDefault();
       if (commandeProduits.length === 0) {
@@ -327,42 +331,81 @@ export default function Commandes({ forcedType }: CommandesProps) {
       handleSaveCommande 
   ]);
 
-  // Auto-recalculate prices when Global Rate/Coeff changes
+  // Debounced recalculation of prices when taux/coeff changes (to prevent loops)
+  const lastRecalcRef = useRef<{ taux: string; coeff: string }>({ taux: '', coeff: '' });
+  const recalcTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Auto-recalculate prices when Global Rate/Coeff changes (with debounce to prevent infinite loops)
   useEffect(() => {
       if (commandeType === 'DIR' && viewMode === 'CREATE') {
           const rate = parseFloat(tauxChange || '0');
           const coeff = parseFloat(fraisCoefficient || '0');
           
           if (!rate || !coeff) return;
-
-          setCommandeProduits(prev => prev.map(item => {
-              // Only update if item has Euro price
-              if (item.prix_euro) {
-                  const pEuro = parseFloat(String(item.prix_euro));
-                  if (!isNaN(pEuro)) {
-                      // 1. Prix Achat FCFA = Euro * Taux
-                      const priceFCFA = pEuro * rate;
-                      // 2. Prix Revient = Prix Achat * Coeff
-                      const costPrice = priceFCFA * coeff;
-                      
-                      // 3. Update Item
-                      const newPrice = costPrice.toFixed(2);
-                      
-                      // 4. Update Selling Price (maintain current margin if possible, else 1.3 default or simple recalc)
-                      // Recalculate selling price based on existing margin
-                      const currentMargin = parseFloat(String(item.marge || 1.3));
-                      const newSelling = costPrice * currentMargin;
-
-                      return {
-                          ...item,
-                          price: newPrice,
-                          selling_price: newSelling.toFixed(0) // Generally rounded
-                      };
+          
+          // Prevent recalculation if values haven't actually changed
+          if (lastRecalcRef.current.taux === tauxChange && lastRecalcRef.current.coeff === fraisCoefficient) {
+              return;
+          }
+          
+          // Clear any pending recalculation
+          if (recalcTimeoutRef.current) {
+              clearTimeout(recalcTimeoutRef.current);
+          }
+          
+          // Debounce the recalculation to prevent rapid consecutive updates
+          recalcTimeoutRef.current = setTimeout(() => {
+              lastRecalcRef.current = { taux: tauxChange, coeff: fraisCoefficient };
+              
+              setCommandeProduits(prev => {
+                  // Skip if no products with Euro price
+                  if (!prev.some(item => item.prix_euro)) {
+                      return prev;
                   }
-              }
-              return item;
-          }));
+                  
+                  let hasChanges = false;
+                  const updated = prev.map(item => {
+                      // Only update if item has Euro price
+                      if (item.prix_euro) {
+                          const pEuro = parseFloat(String(item.prix_euro));
+                          if (!isNaN(pEuro)) {
+                              // 1. Prix Achat FCFA = Euro * Taux
+                              const priceFCFA = pEuro * rate;
+                              // 2. Prix Revient = Prix Achat * Coeff
+                              const costPrice = priceFCFA * coeff;
+                              
+                              // 3. Update Item - Use integer to avoid floating point comparison issues
+                              const newPrice = Math.round(costPrice).toString();
+                              
+                              // 4. Update Selling Price
+                              const currentMargin = parseFloat(String(item.marge || 1.3));
+                              const newSelling = Math.round(costPrice * currentMargin).toString();
+
+                              // Only mark as changed if values are actually different
+                              if (item.price !== newPrice || item.selling_price !== newSelling) {
+                                  hasChanges = true;
+                                  return {
+                                      ...item,
+                                      price: newPrice,
+                                      selling_price: newSelling
+                                  };
+                              }
+                          }
+                      }
+                      return item;
+                  });
+                  
+                  // Return prev if no changes to avoid unnecessary re-renders
+                  return hasChanges ? updated : prev;
+              });
+          }, 500); // 500ms debounce
       }
+      
+      return () => {
+          if (recalcTimeoutRef.current) {
+              clearTimeout(recalcTimeoutRef.current);
+          }
+      };
   }, [tauxChange, fraisCoefficient, commandeType, viewMode]);
 
   // Handle Navigation State (Create from Stock Alerts in Dashboard)
@@ -483,7 +526,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
     { name: 'date_expiration', editable: true },
   ];
 
-  // Navigation clavier dans le tableau
+  /**
+   * Gère la navigation clavier dans le tableau de produits de la commande.
+   * Supporte : Enter/Tab (champ suivant), Shift+Tab (champ précédent),
+   * Flèches haut/bas (lignes), Ctrl+Flèches (navigation rapide).
+   * @param e - Événement clavier React
+   * @param rowIndex - Index de la ligne actuelle
+   * @param fieldIndex - Index du champ actuel dans la ligne
+   */
   function handleTableFieldKeyDown(
     e: React.KeyboardEvent,
     rowIndex: number,
@@ -491,6 +541,18 @@ export default function Commandes({ forcedType }: CommandesProps) {
   ) {
     
     const moveToNextField = () => {
+        // Special case: In DIR mode, after UG (field 1), go to euro field
+        if (commandeType === 'DIR' && fieldIndex === 1) {
+            setTimeout(() => {
+                const euroInput = document.querySelector(
+                    `input[data-row="${rowIndex}"][data-field="euro"]`
+                ) as HTMLInputElement;
+                euroInput?.focus();
+                euroInput?.select();
+            }, 0);
+            return;
+        }
+
         let nextFieldIndex = fieldIndex + 1;
         while (nextFieldIndex < fieldsConfig.length && !fieldsConfig[nextFieldIndex].editable) {
             nextFieldIndex++;
@@ -504,40 +566,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
                     `input[data-row="${rowIndex}"][data-field="${nextFieldIndex}"]`
                 ) as HTMLInputElement;
                 nextInput?.focus();
+                nextInput?.select(); // Sélectionner le contenu pour saisie directe
             }, 0);
         } else {
-             // Fin de ligne : vérifier si ligne complète et passer à la suivante
-             const row = commandeProduits[rowIndex];
-             const isComplete = row && 
-               row.quantity > 0 && 
-               row.price && 
-               parseFloat(String(row.price)) > 0;
-               // Lot and Date are optional now
-
-             if (isComplete) {
-                if (rowIndex < commandeProduits.length - 1) {
-                     // Passer à la ligne suivante, premier champ editable
-                     let firstEditableField = 0;
-                     while (firstEditableField < fieldsConfig.length && !fieldsConfig[firstEditableField].editable) {
-                         firstEditableField++;
-                     }
-                     
-                     setFocusedField({ row: rowIndex + 1, field: firstEditableField });
-                     setTimeout(() => {
-                       const nextInput = document.querySelector(
-                         `input[data-row="${rowIndex + 1}"][data-field="${firstEditableField}"]`
-                       ) as HTMLInputElement;
-                       nextInput?.focus();
-                       nextInput?.select(); // Sélectionner le contenu
-                     }, 0);
-                } else {
-                    // Dernière ligne complète : retourner à la recherche pour ajouter une nouvelle ligne
-                    setFocusedField(null);
-                    setTimeout(() => {
-                        searchInputRef.current?.focus();
-                    }, 0);
-                }
-             }
+             // Fin de ligne (date d'expiration) : retourner à la recherche produit
+             setFocusedField(null);
+             setTimeout(() => {
+                 searchInputRef.current?.focus();
+             }, 0);
         }
     };
 
@@ -554,6 +590,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                     `input[data-row="${rowIndex}"][data-field="${prevFieldIndex}"]`
                 ) as HTMLInputElement;
                 prevInput?.focus();
+                prevInput?.select(); // Sélectionner le contenu pour saisie directe
             }, 0);
         }
     };
@@ -580,6 +617,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
               `input[data-row="${rowIndex + 1}"][data-field="${fieldIndex}"]`
             ) as HTMLInputElement;
             nextInput?.focus();
+            nextInput?.select();
           }, 0);
         }
         break;
@@ -592,6 +630,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
               `input[data-row="${rowIndex - 1}"][data-field="${fieldIndex}"]`
             ) as HTMLInputElement;
             nextInput?.focus();
+            nextInput?.select();
           }, 0);
         }
         break;
@@ -612,6 +651,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
     }
   }
 
+  /**
+   * Ajoute un produit à la commande en cours.
+   * - Vérifie l'exclusivité fournisseur et demande confirmation si nécessaire
+   * - Si le produit existe déjà, incrémente la quantité
+   * - Sinon, crée une nouvelle ligne avec les valeurs par défaut du produit
+   * @param product - Le produit à ajouter à la commande
+   */
   async function selectProduct(product: ProduitModel) {
     // Vérification Exclusivité Fournisseur
     if (product.is_supplier_exclusive) {
@@ -699,6 +745,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
 
+  /**
+   * Supprime un produit de la commande par son index.
+   * Met à jour également les indices de sélection.
+   * @param index - Index du produit à supprimer dans la liste
+   */
   function removeProductFromCommande(index: number) {
     setCommandeProduits(prev => prev.filter((_, i) => i !== index));
     // Retirer aussi de la sélection si présent
@@ -828,6 +879,20 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }
 
 
+  /**
+   * Met à jour un champ d'un produit dans la commande et recalcule les valeurs liées.
+   * 
+   * Calculs automatiques :
+   * - prix_euro → price (conversion Euro→FCFA avec taux de change et coefficient)
+   * - price/marge/tva → selling_price (prix de vente TTC arrondi)
+   * - selling_price → marge (marge recalculée en tenant compte de la TVA)
+   * 
+   * Gère aussi la fusion automatique des lignes avec le même produit et lot.
+   * 
+   * @param index - Index de la ligne à modifier
+   * @param field - Nom du champ à modifier
+   * @param value - Nouvelle valeur du champ
+   */
   function updateCommandeProduitField(
     index: number,
     field: 'quantity' | 'unites_gratuites' | 'price' | 'tva' | 'marge' | 'selling_price' | 'lot' | 'date_expiration' | 'prix_euro',
@@ -839,37 +904,47 @@ export default function Commandes({ forcedType }: CommandesProps) {
         if (i === index) {
             const newItem = { ...item, [field]: value };
             
-            // AUTO-CALCUL: Euro -> FCFA
-            if (commandeType === 'DIR' && field === 'prix_euro') {
-                 const pEuro = parseFloat(String(newItem.prix_euro || 0));
-                 const rate = parseFloat(tauxChange || '655.957'); 
-                 const coeff = parseFloat(fraisCoefficient || '1.0');
+            // AUTO-CALCUL: Euro -> FCFA (avec arrondi à l'entier)
+          if (commandeType === 'DIR' && field === 'prix_euro') {
+               const pEuro = parseFloat(String(newItem.prix_euro || 0));
+               const rate = parseFloat(tauxChange || '655.957'); 
+               const coeff = parseFloat(fraisCoefficient || '1.0');
 
-                 if (!isNaN(pEuro) && !isNaN(rate)) {
-                     const priceFCFA = pEuro * rate;
-                     newItem.price = priceFCFA.toFixed(2);
-                     if (!isNaN(coeff)) {
-                         newItem.price = (priceFCFA * coeff).toFixed(2);
-                     }
-                 }
-            }
+               if (!isNaN(pEuro) && !isNaN(rate)) {
+                   let priceFCFA = pEuro * rate;
+                   if (!isNaN(coeff)) {
+                       priceFCFA = priceFCFA * coeff;
+                   }
+                   // Arrondir à l'entier le plus proche
+                   newItem.price = Math.round(priceFCFA).toString();
+               }
+          }
 
-            // Recalculer selling_price si price ou marge change
-            if (field === 'price' || field === 'marge') {
-                 const price = parseFloat(String(newItem.price || 0));
-                 const marge = parseFloat(String(newItem.marge || 1));
-                 if (!isNaN(price) && !isNaN(marge) && price > 0) {
-                     newItem.selling_price = (price * marge).toString();
-                 }
-            }
-            // Recalculer marge si selling_price change
-            if (field === 'selling_price') {
-                 const price = parseFloat(String(newItem.price || 0));
-                 const selling = parseFloat(String(newItem.selling_price || 0));
-                 if (!isNaN(price) && !isNaN(selling) && price > 0) {
-                     newItem.marge = (selling / price).toString();
-                 }
-            }
+          // Recalculer selling_price si price, marge ou tva change (avec arrondi)
+          if (field === 'price' || field === 'marge' || field === 'tva') {
+               const price = parseFloat(String(newItem.price || 0));
+               const marge = parseFloat(String(newItem.marge || 1));
+               const tva = parseFloat(String(newItem.tva || 0));
+               if (!isNaN(price) && !isNaN(marge) && price > 0) {
+                   // Prix de vente HT = prix d'achat * marge
+                   const sellingHT = price * marge;
+                   // Prix de vente TTC = prix HT * (1 + TVA/100)
+                   const sellingTTC = sellingHT * (1 + tva / 100);
+                   // Arrondir à l'entier le plus proche
+                   newItem.selling_price = Math.round(sellingTTC).toString();
+               }
+          }
+          // Recalculer marge si selling_price change (avec arrondi de la marge à 2 décimales)
+          if (field === 'selling_price') {
+               const price = parseFloat(String(newItem.price || 0));
+               const selling = parseFloat(String(newItem.selling_price || 0));
+               const tva = parseFloat(String(newItem.tva || 0));
+               if (!isNaN(price) && !isNaN(selling) && price > 0) {
+                   // Reconvertir TTC en HT puis calculer la marge
+                   const sellingHT = selling / (1 + tva / 100);
+                   newItem.marge = (sellingHT / price).toFixed(2);
+               }
+          }
             return newItem;
         }
         return item;
@@ -924,6 +999,21 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
 
+  /**
+   * Importe des produits depuis un fichier CSV.
+   * 
+   * Formats supportés :
+   * - CSV standard avec colonnes : CIP, Désignation, Quantité, Prix Achat, Prix Vente, etc.
+   * - Fichiers grossistes (UBIPHARM, LABOREX) avec formats spécifiques
+   * 
+   * Fonctionnalités :
+   * - Recherche automatique des produits par CIP ou nom
+   * - Mise à jour des prix si le produit existe
+   * - Création de nouvelles lignes pour les produits trouvés
+   * - Rapport des produits non trouvés
+   * 
+   * @param event - Événement de changement du champ fichier
+   */
   const handleCsvImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -1067,6 +1157,15 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
 
+  /**
+   * Exporte la commande en cours au format CSV pour envoi aux grossistes.
+   * 
+   * Formats supportés :
+   * - UBIPHARM : format spécifique avec colonnes CIP, Désignation, Quantité
+   * - LABOREX : format spécifique adapté au système LABOREX
+   * 
+   * @param wholesaler - Identifiant du grossiste ('UBIPHARM' ou 'LABOREX')
+   */
   const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX') => {
     if (commandeProduits.length === 0) {
       toast('La commande est vide.', { icon: '⚠️' });
@@ -1355,7 +1454,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           canMerge={canMergeSelectedOrders().canMerge}
           mergeReason={canMergeSelectedOrders().reason}
           onOpenMergeModal={openMergeModal}
-          onOpenCreateView={openCreateView}
+          onOpenCreateView={() => openCreateView(activeTab)}
           onOpenSuggestionModal={() => setIsSuggestionModalOpen(true)}
           onViewDetails={handleViewDetails}
         />

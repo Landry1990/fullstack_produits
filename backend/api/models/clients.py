@@ -21,6 +21,10 @@ class Fournisseur(models.Model):
     )
     phone = models.CharField(validators=[phone_regex], max_length=17, unique=True)
     email = models.EmailField(unique=True)
+    is_active = models.BooleanField(
+        default=True, 
+        help_text="Fournisseur actif (visible dans les recherches)"
+    )
 
     def __str__(self):
         return self.name
@@ -94,6 +98,10 @@ class Client(models.Model):
     )
 
     created_at = models.DateTimeField(default=timezone.now)
+    is_active = models.BooleanField(
+        default=True, 
+        help_text="Client actif (visible dans les recherches)"
+    )
 
     def __str__(self):
         return self.name

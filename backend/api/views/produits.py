@@ -55,6 +55,10 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
     def get_queryset(self):
         queryset = super().get_queryset()
         
+        # Par défaut, ne montrer que les produits actifs (sauf si include_inactive=true)
+        if not self.request.query_params.get('include_inactive'):
+            queryset = queryset.filter(is_active=True)
+        
         # Filtrage manuel pour stock_lt (utilisé dans les rapports)
         stock_lt = self.request.query_params.get('stock_lt')
         if stock_lt is not None:
@@ -102,6 +106,29 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             queryset = queryset.filter(groupe_id=groupe_id)
             
         return queryset
+
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        """Bascule le statut actif/inactif d'un produit."""
+        produit = self.get_object()
+        produit.is_active = not produit.is_active
+        produit.save(update_fields=['is_active'])
+        
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='Produit',
+            object_id=produit.id,
+            description=f"Produit {'réactivé' if produit.is_active else 'masqué'}: {produit.name}",
+            details={'is_active': produit.is_active},
+            request=request
+        )
+        
+        return Response({
+            'status': 'success',
+            'is_active': produit.is_active,
+            'message': f"Produit {'réactivé' if produit.is_active else 'masqué'}"
+        })
 
     @action(detail=False, methods=['get'])
     def for_import(self, request):
@@ -1027,6 +1054,25 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone']
     pagination_class = None
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        # Par défaut, ne montrer que les fournisseurs actifs
+        if not self.request.query_params.get('include_inactive'):
+            qs = qs.filter(is_active=True)
+        return qs
+
+    @action(detail=True, methods=['post'])
+    def toggle_active(self, request, pk=None):
+        """Bascule le statut actif/inactif d'un fournisseur."""
+        fournisseur = self.get_object()
+        fournisseur.is_active = not fournisseur.is_active
+        fournisseur.save(update_fields=['is_active'])
+        return Response({
+            'status': 'success',
+            'is_active': fournisseur.is_active,
+            'message': f"Fournisseur {'réactivé' if fournisseur.is_active else 'masqué'}"
+        })
 
     @action(detail=True, methods=['get'])
     def catalogue(self, request, pk=None):

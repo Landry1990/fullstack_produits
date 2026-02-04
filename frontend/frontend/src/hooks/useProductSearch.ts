@@ -117,7 +117,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         queryKey: ['products', 'search', debouncedSearch, autoLoad],
         queryFn: () => fetchProducts(debouncedSearch, autoLoad),
         enabled: shouldFetch,
-        staleTime: 0, // No cache for absolute real-time accuracy
+        staleTime: 1000 * 30, // 30 seconds cache to reduce API calls and memory pressure
     })
 
     // Handle Barcode matching effect
