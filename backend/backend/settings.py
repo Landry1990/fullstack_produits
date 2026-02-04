@@ -33,13 +33,13 @@ INSTALLED_APPS = [
     'rest_framework.authtoken', # Token Auth
     'django_filters',  # Django Filter (templates & backends)
     'corsheaders',
-    'silk',
+    # 'silk',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'silk.middleware.SilkyMiddleware',
+    # 'silk.middleware.SilkyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
