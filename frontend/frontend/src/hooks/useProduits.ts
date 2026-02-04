@@ -22,6 +22,7 @@ interface ProduitFilters {
     page?: number;
     rayon?: string;
     fournisseur?: string;
+    include_inactive?: boolean;
 }
 
 interface ProduitsResponse {
@@ -50,6 +51,7 @@ export const useProduits = (filters: ProduitFilters) => {
             const params = new URLSearchParams();
             if (filters.search) params.append('search', filters.search);
             if (filters.page) params.append('page', filters.page.toString());
+            if (filters.include_inactive) params.append('include_inactive', 'true');
             // Note: rayon and fournisseur filtering currently happens client-side in the original component, 
             // but if the API supports it, we should add it here. 
             // For migration fidelity, we fetch the paginated list based on search/page first.

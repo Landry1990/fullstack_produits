@@ -16,7 +16,10 @@
         "confirmation": "Confirmation",
         "pay": "Payer",
         "error": "Erreur",
-        "refresh": "Actualiser"
+        "refresh": "Actualiser",
+        "actions": {
+            "confirm": "Confirmer"
+        }
     },
     "sidebar": {
         "dashboard": "Tableau de bord",

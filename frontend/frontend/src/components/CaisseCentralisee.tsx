@@ -8,6 +8,9 @@ import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
+import { PaymentModal } from './caisse/PaymentModal'
+import { FacturesTable } from './caisse/FacturesTable'
+import { CouponPanel } from './caisse/CouponPanel'
 
 // Lazy load barcode component
 const Barcode = lazy(() => import('react-barcode'))
@@ -21,18 +24,9 @@ export default function CaisseCentralisee() {
   const [loading, setLoading] = useState(false)
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [montantPaye, setMontantPaye] = useState('')
-  const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'om' | 'momo'>('especes')
   const [reference, setReference] = useState('')
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
-  const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
-  // Étape du paiement: 'amount' = saisie montant, 'mode' = sélection mode
-  const [paymentStep, setPaymentStep] = useState<'amount' | 'mode'>('amount')
-  // Index du mode de paiement sélectionné (pour navigation clavier)
-  const [selectedModeIndex, setSelectedModeIndex] = useState(0)
-  // Ref pour focus automatique
-  const montantInputRef = useRef<HTMLInputElement>(null)
   
   // États pour les coupons
   const [coupons, setCoupons] = useState<CouponMonnaie[]>([])
@@ -218,25 +212,6 @@ export default function CaisseCentralisee() {
     }
   }
 
-  // Focus automatique sur le champ montant quand le modal s'ouvre ou revient à l'étape montant
-  useEffect(() => {
-    if (isPaymentModalOpen && paymentStep === 'amount') {
-      // Petit délai pour que le DOM soit prêt
-      const timer = setTimeout(() => {
-        montantInputRef.current?.focus()
-        montantInputRef.current?.select()
-      }, 100)
-      return () => clearTimeout(timer)
-    }
-  }, [isPaymentModalOpen, paymentStep])
-
-  // Rafraîchissement automatique toutes les 20 secondes
-  useEffect(() => {
-    fetchFacturesEnAttente()
-    const interval = setInterval(fetchFacturesEnAttente, 20000)
-    return () => clearInterval(interval)
-  }, [fetchFacturesEnAttente])
-
   // Trier les factures par numéro de ticket pour la navigation clavier
   const sortedFactures = useMemo(() => 
     [...facturesEnAttente].sort((a, b) => (a.session_ticket_number || 0) - (b.session_ticket_number || 0)),
@@ -246,24 +221,8 @@ export default function CaisseCentralisee() {
   // Ouvrir la modale de paiement (useCallback pour les raccourcis clavier)
   const handleEncaisser = useCallback((facture: Facture) => {
     setSelectedFacture(facture)
-    // Suggest part_client if available and positive, otherwise total_ttc
-    let amountToPay = (facture.part_client !== null && Number(facture.part_client) >= 0) 
-      ? Number(facture.part_client) 
-      : Number(facture.total_ttc)
-    
-    // Déduire le coupon si appliqué à cette facture spécifique
-    const couponPourCetteFacture = couponsParFacture[facture.id]
-    if (couponPourCetteFacture) {
-      amountToPay = Math.max(0, amountToPay - Number(couponPourCetteFacture.montant))
-    }
-    
-    setMontantPaye(Math.round(amountToPay).toString())
-    setModePaiement('especes')
-    setReference('')
-    setPaiements([]) // Reset multiple payments
-    setPaymentStep('amount') // Reset au mode saisie montant
     setIsPaymentModalOpen(true)
-  }, [couponsParFacture])
+  }, [])
 
   // Raccourcis clavier (mouse killing)
   useEffect(() => {
@@ -347,13 +306,12 @@ export default function CaisseCentralisee() {
   }, [facturesEnAttente.length, selectedRowIndex])
 
   // Enregistrer le paiement
-  const enregistrerPaiement = async () => {
+  // Enregistrer le paiement
+  const enregistrerPaiement = async (paiementsValides: { mode: string; montant: number }[]) => {
     if (!selectedFacture) return
 
     // Calculer le total des paiements
-    const totalPaiements = paiements.reduce((acc, p) => acc + p.montant, 0)
-    const montantCourant = Number(montantPaye) || 0
-    const montantTotal = totalPaiements + (paiements.length === 0 ? montantCourant : 0)
+    const montantTotal = paiementsValides.reduce((acc, p) => acc + p.montant, 0)
 
     if (montantTotal <= 0) {
       toast.error('Veuillez entrer un montant valide')
@@ -382,12 +340,8 @@ export default function CaisseCentralisee() {
             ? Number(factureValidee.part_client)
             : Number(factureValidee.total_ttc))
 
-      // 2. Enregistrer les paiements (multiples ou simple)
-      const paiementsAEnregistrer = paiements.length > 0 
-        ? paiements 
-        : [{ mode: modePaiement, montant: montantCourant }]
-
-      for (const paiement of paiementsAEnregistrer) {
+      // 2. Enregistrer les paiements
+      for (const paiement of paiementsValides) {
         const paiementPayload: any = {
           facture: factureValidee.id,
           mode_paiement: paiement.mode,
@@ -418,7 +372,7 @@ export default function CaisseCentralisee() {
       setTicketCaisse({
         id: 0,
         facture: factureFinale,
-        mode_paiement: paiements.length > 1 ? 'Mixte' : (paiements[0]?.mode || modePaiement),
+        mode_paiement: paiementsValides.length > 1 ? 'Mixte' : (paiementsValides[0]?.mode || 'especes'),
         montant: factureFinale.total_ttc,
         montant_verse: montantTotal.toString(),
         rendu: rendu.toString(),
@@ -586,556 +540,48 @@ export default function CaisseCentralisee() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Panneau des Coupons (Sidebar Gauche) */}
+        {/* Panneau des Coupons (Sidebar Gauche) */}
         {isCouponPanelOpen && (
-          <div className="w-96 bg-white border-r border-base-200 flex flex-col animate-fade-in-right">
-            <div className="p-4 border-b border-base-100 bg-base-50/50">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-bold text-lg flex items-center gap-2">
-                  <span className="text-primary"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" /></svg></span>
-                  Coupons
-                </h2>
-                <button 
-                  onClick={() => setIsGenererCouponModalOpen(true)}
-                  className="btn btn-sm btn-circle btn-primary"
-                  title={user?.is_superuser || user?.profile?.can_generate_coupon ? "Générer un coupon" : "Permission requise"}
-                  disabled={!user?.is_superuser && !user?.profile?.can_generate_coupon}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                </button>
-              </div>
-
-              <div className="join w-full">
-                <input 
-                  type="text" 
-                  placeholder="Rechercher #..." 
-                  className="input input-sm input-bordered join-item flex-1"
-                  value={searchCouponNumero}
-                  onChange={(e) => setSearchCouponNumero(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleRechercherCoupon()}
-                />
-                <button 
-                  className="btn btn-sm join-item"
-                  onClick={handleRechercherCoupon}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {coupons.length === 0 ? (
-                <div className="text-center py-10 text-base-content/40 italic text-sm">
-                  Aucun coupon
-                </div>
-              ) : (
-                <table className="table table-xs table-zebra w-full">
-                  <thead className="sticky top-0 bg-base-100 z-10">
-                    <tr>
-                      <th className="text-[10px] px-1">N° / Montant</th>
-                      <th className="text-[10px] px-1">Création</th>
-                      <th className="text-[10px] px-1">Utilisation</th>
-                      <th className="text-xs text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {coupons.map(coupon => (
-                      <tr 
-                        key={coupon.id} 
-                        className={`cursor-pointer hover:bg-primary/10 transition-colors ${
-                          coupon.status !== 'ACTIF' ? 'opacity-60' : ''
-                        }`}
-                        onClick={() => { setCouponTrouve(coupon); setIsDetailsCouponModalOpen(true); }}
-                      >
-                        <td className="px-1 py-1">
-                          <div className="font-mono text-[10px] font-bold">#{coupon.numero}</div>
-                          <div className={`font-bold text-[10px] ${coupon.status === 'ACTIF' ? 'text-primary' : 'text-base-content/50'}`}>
-                            {Math.round(Number(coupon.montant))} F
-                          </div>
-                        </td>
-                        <td className="text-[10px] text-base-content/60 px-1 py-1">
-                          <div className="font-medium text-base-content whitespace-nowrap">{new Date(coupon.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(coupon.date_creation).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
-                          <div className="truncate max-w-[80px]" title={coupon.cree_par_nom || 'Système'}>
-                            Par: {coupon.cree_par_nom || 'Système'}
-                          </div>
-                        </td>
-                        <td className="text-[10px] text-base-content/60 px-1 py-1">
-                          {coupon.status === 'UTILISE' ? (
-                            <>
-                              <div className="font-medium text-base-content whitespace-nowrap">
-                                {new Date(coupon.date_utilisation!).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })} {new Date(coupon.date_utilisation!).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                              </div>
-                              <div className="truncate max-w-[80px]" title={coupon.utilise_par_nom || 'N/A'}>
-                                Par: {coupon.utilise_par_nom || 'N/A'}
-                              </div>
-                            </>
-                          ) : '-'}
-                        </td>
-                        <td className="text-center">
-                          <span className={`badge badge-xs ${
-                            coupon.status === 'ACTIF' ? 'badge-success' : 
-                            coupon.status === 'UTILISE' ? 'badge-neutral' :
-                            coupon.status === 'EXPIRE' ? 'badge-warning' : 'badge-error'
-                          }`}>
-                            {coupon.status === 'ACTIF' ? '✓' : coupon.status === 'UTILISE' ? '✗' : '!'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
+          <CouponPanel
+            coupons={coupons}
+            onGenerateCoupon={() => setIsGenererCouponModalOpen(true)}
+            searchNumero={searchCouponNumero}
+            onSearchChange={setSearchCouponNumero}
+            onSearch={handleRechercherCoupon}
+            onSelectCoupon={(c) => {
+              setCouponTrouve(c)
+              setIsDetailsCouponModalOpen(true)
+            }}
+            user={user}
+          />
         )}
 
         <div className="flex-1 overflow-auto p-6">
-        {facturesEnAttente.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-base-content/40">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p className="text-xl font-light">Aucune facture en attente de règlement</p>
-            <p className="text-sm mt-2">Les ventes validées par les vendeurs apparaîtront ici</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="table table-sm w-full">
-              <thead className="bg-base-200 sticky top-0 z-10">
-                <tr>
-                  <th>#Ticket</th>
-                  <th>Facture</th>
-                  <th>Client</th>
-                  <th>Date</th>
-                  <th>Produits</th>
-                  <th className="text-right">Montant</th>
-                  <th className="text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedFactures.map((facture, index) => {
-                    // Récupérer le coupon appliqué à CETTE facture spécifique
-                    const couponPourCetteFacture = couponsParFacture[facture.id]
-                    const montantAPayer = Math.round(
-                      Math.max(0,
-                        ((facture.part_client !== null && Number(facture.part_client) >= 0)
-                          ? Number(facture.part_client)
-                          : Number(facture.total_ttc))
-                        - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
-                      )
-                    )
-                    const hasTiersPayant = facture.part_client !== null && Number(facture.part_client) >= 0
-                    const isSelected = index === selectedRowIndex
-                    
-                    return (
-                      <tr 
-                        key={facture.id} 
-                        className={`cursor-pointer transition-all ${
-                          isSelected 
-                            ? 'bg-primary/10 border-l-4 border-primary font-medium' 
-                            : 'hover:bg-base-100'
-                        }`}
-                        onClick={() => setSelectedRowIndex(index)}
-                        onDoubleClick={() => {
-                          if ((user as any)?.can_cash_out || user?.is_superuser) {
-                            handleEncaisser(facture)
-                          }
-                        }}
-                      >
-                        <td>
-                          <span className="badge badge-neutral font-bold">
-                            {facture.session_ticket_number || '?'}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="font-bold text-primary">#{facture.numero_facture}</div>
-                        </td>
-                        <td>
-                          <div className="font-medium">{facture.client_name || 'Passage'}</div>
-                          {hasTiersPayant && (
-                            <span className="badge badge-info badge-xs">Tiers Payant</span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="text-sm">
-                            {new Date(facture.date).toLocaleDateString('fr-FR')}
-                          </div>
-                          <div className="text-xs text-base-content/60">
-                            {new Date(facture.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="dropdown dropdown-hover dropdown-end">
-                            <label tabIndex={0} className="btn btn-sm btn-primary btn-outline gap-2 cursor-pointer">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                              </svg>
-                              <span className="font-bold">{facture.produits?.length || 0} produits</span>
-                            </label>
-                            <div tabIndex={0} className="dropdown-content z-[100] card shadow-2xl bg-white border-2 border-primary/20 p-4 w-96">
-                              <div className="text-base font-bold mb-3 border-b-2 border-primary pb-2 flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                </svg>
-                                Produits ({facture.produits?.length || 0})
-                              </div>
-                              <div className="max-h-60 overflow-y-auto space-y-2">
-                                {facture.produits && facture.produits.length > 0 ? (
-                                  facture.produits.map((p: any) => (
-                                    <div key={p.id} className="flex justify-between items-center bg-base-100 p-3 rounded-lg hover:bg-base-200 transition-colors">
-                                      <span className="font-medium text-sm">{p.produit_nom || `Produit #${p.produit}`}</span>
-                                      <div className="flex items-center gap-3">
-                                        <span className="badge badge-neutral">×{p.quantity}</span>
-                                        <span className="font-bold text-success text-base">{Math.round(p.quantity * Number(p.selling_price))} F</span>
-                                      </div>
-                                    </div>
-                                  ))
-                                ) : (
-                                  <div className="text-sm text-base-content/40 text-center py-4">Aucun produit</div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="text-right">
-                          <div className="font-bold text-lg text-success">{montantAPayer} F</div>
-                          {hasTiersPayant && (
-                            <div className="text-xs text-base-content/50">
-                              Total: {Math.round(Number(facture.total_ttc))} F
-                            </div>
-                          )}
-                          {couponPourCetteFacture && (
-                            <div className="badge badge-success badge-sm gap-1">
-                              <span>#{couponPourCetteFacture.numero}: -{couponPourCetteFacture.montant} F</span>
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); handleRetirerCouponDeFacture(facture.id); }}
-                                className="btn btn-xs btn-circle btn-ghost"
-                              >×</button>
-                            </div>
-                          )}
-                        </td>
-                        <td>
-                          <div className="flex gap-1 justify-center">
-                            <button
-                              onClick={() => handleModifier(facture)}
-                              className="btn btn-xs btn-outline btn-warning"
-                              title="Modifier"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleAnnuler(facture)}
-                              className="btn btn-xs btn-outline btn-error"
-                              title="Annuler"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                            {/* Bouton pour appliquer un coupon à cette vente */}
-                            {!couponPourCetteFacture && (
-                              <button
-                                onClick={() => openCouponSelectionForFacture(facture)}
-                                className="btn btn-xs btn-outline btn-secondary"
-                                title="Appliquer un coupon"
-                              >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                                </svg>
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleEncaisser(facture)}
-                              disabled={!(user as any)?.can_cash_out && !(user?.is_superuser)}
-                              className="btn btn-xs btn-success text-white gap-1"
-                              title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? "Non autorisé" : "Encaisser"}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                              </svg>
-                              Encaisser
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+          <FacturesTable
+            sortedFactures={sortedFactures}
+            loading={loading}
+            selectedRowIndex={selectedRowIndex}
+            onSelectRow={setSelectedRowIndex}
+            onEncaisser={handleEncaisser}
+            onRemoveCoupon={handleRetirerCouponDeFacture}
+            onModify={handleModifier}
+            onCancel={handleAnnuler}
+            onApplyCoupon={openCouponSelectionForFacture}
+            couponsParFacture={couponsParFacture}
+            user={user}
+          />
+        </div>
 
       {/* Modal de paiement */}
       {isPaymentModalOpen && selectedFacture && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-md">
-            <h3 className="font-bold text-lg mb-4">Encaissement - Facture #{selectedFacture.numero_facture}</h3>
-
-            <div className="text-center mb-6">
-              {(() => {
-                const couponPourCetteFacture = couponsParFacture[selectedFacture.id]
-                const montantAffiche = Math.round(
-                  Math.max(0,
-                    ((selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
-                      ? Number(selectedFacture.part_client)
-                      : Number(selectedFacture.total_ttc))
-                    - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
-                  )
-                )
-                return (
-                  <>
-                    <div className="text-sm text-base-content/60">Total à payer</div>
-                    <div className="text-4xl font-bold text-primary">{montantAffiche} F</div>
-                    {couponPourCetteFacture && (
-                      <div className="badge badge-success mt-2 gap-1">
-                        <span>Coupon #{couponPourCetteFacture.numero}: -{couponPourCetteFacture.montant} F</span>
-                      </div>
-                    )}
-                  </>
-                )
-              })()}
-              {(selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0) && (
-                 <div className="badge badge-info mt-2">Part Client (Tiers Payant actif)</div>
-              )}
-            </div>
-
-            {/* Liste des paiements ajoutés */}
-            {paiements.length > 0 && (
-              <div className="bg-base-200 rounded-lg p-3 mb-4">
-                <div className="text-xs font-bold mb-2">Paiements enregistrés:</div>
-                {paiements.map((p, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-white p-2 rounded mb-1">
-                    <span className="text-sm">{p.mode === 'especes' ? 'Espèces' : p.mode === 'carte' ? 'Carte' : p.mode === 'cheque' ? 'Chèque' : p.mode === 'om' ? 'OM' : p.mode === 'momo' ? 'MoMo' : p.mode.toUpperCase()}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold">{p.montant} F</span>
-                      <button 
-                        onClick={() => {
-                          setPaiements(paiements.filter((_, i) => i !== idx))
-                          setPaymentStep('amount')
-                        }}
-                        className="btn btn-ghost btn-xs text-error"
-                      >✕</button>
-                    </div>
-                  </div>
-                ))}
-                <div className="text-right text-xs mt-2 pt-2 border-t">
-                  Total versé: <span className="font-bold">{paiements.reduce((acc, p) => acc + p.montant, 0)} F</span>
-                </div>
-              </div>
-            )}
-
-            {/* Flux intelligent de paiement */}
-            {(() => {
-              const couponPourCetteFacture = couponsParFacture[selectedFacture.id]
-              const totalAPayer = Math.round(
-                Math.max(0,
-                  ((selectedFacture.part_client !== null && Number(selectedFacture.part_client) >= 0)
-                    ? Number(selectedFacture.part_client)
-                    : Number(selectedFacture.total_ttc))
-                  - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
-                )
-              )
-              const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0)
-              const resteAPayer = Math.max(0, totalAPayer - totalVerse)
-              const montantSaisi = Number(montantPaye) || 0
-              const montantCourant = paymentStep === 'amount' ? 0 : montantSaisi
-              const totalAvecCourant = totalVerse + montantCourant
-              const peutValider = totalAvecCourant >= totalAPayer || (paiements.length > 0 && resteAPayer === 0)
-
-              return (
-                <>
-                  {/* Reste à payer */}
-                  {resteAPayer > 0 && (
-                    <div className="alert alert-warning mb-4 py-2">
-                      <span className="font-bold">Reste à payer: {resteAPayer} F</span>
-                    </div>
-                  )}
-
-                  {/* Étape 1: Saisie du montant */}
-                  {paymentStep === 'amount' && (
-                    <div className="form-control w-full mb-4">
-                      <label className="label">
-                        <span className="label-text font-bold">1. Saisissez le montant puis appuyez sur Entrée</span>
-                      </label>
-                      <input
-                        ref={montantInputRef}
-                        type="number"
-                        value={montantPaye}
-                        onChange={(e) => setMontantPaye(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && montantPaye && Number(montantPaye) > 0) {
-                            e.preventDefault()
-                            setPaymentStep('mode')
-                          }
-                        }}
-                        className="input input-bordered input-lg w-full text-3xl text-center font-bold"
-                        placeholder={resteAPayer > 0 ? `${resteAPayer} F` : '0 F'}
-                        autoFocus
-                      />
-                      <label className="label">
-                        <span className="label-text-alt text-base-content/60">Appuyez sur Entrée après avoir saisi le montant</span>
-                      </label>
-                    </div>
-                  )}
-
-                  {/* Étape 2: Sélection du mode de paiement */}
-                  {paymentStep === 'mode' && (
-                    <div className="mb-4">
-                      <div className="text-sm text-base-content/70 mb-2 text-center">
-                        Montant: <span className="font-bold text-lg text-primary">{montantSaisi} F</span>
-                      </div>
-                      <label className="label">
-                        <span className="label-text font-bold">2. Utilisez ↑↓←→ et Entrée pour choisir le mode</span>
-                      </label>
-                      {(() => {
-                        const paymentModes = [
-                          { value: 'especes', label: '💵 Espèces' },
-                          { value: 'carte', label: '💳 Carte' },
-                          { value: 'cheque', label: '📝 Chèque' },
-                          { value: 'virement', label: '🏦 Virement' },
-                          { value: 'om', label: '🟠 OM' },
-                          { value: 'momo', label: '🟡 MoMo' },
-                        ]
-                        
-                        const selectMode = (modeValue: string) => {
-                          // Ajouter le paiement
-                          setPaiements([...paiements, { mode: modeValue, montant: montantSaisi }])
-                          // Calculer le reste
-                          const nouveauTotalVerse = totalVerse + montantSaisi
-                          const nouveauReste = Math.max(0, totalAPayer - nouveauTotalVerse)
-                          // Si reste, remettre en mode saisie avec le reste
-                          if (nouveauReste > 0) {
-                            setMontantPaye(nouveauReste.toString())
-                            setPaymentStep('amount')
-                            setSelectedModeIndex(0)
-                          } else {
-                            // Paiement complet
-                            setMontantPaye('')
-                          }
-                        }
-                        
-                        return (
-                          <div 
-                            className="grid grid-cols-2 gap-2"
-                            tabIndex={0}
-                            ref={(el) => el?.focus()}
-                            onKeyDown={(e) => {
-                              const cols = 2
-                              const rows = Math.ceil(paymentModes.length / cols)
-                              const currentRow = Math.floor(selectedModeIndex / cols)
-                              const currentCol = selectedModeIndex % cols
-                              
-                              if (e.key === 'ArrowRight') {
-                                e.preventDefault()
-                                setSelectedModeIndex(prev => Math.min(prev + 1, paymentModes.length - 1))
-                              } else if (e.key === 'ArrowLeft') {
-                                e.preventDefault()
-                                setSelectedModeIndex(prev => Math.max(prev - 1, 0))
-                              } else if (e.key === 'ArrowDown') {
-                                e.preventDefault()
-                                const newRow = Math.min(currentRow + 1, rows - 1)
-                                setSelectedModeIndex(Math.min(newRow * cols + currentCol, paymentModes.length - 1))
-                              } else if (e.key === 'ArrowUp') {
-                                e.preventDefault()
-                                const newRow = Math.max(currentRow - 1, 0)
-                                setSelectedModeIndex(newRow * cols + currentCol)
-                              } else if (e.key === 'Enter') {
-                                e.preventDefault()
-                                selectMode(paymentModes[selectedModeIndex].value)
-                              } else if (e.key >= '1' && e.key <= '6') {
-                                e.preventDefault()
-                                const idx = parseInt(e.key) - 1
-                                if (idx < paymentModes.length) {
-                                  selectMode(paymentModes[idx].value)
-                                }
-                              } else if (e.key === 'Escape' || e.key === 'Backspace') {
-                                e.preventDefault()
-                                setPaymentStep('amount')
-                                setSelectedModeIndex(0)
-                              }
-                            }}
-                          >
-                            {paymentModes.map((mode, idx) => (
-                              <button
-                                key={mode.value}
-                                type="button"
-                                onClick={() => selectMode(mode.value)}
-                                className={`btn btn-lg h-auto py-4 flex-col transition-all ${
-                                  idx === selectedModeIndex 
-                                    ? 'btn-primary ring-2 ring-primary ring-offset-2' 
-                                    : 'btn-outline'
-                                }`}
-                              >
-                                <span className="text-xl">{mode.label}</span>
-                                <kbd className="kbd kbd-xs opacity-50">{idx + 1}</kbd>
-                              </button>
-                            ))}
-                          </div>
-                        )
-                      })()}
-                      <button
-                        onClick={() => {
-                          setPaymentStep('amount')
-                          setSelectedModeIndex(0)
-                        }}
-                        className="btn btn-ghost btn-sm w-full mt-2"
-                      >
-                        ← Modifier le montant
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Monnaie à rendre */}
-                  {totalAvecCourant > totalAPayer && (
-                    <div className="alert alert-success mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div>
-                        <div className="text-sm">Monnaie à rendre</div>
-                        <div className="text-xl font-bold">{(totalAvecCourant - totalAPayer).toFixed(0)} F</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="modal-action">
-                    <button
-                      onClick={() => {
-                        setIsPaymentModalOpen(false)
-                        setPaymentStep('amount')
-                        setPaiements([])
-                      }}
-                      className="btn btn-ghost"
-                      disabled={loading}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={enregistrerPaiement}
-                      className={`btn ${peutValider ? 'btn-success' : 'btn-disabled'}`}
-                      disabled={loading || !peutValider}
-                      ref={(el) => peutValider && el?.focus()}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && peutValider && !loading) {
-                          e.preventDefault()
-                          enregistrerPaiement()
-                        }
-                      }}
-                    >
-                      {loading ? <span className="loading loading-spinner"></span> : (
-                        peutValider ? '✓ Valider le paiement (Entrée)' : `Reste ${resteAPayer} F`
-                      )}
-                    </button>
-                  </div>
-                </>
-              )
-            })()}
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsPaymentModalOpen(false)}></div>
-        </div>
+        <PaymentModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          facture={selectedFacture}
+          coupon={couponsParFacture[selectedFacture.id]}
+          onConfirm={enregistrerPaiement}
+          loading={loading}
+        />
       )}
 
       {/* Modal Ticket */}
@@ -1204,10 +650,10 @@ export default function CaisseCentralisee() {
                   <div className="flex justify-between text-sm font-normal">
                     <span>Rendu</span>
                     <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
-                </div>
-              )}
-              {ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 ? (
-                <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
+                  </div>
+                )}
+                {ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 ? (
+                  <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
                     <div className="font-bold mb-1">Règlements:</div>
                     {ticketCaisse.paiements_details.map((paiement: any, idx: number) => {
                       const getModeLabel = (mode: string) => {
@@ -1239,16 +685,16 @@ export default function CaisseCentralisee() {
                         </div>
                       )
                     })}
-                </div>
-              ) : ticketCaisse.mode_paiement ? (
-                <div className="text-xs font-normal mt-2 text-center">
-                  Mode: {ticketCaisse.mode_paiement.toUpperCase()}
-                </div>
-              ) : (
-                <div className="text-xs text-red-500 mt-2 text-center">
-                  [Aucun mode de paiement détecté]
-                </div>
-              )}
+                  </div>
+                ) : ticketCaisse.mode_paiement ? (
+                  <div className="text-xs font-normal mt-2 text-center">
+                    Mode: {ticketCaisse.mode_paiement.toUpperCase()}
+                  </div>
+                ) : (
+                  <div className="text-xs text-red-500 mt-2 text-center">
+                    [Aucun mode de paiement détecté]
+                  </div>
+                )}
               </div>
               
               <div className="text-center mt-6 text-xs">

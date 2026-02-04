@@ -24,6 +24,7 @@ export interface Fournisseur {
   phone: string;
   email: string;
   solde_dette?: string; // Dette totale (Factures CLOT - Paiements)
+  is_active?: boolean;
 }
 
 export interface AyantDroit {
@@ -77,6 +78,7 @@ export interface ProduitModel {
   dernier_vente?: string | null
   last_purchase_price?: string | null
   is_supplier_exclusive?: boolean
+  is_active?: boolean
 }
 
 export interface ProduitForm {
@@ -197,6 +199,7 @@ export interface Client {
   remise_automatique?: string;
   ayants_droit?: AyantDroit[];
   current_debt?: string;
+  is_active?: boolean;
 }
 
 export interface FactureProduit {

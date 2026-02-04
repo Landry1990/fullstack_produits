@@ -193,6 +193,10 @@ class Produit(models.Model):
         default=False,
         help_text="Produit visible sur la vitrine en ligne"
     )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Produit actif (visible dans les recherches)"
+    )
 
 
     def save(self, *args, **kwargs):

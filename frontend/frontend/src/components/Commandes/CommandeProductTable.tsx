@@ -59,6 +59,12 @@ export default function CommandeProductTable({
     onRemoveProduct
 }: CommandeProductTableProps) {
     const { t } = useTranslation();
+    
+    // Auto-select content when input receives focus
+    const handleSelectAll = (e: React.FocusEvent<HTMLInputElement>) => {
+        e.target.select();
+    };
+    
     return (
         <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
@@ -270,6 +276,7 @@ export default function CommandeProductTable({
                             value={p.quantity}
                             onChange={(e) => updateCommandeProduitField(index, 'quantity', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 0)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-base w-full text-right font-medium focus:bg-base-100 focus:text-primary ${!fieldsConfig[0].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 0}
                             readOnly={!fieldsConfig[0].editable}
@@ -291,6 +298,7 @@ export default function CommandeProductTable({
                             }
                             }}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 1)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-sm w-full text-center font-medium bg-success/10 focus:bg-success/20 focus:text-success ${!fieldsConfig[1].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             placeholder="0"
                             autoFocus={focusedField?.row === index && focusedField?.field === 1}
@@ -298,13 +306,29 @@ export default function CommandeProductTable({
                             tabIndex={!fieldsConfig[1].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Prix Euro (Direct Only) */}
+                        {/* Prix Euro (Direct Only) - with keyboard navigation */}
                         {commandeType === 'DIR' && (
                             <td className="text-right py-2 md:py-3 bg-blue-50/10 border-l border-blue-100">
                             <input
                                 type="text"
+                                data-row={index}
+                                data-field="euro"
                                 value={p.prix_euro || ''}
                                 onChange={(e) => updateCommandeProduitField(index, 'prix_euro', e.target.value)}
+                                onFocus={handleSelectAll}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === 'Tab') {
+                                        e.preventDefault();
+                                        // Move to price field (field 2)
+                                        setTimeout(() => {
+                                            const nextInput = document.querySelector(
+                                                `input[data-row="${index}"][data-field="2"]`
+                                            ) as HTMLInputElement;
+                                            nextInput?.focus();
+                                            nextInput?.select();
+                                        }, 0);
+                                    }
+                                }}
                                 className="input input-ghost input-sm text-base w-full text-right focus:bg-blue-50 focus:text-blue-600 font-mono"
                                 placeholder="Dev."
                             />
@@ -319,6 +343,7 @@ export default function CommandeProductTable({
                             value={p.price}
                             onChange={(e) => updateCommandeProduitField(index, 'price', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 2)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[2].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 2}
                             readOnly={!fieldsConfig[2].editable}
@@ -334,6 +359,7 @@ export default function CommandeProductTable({
                             value={p.tva || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'tva', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 3)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[3].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 3}
                             readOnly={!fieldsConfig[3].editable}
@@ -349,6 +375,7 @@ export default function CommandeProductTable({
                             value={p.marge || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'marge', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 4)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[4].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 4}
                             readOnly={!fieldsConfig[4].editable}
@@ -364,6 +391,7 @@ export default function CommandeProductTable({
                             value={p.selling_price}
                             onChange={(e) => updateCommandeProduitField(index, 'selling_price', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 5)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-base w-full text-right focus:bg-base-100 focus:text-primary ${!fieldsConfig[5].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             autoFocus={focusedField?.row === index && focusedField?.field === 5}
                             readOnly={!fieldsConfig[5].editable}
@@ -379,6 +407,7 @@ export default function CommandeProductTable({
                             value={p.lot || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'lot', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-xs w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
                             placeholder="N° Lot"
                             autoFocus={focusedField?.row === index && focusedField?.field === 6}
@@ -395,6 +424,7 @@ export default function CommandeProductTable({
                             value={p.date_expiration || ''}
                             onChange={(e) => updateCommandeProduitField(index, 'date_expiration', e.target.value)}
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 7)}
+                            onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-xs w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[7].editable ? 'bg-base-200 cursor-not-allowed' : ''} ${p.date_expiration && !/^(0[1-9]|1[0-2])\/\d{2}$/.test(p.date_expiration) ? 'input-error' : ''}`}
                             placeholder="MM/YY"
                             maxLength={5}

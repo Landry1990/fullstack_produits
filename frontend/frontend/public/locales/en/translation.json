@@ -1,4 +1,26 @@
 {
+    "common": {
+        "loading": "Loading...",
+        "details": "Details",
+        "print": "Print",
+        "refund": "Refund",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "passerby_client": "Walk-in Customer",
+        "close": "Close",
+        "receipt": "Receipt",
+        "print_a4": "A4 Invoice",
+        "print_ticket": "Print Ticket",
+        "confirm": "Confirm",
+        "confirmation": "Confirmation",
+        "pay": "Pay",
+        "error": "Error",
+        "refresh": "Refresh",
+        "actions": {
+            "confirm": "Confirm"
+        }
+    },
     "sidebar": {
         "dashboard": "Dashboard",
         "ventes": {

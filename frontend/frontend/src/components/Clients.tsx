@@ -44,6 +44,7 @@ export default function Clients() {
   const [clients, setClients] = useState<ExtendedClient[]>([]);
   const [selectedClient, setSelectedClient] = useState<ExtendedClient | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [showInactive, setShowInactive] = useState<boolean>(false);
 
   
   // View/Navigation State - REPLACED with Modals
@@ -87,7 +88,9 @@ export default function Clients() {
     setLoading(true);
 
     try {
-      const response = await axios.get(clientsEndpoint);
+      const response = await axios.get(clientsEndpoint, {
+        params: { include_inactive: showInactive }
+      });
       // Handle both paginated and non-paginated responses
       const data: any = response.data;
       setClients(Array.isArray(data) ? data : (data.results || []));
@@ -105,7 +108,7 @@ export default function Clients() {
 
   useEffect(() => {
     fetchClients();
-  }, [clientsEndpoint]);
+  }, [clientsEndpoint, showInactive]);
 
   // Si le client sélectionné disparaît de la liste (ex: suppression), désélectionner
   useEffect(() => {
@@ -289,6 +292,20 @@ export default function Clients() {
     }
   }
 
+  async function handleToggleActive() {
+    if (!selectedClient) return;
+    try {
+      const response = await axios.post(`${clientsEndpoint}${selectedClient.id}/toggle_active/`);
+      const isActive = response.data.is_active;
+      toast.success(isActive ? 'Client réactivé' : 'Client masqué');
+      setSelectedClient(prev => prev ? ({ ...prev, is_active: isActive }) : null);
+      fetchClients();
+    } catch (err) {
+      toast.error('Erreur lors du changement de statut');
+      console.error(err);
+    }
+  }
+
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
       {/* LEFT PANEL: CLIENT LIST (1/3) */}
@@ -298,6 +315,13 @@ export default function Clients() {
              <div className="flex justify-between items-center">
                 <h2 className="font-bold text-xl">{t('clients.title')}</h2>
                 <div className="flex gap-1">
+                   <button 
+                      className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'btn-active btn-neutral' : 'text-slate-400'}`} 
+                      onClick={() => setShowInactive(!showInactive)}
+                      title={showInactive ? "Masquer les clients inactifs" : "Afficher les clients inactifs"}
+                   >
+                      {showInactive ? '👁️' : '🙈'}
+                   </button>
                    <button 
                       className="btn btn-sm btn-ghost btn-square text-secondary" 
                       onClick={() => setIsLoyaltyConfigOpen(true)}
@@ -389,6 +413,13 @@ export default function Clients() {
                         onClick={handleDeleteClient}
                       >
                          🗑️ {t('clients.actions.delete')}
+                      </button>
+                      <button 
+                        className={`btn btn-ghost btn-sm ${selectedClient.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
+                        onClick={handleToggleActive}
+                        title={selectedClient.is_active === false ? 'Réactiver' : 'Masquer'}
+                      >
+                         {selectedClient.is_active === false ? '👁️' : '🙈'}
                       </button>
                   </div>
                </div>
