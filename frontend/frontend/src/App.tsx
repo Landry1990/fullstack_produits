@@ -9,6 +9,7 @@ import Clients from './components/Clients'
 import Categories from './components/Categories'
 import Facturation from './components/Facturation'
 import Dashboard from './components/Dashboard'
+import DashboardManager from './components/DashboardManager'
 import GestionUtilisateurs from './components/GestionUtilisateurs'
 import Vitrine from './components/Vitrine'
 import Inventaire from './components/Inventaire'
@@ -36,6 +37,7 @@ import OrdonnancierPage from './components/Ordonnancier'
 import CentreRapports from './components/CentreRapports'
 import AnalyseABC from './components/AnalyseABC'
 import PromotionList from './components/Promotions/PromotionList';
+import ModuleFinancier from './components/ModuleFinancier';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -106,6 +108,10 @@ const router = createBrowserRouter([
             path: 'dashboard', 
             element: <Dashboard />
           },
+          { 
+            path: 'manager-dashboard', 
+            element: <DashboardManager />
+          },
           { path: 'produits', element: <Produit /> },
           { path: 'commandes', element: <Commandes /> },
           { path: 'commandes/locales', element: <Commandes forcedType="LOC" /> },
@@ -134,6 +140,7 @@ const router = createBrowserRouter([
           { path: 'rapports-mensuels', element: <RapportMensuel /> },
           { path: 'centre-rapports', element: <CentreRapports /> },
           { path: 'analyse-abc', element: <AnalyseABC /> },
+          { path: 'module-financier', element: <ModuleFinancier /> },
           { path: 'promotions', element: <PromotionList /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },

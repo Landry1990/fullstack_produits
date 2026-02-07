@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, type FormEvent } from 'react';
+import React, { useEffect, useState, useMemo, type FormEvent } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -12,6 +12,30 @@ interface AyantDroit {
   nom: string;
   societe?: string;
   date_creation?: string;
+}
+
+interface PurchaseProduct {
+  id: number | null;
+  nom: string;
+  quantite: number;
+  prix_unitaire: number;
+  total: number;
+}
+
+interface PurchaseHistoryItem {
+  id: number;
+  date: string;
+  numero_facture: string;
+  total_ttc: number;
+  status: string;
+  produits: PurchaseProduct[];
+}
+
+interface PurchaseHistoryData {
+  client_id: number;
+  client_name: string;
+  total_factures: number;
+  factures: PurchaseHistoryItem[];
 }
 
 interface ExtendedClient extends Client {
@@ -56,6 +80,11 @@ export default function Clients() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
+
+  // Purchase History State
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryData | null>(null);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [expandedInvoice, setExpandedInvoice] = useState<number | null>(null);
 
   // State for managing Ayants Droit in forms
   const [tempAyantDroit, setTempAyantDroit] = useState<AyantDroit>({ matricule: '', nom: '' });
@@ -129,19 +158,31 @@ export default function Clients() {
     setIsEditModalOpen(true);
   }
 
+  async function fetchPurchaseHistory(clientId: number) {
+    setLoadingHistory(true);
+    setPurchaseHistory(null);
+    setExpandedInvoice(null);
+    try {
+      const response = await axios.get<PurchaseHistoryData>(`${clientsEndpoint}${clientId}/purchase_history/`);
+      setPurchaseHistory(response.data);
+    } catch (err) {
+      console.error("Error fetching purchase history", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }
+
   async function selectClient(client: ExtendedClient) {
-    // Just set selected, no API call needed if list has full data, but let's refresh details to be safe or just use list data
-    // Optimizing: If list data is enough, use it. But often list is summary. 
-    // Given the previous code fetched details, let's keep fetching or just use what we have if it's full.
-    // The previous code fetched details.
     setLoading(true);
     try {
        const response = await axios.get<ExtendedClient>(`${clientsEndpoint}${client.id}/`);
        setSelectedClient(response.data);
+       // Fetch purchase history when selecting a client
+       fetchPurchaseHistory(client.id);
     } catch (err) {
        console.error("Error fetching details", err);
-       // Fallback to local data
        setSelectedClient(client);
+       fetchPurchaseHistory(client.id);
     } finally {
        setLoading(false);
     }
@@ -531,6 +572,81 @@ export default function Clients() {
                              </div>
                           </div>
                        )}
+
+                        {/* Section 4: Historique des Achats */}
+                        <div className="lg:col-span-2 card bg-white shadow-sm border border-base-200">
+                           <div className="card-body p-4">
+                              <div className="flex justify-between items-center border-b pb-2 mb-2">
+                                 <h3 className="card-title text-sm uppercase opacity-50">
+                                    📜 {t('clients.purchase_history.title', 'Historique des Achats')}
+                                 </h3>
+                                 {purchaseHistory && (
+                                    <span className="badge badge-primary badge-sm">
+                                       {purchaseHistory.total_factures} {t('clients.purchase_history.invoices', 'facture(s)')}
+                                    </span>
+                                 )}
+                              </div>
+                              
+                              {loadingHistory ? (
+                                 <div className="flex justify-center py-8">
+                                    <span className="loading loading-spinner loading-md"></span>
+                                 </div>
+                              ) : purchaseHistory && purchaseHistory.factures.length > 0 ? (
+                                 <div className="overflow-y-auto max-h-80">
+                                    <table className="table table-xs w-full">
+                                       <thead className="bg-base-100 sticky top-0">
+                                          <tr>
+                                             <th></th>
+                                             <th>{t('clients.purchase_history.date', 'Date')}</th>
+                                             <th>{t('clients.purchase_history.invoice_number', 'N° Facture')}</th>
+                                             <th className="text-right">{t('clients.purchase_history.total', 'Total TTC')}</th>
+                                          </tr>
+                                       </thead>
+                                       <tbody>
+                                          {purchaseHistory.factures.map(facture => (
+                                             <React.Fragment key={facture.id}>
+                                                <tr 
+                                                   className="hover cursor-pointer"
+                                                   onClick={() => setExpandedInvoice(expandedInvoice === facture.id ? null : facture.id)}
+                                                >
+                                                   <td className="w-6">
+                                                      <span className="text-xs">{expandedInvoice === facture.id ? '▼' : '▶'}</span>
+                                                   </td>
+                                                   <td className="font-mono text-xs">
+                                                      {new Date(facture.date).toLocaleDateString('fr-FR')}
+                                                   </td>
+                                                   <td className="font-bold">{facture.numero_facture}</td>
+                                                   <td className="text-right font-bold text-success">
+                                                      {Math.round(facture.total_ttc).toLocaleString('fr-FR')} F
+                                                   </td>
+                                                </tr>
+                                                {expandedInvoice === facture.id && (
+                                                   <tr>
+                                                      <td colSpan={4} className="bg-base-50 p-2">
+                                                         <div className="text-xs space-y-1">
+                                                            {facture.produits.map((prod, idx) => (
+                                                               <div key={idx} className="flex justify-between px-2">
+                                                                  <span>• {prod.nom} x{prod.quantite}</span>
+                                                                  <span className="font-mono">{Math.round(prod.total).toLocaleString('fr-FR')} F</span>
+                                                               </div>
+                                                            ))}
+                                                         </div>
+                                                      </td>
+                                                   </tr>
+                                                )}
+                                             </React.Fragment>
+                                          ))}
+                                       </tbody>
+                                    </table>
+                                 </div>
+                              ) : (
+                                 <div className="text-center py-8 text-base-content/50">
+                                    <div className="text-3xl mb-2">📋</div>
+                                    <p>{t('clients.purchase_history.empty', 'Aucun achat enregistré')}</p>
+                                 </div>
+                              )}
+                           </div>
+                        </div>
                    </div>
                </div>
             </>

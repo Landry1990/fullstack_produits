@@ -103,26 +103,26 @@ export const useSalesData = () => {
             await axios.delete(`${apiBaseUrl}/factures/${id}/`, {
                 headers: { Authorization: `Token ${token}` }
             });
-            toast.success("Facture supprimée.");
+            toast.success(t('sales.messages.delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
             console.error(error);
-            toast.error("Erreur lors de la suppression.");
+            toast.error(t('sales.messages.delete_error'));
         }
     };
 
     const bulkDeleteFactures = async (ids: number[]) => {
-        if (!window.confirm(`Confirmer la suppression de ${ids.length} factures ? (Seuls les brouillons/annulés seront supprimés)`)) return;
+        if (!window.confirm(t('sales.confirm_bulk_delete', { count: ids.length }))) return;
         try {
             const token = safeStorage.getItem('authToken');
             await axios.post(`${apiBaseUrl}/factures/bulk_delete/`, { ids }, {
                 headers: { Authorization: `Token ${token}` }
             });
-            toast.success("Factures supprimées.");
+            toast.success(t('sales.messages.bulk_delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
             console.error(error);
-            toast.error("Erreur lors de la suppression multiple.");
+            toast.error(t('sales.messages.bulk_delete_error'));
         }
     };
 

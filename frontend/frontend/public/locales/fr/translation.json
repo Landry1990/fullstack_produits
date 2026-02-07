@@ -16,13 +16,36 @@
         "confirmation": "Confirmation",
         "pay": "Payer",
         "error": "Erreur",
-        "refresh": "Actualiser",
         "actions": {
             "confirm": "Confirmer"
+        },
+        "download": "Télécharger",
+        "export_success": "Export réussi",
+        "export_error": "Erreur lors de l'export",
+        "messages": {
+            "created": "Créé avec succès",
+            "updated": "Mis à jour",
+            "deleted": "Supprimé",
+            "saved": "Enregistré",
+            "error_generic": "Une erreur s'est produite",
+            "error_loading": "Erreur lors du chargement",
+            "error_saving": "Erreur lors de la sauvegarde",
+            "error_deleting": "Erreur lors de la suppression",
+            "error_update": "Erreur lors de la mise à jour",
+            "session_expired": "Session expirée. Veuillez vous reconnecter.",
+            "access_denied": "Accès refusé : permissions insuffisantes",
+            "server_error": "Erreur serveur. Réessayez plus tard.",
+            "not_found": "Élément introuvable",
+            "confirm_delete": "Voulez-vous vraiment supprimer cet élément ?",
+            "confirm_action": "Voulez-vous vraiment effectuer cette action ?",
+            "copy_success": "Copié dans le presse-papier",
+            "import_success": "Importation terminée avec succès",
+            "import_error": "Erreur lors de l'importation"
         }
     },
     "sidebar": {
         "dashboard": "Tableau de bord",
+        "manager_sidebar": "Tableau de Bord Manager",
         "ventes": {
             "title": "Ventes",
             "consultation": "Consultation",
@@ -75,7 +98,8 @@
             "abc": "Analyse ABC",
             "produits": "Produits",
             "fournisseurs": "Fournisseurs",
-            "mensuel": "Rapport Mensuel"
+            "mensuel": "Rapport Mensuel",
+            "finances": "Module Financier"
         },
         "parametres": {
             "title": "Paramètres",
@@ -92,6 +116,84 @@
             "pharmacist": "Pharmacien",
             "user": "Utilisateur"
         }
+    },
+    "manager_dashboard": {
+        "title": "Tableau de Bord",
+        "manager": "Manager",
+        "subtitle": "Suivi des performances et objectifs commerciaux",
+        "set_objective": "Fixer un Objectif",
+        "progression": "Progression",
+        "target": "Cible",
+        "alerts_title": "Alertes Intelligentes",
+        "no_alerts": "Aucune alerte pour le moment. Tout va bien !",
+        "active_objectives": "Objectifs Actifs",
+        "not_defined": "Non défini",
+        "modify": "Modifier",
+        "modal_title": "Fixer un Objectif",
+        "modal_subtitle": "Définissez vos cibles de chiffre d'affaires",
+        "period_label": "Période",
+        "ca_target_label": "Chiffre d'Affaires Cible (F)",
+        "start_date_label": "Date de Début",
+        "date_help": "Lundi pour semaine, 1er du mois pour mensuel",
+        "exports_title": "Rapports et Comptabilité",
+        "export_accounting_title": "Export Comptable (CSV)",
+        "export_accounting_desc": "Détail des ventes, TVA et modes de paiement pour votre comptable.",
+        "report_monthly_title": "Rapport Mensuel (PDF)",
+        "report_monthly_desc": "Synthèse visuelle des performances du mois en cours.",
+        "dead_stock_title": "Stocks Dormants (Excel)",
+        "dead_stock_desc": "Liste des produits sans vente depuis plus de 6 mois.",
+        "periods": {
+            "today": "Aujourd'hui",
+            "week": "Semaine",
+            "month": "Mois",
+            "daily": "Journalier",
+            "weekly": "Hebdomadaire",
+            "monthly": "Mensuel"
+        },
+        "alerts": {
+            "perf_title": "Alerte Performance",
+            "perf_msg": "Le CA journalier est en retard ({{rate}}% de l'objectif). Prévoir des actions correctives.",
+            "shortage_title": "Ruptures Critiques",
+            "shortage_msg": "{{count}} produits sont en dessous de leur stock minimum.",
+            "debt_title": "Créances Importantes",
+            "debt_msg": "{{count}} clients dépassent {{threshold}}F de dette. Top: {{top_name}} ({{top_debt}}F).",
+            "dormant_title": "Stocks Dormants",
+            "dormant_msg": "{{count}} produits n'ont pas eu de vente depuis {{days}} jours. Envisager une promotion.",
+            "drop_title": "Baisse Hebdomadaire",
+            "drop_msg": "Le CA de cette semaine est nettement inférieur à la semaine dernière (-30%+)."
+        }
+    },
+    "finance": {
+        "title": "Module Financier",
+        "subtitle": "Analyse et prédictions du chiffre d'affaires",
+        "periode": {
+            "mois": "Ce mois",
+            "trimestre": "Ce trimestre",
+            "annee": "Cette année"
+        },
+        "kpis": {
+            "avg_basket": "Panier Moyen",
+            "margin_rate": "Taux de Marge",
+            "dsi": "Jours Stock (DSI)",
+            "growth": "Croissance Mensuelle"
+        },
+        "charts": {
+            "ca_evolution": "Évolution CA",
+            "margins": "Marges",
+            "predictions": "Prédictions",
+            "ca_12_months": "Chiffre d'Affaires (12 derniers mois)",
+            "margin_evolution": "Évolution des Marges",
+            "predictions_3m": "Prédictions CA (3 prochains mois)",
+            "repartition": "Répartition CA"
+        },
+        "by_category": "Par Catégorie",
+        "by_supplier": "Par Fournisseur",
+        "by_revenue": "Par CA",
+        "by_margin": "Par Marge",
+        "top_products": "Top Produits",
+        "product": "Produit",
+        "margin": "Marge",
+        "summary": "Résumé Annuel"
     },
     "users": {
         "title": "Gestion des Utilisateurs",
@@ -261,7 +363,12 @@
             "delete_confirm_message": "Supprimer le fournisseur \"{{name}}\" ?\n\nCette action est irréversible.",
             "delete_btn": "Supprimer",
             "sudo_title": "Confirmer la suppression",
-            "sudo_message": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive."
+            "sudo_message": "Cette action est sensible. Veuillez saisir votre mot de passe pour confirmer la suppression définitive.",
+            "reactivated": "Fournisseur réactivé",
+            "hidden": "Fournisseur masqué",
+            "status_change_error": "Erreur lors du changement de statut",
+            "load_error": "Erreur lors du chargement des fournisseurs",
+            "save_error": "Erreur lors de l'enregistrement"
         }
     },
     "creances": {
@@ -310,44 +417,122 @@
     },
     "stock": {
         "inventaire": {
-            "title": "Gestion des Inventaires",
-            "create_btn": "Nouvel Inventaire",
-            "list_title": "Historique des Inventaires",
-            "stats_tab": "Ecarts & Valorisation",
-            "data_tab": "Saisie des Stocks",
+            "title": "Inventaires",
+            "create_btn": "+ Nouvel Inventaire",
+            "bulk_action": "{{count}} inventaire(s) sélectionné(s)",
+            "deselect": "Désélectionner",
+            "merge_btn": "Fusionner",
+            "delete_confirm": "Supprimer l'inventaire ?",
+            "product_exists": "Ce produit est déjà dans la liste",
             "validation": {
-                "title": "Validation Inventaire",
-                "btn": "Valider l'Inventaire",
-                "confirm_msg": "Cette action est irréversible. Les stocks seront mis à jour.",
-                "validator_label": "Validé par",
-                "sudo_password": "Mot de passe Administrateur",
                 "success": "Inventaire validé avec succès",
                 "error": "Erreur lors de la validation"
             },
             "merge": {
+                "modal_title": "Fusionner Inventaires",
+                "confirm_msg": "Fusionner l'inventaire sélectionné dans l'actuel ? L'inventaire source sera supprimé.",
                 "btn": "Fusionner",
-                "modal_title": "Fusion d'Inventaires",
-                "source_label": "Inventaire Source (sera supprimé)",
-                "confirm_msg": "Les lignes de l'inventaire source seront ajoutées à l'inventaire actif.",
-                "success": "Fusion réussie"
+                "success": "Fusion effectuée",
+                "success_count": "{{count}} inventaire(s) fusionné(s) avec succès !",
+                "error": "Erreur lors de la fusion"
             },
-            "table": {
+            "list": {
+                "date": "Date",
+                "desc": "Description",
+                "val_theo": "Val. Théorique",
+                "val_phys": "Val. Saisie",
+                "ecart": "Ecart Valeur",
+                "status": "Statut",
+                "created_by": "Crée par",
+                "actions": "Actions",
+                "empty": "Aucun inventaire"
+            },
+            "detail": {
+                "back": "← Retour",
+                "title_new": "Nouvel Inventaire",
+                "title_edit": "Inventaire #{{id}}",
+                "validated": "VALIDÉE",
+                "tab_data": "📝 Saisie / Liste",
+                "tab_analysis": "📊 Analyse",
+                "print": "🖨️ Imprimer Etat (PDF)",
+                "saved_auto": "Enregistré auto.",
+                "merge_to": "🔗 Fusionner vers...",
+                "validate": "✓ Valider et Mettre à jour Stock",
+                "validating": "Validation...",
+                "date": "Date",
+                "description": "Description",
+                "placeholder_desc": "Ex: Inventaire Annuel 2025...",
+                "add_product_label": "Ajouter un produit (Recherche par Nom ou CIP)",
+                "search_placeholder": "Scanner ou taper le nom...",
+                "hint_min_char": "Tapez au moins 1 caractère",
+                "no_result": "Aucun produit trouvé",
+                "header_saved": "En-tête sauvegardé",
+                "save_error": "Erreur sauvegarde",
+                "auto_create_error": "Impossible de créer l'inventaire automatiquement.",
+                "bulk_delete_title": "Suppression Multiple",
+                "bulk_delete_message": "Supprimer ces {{count}} lignes ?",
+                "bulk_delete_confirm": "Oui, Supprimer",
+                "bulk_delete_success": "{{count}} lignes supprimées"
+            },
+            "lines": {
+                "selected": "{{count}} ligne(s) sélectionnée(s)",
+                "delete_selection": "🗑️ Supprimer sélection",
+                "sort_by": "Trier par :",
+                "sort_chronological": "Chronologie (Ajout)",
+                "sort_name": "Libellé (A-Z)",
+                "sort_gap_value": "Ecart Valeur (F)",
+                "sort_gap_qty": "Ecart Quantité (U)",
                 "product": "Produit",
-                "cip": "CIP",
-                "lot": "Lot",
-                "qty_theo": "Qté Théo.",
-                "qty_phys": "Qté Phys.",
-                "gap": "Ecart",
-                "value": "Valeur",
-                "actions": "Actions"
+                "rayon": "Rayon",
+                "buy_price": "Prix Achat",
+                "stock_theo": "Stock Théo.",
+                "qty_saisie": "Qté Saisie",
+                "ecart_qty": "Ecart Qté",
+                "ecart_val": "Ecart Val.",
+                "empty_hint": "Scanner ou ajouter des produits pour commencer le comptage.",
+                "total_theo": "Valeur Théorique",
+                "total_phys": "Valeur Saisie",
+                "total_gap": "Ecart Valeur",
+                "product_added": "Produit ajouté",
+                "delete_error": "Impossible de supprimer la ligne."
             },
-            "status": {
-                "draft": "En cours",
-                "validated": "Validé"
+            "analysis": {
+                "no_data": "Aucune donnée disponible.",
+                "print_ecarts": "🖨️ Imprimer Rapport Écarts (PDF)",
+                "top_losses": "📉 Top 10 Pertes",
+                "ecarts_by_rayon": "📊 Écarts par Rayon",
+                "loss": "Perte",
+                "total_ecart": "Total Écart"
             },
-            "empty_state": "Aucun inventaire en cours",
-            "delete_confirm": "Supprimer cet inventaire ?",
-            "product_exists": "Ce produit (ou ce lot) est déjà dans l'inventaire."
+            "modals": {
+                "lot_title": "Sélectionner un Lot",
+                "lot_for": "Pour: {{name}}",
+                "lot_hint": "Utilisez les flèches ↑/↓ pour naviguer et Entrée pour valider",
+                "lot_none": "Aucun lot trouvé.",
+                "add_global": "Ajouter sans lot (Stock global)",
+                "merge_title_list": "Fusionner {{count}} inventaires",
+                "merge_warning_list": "Tous les inventaires sélectionnés seront fusionnés dans <strong>l'inventaire Cible</strong>. Les autres seront supprimés.",
+                "merge_warning_list_plain": "Fusionner les inventaires sélectionnés dans la CIBLE ?\nLes autres seront supprimés (lignes transférées).",
+                "validate_confirm_btn": "Confirmer Valid. Définitive",
+                "cancel": "Annuler"
+            },
+            "pdf": {
+                "title_etat": "ETAT D'INVENTAIRE #{{id}}",
+                "title_ecarts": "RAPPORT DES ÉCARTS - #{{id}}",
+                "date": "Date : {{date}}",
+                "desc": "Description : {{desc}}",
+                "rayon": "RAYON : {{name}}",
+                "col_id": "ID",
+                "col_product": "Produit",
+                "col_pmp": "PMP",
+                "col_theo": "Theo.",
+                "col_phys": "Phys.",
+                "col_gap": "Ecart",
+                "col_val": "Val.",
+                "total_rayon": "TOTAL",
+                "total_global": "TOTAL GLOBAL ÉCARTS (VALEUR) : {{sign}}{{amount}} F",
+                "no_gaps": "Aucun écart constaté."
+            }
         }
     },
     "orders": {
@@ -595,6 +780,10 @@
             "produits_vendus_tva": {
                 "name": "Produits Vendus (Soumis à TVA)",
                 "description": "Produits avec TVA > 0 vendus sur la période"
+            },
+            "meilleurs_clients": {
+                "name": "Meilleurs Clients",
+                "description": "Classement clients par CA et nombre de ventes"
             }
         },
         "params": {
@@ -621,7 +810,10 @@
             "copy_error": "Erreur lors de la copie",
             "copy_no_result": "Aucun résultat à copier",
             "execute_success": "Requête \"{{name}}\" exécutée",
-            "error_execution": "Erreur lors de l'exécution"
+            "error_execution": "Erreur lors de l'exécution",
+            "export_no_result": "Aucun résultat à exporter",
+            "export_unsupported": "Format non supporté pour l'export",
+            "export_success": "Export téléchargé: {{filename}}"
         }
     },
     "dashboard": {
@@ -929,7 +1121,8 @@
             "bulk_provider": "Fournisseur",
             "deselect": "Désélectionner",
             "selected": "sélectionné(s)",
-            "confirm": "Confirmer"
+            "confirm": "Confirmer",
+            "recalculate_confirm": "Confirmer le recalcul"
         },
         "filters": {
             "search_placeholder": "Nom ou CIP...",
@@ -1102,7 +1295,20 @@
         "messages": {
             "empty": "Aucun promis trouvé",
             "delivered_on": "Livré le {{date}}",
-            "cancelled": "Annulé"
+            "cancelled": "Annulé",
+            "print_ticket_error": "Erreur lors de l'impression du ticket",
+            "bulk_delivery_error": "Erreur lors de la livraison en masse",
+            "bulk_cancel_error": "Erreur lors de l'annulation en masse",
+            "sms_success": "SMS envoyé avec succès",
+            "sms_error": "Erreur lors de l'envoi du SMS"
+        },
+        "modals": {
+            "bulk_delivery_title": "Livrer plusieurs promis",
+            "bulk_delivery_message": "Marquer {{count}} promis comme délivrés ?",
+            "bulk_delivery_confirm": "Délivrer tous",
+            "bulk_cancel_title": "Annuler plusieurs promis",
+            "bulk_cancel_message": "Annuler {{count}} promis et réintégrer le stock ?\n\nCette action créera des entrées dans l'historique des produits.",
+            "bulk_cancel_confirm": "Annuler tous"
         }
     },
     "sales": {
@@ -1196,7 +1402,279 @@
             "no_products": "Aucune ligne de produit pour cette facture.",
             "prompt_client_name": "Nom du client pour la facture :",
             "error_loading_quote": "Impossible de charger le devis",
-            "cash_report_error": "Erreur lors du calcul de la caisse par tranche horaire."
+            "cash_report_error": "Erreur lors du calcul de la caisse par tranche horaire.",
+            "delete_success": "Facture supprimée",
+            "delete_error": "Erreur lors de la suppression",
+            "bulk_delete_success": "Factures supprimées",
+            "bulk_delete_error": "Erreur lors de la suppression multiple",
+            "save_success": "Vente enregistrée",
+            "save_error": "Erreur lors de l'enregistrement",
+            "validate_success": "Facture {{number}} validée",
+            "invoice_modified": "Facture modifiée",
+            "additional_payment": "Encaissement supplémentaire: {{amount}} F",
+            "refund_amount": "Remboursement: {{amount}} F",
+            "same_total": "Facture modifiée (même total)",
+            "coupon_applied": "Coupon #{{numero}} appliqué (-{{amount}} F)",
+            "coupon_not_found": "Coupon \"{{numero}}\" introuvable",
+            "coupon_error": "Erreur lors de l'application du coupon",
+            "promis_error": "Erreur lors de la génération du ticket Promis",
+            "ordonnancier_saved": "Ordonnancier enregistré",
+            "ordonnancier_error": "Erreur lors de l'enregistrement de l'ordonnancier",
+            "credit_limit_exceeded": "⚠️ Plafond crédit dépassé !",
+            "tiers_payant_validated": "Facture {{number}} validée (Tiers payant 100%)",
+            "sent_to_caisse": "Vente envoyée à la Caisse Centralisée (Ticket #{{id}})",
+            "load_error": "Erreur lors du chargement",
+            "load_details_error": "Impossible de charger le détail."
+        },
+        "confirm_delete": "Supprimer cette facture ?",
+        "confirm_bulk_delete": "Confirmer la suppression de {{count}} factures ? (Seuls les brouillons/annulés seront supprimés)"
+    },
+    "perimes": {
+        "title": "Gestion des Périmés",
+        "subtitle": "Analyse des pertes et prévisions d'expiration",
+        "stats": {
+            "valeur_perimes": "Pertes (Coût)",
+            "manque_gagner": "Manque à Gagner",
+            "taux_perte": "Taux de Perte"
+        },
+        "prevision": {
+            "title": "Prévisions d'Expiration"
+        },
+        "top_perimes": "Produits Périmés en Stock"
+    },
+    "caisse": {
+        "title": "Caisse Centralisée",
+        "subtitle": "Les ventes en attente de règlement s'affichent automatiquement",
+        "auto_refresh": "Actualisation auto (20s)",
+        "coupons_active": "Coupons ({{count}} actifs)",
+        "coupons_applied": "{{count}} coupon(s) appliqué(s)",
+        "pending_count": "{{count}} en attente",
+        "no_pending": "Aucune facture en attente",
+        "no_pending_desc": "Les nouvelles factures apparaîtront ici automatiquement.",
+        "table": {
+            "ticket": "#Ticket",
+            "invoice": "Facture",
+            "client": "Client",
+            "date": "Date",
+            "products": "Produits",
+            "amount": "Montant",
+            "actions": "Actions",
+            "tiers_payant": "Tiers Payant",
+            "coupon_applied": "Coupon appliqué",
+            "remove_coupon": "Retirer le coupon",
+            "modify": "Modifier",
+            "cancel": "Annuler",
+            "apply_coupon": "Appliquer un coupon",
+            "cash_in": "Encaisser",
+            "not_authorized": "Non autorisé"
+        },
+        "coupons": {
+            "title": "Coupons",
+            "generate": "Générer un coupon",
+            "permission_required": "Permission requise",
+            "search_placeholder": "Rechercher #...",
+            "none": "Aucun coupon",
+            "headers": {
+                "num_amount": "N° / Montant",
+                "creation": "Création",
+                "usage": "Utilisation",
+                "status": "Statut"
+            },
+            "by": "Par: {{name}}",
+            "system": "Système",
+            "status": {
+                "active": "ACTIF",
+                "used": "UTILISE",
+                "expired": "EXPIRE"
+            },
+            "generate_modal": {
+                "title": "Générer un Coupon",
+                "amount": "Montant",
+                "notes": "Notes",
+                "placeholder_notes": "Commentaire...",
+                "submit": "Générer"
+            },
+            "details_modal": {
+                "title": "Détails du Coupon",
+                "print": "Imprimer"
+            }
+        },
+        "payment": {
+            "modal_title": "Encaissement - Facture #{{numero}}",
+            "total_to_pay": "Total à payer",
+            "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
+            "tiers_payant_alert": "Part Client (Tiers Payant actif)",
+            "recorded_payments": "Paiements enregistrés:",
+            "total_paid": "Total versé:",
+            "remaining": "Reste à payer: {{amount}} F",
+            "step1": "1. Saisissez le montant puis appuyez sur Entrée",
+            "step1_hint": "Appuyez sur Entrée après avoir saisi le montant",
+            "amount_label": "Montant:",
+            "step2": "2. Utilisez ↑↓←→ et Entrée pour choisir le mode",
+            "modify_amount": "← Modifier le montant",
+            "change_to_give": "Monnaie à rendre",
+            "confirm": "✓ Valider le paiement (Entrée)",
+            "missing": "Reste {{amount}} F"
+        },
+        "ticket": {
+            "title": "Ticket de Caisse",
+            "invoice_num": "Facture",
+            "date": "Date",
+            "client": "Client",
+            "subtotal_ht": "Sous-total HT",
+            "discount": "Remise",
+            "tva": "TVA",
+            "total_ttc": "TOTAL TTC",
+            "amount_paid": "Montant Versé",
+            "change": "Rendu",
+            "settlements": "Règlements",
+            "part_patient": "Part Patient",
+            "part_assurance": "Part Assurance"
+        },
+        "messages": {
+            "invalid_amount": "Veuillez entrer un montant valide",
+            "coupon_generated": "Coupon #{{numero}} généré avec succès !",
+            "error_generation": "Erreur lors de la génération du coupon",
+            "coupon_not_active": "Ce coupon n'est pas actif",
+            "coupon_already_applied": "Ce coupon est déjà appliqué à une autre vente",
+            "coupon_applied_to": "Coupon #{{numero}} appliqué à la vente #{{ticket}}",
+            "coupon_removed": "Coupon retiré",
+            "coupon_not_found": "Coupon introuvable",
+            "search_error": "Erreur lors de la recherche",
+            "refreshed": "Liste rafraîchie",
+            "cancel_confirm": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
+            "cancelled": "Facture annulée",
+            "cancel_error": "Erreur lors de l'annulation",
+            "modify_confirm": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",
+            "empty_invoice": "Cette facture ne contient aucun produit",
+            "load_error": "Impossible de charger la facture pour modification",
+            "cash_in_success": "Facture #{{numero}} encaissée avec succès !",
+            "payment_error": "Erreur lors de l'enregistrement du paiement"
+        }
+    },
+    "rayons": {
+        "title": "Gestion des Rayons",
+        "new_main": "Nouveau Rayon Principal",
+        "no_rayon": "Sans Rayon",
+        "print_stock": "Imprimer Etat Stock",
+        "create_btn": "Créer",
+        "count_products": "{{count}} produit(s)",
+        "add_products_btn": "Ajouter des produits",
+        "empty_rayon": "Ce rayon est vide",
+        "add_existing_product": "Ajouter un produit existant",
+        "select_rayon": "Sélectionnez un rayon",
+        "manage_rayons_hint": "Gérez les rayons et associez des produits",
+        "add_product_to": "Ajouter des produits à \"{{rayon}}\"",
+        "add_product_help": "Recherchez des produits et cliquez sur le + pour les associer à ce rayon.",
+        "search_placeholder": "Rechercher par nom ou CIP...",
+        "no_product_found": "Aucun produit trouvé",
+        "search_hint": "Tapez au moins 2 caractères pour rechercher",
+        "remove_product_title": "Retirer le produit",
+        "remove_product_message": "Retirer \"{{product}}\" du rayon \"{{rayon}}\" ? Le produit ne sera pas supprimé, juste détaché de ce rayon.",
+        "remove_btn": "Retirer",
+        "remove_from_rayon": "Retirer du rayon",
+        "modal": {
+            "title_new": "Nouveau Rayon",
+            "title_edit": "Modifier le Rayon",
+            "name": "Nom du rayon",
+            "parent": "Rayon Parent (Optionnel)",
+            "none": "Aucun (Racine)",
+            "cancel": "Annuler",
+            "save": "Enregistrer"
+        },
+        "print_modal": {
+            "title": "Imprimer Etat de Stock",
+            "rayon": "Rayon",
+            "exclude_zero": "Ne pas inclure les stocks nuls (0)",
+            "validate": "Valider et Imprimer"
+        },
+        "table": {
+            "id": "ID",
+            "name": "Nom du Rayon",
+            "type": "Type",
+            "actions": "Actions",
+            "main_rayon": "Rayon Principal",
+            "sub_rayon": "Sous-rayon",
+            "add_sub": "+ Sous-rayon",
+            "stock": "Stock",
+            "modify": "Modifier",
+            "delete": "Supprimer",
+            "no_rayon_found": "Aucun rayon trouvé",
+            "no_sub_rayon": "Aucun sous-rayon",
+            "product": "Produit",
+            "cip": "CIP",
+            "price": "Prix",
+            "current_rayon": "Rayon Actuel",
+            "action": "Action",
+            "none": "Aucun"
+        },
+        "messages": {
+            "load_error": "Erreur lors du chargement des rayons",
+            "save_success_edit": "Rayon modifié avec succès",
+            "save_success_create": "Rayon créé avec succès",
+            "save_error": "Erreur lors de l'enregistrement",
+            "delete_confirm_title": "Supprimer le rayon",
+            "delete_confirm_message": "Êtes-vous sûr de vouloir supprimer ce rayon ?",
+            "delete_confirm_message_detailed": "Attention: Supprimer un rayon ne supprime pas les produits, ils seront \"Sans rayon\". Continuer ?",
+            "delete_btn": "Supprimer",
+            "delete_success": "Rayon supprimé",
+            "delete_error": "Erreur lors de la suppression",
+            "load_products_error": "Erreur lors du chargement des produits",
+            "product_added_to": "{{product}} ajouté à {{rayon}}",
+            "add_product_error": "Erreur lors de l'ajout du produit",
+            "product_removed": "Produit retiré du rayon",
+            "remove_product_error": "Erreur lors du retrait du produit"
+        }
+    },
+    "transformations": {
+        "title": "Transformations de Conditionnement",
+        "new_relation_btn": "Nouvelle Relation",
+        "tabs": {
+            "configured_relations": "Relations Configurées",
+            "history": "Historique"
+        },
+        "table_history": {
+            "date": "Date",
+            "user": "Utilisateur",
+            "transformation": "Transformation",
+            "quantities": "Quantités",
+            "notes": "Notes"
+        },
+        "card": {
+            "ratio": "Ratio: 1 : {{ratio}}",
+            "transform_btn": "Transformer",
+            "delete_btn_title": "Supprimer la relation"
+        },
+        "modal_relation": {
+            "title": "Nouvelle Relation de Transformation",
+            "source": "Produit Source (à transformer)",
+            "destination": "Produit Destination (résultat)",
+            "ratio_label": "Ratio (Combien d'unités Destination pour 1 unité Source ?)",
+            "ratio_help": "Exemple: Si 1 Boîte donne 20 Détails, mettez 20.",
+            "cancel": "Annuler",
+            "create": "Créer",
+            "select_product": "Sélectionner un produit..."
+        },
+        "modal_transform": {
+            "title": "Effectuer une transformation",
+            "current_source_stock": "Stock Source Actuel",
+            "qty_to_transform": "Quantité à transformer",
+            "qty_obtained": "Quantité obtenue",
+            "notes_label": "Notes (Optionnel)",
+            "notes_placeholder": "Raison de la transformation...",
+            "confirm_btn": "Confirmer Transformation"
+        },
+        "messages": {
+            "transform_success": "Transformation effectuée avec succès",
+            "transform_error": "Erreur lors de la transformation",
+            "create_success": "Relation créée avec succès",
+            "create_error": "Erreur lors de la création de la relation",
+            "delete_success": "Relation supprimée",
+            "delete_error": "Erreur lors de la suppression",
+            "load_error": "Erreur lors du chargement des données",
+            "delete_confirm_title": "Supprimer la relation",
+            "delete_confirm_message": "Êtes-vous sûr de vouloir supprimer cette relation de transformation ?",
+            "delete_confirm_btn": "Supprimer"
         }
     }
 }

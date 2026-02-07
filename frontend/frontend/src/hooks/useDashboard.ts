@@ -174,3 +174,68 @@ export const useSupplierDebts = () => {
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
 };
+
+export interface ManagerStats {
+    kpis: {
+        jour: { actual: number; target: number; rate: number };
+        semaine: { actual: number; target: number; rate: number };
+        mois: { actual: number; target: number; rate: number };
+    };
+    alerts: Array<{
+        type: 'danger' | 'warning' | 'info';
+        title_key: string;
+        message_key: string;
+        params?: Record<string, any>;
+    }>;
+}
+
+export const useManagerStats = () => {
+    return useQuery({
+        queryKey: ['dashboard', 'managerStats'],
+        queryFn: async () => {
+            const response = await axios.get<ManagerStats>(`${dashboardEndpoint}manager_stats/`);
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+};
+
+export interface ObjectifCommercial {
+    id: number;
+    periode: 'JOUR' | 'SEMAINE' | 'MOIS';
+    periode_display: string;
+    date_debut: string;
+    ca_objectif: string;
+    nb_ventes_objectif?: number;
+    panier_moyen_objectif?: string;
+    notes?: string;
+    created_by_name: string;
+}
+
+const objectifsEndpoint = apiBaseUrl
+    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/objectifs-commerciaux/`
+    : '/api/objectifs-commerciaux/';
+
+export const useObjectifs = () => {
+    return useQuery({
+        queryKey: ['objectifs'],
+        queryFn: async () => {
+            const response = await axios.get<ObjectifCommercial[]>(objectifsEndpoint);
+            return response.data;
+        }
+    });
+};
+
+export const useCurrentObjectifs = () => {
+    return useQuery({
+        queryKey: ['objectifs', 'courants'],
+        queryFn: async () => {
+            const response = await axios.get<{
+                jour: ObjectifCommercial | null;
+                semaine: ObjectifCommercial | null;
+                mois: ObjectifCommercial | null;
+            }>(`${objectifsEndpoint}courants/`);
+            return response.data;
+        }
+    });
+};

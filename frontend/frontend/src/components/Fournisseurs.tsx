@@ -355,11 +355,11 @@ export default function Fournisseurs() {
     try {
       const response = await axios.post(`${fournisseursEndpoint}${selectedFournisseur.id}/toggle_active/`);
       const isActive = response.data.is_active;
-      toast.success(isActive ? 'Fournisseur réactivé' : 'Fournisseur masqué');
+      toast.success(isActive ? t('providers.messages.reactivated') : t('providers.messages.hidden'));
       setSelectedFournisseur(prev => prev ? ({ ...prev, is_active: isActive }) : null);
       fetchFournisseurs();
     } catch (err) {
-      toast.error('Erreur lors du changement de statut');
+      toast.error(t('providers.messages.status_change_error'));
       console.error(err);
     }
   }

@@ -80,6 +80,46 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'message': f"Client {'réactivé' if client.is_active else 'masqué'}"
         })
 
+    @action(detail=True, methods=['get'])
+    def purchase_history(self, request, pk=None):
+        """Retourne l'historique des achats d'un client avec les produits."""
+        client = self.get_object()
+        
+        factures = Facture.objects.filter(
+            client=client,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).prefetch_related(
+            'produits__produit'
+        ).order_by('-date')[:50]
+        
+        result = []
+        for facture in factures:
+            produits_list = []
+            for fp in facture.produits.all():
+                produits_list.append({
+                    'id': fp.produit.id if fp.produit else None,
+                    'nom': fp.produit.name if fp.produit else fp.produit_nom or 'Produit inconnu',
+                    'quantite': fp.quantity,
+                    'prix_unitaire': float(fp.selling_price),
+                    'total': float(fp.quantity * fp.selling_price)
+                })
+            
+            result.append({
+                'id': facture.id,
+                'date': facture.date.isoformat(),
+                'numero_facture': facture.numero_facture or f"F-{facture.id}",
+                'total_ttc': float(facture.total_ttc),
+                'status': facture.status,
+                'produits': produits_list
+            })
+        
+        return Response({
+            'client_id': client.id,
+            'client_name': client.name,
+            'total_factures': len(result),
+            'factures': result
+        })
+
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""
     queryset = AyantDroit.objects.select_related('client').order_by('nom')

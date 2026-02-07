@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Facture, CouponMonnaie } from '../../types'
 
 interface FacturesTableProps {
@@ -28,6 +29,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   couponsParFacture,
   user
 }) => {
+  const { t } = useTranslation('caisse')
   if (loading && sortedFactures.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -40,8 +42,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     return (
       <div className="text-center py-10 bg-base-100 rounded-lg shadow">
         <div className="text-4xl mb-4">📭</div>
-        <h3 className="font-bold text-lg">Aucune facture en attente</h3>
-        <p className="text-base-content/60">Les nouvelles factures apparaîtront ici automatiquement.</p>
+        <h3 className="font-bold text-lg">{t('no_pending')}</h3>
+        <p className="text-base-content/60">{t('no_pending_desc')}</p>
       </div>
     )
   }
@@ -51,13 +53,13 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       <table className="table table-sm w-full">
         <thead className="bg-base-200 sticky top-0 z-10">
           <tr>
-            <th>#Ticket</th>
-            <th>Facture</th>
-            <th>Client</th>
-            <th>Date</th>
-            <th>Produits</th>
-            <th className="text-right">Montant</th>
-            <th className="text-center">Actions</th>
+            <th>{t('table.ticket')}</th>
+            <th>{t('table.invoice')}</th>
+            <th>{t('table.client')}</th>
+            <th>{t('table.date')}</th>
+            <th>{t('table.products')}</th>
+            <th className="text-right">{t('table.amount')}</th>
+            <th className="text-center">{t('table.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -98,10 +100,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                 <td>
                   <div className="font-bold text-primary">#{facture.numero_facture}</div>
                   {hasTiersPayant && (
-                    <div className="badge badge-xs badge-info mt-1">Tiers Payant</div>
+                    <div className="badge badge-xs badge-info mt-1">{t('table.tiers_payant')}</div>
                   )}
                   {couponPourCetteFacture && (
-                    <div className="badge badge-xs badge-success mt-1">Coupon appliqué</div>
+                    <div className="badge badge-xs badge-success mt-1">{t('table.coupon_applied')}</div>
                   )}
                 </td>
                 <td>
@@ -127,7 +129,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                           onRemoveCoupon(facture.id) 
                         }}
                         className="btn btn-xs btn-circle btn-ghost text-error h-4 w-4 min-h-0"
-                        title="Retirer le coupon"
+                        title={t('table.remove_coupon')}
                       >
                         ✕
                       </button>
@@ -142,7 +144,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                          onModify(facture)
                       }}
                       className="btn btn-xs btn-outline btn-warning"
-                      title="Modifier"
+                      title={t('table.modify')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -154,7 +156,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                          onCancel(facture)
                       }}
                       className="btn btn-xs btn-outline btn-error"
-                      title="Annuler"
+                      title={t('table.cancel')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -167,7 +169,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                            onApplyCoupon(facture)
                         }}
                         className="btn btn-xs btn-outline btn-secondary"
-                        title="Appliquer un coupon"
+                        title={t('table.apply_coupon')}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -181,12 +183,12 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       }}
                       disabled={!(user as any)?.can_cash_out && !(user?.is_superuser)}
                       className="btn btn-xs btn-success text-white gap-1"
-                      title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? "Non autorisé" : "Encaisser"}
+                      title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? t('table.not_authorized') : t('table.cash_in')}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      Encaisser
+                      {t('table.cash_in')}
                     </button>
                   </div>
                 </td>

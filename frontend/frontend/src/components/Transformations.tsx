@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm';
 
 // Interfaces
@@ -33,6 +34,7 @@ interface HistoriqueTransformation {
 }
 
 const Transformations: React.FC = () => {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'relations' | 'historique'>('relations');
   const [relations, setRelations] = useState<RelationTransformation[]>([]);
@@ -83,13 +85,13 @@ const Transformations: React.FC = () => {
       });
       
       if (res.data.success) {
-        toast.success(res.data.message);
+        toast.success(res.data.message || t('transformations.messages.transform_success'));
         setIsTransformerModalOpen(false);
         fetchData(); 
         // On NE remet PAS submitting à false ici pour éviter le re-clic pendant la fermeture
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || "Erreur lors de la transformation");
+      toast.error(error.response?.data?.error || t('transformations.messages.transform_error'));
       setSubmitting(false); // On réactive seulement en cas d'erreur
     }
   };
@@ -97,9 +99,9 @@ const Transformations: React.FC = () => {
   // ... (existing UI code)
 
               <div className="modal-action">
-                <button type="button" className="btn" onClick={() => setIsTransformerModalOpen(false)} disabled={submitting}>Annuler</button>
+                <button type="button" className="btn" onClick={() => setIsTransformerModalOpen(false)} disabled={submitting}>{t('transformations.modal_relation.cancel')}</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? <span className="loading loading-spinner text-white"></span> : 'Confirmer Transformation'}
+                  {submitting ? <span className="loading loading-spinner text-white"></span> : t('transformations.modal_transform.confirm_btn')}
                 </button>
               </div>
 
@@ -119,7 +121,7 @@ const Transformations: React.FC = () => {
       setLoading(false);
     } catch (error) {
       console.error("Erreur fetch:", error);
-      toast.error("Erreur lors du chargement des données");
+      toast.error(t('transformations.messages.load_error'));
       setLoading(false);
     }
   };
@@ -144,7 +146,7 @@ const Transformations: React.FC = () => {
         produit_destination: parseInt(newRelation.produit_destination),
         ratio: parseFloat(newRelation.ratio)
       });
-      toast.success("Relation créée avec succès");
+      toast.success(t('transformations.messages.create_success'));
       setIsRelationModalOpen(false);
       setNewRelation({ produit_source: '', produit_destination: '', ratio: '' });
       fetchData();
@@ -153,7 +155,7 @@ const Transformations: React.FC = () => {
       const errorMsg = error.response?.data?.non_field_errors?.[0] 
         || error.response?.data?.error 
         || error.response?.data?.detail
-        || "Erreur lors de la création de la relation";
+        || t('transformations.messages.create_error');
       
       if (typeof error.response?.data === 'object') {
          // Handle field specific errors if any
@@ -170,18 +172,18 @@ const Transformations: React.FC = () => {
 
   const handleDeleteRelation = async (id: number) => {
     const confirmed = await confirm({
-      title: 'Supprimer la relation',
-      message: 'Êtes-vous sûr de vouloir supprimer cette relation de transformation ?',
+      title: t('transformations.messages.delete_confirm_title'),
+      message: t('transformations.messages.delete_confirm_message'),
       variant: 'danger',
-      confirmText: 'Supprimer'
+      confirmText: t('transformations.messages.delete_confirm_btn')
     })
     if (!confirmed) return;
     try {
       await axios.delete(`${apiBaseUrl}/relations-transformation/${id}/`);
-      toast.success("Relation supprimée");
+      toast.success(t('transformations.messages.delete_success'));
       fetchData();
     } catch (error) {
-      toast.error("Erreur lors de la suppression");
+      toast.error(t('transformations.messages.delete_error'));
     }
   };
 
@@ -210,14 +212,14 @@ const Transformations: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-          Transformations de Conditionnement
+          {t('transformations.title')}
         </h1>
         <button 
           onClick={() => setIsRelationModalOpen(true)}
           className="btn btn-primary"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-          Nouvelle Relation
+          {t('transformations.new_relation_btn')}
         </button>
       </div>
 
@@ -226,13 +228,13 @@ const Transformations: React.FC = () => {
           className={`tab ${activeTab === 'relations' ? 'tab-active' : ''}`}
           onClick={() => setActiveTab('relations')}
         >
-          Relations Configurées
+          {t('transformations.tabs.configured_relations')}
         </a>
         <a 
           className={`tab ${activeTab === 'historique' ? 'tab-active' : ''}`}
           onClick={() => setActiveTab('historique')}
         >
-          Historique
+          {t('transformations.tabs.history')}
         </a>
       </div>
 
@@ -250,13 +252,13 @@ const Transformations: React.FC = () => {
                       <span className="text-gray-400 mx-2">➔</span>
                       {relation.produit_destination_nom}
                     </h2>
-                    <div className="badge badge-secondary badge-outline mb-2">Ratio: 1 : {relation.ratio}</div>
+                    <div className="badge badge-secondary badge-outline mb-2">{t('transformations.card.ratio', { ratio: relation.ratio })}</div>
                     <div className="card-actions justify-end mt-4">
                       <button 
                         className="btn btn-sm btn-accent"
                         onClick={() => openTransformerModal(relation)}
                       >
-                        Transformer
+                        {t('transformations.card.transform_btn')}
                       </button>
                       <button 
                         className="btn btn-sm btn-ghost text-error"
@@ -281,11 +283,11 @@ const Transformations: React.FC = () => {
               <table className="table w-full">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Utilisateur</th>
-                    <th>Transformation</th>
-                    <th>Quantités</th>
-                    <th>Notes</th>
+                    <th>{t('transformations.table_history.date')}</th>
+                    <th>{t('transformations.table_history.user')}</th>
+                    <th>{t('transformations.table_history.transformation')}</th>
+                    <th>{t('transformations.table_history.quantities')}</th>
+                    <th>{t('transformations.table_history.notes')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -316,17 +318,17 @@ const Transformations: React.FC = () => {
       {/* Modal Création Relation */}
       <dialog id="relation_modal" className={`modal ${isRelationModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Nouvelle Relation de Transformation</h3>
+          <h3 className="font-bold text-lg mb-4">{t('transformations.modal_relation.title')}</h3>
           <form onSubmit={handleCreateRelation}>
             <div className="form-control w-full mb-3">
-              <label className="label"><span className="label-text">Produit Source (à transformer)</span></label>
+              <label className="label"><span className="label-text">{t('transformations.modal_relation.source')}</span></label>
               <select 
                 className="select select-bordered"
                 value={newRelation.produit_source}
                 onChange={e => setNewRelation({...newRelation, produit_source: e.target.value})}
                 required
               >
-                <option value="">Sélectionner un produit...</option>
+                <option value="">{t('transformations.modal_relation.select_product')}</option>
                 {produits.sort((a,b) => a.name.localeCompare(b.name)).map(p => (
                   <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
                 ))}
@@ -334,14 +336,14 @@ const Transformations: React.FC = () => {
             </div>
             
             <div className="form-control w-full mb-3">
-              <label className="label"><span className="label-text">Produit Destination (résultat)</span></label>
+              <label className="label"><span className="label-text">{t('transformations.modal_relation.destination')}</span></label>
               <select 
                 className="select select-bordered"
                 value={newRelation.produit_destination}
                 onChange={e => setNewRelation({...newRelation, produit_destination: e.target.value})}
                 required
               >
-                <option value="">Sélectionner un produit...</option>
+                <option value="">{t('transformations.modal_relation.select_product')}</option>
                 {produits.sort((a,b) => a.name.localeCompare(b.name)).map(p => (
                   <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</option>
                 ))}
@@ -349,7 +351,7 @@ const Transformations: React.FC = () => {
             </div>
 
             <div className="form-control w-full mb-6">
-              <label className="label"><span className="label-text">Ratio (Combien d'unités Destination pour 1 unité Source ?)</span></label>
+              <label className="label"><span className="label-text">{t('transformations.modal_relation.ratio_label')}</span></label>
               <input 
                 type="number" 
                 step="0.01"
@@ -360,13 +362,13 @@ const Transformations: React.FC = () => {
                 required
               />
               <label className="label">
-                <span className="label-text-alt text-gray-500">Exemple: Si 1 Boîte donne 20 Détails, mettez 20.</span>
+                <span className="label-text-alt text-gray-500">{t('transformations.modal_relation.ratio_help')}</span>
               </label>
             </div>
 
             <div className="modal-action">
-              <button type="button" className="btn" onClick={() => setIsRelationModalOpen(false)}>Annuler</button>
-              <button type="submit" className="btn btn-primary">Créer</button>
+              <button type="button" className="btn" onClick={() => setIsRelationModalOpen(false)}>{t('transformations.modal_relation.cancel')}</button>
+              <button type="submit" className="btn btn-primary">{t('transformations.modal_relation.create')}</button>
             </div>
           </form>
         </div>
@@ -375,13 +377,13 @@ const Transformations: React.FC = () => {
       {/* Modal Transformer */}
       <dialog id="transformer_modal" className={`modal ${isTransformerModalOpen ? 'modal-open' : ''}`}>
         <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Effectuer une transformation</h3>
+          <h3 className="font-bold text-lg mb-4">{t('transformations.modal_transform.title')}</h3>
           {transformationData.relation && (
             <form onSubmit={handleTransformer}>
               <div className="alert alert-info shadow-sm mb-4">
                 <div>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  <span>Stock Source Actuel: <span className="font-bold">{currentSourceStock}</span></span>
+                  <span>{t('transformations.modal_transform.current_source_stock')}: <span className="font-bold">{currentSourceStock}</span></span>
                 </div>
               </div>
 
@@ -396,7 +398,7 @@ const Transformations: React.FC = () => {
                     onChange={e => setTransformationData({...transformationData, quantite: parseInt(e.target.value) || 0})}
                     required
                   />
-                  <div className="text-center text-xs mt-1">Quantité à transformer</div>
+                  <div className="text-center text-xs mt-1">{t('transformations.modal_transform.qty_to_transform')}</div>
                 </div>
 
                 <div className="flex flex-col items-center justify-center pt-6 text-gray-400">
@@ -409,23 +411,23 @@ const Transformations: React.FC = () => {
                   <div className="input input-bordered w-full flex items-center justify-center bg-base-200 font-bold text-lg text-success">
                     {quantiteDestinationCalculee}
                   </div>
-                  <div className="text-center text-xs mt-1">Quantité obtenue</div>
+                  <div className="text-center text-xs mt-1">{t('transformations.modal_transform.qty_obtained')}</div>
                 </div>
               </div>
 
               <div className="form-control w-full mb-6">
-                <label className="label"><span className="label-text">Notes (Optionnel)</span></label>
+                <label className="label"><span className="label-text">{t('transformations.modal_transform.notes_label')}</span></label>
                 <textarea 
                   className="textarea textarea-bordered h-24" 
-                  placeholder="Raison de la transformation..."
+                  placeholder={t('transformations.modal_transform.notes_placeholder')}
                   value={transformationData.notes}
                   onChange={e => setTransformationData({...transformationData, notes: e.target.value})}
                 ></textarea>
               </div>
 
               <div className="modal-action">
-                <button type="button" className="btn" onClick={() => setIsTransformerModalOpen(false)}>Annuler</button>
-                <button type="submit" className="btn btn-primary">Confirmer Transformation</button>
+                <button type="button" className="btn" onClick={() => setIsTransformerModalOpen(false)}>{t('transformations.modal_relation.cancel')}</button>
+                <button type="submit" className="btn btn-primary">{t('transformations.modal_transform.confirm_btn')}</button>
               </div>
             </form>
           )}
