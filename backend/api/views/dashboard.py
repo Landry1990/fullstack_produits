@@ -3,13 +3,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField
+from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value
 from django.db.models.functions import TruncDay, TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from ..models import Facture, Commande, Produit, Client, StockLot, Caisse
+from ..models import Facture, Commande, Produit, Client, StockLot, Caisse, ObjectifCommercial
 
 class DashboardViewSet(viewsets.ViewSet):
     """
@@ -154,6 +154,160 @@ class DashboardViewSet(viewsets.ViewSet):
             })
             
         return Response(response_data)
+
+    @action(detail=False, methods=['get'])
+    def manager_stats(self, request):
+        """
+        Calculates KPIs for Manager Dashboard: Actual vs Targets and Alerts.
+        """
+        # Role check
+        role = getattr(request.user, 'profile', None).role if hasattr(request.user, 'profile') else None
+        if role in ['VENDEUR', 'CAISSIER'] and not request.user.is_superuser:
+            return Response({"error": "Accès non autorisé"}, status=status.HTTP_403_FORBIDDEN)
+
+        # 1. Basic dates
+        now = timezone.now()
+        today = now.date()
+        start_of_week = today - timedelta(days=today.weekday())
+        start_of_month = today.replace(day=1)
+        
+        # 2. Daily Performance
+        ca_jour = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        
+        obj_jour_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.JOUR)
+        obj_jour = obj_jour_model.ca_objectif if obj_jour_model else Decimal('0')
+        taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
+        
+        # 3. Weekly Performance
+        ca_semaine = Facture.objects.filter(
+            date__date__gte=start_of_week,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        
+        obj_sem_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.SEMAINE)
+        obj_sem = obj_sem_model.ca_objectif if obj_sem_model else Decimal('0')
+        taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
+        
+        # 4. Monthly Performance
+        ca_mois = Facture.objects.filter(
+            date__date__gte=start_of_month,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        
+        obj_mois_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.MOIS)
+        obj_mois = obj_mois_model.ca_objectif if obj_mois_model else Decimal('0')
+        taux_mois = float((ca_mois / obj_mois) * 100) if obj_mois > 0 else 0
+        
+        # 5. Smart Alerts
+        alerts = []
+        
+        # Performance Alert (if CA < 70% of target after 14h)
+        day_actual = ca_jour # Use the already calculated ca_jour
+        day_target = obj_jour # Use the already calculated obj_jour
+        if day_target > 0 and now.hour >= 14:
+            rate = (float(day_actual) / float(day_target)) * 100
+            if rate < 70:
+                alerts.append({
+                    'type': 'danger',
+                    'title_key': 'manager_dashboard.alerts.perf_title',
+                    'message_key': 'manager_dashboard.alerts.perf_msg',
+                    'params': {'rate': round(rate)}
+                })
+        
+        # Stock Alert (Critical shortages)
+        shortages = Produit.objects.filter(stock__lte=F('stock_minimum'), is_active=True).count()
+        if shortages > 10:
+            alerts.append({
+                'type': 'warning',
+                'title_key': 'manager_dashboard.alerts.shortage_title',
+                'message_key': 'manager_dashboard.alerts.shortage_msg',
+                'params': {'count': shortages}
+            })
+
+        # --- IMPORTANT DEBTORS ALERT ---
+        # Find clients with significant debt (> 100k)
+        debt_threshold = Decimal('100000.00')
+        clients_with_debt = Client.objects.filter(is_active=True).annotate(
+            paid_amount=Coalesce(
+                Sum('facture__paiements__montant', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], facture__paiements__statut='completee') & ~Q(facture__paiements__mode_paiement='en_compte')),
+                Value(0, output_field=DecimalField())
+            ),
+            total_billed=Coalesce(
+                Sum('facture__total_ttc', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])),
+                Value(0, output_field=DecimalField())
+            )
+        ).annotate(
+            calculated_debt=F('total_billed') - F('paid_amount')
+        ).filter(calculated_debt__gt=debt_threshold).order_by('-calculated_debt')[:5]
+
+        if clients_with_debt.exists():
+            count = clients_with_debt.count()
+            top_client = clients_with_debt[0]
+            alerts.append({
+                'type': 'danger',
+                'title_key': 'manager_dashboard.alerts.debt_title',
+                'message_key': 'manager_dashboard.alerts.debt_msg',
+                'params': {
+                    'count': count, 
+                    'threshold': int(debt_threshold),
+                    'top_name': top_client.name,
+                    'top_debt': int(top_client.calculated_debt)
+                }
+            })
+
+        # --- DORMANT STOCKS ALERT ---
+        # Products with stock > 0 and no sales in last 90 days
+        limit_date = today - timedelta(days=90)
+        dormant_count = Produit.objects.filter(
+            stock__gt=0,
+            is_active=True
+        ).exclude(
+            factureproduit__facture__date__date__gte=limit_date,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).count()
+
+        if dormant_count > 0:
+            alerts.append({
+                'type': 'warning',
+                'title_key': 'manager_dashboard.alerts.dormant_title',
+                'message_key': 'manager_dashboard.alerts.dormant_msg',
+                'params': {'count': dormant_count, 'days': 90}
+            })
+
+        # Week over Week Performance Drop
+        last_week_start = today - timedelta(days=7 + today.weekday())
+        current_week_start = today - timedelta(days=today.weekday())
+        
+        last_week_ca = Facture.objects.filter(
+            date__date__gte=last_week_start,
+            date__date__lt=current_week_start,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        
+        current_week_ca = Facture.objects.filter(
+            date__date__gte=current_week_start,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
+        
+        if last_week_ca > 0 and current_week_ca < last_week_ca * Decimal('0.7'):
+             alerts.append({
+                'type': 'warning',
+                'title_key': 'manager_dashboard.alerts.drop_title',
+                'message_key': 'manager_dashboard.alerts.drop_msg',
+                'params': {}
+            })
+
+        return Response({
+            'kpis': {
+                'jour': {'actual': float(ca_jour), 'target': float(obj_jour), 'rate': taux_jour},
+                'semaine': {'actual': float(ca_semaine), 'target': float(obj_sem), 'rate': taux_sem},
+                'mois': {'actual': float(ca_mois), 'target': float(obj_mois), 'rate': taux_mois},
+            },
+            'alerts': alerts
+        })
 
     @action(detail=False, methods=['get'])
     def recent_transactions(self, request):

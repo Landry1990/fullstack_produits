@@ -1,0 +1,110 @@
+{
+    "title": "Caisse Centralisée",
+    "subtitle": "Les ventes en attente de règlement s'affichent automatiquement",
+    "auto_refresh": "Actualisation auto (20s)",
+    "coupons_active": "Coupons ({{count}} actifs)",
+    "coupons_applied": "{{count}} coupon(s) appliqué(s)",
+    "pending_count": "{{count}} en attente",
+    "no_pending": "Aucune facture en attente",
+    "no_pending_desc": "Les nouvelles factures apparaîtront ici automatiquement.",
+    "table": {
+        "ticket": "#Ticket",
+        "invoice": "Facture",
+        "client": "Client",
+        "date": "Date",
+        "products": "Produits",
+        "amount": "Montant",
+        "actions": "Actions",
+        "tiers_payant": "Tiers Payant",
+        "coupon_applied": "Coupon appliqué",
+        "remove_coupon": "Retirer le coupon",
+        "modify": "Modifier",
+        "cancel": "Annuler",
+        "apply_coupon": "Appliquer un coupon",
+        "cash_in": "Encaisser",
+        "not_authorized": "Non autorisé"
+    },
+    "coupons": {
+        "title": "Coupons",
+        "generate": "Générer un coupon",
+        "permission_required": "Permission requise",
+        "search_placeholder": "Rechercher #...",
+        "none": "Aucun coupon",
+        "headers": {
+            "num_amount": "N° / Montant",
+            "creation": "Création",
+            "usage": "Utilisation",
+            "status": "Statut"
+        },
+        "by": "Par: {{name}}",
+        "system": "Système",
+        "status": {
+            "active": "ACTIF",
+            "used": "UTILISE",
+            "expired": "EXPIRE"
+        },
+        "generate_modal": {
+            "title": "Générer un Coupon",
+            "amount": "Montant",
+            "notes": "Notes",
+            "placeholder_notes": "Commentaire...",
+            "submit": "Générer"
+        },
+        "details_modal": {
+            "title": "Détails du Coupon",
+            "print": "Imprimer"
+        }
+    },
+    "payment": {
+        "modal_title": "Encaissement - Facture #{{numero}}",
+        "total_to_pay": "Total à payer",
+        "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
+        "tiers_payant_alert": "Part Client (Tiers Payant actif)",
+        "recorded_payments": "Paiements enregistrés:",
+        "total_paid": "Total versé:",
+        "remaining": "Reste à payer: {{amount}} F",
+        "step1": "1. Saisissez le montant puis appuyez sur Entrée",
+        "step1_hint": "Appuyez sur Entrée après avoir saisi le montant",
+        "amount_label": "Montant:",
+        "step2": "2. Utilisez ↑↓←→ et Entrée pour choisir le mode",
+        "modify_amount": "← Modifier le montant",
+        "change_to_give": "Monnaie à rendre",
+        "confirm": "✓ Valider le paiement (Entrée)",
+        "missing": "Reste {{amount}} F"
+    },
+    "ticket": {
+        "title": "Ticket de Caisse",
+        "invoice_num": "Facture",
+        "date": "Date",
+        "client": "Client",
+        "subtotal_ht": "Sous-total HT",
+        "discount": "Remise",
+        "tva": "TVA",
+        "total_ttc": "TOTAL TTC",
+        "amount_paid": "Montant Versé",
+        "change": "Rendu",
+        "settlements": "Règlements",
+        "part_patient": "Part Patient",
+        "part_assurance": "Part Assurance"
+    },
+    "messages": {
+        "invalid_amount": "Veuillez entrer un montant valide",
+        "coupon_generated": "Coupon #{{numero}} généré avec succès !",
+        "error_generation": "Erreur lors de la génération du coupon",
+        "coupon_not_active": "Ce coupon n'est pas actif",
+        "coupon_already_applied": "Ce coupon est déjà appliqué à une autre vente",
+        "coupon_applied_to": "Coupon #{{numero}} appliqué à la vente #{{ticket}}",
+        "coupon_removed": "Coupon retiré",
+        "coupon_not_found": "Coupon introuvable",
+        "search_error": "Erreur lors de la recherche",
+        "refreshed": "Liste rafraîchie",
+        "cancel_confirm": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
+        "cancelled": "Facture annulée",
+        "cancel_error": "Erreur lors de l'annulation",
+        "modify_confirm": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",
+        "empty_invoice": "Cette facture ne contient aucun produit",
+        "load_error": "Impossible de charger la facture pour modification",
+        "cash_in_success": "Facture #{{numero}} encaissée avec succès !",
+        "payment_error": "Erreur lors de l'enregistrement du paiement"
+    }
+}

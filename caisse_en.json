@@ -1,0 +1,110 @@
+{
+    "title": "Centralized Register",
+    "subtitle": "Sales pending settlement are automatically displayed",
+    "auto_refresh": "Auto-refresh (20s)",
+    "coupons_active": "Coupons ({{count}} active)",
+    "coupons_applied": "{{count}} coupon(s) applied",
+    "pending_count": "{{count}} pending",
+    "no_pending": "No pending invoices",
+    "no_pending_desc": "New invoices will appear here automatically.",
+    "table": {
+        "ticket": "#Ticket",
+        "invoice": "Invoice",
+        "client": "Client",
+        "date": "Date",
+        "products": "Products",
+        "amount": "Amount",
+        "actions": "Actions",
+        "tiers_payant": "Third-Party Payer",
+        "coupon_applied": "Coupon applied",
+        "remove_coupon": "Remove coupon",
+        "modify": "Modify",
+        "cancel": "Cancel",
+        "apply_coupon": "Apply coupon",
+        "cash_in": "Cash in",
+        "not_authorized": "Not authorized"
+    },
+    "coupons": {
+        "title": "Coupons",
+        "generate": "Generate coupon",
+        "permission_required": "Permission required",
+        "search_placeholder": "Search #...",
+        "none": "No coupon",
+        "headers": {
+            "num_amount": "N° / Amount",
+            "creation": "Creation",
+            "usage": "Usage",
+            "status": "Status"
+        },
+        "by": "By: {{name}}",
+        "system": "System",
+        "status": {
+            "active": "ACTIVE",
+            "used": "USED",
+            "expired": "EXPIRED"
+        },
+        "generate_modal": {
+            "title": "Generate a Coupon",
+            "amount": "Amount",
+            "notes": "Notes",
+            "placeholder_notes": "Comment...",
+            "submit": "Generate"
+        },
+        "details_modal": {
+            "title": "Coupon Details",
+            "print": "Print"
+        }
+    },
+    "payment": {
+        "modal_title": "Cashing In - Invoice #{{numero}}",
+        "total_to_pay": "Total to pay",
+        "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
+        "tiers_payant_alert": "Client Portion (Third-Party Payer active)",
+        "recorded_payments": "Recorded payments:",
+        "total_paid": "Total paid:",
+        "remaining": "Remaining to pay: {{amount}} F",
+        "step1": "1. Enter amount then press Enter",
+        "step1_hint": "Press Enter after entering the amount",
+        "amount_label": "Amount:",
+        "step2": "2. Use ↑↓←→ and Enter to choose mode",
+        "modify_amount": "← Modify amount",
+        "change_to_give": "Change to give",
+        "confirm": "✓ Validate payment (Enter)",
+        "missing": "Remaining {{amount}} F"
+    },
+    "ticket": {
+        "title": "Cash Receipt",
+        "invoice_num": "Invoice",
+        "date": "Date",
+        "client": "Client",
+        "subtotal_ht": "Subtotal EX-VAT",
+        "discount": "Discount",
+        "tva": "VAT",
+        "total_ttc": "TOTAL INC-VAT",
+        "amount_paid": "Amount Paid",
+        "change": "Change",
+        "settlements": "Settlements",
+        "part_patient": "Patient Portion",
+        "part_assurance": "Insurance Portion"
+    },
+    "messages": {
+        "invalid_amount": "Please enter a valid amount",
+        "coupon_generated": "Coupon #{{numero}} generated successfully!",
+        "error_generation": "Error during coupon generation",
+        "coupon_not_active": "This coupon is not active",
+        "coupon_already_applied": "This coupon is already applied to another sale",
+        "coupon_applied_to": "Coupon #{{numero}} applied to sale #{{ticket}}",
+        "coupon_removed": "Coupon removed",
+        "coupon_not_found": "Coupon not found",
+        "search_error": "Error during search",
+        "refreshed": "List refreshed",
+        "cancel_confirm": "Are you sure you want to cancel invoice #{{numero}}?",
+        "cancelled": "Invoice cancelled",
+        "cancel_error": "Error during cancellation",
+        "modify_confirm": "Modify this invoice? It will be removed from the list and reloaded in the sales screen.",
+        "empty_invoice": "This invoice contains no products",
+        "load_error": "Unable to load invoice for modification",
+        "cash_in_success": "Invoice #{{numero}} cashed in successfully!",
+        "payment_error": "Error during payment recording"
+    }
+}

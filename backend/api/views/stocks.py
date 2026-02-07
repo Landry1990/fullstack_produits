@@ -128,6 +128,133 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.'})
 
+    @action(detail=False, methods=['get'])
+    def stats_perimes(self, request):
+        """
+        Statistiques des produits périmés et à risque d'expiration.
+        Retourne:
+        - Valeur des lots périmés (pertes financières)
+        - Prévisions à 30/60/90 jours
+        - Taux de perte vs CA
+        """
+        from api.models import Facture, FactureProduitAllocation
+        from django.db.models import Q
+        
+        today = timezone.now().date()
+        
+        # Paramètres de période pour le CA (par défaut: 12 derniers mois)
+        periode_jours = int(request.query_params.get('periode_jours', 365))
+        date_debut_ca = today - timedelta(days=periode_jours)
+        
+        # === LOTS DÉJÀ PÉRIMÉS ===
+        lots_perimes = StockLot.objects.filter(
+            date_expiration__lt=today,
+            quantity_remaining__gt=0
+        ).select_related('produit')
+        
+        valeur_perimes_cout = Decimal('0')
+        valeur_perimes_vente = Decimal('0')
+        count_lots_perimes = 0
+        details_perimes = []
+        
+        for lot in lots_perimes:
+            valeur_cout = lot.price_cost * lot.quantity_remaining
+            valeur_vente = lot.selling_price * lot.quantity_remaining
+            valeur_perimes_cout += valeur_cout
+            valeur_perimes_vente += valeur_vente
+            count_lots_perimes += 1
+            
+            details_perimes.append({
+                'lot_id': lot.id,
+                'produit_id': lot.produit_id,
+                'produit_nom': lot.produit_nom or (lot.produit.name if lot.produit else 'Inconnu'),
+                'lot_numero': lot.lot,
+                'date_expiration': lot.date_expiration.isoformat() if lot.date_expiration else None,
+                'quantity': lot.quantity_remaining,
+                'valeur_cout': float(valeur_cout),
+                'valeur_vente': float(valeur_vente)
+            })
+        
+        # === PRÉVISIONS 30/60/90 JOURS ===
+        def calculer_prevision(jours):
+            date_limite = today + timedelta(days=jours)
+            lots = StockLot.objects.filter(
+                date_expiration__gte=today,
+                date_expiration__lt=date_limite,
+                quantity_remaining__gt=0
+            )
+            total_cout = Decimal('0')
+            total_vente = Decimal('0')
+            count = 0
+            
+            for lot in lots:
+                total_cout += lot.price_cost * lot.quantity_remaining
+                total_vente += lot.selling_price * lot.quantity_remaining
+                count += 1
+                
+            return {
+                'jours': jours,
+                'count_lots': count,
+                'valeur_cout': float(total_cout),
+                'valeur_vente': float(total_vente)
+            }
+        
+        prevision_30j = calculer_prevision(30)
+        prevision_60j = calculer_prevision(60)
+        prevision_90j = calculer_prevision(90)
+        
+        # === CALCUL DU CA SUR LA PÉRIODE ===
+        # Utilise les factures validées/payées
+        factures_periode = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            date__gte=date_debut_ca
+        )
+        ca_total = factures_periode.aggregate(
+            total=Sum('total_ttc')
+        )['total'] or Decimal('0')
+        
+        # === PERTES HISTORIQUES (via MouvementStock) ===
+        # Sorties pour périmés sur la période
+        pertes_historiques = MouvementStock.objects.filter(
+            type_mouvement=MouvementStock.TypeMouvement.AVOIR,
+            description__icontains='périmé',
+            date__gte=date_debut_ca
+        ).aggregate(
+            total_qty=Sum('quantite')
+        )['total_qty'] or 0
+        
+        # === TAUX DE PERTE ===
+        taux_perte = Decimal('0')
+        if ca_total > 0:
+            taux_perte = (valeur_perimes_vente / ca_total) * 100
+        
+        return Response({
+            'date_reference': today.isoformat(),
+            'periode_ca_jours': periode_jours,
+            
+            # Lots actuellement périmés
+            'perimes': {
+                'count_lots': count_lots_perimes,
+                'valeur_cout': float(valeur_perimes_cout),
+                'valeur_vente_perdue': float(valeur_perimes_vente),
+                'details': details_perimes[:20]  # Limit to 20 for performance
+            },
+            
+            # Prévisions
+            'previsions': {
+                '30j': prevision_30j,
+                '60j': prevision_60j,
+                '90j': prevision_90j
+            },
+            
+            # Indicateurs financiers
+            'indicateurs': {
+                'ca_periode': float(ca_total),
+                'taux_perte_pct': round(float(taux_perte), 2),
+                'pertes_historiques_qty': abs(pertes_historiques)
+            }
+        })
+
 
 from rest_framework.pagination import PageNumberPagination
 

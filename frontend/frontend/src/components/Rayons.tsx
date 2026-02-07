@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { safeStorage } from '../utils/storage';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -12,6 +13,7 @@ interface Rayon {
 }
 
 export default function Rayons() {
+  const { t } = useTranslation();
   const confirm = useConfirm()
   const [rayons, setRayons] = useState<Rayon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function Rayons() {
       setRayons(res.data.results || res.data);
     } catch (err) {
       console.error("Error fetching rayons:", err);
-      toast.error("Erreur lors du chargement des rayons");
+      toast.error(t('rayons.messages.load_error'));
     } finally {
       setLoading(false);
     }
@@ -59,27 +61,27 @@ export default function Rayons() {
         await axios.put(`${apiBaseUrl}/api/categories/${editingRayon.id}/`, payload, {
           headers: { Authorization: `Token ${token}` }
         });
-        toast.success("Rayon modifié avec succès");
+        toast.success(t('rayons.messages.save_success_edit'));
       } else {
         await axios.post(`${apiBaseUrl}/api/categories/`, payload, {
           headers: { Authorization: `Token ${token}` }
         });
-        toast.success("Rayon créé avec succès");
+        toast.success(t('rayons.messages.save_success_create'));
       }
       closeModal();
       fetchRayons();
     } catch (err) {
       console.error("Error saving rayon:", err);
-      toast.error("Erreur lors de l'enregistrement");
+      toast.error(t('rayons.messages.save_error'));
     }
   };
 
   const handleDelete = async (id: number) => {
     const confirmed = await confirm({
-      title: 'Supprimer le rayon',
-      message: 'Êtes-vous sûr de vouloir supprimer ce rayon ?',
+      title: t('rayons.messages.delete_confirm_title'),
+      message: t('rayons.messages.delete_confirm_message'),
       variant: 'danger',
-      confirmText: 'Supprimer'
+      confirmText: t('rayons.messages.delete_btn')
     })
     if (!confirmed) return;
     
@@ -88,11 +90,11 @@ export default function Rayons() {
       await axios.delete(`${apiBaseUrl}/api/categories/${id}/`, {
         headers: { Authorization: `Token ${token}` }
       });
-      toast.success("Rayon supprimé");
+      toast.success(t('rayons.messages.delete_success'));
       fetchRayons();
     } catch (err) {
       console.error("Error deleting rayon:", err);
-      toast.error("Erreur lors de la suppression");
+      toast.error(t('rayons.messages.delete_error'));
     }
   };
 
@@ -162,7 +164,7 @@ export default function Rayons() {
 
   const openPrintSansRayon = () => {
       // Sentinel object for "No Rayon"
-      setPrintTarget({ id: -1, name: "PRODUITS SANS RAYON", parent: null, parent_name: null }); 
+      setPrintTarget({ id: -1, name: t('rayons.no_rayon'), parent: null, parent_name: null }); 
       setExcludeZeroStock(false);
       setIsPrintModalOpen(true);
   };
@@ -184,14 +186,14 @@ export default function Rayons() {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Rayons</h1>
+        <h1 className="text-2xl font-bold">{t('rayons.title')}</h1>
         <div className="flex gap-2">
             <button onClick={openPrintSansRayon} className="btn btn-secondary btn-outline gap-2">
-              🖨️ Sans Rayon
+              🖨️ {t('rayons.no_rayon')}
             </button>
             <button onClick={() => openModal()} className="btn btn-primary gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-              Nouveau Rayon Principal
+              {t('rayons.new_main')}
             </button>
         </div>
       </div>
@@ -201,16 +203,16 @@ export default function Rayons() {
           <table className="table w-full relative">
             <thead className="sticky top-0 bg-base-200 z-10">
               <tr>
-                <th className="w-20">ID</th>
-                <th>Nom du Rayon</th>
-                <th>Type</th>
-                <th className="text-right">Actions</th>
+                <th className="w-20">{t('rayons.table.id')}</th>
+                <th>{t('rayons.table.name')}</th>
+                <th>{t('rayons.table.type')}</th>
+                <th className="text-right">{t('rayons.table.actions')}</th>
               </tr>
             </thead>
             <tbody>
               {hierarchy.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center py-8 text-base-content/60">Aucun rayon trouvé</td>
+                  <td colSpan={4} className="text-center py-8 text-base-content/60">{t('rayons.table.no_rayon_found')}</td>
                 </tr>
               ) : (
                 paginatedHierarchy.map((parent) => (
@@ -219,7 +221,7 @@ export default function Rayons() {
                     <tr key={parent.id} className="bg-base-100 font-bold hover:bg-base-50">
                       <td>{parent.id}</td>
                       <td className="text-lg text-primary">{parent.name}</td>
-                      <td><span className="badge badge-primary badge-outline">Rayon Principal</span></td>
+                      <td><span className="badge badge-primary badge-outline">{t('rayons.table.main_rayon')}</span></td>
                       <td className="text-right">
                         <button 
                           onClick={() => {
@@ -229,11 +231,12 @@ export default function Rayons() {
                           }} 
                           className="btn btn-xs btn-outline btn-success mr-2 gap-1"
                         >
-                           + Sous-rayon
+
+                           {t('rayons.table.add_sub')}
                         </button>
-                        <button onClick={() => handlePrintRayonStock(parent.id)} className="btn btn-info btn-outline btn-xs mr-2" title="Imprimer Etat Stock">🖨️ Stock</button>
-                        <button onClick={() => openModal(parent)} className="btn btn-ghost btn-xs mr-2">Modifier</button>
-                        <button onClick={() => handleDelete(parent.id)} className="btn btn-ghost btn-xs text-error">Supprimer</button>
+                        <button onClick={() => handlePrintRayonStock(parent.id)} className="btn btn-info btn-outline btn-xs mr-2" title={t('rayons.print_stock')}>🖨️ {t('rayons.table.stock')}</button>
+                        <button onClick={() => openModal(parent)} className="btn btn-ghost btn-xs mr-2">{t('rayons.table.modify')}</button>
+                        <button onClick={() => handleDelete(parent.id)} className="btn btn-ghost btn-xs text-error">{t('rayons.table.delete')}</button>
                       </td>
                     </tr>
                     
@@ -244,11 +247,11 @@ export default function Rayons() {
                         <td className="pl-8">
                            <span className="border-l-2 border-base-300 pl-3">{child.name}</span>
                         </td>
-                        <td><span className="badge badge-ghost badge-sm">Sous-rayon</span></td>
+                        <td><span className="badge badge-ghost badge-sm">{t('rayons.table.sub_rayon')}</span></td>
                         <td className="text-right">
-                          <button onClick={() => handlePrintRayonStock(child.id)} className="btn btn-info btn-outline btn-xs mr-2" title="Imprimer Etat Stock">🖨️ Stock</button>
-                          <button onClick={() => openModal(child)} className="btn btn-ghost btn-xs mr-2">Modifier</button>
-                          <button onClick={() => handleDelete(child.id)} className="btn btn-ghost btn-xs text-error">Supprimer</button>
+                          <button onClick={() => handlePrintRayonStock(child.id)} className="btn btn-info btn-outline btn-xs mr-2" title={t('rayons.print_stock')}>🖨️ {t('rayons.table.stock')}</button>
+                          <button onClick={() => openModal(child)} className="btn btn-ghost btn-xs mr-2">{t('rayons.table.modify')}</button>
+                          <button onClick={() => handleDelete(child.id)} className="btn btn-ghost btn-xs text-error">{t('rayons.table.delete')}</button>
                         </td>
                       </tr>
                     ))}
@@ -257,7 +260,7 @@ export default function Rayons() {
                     {parent.subRayons.length === 0 && (
                       <tr className="text-xs text-base-content/40 italic">
                         <td></td>
-                        <td className="pl-8">Aucun sous-rayon</td>
+                        <td className="pl-8">{t('rayons.table.no_sub_rayon')}</td>
                         <td colSpan={2}></td>
                       </tr>
                     )}
@@ -298,10 +301,10 @@ export default function Rayons() {
       {isModalOpen && (
         <div className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{editingRayon ? 'Modifier le Rayon' : 'Nouveau Rayon'}</h3>
+            <h3 className="font-bold text-lg mb-4">{editingRayon ? t('rayons.modal.title_edit') : t('rayons.modal.title_new')}</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-control w-full mb-4">
-                <label className="label"><span className="label-text">Nom du rayon</span></label>
+                <label className="label"><span className="label-text">{t('rayons.modal.name')}</span></label>
                 <input 
                   type="text" 
                   className="input input-bordered w-full" 
@@ -312,13 +315,13 @@ export default function Rayons() {
               </div>
               
               <div className="form-control w-full mb-6">
-                <label className="label"><span className="label-text">Rayon Parent (Optionnel)</span></label>
+                <label className="label"><span className="label-text">{t('rayons.modal.parent')}</span></label>
                 <select 
                   className="select select-bordered w-full"
                   value={formData.parent}
                   onChange={e => setFormData({...formData, parent: e.target.value})}
                 >
-                  <option value="">Aucun (Racine)</option>
+                  <option value="">{t('rayons.modal.none')}</option>
                   {availableParents.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
@@ -326,8 +329,8 @@ export default function Rayons() {
               </div>
 
               <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>Annuler</button>
-                <button type="submit" className="btn btn-primary">Enregistrer</button>
+                <button type="button" className="btn btn-ghost" onClick={closeModal}>{t('rayons.modal.cancel')}</button>
+                <button type="submit" className="btn btn-primary">{t('rayons.modal.save')}</button>
               </div>
             </form>
           </div>
@@ -339,9 +342,9 @@ export default function Rayons() {
       {isPrintModalOpen && printTarget && (
         <div className="modal modal-open">
           <div className="modal-box">
-             <h3 className="font-bold text-lg mb-4">Imprimer Etat de Stock</h3>
+             <h3 className="font-bold text-lg mb-4">{t('rayons.print_modal.title')}</h3>
              <p className="mb-4">
-               Rayon : <span className="font-bold text-primary">{printTarget.name}</span>
+               {t('rayons.print_modal.rayon')} : <span className="font-bold text-primary">{printTarget.name}</span>
              </p>
 
              <div className="form-control">
@@ -352,14 +355,14 @@ export default function Rayons() {
                    checked={excludeZeroStock}
                    onChange={e => setExcludeZeroStock(e.target.checked)}
                  />
-                 <span className="label-text">Ne pas inclure les stocks nuls (0)</span>
+                 <span className="label-text">{t('rayons.print_modal.exclude_zero')}</span>
                </label>
              </div>
 
              <div className="modal-action">
-               <button className="btn btn-ghost" onClick={() => setIsPrintModalOpen(false)}>Annuler</button>
+               <button className="btn btn-ghost" onClick={() => setIsPrintModalOpen(false)}>{t('rayons.modal.cancel')}</button>
                <button className="btn btn-primary" onClick={handleConfirmPrint}>
-                 <span className="mr-2">🖨️</span> Valider et Imprimer
+                 <span className="mr-2">🖨️</span> {t('rayons.print_modal.validate')}
                </button>
              </div>
           </div>

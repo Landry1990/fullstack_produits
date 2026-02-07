@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { safeStorage } from '../utils/storage';
 import { toast } from 'react-hot-toast';
@@ -10,6 +11,7 @@ interface ScopedProduit extends ProduitModel {
 }
 
 export default function Categories() {
+  const { t } = useTranslation();
   const confirm = useConfirm()
   const [rayons, setRayons] = useState<Rayon[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,7 @@ export default function Categories() {
       setRayons(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching rayons:", err);
-      toast.error("Erreur lors du chargement des rayons");
+      toast.error(t('rayons.messages.load_error'));
       setRayons([]);
     } finally {
       setLoading(false);
@@ -66,7 +68,7 @@ export default function Categories() {
       setProducts(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Error fetching products:", err);
-      toast.error("Erreur lors du chargement des produits");
+      toast.error(t('rayons.messages.load_products_error'));
       setProducts([]);
     } finally {
       setProductsLoading(false);
@@ -101,27 +103,27 @@ export default function Categories() {
         await axios.put(`${apiBaseUrl}/api/categories/${editingRayon.id}/`, payload, {
           headers: { Authorization: `Token ${token}` }
         });
-        toast.success("Rayon modifié");
+        toast.success(t('rayons.messages.save_success_edit'));
       } else {
         await axios.post(`${apiBaseUrl}/api/categories/`, payload, {
           headers: { Authorization: `Token ${token}` }
         });
-        toast.success("Rayon créé");
+        toast.success(t('rayons.messages.save_success_create'));
       }
       closeModal();
       fetchRayons();
     } catch (err) {
       console.error("Error saving rayon:", err);
-      toast.error("Erreur lors de l'enregistrement");
+      toast.error(t('rayons.messages.save_error'));
     }
   };
 
   const handleDeleteRayon = async (id: number) => {
     const confirmed = await confirm({
-      title: 'Supprimer le rayon',
-      message: 'Attention: Supprimer un rayon ne supprime pas les produits, ils seront "Sans rayon". Continuer ?',
+      title: t('rayons.messages.delete_confirm_title'),
+      message: t('rayons.messages.delete_confirm_message_detailed'),
       variant: 'danger',
-      confirmText: 'Supprimer'
+      confirmText: t('rayons.messages.delete_btn')
     })
     if (!confirmed) return;
     
@@ -130,12 +132,12 @@ export default function Categories() {
       await axios.delete(`${apiBaseUrl}/api/categories/${id}/`, {
         headers: { Authorization: `Token ${token}` }
       });
-      toast.success("Rayon supprimé");
+      toast.success(t('rayons.messages.delete_success'));
       if (selectedRayon?.id === id) setSelectedRayon(null);
       fetchRayons();
     } catch (err) {
       console.error("Error deleting rayon:", err);
-      toast.error("Erreur lors de la suppression");
+      toast.error(t('rayons.messages.delete_error'));
     }
   };
 
@@ -196,12 +198,12 @@ export default function Categories() {
         headers: { Authorization: `Token ${token}` }
       });
       
-      toast.success(`${product.name} ajouté à ${selectedRayon.name}`);
+      toast.success(t('rayons.messages.product_added_to', { product: product.name, rayon: selectedRayon.name }));
       setSearchResults(prev => prev.filter(p => p.id !== product.id));
       fetchProductsForRayon(selectedRayon.id); // Refresh list
     } catch (err) {
       console.error("Error adding product to rayon:", err);
-      toast.error("Erreur lors de l'ajout du produit");
+      toast.error(t('rayons.messages.add_product_error'));
     }
   };
 
@@ -209,10 +211,10 @@ export default function Categories() {
     if (!selectedRayon) return;
     
     const confirmed = await confirm({
-      title: 'Retirer le produit',
-      message: `Retirer "${product.name}" du rayon "${selectedRayon.name}" ? Le produit ne sera pas supprimé, juste détaché de ce rayon.`,
+      title: t('rayons.remove_product_title'),
+      message: t('rayons.remove_product_message', { product: product.name, rayon: selectedRayon.name }),
       variant: 'warning',
-      confirmText: 'Retirer'
+      confirmText: t('rayons.remove_btn')
     });
     if (!confirmed) return;
 
@@ -225,11 +227,11 @@ export default function Categories() {
         headers: { Authorization: `Token ${token}` }
       });
       
-      toast.success("Produit retiré du rayon");
+      toast.success(t('rayons.messages.product_removed'));
       fetchProductsForRayon(selectedRayon.id); // Refresh list
     } catch (err) {
       console.error("Error removing product from rayon:", err);
-      toast.error("Erreur lors du retrait du produit");
+      toast.error(t('rayons.messages.remove_product_error'));
     }
   };
 
@@ -252,9 +254,9 @@ export default function Categories() {
       {/* LEFT PANEL: CATEGORIES LIST */}
       <div className="w-1/3 border-r border-base-200 bg-base-100 flex flex-col">
         <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-100 relative z-10">
-          <h2 className="font-bold text-lg">Rayons</h2>
+          <h2 className="font-bold text-lg">{t('sidebar.stock.rayons')}</h2>
           <button onClick={() => openModal()} className="btn btn-sm btn-primary">
-            + Créer
+            + {t('rayons.create_btn')}
           </button>
         </div>
 
@@ -262,7 +264,7 @@ export default function Categories() {
            {loading ? (
              <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>
            ) : hierarchy.length === 0 ? (
-             <div className="text-center p-8 text-base-content/50">Aucun rayon</div>
+             <div className="text-center p-8 text-base-content/50">{t('rayons.no_rayon')}</div>
            ) : (
              <ul className="menu bg-base-100 w-full rounded-box">
                 {hierarchy.map(parent => (
@@ -342,7 +344,7 @@ export default function Categories() {
                  <div>
                     <h2 className="text-2xl font-bold">{selectedRayon.name}</h2>
                     <p className="text-sm opacity-60">
-                        {productsLoading ? 'Chargement...' : `${products.length} produit(s)`}
+                        {productsLoading ? t('common.loading') : t('rayons.count_products', { count: products.length })}
                     </p>
                  </div>
                  <div className="flex gap-2">
@@ -354,7 +356,7 @@ export default function Categories() {
                         setIsAddProductModalOpen(true);
                       }}
                     >
-                       ➕ Ajouter des produits
+                       ➕ {t('rayons.add_products_btn')}
                     </button>
                  </div>
               </div>
@@ -365,7 +367,7 @@ export default function Categories() {
                  ) : products.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-base-content/40">
                        <svg className="w-16 h-16 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                       <p className="text-lg">Ce rayon est vide</p>
+                       <p className="text-lg">{t('rayons.empty_rayon')}</p>
                        <button 
                           className="btn btn-ghost mt-2"
                           onClick={() => {
@@ -374,7 +376,7 @@ export default function Categories() {
                             setIsAddProductModalOpen(true);
                           }}
                         >
-                          Ajouter un produit existant
+                          {t('rayons.add_existing_product')}
                        </button>
                     </div>
                  ) : (
@@ -382,10 +384,10 @@ export default function Categories() {
                       <table className="table table-zebra w-full">
                         <thead>
                           <tr>
-                            <th>Produit</th>
-                            <th>CIP</th>
-                            <th className="text-right">Stock</th>
-                            <th className="text-right">Prix</th>
+                            <th>{t('rayons.table.product')}</th>
+                            <th>{t('rayons.table.cip')}</th>
+                            <th className="text-right">{t('rayons.table.stock')}</th>
+                            <th className="text-right">{t('rayons.table.price')}</th>
                             <th className="w-10"></th>
                           </tr>
                         </thead>
@@ -404,7 +406,7 @@ export default function Categories() {
                                <td>
                                   <button 
                                     className="btn btn-ghost btn-xs text-error tooltip tooltip-left"
-                                    data-tip="Retirer du rayon"
+                                    data-tip={t('rayons.remove_from_rayon')}
                                     onClick={() => handleRemoveProductFromRayon(p)}
                                   >
                                     ✕
@@ -421,8 +423,8 @@ export default function Categories() {
          ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-base-content/30 bg-base-200/50">
                <svg className="w-24 h-24 mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-               <p className="text-xl font-medium">Sélectionnez un rayon</p>
-               <p className="text-sm">Gérez les rayons et associez des produits</p>
+               <p className="text-xl font-medium">{t('rayons.select_rayon')}</p>
+               <p className="text-sm">{t('rayons.manage_rayons_hint')}</p>
             </div>
          )}
       </div>
@@ -431,10 +433,10 @@ export default function Categories() {
       {isModalOpen && (
         <div className="modal modal-open">
           <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{editingRayon ? 'Modifier le rayon' : 'Nouveau rayon'}</h3>
+            <h3 className="font-bold text-lg mb-4">{editingRayon ? t('rayons.modal.title_edit') : t('rayons.modal.title_new')}</h3>
             <form onSubmit={handleSubmitRayon}>
               <div className="form-control w-full mb-4">
-                <label className="label"><span className="label-text">Nom du rayon</span></label>
+                <label className="label"><span className="label-text">{t('rayons.modal.name')}</span></label>
                 <input 
                   type="text" 
                   className="input input-bordered w-full" 
@@ -446,13 +448,13 @@ export default function Categories() {
               </div>
               
               <div className="form-control w-full mb-6">
-                <label className="label"><span className="label-text">Rayon Parent (Optionnel)</span></label>
+                <label className="label"><span className="label-text">{t('rayons.modal.parent')}</span></label>
                 <select 
                   className="select select-bordered w-full"
                   value={formData.parent}
                   onChange={e => setFormData({...formData, parent: e.target.value})}
                 >
-                  <option value="">Aucun (Racine)</option>
+                  <option value="">{t('rayons.modal.none')}</option>
                   {availableParents.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
@@ -460,8 +462,8 @@ export default function Categories() {
               </div>
 
               <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>Annuler</button>
-                <button type="submit" className="btn btn-primary">Enregistrer</button>
+                <button type="button" className="btn btn-ghost" onClick={closeModal}>{t('rayons.modal.cancel')}</button>
+                <button type="submit" className="btn btn-primary">{t('rayons.modal.save')}</button>
               </div>
             </form>
           </div>
@@ -473,13 +475,13 @@ export default function Categories() {
       {isAddProductModalOpen && (
          <div className="modal modal-open">
            <div className="modal-box w-11/12 max-w-3xl h-[600px] flex flex-col">
-              <h3 className="font-bold text-lg mb-2">Ajouter des produits à "{selectedRayon?.name}"</h3>
-              <p className="text-sm opacity-60 mb-4">Recherchez des produits et cliquez sur le <b>+</b> pour les associer à ce rayon.</p>
+              <h3 className="font-bold text-lg mb-2">{t('rayons.add_product_to', { rayon: selectedRayon?.name })}</h3>
+              <p className="text-sm opacity-60 mb-4">{t('rayons.add_product_help')}</p>
               
               <div className="form-control mb-4">
                  <input 
                    type="text" 
-                   placeholder="Rechercher par nom ou CIP..." 
+                   placeholder={t('rayons.search_placeholder')}
                    className="input input-bordered w-full"
                    value={productSearchTerm}
                    onChange={e => handleSearchProducts(e.target.value)}
@@ -494,9 +496,9 @@ export default function Categories() {
                      <table className="table table-sm w-full bg-base-100">
                         <thead>
                            <tr>
-                             <th>Produit</th>
-                             <th>Rayon Actuel</th>
-                             <th className="text-right">Action</th>
+                             <th>{t('rayons.table.product')}</th>
+                             <th>{t('rayons.table.current_rayon')}</th>
+                             <th className="text-right">{t('rayons.table.action')}</th>
                            </tr>
                         </thead>
                         <tbody>
@@ -510,7 +512,7 @@ export default function Categories() {
                                     {p.rayon_name ? (
                                        <span className="badge badge-sm badge-ghost">{p.rayon_name}</span>
                                     ) : (
-                                       <span className="text-xs opacity-40 italic">Aucun</span>
+                                       <span className="text-xs opacity-40 italic">{t('rayons.table.none')}</span>
                                     )}
                                  </td>
                                  <td className="text-right">
@@ -526,14 +528,14 @@ export default function Categories() {
                         </tbody>
                      </table>
                   ) : productSearchTerm.length > 1 ? (
-                     <div className="text-center p-8 text-base-content/50">Aucun produit trouvé</div>
+                     <div className="text-center p-8 text-base-content/50">{t('rayons.no_product_found')}</div>
                   ) : (
-                     <div className="text-center p-8 text-base-content/50">Tapez au moins 2 caractères pour rechercher</div>
+                     <div className="text-center p-8 text-base-content/50">{t('rayons.search_hint')}</div>
                   )}
               </div>
 
               <div className="modal-action">
-                 <button className="btn" onClick={() => setIsAddProductModalOpen(false)}>Fermer</button>
+                 <button className="btn" onClick={() => setIsAddProductModalOpen(false)}>{t('common.close')}</button>
               </div>
            </div>
            <div className="modal-backdrop" onClick={() => setIsAddProductModalOpen(false)}></div>

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import type {
     Client,
     Facture,
@@ -218,6 +219,7 @@ function validateProfessionalClient(params: SaleCompletionParams, client: Client
 export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
     const { apiBaseUrl = '', onSuccess, onError, onReset } = options;
     const { settings: pharmacySettings } = usePharmacySettings();
+    const { t } = useTranslation();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -299,11 +301,11 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
         const difference = result.difference;
         if (difference > 0) {
-            toast.success(`Facture modifiée. Encaissement supplémentaire: ${Math.round(difference).toLocaleString('fr-FR')} F`);
+            toast.success(t('sales.messages.additional_payment', { amount: Math.round(difference).toLocaleString('fr-FR') }));
         } else if (difference < 0) {
-            toast.success(`Facture modifiée. Remboursement: ${Math.round(Math.abs(difference)).toLocaleString('fr-FR')} F`);
+            toast.success(t('sales.messages.refund_amount', { amount: Math.round(Math.abs(difference)).toLocaleString('fr-FR') }));
         } else {
-            toast.success('Facture modifiée (même total)');
+            toast.success(t('sales.messages.same_total'));
         }
 
         return { success: true, facture: result.facture };
@@ -394,13 +396,13 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 const coupon = searchResponse.data.results[0];
                 const utiliserEndpoint = `${couponsEndpoint}${coupon.id}/utiliser/`;
                 await axios.post(utiliserEndpoint, { facture_id: factureId });
-                toast.success(`Coupon #${coupon.numero} appliqué (-${Math.round(Number(coupon.montant))} F)`);
+                toast.success(t('sales.messages.coupon_applied', { numero: coupon.numero, amount: Math.round(Number(coupon.montant)) }));
             } else {
-                toast.error(`Coupon "${couponNumero}" introuvable`);
+                toast.error(t('sales.messages.coupon_not_found', { numero: couponNumero }));
             }
         } catch (err: any) {
             console.error('Erreur application coupon:', err);
-            toast.error(err.response?.data?.detail || "Erreur lors de l'application du coupon");
+            toast.error(err.response?.data?.detail || t('sales.messages.coupon_error'));
         }
     }, [couponsEndpoint]);
 
@@ -564,7 +566,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 });
             } catch (err) {
                 console.error("Erreur génération PDF promis:", err);
-                toast.error("Erreur lors de la génération du ticket Promis");
+                toast.error(t('sales.messages.promis_error'));
             }
         }
 
@@ -595,10 +597,10 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 lignes: lignesForBackend
             });
 
-            toast.success("Ordonnancier enregistré");
+            toast.success(t('sales.messages.ordonnancier_saved'));
         } catch (err) {
             console.error("Erreur enregistrement ordonnancier:", err);
-            toast.error("Erreur lors de l'enregistrement de l'ordonnancier");
+            toast.error(t('sales.messages.ordonnancier_error'));
         }
     }, [ordonnancierEndpoint]);
 
@@ -643,7 +645,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 if (proError) {
                     setError(proError);
                     onError?.(proError);
-                    toast.error("⚠️ Plafond crédit dépassé !", {
+                    toast.error(t('sales.messages.credit_limit_exceeded'), {
                         duration: 6000,
                         style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
                     });
@@ -697,7 +699,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     part_assurance: params.totals.partAssurance
                 });
 
-                toast.success(`Facture ${validatedFacture.numero_facture} validée (Tiers payant 100%)`);
+                toast.success(t('sales.messages.tiers_payant_validated', { number: validatedFacture.numero_facture }));
 
                 const result: SaleCompletionResult = { success: true, facture: validatedFacture };
                 setLastResult(result);
@@ -717,7 +719,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, { status: 'BROU' });
                 }
 
-                toast.success(`Vente envoyée à la Caisse Centralisée (Ticket #${createdFacture.id})`);
+                toast.success(t('sales.messages.sent_to_caisse', { id: createdFacture.id }));
 
                 const result: SaleCompletionResult = {
                     success: true,

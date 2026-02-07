@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
+import * as XLSX from 'xlsx'
 
 // Register French locale
 registerLocale('fr', fr)
@@ -194,8 +195,46 @@ const QUERIES: QueryDefinition[] = [
       { key: 'date_fin', label: 'Fin', type: 'date', required: true }
     ],
     resultType: 'table'
+  },
+  {
+    id: 'meilleurs_clients',
+    name: 'Meilleurs Clients',
+    description: 'Classement clients par CA et nombre de ventes',
+    endpoint: '/api/rapports/meilleurs_clients/',
+    params: [
+      { key: 'date_debut', label: 'Début', type: 'date', required: true },
+      { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+    ],
+    resultType: 'table'
   }
 ]
+
+// Mapping des noms de colonnes vers des labels lisibles
+const COLUMN_LABELS: Record<string, string> = {
+  rang: '#',
+  client_id: 'ID',
+  client_name: 'Client',
+  client_type: 'Type',
+  nb_ventes: 'Nb Ventes',
+  chiffre_affaires: 'CA TTC',
+  panier_moyen: 'Panier Moy.',
+  name: 'Nom',
+  cip: 'CIP',
+  stock: 'Stock',
+  rayon: 'Rayon',
+  fournisseur: 'Fournisseur',
+  valeur: 'Valeur',
+  pmp: 'PMP',
+  vendeur: 'Vendeur',
+  nbre_ventes: 'Nb Ventes',
+  date: 'Date',
+  total: 'Total',
+  status: 'Statut'
+}
+
+const formatColumnHeader = (col: string): string => {
+  return COLUMN_LABELS[col] || col.replace(/_/g, ' ')
+}
 
 // Helper pour formater les valeurs
 const formatValue = (key: string, value: any): string => {
@@ -397,70 +436,62 @@ export default function CentreRapports() {
       }
   }
 
-  // Copier les résultats dans le presse-papier (format TSV pour Excel)
-  const copyToClipboard = () => {
-    if (!results) {
-      toast.error('Aucun résultat à copier')
+  // Télécharger en fichier Excel (.xlsx)
+  const downloadExcel = () => {
+    if (!results || !selectedQuery) {
+      toast.error(t('reports.results.export_no_result'))
       return
     }
     
-    let tsv = ''
+    let data: Record<string, any>[] = []
     
-    // Si les résultats sont un tableau (format table)
     if (Array.isArray(results) && results.length > 0) {
-      // Récupérer les colonnes (max 8 comme dans renderResults)
       const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id').slice(0, 8)
       
-      // En-têtes
-      const headers = columns.map(col => col.replace(/_/g, ' '))
-      
-      // Lignes de données
-      const rows = results.map(row =>
-        columns.map(col => {
+      // Transformer les données avec en-têtes lisibles
+      data = results.map(row => {
+        const obj: Record<string, any> = {}
+        columns.forEach(col => {
+          const header = formatColumnHeader(col)
           const val = row[col]
-          if (val === null || val === undefined) return ''
-          if (typeof val === 'object') return val.name || JSON.stringify(val)
-          return String(val)
+          if (val === null || val === undefined) {
+            obj[header] = ''
+          } else if (typeof val === 'object') {
+            obj[header] = val.name || JSON.stringify(val)
+          } else {
+            obj[header] = val
+          }
         })
-      )
-      
-      tsv = [headers.join('\t'), ...rows.map(r => r.join('\t'))].join('\n')
-    } 
-    // Si les résultats sont un objet (format cards)
-    else if (typeof results === 'object' && !Array.isArray(results)) {
-      const entries = Object.entries(results).map(([key, value]) => {
-        const formattedKey = key.replace(/_/g, ' ')
+        return obj
+      })
+    } else if (typeof results === 'object' && !Array.isArray(results)) {
+      // Format "cards" - convertir en lignes clé/valeur
+      Object.entries(results).forEach(([key, value]) => {
+        const formattedKey = formatColumnHeader(key)
         let formattedValue = ''
         if (typeof value === 'object' && value !== null) {
           formattedValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(', ')
         } else {
           formattedValue = String(value ?? '')
         }
-        return `${formattedKey}\t${formattedValue}`
+        data.push({ 'Indicateur': formattedKey, 'Valeur': formattedValue })
       })
-      tsv = entries.join('\n')
     } else {
-      toast.error('Format de résultats non supporté')
+      toast.error(t('reports.results.export_unsupported'))
       return
     }
     
-    // Méthode fallback avec textarea pour compatibilité
-    const textarea = document.createElement('textarea')
-    textarea.value = tsv
-    textarea.style.position = 'fixed'
-    textarea.style.left = '-9999px'
-    document.body.appendChild(textarea)
-    textarea.select()
+    // Créer le workbook et worksheet
+    const ws = XLSX.utils.json_to_sheet(data)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Rapport')
     
-    try {
-      document.execCommand('copy')
-      const count = Array.isArray(results) ? results.length : Object.keys(results).length
-      toast.success(`${count} éléments copiés ! Collez dans Excel.`)
-    } catch (err) {
-      toast.error('Erreur lors de la copie')
-    } finally {
-      document.body.removeChild(textarea)
-    }
+    // Télécharger
+    const today = new Date().toISOString().slice(0, 10)
+    const filename = `${selectedQuery.id}_${today}.xlsx`
+    XLSX.writeFile(wb, filename)
+    
+    toast.success(t('reports.results.export_success', { filename }))
   }
 
   // Rendu des résultats selon le type
@@ -753,7 +784,7 @@ export default function CentreRapports() {
             <thead>
               <tr>
                 {columns.slice(0, 8).map(col => (
-                  <th key={col} className="text-xs uppercase">{col.replace(/_/g, ' ')}</th>
+                  <th key={col} className="text-xs uppercase">{formatColumnHeader(col)}</th>
                 ))}
               </tr>
             </thead>
@@ -857,11 +888,14 @@ export default function CentreRapports() {
                       {t('common.print')}
                     </button>
                     <button 
-                      className="btn btn-outline btn-sm gap-2"
-                      onClick={copyToClipboard}
+                      className="btn btn-success btn-sm gap-2"
+                      onClick={downloadExcel}
                       disabled={!results}
                     >
-                      📋 {t('reports.copy')}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Excel
                     </button>
                   </div>
                 </div>

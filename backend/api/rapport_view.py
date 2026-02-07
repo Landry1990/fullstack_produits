@@ -748,10 +748,10 @@ class RapportViewSet(viewsets.ViewSet):
         try:
             min_value = Decimal(request.query_params.get('min_value', 100000))
             months = int(request.query_params.get('months', 6))
+            export_format = request.query_params.get('format')
         except (ValueError, TypeError):
              return Response({'error': 'Paramètres invalides'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Date limite : aujourd'hui - X mois
         # Date limite : aujourd'hui - X mois
         limit_date = (timezone.now() - timedelta(days=months*30)).date()
         
@@ -794,6 +794,36 @@ class RapportViewSet(viewsets.ViewSet):
         # Tri par valeur décroissante
         results.sort(key=lambda x: x['valeur'], reverse=True)
         
+        if export_format == 'csv':
+            import csv
+            from django.http import HttpResponse
+            
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="stocks_morts_{timezone.now().date()}.csv"'
+            
+            # En-tête UTF-8 BOM pour Excel
+            response.write(u'\ufeff'.encode('utf8'))
+            
+            writer = csv.writer(response, delimiter=';')
+            writer.writerow([
+                'Produit', 'CIP', 'Rayon', 'Fournisseur', 
+                'Stock', 'PMP', 'Valeur Stock', 'Dernière Vente'
+            ])
+
+            for r in results:
+                writer.writerow([
+                    r['name'],
+                    r['cip'],
+                    r['rayon'],
+                    r['fournisseur'],
+                    str(r['stock']).replace('.', ','),
+                    str(r['pmp']).replace('.', ','),
+                    str(r['valeur']).replace('.', ','),
+                    r['dernier_vente'].strftime('%d/%m/%Y') if r['dernier_vente'] else 'Jamais'
+                ])
+
+            return response
+
         return Response(results)
 
     @action(detail=False, methods=['get'])
@@ -959,3 +989,150 @@ class RapportViewSet(viewsets.ViewSet):
             })
             
         return Response(data)
+    @action(detail=False, methods=['get'])
+    def export_comptable_csv(self, request):
+        """
+        Export détaillé des ventes pour la comptabilité (CSV).
+        Inclut: Date, Facture, Client, HT, TVA, TTC, Remise, Mode Paiement.
+        """
+        import csv
+        from django.http import HttpResponse
+        
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+        
+        if not date_debut_str or not date_fin_str:
+             return Response({'error': 'Les paramètres date_debut et date_fin sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
+             
+        try:
+            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+        except ValueError:
+            return Response({'error': 'Format de date invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1. Récupérer les factures validées/payées
+        factures = Facture.objects.filter(
+            date__range=(date_debut, date_fin),
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).select_related('client', 'created_by').prefetch_related('paiements')
+
+        # 2. Préparer la réponse CSV
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="export_comptable_{date_debut.date()}.csv"'
+        
+        # En-tête UTF-8 BOM pour Excel
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow([
+            'Date', 'Heure', 'Facture #', 'Client', 'Status', 
+            'Total HT', 'Total TVA', 'Total TTC', 'Remise', 
+            'Mode de Paiement', 'Caissier'
+        ])
+
+        for f in factures:
+            # Modes de paiement consolidés
+            modes = list(f.paiements.filter(statut='completee').values_list('mode_paiement', flat=True).distinct())
+            modes_labels = [dict(Caisse.MODES_PAIEMENT).get(m, m) for m in modes]
+            modes_str = ", ".join(modes_labels)
+
+            writer.writerow([
+                f.date.strftime('%d/%m/%Y'),
+                f.date.strftime('%H:%M'),
+                f.numero_facture or f.id,
+                f.client.name if f.client else (f.client_name_override or 'Client de passage'),
+                f.get_status_display(),
+                str(f.total_ht).replace('.', ','),
+                str(f.total_tva).replace('.', ','),
+                str(f.total_ttc).replace('.', ','),
+                str(f.remise).replace('.', ','),
+                modes_str,
+                f.created_by.get_full_name() if f.created_by else 'Système'
+            ])
+
+        return response
+
+    @action(detail=False, methods=['get'])
+    def meilleurs_clients(self, request):
+        """
+        Classement des meilleurs clients par CA et nombre de ventes.
+        Paramètres: date_debut, date_fin, format (csv optionnel)
+        """
+        import csv
+        from django.http import HttpResponse
+        
+        date_debut_str = request.query_params.get('date_debut')
+        date_fin_str = request.query_params.get('date_fin')
+        export_format = request.query_params.get('format')
+        
+        if not date_debut_str or not date_fin_str:
+            return Response(
+                {'error': 'Les paramètres date_debut et date_fin sont requis.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+        except ValueError:
+            return Response({'error': 'Format de date invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Récupérer toutes les factures validées/payées avec client
+        factures = Facture.objects.filter(
+            date__range=(date_debut, date_fin),
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            client__isnull=False
+        ).select_related('client')
+
+        # Agrégation par client
+        stats = {}
+        for f in factures:
+            cid = f.client.id
+            if cid not in stats:
+                stats[cid] = {
+                    'client_id': cid,
+                    'client_name': f.client.name,
+                    'client_type': f.client.client_type,
+                    'nb_ventes': 0,
+                    'chiffre_affaires': Decimal('0.00')
+                }
+            stats[cid]['nb_ventes'] += 1
+            stats[cid]['chiffre_affaires'] += f.total_ttc
+
+        # Conversion en liste et tri par CA décroissant
+        results = list(stats.values())
+        results.sort(key=lambda x: x['chiffre_affaires'], reverse=True)
+        
+        # Ajouter rang et panier moyen
+        for i, r in enumerate(results, 1):
+            r['rang'] = i
+            r['panier_moyen'] = round(r['chiffre_affaires'] / r['nb_ventes'], 0) if r['nb_ventes'] > 0 else Decimal('0')
+            r['chiffre_affaires'] = float(r['chiffre_affaires'])
+            r['panier_moyen'] = float(r['panier_moyen'])
+
+        # Export CSV
+        if export_format == 'csv':
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="meilleurs_clients_{date_debut.date()}.csv"'
+            
+            # En-tête UTF-8 BOM pour Excel
+            response.write(u'\ufeff'.encode('utf8'))
+            
+            writer = csv.writer(response, delimiter=';')
+            writer.writerow([
+                'Rang', 'Client', 'Type', 'Nb Ventes', 'Chiffre Affaires', 'Panier Moyen'
+            ])
+
+            for r in results:
+                writer.writerow([
+                    r['rang'],
+                    r['client_name'],
+                    r['client_type'],
+                    r['nb_ventes'],
+                    str(r['chiffre_affaires']).replace('.', ','),
+                    str(r['panier_moyen']).replace('.', ',')
+                ])
+
+            return response
+
+        return Response(results)

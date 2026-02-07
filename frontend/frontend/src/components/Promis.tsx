@@ -152,10 +152,10 @@ export default function PromisPage() {
   const handleBulkDelivrer = async () => {
     if (selectedIds.size === 0) return
     const confirmed = await confirm({
-      title: 'Livrer plusieurs promis',
-      message: `Marquer ${selectedIds.size} promis comme délivrés ?`,
+      title: t('promis.modals.bulk_delivery_title'),
+      message: t('promis.modals.bulk_delivery_message', { count: selectedIds.size }),
       variant: 'success',
-      confirmText: 'Délivrer tous'
+      confirmText: t('promis.modals.bulk_delivery_confirm')
     })
     if (!confirmed) return
     
@@ -168,7 +168,7 @@ export default function PromisPage() {
       setSelectedIds(new Set())
       fetchPromis()
     } catch (err) {
-      toast.error('Erreur lors de la livraison en masse')
+      toast.error(t('promis.messages.bulk_delivery_error'))
       console.error(err)
     } finally {
       setBulkLoading(false)
@@ -178,10 +178,10 @@ export default function PromisPage() {
   const handleBulkAnnuler = async () => {
     if (selectedIds.size === 0) return
     const confirmed = await confirm({
-      title: 'Annuler plusieurs promis',
-      message: `Annuler ${selectedIds.size} promis et réintégrer le stock ?\n\nCette action créera des entrées dans l'historique des produits.`,
+      title: t('promis.modals.bulk_cancel_title'),
+      message: t('promis.modals.bulk_cancel_message', { count: selectedIds.size }),
       variant: 'warning',
-      confirmText: 'Annuler tous'
+      confirmText: t('promis.modals.bulk_cancel_confirm')
     })
     if (!confirmed) return
     
@@ -194,7 +194,7 @@ export default function PromisPage() {
       setSelectedIds(new Set())
       fetchPromis()
     } catch (err) {
-      toast.error('Erreur lors de l\'annulation en masse')
+      toast.error(t('promis.messages.bulk_cancel_error'))
       console.error(err)
     } finally {
       setBulkLoading(false)
@@ -236,7 +236,7 @@ export default function PromisPage() {
       setTimeout(() => window.URL.revokeObjectURL(url), 10000)
     } catch (err) {
       console.error('Erreur impression ticket:', err)
-      toast.error('Erreur lors de l\'impression du ticket')
+      toast.error(t('promis.messages.print_ticket_error'))
     }
   }
 
@@ -326,10 +326,10 @@ export default function PromisPage() {
             context_type: 'PROMIS',
             context_id: smsModal.promis.id
         })
-        toast.success("SMS envoyé avec succès")
+        toast.success(t('promis.messages.sms_success'))
         setSmsModal({ isOpen: false, promis: null, message: '' })
     } catch (err: any) {
-        toast.error("Erreur lors de l'envoi du SMS")
+        toast.error(t('promis.messages.sms_error'))
         console.error(err)
     } finally {
         setSendingSms(false)

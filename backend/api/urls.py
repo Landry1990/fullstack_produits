@@ -22,6 +22,8 @@ from .views.auth import verify_password
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
 from .views.communication import SmsViewSet, SmsTemplateViewSet
+from .views.finance_stats import FinanceStatsViewSet
+from .views.objectifs import ObjectifViewSet
 
 
 # Create a router and register our viewsets with it.
@@ -68,6 +70,8 @@ router.register(r'paiements-fournisseurs', PaiementFournisseurViewSet, basename=
 router.register(r'configuration-options', ConfigurationOptionViewSet, basename='configurationoption')
 router.register(r'promis', PromisViewSet, basename='promis')
 router.register(r'promotions', PromotionViewSet, basename='promotion')
+router.register(r'finance-stats', FinanceStatsViewSet, basename='finance-stats')
+router.register(r'objectifs-commerciaux', ObjectifViewSet, basename='objectif-commercial')
 
 
 # The API URLs are now determined automatically by the router.

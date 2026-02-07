@@ -37,7 +37,7 @@ class CustomAuthToken(ObtainAuthToken):
             role = 'admin'
             # Superuser gets all menus
             allowed_menus = [
-                'dashboard', 'facturation', 'produits', 'commandes', 
+                'dashboard', 'manager_sidebar', 'facturation', 'produits', 'commandes', 
                 'clients', 'fournisseurs', 'inventaire', 'rapports',
                 'parametres', 'utilisateurs', 'avoirs', 'promis',
                 'ordonnancier', 'statistiques', 'audit', 'stock-analysis'

@@ -499,7 +499,7 @@ export default function InventaireComponent() {
           setLignes(prev => prev.filter(l => l.id !== lineId));
       } catch (err) {
           console.error("Erreur suppression ligne", err);
-          toast.error("Impossible de supprimer la ligne.");
+          toast.error(t('stock.inventaire.lines.delete_error'));
       }
   };
 
@@ -552,9 +552,9 @@ export default function InventaireComponent() {
                date: dateInventaire,
                description
            });
-           toast.success("En-tête sauvegardé");
+           toast.success(t('stock.inventaire.detail.header_saved'));
       } catch(err) {
-          toast.error("Erreur sauvegarde");
+          toast.error(t('stock.inventaire.detail.save_error'));
       }
   };
 
@@ -598,10 +598,10 @@ export default function InventaireComponent() {
       if (selectedLines.size === 0) return;
       
       const confirmed = await confirm({
-          title: 'Suppression Multiple',
-          message: `Supprimer ces ${selectedLines.size} lignes ?`,
+          title: t('stock.inventaire.detail.bulk_delete_title'),
+          message: t('stock.inventaire.detail.bulk_delete_message', { count: selectedLines.size }),
           variant: 'danger',
-          confirmText: 'Oui, Supprimer'
+          confirmText: t('stock.inventaire.detail.bulk_delete_confirm')
       });
       if (!confirmed) return;
 
@@ -615,11 +615,11 @@ export default function InventaireComponent() {
           
           setLignes(prev => prev.filter(l => !selectedLines.has(l.id)));
           setSelectedLines(new Set());
-          toast.success(`${idsToDelete.length} lignes supprimées`);
+          toast.success(t('stock.inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
 
       } catch (err) {
           console.error("Erreur suppression bulk", err);
-          toast.error("Erreur lors de la suppression multiple");
+          toast.error(t('stock.inventaire.detail.save_error')); // Reuse save error or generic
       }
   };
 
@@ -640,7 +640,7 @@ export default function InventaireComponent() {
       const confirmed = await confirm({
           title: t('stock.inventaire.merge.modal_title'),
           message: isListMode 
-            ? 'Fusionner les inventaires sélectionnés dans la CIBLE ?\nLes autres seront supprimés (lignes transférées).'
+            ? t('stock.inventaire.modals.merge_warning_list_plain') // Need plain text for confirm
             : t('stock.inventaire.merge.confirm_msg'),
           variant: 'warning',
           confirmText: t('stock.inventaire.merge.btn')
@@ -661,7 +661,7 @@ export default function InventaireComponent() {
                   successCount++;
               }
               
-              toast.success(`${successCount} inventaire(s) fusionné(s) avec succès !`);
+              toast.success(t('stock.inventaire.merge.success_count', { count: successCount }));
               setSelectedInventaireIds(new Set());
               fetchInventaires();
           } else {
@@ -677,7 +677,7 @@ export default function InventaireComponent() {
           setSelectedMergeSource(null);
       } catch (err: any) {
           console.error("Erreur fusion", err);
-          toast.error(err.response?.data?.error || "Erreur lors de la fusion");
+          toast.error(err.response?.data?.error || t('stock.inventaire.merge.error'));
       } finally {
           setMerging(false);
       }
@@ -695,11 +695,11 @@ export default function InventaireComponent() {
     
     // Header
     doc.setFontSize(14);
-    doc.text(`ETAT D'INVENTAIRE #${activeInventaire.id}`, 14, 15);
+    doc.text(t('stock.inventaire.pdf.title_etat', { id: activeInventaire.id }), 14, 15);
     doc.setFontSize(10);
-    doc.text(`Date: ${new Date(activeInventaire.date).toLocaleDateString('fr-FR')}`, 14, 22);
+    doc.text(t('stock.inventaire.pdf.date', { date: new Date(activeInventaire.date).toLocaleDateString('fr-FR') }), 14, 22);
     if (activeInventaire.description) {
-        doc.text(`Description: ${activeInventaire.description}`, 14, 27);
+        doc.text(t('stock.inventaire.pdf.desc', { desc: activeInventaire.description }), 14, 27);
     }
 
     // Group by Rayon
@@ -720,7 +720,7 @@ export default function InventaireComponent() {
         // Title Rayon
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`RAYON: ${rayon}`, 14, currentY);
+        doc.text(t('stock.inventaire.pdf.rayon', { name: rayon }), 14, currentY);
         currentY += 2;
 
         // Sort items alphabetically by name within Rayon
@@ -762,11 +762,19 @@ export default function InventaireComponent() {
              return acc + (l.ecart * pmpVal);
         }, 0);
         
-        tableBody.push(['', '', '', '', '', 'TOTAL', totalRayon > 0 ? `+${totalRayon.toFixed(0)}` : totalRayon.toFixed(0)]);
+        tableBody.push(['', '', '', '', '', t('stock.inventaire.pdf.total_rayon'), totalRayon > 0 ? `+${totalRayon.toFixed(0)}` : totalRayon.toFixed(0)]);
 
         autoTable(doc, {
             startY: currentY,
-            head: [['ID', 'Produit', 'PMP', 'Theo.', 'Phys.', 'Ecart', 'Val.']],
+            head: [[
+                t('stock.inventaire.pdf.col_id'),
+                t('stock.inventaire.pdf.col_product'),
+                t('stock.inventaire.pdf.col_pmp'),
+                t('stock.inventaire.pdf.col_theo'),
+                t('stock.inventaire.pdf.col_phys'),
+                t('stock.inventaire.pdf.col_gap'),
+                t('stock.inventaire.pdf.col_val')
+            ]],
             body: tableBody,
             theme: 'plain', 
             styles: {
@@ -802,7 +810,10 @@ export default function InventaireComponent() {
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`TOTAL GLOBAL ÉCARTS (VALEUR): ${totalGlobal > 0 ? '+' : ''}${totalGlobal.toFixed(0)} F`, 14, currentY);
+    doc.text(t('stock.inventaire.pdf.total_global', { 
+        sign: totalGlobal > 0 ? '+' : '',
+        amount: totalGlobal.toFixed(0)
+    }), 14, currentY);
 
     doc.save(`inventaire_${activeInventaire.id}_etat.pdf`);
   };
@@ -814,15 +825,15 @@ export default function InventaireComponent() {
     
     // Header
     doc.setFontSize(14);
-    doc.text(`RAPPORT DES ÉCARTS - #${activeInventaire.id}`, 14, 15);
+    doc.text(t('stock.inventaire.pdf.title_ecarts', { id: activeInventaire.id }), 14, 15);
     doc.setFontSize(10);
-    doc.text(`Date: ${new Date(activeInventaire.date).toLocaleDateString('fr-FR')}`, 14, 22);
+    doc.text(t('stock.inventaire.pdf.date', { date: new Date(activeInventaire.date).toLocaleDateString('fr-FR') }), 14, 22);
 
     // Filter lines with discrepancies
     const linesWithGaps = lignes.filter(l => l.ecart !== 0);
     
     if (linesWithGaps.length === 0) {
-        doc.text("Aucun écart constaté.", 14, 35);
+        doc.text(t('stock.inventaire.pdf.no_gaps'), 14, 35);
         doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
         return;
     }
@@ -842,7 +853,7 @@ export default function InventaireComponent() {
     sortedRayons.forEach(rayon => {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
-        doc.text(`RAYON: ${rayon}`, 14, currentY);
+        doc.text(t('stock.inventaire.pdf.rayon', { name: rayon }), 14, currentY);
         currentY += 2;
 
         // Sort items alphabetically within Rayon
@@ -884,11 +895,19 @@ export default function InventaireComponent() {
              return acc + (l.ecart * pmpVal);
         }, 0);
         
-        tableBody.push(['', '', '', '', '', 'TOTAL', totalRayon > 0 ? `+${totalRayon.toFixed(0)}` : totalRayon.toFixed(0)]);
+        tableBody.push(['', '', '', '', '', t('stock.inventaire.pdf.total_rayon'), totalRayon > 0 ? `+${totalRayon.toFixed(0)}` : totalRayon.toFixed(0)]);
 
         autoTable(doc, {
             startY: currentY,
-            head: [['ID', 'Produit', 'PMP', 'Theo.', 'Phys.', 'Ecart', 'Val.']],
+            head: [[
+                t('stock.inventaire.pdf.col_id'),
+                t('stock.inventaire.pdf.col_product'),
+                t('stock.inventaire.pdf.col_pmp'),
+                t('stock.inventaire.pdf.col_theo'),
+                t('stock.inventaire.pdf.col_phys'),
+                t('stock.inventaire.pdf.col_gap'),
+                t('stock.inventaire.pdf.col_val')
+            ]],
             body: tableBody,
             theme: 'plain', 
             styles: {
@@ -926,10 +945,13 @@ export default function InventaireComponent() {
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text(`TOTAL GLOBAL ÉCARTS (VALEUR): ${totalGlobal > 0 ? '+' : ''}${totalGlobal.toFixed(0)} F`, 14, currentY);
+    doc.text(t('stock.inventaire.pdf.total_global', { 
+        sign: totalGlobal > 0 ? '+' : '',
+        amount: totalGlobal.toFixed(0)
+    }), 14, currentY);
 
     doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
-    doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
+
   };
 
   const renderAnalysis = () => {
@@ -940,7 +962,7 @@ export default function InventaireComponent() {
           <div className="space-y-6 animate-fade-in">
               <div className="flex justify-end">
                   <button className="btn btn-outline gap-2" onClick={handlePrintEcartsFrontend}>
-                      🖨️ Imprimer Rapport Écarts (PDF)
+                      {t('stock.inventaire.analysis.print_ecarts')}
                   </button>
               </div>
 
@@ -948,19 +970,19 @@ export default function InventaireComponent() {
                   {/* Top 10 Pertes */}
                   <div className="card bg-base-100 shadow border border-base-200">
                       <div className="card-body">
-                          <h3 className="card-title text-error">📉 Top 10 Pertes</h3>
+                          <h3 className="card-title text-error">{t('stock.inventaire.analysis.top_losses')}</h3>
                           <div className="overflow-x-auto">
                               <table className="table table-xs">
                                   <thead>
                                       <tr>
-                                          <th>Produit</th>
-                                          <th className="text-right">Ecart</th>
-                                          <th className="text-right">Perte</th>
+                                          <th>{t('stock.inventaire.table.product')}</th>
+                                          <th className="text-right">{t('stock.inventaire.table.gap')}</th>
+                                          <th className="text-right">{t('stock.inventaire.analysis.loss')}</th>
                                       </tr>
                                   </thead>
                                   <tbody>
                                       {inventoryStats.top_pertes.length === 0 ? (
-                                          <tr><td colSpan={3} className="text-center text-gray-500 py-4">Aucune perte significative.</td></tr>
+                                          <tr><td colSpan={3} className="text-center text-gray-500 py-4">{t('stock.inventaire.analysis.no_data')}</td></tr>
                                       ) : inventoryStats.top_pertes.map((p, idx) => (
                                           <tr key={idx}>
                                               <td className="truncate max-w-[150px]" title={p.produit_nom}>{p.produit_nom}</td>
@@ -977,13 +999,13 @@ export default function InventaireComponent() {
                   {/* Ecarts par Rayon */}
                   <div className="card bg-base-100 shadow border border-base-200">
                       <div className="card-body">
-                          <h3 className="card-title">📊 Écarts par Rayon</h3>
+                          <h3 className="card-title">{t('stock.inventaire.analysis.ecarts_by_rayon')}</h3>
                           <div className="overflow-x-auto">
                               <table className="table table-xs">
                                   <thead>
                                       <tr>
-                                          <th>Rayon</th>
-                                          <th className="text-right">Total Écart</th>
+                                          <th>{t('stock.inventaire.lines.rayon')}</th>
+                                          <th className="text-right">{t('stock.inventaire.analysis.total_ecart')}</th>
                                       </tr>
                                   </thead>
                                   <tbody>
@@ -996,7 +1018,7 @@ export default function InventaireComponent() {
                                           </tr>
                                       ))}
                                       {inventoryStats.par_rayon.length === 0 && (
-                                          <tr><td colSpan={2} className="text-center text-gray-500 py-4">Pas de données.</td></tr>
+                                          <tr><td colSpan={2} className="text-center text-gray-500 py-4">{t('stock.inventaire.analysis.no_data')}</td></tr>
                                       )}
                                   </tbody>
                               </table>
@@ -1013,22 +1035,22 @@ export default function InventaireComponent() {
   const renderList = () => (
           <div className="space-y-6">
               <div className="flex justify-between items-center">
-                  <h1 className="text-2xl font-bold">Inventaires</h1>
+                  <h1 className="text-2xl font-bold">{t('stock.inventaire.title')}</h1>
                   <button className="btn btn-primary" onClick={handleCreate}>
-                      + Nouvel Inventaire
+                      {t('stock.inventaire.create_btn')}
                   </button>
               </div>
 
              {/* Bulk Action Bar */}
              {selectedInventaireIds.size > 0 && (
                 <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <span className="font-semibold text-sm">{selectedInventaireIds.size} inventaire(s) sélectionné(s)</span>
+                    <span className="font-semibold text-sm">{t('stock.inventaire.bulk_action', { count: selectedInventaireIds.size })}</span>
                     <button
                         type="button"
                         className="btn btn-sm btn-ghost"
                         onClick={() => setSelectedInventaireIds(new Set())}
                     >
-                        Désélectionner
+                        {t('stock.inventaire.deselect')}
                     </button>
                     
                     <button
@@ -1038,7 +1060,7 @@ export default function InventaireComponent() {
                         disabled={!canMergeSelectedInventaires().canMerge}
                         title={canMergeSelectedInventaires().reason || ''}
                     >
-                        🔀 Fusionner
+                        {t('stock.inventaire.merge_btn')}
                     </button>
                 </div>
               )}
@@ -1058,21 +1080,21 @@ export default function InventaireComponent() {
                                           />
                                       </label>
                                   </th>
-                                  <th>Date</th>
-                                  <th>Description</th>
-                                  <th className="text-right">Val. Théorique</th>
-                                  <th className="text-right">Val. Saisie</th>
-                                  <th className="text-right">Ecart Valeur</th>
-                                  <th>Statut</th>
-                                  <th>Crée par</th>
-                                  <th>Actions</th>
+                                  <th>{t('stock.inventaire.list.date')}</th>
+                                  <th>{t('stock.inventaire.list.desc')}</th>
+                                  <th className="text-right">{t('stock.inventaire.list.val_theo')}</th>
+                                  <th className="text-right">{t('stock.inventaire.list.val_phys')}</th>
+                                  <th className="text-right">{t('stock.inventaire.list.ecart')}</th>
+                                  <th>{t('stock.inventaire.list.status')}</th>
+                                  <th>{t('stock.inventaire.list.created_by')}</th>
+                                  <th>{t('stock.inventaire.list.actions')}</th>
                               </tr>
                           </thead>
                           <tbody>
                               {loading ? (
                                   <tr>
                                       <td colSpan={9} className="text-center py-4">
-                                          <span className="loading loading-spinner"></span> Chargement...
+                                          <span className="loading loading-spinner"></span> {t('common.loading')}
                                       </td>
                                   </tr>
                               ) : inventaires.map(inv => (
@@ -1102,14 +1124,14 @@ export default function InventaireComponent() {
                                       <td>{inv.created_by_name || '-'}</td>
                                       <td onClick={e => e.stopPropagation()}>
                                           <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(inv.id)} disabled={inv.status === 'VALIDEE'}>
-                                              Supprimer
+                                              {t('rayons.table.delete')}
                                           </button>
                                       </td>
                                   </tr>
                               ))}
                               {inventaires.length === 0 && (
                                   <tr>
-                                      <td colSpan={9} className="text-center py-4 text-gray-500">Aucun inventaire</td>
+                                      <td colSpan={9} className="text-center py-4 text-gray-500">{t('stock.inventaire.list.empty')}</td>
                                   </tr>
                               )}
                           </tbody>
@@ -1168,11 +1190,11 @@ export default function InventaireComponent() {
            <div className="space-y-6">
           <div className="flex justify-between items-center">
               <div className="flex gap-4 items-center">
-                   <button className="btn btn-ghost" onClick={() => setViewMode('LIST')}>← Retour</button>
+                   <button className="btn btn-ghost" onClick={() => setViewMode('LIST')}>{t('stock.inventaire.detail.back')}</button>
                    <h1 className="text-2xl font-bold">
-                       {viewMode === 'CREATE' ? 'Nouvel Inventaire' : `Inventaire #${activeInventaire?.id}`}
+                       {viewMode === 'CREATE' ? t('stock.inventaire.detail.title_new') : t('stock.inventaire.detail.title_edit', { id: activeInventaire?.id })}
                    </h1>
-                   {isReadOnly && <span className="badge badge-success badge-lg">VALIDÉE</span>}
+                   {isReadOnly && <span className="badge badge-success badge-lg">{t('stock.inventaire.detail.validated')}</span>}
               </div>
               <div className="flex gap-2">
                        <div className="join mr-4">
@@ -1180,7 +1202,7 @@ export default function InventaireComponent() {
                                 className={`join-item btn btn-sm ${viewTab === 'DATA' ? 'btn-active btn-primary' : ''}`}
                                 onClick={() => setViewTab('DATA')}
                             >
-                                📝 Saisie / Liste
+                                {t('stock.inventaire.detail.tab_data')}
                             </button>
                             <button 
                                 className={`join-item btn btn-sm ${viewTab === 'ANALYSIS' ? 'btn-active btn-primary' : ''}`}
@@ -1189,7 +1211,7 @@ export default function InventaireComponent() {
                                     if (activeInventaire) fetchStats(activeInventaire.id);
                                 }}
                             >
-                                📊 Analyse
+                                {t('stock.inventaire.detail.tab_analysis')}
                             </button>
                         </div>
 
@@ -1198,7 +1220,7 @@ export default function InventaireComponent() {
                          onClick={handlePrintEtatFrontend}
                          disabled={!activeInventaire?.id}
                        >
-                           🖨️ Imprimer Etat (PDF)
+                           {t('stock.inventaire.detail.print')}
                        </button>
 
                   {!isReadOnly && activeInventaire && (
@@ -1207,14 +1229,14 @@ export default function InventaireComponent() {
                                Actually, since we save line by line, this is mostly for the header or just status.
                                User requested SEPARATE buttons. One for Validating.
                            */}
-                           <button className="btn btn-warning" disabled>Enregistré auto.</button> {/* Feedback only */}
+                           <button className="btn btn-warning" disabled>{t('stock.inventaire.detail.saved_auto')}</button> {/* Feedback only */}
 
                            <button className="btn btn-info text-white" onClick={() => setShowMergeModal(true)}>
-                               🔗 Fusionner vers...
+                               {t('stock.inventaire.detail.merge_to')}
                            </button>
 
                            <button className="btn btn-success text-white" onClick={handleOpenValidateModal} disabled={saving}>
-                               {saving ? 'Validation...' : '✓ Valider et Mettre à jour Stock'}
+                               {saving ? t('stock.inventaire.detail.validating') : t('stock.inventaire.detail.validate')}
                            </button>
                        </>
                   )}
@@ -1227,7 +1249,7 @@ export default function InventaireComponent() {
           <div className="card bg-base-100 shadow p-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-control">
-                      <label className="label">Date</label>
+                      <label className="label">{t('stock.inventaire.detail.date')}</label>
                       <input 
                           type="date" 
                           className="input input-bordered" 
@@ -1238,11 +1260,11 @@ export default function InventaireComponent() {
                       />
                   </div>
                   <div className="form-control md:col-span-2">
-                      <label className="label">Description</label>
+                      <label className="label">{t('stock.inventaire.detail.description')}</label>
                       <input 
                           type="text" 
                           className="input input-bordered" 
-                          placeholder="Ex: Inventaire Annuel 2025..."
+                          placeholder={t('stock.inventaire.detail.placeholder_desc')}
                           value={description}
                           onChange={e => setDescription(e.target.value)}
                           disabled={isReadOnly}
@@ -1256,12 +1278,12 @@ export default function InventaireComponent() {
           {!isReadOnly && (
               <div className="card bg-base-100 shadow p-4 overflow-visible relative">
                   <div className="form-control w-full">
-                       <label className="label font-bold">Ajouter un produit (Recherche par Nom ou CIP)</label>
+                       <label className="label font-bold">{t('stock.inventaire.detail.add_product_label')}</label>
                        <input 
                            ref={searchInputRef}
                            type="text" 
                            className="input input-bordered w-full" 
-                           placeholder="Scanner ou taper le nom..."
+                           placeholder={t('stock.inventaire.detail.search_placeholder')}
                            value={searchQuery}
                            onChange={e => setSearchQuery(e.target.value)}
                            onKeyDown={handleSearchKeyDown}
@@ -1277,9 +1299,9 @@ export default function InventaireComponent() {
                                   {loadingSearch ? (
                                       <span className="loading loading-spinner loading-sm"></span>
                                   ) : searchQuery.length < 1 ? (
-                                      'Tapez au moins 1 caractère'
+                                      t('stock.inventaire.detail.hint_min_char')
                                   ) : (
-                                      'Aucun produit trouvé'
+                                      t('stock.inventaire.detail.no_result')
                                   )}
                               </div>
                           ) : (
@@ -1332,26 +1354,26 @@ export default function InventaireComponent() {
               <div className="overflow-x-auto">
                   {selectedLines.size > 0 ? (
                       <div className="bg-base-200 p-2 flex justify-between items-center px-4 border-b border-base-300">
-                          <span className="text-sm font-bold">{selectedLines.size} ligne(s) sélectionnée(s)</span>
+                          <span className="text-sm font-bold">{t('stock.inventaire.lines.selected', { count: selectedLines.size })}</span>
                           <button 
                               className="btn btn-sm btn-error text-white"
                               onClick={handleBulkDelete}
                           >
-                              🗑️ Supprimer sélection
+                              {t('stock.inventaire.lines.delete_selection')}
                           </button>
                       </div>
                   ) : (
                     <div className="bg-base-200 p-2 flex justify-end items-center px-4 border-b border-base-300 gap-2">
-                        <span className="text-xs opacity-50 uppercase font-bold mr-2">Trier par :</span>
+                        <span className="text-xs opacity-50 uppercase font-bold mr-2">{t('stock.inventaire.lines.sort_by')}</span>
                         <select 
                             className="select select-bordered select-xs" 
                             value={sortBy} 
                             onChange={(e) => setSortBy(e.target.value as SortOption)}
                         >
-                            <option value="CHRONOLOGICAL">Chronologie (Ajout)</option>
-                            <option value="NAME">Libellé (A-Z)</option>
-                            <option value="GAP_VALUE">Ecart Valeur (F)</option>
-                            <option value="GAP_QTY">Ecart Quantité (U)</option>
+                            <option value="CHRONOLOGICAL">{t('stock.inventaire.lines.sort_chronological')}</option>
+                            <option value="NAME">{t('stock.inventaire.lines.sort_name')}</option>
+                            <option value="GAP_VALUE">{t('stock.inventaire.lines.sort_gap_value')}</option>
+                            <option value="GAP_QTY">{t('stock.inventaire.lines.sort_gap_qty')}</option>
                         </select>
                         <button 
                             className="btn btn-ghost btn-xs btn-square"
@@ -1377,14 +1399,15 @@ export default function InventaireComponent() {
                                       </label>
                                   </th>
                               )}
-                              <th>Produit</th>
-                              <th>Rayon</th>
-                              <th className="text-right">Prix Achat</th>
-                              <th className="text-center">Stock Théo.</th>
-                              <th className="text-center">Qté Saisie</th>
-                              <th className="text-center">Ecart Qté</th>
-                              <th className="text-right">Ecart Val.</th>
-                              {!isReadOnly && <th>Actions</th>}
+
+                              <th>{t('stock.inventaire.lines.product')}</th>
+                              <th>{t('stock.inventaire.lines.rayon')}</th>
+                              <th className="text-right">{t('stock.inventaire.lines.buy_price')}</th>
+                              <th className="text-center">{t('stock.inventaire.lines.stock_theo')}</th>
+                              <th className="text-center">{t('stock.inventaire.lines.qty_saisie')}</th>
+                              <th className="text-center">{t('stock.inventaire.lines.ecart_qty')}</th>
+                              <th className="text-right">{t('stock.inventaire.lines.ecart_val')}</th>
+                              {!isReadOnly && <th>{t('stock.inventaire.list.actions')}</th>}
                           </tr>
                       </thead>
                       <tbody>
@@ -1502,7 +1525,7 @@ export default function InventaireComponent() {
                           {lignes.length === 0 && (
                               <tr>
                               <td colSpan={!isReadOnly ? 9 : 8} className="text-center py-8 opacity-50">
-                                      Scanner ou ajouter des produits pour commencer le comptage.
+                                      {t('stock.inventaire.lines.empty_hint')}
                                   </td>
                               </tr>
                           )}
@@ -1511,15 +1534,15 @@ export default function InventaireComponent() {
               </div>
               <div className="p-4 bg-base-200 border-t flex justify-end gap-8">
                   <div className="text-right">
-                      <div className="text-sm opacity-50">Valeur Théorique</div>
+                      <div className="text-sm opacity-50">{t('stock.inventaire.lines.total_theo')}</div>
                       <div className="text-xl font-bold">{totalValeurTheorique.toLocaleString()} F</div>
                   </div>
                   <div className="text-right">
-                      <div className="text-sm opacity-50">Valeur Saisie</div>
+                      <div className="text-sm opacity-50">{t('stock.inventaire.lines.total_phys')}</div>
                       <div className="text-xl font-bold">{totalValeurPhysique.toLocaleString()} F</div>
                   </div>
                   <div className="text-right">
-                      <div className="text-sm opacity-50">Ecart Valeur</div>
+                      <div className="text-sm opacity-50">{t('stock.inventaire.lines.total_gap')}</div>
                       <div className={`text-xl font-bold ${totalEcartValeur < 0 ? 'text-error' : totalEcartValeur > 0 ? 'text-success' : ''}`}>
                           {totalEcartValeur > 0 ? '+' : ''}{totalEcartValeur.toLocaleString()} F
                       </div>
@@ -1531,22 +1554,22 @@ export default function InventaireComponent() {
           {showLotModal && (
               <dialog className="modal modal-open">
                   <div className="modal-box" onKeyDown={handleLotModalKeyDown} tabIndex={0} autoFocus>
-                      <h3 className="font-bold text-lg">Sélectionner un Lot</h3>
-                      <p className="py-2 text-sm text-gray-500">Pour: {selectedProductForLot?.name}</p>
-                      <p className="text-xs text-info mb-2">Utilisez les flèches ↑/↓ pour naviguer et Entrée pour valider</p>
+                      <h3 className="font-bold text-lg">{t('stock.inventaire.modals.lot_title')}</h3>
+                      <p className="py-2 text-sm text-gray-500">{t('stock.inventaire.modals.lot_for', { name: selectedProductForLot?.name })}</p>
+                      <p className="text-xs text-info mb-2">{t('stock.inventaire.modals.lot_hint')}</p>
                       
                       <div className="py-4">
                           {loadingLots ? (
                               <div className="flex justify-center"><span className="loading loading-spinner"></span></div>
                           ) : availableLots.length === 0 ? (
                               <div className="text-center text-gray-500">
-                                  Aucun lot trouvé. 
+                                  {t('stock.inventaire.modals.lot_none')} 
                                   <br/>
                                   <button 
                                       className="btn btn-sm btn-outline mt-2" 
                                       onClick={() => handleAddProduct(selectedProductForLot!)}
                                   >
-                                      Ajouter sans lot (Stock global)
+                                      {t('stock.inventaire.modals.add_global')}
                                   </button>
                               </div>
                           ) : (
@@ -1576,14 +1599,14 @@ export default function InventaireComponent() {
                               className="btn btn-ghost" 
                               onClick={() => { setShowLotModal(false); setSelectedProductForLot(null); }}
                           >
-                              Annuler
+                              {t('stock.inventaire.modals.cancel')}
                           </button>
                           {availableLots.length > 0 && (
                              <button 
                                  className="btn btn-ghost btn-xs"
                                  onClick={() => handleAddProduct(selectedProductForLot!)}
                              >
-                                 Ajouter sans lot (Hors lots)
+                                 {t('stock.inventaire.modals.add_global')}
                              </button>
                           )}
                       </div>
@@ -1600,12 +1623,12 @@ export default function InventaireComponent() {
                     {viewMode === 'LIST' ? (
                         /* MODE LISTE : Fusionner la SÉLECTION */
                         <>
-                             <h3 className="font-bold text-lg mb-4">Fusionner {selectedInventaireIds.size} inventaires</h3>
+                             <h3 className="font-bold text-lg mb-4">{t('stock.inventaire.modals.merge_title_list', { count: selectedInventaireIds.size })}</h3>
                               <div className="alert alert-warning mb-4 text-xs shadow-sm">
-                                  <span>Tous les inventaires sélectionnés seront fusionnés dans <strong>l'inventaire Cible</strong>. Les autres seront supprimés.</span>
+                                  <span dangerouslySetInnerHTML={{ __html: t('stock.inventaire.modals.merge_warning_list') }}></span>
                               </div>
                               
-                              <p className="mb-2 font-semibold text-sm">Choisissez l'inventaire CIBLE (Principal) :</p>
+                              <p className="mb-2 font-semibold text-sm">{t('stock.inventaire.modals.merge_target_select')}</p>
                               <div className="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4">
                                    {inventaires.filter(i => selectedInventaireIds.has(i.id)).map(inv => (
                                        <button 
@@ -1616,7 +1639,7 @@ export default function InventaireComponent() {
                                            <div className="text-left flex-1">
                                                <div className="font-bold flex items-center gap-2">
                                                    Inventaire #{inv.id}
-                                                   {selectedMergeSource === inv.id && <span className="badge badge-sm badge-white text-primary">CIBLE</span>}
+                                                   {selectedMergeSource === inv.id && <span className="badge badge-sm badge-white text-primary">{t('stock.inventaire.modals.merge_target_badge')}</span>}
                                                </div>
                                                <div className="text-xs opacity-80">{new Date(inv.date).toLocaleDateString('fr-FR')} - {inv.description || 'Sans description'}</div>
                                            </div>
@@ -1628,13 +1651,13 @@ export default function InventaireComponent() {
                     ) : ( 
                         /* MODE DETAILS : Fusionner UN EXTERNE VERS ICI */
                         <>
-                          <h3 className="font-bold text-lg mb-4">Importer / Fusionner un autre inventaire</h3>
+                          <h3 className="font-bold text-lg mb-4">{t('stock.inventaire.modals.merge_title_external')}</h3>
                           <div className="alert alert-warning mb-4 text-xs shadow-sm">
-                              <span>L'inventaire sélectionné ci-dessous (Source) sera <strong>SUPPRIMÉ</strong> et ses lignes ajoutées à l'inventaire actuel (#{activeInventaire?.id}).</span>
+                              <span dangerouslySetInnerHTML={{ __html: t('stock.inventaire.modals.merge_warning_external', { id: activeInventaire?.id }) }}></span>
                           </div>
                           
                           <p className="py-2 text-sm text-gray-500 mb-2">
-                              Inventaire Actuel (Cible) : <strong>#{activeInventaire?.id}</strong>
+                              {t('stock.inventaire.modals.merge_current_target')} <strong>#{activeInventaire?.id}</strong>
                           </p>
 
                           <div className="py-2">
@@ -1642,7 +1665,7 @@ export default function InventaireComponent() {
                                    <div className="flex justify-center py-8"><span className="loading loading-spinner"></span></div>
                                ) : mergeCandidates.length === 0 ? (
                                    <div className="text-center text-gray-500 py-8 italic border rounded-lg bg-base-200">
-                                       Aucun autre inventaire "EN COURS" disponible.
+                                       {t('stock.inventaire.modals.merge_no_candidate')}
                                    </div>
                                ) : (
                                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
@@ -1667,13 +1690,13 @@ export default function InventaireComponent() {
                     )}
 
                       <div className="modal-action">
-                          <button className="btn btn-ghost" onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}>Annuler</button>
-                          <button 
+                          <button className="btn btn-ghost" onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}>{t('stock.inventaire.modals.cancel')}</button>
+                          <button  
                               className="btn btn-primary" 
                               disabled={!selectedMergeSource || merging}
                               onClick={handleMerge}
                           >
-                              {merging ? <span className="loading loading-spinner"></span> : 'Confirmer la Fusion'}
+                              {merging ? <span className="loading loading-spinner"></span> : t('stock.inventaire.modals.merge_confirm_btn')}
                           </button>
                       </div>
                   </div>
@@ -1684,24 +1707,21 @@ export default function InventaireComponent() {
           {showValidationModal && (
               <dialog className="modal modal-open">
                   <div className="modal-box">
-                      <h3 className="font-bold text-lg">Valider l'inventaire</h3>
-                      <p className="py-4">
-                          Cette action va <strong>mettre à jour le stock officiel</strong> de tous les produits listés.
-                          <br/>
-                          Une fois validé, l'inventaire ne sera plus modifiable.
+                      <h3 className="font-bold text-lg">{t('stock.inventaire.modals.validate_title')}</h3>
+                      <p className="py-4" dangerouslySetInnerHTML={{ __html: t('stock.inventaire.modals.validate_warning') }}>
                       </p>
                       
                       <div className="form-control w-full max-w-xs mt-2">
                           <label className="label">
-                              <span className="label-text">Valider en tant que (Optionnel)</span>
-                              <span className="label-text-alt text-warning">Mode Admin</span>
+                              <span className="label-text">{t('stock.inventaire.modals.validate_as')}</span>
+                              <span className="label-text-alt text-warning">{t('stock.inventaire.modals.validate_admin')}</span>
                           </label>
                           <select 
                               className="select select-bordered"
                               value={selectedValidator || ''}
                               onChange={(e) => setSelectedValidator(e.target.value ? parseInt(e.target.value) : null)}
                           >
-                              <option value="">-- Moi-même --</option>
+                              <option value="">{t('stock.inventaire.modals.validate_me')}</option>
                               {users.map(u => (
                                   <option key={u.id} value={u.id}>
                                       {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username} ({u.username})
@@ -1713,13 +1733,13 @@ export default function InventaireComponent() {
                       {selectedValidator && (
                           <div className="form-control w-full max-w-xs mt-4">
                               <label className="label">
-                                  <span className="label-text">Mot de passe Administrateur</span>
-                                  <span className="label-text-alt text-error">* Requis</span>
+                                  <span className="label-text">{t('stock.inventaire.modals.validate_password')}</span>
+                                  <span className="label-text-alt text-error">{t('stock.inventaire.modals.validate_required')}</span>
                               </label>
                               <input 
                                   type="password" 
                                   className="input input-bordered" 
-                                  placeholder="Votre mot de passe..."
+                                  placeholder={t('stock.inventaire.modals.validate_password')}
                                   value={sudoPassword}
                                   onChange={e => setSudoPassword(e.target.value)}
                               />
@@ -1727,23 +1747,17 @@ export default function InventaireComponent() {
                       )}
 
                       <div className="modal-action">
-                          <button 
-                              className="btn btn-ghost" 
-                              onClick={() => {
+                          <button className="btn btn-ghost" onClick={() => {
                                   setShowValidationModal(false);
                                   setSelectedValidator(null);
                                   setSudoPassword('');
-                              }}
-                              disabled={saving}
-                          >
-                              Annuler
-                          </button>
+                              }}>{t('stock.inventaire.modals.cancel')}</button>
                           <button 
                               className="btn btn-success" 
                               onClick={handleValidateConfirm}
                               disabled={saving}
                           >
-                              {saving ? <span className="loading loading-spinner"></span> : 'Confirmer la Validation'}
+                              {saving ? <span className="loading loading-spinner"></span> : t('stock.inventaire.modals.validate_confirm_btn')}
                           </button>
                       </div>
                   </div>

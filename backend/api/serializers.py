@@ -11,7 +11,7 @@ from .models import (
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
-    Promotion, PromotionPackItem
+    Promotion, PromotionPackItem, ObjectifCommercial
 )
 from .services import PromotionService
 
@@ -1028,3 +1028,18 @@ class ConfigurationOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConfigurationOption
         fields = '__all__'
+
+
+class ObjectifCommercialSerializer(serializers.ModelSerializer):
+    """Serializer pour les objectifs commerciaux"""
+    periode_display = serializers.CharField(source='get_periode_display', read_only=True)
+    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+
+    class Meta:
+        model = ObjectifCommercial
+        fields = '__all__'
+        read_only_fields = ['created_at', 'updated_at', 'created_by']
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user
+        return super().create(validated_data)

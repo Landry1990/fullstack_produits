@@ -16,13 +16,82 @@
         "confirmation": "Confirmation",
         "pay": "Pay",
         "error": "Error",
-        "refresh": "Refresh",
         "actions": {
             "confirm": "Confirm"
+        },
+        "download": "Download",
+        "export_success": "Export successful",
+        "export_error": "Error during export",
+        "messages": {
+            "created": "Created successfully",
+            "updated": "Updated",
+            "deleted": "Deleted",
+            "saved": "Saved",
+            "error_generic": "An error occurred",
+            "error_loading": "Error loading data",
+            "error_saving": "Error saving",
+            "error_deleting": "Error deleting",
+            "error_update": "Error updating",
+            "session_expired": "Session expired. Please log in again.",
+            "access_denied": "Access denied: insufficient permissions",
+            "server_error": "Server error. Please try again later.",
+            "not_found": "Item not found",
+            "confirm_delete": "Are you sure you want to delete this item?",
+            "confirm_action": "Are you sure you want to perform this action?",
+            "copy_success": "Copied to clipboard",
+            "import_success": "Import completed successfully",
+            "import_error": "Error during import"
+        }
+    },
+    "manager_dashboard": {
+        "title": "Manager Dashboard",
+        "manager": "Manager",
+        "subtitle": "Performance monitoring and business objectives",
+        "set_objective": "Set an Objective",
+        "progression": "Progression",
+        "target": "Target",
+        "alerts_title": "Smart Alerts",
+        "no_alerts": "No alerts at the moment. Everything is fine!",
+        "active_objectives": "Active Objectives",
+        "not_defined": "Not defined",
+        "modify": "Modify",
+        "modal_title": "Set an Objective",
+        "modal_subtitle": "Define your revenue targets",
+        "period_label": "Period",
+        "ca_target_label": "Target Revenue (F)",
+        "start_date_label": "Start Date",
+        "date_help": "Monday for weekly, 1st of the month for monthly",
+        "exports_title": "Reports & Accounting",
+        "export_accounting_title": "Accounting Export (CSV)",
+        "export_accounting_desc": "Sales details, VAT, and payment methods for your accountant.",
+        "report_monthly_title": "Monthly Report (PDF)",
+        "report_monthly_desc": "Visual summary of current month performance.",
+        "dead_stock_title": "Dormant Stocks (Excel)",
+        "dead_stock_desc": "List of products with no sales for more than 6 months.",
+        "periods": {
+            "today": "Today",
+            "week": "Week",
+            "month": "Month",
+            "daily": "Daily",
+            "weekly": "Weekly",
+            "monthly": "Monthly"
+        },
+        "alerts": {
+            "perf_title": "Performance Alert",
+            "perf_msg": "Daily Revenue is behind ({{rate}}% of target). Planned corrective actions.",
+            "shortage_title": "Critical Shortages",
+            "shortage_msg": "{{count}} products are below their minimum stock level.",
+            "debt_title": "Important Debts",
+            "debt_msg": "{{count}} clients exceed {{threshold}}F in debt. Top: {{top_name}} ({{top_debt}}F).",
+            "dormant_title": "Dormant Stocks",
+            "dormant_msg": "{{count}} products have not had any sales for {{days}} days. Consider a promotion.",
+            "drop_title": "Weekly Drop",
+            "drop_msg": "This week's CA is significantly lower than last week (-30%+)."
         }
     },
     "sidebar": {
         "dashboard": "Dashboard",
+        "manager_sidebar": "Manager Dashboard",
         "ventes": {
             "title": "Sales",
             "consultation": "Consultation",
@@ -70,7 +139,8 @@
             "abc": "ABC Analysis",
             "produits": "Products",
             "fournisseurs": "Suppliers",
-            "mensuel": "Monthly Report"
+            "mensuel": "Monthly Report",
+            "finances": "Financial Module"
         },
         "parametres": {
             "title": "Settings",
@@ -87,6 +157,38 @@
             "pharmacist": "Pharmacist",
             "user": "User"
         }
+    },
+    "finance": {
+        "title": "Financial Module",
+        "subtitle": "Revenue analysis and predictions",
+        "periode": {
+            "mois": "This month",
+            "trimestre": "This quarter",
+            "annee": "This year"
+        },
+        "kpis": {
+            "avg_basket": "Average Basket",
+            "margin_rate": "Margin Rate",
+            "dsi": "Days Stock (DSI)",
+            "growth": "Monthly Growth"
+        },
+        "charts": {
+            "ca_evolution": "Revenue Evolution",
+            "margins": "Margins",
+            "predictions": "Predictions",
+            "ca_12_months": "Revenue (Last 12 Months)",
+            "margin_evolution": "Margin Evolution",
+            "predictions_3m": "Revenue Predictions (Next 3 Months)",
+            "repartition": "Revenue Breakdown"
+        },
+        "by_category": "By Category",
+        "by_supplier": "By Supplier",
+        "by_revenue": "By Revenue",
+        "by_margin": "By Margin",
+        "top_products": "Top Products",
+        "product": "Product",
+        "margin": "Margin",
+        "summary": "Annual Summary"
     },
     "users": {
         "title": "User Management",
@@ -256,7 +358,12 @@
             "delete_confirm_message": "Delete provider \"{{name}}\"?\n\nThis action is irreversible.",
             "delete_btn": "Delete",
             "sudo_title": "Confirm Deletion",
-            "sudo_message": "This is a sensitive action. Please enter your password to confirm permanent deletion."
+            "sudo_message": "This is a sensitive action. Please enter your password to confirm permanent deletion.",
+            "reactivated": "Provider reactivated",
+            "hidden": "Provider hidden",
+            "status_change_error": "Error changing status",
+            "load_error": "Error loading providers",
+            "save_error": "Error saving"
         }
     },
     "creances": {
@@ -305,44 +412,136 @@
     },
     "stock": {
         "inventaire": {
-            "title": "Stock Take Management",
-            "create_btn": "New Stock Take",
-            "list_title": "History",
-            "stats_tab": "Gaps & Valuation",
-            "data_tab": "Count Entry",
+            "title": "Inventory",
+            "create_btn": "+ New Inventory",
+            "bulk_action": "{{count}} inventory(s) selected",
+            "deselect": "Deselect",
+            "merge_btn": "Merge",
+            "delete_confirm": "Delete inventory?",
+            "product_exists": "This product is already in the list",
             "validation": {
-                "title": "Validate Stock Take",
-                "btn": "Validate Stock Take",
-                "confirm_msg": "This action is irreversible. Stocks will be updated.",
-                "validator_label": "Validated by",
-                "sudo_password": "Admin Password",
-                "success": "Stock Take validated successfully",
-                "error": "Validation error"
+                "success": "Inventory validated successfully",
+                "error": "Error validation inventory"
             },
             "merge": {
+                "modal_title": "Merge Inventories",
+                "confirm_msg": "Merge selected inventory into current one? Source inventory will be deleted.",
                 "btn": "Merge",
-                "modal_title": "Merge Stock Takes",
-                "source_label": "Source Stock Take (will be deleted)",
-                "confirm_msg": "Source stock take lines will be added to active stock take.",
-                "success": "Merge successful"
+                "success": "Merged successfully",
+                "success_count": "{{count}} inventory(ies) merged successfully!",
+                "error": "Error during merge"
             },
-            "table": {
+            "list": {
+                "date": "Date",
+                "desc": "Description",
+                "val_theo": "Theo. Value",
+                "val_phys": "Input Value",
+                "ecart": "Value Gap",
+                "status": "Status",
+                "created_by": "Created By",
+                "actions": "Actions",
+                "empty": "No inventory"
+            },
+            "detail": {
+                "back": "← Back",
+                "title_new": "New Inventory",
+                "title_edit": "Inventory #{{id}}",
+                "validated": "VALIDATED",
+                "tab_data": "📝 Input / List",
+                "tab_analysis": "📊 Analysis",
+                "print": "🖨️ Print Status (PDF)",
+                "saved_auto": "Auto saved.",
+                "merge_to": "🔗 Merge to...",
+                "validate": "✓ Validate and Update Stock",
+                "validating": "Validating...",
+                "date": "Date",
+                "description": "Description",
+                "placeholder_desc": "Ex: Annual Inventory 2025...",
+                "add_product_label": "Add Product (Search by Name or CIP)",
+                "search_placeholder": "Scan or type name...",
+                "hint_min_char": "Type at least 1 character",
+                "no_result": "No product found",
+                "header_saved": "Header saved",
+                "save_error": "Save error",
+                "auto_create_error": "Cannot create inventory automatically.",
+                "bulk_delete_title": "Bulk Delete",
+                "bulk_delete_message": "Delete these {{count}} lines?",
+                "bulk_delete_confirm": "Yes, Delete",
+                "bulk_delete_success": "{{count}} lines deleted"
+            },
+            "lines": {
+                "selected": "{{count}} line(s) selected",
+                "delete_selection": "🗑️ Delete selection",
+                "sort_by": "Sort by:",
+                "sort_chronological": "Chronological (Added)",
+                "sort_name": "Label (A-Z)",
+                "sort_gap_value": "Gap Value (Currency)",
+                "sort_gap_qty": "Gap Qty (Unit)",
                 "product": "Product",
-                "cip": "CIP",
-                "lot": "Lot",
-                "qty_theo": "Theo. Qty",
-                "qty_phys": "Phys. Qty",
-                "gap": "Gap",
-                "value": "Value",
-                "actions": "Actions"
+                "rayon": "Shelf",
+                "buy_price": "Buy Price",
+                "stock_theo": "Theo. Stock",
+                "qty_saisie": "Input Qty",
+                "ecart_qty": "Gap Qty",
+                "ecart_val": "Gap Val.",
+                "empty_hint": "Scan or add products to start counting.",
+                "total_theo": "Theoretical Value",
+                "total_phys": "Input Value",
+                "total_gap": "Gap Value",
+                "product_added": "Product added",
+                "delete_error": "Cannot delete line."
             },
-            "status": {
-                "draft": "In Progress",
-                "validated": "Validated"
+            "analysis": {
+                "no_data": "No data available.",
+                "print_ecarts": "🖨️ Print Discrepancy Report (PDF)",
+                "top_losses": "📉 Top 10 Losses",
+                "ecarts_by_rayon": "📊 Gaps by Shelf",
+                "loss": "Loss",
+                "total_ecart": "Total Gap"
             },
-            "empty_state": "No stock take in progress",
-            "delete_confirm": "Delete this stock take?",
-            "product_exists": "This product (or lot) is already in the stock take."
+            "modals": {
+                "lot_title": "Select Lot",
+                "lot_for": "For: {{name}}",
+                "lot_hint": "Use arrows ↑/↓ to navigate and Enter to select",
+                "lot_none": "No lot found.",
+                "add_global": "Add without lot (Global Stock)",
+                "merge_title_list": "Merge {{count}} inventories",
+                "merge_warning_list": "All selected inventories will be merged into <strong>Target Inventory</strong>. Others will be deleted.",
+                "merge_warning_list_plain": "Merge selected inventories into TARGET?\nOthers will be deleted (lines transferred).",
+                "merge_target_select": "Choose TARGET Inventory (Main):",
+                "merge_target_badge": "TARGET",
+                "merge_title_external": "Import / Merge another inventory",
+                "merge_warning_external": "Selected inventory below (Source) will be <strong>DELETED</strong> and lines added to current inventory (#{id}).",
+                "merge_current_target": "Current Inventory (Target):",
+                "merge_no_candidate": "No other 'IN PROGRESS' inventory available.",
+                "merge_confirm_btn": "Confirm Merge",
+                "validate_title": "Validate Inventory",
+                "validate_warning": "This will <strong>update official stock</strong> for all listed products.<br/>Once validated, inventory cannot be modified.",
+                "validate_as": "Validate as (Optional)",
+                "validate_admin": "Admin Mode",
+                "validate_me": "-- Myself --",
+                "validate_password": "Admin Password",
+                "validate_required": "* Required",
+                "validate_confirm_btn": "Confirm Final Validation",
+                "cancel": "Cancel"
+            },
+            "pdf": {
+                "title_etat": "STOCK TAKE STATE #{{id}}",
+                "title_ecarts": "DISCREPANCY REPORT - #{{id}}",
+                "date": "Date: {{date}}",
+                "desc": "Description: {{desc}}",
+                "rayon": "SHELF: {{name}}",
+                "col_id": "ID",
+                "col_product": "Product",
+                "col_pmp": "WAP",
+                "col_theo": "Theo.",
+                "col_phys": "Phys.",
+                "col_gap": "Gap",
+                "col_val": "Val.",
+                "total_rayon": "TOTAL",
+                "total_global": "GLOBAL GAP TOTAL (VALUE): {{sign}}{{amount}}",
+                "no_gaps": "No discrepancy found."
+            }
         }
     },
     "orders": {
@@ -590,6 +789,10 @@
             "produits_vendus_tva": {
                 "name": "Sold Products (VAT)",
                 "description": "Products with VAT > 0 sold during period"
+            },
+            "meilleurs_clients": {
+                "name": "Best Customers",
+                "description": "Customer ranking by revenue and sales count"
             }
         },
         "params": {
@@ -616,7 +819,10 @@
             "copy_error": "Error copying",
             "copy_no_result": "No results to copy",
             "execute_success": "Query \"{{name}}\" executed",
-            "error_execution": "Error executing query"
+            "error_execution": "Error executing query",
+            "export_no_result": "No results to export",
+            "export_unsupported": "Unsupported format for export",
+            "export_success": "Export downloaded: {{filename}}"
         }
     },
     "dashboard": {
@@ -1005,6 +1211,71 @@
             "input_quantity_error": "Please enter the new quantity"
         }
     },
+    "promis": {
+        "title": "Promis Management",
+        "new_btn": "+ New Promis",
+        "filter_status": "Filter by Status",
+        "status_all": "All",
+        "status_att": "Pending",
+        "status_del": "Delivered",
+        "status_ann": "Cancelled",
+        "table": {
+            "date": "Date",
+            "client": "Client",
+            "phone": "Phone",
+            "product": "Product",
+            "qty": "Qty",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "actions": {
+            "deliver": "Deliver",
+            "cancel": "Cancel",
+            "print": "Print",
+            "sms": "SMS",
+            "sms_send": "Send 📨"
+        },
+        "modal": {
+            "title_new": "New Promis",
+            "title_sms": "Send SMS to {{name}}",
+            "client_label": "Client",
+            "client_placeholder": "Client/Patient Name...",
+            "phone_label": "Phone",
+            "phone_placeholder": "Phone Number (ex: 77...)",
+            "product_label": "Product *",
+            "product_placeholder": "Search Product (Name/CIP)...",
+            "qty_label": "Quantity *",
+            "notes_label": "Notes",
+            "notes_placeholder": "Instructions or comments...",
+            "cancel": "Cancel",
+            "create": "Save",
+            "sms_number": "Recipient Number",
+            "sms_message": "Message Content"
+        },
+        "validation": {
+            "product_required": "Please select a product",
+            "client_required": "Client required (select or type name)",
+            "create_error": "Error creating Promis"
+        },
+        "messages": {
+            "empty": "No Promis found",
+            "delivered_on": "Delivered on {{date}}",
+            "cancelled": "Cancelled",
+            "print_ticket_error": "Error printing ticket",
+            "bulk_delivery_error": "Error during bulk delivery",
+            "bulk_cancel_error": "Error during bulk cancellation",
+            "sms_success": "SMS sent successfully",
+            "sms_error": "Error sending SMS"
+        },
+        "modals": {
+            "bulk_delivery_title": "Deliver Multiple Promis",
+            "bulk_delivery_message": "Mark {{count}} promis as delivered?",
+            "bulk_delivery_confirm": "Deliver All",
+            "bulk_cancel_title": "Cancel Multiple Promis",
+            "bulk_cancel_message": "Cancel {{count}} promis and restock items?\n\nThis will create history entries for products.",
+            "bulk_cancel_confirm": "Cancel All"
+        }
+    },
     "sales": {
         "title": "Sales History",
         "subtitle": "View and manage history of all invoices",
@@ -1081,7 +1352,279 @@
             "no_products": "No product lines for this invoice.",
             "prompt_client_name": "Client name for the invoice:",
             "error_loading_quote": "Unable to load the quote",
-            "cash_report_error": "Error calculating cash report."
+            "cash_report_error": "Error calculating cash report.",
+            "delete_success": "Invoice deleted",
+            "delete_error": "Error deleting invoice",
+            "bulk_delete_success": "Invoices deleted",
+            "bulk_delete_error": "Error during bulk deletion",
+            "save_success": "Sale saved",
+            "save_error": "Error saving sale",
+            "validate_success": "Invoice {{number}} validated",
+            "invoice_modified": "Invoice modified",
+            "additional_payment": "Additional payment: {{amount}} F",
+            "refund_amount": "Refund: {{amount}} F",
+            "same_total": "Invoice modified (same total)",
+            "coupon_applied": "Coupon #{{numero}} applied (-{{amount}} F)",
+            "coupon_not_found": "Coupon \"{{numero}}\" not found",
+            "coupon_error": "Error applying coupon",
+            "promis_error": "Error generating Promis ticket",
+            "ordonnancier_saved": "Prescription log saved",
+            "ordonnancier_error": "Error saving prescription log",
+            "credit_limit_exceeded": "⚠️ Credit limit exceeded!",
+            "tiers_payant_validated": "Invoice {{number}} validated (Third-party payer 100%)",
+            "sent_to_caisse": "Sale sent to Centralized Cash Register (Ticket #{{id}})",
+            "load_error": "Error loading data",
+            "load_details_error": "Unable to load details."
+        },
+        "confirm_delete": "Delete this invoice?",
+        "confirm_bulk_delete": "Confirm deletion of {{count}} invoices? (Only drafts/cancelled will be deleted)"
+    },
+    "perimes": {
+        "title": "Expired Products Management",
+        "subtitle": "Loss analysis and expiration forecasts",
+        "stats": {
+            "valeur_perimes": "Losses (Cost)",
+            "manque_gagner": "Missed Revenue",
+            "taux_perte": "Loss Rate"
+        },
+        "prevision": {
+            "title": "Expiration Forecasts"
+        },
+        "top_perimes": "Expired Products in Stock"
+    },
+    "caisse": {
+        "title": "Centralized Register",
+        "subtitle": "Sales pending settlement are automatically displayed",
+        "auto_refresh": "Auto-refresh (20s)",
+        "coupons_active": "Coupons ({{count}} active)",
+        "coupons_applied": "{{count}} coupon(s) applied",
+        "pending_count": "{{count}} pending",
+        "no_pending": "No pending invoices",
+        "no_pending_desc": "New invoices will appear here automatically.",
+        "table": {
+            "ticket": "#Ticket",
+            "invoice": "Invoice",
+            "client": "Client",
+            "date": "Date",
+            "products": "Products",
+            "amount": "Amount",
+            "actions": "Actions",
+            "tiers_payant": "Third-Party Payer",
+            "coupon_applied": "Coupon applied",
+            "remove_coupon": "Remove coupon",
+            "modify": "Modify",
+            "cancel": "Cancel",
+            "apply_coupon": "Apply coupon",
+            "cash_in": "Cash in",
+            "not_authorized": "Not authorized"
+        },
+        "coupons": {
+            "title": "Coupons",
+            "generate": "Generate coupon",
+            "permission_required": "Permission required",
+            "search_placeholder": "Search #...",
+            "none": "No coupon",
+            "headers": {
+                "num_amount": "N° / Amount",
+                "creation": "Creation",
+                "usage": "Usage",
+                "status": "Status"
+            },
+            "by": "By: {{name}}",
+            "system": "System",
+            "status": {
+                "active": "ACTIVE",
+                "used": "USED",
+                "expired": "EXPIRED"
+            },
+            "generate_modal": {
+                "title": "Generate a Coupon",
+                "amount": "Amount",
+                "notes": "Notes",
+                "placeholder_notes": "Comment...",
+                "submit": "Generate"
+            },
+            "details_modal": {
+                "title": "Coupon Details",
+                "print": "Print"
+            }
+        },
+        "payment": {
+            "modal_title": "Cashing In - Invoice #{{numero}}",
+            "total_to_pay": "Total to pay",
+            "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
+            "tiers_payant_alert": "Client Portion (Third-Party Payer active)",
+            "recorded_payments": "Recorded payments:",
+            "total_paid": "Total paid:",
+            "remaining": "Remaining to pay: {{amount}} F",
+            "step1": "1. Enter amount then press Enter",
+            "step1_hint": "Press Enter after entering the amount",
+            "amount_label": "Amount:",
+            "step2": "2. Use ↑↓←→ and Enter to choose mode",
+            "modify_amount": "← Modify amount",
+            "change_to_give": "Change to give",
+            "confirm": "✓ Validate payment (Enter)",
+            "missing": "Remaining {{amount}} F"
+        },
+        "ticket": {
+            "title": "Cash Receipt",
+            "invoice_num": "Invoice",
+            "date": "Date",
+            "client": "Client",
+            "subtotal_ht": "Subtotal EX-VAT",
+            "discount": "Discount",
+            "tva": "VAT",
+            "total_ttc": "TOTAL INC-VAT",
+            "amount_paid": "Amount Paid",
+            "change": "Change",
+            "settlements": "Settlements",
+            "part_patient": "Patient Portion",
+            "part_assurance": "Insurance Portion"
+        },
+        "messages": {
+            "invalid_amount": "Please enter a valid amount",
+            "coupon_generated": "Coupon #{{numero}} generated successfully!",
+            "error_generation": "Error during coupon generation",
+            "coupon_not_active": "This coupon is not active",
+            "coupon_already_applied": "This coupon is already applied to another sale",
+            "coupon_applied_to": "Coupon #{{numero}} applied to sale #{{ticket}}",
+            "coupon_removed": "Coupon removed",
+            "coupon_not_found": "Coupon not found",
+            "search_error": "Error during search",
+            "refreshed": "List refreshed",
+            "cancel_confirm": "Are you sure you want to cancel invoice #{{numero}}?",
+            "cancelled": "Invoice cancelled",
+            "cancel_error": "Error during cancellation",
+            "modify_confirm": "Modify this invoice? It will be removed from the list and reloaded in the sales screen.",
+            "empty_invoice": "This invoice contains no products",
+            "load_error": "Unable to load invoice for modification",
+            "cash_in_success": "Invoice #{{numero}} cashed in successfully!",
+            "payment_error": "Error during payment recording"
+        }
+    },
+    "rayons": {
+        "title": "Shelf Management",
+        "new_main": "New Main Shelf",
+        "no_rayon": "Uncategorized",
+        "print_stock": "Print Stock Status",
+        "create_btn": "Create",
+        "count_products": "{{count}} product(s)",
+        "add_products_btn": "Add Products",
+        "empty_rayon": "This shelf is empty",
+        "add_existing_product": "Add existing product",
+        "select_rayon": "Select a shelf",
+        "manage_rayons_hint": "Manage shelves and assign products",
+        "add_product_to": "Add products to \"{{rayon}}\"",
+        "add_product_help": "Search for products and click + to assign them to this shelf.",
+        "search_placeholder": "Search by name or CIP...",
+        "no_product_found": "No products found",
+        "search_hint": "Type at least 2 characters to search",
+        "remove_product_title": "Remove Product",
+        "remove_product_message": "Remove \"{{product}}\" from shelf \"{{rayon}}\"? The product will not be deleted, just detached from this shelf.",
+        "remove_btn": "Remove",
+        "remove_from_rayon": "Remove from shelf",
+        "modal": {
+            "title_new": "New Shelf",
+            "title_edit": "Edit Shelf",
+            "name": "Shelf Name",
+            "parent": "Parent Shelf (Optional)",
+            "none": "None (Root)",
+            "cancel": "Cancel",
+            "save": "Save"
+        },
+        "print_modal": {
+            "title": "Print Stock Status",
+            "rayon": "Shelf",
+            "exclude_zero": "Exclude zero stock",
+            "validate": "Validate and Print"
+        },
+        "table": {
+            "id": "ID",
+            "name": "Shelf Name",
+            "type": "Type",
+            "actions": "Actions",
+            "main_rayon": "Main Shelf",
+            "sub_rayon": "Sub-shelf",
+            "add_sub": "+ Sub-shelf",
+            "stock": "Stock",
+            "modify": "Modify",
+            "delete": "Delete",
+            "no_rayon_found": "No shelf found",
+            "no_sub_rayon": "No sub-shelf",
+            "product": "Product",
+            "cip": "CIP",
+            "price": "Price",
+            "current_rayon": "Current Shelf",
+            "action": "Action",
+            "none": "None"
+        },
+        "messages": {
+            "load_error": "Error loading shelves",
+            "save_success_edit": "Shelf updated successfully",
+            "save_success_create": "Shelf created successfully",
+            "save_error": "Error saving shelf",
+            "delete_confirm_title": "Delete Shelf",
+            "delete_confirm_message": "Are you sure you want to delete this shelf?",
+            "delete_confirm_message_detailed": "Warning: Deleting a shelf does not delete products; they will be marked as 'No Shelf'. Continue?",
+            "delete_btn": "Delete",
+            "delete_success": "Shelf deleted",
+            "delete_error": "Error deleting shelf",
+            "load_products_error": "Error loading products",
+            "product_added_to": "{{product}} added to {{rayon}}",
+            "add_product_error": "Error adding product",
+            "product_removed": "Product removed from shelf",
+            "remove_product_error": "Error removing product"
+        }
+    },
+    "transformations": {
+        "title": "Packaging Transformations",
+        "new_relation_btn": "New Relation",
+        "tabs": {
+            "configured_relations": "Configured Relations",
+            "history": "History"
+        },
+        "table_history": {
+            "date": "Date",
+            "user": "User",
+            "transformation": "Transformation",
+            "quantities": "Quantities",
+            "notes": "Notes"
+        },
+        "card": {
+            "ratio": "Ratio: 1 : {{ratio}}",
+            "transform_btn": "Transform",
+            "delete_btn_title": "Delete Relation"
+        },
+        "modal_relation": {
+            "title": "New Transformation Relation",
+            "source": "Source Product (to transform)",
+            "destination": "Destination Product (result)",
+            "ratio_label": "Ratio (How many Destination units for 1 Source unit?)",
+            "ratio_help": "Example: If 1 Box gives 20 Details, put 20.",
+            "cancel": "Cancel",
+            "create": "Create",
+            "select_product": "Select a product..."
+        },
+        "modal_transform": {
+            "title": "Perform Transformation",
+            "current_source_stock": "Current Source Stock",
+            "qty_to_transform": "Quantity to transform",
+            "qty_obtained": "Quantity obtained",
+            "notes_label": "Notes (Optional)",
+            "notes_placeholder": "Reason for transformation...",
+            "confirm_btn": "Confirm Transformation"
+        },
+        "messages": {
+            "transform_success": "Transformation successful",
+            "transform_error": "Error during transformation",
+            "create_success": "Relation created successfully",
+            "create_error": "Error creating relation",
+            "delete_success": "Relation deleted",
+            "delete_error": "Error deleting relation",
+            "load_error": "Error loading data",
+            "delete_confirm_title": "Delete Relation",
+            "delete_confirm_message": "Are you sure you want to delete this transformation relation?",
+            "delete_confirm_btn": "Delete"
         }
     }
 }
