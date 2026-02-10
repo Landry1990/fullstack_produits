@@ -15,6 +15,7 @@ export { usePharmacySettings } from './usePharmacySettings';
 export { useProductSearch } from './useProductSearch';
 export { useProduits } from './useProduits';
 export { useStockLots } from './useStockLots';
+export { usePeakHours, useDailyComparison, useSeasonality } from './useTemporalAnalysis';
 
 // UI hooks
 export { useConfirm } from './useConfirm';

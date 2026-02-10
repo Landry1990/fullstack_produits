@@ -1061,7 +1061,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       let currentList = [...commandeProduits];
       let productsFound = 0;
       let productsNotFound = 0;
-      const notFoundCips: string[] = [];
+      const notFoundItems: { cip: string; qty: number }[] = [];
 
       // Debug: Afficher quelques produits pour vérifier les CIP disponibles
 
@@ -1131,7 +1131,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
             }
         } else {
             console.warn(`[CSV Import] CIP non trouvé: "${cleanCip}" (normalisé: "${normalizeCip(cleanCip)}")`);
-            notFoundCips.push(cleanCip);
+            notFoundItems.push({ cip: cleanCip, qty });
             productsNotFound++;
         }
       });
@@ -1139,7 +1139,19 @@ export default function Commandes({ forcedType }: CommandesProps) {
       setCommandeProduits(currentList);
       
       if (productsNotFound > 0) {
-        toast.error(`${productsFound} produits ajoutés. ${productsNotFound} CIPs introuvables: ${notFoundCips.slice(0, 5).join(', ')}${notFoundCips.length > 5 ? '...' : ''}`);
+        // Générer et télécharger le fichier txt des produits non reconnus
+        const txtContent = notFoundItems.map(item => `${item.cip};${item.qty}`).join('\n');
+        const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+        const link = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        link.href = URL.createObjectURL(blob);
+        link.download = `produits_non_reconnus_${dateStr}.txt`;
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.error(`${productsFound} produits ajoutés. ${productsNotFound} CIPs introuvables - fichier téléchargé.`);
       } else {
         toast.success(`${productsFound} produits importés avec succès.`);
       }

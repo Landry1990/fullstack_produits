@@ -39,6 +39,7 @@ class Facture(models.Model):
     tva = models.DecimalField(max_digits=5, decimal_places=2, default=19.25)
     notes = models.TextField(blank=True, null=True)
     date_annulation = models.DateTimeField(null=True, blank=True)
+    date_document = models.DateTimeField(null=True, blank=True, help_text="Date affichée sur les documents (si différente de la date de création)")
     
     points_fidelite_gagnes = models.IntegerField(default=0)
     points_fidelite_utilises = models.IntegerField(default=0)

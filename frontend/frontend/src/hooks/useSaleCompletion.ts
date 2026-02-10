@@ -94,6 +94,9 @@ export interface SaleCompletionParams {
 
     // Ordonnance
     tempOrdonnanceData: OrdonnanceData | null;
+    // Sudo Mode
+    validated_by_id?: number | null;
+    sudo_password?: string;
 }
 
 export interface SaleCompletionResult {
@@ -124,7 +127,7 @@ export interface UseSaleCompletionReturn {
  * Valide les données avant soumission
  */
 function validateSaleData(params: SaleCompletionParams): string | null {
-    const { selectedClient, lignesFacture, totals, montantPaye, paiements } = params;
+    const { selectedClient, lignesFacture, totals, montantPaye, paiements, validated_by_id, sudo_password } = params;
 
     if (!selectedClient && !params.useManualClient) {
         return 'Veuillez sélectionner un client';
@@ -132,6 +135,11 @@ function validateSaleData(params: SaleCompletionParams): string | null {
 
     if (lignesFacture.length === 0) {
         return 'Veuillez ajouter au moins un produit';
+    }
+
+    // Validation Sudo
+    if (validated_by_id && !sudo_password) {
+        return 'Mot de passe requis pour la validation par un tiers';
     }
 
     // Validation du montant
@@ -296,7 +304,9 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             produits: produitsPayload,
             remise: params.totals.remiseMontant.toString(),
             client: params.useManualClient ? null : params.selectedClient,
-            client_name_override: params.useManualClient ? params.manualClientName : null
+            client_name_override: params.useManualClient ? params.manualClientName : null,
+            // Sudo for Modification? Usually validation is separate. 
+            // But if modifying validates immediately... currently logic separates them.
         });
 
         const difference = result.difference;
@@ -333,7 +343,9 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             part_client: (client?.client_type === 'PROFESSIONNEL' && params.totals.tauxCouverture > 0)
                 ? params.totals.partPatient
                 : null,
-            type: params.isRetrocession ? 'RETRO' : 'STD'
+            type: params.isRetrocession ? 'RETRO' : 'STD',
+            // Note: We don't pass validated_by_id here because creation is technical. 
+            // The logic override happens at 'valider' step.
         };
 
         console.log("DEBUG: Creating Invoice Payload:", facturePayload);
@@ -488,7 +500,10 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
     const recordPayments = useCallback(async (
         paiementsList: PaymentDetails[],
         factureId: number,
-        reference: string
+        reference: string,
+        // Sudo params
+        validatedById?: number | null,
+        sudoPassword?: string
     ): Promise<number> => {
         let totalVerse = 0;
 
@@ -506,6 +521,12 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             }
             if (paiement.part_assurance !== null && paiement.part_assurance !== undefined) {
                 payload.part_assurance = paiement.part_assurance;
+            }
+
+            // Sudo
+            if (validatedById) {
+                payload.validated_by_id = validatedById;
+                payload.sudo_password = sudoPassword;
             }
 
             await axios.post(caisseEndpoint, payload);
@@ -686,7 +707,9 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`;
                 const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
                     use_pending_discount: params.usePendingDiscount,
-                    points_to_use: params.pointsToUse
+                    points_to_use: params.pointsToUse,
+                    validated_by_id: params.validated_by_id,
+                    sudo_password: params.sudo_password
                 });
 
                 await axios.post(caisseEndpoint, {
@@ -736,13 +759,21 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`;
             const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
                 use_pending_discount: params.usePendingDiscount,
-                points_to_use: params.pointsToUse
+                points_to_use: params.pointsToUse,
+                validated_by_id: params.validated_by_id, // Add Sudo Params
+                sudo_password: params.sudo_password       // Add Sudo Params
             });
             validatedFactureForRollback = validatedFacture;
 
             // 5. Enregistrer les paiements
             const paiementsList = buildPaymentsList(params);
-            const totalVerse = await recordPayments(paiementsList, validatedFacture.id, params.reference);
+            const totalVerse = await recordPayments(
+                paiementsList,
+                validatedFacture.id,
+                params.reference,
+                params.validated_by_id,
+                params.sudo_password
+            );
 
             // 6. Mettre à jour le statut
             await axios.patch(`${facturesEndpoint}${validatedFacture.id}/`, { status: 'PAY' });
@@ -770,10 +801,10 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 montant: finalFacture.total_ttc,
                 montant_verse: totalVerse.toString(),
                 rendu: rendu.toString(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
+                created_at: finalFacture.date || new Date().toISOString(),
+                updated_at: finalFacture.date || new Date().toISOString(),
                 statut: 'completee',
-                date_paiement: new Date().toISOString(),
+                date_paiement: finalFacture.date || new Date().toISOString(),
                 client_name: clientName,
                 paiements_details: paiementsList
             } as TicketCaisse;

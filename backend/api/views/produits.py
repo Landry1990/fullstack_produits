@@ -104,6 +104,18 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         groupe_id = self.request.query_params.get('groupe')
         if groupe_id:
             queryset = queryset.filter(groupe_id=groupe_id)
+        
+        # Recherche par ID: si le terme de recherche est un nombre, 
+        # on ajoute une recherche exacte par ID pour permettre la recherche par ID produit
+        search = self.request.query_params.get('search', '').strip()
+        if search and search.isdigit():
+            # Si la recherche est purement numérique, inclure les correspondances par ID
+            # Cela permet de trouver un produit par son ID (ex: "1234" trouve produit #1234)
+            from django.db.models import Q
+            queryset_by_id = Produit.objects.filter(id=int(search), is_active=True)
+            if queryset_by_id.exists():
+                # Combiner avec le queryset actuel en utilisant union
+                queryset = queryset | queryset_by_id.select_related('rayon', 'fournisseur', 'forme')
             
         return queryset
 

@@ -129,6 +129,10 @@ class DashboardViewSet(viewsets.ViewSet):
                 role = request.user.profile.role
         except Exception:
             pass
+        
+        # Superusers and staff always get full access
+        if request.user.is_superuser or request.user.is_staff:
+            role = 'PHARMACIEN'
             
         # Base response
         response_data = {
@@ -218,7 +222,12 @@ class DashboardViewSet(viewsets.ViewSet):
                 })
         
         # Stock Alert (Critical shortages)
-        shortages = Produit.objects.filter(stock__lte=F('stock_minimum'), is_active=True).count()
+        # Only count products that HAVE a minimum stock defined (> 0)
+        shortages = Produit.objects.filter(
+            stock__lte=F('stock_minimum'), 
+            stock_minimum__gt=0,
+            is_active=True
+        ).count()
         if shortages > 10:
             alerts.append({
                 'type': 'warning',
@@ -241,7 +250,7 @@ class DashboardViewSet(viewsets.ViewSet):
             )
         ).annotate(
             calculated_debt=F('total_billed') - F('paid_amount')
-        ).filter(calculated_debt__gt=debt_threshold).order_by('-calculated_debt')[:5]
+        ).filter(calculated_debt__gt=debt_threshold).exclude(name__icontains='DIVERS').order_by('-calculated_debt')[:5]
 
         if clients_with_debt.exists():
             count = clients_with_debt.count()
@@ -277,22 +286,31 @@ class DashboardViewSet(viewsets.ViewSet):
                 'params': {'count': dormant_count, 'days': 90}
             })
 
-        # Week over Week Performance Drop
-        last_week_start = today - timedelta(days=7 + today.weekday())
-        current_week_start = today - timedelta(days=today.weekday())
+        # Week over Week Performance Drop (Compare strictly same days so far)
+        # e.g. If today is Tuesday, compare Mon-Tue this week vs Mon-Tue last week
+        last_week_start = today - timedelta(days=7 + today.weekday()) # Last Monday
+        current_week_start = today - timedelta(days=today.weekday()) # This Monday
         
-        last_week_ca = Facture.objects.filter(
+        # Calculate how many days have passed this week (0=Mon, 1=Tue, ...)
+        days_passed = (today - current_week_start).days
+        
+        # Limit Last Week to same number of days
+        last_week_limit = last_week_start + timedelta(days=days_passed + 1)
+        
+        last_week_partial_ca = Facture.objects.filter(
             date__date__gte=last_week_start,
-            date__date__lt=current_week_start,
+            date__date__lt=last_week_limit,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         current_week_ca = Facture.objects.filter(
             date__date__gte=current_week_start,
+            date__date__lte=today, # Include today explicitly
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
-        if last_week_ca > 0 and current_week_ca < last_week_ca * Decimal('0.7'):
+        # Only alert if we have enough history to compare and significant drop
+        if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * Decimal('0.7'):
              alerts.append({
                 'type': 'warning',
                 'title_key': 'manager_dashboard.alerts.drop_title',
@@ -480,7 +498,7 @@ class DashboardViewSet(viewsets.ViewSet):
         clients = Client.objects.filter(
             client_type='PROFESSIONNEL',
             plafond__gt=0
-        )
+        ).exclude(name__icontains='DIVERS')
         
         alert_clients = []
         for client in clients:

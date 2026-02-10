@@ -736,7 +736,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
         # 1. Calculer les moyennes globales pour références
         stats_globales = base_qs.aggregate(
             avg_volume=Avg('quantity'),
-            avg_marge_taux=Avg(F('selling_price') / F('cost_price'), output_field=DecimalField())
+            avg_marge_taux=Avg(F('selling_price') / F('produit__cost_price'), output_field=DecimalField())
         )
         
         # Moyenne volume par produit (approximation simple)
@@ -750,7 +750,7 @@ class FinanceStatsViewSet(viewsets.ViewSet):
             'produit__id', 'produit__name', 'produit__cost_price', 'produit__selling_price'
         ).annotate(
             volume_total=Sum('quantity'),
-            marge_totale=Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField())
+            marge_totale=Sum((F('selling_price') - F('produit__cost_price')) * F('quantity'), output_field=DecimalField())
         )
         
         opportunites_nego = []

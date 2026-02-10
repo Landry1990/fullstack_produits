@@ -550,7 +550,7 @@ class FactureSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'client_nom', 'client_name_override', 
             'ayant_droit', 'ayant_droit_details',
-            'date', 'status', 'status_display', 'produits', 
+            'date', 'date_document', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
             'is_remise_auto', 'part_client', 'paiements', 'created_by_name'

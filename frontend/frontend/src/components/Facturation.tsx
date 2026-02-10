@@ -1546,6 +1546,7 @@ export default function Facturation() {
             setAyantDroitMatricule={setAyantDroitMatricule}
             ayantDroitSociete={ayantDroitSociete}
             setAyantDroitSociete={setAyantDroitSociete}
+            onEnter={() => searchInputRef.current?.focus()}
           />
 
           {/* Product Search */}

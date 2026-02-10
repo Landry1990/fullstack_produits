@@ -16,6 +16,8 @@
         "confirmation": "Confirmation",
         "pay": "Payer",
         "error": "Erreur",
+        "refresh": "Actualiser",
+        "restore": "Restaurer",
         "actions": {
             "confirm": "Confirmer"
         },
@@ -99,7 +101,9 @@
             "produits": "Produits",
             "fournisseurs": "Fournisseurs",
             "mensuel": "Rapport Mensuel",
-            "finances": "Module Financier"
+            "finances": "Module Financier",
+            "classement_vendeurs": "Classement Vendeurs",
+            "analyse_temporelle": "Analyse Temporelle"
         },
         "parametres": {
             "title": "Paramètres",
@@ -193,7 +197,69 @@
         "top_products": "Top Produits",
         "product": "Produit",
         "margin": "Marge",
-        "summary": "Résumé Annuel"
+        "summary": "Résumé Annuel",
+        "trend": {
+            "up": "En hausse",
+            "down": "En baisse",
+            "stable": "Stable"
+        },
+        "category_analysis": "Analyse par Catégorie",
+        "category": {
+            "rayon": "Rayon",
+            "groupe": "Groupe",
+            "forme": "Forme",
+            "total_ca": "CA Total",
+            "total_margin": "Marge Totale",
+            "global_rate": "Taux Marge Global",
+            "no_data": "Aucune donnée pour cette catégorie"
+        },
+        "margin_analysis": "Analyse Avancée et Opportunités",
+        "analysis": {
+            "opportunities": "Faible Marge / Fort Volume",
+            "negotiation": "Opportunités de négociation fournisseur",
+            "dormant": "Forte Marge / Faible Rotation",
+            "dormant_risk": "Risque de stock dormant (Argent immobilisé)",
+            "price_opt": "Optimisation Prix (+5%)",
+            "low_margin_impact": "Produits à marge très faible (Impact estimé)",
+            "gain": "Gain Pot.",
+            "current_price": "Actuel",
+            "suggested_price": "Suggéré",
+            "price": "Prix",
+            "no_opportunity": "Aucune opportunité détectée",
+            "no_dormant": "Aucun produit dormant détecté",
+            "optimized": "Prix optimisés"
+        },
+        "supplier_analysis": "Analyse Fournisseurs",
+        "supplier": {
+            "name": "Fournisseur",
+            "score": "Score Global",
+            "volume": "Volume (30%)",
+            "quality": "Qualité (30%)",
+            "regularity": "Régularité (40%)",
+            "no_data": "Aucune donnée disponible",
+            "no_data_12m": "Aucune donnée fournisseur disponible sur 12 mois"
+        },
+        "summary_stats": {
+            "total_ca_12m": "CA Total (12 mois)",
+            "vs_n1": "vs {{amount}} N-1",
+            "total_margin": "Marge Totale",
+            "avg_rate": "Taux moyen: {{rate}}%",
+            "annual_ca": "CA Annuel",
+            "sales_count": "{{count}} ventes"
+        }
+    },
+    "temporal_analysis": {
+        "title": "Analyse Temporelle",
+        "subtitle": "Analysez vos meilleures heures, jours et saisons.",
+        "peak_hours": "Heures de Pointe",
+        "daily_comparison": "Jours Rentables",
+        "seasonality": "Saisonnalité",
+        "peak_hour_title": "Pic d'affluence",
+        "peak_hour_summary": "Votre pic est à {{hour}} avec {{revenue}} F de CA moyen.",
+        "best_day_title": "Jour le plus performant",
+        "best_day_summary": "Le {{day}} est votre meilleur jour avec {{revenue}} F de CA moyen.",
+        "seasonality_title": "Tendances Saisonnières",
+        "seasonality_summary": "Analyse sur les {{months}} derniers mois. {{count}} produits saisonniers identifiés."
     },
     "users": {
         "title": "Gestion des Utilisateurs",
@@ -869,6 +935,19 @@
         }
     },
     "facturation": {
+        "pending_sales": {
+            "title": "Ventes en attente",
+            "items_count": "{{count}} article(s)"
+        },
+        "payment": {
+            "modal_title": "Paiement",
+            "sudo_mode": {
+                "validate_by": "Validé par",
+                "password": "Mot de passe (Sudo)"
+            },
+            "validate_sale": "Valider la vente",
+            "register_payment": "Enregistrer le paiement"
+        },
         "title": "Facturation",
         "sale_recorded": "Vente enregistrée",
         "invoice": "Facture",
@@ -1499,6 +1578,30 @@
                 "print": "Imprimer"
             }
         },
+        "payment_modes": {
+            "especes": "Espèces",
+            "carte": "Carte Bancaire",
+            "cheque": "Chèque",
+            "virement": "Virement",
+            "om_short": "OM",
+            "momo_short": "MoMo"
+        },
+        "payment_modal": {
+            "title": "Encaissement - Facture #{{numero}}",
+            "total": "Total à payer",
+            "coupon_label": "Coupon #{{numero}}: -{{montant}} F",
+            "part_patient": "Part Patient (Tiers Payant actif)",
+            "recorded_payments": "Paiements enregistrés",
+            "total_paid": "Total versé",
+            "balance": "Reste à payer: {{amount}} F",
+            "step1": "1. Saisissez le montant puis appuyez sur Entrée",
+            "enter_hint": "Appuyez sur Entrée après avoir saisi le montant",
+            "step2": "2. Utilisez ↑↓←→ et Entrée pour choisir le mode",
+            "modify_amount": "Modifier le montant",
+            "change": "Monnaie à rendre",
+            "validate_hint": "✓ Valider le paiement (Entrée)",
+            "balance_short": "Reste {{amount}} F"
+        },
         "payment": {
             "modal_title": "Encaissement - Facture #{{numero}}",
             "total_to_pay": "Total à payer",
@@ -1514,7 +1617,13 @@
             "modify_amount": "← Modifier le montant",
             "change_to_give": "Monnaie à rendre",
             "confirm": "✓ Valider le paiement (Entrée)",
-            "missing": "Reste {{amount}} F"
+            "missing": "Reste {{amount}} F",
+            "sudo_mode": {
+                "validate_by": "Validé par",
+                "password": "Mot de passe (Sudo)"
+            },
+            "validate_sale": "Valider la vente",
+            "register_payment": "Enregistrer le paiement"
         },
         "ticket": {
             "title": "Ticket de Caisse",
@@ -1675,6 +1784,63 @@
             "delete_confirm_title": "Supprimer la relation",
             "delete_confirm_message": "Êtes-vous sûr de vouloir supprimer cette relation de transformation ?",
             "delete_confirm_btn": "Supprimer"
+        }
+    },
+    "sellers": {
+        "ranking": {
+            "title": "Classement Vendeurs",
+            "subtitle": "Performances mensuelles et évolution",
+            "period": {
+                "month": "Mois",
+                "quarter": "Trimestre",
+                "year": "Année"
+            },
+            "table_title": "Classement Complet",
+            "seller": "Vendeur",
+            "sales": "Ventes",
+            "revenue": "CA",
+            "avg_basket": "Panier",
+            "evolution": "Évol.",
+            "no_data": "Aucune donnée pour cette période",
+            "evolution_chart": "Évolution",
+            "select_seller": "Sélectionnez un vendeur pour voir son évolution",
+            "comparison": "Comparaison CA"
+        }
+    },
+    "caisse": {
+        "title": "Caisse Centralisée",
+        "subtitle": "Gestion des encaissements",
+        "auto_refresh": "Actualisation auto",
+        "coupons_active": "Coupons actifs",
+        "pending_count": "{{count}} facture(s) en attente",
+        "table": {
+            "ticket": "Ticket",
+            "invoice": "Facture",
+            "client": "Client",
+            "date": "Date",
+            "products": "Produits",
+            "amount": "Montant",
+            "actions": "Actions",
+            "tiers_payant": "Tiers Payant",
+            "modify": "Modifier",
+            "cancel": "Annuler",
+            "apply_coupon": "Appliquer Coupon",
+            "cash_in": "Encaisser"
+        },
+        "empty": "Aucune facture en attente d'encaissement",
+        "payment": {
+            "title": "Encaissement",
+            "amount_to_pay": "Montant à payer",
+            "payment_mode": "Mode de paiement",
+            "modes": {
+                "cash": "Espèces",
+                "card": "Carte Bancaire",
+                "mobile": "Mobile Money",
+                "check": "Chèque",
+                "credit": "En Compte"
+            },
+            "confirm": "Valider le paiement",
+            "success": "Paiement enregistré"
         }
     }
 }

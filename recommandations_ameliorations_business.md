@@ -9,7 +9,7 @@ Ce document regroupe l'ensemble des propositions faites pour enrichir le module 
 - **Analyse RFM** (Récence, Fréquence, Montant) : Segmenter la base client.
 - **Taux de fidélité** : Distinguer clients récurrents vs occasionnels.
 
-### Performance Vendeurs
+### Performance Vendeurs (Implémenté ✅)
 - **CA par vendeur / par jour**.
 - **Panier moyen par vendeur**.
 - **Nombre de transactions par vendeur**.
@@ -25,7 +25,7 @@ Ce document regroupe l'ensemble des propositions faites pour enrichir le module 
 - **Jours les plus rentables** : Comparaison (ex: Lundi vs Samedi).
 - **Saisonnalité** : Identifier les produits qui varient selon la saison.
 
-### Analyse des Marges (En cours d'implémentation)
+### Analyse des Marges (En cours d'implémentation) ok
 - **Produits à faible marge mais fort volume** : Opportunités de négociation.
 - **Produits à forte marge mais faible rotation** : Risque de sur-stockage.
 - **Optimisation pricing** : Suggestions d'ajustement des prix (+5% sur marges faibles).

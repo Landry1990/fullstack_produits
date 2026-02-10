@@ -13,6 +13,7 @@ import DashboardManager from './components/DashboardManager'
 import GestionUtilisateurs from './components/GestionUtilisateurs'
 import Vitrine from './components/Vitrine'
 import Inventaire from './components/Inventaire'
+import EtatsInventaire from './components/EtatsInventaire'
 import Formes from './components/Formes'
 import Groupes from './components/Groupes'
 import Login from './components/Login'
@@ -38,6 +39,8 @@ import CentreRapports from './components/CentreRapports'
 import AnalyseABC from './components/AnalyseABC'
 import PromotionList from './components/Promotions/PromotionList';
 import ModuleFinancier from './components/ModuleFinancier';
+import ClassementVendeurs from './components/ClassementVendeurs';
+import AnalyseTemporelle from './components/AnalyseTemporelle';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -134,6 +137,7 @@ const router = createBrowserRouter([
           { path: 'avoirs', element: <Avoirs /> },
           { path: 'promis', element: <Promis /> },
           { path: 'stock-analysis', element: <StockAnalysis /> },
+          { path: 'etats-inventaire', element: <EtatsInventaire /> },
           { path: 'vitrine', element: <Vitrine /> },
           { path: 'journal-ajustements', element: <JournalAjustements /> },
           { path: 'transformations', element: <Transformations /> },
@@ -141,6 +145,8 @@ const router = createBrowserRouter([
           { path: 'centre-rapports', element: <CentreRapports /> },
           { path: 'analyse-abc', element: <AnalyseABC /> },
           { path: 'module-financier', element: <ModuleFinancier /> },
+          { path: 'classement-vendeurs', element: <ClassementVendeurs /> },
+          { path: 'analyse-temporelle', element: <AnalyseTemporelle /> },
           { path: 'promotions', element: <PromotionList /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },

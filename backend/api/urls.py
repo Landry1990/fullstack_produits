@@ -19,11 +19,13 @@ from .views.paiements import PaiementFournisseurViewSet
 from .views.coupons import CouponMonnaieViewSet
 from .views.groupes import GroupeViewSet
 from .views.auth import verify_password
+from .views.etat_inventaire import EtatInventairePDFView
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
 from .views.communication import SmsViewSet, SmsTemplateViewSet
 from .views.finance_stats import FinanceStatsViewSet
 from .views.objectifs import ObjectifViewSet
+from .views.temporal_analysis import TemporalAnalysisViewSet
 
 
 # Create a router and register our viewsets with it.
@@ -72,6 +74,7 @@ router.register(r'promis', PromisViewSet, basename='promis')
 router.register(r'promotions', PromotionViewSet, basename='promotion')
 router.register(r'finance-stats', FinanceStatsViewSet, basename='finance-stats')
 router.register(r'objectifs-commerciaux', ObjectifViewSet, basename='objectif-commercial')
+router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
 
 
 # The API URLs are now determined automatically by the router.
@@ -86,5 +89,6 @@ urlpatterns = [
     path('pharmacy-settings/', PharmacySettingsView.as_view(), name='pharmacy-settings'),
     path('products/import/', ProductImportView.as_view(), name='product-import'),
     path('generer-suggestions/', generer_suggestions_commande, name='generer-suggestions'),
+    path('produits/etat-inventaire/pdf/', EtatInventairePDFView.as_view(), name='etat-inventaire-pdf'),
     path('', include(router.urls)),
 ]
