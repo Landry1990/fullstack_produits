@@ -154,7 +154,7 @@ export default function Produit() {
 
   const handleViewDetails = (produit: ProduitModel) => {
     setSelectedProduit(produit)
-    setActiveTab('general')
+    // Note: On ne réinitialise plus l'onglet actif pour préserver la navigation utilisateur
     // Data fetching is now automatic via hooks
   }
 

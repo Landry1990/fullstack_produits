@@ -1,0 +1,76 @@
+{
+    "title": "Caisse Centralisée",
+    "subtitle": "Gestion des encaissements",
+    "auto_refresh": "Actualisation auto",
+    "coupons_active": "{{count}} coupon(s) actif(s)",
+    "coupons_applied": "{{count}} coupon(s) appliqué(s)",
+    "pending_count": "{{count}} facture(s) en attente",
+    "no_pending": "Aucune facture en attente",
+    "no_pending_desc": "Toutes les factures ont été encaissées. Prêt pour la prochaine vente.",
+    "table": {
+        "ticket": "Ticket",
+        "invoice": "Facture",
+        "client": "Client",
+        "date": "Date",
+        "products": "Produits",
+        "amount": "Montant",
+        "actions": "Actions",
+        "tiers_payant": "Tiers Payant",
+        "modify": "Modifier",
+        "cancel": "Annuler",
+        "apply_coupon": "Appliquer Coupon",
+        "cash_in": "Encaisser"
+    },
+    "ticket": {
+        "title": "Ticket de Caisse"
+    },
+    "coupons": {
+        "title": "Gestion des Coupons",
+        "search": "Rechercher...",
+        "generate": "Générer un Coupon",
+        "active": "Actifs",
+        "used": "Utilisés",
+        "empty": "Aucun coupon",
+        "apply_to_sale": "Appliquer à la vente",
+        "details_modal": {
+            "title": "Détails du Coupon",
+            "close": "Fermer",
+            "print": "Imprimer"
+        },
+        "generate_modal": {
+            "title": "Générer un Coupon",
+            "amount": "Montant",
+            "notes": "Notes (optionnel)",
+            "cancel": "Annuler",
+            "confirm": "Générer"
+        }
+    },
+    "messages": {
+        "refreshed": "Liste actualisée",
+        "invalid_amount": "Montant invalide",
+        "coupon_generated": "Coupon #{{numero}} généré avec succès !",
+        "error_generation": "Erreur lors de la génération du coupon",
+        "coupon_not_active": "Ce coupon n'est pas actif",
+        "coupon_already_applied": "Ce coupon est déjà appliqué à une autre facture",
+        "coupon_applied_to": "Coupon #{{numero}} appliqué au ticket {{ticket}}",
+        "coupon_removed": "Coupon retiré",
+        "coupon_not_found": "Coupon non trouvé",
+        "search_error": "Erreur lors de la recherche"
+    },
+    "payment": {
+        "title": "Encaissement",
+        "amount_to_pay": "Montant à payer",
+        "payment_mode": "Mode de paiement",
+        "amount_received": "Montant reçu",
+        "change": "Rendu",
+        "modes": {
+            "cash": "Espèces",
+            "card": "Carte Bancaire",
+            "mobile": "Mobile Money",
+            "check": "Chèque",
+            "credit": "En Compte"
+        },
+        "confirm": "Valider le paiement",
+        "success": "Paiement enregistré"
+    }
+}

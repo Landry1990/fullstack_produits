@@ -89,7 +89,8 @@ export default function Sidebar() {
         { path: '/app/perimes', label: t('sidebar.stock.perimes'), key: 'inventaire' },
         { path: '/app/formes', label: t('sidebar.stock.formes'), key: 'formes' },
         { path: '/app/groupes', label: t('sidebar.stock.groupes'), key: 'groupes' },
-        { path: '/app/rayons', label: t('sidebar.stock.rayons'), key: 'rayons' }
+        { path: '/app/rayons', label: t('sidebar.stock.rayons'), key: 'rayons' },
+        { path: '/app/etats-inventaire', label: 'États Inventaires', key: 'inventaire' }
       ]
     },
     { 
@@ -104,7 +105,9 @@ export default function Sidebar() {
         { path: '/app/statistiques', label: t('sidebar.statistiques.produits'), key: 'statistiques' },
         { path: '/app/statistiques-fournisseurs', label: t('sidebar.statistiques.fournisseurs'), key: 'statistiques' },
         { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques' },
-        { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques' }
+        { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques' },
+        { path: '/app/classement-vendeurs', label: t('sidebar.statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques' },
+        { path: '/app/analyse-temporelle', label: t('sidebar.statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques' }
       ]
     },
     {

@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 
 type PaymentItem = {
-    mode: string // Relaxed to match broader usage in Facturation.tsx
+    mode: string
     montant: number
     part_patient?: number | null
     part_assurance?: number | null
@@ -28,12 +29,12 @@ type PaymentModalProps = {
     modePaiement: string
     setModePaiement: (val: any) => void
     paiements: PaymentItem[]
-    setPaiements: (items: any[]) => void // Allow flexible array update
-    onCompleteSale: () => void
+    setPaiements: (items: any[]) => void
+    onCompleteSale: (validatedBy?: number, password?: string) => void
     onRegisterPayment: () => void
     selectedClient: number | null
     useManualClient: boolean
-    paymentInputRef: React.RefObject<HTMLInputElement | null> // Allow null in RefObject
+    paymentInputRef: React.RefObject<HTMLInputElement | null>
 }
 
 export default function PaymentModal({
@@ -51,21 +52,44 @@ export default function PaymentModal({
     setPaiements,
     onCompleteSale,
     onRegisterPayment,
-    selectedClient: _selectedClient,
+    selectedClient,
     useManualClient: _useManualClient,
     paymentInputRef
 }: PaymentModalProps) {
     const { t } = useTranslation()
 
+    // Sudo Mode State
+    const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
+    const [sudoPassword, setSudoPassword] = useState('');
+    const [users, setUsers] = useState<any[]>([]);
+
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
     useEffect(() => {
         if (isOpen) {
+            // Fetch users for Sudo selection
+            const fetchUsers = async () => {
+                try {
+                    const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/`);
+                    const data = response.data.results || response.data;
+                    setUsers(Array.isArray(data) ? data : []);
+                } catch (err) {
+                    console.error("Erreur chargement utilisateurs", err);
+                }
+            };
+            fetchUsers();
+            
              // Focus sur le montant après un court délai pour laisser la modale s'ouvrir
              setTimeout(() => {
                 paymentInputRef.current?.focus()
                 paymentInputRef.current?.select()
             }, 100)
+        } else {
+            // Reset Sudo state on close
+            setSelectedValidator(null);
+            setSudoPassword('');
         }
-    }, [isOpen, paymentInputRef])
+    }, [isOpen, paymentInputRef, apiBaseUrl])
 
     return (
         <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
@@ -79,7 +103,8 @@ export default function PaymentModal({
             <form onSubmit={(e) => { 
               e.preventDefault(); 
               if (isNewSale) {
-                onCompleteSale();
+                // Pass Sudo params if set
+                onCompleteSale(selectedValidator || undefined, sudoPassword || undefined);
               } else {
                 onRegisterPayment(); 
               }
@@ -290,40 +315,91 @@ export default function PaymentModal({
                 </>
               )}
 
+              {/* Sudo Mode Section */}
+              <div className="bg-base-50 p-3 rounded-lg border border-base-200 mt-4 mb-2">
+                  <div className="form-control w-full">
+                      <label className="label py-1">
+                          <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.validate_by') || 'Validé par'}</span>
+                      </label>
+                      <select 
+                          className="select select-bordered select-sm w-full"
+                          value={selectedValidator || ''}
+                          onChange={(e) => setSelectedValidator(e.target.value ? Number(e.target.value) : null)}
+                      >
+                          <option value="">(Moi-même)</option>
+                          {Array.isArray(users) && users.map(u => (
+                              <option key={u.id} value={u.id}>
+                                  {u.first_name} {u.last_name} ({u.username})
+                              </option>
+                          ))}
+                      </select>
+                  </div>
+                  
+                  {selectedValidator && (
+                      <div className="form-control w-full mt-2">
+                          <label className="label py-1">
+                              <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.password') || 'Mot de passe (Sudo)'}</span>
+                          </label>
+                          <input 
+                              type="password" 
+                              className="input input-bordered input-sm w-full"
+                              placeholder="Mot de passe du validateur..."
+                              value={sudoPassword}
+                              onChange={(e) => setSudoPassword(e.target.value)}
+                          />
+                      </div>
+                  )}
+              </div>
+
               {(() => {
                 const totalAPayer = isNewSale 
                     ? (totals.tauxCouverture > 0 
                         ? totals.partPatient 
-                        : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
+                        : Math.max(0, (totals.totalTtc || 0) - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                     : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
-                const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 ? Number(montantPaye) : 0)
+                
+                const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 && Number(montantPaye) > 0 ? Number(montantPaye) : 0)
                 const rendu = totalVerse - totalAPayer
+                
+                // Allow validation if fully paid OR if user wants to validate partial/credit (though typically we require full payment unless credit allowed)
+                // For now, enable if fully paid OR if authorized (which logic is outside).
+                // But button is disabled if `rendu < 0` usually.
+                // Actually, logic below handles it.
+                
                 return (
-                  <div className="flex flex-col gap-1">
-                      <div className="flex justify-between text-sm">
-                          <span>{t('facturation.payment.amount_paid')}:</span>
-                          <span className="font-bold">{Math.round(totalVerse)} F</span>
-                      </div>
-                      {rendu > 0 && (
-                        <div className="alert bg-success/10 text-success border-success/20 py-2 px-3 shadow-sm flex justify-between items-center">
-                            <span className="text-sm font-medium">{t('facturation.payment.change_due')}</span>
-                            <span className="text-xl font-bold">{rendu.toFixed(0)} F</span>
+                  <div className="pt-4 border-t border-base-200 mt-2">
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="text-sm">
+                            {rendu >= 0 
+                                ? <span className="text-success font-bold">Rendu monnaie: {Math.round(rendu)} F</span>
+                                : <span className="text-error font-bold">Reste à payer: {Math.round(Math.abs(rendu))} F</span>
+                            }
                         </div>
-                      )}
+                        <div className="text-xl font-bold">
+                            Total: {Math.round(totalVerse)} / {Math.round(totalAPayer)} F
+                        </div>
+                    </div>
+                    
+                    <button 
+                        type="submit" 
+                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (selectedValidator !== null && !sudoPassword)}
+                        className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
+                    >
+                        {loading ? 'Traitement...' : isNewSale ? t('facturation.payment.validate_sale') : t('facturation.payment.register_payment')}
+                    </button>
                   </div>
                 )
               })()}
-
-              <div className="pt-4 flex gap-3">
-                <button type="button" className="btn btn-ghost flex-1" onClick={onClose}>{t('facturation.payment.cancel')} (Esc)</button>
-                <button type="submit" className="btn btn-primary flex-1" disabled={loading}>
-                  {loading ? <span className="loading loading-spinner"></span> : t('facturation.payment.validate')}
-                </button>
-              </div>
             </form>
           )}
+
+          {!facturePourPaiement && !isNewSale && (
+            <div className="p-8 text-center text-base-content/50">
+                Aucune facture sélectionnée.
+            </div>
+          )}
         </div>
-        <form method="dialog" className="modal-backdrop" onClick={onClose}><button>close</button></form>
-      </dialog>
+        </dialog>
     )
 }
+

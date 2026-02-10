@@ -101,11 +101,11 @@ export default function ModuleFinancier() {
   const getTrendInfo = (tendance: string) => {
     switch (tendance) {
       case 'hausse':
-        return { icon: '📈', color: 'text-green-500', label: 'En hausse' };
+        return { icon: '📈', color: 'text-green-500', label: t('finance.trend.up', 'En hausse') };
       case 'baisse':
-        return { icon: '📉', color: 'text-red-500', label: 'En baisse' };
+        return { icon: '📉', color: 'text-red-500', label: t('finance.trend.down', 'En baisse') };
       default:
-        return { icon: '➡️', color: 'text-yellow-500', label: 'Stable' };
+        return { icon: '➡️', color: 'text-yellow-500', label: t('finance.trend.stable', 'Stable') };
     }
   };
 
@@ -262,7 +262,7 @@ export default function ModuleFinancier() {
                     <Area 
                       type="monotone" 
                       dataKey="current" 
-                      name="CA Actuel" 
+                      name={t('finance.charts.current_revenue', 'CA Actuel')}
                       stroke="#10B981" 
                       fillOpacity={1} 
                       fill="url(#colorCurrent)" 
@@ -271,7 +271,7 @@ export default function ModuleFinancier() {
                     <Line 
                       type="monotone" 
                       dataKey="n1" 
-                      name="CA N-1" 
+                      name={t('finance.charts.n1_revenue', 'CA N-1')}
                       stroke="#6B7280" 
                       strokeDasharray="5 5" 
                       dot={false}
@@ -310,8 +310,8 @@ export default function ModuleFinancier() {
                       name === 'taux' ? `${value}%` : formatMoneyFull(value)
                     } />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="marge" name="Marge Brute" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                    <Line yAxisId="right" type="monotone" dataKey="taux" name="Taux %" stroke="#F59E0B" strokeWidth={2} />
+                    <Bar yAxisId="left" dataKey="marge" name={t('finance.margin', 'Marge Brute')} fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                    <Line yAxisId="right" type="monotone" dataKey="taux" name={t('finance.margin_rate', 'Taux %')} stroke="#F59E0B" strokeWidth={2} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -354,7 +354,7 @@ export default function ModuleFinancier() {
                     <Line 
                       type="monotone" 
                       dataKey="historique" 
-                      name="Historique" 
+                      name={t('finance.charts.history', 'Historique')}
                       stroke="#10B981" 
                       strokeWidth={2}
                       dot={{ fill: '#10B981' }}
@@ -363,7 +363,7 @@ export default function ModuleFinancier() {
                     <Line 
                       type="monotone" 
                       dataKey="prediction" 
-                      name="Prédiction" 
+                      name={t('finance.charts.prediction', 'Prédiction')}
                       stroke="#8B5CF6" 
                       strokeWidth={2}
                       strokeDasharray="5 5"
@@ -425,7 +425,7 @@ export default function ModuleFinancier() {
               </ResponsiveContainer>
             ) : (
               <div className="h-64 flex items-center justify-center text-base-content/50">
-                Aucune donnée
+                {t('common.no_data', 'Aucune donnée')}
               </div>
             )}
           </div>
@@ -480,7 +480,7 @@ export default function ModuleFinancier() {
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center text-base-content/50">
-                Aucune donnée
+                {t('common.no_data', 'Aucune donnée')}
               </div>
             )}
           </div>
@@ -500,19 +500,19 @@ export default function ModuleFinancier() {
                   className={`btn btn-sm ${categoryType === 'rayon' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => setCategoryType('rayon')}
                 >
-                  Rayon
+                  {t('finance.category.rayon', 'Rayon')}
                 </button>
                 <button
                   className={`btn btn-sm ${categoryType === 'groupe' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => setCategoryType('groupe')}
                 >
-                  Groupe
+                  {t('finance.category.groupe', 'Groupe')}
                 </button>
                 <button
                   className={`btn btn-sm ${categoryType === 'forme' ? 'btn-primary' : 'btn-ghost'}`}
                   onClick={() => setCategoryType('forme')}
                 >
-                  Forme
+                  {t('finance.category.forme', 'Forme')}
                 </button>
               </div>
             </div>
@@ -548,10 +548,10 @@ export default function ModuleFinancier() {
                 <table className="table table-sm table-zebra">
                   <thead className="sticky top-0 bg-base-100">
                     <tr>
-                      <th>{categoryType === 'rayon' ? 'Rayon' : categoryType === 'groupe' ? 'Groupe' : 'Forme'}</th>
+                      <th>{categoryType === 'rayon' ? t('finance.category.rayon', 'Rayon') : categoryType === 'groupe' ? t('finance.category.groupe', 'Groupe') : t('finance.category.forme', 'Forme')}</th>
                       <th className="text-right">CA</th>
-                      <th className="text-right">Marge</th>
-                      <th className="text-right">Taux</th>
+                      <th className="text-right">{t('finance.margin', 'Marge')}</th>
+                      <th className="text-right">{t('finance.margin_rate', 'Taux')}</th>
                       <th className="text-right">%</th>
                     </tr>
                   </thead>
@@ -575,7 +575,7 @@ export default function ModuleFinancier() {
             </div>
           ) : (
             <div className="h-64 flex items-center justify-center text-base-content/50">
-              Aucune donnée pour cette catégorie
+              {t('finance.category.no_data', 'Aucune donnée pour cette catégorie')}
             </div>
           )}
           
@@ -583,15 +583,15 @@ export default function ModuleFinancier() {
           {categoryAnalysis && (
             <div className="mt-4 flex gap-4 flex-wrap">
               <div className="stat bg-base-200 rounded-lg p-3">
-                <div className="stat-title text-xs">CA Total</div>
+                <div className="stat-title text-xs">{t('finance.category.total_ca', 'CA Total')}</div>
                 <div className="stat-value text-lg text-primary">{formatMoneyFull(categoryAnalysis.total_ca)}</div>
               </div>
               <div className="stat bg-base-200 rounded-lg p-3">
-                <div className="stat-title text-xs">Marge Totale</div>
+                <div className="stat-title text-xs">{t('finance.category.total_margin', 'Marge Totale')}</div>
                 <div className="stat-value text-lg text-success">{formatMoneyFull(categoryAnalysis.total_marge)}</div>
               </div>
               <div className="stat bg-base-200 rounded-lg p-3">
-                <div className="stat-title text-xs">Taux Marge Global</div>
+                <div className="stat-title text-xs">{t('finance.category.global_rate', 'Taux Marge Global')}</div>
                 <div className="stat-value text-lg">{categoryAnalysis.taux_marge_global}%</div>
               </div>
             </div>
@@ -620,19 +620,19 @@ export default function ModuleFinancier() {
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm flex items-center gap-2">
                     <span className="text-warning">⚠️</span>
-                    Faible Marge / Fort Volume
+                    {t('finance.analysis.opportunities', 'Faible Marge / Fort Volume')}
                   </h4>
                   <p className="text-xs opacity-70 mb-2">
-                    Opportunités de négociation fournisseur
+                    {t('finance.analysis.negotiation', 'Opportunités de négociation fournisseur')}
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
                     <table className="table table-xs">
                       <thead>
                         <tr>
-                          <th>Produit</th>
-                          <th className="text-right">Marge</th>
-                          <th className="text-right">Gain Pot.</th>
+                          <th>{t('finance.product', 'Produit')}</th>
+                          <th className="text-right">{t('finance.margin', 'Marge')}</th>
+                          <th className="text-right">{t('finance.analysis.gain', 'Gain Pot.')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -651,7 +651,7 @@ export default function ModuleFinancier() {
                             </tr>
                           ))
                         ) : (
-                          <tr><td colSpan={3} className="text-center opacity-50">Aucune opportunité détectée</td></tr>
+                          <tr><td colSpan={3} className="text-center opacity-50">{t('finance.analysis.no_opportunity', 'Aucune opportunité détectée')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -664,19 +664,19 @@ export default function ModuleFinancier() {
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm flex items-center gap-2">
                     <span className="text-error">🛑</span>
-                    Forte Marge / Faible Rotation
+                    {t('finance.analysis.dormant', 'Forte Marge / Faible Rotation')}
                   </h4>
                   <p className="text-xs opacity-70 mb-2">
-                    Risque de stock dormant (Argent immobilisé)
+                    {t('finance.analysis.dormant_risk', 'Risque de stock dormant (Argent immobilisé)')}
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
                     <table className="table table-xs">
                       <thead>
                         <tr>
-                          <th>Produit</th>
-                          <th className="text-right">Marge</th>
-                          <th className="text-right">Prix</th>
+                          <th>{t('finance.product', 'Produit')}</th>
+                          <th className="text-right">{t('finance.margin', 'Marge')}</th>
+                          <th className="text-right">{t('finance.analysis.price', 'Prix')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -695,7 +695,7 @@ export default function ModuleFinancier() {
                             </tr>
                           ))
                         ) : (
-                          <tr><td colSpan={3} className="text-center opacity-50">Aucun produit dormant détecté</td></tr>
+                          <tr><td colSpan={3} className="text-center opacity-50">{t('finance.analysis.no_dormant', 'Aucun produit dormant détecté')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -708,19 +708,19 @@ export default function ModuleFinancier() {
                 <div className="card-body p-4">
                   <h4 className="card-title text-sm flex items-center gap-2">
                     <span className="text-success">💡</span>
-                    Optimisation Prix (+5%)
+                    {t('finance.analysis.price_opt', 'Optimisation Prix (+5%)')}
                   </h4>
                   <p className="text-xs opacity-70 mb-2">
-                    Produits à marge très faible (Impact estimé)
+                    {t('finance.analysis.low_margin_impact', 'Produits à marge très faible (Impact estimé)')}
                   </p>
                   
                   <div className="overflow-x-auto max-h-60">
                     <table className="table table-xs">
                       <thead>
                         <tr>
-                          <th>Produit</th>
-                          <th className="text-right">Actuel</th>
-                          <th className="text-right">Suggéré</th>
+                          <th>{t('finance.product', 'Produit')}</th>
+                          <th className="text-right">{t('finance.analysis.current_price', 'Actuel')}</th>
+                          <th className="text-right">{t('finance.analysis.suggested_price', 'Suggéré')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -739,7 +739,7 @@ export default function ModuleFinancier() {
                             </tr>
                           ))
                         ) : (
-                          <tr><td colSpan={3} className="text-center opacity-50">Prix optimisés</td></tr>
+                          <tr><td colSpan={3} className="text-center opacity-50">{t('finance.analysis.optimized', 'Prix optimisés')}</td></tr>
                         )}
                       </tbody>
                     </table>
@@ -750,7 +750,7 @@ export default function ModuleFinancier() {
             </div>
           ) : (
             <div className="h-48 flex items-center justify-center text-base-content/50">
-              Aucune donnée disponible
+              {t('common.no_data', 'Aucune donnée disponible')}
             </div>
           )}
         </div>
@@ -775,11 +775,11 @@ export default function ModuleFinancier() {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Fournisseur</th>
-                    <th className="text-center">Score Global</th>
-                    <th className="text-center">Volume (30%)</th>
-                    <th className="text-center">Qualité (30%)</th>
-                    <th className="text-center">Régularité (40%)</th>
+                    <th>{t('finance.supplier.name', 'Fournisseur')}</th>
+                    <th className="text-center">{t('finance.supplier.score', 'Score Global')}</th>
+                    <th className="text-center">{t('finance.supplier.volume', 'Volume (30%)')}</th>
+                    <th className="text-center">{t('finance.supplier.quality', 'Qualité (30%)')}</th>
+                    <th className="text-center">{t('finance.supplier.regularity', 'Régularité (40%)')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -821,7 +821,7 @@ export default function ModuleFinancier() {
             </div>
           ) : (
              <div className="h-48 flex items-center justify-center text-base-content/50">
-              Aucune donnée fournisseur disponible sur 12 mois
+              {t('finance.supplier.no_data_12m', 'Aucune donnée fournisseur disponible sur 12 mois')}
             </div>
           )}
         </div>
@@ -836,22 +836,22 @@ export default function ModuleFinancier() {
             </h3>
             <div className="stats stats-vertical lg:stats-horizontal w-full">
               <div className="stat">
-                <div className="stat-title">CA Total (12 mois)</div>
+                <div className="stat-title">{t('finance.summary_stats.total_ca_12m', 'CA Total (12 mois)')}</div>
                 <div className="stat-value text-primary">{formatMoneyFull(caEvolution.total_current)}</div>
-                <div className="stat-desc">vs {formatMoneyFull(caEvolution.total_n1)} N-1</div>
+                <div className="stat-desc">{t('finance.summary_stats.vs_n1', { amount: formatMoneyFull(caEvolution.total_n1) })}</div>
               </div>
               {margesData && (
                 <div className="stat">
-                  <div className="stat-title">Marge Totale</div>
+                  <div className="stat-title">{t('finance.summary_stats.total_margin', 'Marge Totale')}</div>
                   <div className="stat-value text-success">{formatMoneyFull(margesData.total_marge)}</div>
-                  <div className="stat-desc">Taux moyen: {margesData.taux_moyen}%</div>
+                  <div className="stat-desc">{t('finance.summary_stats.avg_rate', { rate: margesData.taux_moyen })}</div>
                 </div>
               )}
               {kpis && (
                 <div className="stat">
-                  <div className="stat-title">CA Annuel</div>
+                  <div className="stat-title">{t('finance.summary_stats.annual_ca', 'CA Annuel')}</div>
                   <div className="stat-value">{formatMoneyFull(kpis.ca_annee)}</div>
-                  <div className="stat-desc">{kpis.nb_ventes_annee} ventes</div>
+                  <div className="stat-desc">{t('finance.summary_stats.sales_count', { count: kpis.nb_ventes_annee })}</div>
                 </div>
               )}
             </div>

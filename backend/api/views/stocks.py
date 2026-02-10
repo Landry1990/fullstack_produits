@@ -440,6 +440,20 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 produit.save(update_fields=['use_lot_management'])
             
             produit.calculate_stock_from_lots()
+            
+            # Créer un enregistrement StockAdjustment pour le journal des ajustements
+            ecart = ligne.quantite_physique - ligne.stock_theorique
+            if ecart != 0:
+                StockAdjustment.objects.create(
+                    produit=produit,
+                    stock_lot=target_lot,
+                    user=validator,
+                    quantity_before=ligne.stock_theorique,
+                    quantity_after=ligne.quantite_physique,
+                    quantity_change=ecart,
+                    reason_type='INVENTAIRE',
+                    reason_detail=f"Inventaire #{inventaire.id} - {inventaire.description or 'Sans description'}"
+                )
              
         inventaire.status = Inventaire.Status.VALIDEE
         inventaire.save()

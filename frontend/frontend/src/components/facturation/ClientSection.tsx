@@ -21,6 +21,7 @@ interface ClientSectionProps {
   setShowClientDropdown: (v: boolean) => void
   
   onOpenCreateClient: (initialName: string) => void
+  onEnter?: () => void
   
   // Ayant Droit
   ayantsDroitList: AyantDroit[]
@@ -52,6 +53,7 @@ export default function ClientSection({
   showClientDropdown,
   setShowClientDropdown,
   onOpenCreateClient,
+  onEnter,
   ayantsDroitList,
   selectedAyantDroit,
   setSelectedAyantDroit,
@@ -82,7 +84,14 @@ export default function ClientSection({
   }, [setShowClientDropdown])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showClientDropdown) return
+    if (!showClientDropdown) {
+        // If dropdown is closed and Enter is pressed, trigger global enter if exists
+        if (e.key === 'Enter') {
+            e.preventDefault()
+            onEnter?.()
+        }
+        return
+    }
     
     switch (e.key) {
       case 'ArrowDown':
@@ -103,10 +112,22 @@ export default function ClientSection({
           setClientSearch('')
           setShowClientDropdown(false)
           setHighlightedClientIndex(-1)
+          // Trigger callbacks after state updates/rendering probably settled? 
+          // React state updates are batched, so calling focus immediately is fine usually.
+          setTimeout(() => onEnter?.(), 0)
         } else if (filteredClients.length === 0 && clientSearch) {
           // Ouvrir modal création si aucun résultat
           onOpenCreateClient(clientSearch)
           setShowClientDropdown(false)
+        } else {
+             // Just Enter pressed with text entered but no highlight? Try finding exact match or just move focus?
+             // If manual entry was allowed via search, we'd handle it. 
+             // Here we assume search selects existing clients.
+             // If we want to just move focus if something is selected or just typed?
+             // Let's assume selection is primary.
+             if (selectedClient) {
+                 onEnter?.()
+             }
         }
         break
       case 'Escape':
@@ -142,6 +163,12 @@ export default function ClientSection({
           type="text"
           value={manualClientName}
           onChange={(e) => setManualClientName(e.target.value)}
+          onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                  e.preventDefault()
+                  onEnter?.()
+              }
+          }}
           placeholder={t('facturation.client.manual_placeholder')}
           className="input input-bordered w-full input-sm bg-base-50 focus:bg-white transition-colors"
         />

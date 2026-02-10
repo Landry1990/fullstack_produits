@@ -19,7 +19,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onConfirm,
   loading
 }) => {
-  const { t } = useTranslation('caisse')
+  const { t } = useTranslation()
   const [montantPaye, setMontantPaye] = useState('')
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
   const [paymentStep, setPaymentStep] = useState<'amount' | 'mode'>('amount')
@@ -69,7 +69,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   if (!isOpen) return null
 
-  const modalTitle = t('payment_modal.title', { numero: facture.numero_facture })
+  const modalTitle = t('caisse.payment_modal.title', { numero: facture.numero_facture })
   
   const amountToPayInitial = (facture.part_client !== null && Number(facture.part_client) >= 0)
     ? Number(facture.part_client)
@@ -86,12 +86,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Payment modes data
   const paymentModes = [
-    { value: 'especes', label: `💵 ${t('payment_modes.especes')}`, key: '1' },
-    { value: 'carte', label: `💳 ${t('payment_modes.carte')}`, key: '2' },
-    { value: 'cheque', label: `📝 ${t('payment_modes.cheque')}`, key: '3' },
-    { value: 'virement', label: `🏦 ${t('payment_modes.virement')}`, key: '4' },
-    { value: 'om', label: `🟠 ${t('payment_modes.om_short') || 'OM'}`, key: '5' },
-    { value: 'momo', label: `🟡 ${t('payment_modes.momo_short') || 'MoMo'}`, key: '6' },
+    { value: 'especes', label: `💵 ${t('caisse.payment_modes.especes')}`, key: '1' },
+    { value: 'carte', label: `💳 ${t('caisse.payment_modes.carte')}`, key: '2' },
+    { value: 'cheque', label: `📝 ${t('caisse.payment_modes.cheque')}`, key: '3' },
+    { value: 'virement', label: `🏦 ${t('caisse.payment_modes.virement')}`, key: '4' },
+    { value: 'om', label: `🟠 ${t('caisse.payment_modes.om_short') || 'OM'}`, key: '5' },
+    { value: 'momo', label: `🟡 ${t('caisse.payment_modes.momo_short') || 'MoMo'}`, key: '6' },
   ]
 
   const selectMode = (modeValue: string) => {
@@ -126,22 +126,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <h3 className="font-bold text-lg mb-4">{modalTitle}</h3>
 
         <div className="text-center mb-6">
-          <div className="text-sm text-base-content/60">{t('payment_modal.total')}</div>
+          <div className="text-sm text-base-content/60">{t('caisse.payment_modal.total')}</div>
           <div className="text-4xl font-bold text-primary">{montantAffiche} F</div>
           {coupon && (
             <div className="badge badge-success mt-2 gap-1">
-              <span>{t('payment_modal.coupon_label', { numero: coupon.numero, montant: coupon.montant })}</span>
+              <span>{t('caisse.payment_modal.coupon_label', { numero: coupon.numero, montant: coupon.montant })}</span>
             </div>
           )}
           {(facture.part_client !== null && Number(facture.part_client) >= 0) && (
-             <div className="badge badge-info mt-2">{t('payment_modal.part_patient')}</div>
+             <div className="badge badge-info mt-2">{t('caisse.payment_modal.part_patient')}</div>
           )}
         </div>
 
         {/* Liste des paiements ajoutés */}
         {paiements.length > 0 && (
           <div className="bg-base-200 rounded-lg p-3 mb-4">
-            <div className="text-xs font-bold mb-2">{t('payment_modal.recorded_payments')}:</div>
+            <div className="text-xs font-bold mb-2">{t('caisse.payment_modal.recorded_payments')}:</div>
             {paiements.map((p, idx) => (
               <div key={idx} className="flex justify-between items-center bg-white p-2 rounded mb-1">
                 <span className="text-sm">
@@ -165,7 +165,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
             ))}
             <div className="text-right text-xs mt-2 pt-2 border-t">
-              {t('payment_modal.total_paid')}: <span className="font-bold">{totalVerse} F</span>
+              {t('caisse.payment_modal.total_paid')}: <span className="font-bold">{totalVerse} F</span>
             </div>
           </div>
         )}
@@ -173,7 +173,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Reste à payer */}
         {resteAPayer > 0 && (
           <div className="alert alert-warning mb-4 py-2">
-            <span className="font-bold">{t('payment_modal.balance', { amount: resteAPayer })}</span>
+            <span className="font-bold">{t('caisse.payment_modal.balance', { amount: resteAPayer })}</span>
           </div>
         )}
 
@@ -181,7 +181,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {paymentStep === 'amount' && (
           <div className="form-control w-full mb-4">
             <label className="label">
-              <span className="label-text font-bold">{t('payment_modal.step1')}</span>
+              <span className="label-text font-bold">{t('caisse.payment_modal.step1')}</span>
             </label>
             <input
               ref={montantInputRef}
@@ -199,7 +199,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               autoFocus
             />
             <label className="label">
-              <span className="label-text-alt text-base-content/60">{t('payment_modal.enter_hint')}</span>
+              <span className="label-text-alt text-base-content/60">{t('caisse.payment_modal.enter_hint')}</span>
             </label>
           </div>
         )}
@@ -208,10 +208,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {paymentStep === 'mode' && (
           <div className="mb-4">
             <div className="text-sm text-base-content/70 mb-2 text-center">
-              {t('table.amount')}: <span className="font-bold text-lg text-primary">{montantSaisi} F</span>
+              {t('caisse.table.amount')}: <span className="font-bold text-lg text-primary">{montantSaisi} F</span>
             </div>
             <label className="label">
-              <span className="label-text font-bold">{t('payment_modal.step2')}</span>
+              <span className="label-text font-bold">{t('caisse.payment_modal.step2')}</span>
             </label>
             
             <div 
@@ -278,7 +278,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               }}
               className="btn btn-ghost btn-sm w-full mt-2"
             >
-              ← {t('payment_modal.modify_amount')}
+              ← {t('caisse.payment_modal.modify_amount')}
             </button>
           </div>
         )}
@@ -290,7 +290,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <div className="text-sm">{t('payment_modal.change')}</div>
+              <div className="text-sm">{t('caisse.payment_modal.change')}</div>
               <div className="text-xl font-bold">{(totalAvecCourant - montantAffiche).toFixed(0)} F</div>
             </div>
           </div>
@@ -307,7 +307,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             className="btn btn-ghost"
             disabled={loading}
           >
-            {t('table.cancel')}
+            {t('caisse.table.cancel')}
           </button>
           <button
             onClick={handleConfirm}
@@ -322,7 +322,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             }}
           >
             {loading ? <span className="loading loading-spinner"></span> : (
-              peutValider ? t('payment_modal.validate_hint') : t('payment_modal.balance_short', { amount: resteAPayer })
+              peutValider ? t('caisse.payment_modal.validate_hint') : t('caisse.payment_modal.balance_short', { amount: resteAPayer })
             )}
           </button>
         </div>

@@ -225,6 +225,37 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'detail': f'Impossible de valider une facture avec le statut {facture.get_status_display()}.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        payment_user = request.user
+
+        # --- MODE SUDO / VALIDATION TIERS ---
+        validated_by_id = request.data.get('validated_by_id')
+        sudo_password = request.data.get('sudo_password')
+        
+        if validated_by_id:
+            # We are verifying if the current user (or the requested validator) has rights?
+            # Actually, simply verify if the REQUESTED validator credentials are correct.
+            # We don't need to check if *request.user* is admin, because the security comes from KNOWING the password of the target user.
+            
+            try:
+                from django.contrib.auth.models import User
+                validator_user = User.objects.get(id=validated_by_id)
+            except User.DoesNotExist:
+                return Response({'detail': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not sudo_password:
+                return Response({'detail': 'Mot de passe requis pour la validation par un tiers.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Verify Password
+            if not validator_user.check_password(sudo_password):
+                return Response({'detail': 'Mot de passe incorrect pour l\'utilisateur sélectionné.'}, status=status.HTTP_403_FORBIDDEN)
+            
+            # Update created_by to the validator (Transfer ownership/responsibility)
+            facture.created_by = validator_user
+            payment_user = validator_user
+            # We will save this change later when saving the invoice status
+        
+        # --- FIN MODE SUDO ---
+
         # Récupérer les lignes de facture
         items = FactureProduit.objects.filter(facture=facture)
         
@@ -259,7 +290,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             produit = product_map.get(item.produit_id)
             if not produit:
                 continue 
-
+            
             try:
                 qty = Decimal(str(item.quantity))
                 stock = Decimal(str(produit.stock))
@@ -435,7 +466,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         mode_paiement='en_compte',
                         montant=part_assurance,
                         statut='completee',
-                        user=request.user,
+                        user=payment_user,
                         part_assurance=part_assurance,
                         part_patient=Decimal('0.00')
                     )
@@ -451,7 +482,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     mode_paiement=mode_paiement,
                     montant=facture.total_ttc,
                     statut='completee',
-                    user=request.user
+                    user=payment_user
                 )
 
         facture.refresh_from_db()
@@ -839,7 +870,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             Paragraph(company_address_fmt, style_normal)
         ]
         
-        invoice_date = facture.date.strftime('%d/%m/%Y à %H:%M')
+        invoice_date = (facture.date_document or facture.date).strftime('%d/%m/%Y à %H:%M')
         client_name = facture.client_name_override or (facture.client.name if facture.client else "Client de passage")
         
         invoice_details_text = f"""
@@ -1104,7 +1135,24 @@ class CaisseViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        user = self.request.user
+        
+        # Gestion Sudo Mode
+        validated_by_id = self.request.data.get('validated_by_id')
+        sudo_password = self.request.data.get('sudo_password')
+        
+        if validated_by_id:
+            try:
+                from django.contrib.auth.models import User
+                validator_user = User.objects.get(id=validated_by_id)
+                if sudo_password and validator_user.check_password(sudo_password):
+                    user = validator_user
+            except Exception as e:
+                # En cas d'erreur ou mot de passe incorrect, on garde l'utilisateur connecté
+                # (Ou on pourrait lever une erreur, mais ici on sécurise le flux)
+                pass
+
+        serializer.save(user=user)
 
     @action(detail=False, methods=['get'])
     def get_totals(self, request):
@@ -1684,6 +1732,71 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'releve_reference': releve.reference,
             'total_amount': str(total_paid_bulk)
         })
+
+
+    @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
+    def vider(self, request):
+        """
+        Supprime tout le contenu de la facture.
+        """
+        facture_id = request.data.get('facture')
+        if not facture_id:
+             return Response({'detail': 'ID facture requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        FactureProduit.objects.filter(facture_id=facture_id).delete()
+        
+        # Mettre à jour les totaux de la facture
+        try:
+            facture = Facture.objects.get(id=facture_id)
+            facture.calculate_totals()
+            facture.save()
+        except Facture.DoesNotExist:
+            pass
+
+        return Response({'detail': 'Contenu de la facture vidé.'})
+
+
+class CaisseViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint pour gérer les mouvements de caisse liés aux ventes.
+    """
+    queryset = Caisse.objects.all().order_by('-date_paiement')
+    serializer_class = CaisseSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    
+    filterset_fields = ['facture', 'mode_paiement', 'statut']
+    search_fields = ['reference', 'facture__numero_facture', 'facture__client__name'] 
+
+    def perform_create(self, serializer):
+        # Sudo Mode Logic
+        validated_by_id = self.request.data.get('validated_by_id')
+        sudo_password = self.request.data.get('sudo_password')
+        user = self.request.user
+
+        if validated_by_id:
+             from django.contrib.auth.models import User
+             try:
+                 validator_user = User.objects.get(id=validated_by_id)
+                 if sudo_password and validator_user.check_password(sudo_password):
+                      user = validator_user
+             except User.DoesNotExist:
+                 pass # Fallback to request.user if invalid (should be caught by frontend val)
+        
+        serializer.save(user=user)
+        
+        # Mise à jour du statut de la facture si tout est payé
+        instance = serializer.instance
+        if instance.facture:
+            facture = instance.facture
+            total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(Sum('montant'))['montant__sum'] or 0
+            
+            # Note: total_ttc est Decimal, total_paye est Decimal
+            # On utilise une petite marge d'erreur pour les flottants si nécessaire, mais Decimal est précis
+            if total_paye >= facture.total_ttc:
+                 if facture.status != Facture.Status.PAYEE:
+                     facture.status = Facture.Status.PAYEE
+                     facture.save()
 
 
 class MouvementCaisseViewSet(viewsets.ModelViewSet):

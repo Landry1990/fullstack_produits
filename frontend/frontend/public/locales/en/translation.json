@@ -16,6 +16,8 @@
         "confirmation": "Confirmation",
         "pay": "Pay",
         "error": "Error",
+        "refresh": "Refresh",
+        "restore": "Restore",
         "actions": {
             "confirm": "Confirm"
         },
@@ -102,7 +104,6 @@
             "promotions": "Promotions",
             "caisse_centralisee": "Centralized Register"
         },
-        "facturation": "Billing",
         "produits": "Products",
         "vitrine": "Web Storefront",
         "commandes": {
@@ -140,7 +141,8 @@
             "produits": "Products",
             "fournisseurs": "Suppliers",
             "mensuel": "Monthly Report",
-            "finances": "Financial Module"
+            "finances": "Financial Module",
+            "classement_vendeurs": "Seller Ranking"
         },
         "parametres": {
             "title": "Settings",
@@ -188,7 +190,56 @@
         "top_products": "Top Products",
         "product": "Product",
         "margin": "Margin",
-        "summary": "Annual Summary"
+        "summary": "Annual Summary",
+        "trend": {
+            "up": "Upward",
+            "down": "Downward",
+            "stable": "Stable"
+        },
+        "category_analysis": "Category Analysis",
+        "category": {
+            "rayon": "Department",
+            "groupe": "Group",
+            "forme": "Form",
+            "total_ca": "Total Revenue",
+            "total_margin": "Total Margin",
+            "global_rate": "Global Margin Rate",
+            "no_data": "No data for this category"
+        },
+        "margin_analysis": "Advanced Analysis & Opportunities",
+        "analysis": {
+            "opportunities": "Low Margin / High Volume",
+            "negotiation": "Supplier negotiation opportunities",
+            "dormant": "High Margin / Low Rotation",
+            "dormant_risk": "Dormant stock risk (Tied capital)",
+            "price_opt": "Price Optimization (+5%)",
+            "low_margin_impact": "Very low margin products (Estimated impact)",
+            "gain": "Pot. Gain",
+            "current_price": "Current",
+            "suggested_price": "Suggested",
+            "price": "Price",
+            "no_opportunity": "No opportunity detected",
+            "no_dormant": "No dormant stock detected",
+            "optimized": "Optimized prices"
+        },
+        "supplier_analysis": "Supplier Analysis",
+        "supplier": {
+            "name": "Supplier",
+            "score": "Global Score",
+            "volume": "Volume (30%)",
+            "quality": "Quality (30%)",
+            "regularity": "Reliability (40%)",
+            "no_data": "No data available",
+            "no_data_12m": "No supplier data available for 12 months"
+        },
+        "summary_stats": {
+            "total_ca_12m": "Total Revenue (12 months)",
+            "vs_n1": "vs {{amount}} Y-1",
+            "total_margin": "Total Margin",
+            "avg_rate": "Avg Rate: {{rate}}%",
+            "annual_ca": "Annual Revenue",
+            "sales_count": "{{count}} sales"
+        }
     },
     "users": {
         "title": "User Management",
@@ -878,6 +929,19 @@
         }
     },
     "facturation": {
+        "pending_sales": {
+            "title": "Pending Sales",
+            "items_count": "{{count}} item(s)"
+        },
+        "payment": {
+            "modal_title": "Payment",
+            "sudo_mode": {
+                "validate_by": "Validated by",
+                "password": "Password (Sudo)"
+            },
+            "validate_sale": "Validate Sale",
+            "register_payment": "Register Payment"
+        },
         "title": "Billing",
         "subtitle": "Invoice Creation",
         "search_placeholder": "Scan barcode or search product (Name, CIP...)",
@@ -1449,6 +1513,30 @@
                 "print": "Print"
             }
         },
+        "payment_modes": {
+            "especes": "Cash",
+            "carte": "Credit Card",
+            "cheque": "Check",
+            "virement": "Transfer",
+            "om_short": "OM",
+            "momo_short": "MoMo"
+        },
+        "payment_modal": {
+            "title": "Cashing In - Invoice #{{numero}}",
+            "total": "Total to pay",
+            "coupon_label": "Coupon #{{numero}}: -{{montant}} F",
+            "part_patient": "Patient Portion (Third-Party Payer active)",
+            "recorded_payments": "Recorded payments",
+            "total_paid": "Total paid",
+            "balance": "Remaining to pay: {{amount}} F",
+            "step1": "1. Enter amount then press Enter",
+            "enter_hint": "Press Enter after entering the amount",
+            "step2": "2. Use ↑↓←→ and Enter to choose mode",
+            "modify_amount": "Modify amount",
+            "change": "Change to give",
+            "validate_hint": "✓ Validate payment (Enter)",
+            "balance_short": "Remaining {{amount}} F"
+        },
         "payment": {
             "modal_title": "Cashing In - Invoice #{{numero}}",
             "total_to_pay": "Total to pay",
@@ -1464,7 +1552,13 @@
             "modify_amount": "← Modify amount",
             "change_to_give": "Change to give",
             "confirm": "✓ Validate payment (Enter)",
-            "missing": "Remaining {{amount}} F"
+            "missing": "Remaining {{amount}} F",
+            "sudo_mode": {
+                "validate_by": "Validated by",
+                "password": "Password (Sudo)"
+            },
+            "validate_sale": "Validate Sale",
+            "register_payment": "Register Payment"
         },
         "ticket": {
             "title": "Cash Receipt",
@@ -1625,6 +1719,63 @@
             "delete_confirm_title": "Delete Relation",
             "delete_confirm_message": "Are you sure you want to delete this transformation relation?",
             "delete_confirm_btn": "Delete"
+        }
+    },
+    "sellers": {
+        "ranking": {
+            "title": "Seller Ranking",
+            "subtitle": "Monthly performance and trends",
+            "period": {
+                "month": "Month",
+                "quarter": "Quarter",
+                "year": "Year"
+            },
+            "table_title": "Full Ranking",
+            "seller": "Seller",
+            "sales": "Sales",
+            "revenue": "Revenue",
+            "avg_basket": "Avg Basket",
+            "evolution": "Trend",
+            "no_data": "No data for this period",
+            "evolution_chart": "Trend",
+            "select_seller": "Select a seller to view trend",
+            "comparison": "Revenue Comparison"
+        }
+    },
+    "caisse": {
+        "title": "Centralized Register",
+        "subtitle": "Payment Management",
+        "auto_refresh": "Auto refresh",
+        "coupons_active": "Active coupons",
+        "pending_count": "{{count}} invoice(s) pending",
+        "table": {
+            "ticket": "Ticket",
+            "invoice": "Invoice",
+            "client": "Client",
+            "date": "Date",
+            "products": "Products",
+            "amount": "Amount",
+            "actions": "Actions",
+            "tiers_payant": "Third Party Payer",
+            "modify": "Modify",
+            "cancel": "Cancel",
+            "apply_coupon": "Apply Coupon",
+            "cash_in": "Cash In"
+        },
+        "empty": "No invoices pending payment",
+        "payment": {
+            "title": "Payment",
+            "amount_to_pay": "Amount to pay",
+            "payment_mode": "Payment method",
+            "modes": {
+                "cash": "Cash",
+                "card": "Credit Card",
+                "mobile": "Mobile Money",
+                "check": "Check",
+                "credit": "On Account"
+            },
+            "confirm": "Confirm payment",
+            "success": "Payment recorded"
         }
     }
 }
