@@ -83,8 +83,10 @@ class FactureListSerializer(serializers.ModelSerializer):
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
             'validated_by_name',
             'date', 'status', 'status_display',
-            'total_ht', 'total_ttc', 'remise'
+            'total_ht', 'total_ttc', 'remise', 'session_ticket_number'
         ]
+
+    session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
     
     def get_client_name(self, obj):
         if obj.client_name_override:

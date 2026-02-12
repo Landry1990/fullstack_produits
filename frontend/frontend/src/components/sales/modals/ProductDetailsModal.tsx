@@ -20,18 +20,23 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
 
     // Calculs de montants
     const totals = useMemo(() => {
-        if (!facture) return { totalHt: 0, totalTva: 0, totalTtc: 0 };
+        if (!facture) return { totalHt: 0, totalTva: 0, totalTtc: 0, remise: 0, partClient: 0 };
+        const totalTtc = parseFloat(String(facture.total_ttc || '0'));
+        const partClient = facture.part_client ? parseFloat(String(facture.part_client)) : totalTtc;
+        
         return {
-            totalHt: parseFloat(facture.total_ht),
-            totalTva: parseFloat(facture.total_tva),
-            totalTtc: parseFloat(facture.total_ttc),
+            totalHt: parseFloat(String(facture.total_ht || '0')),
+            totalTva: parseFloat(String(facture.total_tva || '0')),
+            totalTtc: totalTtc,
+            remise: parseFloat(String(facture.remise || '0')),
+            partClient: partClient
         };
     }, [facture]);
 
     if (!isOpen || !facture) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="border-b border-gray-100 p-6 flex justify-between items-center bg-gradient-to-r from-gray-50 to-white">
@@ -127,36 +132,50 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <tr>
                                     <th className="px-6 py-4 border-b border-gray-100">Produit</th>
                                     <th className="px-6 py-4 text-center border-b border-gray-100">Qté</th>
-                                    <th className="px-6 py-4 text-right border-b border-gray-100">P.U.</th>
+                                    <th className="px-6 py-4 text-right border-b border-gray-100">P.U. (Net)</th>
                                     <th className="px-6 py-4 text-right border-b border-gray-100">Total</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 text-sm">
-                                {facture.produits.map((prod) => (
-                                    <tr key={prod.id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-6 py-3">
-                                            <div className="font-medium text-gray-900">
-                                                {prod.produit_nom}
-                                            </div>
-                                            {prod.lot && (
-                                                <div className="text-xs text-blue-600 font-mono mt-0.5 bg-blue-50 inline-block px-1.5 py-0.5 rounded border border-blue-100">
-                                                    Lot: {prod.lot} {prod.date_expiration && `(Exp: ${prod.date_expiration})`}
+                                {facture.produits.map((prod) => {
+                                    const puVente = parseFloat(prod.selling_price || '0');
+                                    const remiseUnitaire = parseFloat(prod.discount || '0');
+                                    const puNet = puVente - remiseUnitaire;
+                                    const totalLigne = prod.quantity * puNet;
+
+                                    return (
+                                        <tr key={prod.id} className="hover:bg-gray-50/50 transition-colors group">
+                                            <td className="px-6 py-3">
+                                                <div className="font-medium text-gray-900 uppercase">
+                                                    {prod.produit_nom}
                                                 </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-3 text-center">
-                                            <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-700 font-medium">
-                                                {prod.quantity}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-3 text-right text-gray-600 font-mono">
-                                            {parseFloat(prod.selling_price).toLocaleString('fr-FR')} F
-                                        </td>
-                                        <td className="px-6 py-3 text-right font-medium font-mono text-gray-900 group-hover:text-blue-600 transition-colors">
-                                            {(prod.quantity * parseFloat(prod.selling_price)).toLocaleString('fr-FR')} F
-                                        </td>
-                                    </tr>
-                                ))}
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {prod.lot && (
+                                                        <span className="text-[10px] text-blue-600 font-mono bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                                            Lot: {prod.lot} {prod.date_expiration && `(Exp: ${prod.date_expiration})`}
+                                                        </span>
+                                                    )}
+                                                    {remiseUnitaire > 0 && (
+                                                        <span className="text-[10px] text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
+                                                            Remise: -{remiseUnitaire.toLocaleString('fr-FR')} F /unité
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3 text-center">
+                                                <span className="font-mono bg-gray-100 px-2 py-1 rounded text-gray-700 font-medium">
+                                                    {prod.quantity}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-3 text-right text-gray-600 font-mono">
+                                                {puNet.toLocaleString('fr-FR')} F
+                                            </td>
+                                            <td className="px-6 py-3 text-right font-medium font-mono text-gray-900 group-hover:text-blue-600 transition-colors">
+                                                {totalLigne.toLocaleString('fr-FR')} F
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     )}
@@ -165,19 +184,33 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 {/* Footer Totals */}
                 <div className="bg-gray-50 border-t border-gray-200 p-6">
                     <div className="flex justify-end">
-                        <div className="w-64 space-y-2">
+                        <div className="w-72 space-y-2">
                             <div className="flex justify-between text-sm text-gray-600">
-                                <span>Total HT</span>
+                                <span>Total Brut HT</span>
                                 <span className="font-mono">{totals.totalHt.toLocaleString('fr-FR')} F</span>
                             </div>
                             <div className="flex justify-between text-sm text-gray-600">
-                                <span>TVA</span>
+                                <span>Total TVA</span>
                                 <span className="font-mono">{totals.totalTva.toLocaleString('fr-FR')} F</span>
                             </div>
+                            {totals.remise > 0 && (
+                                <div className="flex justify-between text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                    <span>Remise Facture</span>
+                                    <span className="font-mono">-{totals.remise.toLocaleString('fr-FR')} F</span>
+                                </div>
+                            )}
                             <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2">
                                 <span>Total TTC</span>
                                 <span className="font-mono text-blue-600">{totals.totalTtc.toLocaleString('fr-FR')} F</span>
                             </div>
+                            
+                            {/* Part Client (Tiers Payant) */}
+                            {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
+                                <div className="flex justify-between text-xl font-black text-white bg-blue-600 p-3 rounded-lg shadow-md mt-4 animate-pulse">
+                                    <span className="uppercase text-sm">À payer client</span>
+                                    <span className="font-mono">{totals.partClient.toLocaleString('fr-FR')} F</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

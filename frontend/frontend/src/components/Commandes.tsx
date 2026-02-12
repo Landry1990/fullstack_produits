@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
-import axios from 'axios'
+import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm'
@@ -61,6 +61,26 @@ export default function Commandes({ forcedType }: CommandesProps) {
     }
   }, [forcedType]);
   
+  // Navigation directe vers les détails (ex: depuis Historique Produit)
+  useEffect(() => {
+    const openDetailsId = location.state?.openDetailsId;
+    if (openDetailsId) {
+      const fetchAndShow = async () => {
+        try {
+          const resp = await axios.get(`/api/commandes/${openDetailsId}/`);
+          setSelectedCommande(resp.data);
+          setViewMode('DETAILS');
+          // Nettoyer l'état pour éviter de réouvrir au refresh/navigation
+          navigate(location.pathname, { replace: true, state: {} });
+        } catch (err) {
+          console.error("Erreur lors du chargement de la commande via navigation:", err);
+          toast.error("Impossible de charger les détails de cette commande");
+        }
+      };
+      fetchAndShow();
+    }
+  }, [location.state, navigate, location.pathname]);
+
   // Champs spécifiques Commandes Directes
   const [tauxChange, setTauxChange] = useState<string>('655.957');
   const [fraisCoefficient, setFraisCoefficient] = useState<string>('1.35');

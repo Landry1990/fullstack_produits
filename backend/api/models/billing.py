@@ -59,6 +59,7 @@ class Facture(models.Model):
     total_ht = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     total_tva = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     total_ttc = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    ticket_session = models.IntegerField(null=True, blank=True, help_text="Numéro de ticket pour la session du jour")
 
     validated_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,

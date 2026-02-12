@@ -561,22 +561,38 @@ export default function Facturation() {
       
       // 1. Refresh Stock Data for ALL lines to ensure we don't rely on stale cache
       // This solves the issue where previously loaded products might show outdated stock
-      const freshLinesPromises = lignesFacture.map(async (ligne) => {
-          try {
-              const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-              const { data: freshProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${ligne.produit.id}/`)
-              return {
-                  ...ligne,
-                  produit: freshProduct // Update with fresh stock
+      // Optimized: Using new bulk_refresh endpoint to avoid multiple simultaneous API calls
+      let freshLignes = lignesFacture;
+      try {
+          const productIds = lignesFacture.map(l => l.produit.id);
+          const refreshEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/bulk_refresh/` : '/api/produits/bulk_refresh/';
+          
+          const { data: freshProductsData } = await axios.post<any[]>(refreshEndpoint, { ids: productIds });
+          
+          // Map fresh data back to lines
+          const productMap = new Map(freshProductsData.map(p => [p.id, p]));
+          
+          freshLignes = lignesFacture.map(ligne => {
+              const freshProduct = productMap.get(ligne.produit.id);
+              if (freshProduct) {
+                  return {
+                      ...ligne,
+                      produit: {
+                          ...ligne.produit,
+                          stock: freshProduct.stock,
+                          selling_price: freshProduct.selling_price,
+                          is_active: freshProduct.is_active
+                      }
+                  };
               }
-          } catch (e) {
-              console.error(`Failed to refresh stock for ${ligne.produit.name}`, e)
-              return ligne // Fallback to existing data
-          }
-      })
+              return ligne;
+          });
+      } catch (e) {
+          console.error(`Failed to bulk refresh stocks`, e);
+          toast.error(t('facturation.messages.refresh_failed') || "Erreur de rafraîchissement des stocks");
+          // Fallback to current state
+      }
 
-      const freshLignes = await Promise.all(freshLinesPromises)
-      
       // Update the cart state with fresh data so the UI reflects reality
       setLignesFacture(freshLignes)
       setLoading(false)

@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast'
 import { useConfirm } from '../hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
 import type { StockLot } from '../types'
+import SudoValidationModal from './common/SudoValidationModal'
 
 // Types pour les statistiques
 interface PerimesStats {
@@ -47,6 +48,11 @@ export default function Perimes() {
   const [filterDays, setFilterDays] = useState<number>(30)
   const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(true)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'list'>('dashboard')
+
+  // Sudo Validation State
+  const [showValidationModal, setShowValidationModal] = useState(false)
+  const [lotToProcess, setLotToProcess] = useState<{lot: StockLot, quantity: number, reason: string} | null>(null)
+  const [processing, setProcessing] = useState(false)
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -123,25 +129,36 @@ export default function Perimes() {
       return
     }
     
-    const confirmed = await confirm({
-      title: 'Confirmer la sortie',
-      message: `Confirmer la sortie de ${qty} unités du produit ${lot.produit_nom} ?`,
-      variant: 'warning',
-      confirmText: 'Confirmer'
-    })
-    if (!confirmed) return
-
-    try {
-      await axios.post(`${stockLotsEndpoint}${lot.id}/sortir_perimes/`, {
+    // Open Sudo Modal
+    setLotToProcess({
+        lot,
         quantity: qty,
         reason: 'Périmé / Avarie'
+    })
+    setShowValidationModal(true)
+  }
+
+  const handleSudoValidate = async (validatorId: number, password: string) => {
+    if (!lotToProcess) return
+
+    try {
+      setProcessing(true)
+      await axios.post(`${stockLotsEndpoint}${lotToProcess.lot.id}/sortir_perimes/`, {
+        quantity: lotToProcess.quantity,
+        reason: lotToProcess.reason,
+        validated_by_id: validatorId,
+        password: password
       })
       toast.success('Sortie de stock effectuée.')
       fetchLots()
       fetchStats() // Refresh stats after removal
-    } catch (err) {
+      setShowValidationModal(false)
+      setLotToProcess(null)
+    } catch (err: any) {
       console.error('Erreur sortie stock:', err)
-      toast.error('Erreur lors de la sortie de stock.')
+      toast.error('Erreur: ' + (err.response?.data?.error || err.message || 'Erreur inconnue'))
+    } finally {
+      setProcessing(false)
     }
   }
 
@@ -467,6 +484,19 @@ export default function Perimes() {
           </>
         )}
       </div>
+
+      {/* Sudo Validation Modal */}
+      <SudoValidationModal
+        isOpen={showValidationModal}
+        onClose={() => {
+            setShowValidationModal(false)
+            setLotToProcess(null)
+        }}
+        onValidate={handleSudoValidate}
+        saving={processing}
+        title={`Sortie de stock - Périmés`}
+        message={`Confirmer la sortie de <strong>${lotToProcess?.quantity} unités</strong> du produit <strong>${lotToProcess?.lot.produit_nom}</strong> (Lot ${lotToProcess?.lot.lot}) ?<br/><br/>Cette action est irréversible.`}
+      />
     </div>
   )
 }

@@ -572,8 +572,10 @@ class FactureSerializer(serializers.ModelSerializer):
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
             'is_remise_auto', 'part_client', 'paiements', 'created_by_name',
-            'validated_by_name', 'cancelled_by_name'
+            'validated_by_name', 'cancelled_by_name', 'session_ticket_number'
         ]
+
+    session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
 
 class StockLotSerializer(serializers.ModelSerializer):
     """Serializer pour les lots de stock avec traçabilité fournisseur"""
@@ -741,6 +743,7 @@ class AvoirSerializer(serializers.ModelSerializer):
     produits = LigneAvoirSerializer(many=True, read_only=True)
     fournisseur_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
+    validated_by_name = serializers.SerializerMethodField()
     total_ht = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     type_avoir_display = serializers.CharField(source='get_type_avoir_display', read_only=True)
@@ -756,6 +759,11 @@ class AvoirSerializer(serializers.ModelSerializer):
     def get_created_by_name(self, obj):
         if obj.created_by:
             return obj.created_by.get_full_name() or obj.created_by.username
+        return ''
+
+    def get_validated_by_name(self, obj):
+        if obj.validated_by:
+            return obj.validated_by.get_full_name() or obj.validated_by.username
         return ''
 
 

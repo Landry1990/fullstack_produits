@@ -90,13 +90,55 @@ export default function JournalAjustements() {
     }
   }
 
+  const handleExportExcel = async () => {
+    try {
+      const params: any = {}
+      if (searchQuery) params.search = searchQuery
+      if (filterReasonType) params.reason_type = filterReasonType
+      if (dateStart) params.created_at__gte = dateStart
+      if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59'
+
+      const response = await axios.get(`${adjustmentsEndpoint}export_excel/`, {
+        params,
+        responseType: 'blob'
+      })
+
+      const url = window.URL.createObjectURL(new Blob([response.data]))
+      const link = document.createElement('a')
+      link.href = url
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      link.setAttribute('download', `ajustements_stock_${timestamp}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      
+      toast.success('Export réussi')
+    } catch (err) {
+      toast.error('Erreur lors de l\'export')
+      console.error(err)
+    }
+  }
+
   return (
     <div className="p-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">📋 Journal des Ajustements de Stock</h1>
-        <button className="btn btn-sm btn-ghost" onClick={() => fetchAdjustments(currentPage)}>
-          🔄 Actualiser
-        </button>
+        <div className="flex gap-2">
+          <button 
+            className="btn btn-sm btn-success gap-2" 
+            onClick={handleExportExcel}
+            disabled={loading}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Exporter Excel
+          </button>
+          <button className="btn btn-sm btn-ghost" onClick={() => fetchAdjustments(currentPage)}>
+            🔄 Actualiser
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -155,6 +197,7 @@ export default function JournalAjustements() {
           <option value="ERR_ENTREE">Erreur d'entrée</option>
           <option value="AVARIE">Avarié</option>
           <option value="USAGE_INT">Usage interne</option>
+          <option value="PERIME">Périmé</option>
         </select>
         {(dateStart || dateEnd || filterReasonType || searchQuery) && (
           <button 

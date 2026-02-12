@@ -1,0 +1,20 @@
+--- Verification du Mode Sudo pour Sortie PÚrimÚs ---
+Utilisateurs prÛts: Creator=user_lambda, Validator=sudo_validator_perimes
+Produit crÚÚ: Produit Test PÚrimÚs, Stock Initial: 100
+Lot crÚÚ: LOT-EXP-001, Marge: 100
+Envoi requÛte Sortie de 15 unitÚs avec validation Sudo...
+Status Code: 200
+Stock Lot aprÞs: 85 (Attendu: 85)
+Stock Produit aprÞs: 85 (Attendu: 85)
+Dernier mouvement: AVOIR, QuantitÚ: -15, User: sudo_validator_perimes
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\scripts\verify_sudo_perimes.py", line 119, in <module>
+    verify_sudo_perimes()
+    ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\scripts\verify_sudo_perimes.py", line 116, in verify_sudo_perimes
+    print("\n\u2705 V╔RIFICATION R╔USSIE : La sortie de pÚrimÚs via Sudo Mode fonctionne correctement.")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 2: character maps to <undefined>
