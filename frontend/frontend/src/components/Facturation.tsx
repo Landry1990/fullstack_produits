@@ -786,7 +786,7 @@ export default function Facturation() {
     setUsePendingDiscount(false)
   }, [selectedClient, isNewSale])
 
-  const handleCompleteSale = async () => {
+  const handleCompleteSale = async (validatedBy?: number, password?: string) => {
     // Collect all data for the hook
     const params = {
         selectedClient,
@@ -821,7 +821,10 @@ export default function Facturation() {
         isModificationMode,
         modificationInvoiceId,
         devisIdToValidate,
-        tempOrdonnanceData
+        tempOrdonnanceData,
+        // Sudo Mode - pass the operator selected in PaymentModal
+        validated_by_id: validatedBy || null,
+        sudo_password: password || undefined
     };
 
     await completeSale(params);
@@ -830,7 +833,9 @@ export default function Facturation() {
   // Helper pour vider les données de vente sans fermer les modals de succès éventuels
   const _resetSaleDataOnly = () => {
       setLignesFacture([])
-      setSelectedClient(null)
+      // Auto-select "clients divers" after a sale
+      const clientsDivers = clients.find(c => c.name.toLowerCase() === 'clients divers')
+      setSelectedClient(clientsDivers ? clientsDivers.id : null)
       setUseManualClient(false)
       setManualClientName('')
       setRemise('0')
@@ -1259,7 +1264,9 @@ export default function Facturation() {
 
     // Clear everything
     setLignesFacture([])
-    setSelectedClient(null)
+    // Auto-select "clients divers" after reset
+    const clientsDivers = clients.find(c => c.name.toLowerCase() === 'clients divers')
+    setSelectedClient(clientsDivers ? clientsDivers.id : null)
     setUseManualClient(false)
     setManualClientName('')
     setRemise('0')

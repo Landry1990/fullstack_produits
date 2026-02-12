@@ -1288,45 +1288,47 @@ export default function Produit() {
                     ) : (
                       <table className="table table-sm">
                         <thead className="bg-base-200 sticky top-0">
-                          <tr>
-                            <th className="text-xs">Date</th>
-                            <th className="text-xs">Type</th>
-                            <th className="text-xs">Libellé</th>
-                            <th className="text-xs text-right">Avant</th>
-                            <th className="text-xs text-right">Qté</th>
-                            <th className="text-xs text-right">Après</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {stockHistory.map((item, index) => {
-                            const isPositive = item.type === 'AJUSTEMENT' 
-                              ? item.quantity > 0 
-                              : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
-                            return (
-                              <tr key={index} className="hover:bg-base-200/30">
-                                <td className="whitespace-nowrap text-xs font-mono">
-                                  {new Date(item.date).toLocaleDateString('fr-FR')}
-                                </td>
-                                <td>
-                                  <span className={`badge badge-xs font-medium ${
-                                    item.type === 'AJUSTEMENT' 
-                                      ? 'badge-warning text-warning-content'
-                                      : isPositive ? 'badge-success text-white' : 'badge-error text-white'
-                                  }`}>
-                                    {item.type}
-                                  </span>
-                                </td>
-                                <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
-                                  {item.libelle}
-                                </td>
-                                <td className="text-right font-mono text-xs">{item.stock_avant}</td>
-                                <td className={`text-right font-bold text-xs ${isPositive ? 'text-success' : 'text-error'}`}>
-                                  {isPositive ? '+' : ''}{item.quantity}
-                                </td>
-                                <td className="text-right font-mono font-bold text-xs">{item.stock_apres}</td>
-                              </tr>
-                            );
-                          })}
+                            <tr>
+                              <th className="text-xs">Date</th>
+                              <th className="text-xs">Type</th>
+                              <th className="text-xs">Libellé</th>
+                              <th className="text-xs">Opérateur</th>
+                              <th className="text-xs text-right">Avant</th>
+                              <th className="text-xs text-right">Qté</th>
+                              <th className="text-xs text-right">Après</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stockHistory.map((item, index) => {
+                              const isPositive = item.type === 'AJUSTEMENT' 
+                                ? item.quantity > 0 
+                                : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                              return (
+                                <tr key={index} className="hover:bg-base-200/30">
+                                  <td className="whitespace-nowrap text-xs font-mono">
+                                    {new Date(item.date).toLocaleDateString('fr-FR')}
+                                  </td>
+                                  <td>
+                                    <span className={`badge badge-xs font-medium ${
+                                      item.type === 'AJUSTEMENT' 
+                                        ? 'badge-warning text-warning-content'
+                                        : isPositive ? 'badge-success text-white' : 'badge-error text-white'
+                                    }`}>
+                                      {item.type}
+                                    </span>
+                                  </td>
+                                  <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
+                                    {item.libelle}
+                                  </td>
+                                  <td className="text-xs">{item.user_nom || '-'}</td>
+                                  <td className="text-right font-mono text-xs">{item.stock_avant}</td>
+                                  <td className={`text-right font-bold text-xs ${isPositive ? 'text-success' : 'text-error'}`}>
+                                    {isPositive ? '+' : ''}{item.quantity}
+                                  </td>
+                                  <td className="text-right font-mono font-bold text-xs">{item.stock_apres}</td>
+                                </tr>
+                              );
+                            })}
                         </tbody>
                       </table>
                     )}

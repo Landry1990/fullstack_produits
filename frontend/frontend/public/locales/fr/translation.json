@@ -86,7 +86,7 @@
             "inventaire": "Inventaire",
             "journal": "Journal Ajustements",
             "analyse": "Analyse Stock",
-            "avoirs": "Avoirs",
+            "avoirs": "Réclamations",
             "promis": "Promis",
             "transformations": "Transformations",
             "perimes": "Périmés",
@@ -676,7 +676,7 @@
             "export_btn": "Exporter CSV",
             "import_btn": "Importer CSV",
             "new_product_btn": "Nouveau produit",
-            "return_btn": "Retour / Avoir",
+            "return_btn": "Retour / Réclamation",
             "direct_order_badge": "COMMANDE DIRECTE (ETRANGER)",
             "exchange_rate": "Taux de Change (XAF/Devise)",
             "coefficient": "Coefficient (Frais)",
@@ -730,8 +730,9 @@
             "delete": "Supprimer",
             "print_receipt": "Imprimer Bon",
             "cancel_reception": "Annuler Réception",
-            "return": "Retour / Avoir",
+            "return": "Retour / Réclamation",
             "id": "ID Commande",
+            "closed_by": "Clôturé par",
             "price_unit": "P.U.",
             "invoice": "N° Facture",
             "provider": "Fournisseur",
@@ -941,12 +942,46 @@
         },
         "payment": {
             "modal_title": "Paiement",
+            "amount_due": "Reste à payer",
+            "amount_paid": "Montant versé",
+            "change_due": "Monnaie à rendre",
+            "part_patient": "Part Patient (Tiers Payant actif)",
+            "detail_title": "Détail du paiement",
+            "part_assurance": "Part Assurance",
+            "tiers_payant_active": "Tiers Payant {{rate}}% actif - Paiement automatiquement réparti",
+            "remaining_to_allocate": "Reste à allouer:",
+            "mode_label": "Mode",
+            "amount_label": "Montant",
+            "caisse_centrale": "Caisse Centrale",
+            "en_compte_auto": "En compte (automatique)",
+            "payment_mode_label": "Mode de paiement",
+            "add_btn": "Ajouter",
             "sudo_mode": {
                 "validate_by": "Validé par",
                 "password": "Mot de passe (Sudo)"
             },
+            "sudo_self": "(Moi-même)",
+            "password_placeholder": "Mot de passe du validateur...",
+            "change_due_label": "Rendu monnaie:",
+            "remaining_due_label": "Reste à payer:",
+            "total_label": "Total:",
+            "no_invoice": "Aucune facture sélectionnée.",
+            "modes": {
+                "especes": "Espèces",
+                "cheque": "Chèque",
+                "carte": "Carte Bancaire",
+                "virement": "Virement",
+                "mobile": "Mobile Money",
+                "momo": "Mobile Money",
+                "other": "Autre",
+                "credit": "Crédit Client"
+            },
+            "validate": "Valider le Paiement",
             "validate_sale": "Valider la vente",
-            "register_payment": "Enregistrer le paiement"
+            "register_payment": "Enregistrer le paiement",
+            "cancel": "Annuler",
+            "print_ticket": "Imprimer le Ticket",
+            "print_invoice": "Imprimer la Facture A4"
         },
         "title": "Facturation",
         "sale_recorded": "Vente enregistrée",
@@ -1058,30 +1093,31 @@
             "missing": "Manquant",
             "promised": "Promis ?",
             "client_name": "Nom du Client",
+            "optional": "(Optionnel)",
             "client_phone_for_promised_ticket": "Numéro de téléphone pour le ticket promis",
             "phone_number_placeholder": "Ex: 77...",
             "cancel_and_edit_cart": "Annuler et modifier panier",
             "validate_and_cash": "Valider et Encaisser"
         },
-        "payment": {
-            "modal_title": "Paiement",
-            "amount_due": "Reste à payer",
-            "amount_paid": "Montant versé",
-            "change_due": "Monnaie à rendre",
-            "modes": {
-                "especes": "Espèces",
-                "cheque": "Chèque",
-                "carte": "Carte Bancaire",
-                "virement": "Virement",
-                "mobile": "Mobile Money",
-                "momo": "Mobile Money",
-                "other": "Autre",
-                "credit": "Crédit Client"
-            },
-            "validate": "Valider le Paiement",
-            "cancel": "Annuler",
-            "print_ticket": "Imprimer le Ticket",
-            "print_invoice": "Imprimer la Facture A4"
+        "ordonnance": {
+            "title": "Saisie Ordonnancier",
+            "description": "Cette vente contient des produits nécessitant une ordonnance ou sous surveillance. Veuillez renseigner les informations ci-dessous.",
+            "patient_name": "Nom du Patient *",
+            "patient_placeholder": "Nom complet du patient",
+            "prescriber_name": "Prescripteur (Médecin) *",
+            "prescriber_placeholder": "Dr. Nom du médecin",
+            "order_number": "Numéro d'Ordonnance (facultatif)",
+            "order_placeholder": "Ex: ORD-2024-001",
+            "prescription_date": "Date Prescription",
+            "affected_products": "Produits Concernés",
+            "product_col": "Produit",
+            "qty_col": "Qté",
+            "surveillance_col": "Surveillance",
+            "surveillance_renforcee": "Renforcée",
+            "surveillance_standard": "Standard",
+            "surveillance_ordonnance": "Ordonnance",
+            "ignore_btn": "Ignorer (Déconseillé)",
+            "save_btn": "Enregistrer Ordonnancier"
         },
         "messages": {
             "cart_empty": "Le panier est vide",
@@ -1293,6 +1329,7 @@
                 "stock_after": "Stock",
                 "details": "Détails",
                 "user": "User",
+                "operator": "Opérateur",
                 "empty": "Aucun mouvement enregistré"
             }
         },
@@ -1430,7 +1467,9 @@
             "paid": "Payée",
             "validated": "Validée",
             "draft": "Brouillon",
-            "cancelled": "Annulée"
+            "cancelled": "Annulée",
+            "validated_by": "Validé par",
+            "cancelled_by": "Annulé par"
         },
         "delete_drafts": "Vider les brouillons",
         "table": {
@@ -1841,6 +1880,116 @@
             },
             "confirm": "Valider le paiement",
             "success": "Paiement enregistré"
+        }
+    },
+    "caisse": {
+        "payment_modal": {
+            "title": "Paiement - {{numero}}",
+            "total": "Total à payer",
+            "coupon_label": "🎟️ Coupon #{{numero}} : -{{montant}} F",
+            "part_patient": "Part Patient",
+            "recorded_payments": "Paiements enregistrés",
+            "total_paid": "Total versé",
+            "balance": "Reste à payer : {{amount}} F",
+            "balance_short": "Reste {{amount}} F",
+            "step1": "Étape 1 : Montant à payer",
+            "enter_hint": "Appuyez sur Entrée pour choisir le mode",
+            "step2": "Étape 2 : Mode de paiement",
+            "modify_amount": "Modifier le montant",
+            "change": "Monnaie à rendre",
+            "validate_hint": "✅ Valider le paiement"
+        },
+        "payment_modes": {
+            "especes": "Espèces",
+            "carte": "Carte",
+            "cheque": "Chèque",
+            "virement": "Virement",
+            "om_short": "OM",
+            "momo_short": "MoMo"
+        },
+        "table": {
+            "amount": "Montant",
+            "cancel": "Annuler"
+        }
+    },
+    "salesHistory": {
+        "title": "Historique des Ventes par Jour",
+        "start_date": "Date début",
+        "end_date": "Date fin",
+        "no_data": "Aucune vente trouvée pour cette période",
+        "total": "TOTAL",
+        "columns": {
+            "date": "Date",
+            "ca_ttc": "CA TTC",
+            "ca_ht": "CA HT",
+            "tva": "TVA",
+            "cash": "Espèces",
+            "card": "Carte",
+            "check": "Chèque",
+            "mobile_money": "Mobile Money",
+            "nb_invoices": "Nb Factures",
+            "avg_basket": "Panier Moyen"
+        }
+    },
+    "stockAnalysis": {
+        "title": "Analyse des Stocks",
+        "error": "Erreur lors du chargement des données. Vérifiez que le serveur est accessible.",
+        "per_month": "mois",
+        "per_day": "jour",
+        "days": "jours",
+        "tabs": {
+            "unsold": "Invendus",
+            "overstock": "Surstock",
+            "shortage": "Prévisions Rupture",
+            "unsold_desc": "Produits en stock mais sans ventes (Rotation = 0)",
+            "overstock_desc": "Produits en surstock (Stock > 1.7x Rotation)",
+            "shortage_desc": "Produits qui risquent la rupture dans les 30 prochains jours"
+        },
+        "filters": {
+            "supplier": "Fournisseur",
+            "all_suppliers": "Tous les fournisseurs",
+            "refresh": "Actualiser",
+            "days_threshold": "Jours sans vente"
+        },
+        "stats": {
+            "supplier": "Fournisseur",
+            "item_count": "Nombre d'articles",
+            "estimated_value": "Valeur estimée",
+            "overstock_value": "Valeur estimée du surstock",
+            "value_at_risk": "Valeur à risque",
+            "critical_alerts": "Alertes critiques"
+        },
+        "columns": {
+            "product": "Produit",
+            "supplier": "Fournisseur",
+            "current_stock": "Stock Actuel",
+            "created_at": "Créé le",
+            "cost_price": "Prix Achat",
+            "stock_value": "Valeur Stock",
+            "avg_rotation": "Rotation Moy.",
+            "threshold": "Seuil (1.7x)",
+            "excess_qty": "Qté Excès",
+            "excess_value": "Valeur Excès",
+            "avg_daily_sales": "Vente Moy/Jour",
+            "days_until_stockout": "Jours avant rupture",
+            "urgency": "Urgence",
+            "value_at_risk": "Valeur à risque"
+        },
+        "shortage": {
+            "warnings": "avertissements",
+            "selected": "produit(s) sélectionné(s)",
+            "generate_order": "Générer Commande",
+            "urgency": {
+                "critical": "Critique (< 7j)",
+                "warning": "Attention (< 14j)",
+                "caution": "Surveillance (< 30j)"
+            }
+        },
+        "empty": {
+            "unsold": "Aucun produit invendu",
+            "overstock": "Aucun produit en surstock",
+            "shortage": "Aucune rupture prévue",
+            "all_good": "Tout semble en ordre !"
         }
     }
 }

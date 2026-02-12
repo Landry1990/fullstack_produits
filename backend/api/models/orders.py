@@ -34,18 +34,14 @@ class Commande(models.Model):
     fournisseur = models.ForeignKey(
         'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True
     )
-    fournisseur_nom = models.CharField(
-        max_length=150, blank=True, null=True, 
-        help_text="Nom du fournisseur sauvegardé"
-    )
-    numero_facture = models.CharField(max_length=100, blank=True, null=True)
-    date = models.DateTimeField(auto_now_add=True)
-    date_cloture = models.DateTimeField(null=True, blank=True, verbose_name="Date de clôture")
-    status = models.CharField(
-        max_length=4,
-        choices=Status.choices,
-        default=Status.EN_PREPARATION,
-    )
+    fournisseur_nom = models.CharField(max_length=255, null=True, blank=True) # Nom si fournisseur supprimé
+    numero_facture = models.CharField(max_length=100, null=True, blank=True)
+    date = models.DateTimeField(default=timezone.now)
+    date_cloture = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION)
+    
+    # Tracking
+    closed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='commandes_cloturees')
 
     def save(self, *args, **kwargs):
         if self.numero_facture:

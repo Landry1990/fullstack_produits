@@ -75,7 +75,7 @@ export default function ClientCreateModal({
                 value={newClientForm.name}
                 onChange={e => setNewClientForm((prev: any) => ({ ...prev, name: e.target.value }))}
                 className="input input-bordered input-sm w-full"
-                placeholder="Nom complet"
+                placeholder={t('facturation.create_client.name')}
                 required
               />
             </div>
@@ -116,7 +116,7 @@ export default function ClientCreateModal({
               value={newClientForm.address}
               onChange={e => setNewClientForm((prev: any) => ({ ...prev, address: e.target.value }))}
               className="textarea textarea-bordered textarea-sm w-full h-16 resize-none"
-              placeholder="Adresse complète"
+              placeholder={t('facturation.create_client.address')}
               required
             />
           </div>

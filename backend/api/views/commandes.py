@@ -597,7 +597,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         # 2.3 Mettre à jour le statut et la date de clôture de la commande
         commande.status = Commande.Status.CLOTUREE
-        commande.save(update_fields=['status', 'date_cloture'])
+        commande.closed_by = request.user
+        commande.save(update_fields=['status', 'date_cloture', 'closed_by'])
         
         # 2.4 Créer les MouvementStock pour historique permanent
         mouvements_to_create = []

@@ -126,7 +126,7 @@
             "inventaire": "Stock Take",
             "journal": "Adjustment Journal",
             "analyse": "Stock Analysis",
-            "avoirs": "Returns",
+            "avoirs": "Claims",
             "promis": "Promised Items",
             "transformations": "Transformations",
             "perimes": "Expired Items",
@@ -670,7 +670,7 @@
             "export_btn": "Export CSV",
             "import_btn": "Import CSV",
             "new_product_btn": "New Product",
-            "return_btn": "Return / Credit Note",
+            "return_btn": "Return / Claim",
             "direct_order_badge": "DIRECT ORDER (FOREIGN)",
             "exchange_rate": "Exchange Rate (XAF/Currency)",
             "coefficient": "Coefficient (Fees)",
@@ -724,8 +724,9 @@
             "delete": "Delete",
             "print_receipt": "Print Receipt",
             "cancel_reception": "Cancel Reception",
-            "return": "Return / Credit Note",
+            "return": "Return / Claim",
             "id": "Order ID",
+            "closed_by": "Closed by",
             "price_unit": "U.P.",
             "invoice": "Invoice #",
             "provider": "Provider",
@@ -1243,6 +1244,7 @@
                 "stock_after": "Stock",
                 "details": "Details",
                 "user": "User",
+                "operator": "Operator",
                 "empty": "No movements recorded"
             }
         },
@@ -1776,6 +1778,86 @@
             },
             "confirm": "Confirm payment",
             "success": "Payment recorded"
+        }
+    },
+    "salesHistory": {
+        "title": "Daily Sales History",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "no_data": "No sales found for this period",
+        "total": "TOTAL",
+        "columns": {
+            "date": "Date",
+            "ca_ttc": "Revenue (incl. tax)",
+            "ca_ht": "Revenue (excl. tax)",
+            "tva": "TVA",
+            "cash": "Cash",
+            "card": "Card",
+            "check": "Check",
+            "mobile_money": "Mobile Money",
+            "nb_invoices": "Invoice Count",
+            "avg_basket": "Avg. Basket"
+        }
+    },
+    "stockAnalysis": {
+        "title": "Stock Analysis",
+        "error": "Error loading data. Check that the server is accessible.",
+        "per_month": "month",
+        "per_day": "day",
+        "days": "days",
+        "tabs": {
+            "unsold": "Unsold",
+            "overstock": "Overstock",
+            "shortage": "Shortage Forecast",
+            "unsold_desc": "Products in stock but without sales (Rotation = 0)",
+            "overstock_desc": "Overstocked products (Stock > 1.7x Rotation)",
+            "shortage_desc": "Products at risk of stockout within the next 30 days"
+        },
+        "filters": {
+            "supplier": "Supplier",
+            "all_suppliers": "All suppliers",
+            "refresh": "Refresh",
+            "days_threshold": "Days without sales"
+        },
+        "stats": {
+            "supplier": "Supplier",
+            "item_count": "Item count",
+            "estimated_value": "Estimated value",
+            "overstock_value": "Overstock value",
+            "value_at_risk": "Value at risk",
+            "critical_alerts": "Critical alerts"
+        },
+        "columns": {
+            "product": "Product",
+            "supplier": "Supplier",
+            "current_stock": "Current Stock",
+            "created_at": "Created",
+            "cost_price": "Cost Price",
+            "stock_value": "Stock Value",
+            "avg_rotation": "Avg. Rotation",
+            "threshold": "Threshold (1.7x)",
+            "excess_qty": "Excess Qty",
+            "excess_value": "Excess Value",
+            "avg_daily_sales": "Avg. Daily Sales",
+            "days_until_stockout": "Days Until Stockout",
+            "urgency": "Urgency",
+            "value_at_risk": "Value at Risk"
+        },
+        "shortage": {
+            "warnings": "warnings",
+            "selected": "product(s) selected",
+            "generate_order": "Generate Order",
+            "urgency": {
+                "critical": "Critical (< 7d)",
+                "warning": "Warning (< 14d)",
+                "caution": "Watch (< 30d)"
+            }
+        },
+        "empty": {
+            "unsold": "No unsold products",
+            "overstock": "No overstocked products",
+            "shortage": "No shortage predicted",
+            "all_good": "Everything looks fine!"
         }
     }
 }

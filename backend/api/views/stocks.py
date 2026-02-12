@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from django.db import transaction
-from django.db.models import F, Sum, DecimalField
+from django.db.models import F, Sum, DecimalField, Max, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -1379,16 +1379,39 @@ class StockAnalysisUnsoldView(APIView):
 
     def get(self, request):
         fournisseur_id = request.query_params.get('fournisseur', None)
+        days_threshold = int(request.query_params.get('days', 90))  # Default: 90 days
         
-        produits = Produit.objects.filter(stock__gt=0, rotation_moyenne=0).select_related('fournisseur')
+        today = timezone.now()
+        cutoff_date = (today - timedelta(days=days_threshold)).date()
+        
+        # Products with stock, where last sale is NULL or older than threshold
+        produits = Produit.objects.filter(stock__gt=0).select_related('fournisseur')
         if fournisseur_id:
             produits = produits.filter(fournisseur_id=fournisseur_id)
+        
+        # Filter: last sale is NULL or older than threshold
+        # AND product has been in stock long enough (dernier_achat or created_at before cutoff)
+        produits = produits.filter(
+            Q(dernier_vente__isnull=True) | Q(dernier_vente__lte=cutoff_date)
+        ).filter(
+            Q(dernier_achat__isnull=False, dernier_achat__lte=cutoff_date) |
+            Q(dernier_achat__isnull=True, created_at__date__lte=cutoff_date)
+        )
         
         results = []
         total_value = Decimal('0.00')
         
         for produit in produits:
             value = Decimal(str(produit.stock)) * Decimal(str(produit.cost_price))
+            
+            # Calculate days since last sale
+            if produit.dernier_vente:
+                days_since_sale = (today.date() - produit.dernier_vente).days
+            elif produit.dernier_achat:
+                days_since_sale = (today.date() - produit.dernier_achat).days
+            else:
+                days_since_sale = (today - produit.created_at).days
+            
             results.append({
                 'id': produit.id,
                 'name': produit.name,
@@ -1397,10 +1420,16 @@ class StockAnalysisUnsoldView(APIView):
                 'cost_price': float(produit.cost_price or 0),
                 'selling_price': float(produit.selling_price or 0),
                 'value': float(value),
+                'days_since_sale': days_since_sale,
+                'derniere_vente': produit.dernier_vente,
+                'dernier_achat': produit.dernier_achat,
                 'created_at': produit.created_at.date(),
                 'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A'
             })
             total_value += value
+        
+        # Sort by days since sale (most stagnant first)
+        results.sort(key=lambda x: x['days_since_sale'], reverse=True)
         
         return Response({
             'type': 'invendus',
@@ -1451,5 +1480,97 @@ class StockAnalysisOverstockView(APIView):
             'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
             'total_items': len(results),
             'total_value': float(total_value),
+            'items': results
+        })
+
+
+class StockAnalysisShortageView(APIView):
+    """
+    Prévision des ruptures de stock.
+    Calcule le nombre de jours avant rupture pour chaque produit
+    en se basant sur la consommation moyenne des 30 derniers jours.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from ..models import Facture, FactureProduit
+
+        fournisseur_id = request.query_params.get('fournisseur', None)
+        today = timezone.now().date()
+        date_30_days_ago = today - timedelta(days=30)
+
+        # Get all products with stock > 0
+        produits = Produit.objects.filter(stock__gt=0).select_related('fournisseur')
+        if fournisseur_id:
+            produits = produits.filter(fournisseur_id=fournisseur_id)
+
+        # Aggregate total quantity sold per product in the last 30 days
+        # Only count validated or paid invoices
+        sales_data = (
+            FactureProduit.objects
+            .filter(
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture__date__gte=date_30_days_ago,
+                produit__isnull=False
+            )
+            .values('produit_id')
+            .annotate(total_sold=Sum('quantity'))
+        )
+
+        # Build a dict: produit_id -> total_sold
+        sales_map = {item['produit_id']: item['total_sold'] for item in sales_data}
+
+        results = []
+        total_value_at_risk = Decimal('0.00')
+
+        for produit in produits:
+            total_sold = sales_map.get(produit.id, 0)
+            if total_sold <= 0:
+                continue  # No sales = no predicted shortage
+
+            avg_daily_sales = total_sold / 30.0
+            days_until_stockout = produit.stock / avg_daily_sales
+
+            if days_until_stockout > 30:
+                continue  # Only show products at risk within 30 days
+
+            # Determine urgency level
+            if days_until_stockout < 7:
+                urgency = 'critical'
+            elif days_until_stockout < 14:
+                urgency = 'warning'
+            else:
+                urgency = 'caution'
+
+            value_at_risk = Decimal(str(produit.stock)) * Decimal(str(produit.cost_price or 0))
+            total_value_at_risk += value_at_risk
+
+            results.append({
+                'id': produit.id,
+                'name': produit.name,
+                'stock': produit.stock,
+                'avg_daily_sales': round(avg_daily_sales, 2),
+                'days_until_stockout': round(days_until_stockout, 1),
+                'cost_price': float(produit.cost_price or 0),
+                'selling_price': float(produit.selling_price or 0),
+                'value': float(value_at_risk),
+                'urgency': urgency,
+                'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A'
+            })
+
+        # Sort by urgency: fewest days first
+        results.sort(key=lambda x: x['days_until_stockout'])
+
+        # Count by urgency
+        critical_count = sum(1 for r in results if r['urgency'] == 'critical')
+        warning_count = sum(1 for r in results if r['urgency'] == 'warning')
+
+        return Response({
+            'type': 'shortage',
+            'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
+            'total_items': len(results),
+            'total_value': float(total_value_at_risk),
+            'critical_count': critical_count,
+            'warning_count': warning_count,
             'items': results
         })

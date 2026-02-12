@@ -1,14 +1,16 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSidebar } from '../context/SidebarContext';
 import PharmaCrossLogo from './PharmaCrossLogo';
-
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export default function Sidebar() {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
-  const { isOpen, toggleSidebar, closeSidebar } = useSidebar();
+  const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
+  const location = useLocation();
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   
   const allMenuItems = [
     { path: '/app', label: t('sidebar.dashboard'), key: 'dashboard', icon: (
@@ -102,7 +104,6 @@ export default function Sidebar() {
       submenus: [
         { path: '/app/centre-rapports', label: t('sidebar.statistiques.rapports'), key: 'statistiques' },
         { path: '/app/analyse-abc', label: t('sidebar.statistiques.abc'), key: 'statistiques' },
-        { path: '/app/statistiques', label: t('sidebar.statistiques.produits'), key: 'statistiques' },
         { path: '/app/statistiques-fournisseurs', label: t('sidebar.statistiques.fournisseurs'), key: 'statistiques' },
         { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques' },
         { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques' },
@@ -119,28 +120,21 @@ export default function Sidebar() {
       submenus: [
         { path: '/app/invoice-settings', label: t('sidebar.parametres.facture'), key: 'settings' },
         { path: '/app/pharmacy-settings', label: t('sidebar.parametres.pharmacie'), key: 'settings' },
-        { path: '/app/settings/labels', label: t('sidebar.parametres.etiquettes'), key: 'settings' },
-        { path: '/app/settings/printers', label: t('sidebar.parametres.imprimantes'), key: 'settings' }
+        { path: '/app/settings/options', label: t('sidebar.parametres.etiquettes'), key: 'settings' }
       ]
     },
   ];
 
-  // Filter menu items based on permissions
+  // Logic to calculate menuItems based on authentication
   const menuItems = allMenuItems.filter(item => {
     if (user?.is_superuser) return true;
-    
     const allowed = (user as any)?.allowed_menus || [];
-
-    // Check if item has submenus
     if (item.submenus) {
-      // If any submenu is allowed, show the parent
       return item.submenus.some(sub => allowed.includes(sub.key));
     }
-    
     return allowed.includes(item.key);
   });
 
-  // Add User Management for superusers
   if (user?.is_superuser) {
     menuItems.push({
       path: '/app/utilisateurs',
@@ -160,21 +154,36 @@ export default function Sidebar() {
     });
   }
 
+  // Effect to automatically handle expansion and collapsing
+  useEffect(() => {
+    // Find if current location belongs to a submenu
+    const parent = menuItems.find(item => 
+      item.submenus?.some(sub => location.pathname === sub.path)
+    );
+
+    if (parent) {
+      setOpenMenu(parent.key);
+    } else {
+      // If we are not in a submenu path, check if we are in a top-level path that is NOT a submenu
+      const isTopLevel = menuItems.some(item => !item.submenus && item.path === location.pathname);
+      if (isTopLevel) {
+        setOpenMenu(null);
+      }
+    }
+  }, [location.pathname]);
+
+  const toggleMenu = (key: string) => {
+    setOpenMenu(prev => prev === key ? null : key);
+  }
+
   return (
     <>
-      {/* Bouton Hamburger Mobile */}
       <button
         onClick={toggleSidebar}
         className="fixed top-4 left-4 z-50 lg:hidden btn btn-circle btn-primary shadow-lg"
         aria-label="Toggle menu"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           {isOpen ? (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           ) : (
@@ -183,111 +192,154 @@ export default function Sidebar() {
         </svg>
       </button>
 
-      {/* Sidebar */}
       <aside 
-        className={`
-          w-64 pharma-sidebar flex flex-col h-screen
-          fixed lg:sticky top-0 z-50
-          transition-transform duration-300 ease-in-out
+        className={`pharma-sidebar flex flex-col h-screen fixed lg:sticky top-0 z-50 transition-all duration-300 ease-in-out
+          ${isCollapsed ? 'w-[72px]' : 'w-64'}
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-      <div className="pharma-sidebar-header p-6 flex items-center gap-3">
-        <PharmaCrossLogo size={48} />
-        <div>
-          <h1 className="text-xl font-bold text-white">Zenith</h1>
-          <p className="text-xs text-green-400">{t('sidebar.app_subtitle')}</p>
+        <div className="pharma-sidebar-header p-4 flex items-center gap-3">
+          <PharmaCrossLogo size={isCollapsed ? 32 : 48} />
+          {!isCollapsed && (
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-white truncate">Zenith</h1>
+              <p className="text-xs text-green-400 truncate">{t('sidebar.app_subtitle')}</p>
+            </div>
+          )}
         </div>
-      </div>
-      
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="menu w-full px-2 gap-1">
-          {menuItems.map((item) => (
-            <li key={item.path || item.key}>
-              {item.submenus ? (
-                <details className="group">
-                  <summary className="pharma-menu-item flex items-center gap-3 px-4 py-3 rounded-lg text-white/70 hover:text-white cursor-pointer marker:content-none">
-                    {item.icon}
-                    <span className="flex-1">{item.label}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                  </summary>
-                  <ul className="menu menu-sm pl-8 mt-1 gap-1">
-                    {item.submenus.map((sub) => {
-                      const allowed = (user as any)?.allowed_menus || [];
-                      if (!user?.is_superuser && !allowed.includes(sub.key)) return null;
-                      return (
-                      <li key={sub.path}>
-                        <NavLink 
-                          to={sub.path}
-                          onClick={closeSidebar}
-                          className={({ isActive }) => 
-                            `rounded-lg text-sm ${isActive ? 'bg-green-500/10 text-green-400 font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'}`
-                          }
-                        >
-                          {sub.label}
-                        </NavLink>
-                      </li>
-                      );
-                    })}
-                  </ul>
-                </details>
-              ) : (
-                <NavLink 
-                  to={item.path}
-                  end={item.path === '/app'} // Only exact match for dashboard
-                  onClick={closeSidebar}
-                  className={({ isActive }) => 
-                    `pharma-menu-item flex items-center gap-3 px-4 py-3 rounded-lg ${
-                      isActive 
-                        ? 'active text-green-400 font-medium' 
-                        : 'text-white/70 hover:text-white'
-                    }`
-                  }
-                >
-                  {item.icon}
-                  {item.label}
-                </NavLink>
-              )}
-            </li>
-          ))}
-        </ul>
-      </nav>
 
-      <div className="p-4 border-t border-white/10">
-        <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 mb-2">
-          <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold">
-            {user?.username.charAt(0) || 'A'}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
-            <p className="text-xs text-white/60 truncate">
-              {user?.is_superuser ? t('sidebar.roles.pharmacist') : t('sidebar.roles.user')}
-            </p>
-          </div>
-        </div>
-        <button 
-          onClick={logout}
-          className="btn btn-sm btn-ghost w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2"
+        <button
+          onClick={toggleCollapse}
+          className="hidden lg:flex items-center justify-center mx-auto my-1 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white transition-all duration-200"
+          title={isCollapsed ? 'Déplier le menu' : 'Replier le menu'}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-          {t('sidebar.logout')}
+          <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
         </button>
-        <div className="mt-4 flex gap-2 justify-center">
-            <button 
-                className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`}
-                onClick={() => i18n.changeLanguage('fr')}
-            >
-                FR
-            </button>
-            <button 
-                className={`btn btn-xs ${i18n.language === 'en' ? 'btn-primary' : 'btn-ghost text-white/50'}`}
-                onClick={() => i18n.changeLanguage('en')}
-            >
-                EN
-            </button>
+        
+        <nav className="flex-1 overflow-y-auto py-2">
+          <ul className={`menu w-full gap-1 ${isCollapsed ? 'px-1' : 'px-2'}`}>
+            {menuItems.map((item) => {
+              const hasSubmenus = !!item.submenus;
+              const isParentOfActive = item.submenus?.some(sub => location.pathname === sub.path);
+              const isOpen = openMenu === item.key;
+
+              if (hasSubmenus) {
+                return (
+                  <li key={item.key}>
+                    {isCollapsed ? (
+                      /* Mode replié : Dropdown */
+                      <div className="dropdown dropdown-right w-full">
+                        <div tabIndex={0} role="button" 
+                          className={`pharma-menu-item flex items-center justify-center px-2 py-3 rounded-lg hover:text-white cursor-pointer ${isParentOfActive ? 'text-green-400' : 'text-white/70'}`}
+                        >
+                          {item.icon}
+                        </div>
+                        <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-xl bg-slate-800 rounded-box w-56 ml-1">
+                          <li className="menu-title text-green-400 text-xs font-semibold px-2 py-1">{item.label}</li>
+                          {item.submenus?.map((sub) => (
+                            <li key={sub.path}>
+                              <NavLink to={sub.path} onClick={closeSidebar}
+                                className={({ isActive }) => `rounded-lg text-sm ${isActive ? 'bg-green-500/10 text-green-400 font-medium' : 'text-white/80 hover:text-white hover:bg-white/10'}`}
+                              >
+                                {sub.label}
+                              </NavLink>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      /* Mode déployé : Contrôlé */
+                      <>
+                        <div 
+                          className={`pharma-menu-item flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors duration-200
+                            ${isParentOfActive || isOpen ? 'text-green-400' : 'text-white/70 hover:text-white'}
+                          `}
+                          onClick={() => toggleMenu(item.key)}
+                        >
+                          {item.icon}
+                          <span className="flex-1 font-medium">{item.label}</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                          <ul className="menu menu-sm pl-8 gap-1 mt-1">
+                            {item.submenus?.map((sub) => (
+                              <li key={sub.path}>
+                                <NavLink to={sub.path} onClick={closeSidebar}
+                                  className={({ isActive }) => `rounded-lg text-sm ${isActive ? 'bg-green-500/10 text-green-400 font-medium' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                                >
+                                  {sub.label}
+                                </NavLink>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    )}
+                  </li>
+                );
+              }
+
+              return (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path!}
+                    end={item.path === '/app'}
+                    onClick={closeSidebar}
+                    className={({ isActive }) => 
+                      `pharma-menu-item flex items-center ${isCollapsed ? 'justify-center px-2' : 'gap-3 px-4'} py-3 rounded-lg ${
+                        isActive ? 'text-green-400 font-medium' : 'text-white/70 hover:text-white'
+                      }`
+                    }
+                    title={isCollapsed ? item.label : undefined}
+                  >
+                    {item.icon}
+                    {!isCollapsed && item.label}
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        <div className={`p-3 border-t border-white/10 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
+          {!isCollapsed ? (
+            <>
+              <div className="flex items-center gap-3 p-2 rounded-lg bg-white/5 mb-2">
+                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold">
+                  {user?.username.charAt(0) || 'A'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white truncate">{user?.username || 'Admin'}</p>
+                  <p className="text-xs text-white/60 truncate">
+                    {user?.is_superuser ? t('sidebar.roles.pharmacist') : t('sidebar.roles.user')}
+                  </p>
+                </div>
+              </div>
+              <button onClick={logout} className="btn btn-sm btn-ghost w-full text-red-400 hover:bg-red-500/10 hover:text-red-300 gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                {t('sidebar.logout')}
+              </button>
+              <div className="mt-3 flex gap-2 justify-center">
+                <button className={`btn btn-xs ${i18n.language === 'fr' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('fr')}>FR</button>
+                <button className={`btn btn-xs ${i18n.language === 'en' ? 'btn-primary' : 'btn-ghost text-white/50'}`} onClick={() => i18n.changeLanguage('en')}>EN</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="w-9 h-9 rounded-full bg-green-500 text-white flex items-center justify-center text-sm uppercase font-bold mb-2" title={user?.username || 'Admin'}>
+                {user?.username.charAt(0) || 'A'}
+              </div>
+              <button onClick={logout} className="btn btn-xs btn-ghost text-red-400 hover:bg-red-500/10 hover:text-red-300" title="Déconnexion">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              </button>
+            </>
+          )}
         </div>
-      </div>
-    </aside>
+      </aside>
     </>
   );
 }

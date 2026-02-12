@@ -611,7 +611,7 @@ export default function Dashboard() {
                   </button>
                 )}
                 <Link 
-                  to="/produits" 
+                  to="/app/produits" 
                   className="btn btn-ghost btn-sm flex-1 text-error hover:bg-error/10"
                   onClick={(e) => e.stopPropagation()}
                 >

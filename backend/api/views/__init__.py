@@ -15,7 +15,7 @@ from .ventes import (
 from .stocks import (
     StockLotViewSet, InventaireViewSet, LigneInventaireViewSet, StockAdjustmentViewSet,
     StatsUGViewSet, RelationTransformationViewSet, HistoriqueTransformationViewSet,
-    StockAnalysisUnsoldView, StockAnalysisOverstockView
+    StockAnalysisUnsoldView, StockAnalysisOverstockView, StockAnalysisShortageView
 )
 from .users import CustomAuthToken, UserViewSet
 from .auth import verify_password
@@ -47,7 +47,7 @@ __all__ = [
     'CreanceViewSet', 'MouvementCaisseViewSet',
     'StockLotViewSet', 'InventaireViewSet', 'LigneInventaireViewSet', 'StockAdjustmentViewSet',
     'StatsUGViewSet', 'RelationTransformationViewSet', 'HistoriqueTransformationViewSet',
-    'StockAnalysisUnsoldView', 'StockAnalysisOverstockView',
+    'StockAnalysisUnsoldView', 'StockAnalysisOverstockView', 'StockAnalysisShortageView',
     'CustomAuthToken', 'UserViewSet', 'verify_password',
     'LoyaltySettingViewSet', 'InvoiceConfigurationView', 'PharmacySettingsView', 'ConfigurationOptionViewSet',
     'DashboardViewSet', 'StatistiquesViewSet',

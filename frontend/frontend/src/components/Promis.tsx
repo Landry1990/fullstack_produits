@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import PasswordConfirmModal from './PasswordConfirmModal'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
@@ -130,14 +131,32 @@ export default function PromisPage() {
     }
   }
 
-  const handleAnnuler = async (id: number) => {
-    const confirmed = await confirm({
-      title: 'Annuler le promis',
-      message: 'Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l\'historique du produit.',
-      variant: 'warning',
-      confirmText: 'Annuler'
+  // Sudo mode state for cancel actions
+  const [sudoModal, setSudoModal] = useState({
+    isOpen: false,
+    action: null as 'cancel' | 'bulk_cancel' | null,
+    targetId: null as number | null
+  })
+
+  const openSudoForCancel = (id: number) => {
+    setSudoModal({
+      isOpen: true,
+      action: 'cancel',
+      targetId: id
     })
-    if (!confirmed) return
+  }
+
+  const openSudoForBulkCancel = () => {
+    if (selectedIds.size === 0) return
+    setSudoModal({
+      isOpen: true,
+      action: 'bulk_cancel',
+      targetId: null
+    })
+  }
+
+  // The actual cancellation logic (called after password confirmation)
+  const performCancel = async (id: number) => {
     try {
       const { data } = await axios.post(`${promisEndpoint}${id}/annuler_et_reintegrer/`)
       toast.success(data.detail)
@@ -146,6 +165,44 @@ export default function PromisPage() {
       toast.error('Erreur lors de l\'annulation')
       console.error(err)
     }
+  }
+
+  const performBulkCancel = async () => {
+    setBulkLoading(true)
+    try {
+      const { data } = await axios.post(`${promisEndpoint}bulk_annuler/`, {
+        ids: Array.from(selectedIds)
+      })
+      toast.success(data.detail)
+      setSelectedIds(new Set())
+      fetchPromis()
+    } catch (err) {
+      toast.error(t('promis.messages.bulk_cancel_error'))
+      console.error(err)
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  // Handle password confirmation success
+  const handleSudoConfirm = () => {
+    if (sudoModal.action === 'cancel' && sudoModal.targetId) {
+      performCancel(sudoModal.targetId)
+    } else if (sudoModal.action === 'bulk_cancel') {
+      performBulkCancel()
+    }
+    setSudoModal({ isOpen: false, action: null, targetId: null })
+  }
+
+  const handleAnnuler = async (id: number) => {
+    const confirmed = await confirm({
+      title: 'Annuler le promis',
+      message: 'Annuler ce promis et réintégrer le stock ?\n\nCette action créera une entrée dans l\'historique du produit.\n\nUne confirmation par mot de passe sera requise.',
+      variant: 'warning',
+      confirmText: 'Continuer'
+    })
+    if (!confirmed) return
+    openSudoForCancel(id)
   }
 
   // Bulk actions
@@ -179,26 +236,12 @@ export default function PromisPage() {
     if (selectedIds.size === 0) return
     const confirmed = await confirm({
       title: t('promis.modals.bulk_cancel_title'),
-      message: t('promis.modals.bulk_cancel_message', { count: selectedIds.size }),
+      message: t('promis.modals.bulk_cancel_message', { count: selectedIds.size }) + '\n\nUne confirmation par mot de passe sera requise.',
       variant: 'warning',
       confirmText: t('promis.modals.bulk_cancel_confirm')
     })
     if (!confirmed) return
-    
-    setBulkLoading(true)
-    try {
-      const { data } = await axios.post(`${promisEndpoint}bulk_annuler/`, {
-        ids: Array.from(selectedIds)
-      })
-      toast.success(data.detail)
-      setSelectedIds(new Set())
-      fetchPromis()
-    } catch (err) {
-      toast.error(t('promis.messages.bulk_cancel_error'))
-      console.error(err)
-    } finally {
-      setBulkLoading(false)
-    }
+    openSudoForBulkCancel()
   }
 
   // Selection helpers
@@ -683,6 +726,14 @@ export default function PromisPage() {
           </div>
         </div>
       )}
+      
+      <PasswordConfirmModal
+        isOpen={sudoModal.isOpen}
+        onClose={() => setSudoModal({ isOpen: false, action: null, targetId: null })}
+        onConfirm={handleSudoConfirm}
+        title="Confirmation Requise (Zone Sensible)"
+        message="Cette action va modifier le stock (réintégration). Veuillez confirmer votre mot de passe pour continuer."
+      />
     </div>
   )
 }

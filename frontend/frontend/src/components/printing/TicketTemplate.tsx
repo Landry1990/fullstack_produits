@@ -92,6 +92,12 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
             <span className="font-semibold">Client:</span>
             <span className="text-right max-w-[50%] truncate">{ticket.client_name || 'Passage'}</span>
         </div>
+        {facture?.created_by_name && (
+             <div className="flex justify-between">
+                <span className="font-semibold">Vendeur:</span>
+                <span>{facture.created_by_name}</span>
+            </div>
+        )}
         {ticket.user_details && (
              <div className="flex justify-between">
                 <span className="font-semibold">Caissier:</span>
