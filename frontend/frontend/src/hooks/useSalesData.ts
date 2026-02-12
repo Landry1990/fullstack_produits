@@ -32,8 +32,8 @@ export const useSalesData = () => {
             if (page !== currentPage) setCurrentPage(page);
 
             const params: any = {
-                start_date: startDate,
-                end_date: endDate,
+                date__gte: startDate,
+                date__lte: `${endDate}T23:59:59`,
                 page: page,
                 page_size: PAGE_SIZE
             };

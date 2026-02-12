@@ -72,6 +72,7 @@ class FactureListSerializer(serializers.ModelSerializer):
     """
     client_name = serializers.SerializerMethodField()
     created_by_name = serializers.SerializerMethodField()
+    validated_by_name = serializers.SerializerMethodField()
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
@@ -80,6 +81,7 @@ class FactureListSerializer(serializers.ModelSerializer):
         model = Facture
         fields = [
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
+            'validated_by_name',
             'date', 'status', 'status_display',
             'total_ht', 'total_ttc', 'remise'
         ]
@@ -95,6 +97,12 @@ class FactureListSerializer(serializers.ModelSerializer):
         if obj.created_by:
             full_name = f"{obj.created_by.first_name} {obj.created_by.last_name}".strip()
             return full_name or obj.created_by.username
+        return ''
+
+    def get_validated_by_name(self, obj):
+        if obj.validated_by:
+            full_name = f"{obj.validated_by.first_name} {obj.validated_by.last_name}".strip()
+            return full_name or obj.validated_by.username
         return ''
 
 
@@ -121,6 +129,7 @@ class CommandeListSerializer(serializers.ModelSerializer):
     
     reste_a_payer = serializers.SerializerMethodField()
     statut_paiement = serializers.SerializerMethodField()
+    closed_by_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Commande
@@ -128,8 +137,13 @@ class CommandeListSerializer(serializers.ModelSerializer):
             'id', 'numero_facture', 'fournisseur', 'fournisseur_nom',
             'date', 'date_cloture', 'status', 'status_display', 'total',
             'type', 'type_display', 'taux_change', 'frais_coefficient',
-            'montant_paye', 'reste_a_payer', 'statut_paiement'
+            'montant_paye', 'reste_a_payer', 'statut_paiement', 'closed_by_name'
         ]
+
+    def get_closed_by_name(self, obj):
+        if obj.closed_by:
+            return obj.closed_by.get_full_name() or obj.closed_by.username
+        return ''
 
     def get_reste_a_payer(self, obj):
         # Use annotated values if available

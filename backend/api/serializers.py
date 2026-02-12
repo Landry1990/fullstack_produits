@@ -401,11 +401,12 @@ class CommandeSerializer(serializers.ModelSerializer):
     fournisseur_nom = serializers.SerializerMethodField()
     produits = CommandeProduitSerializer(many=True, read_only=True)
     total = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    closed_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Commande
         fields = '__all__'
-        read_only_fields = ['date', 'status']
+        read_only_fields = ['date', 'status', 'closed_by']
         extra_kwargs = {
             'fournisseur': {
                 'required': True,
@@ -419,6 +420,11 @@ class CommandeSerializer(serializers.ModelSerializer):
 
     def get_fournisseur_nom(self, obj):
         return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
+
+    def get_closed_by_name(self, obj):
+        if obj.closed_by:
+            return obj.closed_by.get_full_name() or obj.closed_by.username
+        return ''
 
     def create(self, validated_data):
         # Auto-save fournisseur_nom as backup when fournisseur is linked
@@ -510,6 +516,8 @@ class FactureSerializer(serializers.ModelSerializer):
     is_remise_auto = serializers.SerializerMethodField()
     paiements = CaisseSerializer(many=True, read_only=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    validated_by_name = serializers.SerializerMethodField()
+    cancelled_by_name = serializers.SerializerMethodField()
 
     def get_client_nom(self, obj):
         if obj.client_name_override:
@@ -524,6 +532,16 @@ class FactureSerializer(serializers.ModelSerializer):
         if obj.client:
             return obj.client.name
         return "Client de passage"
+    
+    def get_validated_by_name(self, obj):
+        if obj.validated_by:
+            return obj.validated_by.get_full_name() or obj.validated_by.username
+        return ''
+
+    def get_cancelled_by_name(self, obj):
+        if obj.cancelled_by:
+            return obj.cancelled_by.get_full_name() or obj.cancelled_by.username
+        return ''
     
     def get_is_remise_auto(self, obj):
         """Indique si la facture a potentiellement bénéficié d'une remise automatique"""
@@ -553,7 +571,8 @@ class FactureSerializer(serializers.ModelSerializer):
             'date', 'date_document', 'status', 'status_display', 'produits', 
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
-            'is_remise_auto', 'part_client', 'paiements', 'created_by_name'
+            'is_remise_auto', 'part_client', 'paiements', 'created_by_name',
+            'validated_by_name', 'cancelled_by_name'
         ]
 
 class StockLotSerializer(serializers.ModelSerializer):

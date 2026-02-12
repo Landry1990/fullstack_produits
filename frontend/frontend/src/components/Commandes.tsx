@@ -316,7 +316,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                  setSaving(false);
                  setLastSaved(new Date());
              }
-        }, 300000); // 5 minutes
+        }, 60000); // 1 minute
         return () => clearTimeout(timer);
     }
   }, [
@@ -432,8 +432,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
             // Fetch full product data
             const { data: fullProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${p.id}/`);
             
-            // Calculate suggested quantity (e.g., reorder to double the min stock or a default)
-            const suggestedQty = Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
+            // Smart suggested quantity:
+            // If avg_daily_sales is available (from shortage prediction), order enough for 30 days of coverage
+            // Otherwise, fall back to stock_minimum - stock
+            const avgSales = (p as any).avg_daily_sales;
+            const coverageDays = 30;
+            const suggestedQty = avgSales && avgSales > 0
+              ? Math.max(1, Math.ceil(avgSales * coverageDays) - (fullProduct.stock || 0))
+              : Math.max(1, (fullProduct.stock_minimum || 10) - (fullProduct.stock || 0));
             
             newLines.push({
               id: Date.now() + p.id, // Temp ID
@@ -1570,6 +1576,12 @@ export default function Commandes({ forcedType }: CommandesProps) {
                  <div className="text-xs text-gray-500 uppercase">{t('orders.details.status')}</div>
                  <div><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></div>
             </div>
+            {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
+                <div>
+                    <div className="text-xs text-gray-500 uppercase">{t('orders.details.closed_by')}</div>
+                    <div className="font-bold">{selectedCommande.closed_by_name}</div>
+                </div>
+            )}
             <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
                  <div className="text-xs text-gray-500 uppercase mb-1">{t('orders.details.financial_summary')}</div>
                  {(() => {

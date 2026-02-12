@@ -64,6 +64,33 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <User className="w-3.5 h-3.5" />
                                 {facture.client_name || facture.client_name_override || t('common.passerby_client')}
                             </span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                            <span className="flex items-center gap-1.5" title="Vendeur">
+                                <User className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="text-gray-600 font-medium">{facture.created_by_name || '-'}</span>
+                            </span>
+                            {facture.validated_by_name && (
+                                <>
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                                    <span className="flex items-center gap-1.5" title="Validé par">
+                                        <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
+                                            <User className="w-2.5 h-2.5 text-green-600" />
+                                        </div>
+                                        <span className="text-gray-600 font-medium">{facture.validated_by_name}</span>
+                                    </span>
+                                </>
+                            )}
+                             {facture.cancelled_by_name && (
+                                <>
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                                    <span className="flex items-center gap-1.5" title="Annulé par">
+                                        <div className="w-3.5 h-3.5 rounded-full bg-red-100 flex items-center justify-center">
+                                            <User className="w-2.5 h-2.5 text-red-600" />
+                                        </div>
+                                        <span className="text-gray-600 font-medium">{facture.cancelled_by_name}</span>
+                                    </span>
+                                </>
+                            )}
                         </div>
                         {facture.paiements && facture.paiements.length > 0 && (
                             <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">

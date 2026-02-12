@@ -21,97 +21,92 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const { t } = useTranslation()
   const [montantPaye, setMontantPaye] = useState('')
+  const [modePaiement, setModePaiement] = useState('especes')
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
-  const [paymentStep, setPaymentStep] = useState<'amount' | 'mode'>('amount')
-  const [selectedModeIndex, setSelectedModeIndex] = useState(0)
   const montantInputRef = useRef<HTMLInputElement>(null)
+  const validateBtnRef = useRef<HTMLButtonElement>(null)
 
-  // Reset state when modal opens
+  // Computed values
+  const hasTiersPayant = facture.part_client !== null 
+    && Number(facture.part_client) >= 0 
+    && Number(facture.part_client) < Number(facture.total_ttc)
+
+  const montantDu = Math.round(
+    Math.max(0,
+      (hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc))
+      - (coupon ? Number(coupon.montant) : 0)
+    )
+  )
+
+  const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0)
+  const resteAPayer = Math.max(0, montantDu - totalVerse)
+  const renduMonnaie = Math.max(0, totalVerse - montantDu)
+  const peutValider = totalVerse >= montantDu && paiements.length > 0
+
+  const paymentModes = [
+    { value: 'especes', label: 'Espèces' },
+    { value: 'carte', label: 'Carte bancaire' },
+    { value: 'om', label: 'Orange Money' },
+    { value: 'momo', label: 'Mobile Money' },
+    { value: 'cheque', label: 'Chèque' },
+    { value: 'virement', label: 'Virement' },
+  ]
+
+  const getModeLabel = (value: string) => paymentModes.find(m => m.value === value)?.label || value
+
+  // Reset on open
   useEffect(() => {
     if (isOpen) {
-      const amountToPay = (facture.part_client !== null && Number(facture.part_client) >= 0)
-        ? Number(facture.part_client)
-        : Number(facture.total_ttc)
-      
-      const montantApresCoupon = Math.max(0, amountToPay - (coupon ? Number(coupon.montant) : 0))
-      
-      setMontantPaye(Math.round(montantApresCoupon).toString())
+      setMontantPaye(montantDu.toString())
       setPaiements([])
-      setPaymentStep('amount')
-      setSelectedModeIndex(0)
-    }
-  }, [isOpen, facture, coupon])
-
-  // Focus automatique sur le champ montant quand le modal s'ouvre ou revient à l'étape montant
-  useEffect(() => {
-    if (isOpen && paymentStep === 'amount') {
-      const timer = setTimeout(() => {
+      setModePaiement('especes')
+      setTimeout(() => {
         montantInputRef.current?.focus()
         montantInputRef.current?.select()
-      }, 100)
-      return () => clearTimeout(timer)
+      }, 150)
     }
-  }, [isOpen, paymentStep])
+  }, [isOpen]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Raccourcis clavier (mouse killing) - Escape
+  // Escape to close
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorer si une autre modale est ouverte
-      if (isOpen) {
-        if (e.key === 'Escape') {
-          onClose()
-        }
-      }
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
     }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
   if (!isOpen) return null
 
-  const modalTitle = t('caisse.payment_modal.title', { numero: facture.numero_facture })
-  
-  const amountToPayInitial = (facture.part_client !== null && Number(facture.part_client) >= 0)
-    ? Number(facture.part_client)
-    : Number(facture.total_ttc)
+  const handleAddPayment = () => {
+    const montant = Number(montantPaye)
+    if (!montant || montant <= 0) return
     
-  const montantAffiche = Math.round(Math.max(0, amountToPayInitial - (coupon ? Number(coupon.montant) : 0)))
-
-  const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0)
-  const resteAPayer = Math.max(0, montantAffiche - totalVerse)
-  const montantSaisi = Number(montantPaye) || 0
-  const montantCourant = paymentStep === 'amount' ? 0 : montantSaisi
-  const totalAvecCourant = totalVerse + montantCourant
-  const peutValider = totalAvecCourant >= montantAffiche || (paiements.length > 0 && resteAPayer === 0)
-
-  // Payment modes data
-  const paymentModes = [
-    { value: 'especes', label: `💵 ${t('caisse.payment_modes.especes')}`, key: '1' },
-    { value: 'carte', label: `💳 ${t('caisse.payment_modes.carte')}`, key: '2' },
-    { value: 'cheque', label: `📝 ${t('caisse.payment_modes.cheque')}`, key: '3' },
-    { value: 'virement', label: `🏦 ${t('caisse.payment_modes.virement')}`, key: '4' },
-    { value: 'om', label: `🟠 ${t('caisse.payment_modes.om_short') || 'OM'}`, key: '5' },
-    { value: 'momo', label: `🟡 ${t('caisse.payment_modes.momo_short') || 'MoMo'}`, key: '6' },
-  ]
-
-  const selectMode = (modeValue: string) => {
-    // Ajouter le paiement
-    const newPaiements = [...paiements, { mode: modeValue, montant: montantSaisi }]
+    const newPaiements = [...paiements, { mode: modePaiement, montant }]
     setPaiements(newPaiements)
     
-    // Calculer le reste
-    const nouveauTotalVerse = totalVerse + montantSaisi
-    const nouveauReste = Math.max(0, montantAffiche - nouveauTotalVerse)
+    const newTotal = newPaiements.reduce((acc, p) => acc + p.montant, 0)
+    const newReste = Math.max(0, montantDu - newTotal)
     
-    // Si reste, remettre en mode saisie avec le reste
-    if (nouveauReste > 0) {
-      setMontantPaye(nouveauReste.toString())
-      setPaymentStep('amount')
-      setSelectedModeIndex(0)
+    if (newReste > 0) {
+      setMontantPaye(newReste.toString())
+      setTimeout(() => {
+        montantInputRef.current?.focus()
+        montantInputRef.current?.select()
+      }, 50)
     } else {
-      // Paiement complet
       setMontantPaye('')
+      setTimeout(() => validateBtnRef.current?.focus(), 50)
     }
+  }
+
+  const handleRemovePayment = (idx: number) => {
+    const newPaiements = paiements.filter((_, i) => i !== idx)
+    setPaiements(newPaiements)
+    const newTotal = newPaiements.reduce((acc, p) => acc + p.montant, 0)
+    const newReste = Math.max(0, montantDu - newTotal)
+    setMontantPaye(newReste.toString())
   }
 
   const handleConfirm = () => {
@@ -122,198 +117,137 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box max-w-md">
-        <h3 className="font-bold text-lg mb-4">{modalTitle}</h3>
+      <div className="modal-box max-w-md p-0 overflow-hidden">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-base-200 flex justify-between items-center">
+          <h3 className="font-bold text-lg">
+            Encaissement — #{facture.numero_facture}
+          </h3>
+          <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
+        </div>
 
-        <div className="text-center mb-6">
-          <div className="text-sm text-base-content/60">{t('caisse.payment_modal.total')}</div>
-          <div className="text-4xl font-bold text-primary">{montantAffiche} F</div>
-          {coupon && (
-            <div className="badge badge-success mt-2 gap-1">
-              <span>{t('caisse.payment_modal.coupon_label', { numero: coupon.numero, montant: coupon.montant })}</span>
+        <div className="p-5 space-y-4">
+          {/* Montant dû */}
+          <div className="text-center">
+            <div className="text-xs uppercase tracking-wider text-base-content/50 mb-1">
+              {hasTiersPayant ? 'Part Patient' : 'Montant à payer'}
+            </div>
+            <div className="text-4xl font-light text-primary">{montantDu} F</div>
+            {coupon && (
+              <div className="text-xs text-success mt-1">
+                Coupon #{coupon.numero} : -{Number(coupon.montant)} F
+              </div>
+            )}
+            {hasTiersPayant && (
+              <div className="text-xs text-info mt-1">
+                Tiers payant — Part assurance: {Math.round(Number(facture.total_ttc) - Number(facture.part_client!))} F
+              </div>
+            )}
+          </div>
+
+          {/* Ligne de saisie : Mode + Montant + Ajouter */}
+          <div className="flex gap-2 items-end">
+            <div className="form-control flex-1">
+              <label className="label py-1">
+                <span className="label-text text-xs font-semibold">Mode</span>
+              </label>
+              <select
+                className="select select-bordered select-sm w-full"
+                value={modePaiement}
+                onChange={(e) => setModePaiement(e.target.value)}
+              >
+                {paymentModes.map(m => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-control flex-1">
+              <label className="label py-1">
+                <span className="label-text text-xs font-semibold">Montant</span>
+              </label>
+              <input
+                ref={montantInputRef}
+                type="number"
+                className="input input-bordered input-sm w-full text-right font-mono"
+                value={montantPaye}
+                onChange={(e) => setMontantPaye(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddPayment()
+                  }
+                }}
+                placeholder="0"
+              />
+            </div>
+            <button
+              type="button"
+              className="btn btn-sm btn-primary"
+              onClick={handleAddPayment}
+              disabled={!montantPaye || Number(montantPaye) <= 0}
+            >
+              +
+            </button>
+          </div>
+
+          {/* Liste des paiements enregistrés */}
+          {paiements.length > 0 && (
+            <div className="bg-base-100 rounded-lg border border-base-200 overflow-hidden">
+              <div className="px-3 py-2 bg-base-200/50 text-xs font-bold uppercase tracking-wider text-base-content/50">
+                Règlements
+              </div>
+              {paiements.map((p, idx) => (
+                <div key={idx} className="flex justify-between items-center px-3 py-2 border-t border-base-200">
+                  <span className="text-sm">{getModeLabel(p.mode)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold">{p.montant} F</span>
+                    <button
+                      onClick={() => handleRemovePayment(idx)}
+                      className="btn btn-ghost btn-xs text-error h-5 w-5 min-h-0 p-0"
+                    >✕</button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between items-center px-3 py-2 border-t border-base-300 bg-base-200/30">
+                <span className="text-sm font-bold">Total versé</span>
+                <span className="font-mono font-bold text-primary">{totalVerse} F</span>
+              </div>
             </div>
           )}
-          {(facture.part_client !== null && Number(facture.part_client) >= 0) && (
-             <div className="badge badge-info mt-2">{t('caisse.payment_modal.part_patient')}</div>
+
+          {/* Reste à payer / Rendu monnaie */}
+          {paiements.length > 0 && (
+            <div className="space-y-2">
+              {resteAPayer > 0 && (
+                <div className="flex justify-between items-center px-3 py-2 bg-warning/10 border border-warning/30 rounded-lg">
+                  <span className="text-sm font-semibold text-warning">Reste à payer</span>
+                  <span className="font-mono font-bold text-warning text-lg">{resteAPayer} F</span>
+                </div>
+              )}
+              {renduMonnaie > 0 && (
+                <div className="flex justify-between items-center px-3 py-3 bg-success/10 border border-success/30 rounded-lg">
+                  <span className="text-sm font-semibold text-success">💰 Rendu monnaie</span>
+                  <span className="font-mono font-bold text-success text-2xl">{renduMonnaie} F</span>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Liste des paiements ajoutés */}
-        {paiements.length > 0 && (
-          <div className="bg-base-200 rounded-lg p-3 mb-4">
-            <div className="text-xs font-bold mb-2">{t('caisse.payment_modal.recorded_payments')}:</div>
-            {paiements.map((p, idx) => (
-              <div key={idx} className="flex justify-between items-center bg-white p-2 rounded mb-1">
-                <span className="text-sm">
-                  {paymentModes.find(m => m.value === p.mode)?.label.split(' ')[1] || p.mode.toUpperCase()}
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold">{p.montant} F</span>
-                  <button 
-                    onClick={() => {
-                      const newPaiements = paiements.filter((_, i) => i !== idx)
-                      setPaiements(newPaiements)
-                      // Recalculer reste
-                      const newTotal = newPaiements.reduce((acc, p) => acc + p.montant, 0)
-                      const newReste = Math.max(0, montantAffiche - newTotal)
-                      setMontantPaye(newReste.toString())
-                      setPaymentStep('amount')
-                    }}
-                    className="btn btn-ghost btn-xs text-error"
-                  >✕</button>
-                </div>
-              </div>
-            ))}
-            <div className="text-right text-xs mt-2 pt-2 border-t">
-              {t('caisse.payment_modal.total_paid')}: <span className="font-bold">{totalVerse} F</span>
-            </div>
-          </div>
-        )}
-
-        {/* Reste à payer */}
-        {resteAPayer > 0 && (
-          <div className="alert alert-warning mb-4 py-2">
-            <span className="font-bold">{t('caisse.payment_modal.balance', { amount: resteAPayer })}</span>
-          </div>
-        )}
-
-        {/* Étape 1: Saisie du montant */}
-        {paymentStep === 'amount' && (
-          <div className="form-control w-full mb-4">
-            <label className="label">
-              <span className="label-text font-bold">{t('caisse.payment_modal.step1')}</span>
-            </label>
-            <input
-              ref={montantInputRef}
-              type="number"
-              value={montantPaye}
-              onChange={(e) => setMontantPaye(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && montantPaye && Number(montantPaye) > 0) {
-                  e.preventDefault()
-                  setPaymentStep('mode')
-                }
-              }}
-              className="input input-bordered input-lg w-full text-3xl text-center font-bold"
-              placeholder={resteAPayer > 0 ? `${resteAPayer} F` : '0 F'}
-              autoFocus
-            />
-            <label className="label">
-              <span className="label-text-alt text-base-content/60">{t('caisse.payment_modal.enter_hint')}</span>
-            </label>
-          </div>
-        )}
-
-        {/* Étape 2: Sélection du mode de paiement */}
-        {paymentStep === 'mode' && (
-          <div className="mb-4">
-            <div className="text-sm text-base-content/70 mb-2 text-center">
-              {t('caisse.table.amount')}: <span className="font-bold text-lg text-primary">{montantSaisi} F</span>
-            </div>
-            <label className="label">
-              <span className="label-text font-bold">{t('caisse.payment_modal.step2')}</span>
-            </label>
-            
-            <div 
-              className="grid grid-cols-2 gap-2"
-              tabIndex={0}
-              ref={(el) => el?.focus()}
-              onKeyDown={(e) => {
-                const cols = 2
-                const rows = Math.ceil(paymentModes.length / cols)
-                const currentRow = Math.floor(selectedModeIndex / cols)
-                const currentCol = selectedModeIndex % cols
-                
-                if (e.key === 'ArrowRight') {
-                  e.preventDefault()
-                  setSelectedModeIndex(prev => Math.min(prev + 1, paymentModes.length - 1))
-                } else if (e.key === 'ArrowLeft') {
-                  e.preventDefault()
-                  setSelectedModeIndex(prev => Math.max(prev - 1, 0))
-                } else if (e.key === 'ArrowDown') {
-                  e.preventDefault()
-                  const newRow = Math.min(currentRow + 1, rows - 1)
-                  setSelectedModeIndex(Math.min(newRow * cols + currentCol, paymentModes.length - 1))
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault()
-                  const newRow = Math.max(currentRow - 1, 0)
-                  setSelectedModeIndex(newRow * cols + currentCol)
-                } else if (e.key === 'Enter') {
-                  e.preventDefault()
-                  selectMode(paymentModes[selectedModeIndex].value)
-                } else if (e.key >= '1' && e.key <= '6') {
-                  e.preventDefault()
-                  const idx = parseInt(e.key) - 1
-                  if (idx < paymentModes.length) {
-                    selectMode(paymentModes[idx].value)
-                  }
-                } else if (e.key === 'Escape' || e.key === 'Backspace') {
-                  e.preventDefault()
-                  setPaymentStep('amount')
-                  setSelectedModeIndex(0)
-                }
-              }}
-            >
-              {paymentModes.map((mode, idx) => (
-                <button
-                  key={mode.value}
-                  type="button"
-                  onClick={() => selectMode(mode.value)}
-                  className={`btn btn-lg h-auto py-4 flex-col transition-all ${
-                    idx === selectedModeIndex 
-                      ? 'btn-primary ring-2 ring-primary ring-offset-2' 
-                      : 'btn-outline'
-                  }`}
-                >
-                  <span className="text-xl">{mode.label.split(' ')[1]}</span>
-                  <kbd className="kbd kbd-xs opacity-50">{mode.key}</kbd>
-                </button>
-              ))}
-            </div>
-            
-            <button
-              onClick={() => {
-                setPaymentStep('amount')
-                setSelectedModeIndex(0)
-              }}
-              className="btn btn-ghost btn-sm w-full mt-2"
-            >
-              ← {t('caisse.payment_modal.modify_amount')}
-            </button>
-          </div>
-        )}
-
-        {/* Monnaie à rendre */}
-        {totalAvecCourant > montantAffiche && (
-          <div className="alert alert-success mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div>
-              <div className="text-sm">{t('caisse.payment_modal.change')}</div>
-              <div className="text-xl font-bold">{(totalAvecCourant - montantAffiche).toFixed(0)} F</div>
-            </div>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="modal-action">
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-base-200 flex justify-end gap-2">
           <button
-            onClick={() => {
-              onClose()
-              setPaymentStep('amount')
-              setPaiements([])
-            }}
-            className="btn btn-ghost"
+            className="btn btn-ghost btn-sm"
+            onClick={onClose}
             disabled={loading}
           >
-            {t('caisse.table.cancel')}
+            Annuler
           </button>
           <button
+            ref={validateBtnRef}
             onClick={handleConfirm}
-            className={`btn ${peutValider ? 'btn-success' : 'btn-disabled'}`}
+            className={`btn btn-sm ${peutValider ? 'btn-success' : 'btn-disabled'}`}
             disabled={loading || !peutValider}
-            ref={(el) => { if (el && peutValider) el.focus() }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && peutValider && !loading) {
                 e.preventDefault()
@@ -321,9 +255,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               }
             }}
           >
-            {loading ? <span className="loading loading-spinner"></span> : (
-              peutValider ? t('caisse.payment_modal.validate_hint') : t('caisse.payment_modal.balance_short', { amount: resteAPayer })
-            )}
+            {loading 
+              ? <span className="loading loading-spinner loading-sm"></span>
+              : peutValider 
+                ? '✓ Valider l\'encaissement' 
+                : `Reste ${resteAPayer} F`
+            }
           </button>
         </div>
       </div>

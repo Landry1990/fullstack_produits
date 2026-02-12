@@ -137,33 +137,16 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # Robust check: look for BROU and VAL in the string (handles encoding/order)
         if 'BROU' in status_filter and 'VAL' in status_filter:
-            global SESSION_TICKET_COUNTER
-            global INVOICE_TICKET_MAP
-            global SESSION_TICKET_DATE
-            
-            # Daily reset: Check if the date has changed
-            today = date.today()
-            if SESSION_TICKET_DATE != today:
-                SESSION_TICKET_COUNTER = 0
-                INVOICE_TICKET_MAP = {}
-                SESSION_TICKET_DATE = today
-
-            
             # Handle pagination
             data_list = response.data['results'] if isinstance(response.data, dict) and 'results' in response.data else response.data
             
             if isinstance(data_list, list):
-                # Simply loop and assign/retrieve
-                for facture in data_list:
-                    # Only assign if not present
-                    facture_id = facture.get('id')
-                    if facture_id:
-                        if facture_id not in INVOICE_TICKET_MAP:
-                            SESSION_TICKET_COUNTER += 1
-                            INVOICE_TICKET_MAP[facture_id] = SESSION_TICKET_COUNTER
-
-                        
-                        facture['session_ticket_number'] = INVOICE_TICKET_MAP[facture_id]
+                # Sort by date chronologically, then assign ticket numbers dynamically
+                # Ticket #1 = earliest sale of the day, always recalculated
+                sorted_indices = sorted(range(len(data_list)), key=lambda i: data_list[i].get('date', ''))
+                
+                for ticket_num, idx in enumerate(sorted_indices, start=1):
+                    data_list[idx]['session_ticket_number'] = ticket_num
         
         return response
 
@@ -211,6 +194,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
     def valider(self, request, pk=None):
         """
         Valide une facture, met à jour le stock et alloue les lots (FIFO).
@@ -225,17 +210,13 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'detail': f'Impossible de valider une facture avec le statut {facture.get_status_display()}.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        payment_user = request.user
+        validation_user = request.user
 
         # --- MODE SUDO / VALIDATION TIERS ---
         validated_by_id = request.data.get('validated_by_id')
         sudo_password = request.data.get('sudo_password')
         
         if validated_by_id:
-            # We are verifying if the current user (or the requested validator) has rights?
-            # Actually, simply verify if the REQUESTED validator credentials are correct.
-            # We don't need to check if *request.user* is admin, because the security comes from KNOWING the password of the target user.
-            
             try:
                 from django.contrib.auth.models import User
                 validator_user = User.objects.get(id=validated_by_id)
@@ -249,11 +230,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             if not validator_user.check_password(sudo_password):
                 return Response({'detail': 'Mot de passe incorrect pour l\'utilisateur sélectionné.'}, status=status.HTTP_403_FORBIDDEN)
             
-            # Update created_by to the validator (Transfer ownership/responsibility)
-            facture.created_by = validator_user
-            payment_user = validator_user
-            # We will save this change later when saving the invoice status
+            # Set validator
+            validation_user = validator_user
         
+        facture.validated_by = validation_user
         # --- FIN MODE SUDO ---
 
         # Récupérer les lignes de facture
@@ -440,13 +420,14 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 if save_client:
                     client.save()
 
+        # Preserve created_by if it exists, otherwise set it to current user or validator
         if not facture.created_by:
-            facture.created_by = request.user
+            facture.created_by = validation_user
 
         facture.status = Facture.Status.VALIDEE
         if not facture.numero_facture:
             facture.numero_facture = f"FAC-{facture.id:06d}"
-        facture.save(update_fields=['status', 'numero_facture', 'created_by'])
+        facture.save(update_fields=['status', 'numero_facture', 'created_by', 'validated_by'])
         
         today = date.today()
         Produit.objects.filter(id__in=product_ids).update(dernier_vente=today)
@@ -466,7 +447,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         mode_paiement='en_compte',
                         montant=part_assurance,
                         statut='completee',
-                        user=payment_user,
+                        user=validation_user,
                         part_assurance=part_assurance,
                         part_patient=Decimal('0.00')
                     )
@@ -482,7 +463,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     mode_paiement=mode_paiement,
                     montant=facture.total_ttc,
                     statut='completee',
-                    user=payment_user
+                    user=validation_user
                 )
 
         facture.refresh_from_db()
@@ -500,6 +481,32 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             return Response({'detail': 'Cette facture est déjà annulée.'}, status=status.HTTP_400_BAD_REQUEST)
 
         motif = request.data.get('motif', '')
+
+        # --- MODE SUDO / VALIDATION TIERS ---
+        cancelled_by_id = request.data.get('cancelled_by_id') # Changed param name to be explicit
+        sudo_password = request.data.get('sudo_password')
+        
+        # Default cancellation user is request.user
+        cancellation_user = request.user
+        
+        if cancelled_by_id:
+            try:
+                from django.contrib.auth.models import User
+                canceller_user = User.objects.get(id=cancelled_by_id)
+            except User.DoesNotExist:
+                return Response({'detail': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not sudo_password:
+                return Response({'detail': 'Mot de passe requis pour la validation par un tiers.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Verify Password
+            if not canceller_user.check_password(sudo_password):
+                return Response({'detail': 'Mot de passe incorrect pour l\'utilisateur sélectionné.'}, status=status.HTTP_403_FORBIDDEN)
+            
+            cancellation_user = canceller_user
+        
+        facture.cancelled_by = cancellation_user
+        # --- FIN MODE SUDO ---
 
         was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
         
@@ -531,7 +538,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     quantite=item.quantity, # Positive because product comes BACK to stock
                     stock_apres=item.produit.stock + item.quantity, # Approximation (concurrency safe enough for history)
                     description=f"Annulation Facture #{facture.numero_facture or facture.id}",
-                    user=request.user
+                    user=cancellation_user 
                 ))
             
             # Bulk create movements for performance
@@ -548,13 +555,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             timestamp = facture.date_annulation.strftime('%d/%m/%Y %H:%M')
             facture.notes = f"{current_notes}\n[Annulation le {timestamp}] Motif: {motif}".strip()
             
-        facture.save(update_fields=['status', 'notes', 'date_annulation'])
-
-
+        facture.save(update_fields=['status', 'notes', 'date_annulation', 'cancelled_by'])
 
         numero = facture.numero_facture or f"#{facture.id}"
         log_audit(
-            user=request.user,
+            user=request.user, # Audit log keeps the actual request user, but details can mention sudo
             action=AuditLog.Action.INVOICE_CANCEL,
             model_name='Facture',
             object_id=facture.id,
@@ -564,7 +569,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'numero_facture': numero,
                 'montant': float(facture.total_ttc),
                 'motif': motif,
-                'client': facture.client.name if facture.client else None
+                'client': facture.client.name if facture.client else None,
+                'cancelled_by': cancellation_user.username
             },
             request=request
         )

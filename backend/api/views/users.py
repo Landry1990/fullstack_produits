@@ -136,6 +136,46 @@ class UserViewSet(viewsets.ModelViewSet):
         )
         return response
 
+    @action(detail=False, methods=['post'])
+    def verify_password(self, request):
+        """
+        Vérifie le mot de passe d'un utilisateur (pour le mode sudo).
+        POST { "user_id": 1, "password": "xxx" }
+        """
+        user_id = request.data.get('user_id')
+        password = request.data.get('password')
+        
+        if not user_id or not password:
+            return Response({'valid': False, 'detail': 'user_id et password requis.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'valid': False, 'detail': 'Utilisateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if target_user.check_password(password):
+            return Response({'valid': True})
+        else:
+            return Response({'valid': False, 'detail': 'Mot de passe incorrect.'})
+
+    @action(detail=False, methods=['get'])
+    def operators(self, request):
+        """
+        Liste tous les utilisateurs actifs (pour le mode sudo / sélection d'opérateur).
+        Retourne uniquement les champs nécessaires, accessible à tout utilisateur authentifié.
+        """
+        users = User.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        data = [
+            {
+                'id': u.id,
+                'username': u.username,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+            }
+            for u in users
+        ]
+        return Response(data)
+
     @action(detail=False, methods=['get'])
     def me(self, request):
         serializer = self.get_serializer(request.user)

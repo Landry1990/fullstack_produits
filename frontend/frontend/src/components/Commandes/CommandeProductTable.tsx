@@ -263,9 +263,17 @@ export default function CommandeProductTable({
                         </td>
                         {/* Stock Actuel */}
                         <td className="text-center py-2 md:py-3 bg-orange-50/20">
-                            <span className={`text-xs font-bold px-2 py-1 rounded ${((p as any).produit_stock || 0) <= 0 ? 'text-error bg-error/10' : 'text-orange-600 bg-orange-100/50'}`}>
-                                {(p as any).produit_stock || 0}
-                            </span>
+                            {(() => {
+                                const currentStock = (typeof p.produit === 'object' && p.produit.stock !== undefined) 
+                                    ? p.produit.stock 
+                                    : (p as any).produit_stock ?? 0;
+                                
+                                return (
+                                    <span className={`text-xs font-bold px-2 py-1 rounded ${currentStock <= 0 ? 'text-error bg-error/10' : 'text-orange-600 bg-orange-100/50'}`}>
+                                        {currentStock}
+                                    </span>
+                                );
+                            })()}
                         </td>
                         {/* Quantity (0) */}
                         <td className="text-right py-2 md:py-3">

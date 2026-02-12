@@ -214,9 +214,9 @@ export default function CaisseCentralisee() {
     }
   }
 
-  // Trier les factures par numéro de ticket pour la navigation clavier
+  // Trier les factures par date chronologique (plus ancienne en premier)
   const sortedFactures = useMemo(() => 
-    [...facturesEnAttente].sort((a, b) => (a.session_ticket_number || 0) - (b.session_ticket_number || 0)),
+    [...facturesEnAttente].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
     [facturesEnAttente]
   )
 

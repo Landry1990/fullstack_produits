@@ -150,6 +150,7 @@ export interface Commande {
   montant_paye?: string
   reste_a_payer?: string
   statut_paiement?: 'PAYE' | 'PARTIEL' | 'IMPAYE' | 'NON_CONCERNE'
+  closed_by_name?: string
 }
 
 export interface LigneInventaire {
@@ -236,6 +237,8 @@ export interface Facture {
   part_client?: string | number | null
   reste_a_payer?: string
   paiements?: any[]
+  validated_by_name?: string
+  cancelled_by_name?: string
   session_ticket_number?: number
 }
 

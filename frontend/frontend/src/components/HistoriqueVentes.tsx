@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface DailySale {
   date: string;
@@ -20,6 +21,7 @@ interface DailySale {
 
 const HistoriqueVentes = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [data, setData] = useState<DailySale[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateDebut, setDateDebut] = useState('');
@@ -59,12 +61,12 @@ const HistoriqueVentes = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Historique des Ventes par Jour</h1>
+      <h1 className="text-2xl font-bold mb-6">{t('salesHistory.title')}</h1>
 
-      <div className="flex gap-4 mb-6 bg-base-200 p-4 rounded-lg">
+      <div className="flex items-end gap-4 mb-6 bg-base-200 p-4 rounded-lg">
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Date début</span>
+            <span className="label-text">{t('salesHistory.start_date')}</span>
           </label>
           <input 
             type="date" 
@@ -76,7 +78,7 @@ const HistoriqueVentes = () => {
         </div>
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Date fin</span>
+            <span className="label-text">{t('salesHistory.end_date')}</span>
           </label>
           <input 
             type="date" 
@@ -86,9 +88,7 @@ const HistoriqueVentes = () => {
             lang="fr"
           />
         </div>
-        <div className="form-control justify-end">
-             <button className="btn btn-primary" onClick={fetchHistory}>Actualiser</button>
-        </div>
+        <button className="btn btn-primary" onClick={fetchHistory}>{t('common.refresh')}</button>
       </div>
 
       {loading ? (
@@ -100,16 +100,16 @@ const HistoriqueVentes = () => {
           <table className="table table-zebra w-full shadow-xl bg-base-100 rounded-box">
             <thead>
               <tr className="bg-base-200 text-base-content uppercase text-sm">
-                <th>Date</th>
-                <th className="text-right">CA TTC</th>
-                <th className="text-right">CA HT</th>
-                <th className="text-right">TVA</th>
-                <th className="text-right">Espèces</th>
-                <th className="text-right">Carte</th>
-                <th className="text-right">Chèque</th>
-                <th className="text-right">Mobile Money</th>
-                <th className="text-center">Nb Factures</th>
-                <th className="text-right">Panier Moyen</th>
+                <th>{t('salesHistory.columns.date')}</th>
+                <th className="text-right">{t('salesHistory.columns.ca_ttc')}</th>
+                <th className="text-right">{t('salesHistory.columns.ca_ht')}</th>
+                <th className="text-right">{t('salesHistory.columns.tva')}</th>
+                <th className="text-right">{t('salesHistory.columns.cash')}</th>
+                <th className="text-right">{t('salesHistory.columns.card')}</th>
+                <th className="text-right">{t('salesHistory.columns.check')}</th>
+                <th className="text-right">{t('salesHistory.columns.mobile_money')}</th>
+                <th className="text-center">{t('salesHistory.columns.nb_invoices')}</th>
+                <th className="text-right">{t('salesHistory.columns.avg_basket')}</th>
               </tr>
             </thead>
             <tbody>
@@ -130,14 +130,14 @@ const HistoriqueVentes = () => {
               {data.length === 0 && (
                 <tr>
                   <td colSpan={10} className="text-center p-8 text-base-content/50">
-                    Aucune vente trouvée pour cette période
+                    {t('salesHistory.no_data')}
                   </td>
                 </tr>
               )}
             </tbody>
             <tfoot className="bg-base-200 font-bold text-base-content">
                 <tr>
-                    <td>TOTAL</td>
+                    <td>{t('salesHistory.total')}</td>
                     <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.ca_ttc, 0))}</td>
                     <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.ca_ht, 0))}</td>
                     <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.tva, 0))}</td>

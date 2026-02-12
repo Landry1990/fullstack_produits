@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import axios from 'axios'
+import { toast } from 'react-hot-toast'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 
@@ -62,15 +63,25 @@ export default function PaymentModal({
     const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
     const [sudoPassword, setSudoPassword] = useState('');
     const [users, setUsers] = useState<any[]>([]);
+    const [passwordVerified, setPasswordVerified] = useState(false);
+    const [verifying, setVerifying] = useState(false);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    // Refs for keyboard-driven flow
+    const validatorSelectRef = useRef<HTMLSelectElement>(null);
+    const sudoPasswordRef = useRef<HTMLInputElement>(null);
+    const submitBtnRef = useRef<HTMLButtonElement>(null);
+
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
+        ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')
+        : '';
 
     useEffect(() => {
         if (isOpen) {
             // Fetch users for Sudo selection
             const fetchUsers = async () => {
                 try {
-                    const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/`);
+                    const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/operators/` : '/api/users/operators/';
+                    const response = await axios.get(endpoint);
                     const data = response.data.results || response.data;
                     setUsers(Array.isArray(data) ? data : []);
                 } catch (err) {
@@ -79,17 +90,79 @@ export default function PaymentModal({
             };
             fetchUsers();
             
-             // Focus sur le montant après un court délai pour laisser la modale s'ouvrir
-             setTimeout(() => {
-                paymentInputRef.current?.focus()
-                paymentInputRef.current?.select()
-            }, 100)
+            // Focus on user select after modal renders
+            setTimeout(() => {
+                validatorSelectRef.current?.focus();
+            }, 150)
         } else {
             // Reset Sudo state on close
             setSelectedValidator(null);
             setSudoPassword('');
+            setPasswordVerified(false);
         }
-    }, [isOpen, paymentInputRef, apiBaseUrl])
+    }, [isOpen, apiBaseUrl])
+
+    // Reset password state when validator changes
+    useEffect(() => {
+        setSudoPassword('');
+        setPasswordVerified(false);
+    }, [selectedValidator]);
+
+    // Verify password via API
+    const verifyPassword = useCallback(async (userId: number, password: string) => {
+        if (!userId || !password) return false;
+        setVerifying(true);
+        try {
+            const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/verify_password/` : '/api/users/verify_password/';
+            const response = await axios.post(endpoint, { user_id: userId, password });
+            if (response.data.valid) {
+                setPasswordVerified(true);
+                toast.success('✅ Mot de passe vérifié');
+                // Focus on submit button
+                setTimeout(() => submitBtnRef.current?.focus(), 100);
+                return true;
+            } else {
+                setPasswordVerified(false);
+                toast.error('❌ Mot de passe incorrect');
+                // Focus back to validator select
+                setSudoPassword('');
+                setTimeout(() => validatorSelectRef.current?.focus(), 100);
+                return false;
+            }
+        } catch (err) {
+            setPasswordVerified(false);
+            toast.error('❌ Mot de passe incorrect');
+            setSudoPassword('');
+            setTimeout(() => validatorSelectRef.current?.focus(), 100);
+            return false;
+        } finally {
+            setVerifying(false);
+        }
+    }, [apiBaseUrl]);
+
+    // Handle select keydown: Enter → focus password field
+    const handleSelectKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedValidator) {
+                // User selected → go to password
+                setTimeout(() => sudoPasswordRef.current?.focus(), 50);
+            } else {
+                // No user selected (Moi-même) → go straight to submit
+                setTimeout(() => submitBtnRef.current?.focus(), 50);
+            }
+        }
+    };
+
+    // Handle password keydown: Enter → verify password
+    const handlePasswordKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedValidator && sudoPassword) {
+                await verifyPassword(selectedValidator, sudoPassword);
+            }
+        }
+    };
 
     return (
         <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
@@ -103,13 +176,66 @@ export default function PaymentModal({
             <form onSubmit={(e) => { 
               e.preventDefault(); 
               if (isNewSale) {
-                // Pass Sudo params if set
                 onCompleteSale(selectedValidator || undefined, sudoPassword || undefined);
               } else {
                 onRegisterPayment(); 
               }
             }} className="p-6 space-y-5">
               
+              {/* Sudo Mode Section - FIRST for keyboard flow */}
+              <div className="bg-base-50 p-3 rounded-lg border border-base-200">
+                  <div className="form-control w-full">
+                      <label className="label py-1">
+                          <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.validate_by')}</span>
+                      </label>
+                      <select 
+                          ref={validatorSelectRef}
+                          className={`select select-bordered select-sm w-full ${passwordVerified ? 'select-success' : ''}`}
+                          value={selectedValidator || ''}
+                          onChange={(e) => setSelectedValidator(e.target.value ? Number(e.target.value) : null)}
+                          onKeyDown={handleSelectKeyDown}
+                      >
+                          <option value="">{t('facturation.payment.sudo_self')}</option>
+                          {Array.isArray(users) && users.map(u => (
+                              <option key={u.id} value={u.id}>
+                                  {u.username}
+                              </option>
+                          ))}
+                      </select>
+                  </div>
+                  
+                  {selectedValidator && (
+                      <div className="form-control w-full mt-2">
+                          <label className="label py-1">
+                              <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.password')}</span>
+                          </label>
+                          <div className="relative">
+                              <input 
+                                  ref={sudoPasswordRef}
+                                  type="password" 
+                                  className={`input input-bordered input-sm w-full pr-10 ${passwordVerified ? 'input-success border-success' : ''}`}
+                                  placeholder={t('facturation.payment.password_placeholder')}
+                                  value={sudoPassword}
+                                  onChange={(e) => {
+                                      setSudoPassword(e.target.value);
+                                      setPasswordVerified(false);
+                                  }}
+                                  onKeyDown={handlePasswordKeyDown}
+                                  disabled={verifying}
+                              />
+                              {verifying && (
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                                      <span className="loading loading-spinner loading-xs"></span>
+                                  </span>
+                              )}
+                              {passwordVerified && (
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success text-lg">✓</span>
+                              )}
+                          </div>
+                      </div>
+                  )}
+              </div>
+
               <div className="text-center mb-6">
                 <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">
                     {isNewSale && totals.tauxCouverture > 0 ? t('facturation.totals.part_patient') : t('facturation.payment.amount_due')}
@@ -134,11 +260,11 @@ export default function PaymentModal({
                 <div className="space-y-4">
                   <div className="alert alert-info">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span className="text-sm">Tiers Payant {totals.tauxCouverture}% actif - Paiement automatiquement réparti</span>
+                    <span className="text-sm">{t('facturation.payment.tiers_payant_active', { rate: totals.tauxCouverture })}</span>
                   </div>
                   
                   <div className="bg-base-50 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">Détail du paiement</h4>
+                    <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">{t('facturation.payment.detail_title')}</h4>
                     
                     {/* Part Patient */}
                     <div className="bg-white rounded-lg p-3 border border-success/20">
@@ -164,20 +290,20 @@ export default function PaymentModal({
                                         </div>
                                     ))}
                                     <div className="text-right text-xs text-base-content/60 pt-1 border-t border-base-200">
-                                        Reste à allouer: <span className="font-bold text-error">{Math.max(0, totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0))} F</span>
+                                        {t('facturation.payment.remaining_to_allocate')} <span className="font-bold text-error">{Math.max(0, totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0))} F</span>
                                     </div>
                                 </div>
                             )}
 
                         <div className="flex gap-2 items-end">
                             <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">Mode</span> </label>
+                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation.payment.mode_label')}</span> </label>
                                 <div className="text-sm font-medium py-1.5 px-2 bg-base-100 border border-base-200 rounded text-base-content/70">
-                                    Caisse Centrale
+                                    {t('facturation.payment.caisse_centrale')}
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">Montant</span> </label>
+                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation.payment.amount_label')}</span> </label>
                                 <input 
                                     type="number" 
                                     className="input input-sm input-bordered w-full" 
@@ -224,7 +350,7 @@ export default function PaymentModal({
                         <span className="text-lg font-bold text-info">{Math.round(totals.partAssurance)} F</span>
                       </div>
                       <div className="text-xs text-base-content/60 mt-1">
-                        <span className="badge badge-ghost badge-xs">En compte (automatique)</span>
+                        <span className="badge badge-ghost badge-xs">{t('facturation.payment.en_compte_auto')}</span>
                       </div>
                     </div>
                   </div>
@@ -232,10 +358,10 @@ export default function PaymentModal({
               ) : (
                 <>
                   <div className="form-control w-full">
-                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Mode de paiement</span></label>
+                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.payment_mode_label')}</span></label>
                     <div className="p-3 bg-base-100 border border-base-300 rounded-lg text-sm font-medium flex items-center gap-2">
                         <span className="badge badge-primary badge-xs"></span>
-                        Caisse Centrale
+                        {t('facturation.payment.caisse_centrale')}
                     </div>
                     {/* Hidden input to maintain logic if needed, but we just use state 'especes' */}
                   </div>
@@ -245,7 +371,7 @@ export default function PaymentModal({
                     <div className="bg-base-50 rounded-lg p-2 space-y-1">
                         {paiements.map((p, idx) => (
                             <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
-                                <span>Caisse Centrale</span>
+                                <span>{t('facturation.payment.caisse_centrale')}</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{p.montant} F</span>
                                     <button 
@@ -261,7 +387,7 @@ export default function PaymentModal({
 
                   <div className="flex items-end gap-2">
                       <div className="form-control flex-1">
-                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">Montant</span></label>
+                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.amount_label')}</span></label>
                         <input
                           ref={paymentInputRef}
                           type="number"
@@ -309,47 +435,11 @@ export default function PaymentModal({
                             }
                         }}
                       >
-                        Ajouter
+                        {t('facturation.payment.add_btn')}
                       </button>
                   </div>
                 </>
               )}
-
-              {/* Sudo Mode Section */}
-              <div className="bg-base-50 p-3 rounded-lg border border-base-200 mt-4 mb-2">
-                  <div className="form-control w-full">
-                      <label className="label py-1">
-                          <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.validate_by') || 'Validé par'}</span>
-                      </label>
-                      <select 
-                          className="select select-bordered select-sm w-full"
-                          value={selectedValidator || ''}
-                          onChange={(e) => setSelectedValidator(e.target.value ? Number(e.target.value) : null)}
-                      >
-                          <option value="">(Moi-même)</option>
-                          {Array.isArray(users) && users.map(u => (
-                              <option key={u.id} value={u.id}>
-                                  {u.first_name} {u.last_name} ({u.username})
-                              </option>
-                          ))}
-                      </select>
-                  </div>
-                  
-                  {selectedValidator && (
-                      <div className="form-control w-full mt-2">
-                          <label className="label py-1">
-                              <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.password') || 'Mot de passe (Sudo)'}</span>
-                          </label>
-                          <input 
-                              type="password" 
-                              className="input input-bordered input-sm w-full"
-                              placeholder="Mot de passe du validateur..."
-                              value={sudoPassword}
-                              onChange={(e) => setSudoPassword(e.target.value)}
-                          />
-                      </div>
-                  )}
-              </div>
 
               {(() => {
                 const totalAPayer = isNewSale 
@@ -360,11 +450,6 @@ export default function PaymentModal({
                 
                 const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 && Number(montantPaye) > 0 ? Number(montantPaye) : 0)
                 const rendu = totalVerse - totalAPayer
-                
-                // Allow validation if fully paid OR if user wants to validate partial/credit (though typically we require full payment unless credit allowed)
-                // For now, enable if fully paid OR if authorized (which logic is outside).
-                // But button is disabled if `rendu < 0` usually.
-                // Actually, logic below handles it.
                 
                 return (
                   <div className="pt-4 border-t border-base-200 mt-2">
@@ -381,9 +466,10 @@ export default function PaymentModal({
                     </div>
                     
                     <button 
+                        ref={submitBtnRef}
                         type="submit" 
-                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (selectedValidator !== null && !sudoPassword)}
-                        className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
+                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (selectedValidator !== null && !passwordVerified)}
+                        className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''} ${passwordVerified ? 'btn-success' : ''}`}
                     >
                         {loading ? 'Traitement...' : isNewSale ? t('facturation.payment.validate_sale') : t('facturation.payment.register_payment')}
                     </button>
@@ -402,4 +488,3 @@ export default function PaymentModal({
         </dialog>
     )
 }
-
