@@ -21,7 +21,8 @@ from .products import (
 # Stock
 from .stock import (
     StockLot, LotSequence, StockAdjustment, MouvementStock,
-    generate_lot_number
+    TicketSessionSequence,
+    generate_lot_number, get_next_ticket_session
 )
 
 # Clients
@@ -69,7 +70,8 @@ __all__ = [
     'Substance', 'DrugInteraction', 'Produit',
     # Stock
     'StockLot', 'LotSequence', 'StockAdjustment', 'MouvementStock',
-    'generate_lot_number',
+    'TicketSessionSequence',
+    'generate_lot_number', 'get_next_ticket_session',
     # Clients
     'Fournisseur', 'Client', 'AyantDroit',
     # Orders

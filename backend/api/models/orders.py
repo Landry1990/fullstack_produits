@@ -150,6 +150,7 @@ class Avoir(models.Model):
     observations = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='BROUILLON')
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_created')
+    validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='avoirs_validated', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

@@ -21,10 +21,12 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.colors import HexColor
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Frame, PageTemplate, BaseDocTemplate
 
+from django.contrib.auth.models import User
 from ..models import (
     Facture, FactureProduit, FactureProduitAllocation, Caisse, ClotureCaisse, 
     MouvementCaisse, Produit, StockLot, LoyaltySetting, InvoiceSettings, AuditLog,
-    RelevePaiement, MouvementStock
+    RelevePaiement, MouvementStock, Promis, Ordonnancier, LigneOrdonnancier,
+    get_next_ticket_session
 )
 from ..services import PromotionService
 from ..serializers import (
@@ -89,10 +91,6 @@ def header_footer_facture(canvas, doc, company_info, facture_info, facture):
     
     canvas.restoreState()
 
-# Globals for session-based ticket numbering with daily reset
-SESSION_TICKET_COUNTER = 0
-INVOICE_TICKET_MAP = {}
-SESSION_TICKET_DATE = None  # Tracks the date for daily reset
 
 class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -129,29 +127,202 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     detail_serializer_class = FactureDetailSerializer
 
     def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        
-        # Inject context-based ticket numbers
-        # Only for Caisse Centrale view (pending invoices)
+        # Fallback pour les factures créées aujourd'hui sans ticket_session (avant la MAJ)
+        # On vérifie si on est dans la vue Caisse Centrale
         status_filter = request.query_params.get('status__in', '')
-        
-        # Robust check: look for BROU and VAL in the string (handles encoding/order)
         if 'BROU' in status_filter and 'VAL' in status_filter:
-            # Handle pagination
-            data_list = response.data['results'] if isinstance(response.data, dict) and 'results' in response.data else response.data
+            today = timezone.now().date()
+            # On cherche les factures d'aujourd'hui sans ticket_session
+            missing_tickets = Facture.objects.filter(
+                date__date=today,
+                ticket_session__isnull=True,
+                status__in=[Facture.Status.BROUILLON, Facture.Status.VALIDEE]
+            ).order_by('date')
             
-            if isinstance(data_list, list):
-                # Sort by date chronologically, then assign ticket numbers dynamically
-                # Ticket #1 = earliest sale of the day, always recalculated
-                sorted_indices = sorted(range(len(data_list)), key=lambda i: data_list[i].get('date', ''))
-                
-                for ticket_num, idx in enumerate(sorted_indices, start=1):
-                    data_list[idx]['session_ticket_number'] = ticket_num
-        
-        return response
+            if missing_tickets.exists():
+                for f in missing_tickets:
+                    f.ticket_session = get_next_ticket_session()
+                    f.save(update_fields=['ticket_session'])
+
+        return super().list(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def finaliser(self, request):
+        """
+        Action ATOMIQUE pour finaliser une vente complète.
+        Regroupe : Création Facture, Ajout Produits, Validation, Promis, Ordonnance et Paiements.
+        """
+        data = request.data
+        user = request.user
+
+        # 1. Extraction des données
+        client_id = data.get('client')
+        client_name_override = data.get('client_name_override')
+        ayant_droit_id = data.get('ayant_droit')
+        remise_montant = Decimal(str(data.get('remise', '0')))
+        produits_data = data.get('produits', [])
+        paiements_data = data.get('paiements', [])
+        loyalty_data = data.get('loyalty', {})
+        ordonnance_data = data.get('ordonnance')
+        sudo_data = data.get('sudo', {})
+        sale_type = data.get('type', 'STD')
+        centralized = data.get('centralized_cash_register', True)
+        coupon_numero = data.get('coupon_numero')
+
+        if not produits_data:
+            return Response({'detail': 'La liste des produits ne peut pas être vide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Gestion Sudo Mode pour la validation
+        validation_user = user
+        if sudo_data.get('validated_by_id'):
+            try:
+                validator_user = User.objects.get(id=sudo_data['validated_by_id'])
+                if not sudo_data.get('sudo_password'):
+                    return Response({'detail': 'Mot de passe requis pour la validation par un tiers.'}, status=status.HTTP_400_BAD_REQUEST)
+                if not validator_user.check_password(sudo_data['sudo_password']):
+                    return Response({'detail': 'Mot de passe sudo incorrect.'}, status=status.HTTP_403_FORBIDDEN)
+                validation_user = validator_user
+            except User.DoesNotExist:
+                return Response({'detail': 'Validateur sudo introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Création de la Facture
+        facture = Facture.objects.create(
+            client_id=client_id,
+            client_name_override=client_name_override,
+            ayant_droit_id=ayant_droit_id,
+            remise=remise_montant,
+            status=Facture.Status.BROUILLON,
+            created_by=user,
+            validated_by=validation_user if not centralized else None,
+            ticket_session=get_next_ticket_session() if centralized else None
+        )
+
+        # 4. Ajout des produits (OPTIMISÉ: bulk_create)
+        facture_produits_to_create = []
+        for p_item in produits_data:
+            produit_id = p_item.get('produit')
+            qty = int(p_item.get('quantity', 0))
+            price = Decimal(str(p_item.get('selling_price', '0')))
+            discount = Decimal(str(p_item.get('discount', '0')))
+            lot_id = p_item.get('lot_id')
+
+            facture_produits_to_create.append(FactureProduit(
+                facture=facture,
+                produit_id=produit_id,
+                quantity=qty,
+                selling_price=price,
+                discount=discount,
+                stock_lot_id=lot_id
+            ))
+        
+        if facture_produits_to_create:
+            FactureProduit.objects.bulk_create(facture_produits_to_create)
+
+        # Recalcul des totaux avant validation
+        facture.calculate_totals(save=True)
+
+        # 5. Application des coupons
+        if coupon_numero:
+            from ..models import CouponMonnaie
+            try:
+                coupon = CouponMonnaie.objects.get(numero=coupon_numero, status=CouponMonnaie.Status.ACTIF)
+                coupon.status = CouponMonnaie.Status.UTILISE
+                coupon.facture_utilisation = facture
+                coupon.date_utilisation = timezone.now()
+                coupon.utilise_par = user
+                coupon.save()
+                # On ne déduit pas le montant ici, le frontend l'a normalement déjà inclus dans 'remise' ou ajusté le paiement.
+                # Mais si c'est une remise facture, on l'ajoute.
+                # Selon useSaleCompletion.ts, couponsEndpoint/utiliser est appelé.
+            except CouponMonnaie.DoesNotExist:
+                pass
+
+        # 6. Gestion des Promis (OPTIMISÉ: bulk_create)
+        promis_to_create = []
+        for p_item in produits_data:
+            if p_item.get('is_promis') and p_item.get('promis_quantity', 0) > 0:
+                promis_to_create.append(Promis(
+                    facture=facture,
+                    client_id=client_id,
+                    client_name=client_name_override or '',
+                    client_phone=p_item.get('promis_phone', ''),
+                    produit_id=p_item['produit'],
+                    quantite=p_item['promis_quantity'],
+                    status=Promis.Status.EN_ATTENTE,
+                    created_by=user
+                ))
+        if promis_to_create:
+            Promis.objects.bulk_create(promis_to_create)
+
+        # 7. Gestion de l'Ordonnancier
+        if ordonnance_data:
+            ord_obj = Ordonnancier.objects.create(
+                patient_nom=ordonnance_data.get('patient_nom'),
+                prescripteur_nom=ordonnance_data.get('prescripteur_nom'),
+                facture=facture,
+                enregistre_par=user
+            )
+            ordonnance_lignes_to_create = []
+            for l_ord in ordonnance_data.get('lignes', []):
+                ordonnance_lignes_to_create.append(LigneOrdonnancier(
+                    ordonnancier=ord_obj,
+                    produit_id=l_ord.get('produit_id'),
+                    produit_nom=l_ord.get('produit_nom'),
+                    quantite=l_ord.get('quantite'),
+                    surveillance_category=l_ord.get('surveillance_category', 'NONE')
+                ))
+            if ordonnance_lignes_to_create:
+                LigneOrdonnancier.objects.bulk_create(ordonnance_lignes_to_create)
+
+        # 8. Validation (Stock + Lots + Mouvements)
+        if not centralized:
+            # On réutilise la logique de validation existante
+            # Pour éviter les duplications massives, on peut extraire la logique ou appeler l'action en interne
+            # Mais invoquer une action DRF en interne est complexe avec les contextes request.
+            # Je vais copier les parties essentielles ici, car `valider` fait beaucoup de checks.
+            
+            # Note: Je simplifie ici en supposant que valider() sera appelée via un endpoint si pas centralized?
+            # Non, l'atomicité veut qu'on fasse TOUT.
+            
+            # J'appelle la méthode interne qui sera refactorisée plus tard si besoin.
+            # Pour l'instant, je vais exécuter la logique de valider()
+            
+            # Mock de request pour la fidélité
+            request.data.update({
+                'use_pending_discount': loyalty_data.get('use_pending_discount', False),
+                'points_to_use': loyalty_data.get('points_to_use', 0),
+                'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data)
+            })
+            
+            # Exécution de la validation
+            self.valider(request, pk=facture.id, facture=facture)
+            
+            # 9. Enregistrement des paiements (si direct)
+            for p_data in paiements_data:
+                Caisse.objects.create(
+                    facture=facture,
+                    mode_paiement=p_data['mode'],
+                    montant=Decimal(str(p_data['montant'])),
+                    reference=p_data.get('reference'),
+                    statut='completee',
+                    user=user,
+                    part_patient=p_data.get('part_patient'),
+                    part_assurance=p_data.get('part_assurance')
+                )
+            
+            # Refresh for status update (Caisse signals might have updated it to PAY)
+            facture.refresh_from_db()
+        else:
+            # Mode Caisse Centralisée: On laisse en BROUILLON (ou on met en BROUILLON si c'était PROFORMA)
+            # Pas de déduction de stock ici, ce sera fait à la validation en caisse.
+            pass
+
+        serializer = self.get_serializer(facture)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -194,13 +365,12 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
-    @action(detail=True, methods=['post'])
-    @transaction.atomic
-    def valider(self, request, pk=None):
+    def valider(self, request, pk=None, facture=None):
         """
         Valide une facture, met à jour le stock et alloue les lots (FIFO).
         """
-        facture = self.get_object()
+        if not facture:
+            facture = self.get_object()
         if facture.status == Facture.Status.VALIDEE:
             return Response({'detail': 'Cette facture est déjà validée.'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -251,16 +421,25 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         # 0. Vérifier le plafond de crédit pour les clients professionnels
         if facture.client and facture.client.client_type == 'PROFESSIONNEL':
             current_debt = facture.client.current_debt
-            new_invoice_amount = facture.total_ttc
+            
+            # Prendre en compte le paiement immédiat (si fourni dans la requête)
+            paiement_immediat = request.data.get('paiement_immediat', 0)
+            try:
+                paiement_immediat = Decimal(str(paiement_immediat))
+            except (ValueError, TypeError, DecimalException):
+                paiement_immediat = Decimal('0')
+                
+            new_debt_increment = max(Decimal('0'), facture.total_ttc - paiement_immediat)
             plafond = facture.client.plafond
-            if plafond > 0 and (current_debt + new_invoice_amount) > plafond:
+            
+            if plafond > 0 and (current_debt + new_debt_increment) > plafond:
                 return Response(
                     {
                         'detail': f"Le plafond de crédit du client est dépassé. "
                                   f"Dette actuelle: {current_debt}, "
-                                  f"Montant facture: {new_invoice_amount}, "
+                                  f"Incrément dette (TTC - Paiement): {new_debt_increment}, "
                                   f"Plafond: {plafond}. "
-                                  f"Total après validation: {current_debt + new_invoice_amount}"
+                                  f"Dépassement de: {(current_debt + new_debt_increment) - plafond}"
                     },
                     status=status.HTTP_400_BAD_REQUEST
                 )
@@ -298,6 +477,27 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         status=status.HTTP_403_FORBIDDEN
                     )
 
+        # --- OPTIMISATION: Pré-chargement et verrouillage global des lots ---
+        lot_ids_to_lock = [item.stock_lot_id for item in items if item.stock_lot_id]
+        locked_lots_dict = {l.id: l for l in StockLot.objects.select_for_update().filter(id__in=lot_ids_to_lock)} if lot_ids_to_lock else {}
+
+        fifo_prods = [item.produit_id for item in items if item.quantity > 0 and not item.stock_lot_id]
+        fifo_lots_queue = {}
+        if fifo_prods:
+            fifo_lots = StockLot.objects.select_for_update().filter(
+                produit_id__in=fifo_prods,
+                quantity_remaining__gt=0
+            ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
+            for lot in fifo_lots:
+                fifo_lots_queue.setdefault(lot.produit_id, []).append(lot)
+
+        # Collecteurs pour opérations bulk
+        allocations_to_create = []
+        items_to_update = []
+        lots_to_update_set = set()
+        prods_to_sync_from_lots = set()
+        manual_stock_decrements = {} # prod_id -> total_qty
+
         # Mettre à jour le stock
         for item in items:
             produit = product_map.get(item.produit_id)
@@ -305,75 +505,132 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             
             # 1. Gestion des lots pour les VENTES (qty > 0)
             if item.quantity > 0:
-                quantity_to_allocate = item.quantity
+                qty_to_alloc = item.quantity
                 
                 # CAS 1: Un lot spécifique est ciblé
-                if item.stock_lot:
-                    target_lot = StockLot.objects.select_for_update().get(id=item.stock_lot.id)
+                if item.stock_lot_id:
+                    target_lot = locked_lots_dict.get(item.stock_lot_id)
+                    if not target_lot: 
+                        # Fallback de sécurité (peu probable si les données sont cohérentes)
+                        target_lot = StockLot.objects.select_for_update().get(id=item.stock_lot_id)
                     
-                    if target_lot.quantity_remaining < quantity_to_allocate:
+                    if target_lot.quantity_remaining < qty_to_alloc:
                         return Response(
                             {
                                 'detail': f'Stock insuffisant dans le lot {target_lot.lot}. '
                                           f'Stock disponible: {target_lot.quantity_remaining}, '
-                                          f'Quantité demandée: {quantity_to_allocate}'
+                                          f'Quantité demandée: {qty_to_alloc}'
                             },
                             status=status.HTTP_400_BAD_REQUEST
                         )
 
-                    FactureProduitAllocation.objects.create(
+                    allocations_to_create.append(FactureProduitAllocation(
                         facture_produit=item,
                         stock_lot=target_lot,
-                        quantity=quantity_to_allocate,
+                        quantity=qty_to_alloc,
                         cost_price=target_lot.price_cost,
                         selling_price=item.selling_price
-                    )
-                    target_lot.quantity_remaining -= quantity_to_allocate
-                    target_lot.save()
+                    ))
+                    target_lot.quantity_remaining -= qty_to_alloc
+                    lots_to_update_set.add(target_lot)
                     
-                    # Update item lot name
                     item.lot = target_lot.lot[:20] 
-                    item.save(update_fields=['lot'])
+                    items_to_update.append(item)
                     lots_updated = True
 
                 # CAS 2: Pas de lot spécifique -> FIFO/FEFO standard
                 else:
-                    available_lots = StockLot.objects.select_for_update().filter(
-                        produit=produit,
-                        quantity_remaining__gt=0
-                    ).order_by(F('date_expiration').asc(nulls_last=True), 'date_reception')
-                    
-                    used_lots = []
-                    for lot in available_lots:
-                        if quantity_to_allocate <= 0:
+                    available = fifo_lots_queue.get(produit.id, [])
+                    used_lots_names = []
+                    for lot in available:
+                        if qty_to_alloc <= 0:
                             break
-                        quantity_from_lot = min(lot.quantity_remaining, quantity_to_allocate)
-                        FactureProduitAllocation.objects.create(
+                        quantity_from_lot = min(lot.quantity_remaining, qty_to_alloc)
+                        allocations_to_create.append(FactureProduitAllocation(
                             facture_produit=item,
                             stock_lot=lot,
                             quantity=quantity_from_lot,
                             cost_price=lot.price_cost,
                             selling_price=item.selling_price
-                        )
+                        ))
                         lot.quantity_remaining -= quantity_from_lot
-                        lot.save()
-                        used_lots.append(lot.lot)
-                        quantity_to_allocate -= quantity_from_lot
+                        lots_to_update_set.add(lot)
+                        used_lots_names.append(lot.lot)
+                        qty_to_alloc -= quantity_from_lot
                         lots_updated = True
 
-                    if used_lots:
-                        # Join lots if multiple, truncate to 20 chars
-                        item.lot = ",".join(used_lots)[:20]
-                        item.save(update_fields=['lot'])
+                    if used_lots_names:
+                        item.lot = ",".join(used_lots_names)[:20]
+                        items_to_update.append(item)
             
-            # 2. Mise à jour du stock global
+            # 2. Préparation du calcul du stock global
             if produit.use_lot_management and lots_updated:
-                # Pour les produits avec gestion par lots, recalculer depuis les lots
-                produit.calculate_stock_from_lots()
+                prods_to_sync_from_lots.add(produit.id)
             else:
-                # Pour les produits sans lots ou retours, décrémenter manuellement
-                produit.stock = F('stock') - item.quantity
-                produit.save(update_fields=['stock'])
+                # Pour les produits sans lots ou retours, accumulation pour update
+                manual_stock_decrements[produit.id] = manual_stock_decrements.get(produit.id, 0) + item.quantity
+
+        # --- EXÉCUTION DES OPÉRATIONS EN MASSE (BULK) ---
+        if allocations_to_create:
+            FactureProduitAllocation.objects.bulk_create(allocations_to_create)
+        
+        if items_to_update:
+            FactureProduit.objects.bulk_update(items_to_update, ['lot'])
+
+        if lots_to_update_set:
+            StockLot.objects.bulk_update(list(lots_to_update_set), ['quantity_remaining'])
+        
+        if manual_stock_decrements:
+            for pid, qty in manual_stock_decrements.items():
+                Produit.objects.filter(id=pid).update(stock=F('stock') - qty)
+
+        if prods_to_sync_from_lots:
+            # Synchronisation massive du stock depuis la somme des lots
+            from django.db.models import Subquery, OuterRef
+            total_lots_sum = StockLot.objects.filter(
+                produit=OuterRef('pk')
+            ).order_by().values('produit').annotate(
+                total=Sum('quantity_remaining')
+            ).values('total')
+            
+            Produit.objects.filter(id__in=prods_to_sync_from_lots).update(
+                stock=Coalesce(Subquery(total_lots_sum), Value(0))
+            )
+
+        # --- CRÉATION DES MOUVEMENTS DE STOCK (TRACEABILITÉ) ---
+        # On refait une passe pour créer les mouvements avec le stock à jour
+        # Nécessaire pour avoir le stock_apres correct et enregistrer le vendeur
+        mouvements_to_create = []
+        
+        # Re-fetch updated products to get accurate stock levels
+        updated_products = Produit.objects.filter(id__in=product_ids)
+        product_stock_map = {p.id: p.stock for p in updated_products}
+        
+        for item in items:
+            if item.quantity <= 0:
+                continue # On ne trace pas les retours ici (géré ailleurs) ou les quantités nulles
+                
+            current_stock = product_stock_map.get(item.produit_id)
+            
+            # Description avec infos utiles
+            desc = f"Vente Facture #{facture.numero_facture or facture.id}"
+            if facture.client or facture.client_name_override:
+                client_name = facture.client.name if facture.client else facture.client_name_override
+                desc += f" - Client: {client_name}"
+            
+            mouvements_to_create.append(MouvementStock(
+                produit_id=item.produit_id,
+                type_mouvement=MouvementStock.TypeMouvement.SORTIE,
+                quantite=-item.quantity, # Sortie = négatif
+                stock_apres=current_stock,
+                user=validation_user, # Le vendeur / validateur
+                facture=facture, # Lien vers la facture
+                description=desc,
+                date=timezone.now()
+            ))
+            
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create)
 
         # --- GESTION FIDELITE ---
         if facture.client and facture.client.client_type != 'PROFESSIONNEL' and facture.client.is_loyalty_member:
@@ -538,7 +795,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     quantite=item.quantity, # Positive because product comes BACK to stock
                     stock_apres=item.produit.stock + item.quantity, # Approximation (concurrency safe enough for history)
                     description=f"Annulation Facture #{facture.numero_facture or facture.id}",
-                    user=cancellation_user 
+                    user=cancellation_user,
+                    facture=facture
                 ))
             
             # Bulk create movements for performance

@@ -580,7 +580,14 @@
                 "merge_warning_list": "Tous les inventaires sélectionnés seront fusionnés dans <strong>l'inventaire Cible</strong>. Les autres seront supprimés.",
                 "merge_warning_list_plain": "Fusionner les inventaires sélectionnés dans la CIBLE ?\nLes autres seront supprimés (lignes transférées).",
                 "validate_confirm_btn": "Confirmer Valid. Définitive",
-                "cancel": "Annuler"
+                "cancel": "Annuler",
+                "validate_title": "Validation Administrative",
+                "validate_warning": "Cette action nécessite une validation par un administrateur ou un pharmacien.",
+                "validate_as": "Valider au nom de",
+                "validate_admin": "Sélectionner un administrateur",
+                "validate_me": "Moi-même (Utilisateur actuel)",
+                "validate_password": "Mot de passe Sudo",
+                "validate_required": "(Requis pour valider)"
             },
             "pdf": {
                 "title_etat": "ETAT D'INVENTAIRE #{{id}}",
@@ -1211,6 +1218,14 @@
             "error_delete": "Erreur lors de la suppression du client",
             "network_error": "Erreur réseau",
             "unknown_error": "Erreur inconnue"
+        },
+        "purchase_history": {
+            "title": "Historique des Achats",
+            "invoices": "facture(s)",
+            "date": "Date",
+            "invoice_number": "N° Facture",
+            "total": "Total TTC",
+            "empty": "Aucun achat enregistré"
         }
     },
     "products": {

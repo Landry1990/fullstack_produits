@@ -24,6 +24,20 @@ class LotSequence(models.Model):
     def __str__(self):
         return f"Lot Sequence: {self.last_number}"
 
+class TicketSessionSequence(models.Model):
+    """
+    Séquence pour les numéros de ticket en session de caisse.
+    Reset quotidien.
+    """
+    date = models.DateField(primary_key=True)
+    last_number = models.IntegerField(default=0)
+    
+    class Meta:
+        db_table = 'ticket_session_sequence'
+    
+    def __str__(self):
+        return f"Ticket Sequence: {self.last_number} for {self.date}"
+
 
 def generate_lot_number():
     """
@@ -58,6 +72,24 @@ def generate_lot_number():
         LotSequence.objects.update_or_create(id=1, defaults={'last_number': sequence})
 
     return f'L{sequence:02d}'
+
+
+def get_next_ticket_session():
+    """
+    Retourne le prochain numéro de ticket pour la journée en cours.
+    Gère le reset quotidien de manière atomique.
+    """
+    from django.db import transaction
+    today = timezone.now().date()
+    
+    with transaction.atomic():
+        seq, created = TicketSessionSequence.objects.select_for_update().get_or_create(
+            date=today,
+            defaults={'last_number': 0}
+        )
+        seq.last_number += 1
+        seq.save(update_fields=['last_number'])
+        return seq.last_number
 
 
 class StockLot(models.Model):
@@ -131,6 +163,7 @@ class StockAdjustment(models.Model):
         ERREUR_ENTREE = 'ERR_ENTREE', 'Erreur d\'entrée en stock'
         AVARIE = 'AVARIE', 'Avarié'
         USAGE_INTERNE = 'USAGE_INT', 'Usage interne'
+        PERIME = 'PERIME', 'Périmé'
     
     produit = models.ForeignKey(
         'Produit', on_delete=models.SET_NULL, null=True, blank=True, 
@@ -182,6 +215,21 @@ class MouvementStock(models.Model):
         related_name='mouvements_stock'
     )
     produit_nom = models.CharField(max_length=150, blank=True, null=True, help_text="Nom du produit sauvegardé")
+    facture = models.ForeignKey(
+        'Facture', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mouvements_stock',
+        help_text="Facture associée au mouvement (pour les ventes/retours)"
+    )
+    commande = models.ForeignKey(
+        'Commande', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mouvements_stock',
+        help_text="Commande associée au mouvement (pour les achats/réceptions)"
+    )
+    inventaire = models.ForeignKey(
+        'Inventaire', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='mouvements_stock',
+        help_text="Inventaire associé au mouvement (pour les ajustements)"
+    )
     type_mouvement = models.CharField(max_length=30, choices=TypeMouvement.choices)
     quantite = models.IntegerField(help_text="Quantité mouvementée (positive ou négative)")
     stock_apres = models.IntegerField(null=True, blank=True, help_text="Stock après mouvement (snapshot)")

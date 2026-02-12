@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useEffect } from 'react' // Keep useEffect for scroll/focus management if needed, but remove data fetching ones
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
@@ -27,9 +28,13 @@ import {
   useRecalculateRotation
 } from '../hooks/useProduits';
 
+import { ProductDetailsModal as SalesDetailsModal } from './sales/modals/ProductDetailsModal';
+import type { Facture } from '../types';
+
 export default function Produit() {
   // Hook de confirmation
   const confirm = useConfirm()
+  const navigate = useNavigate()
   const { t } = useTranslation();
   
   const { user } = useAuth();
@@ -85,6 +90,11 @@ export default function Produit() {
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
   const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'ajustements' | 'stats' | 'mouvements'>('general')
 
+  // Sales Modal State
+  const [showSalesModal, setShowSalesModal] = useState(false);
+  const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null);
+  const [loadingFacture, setLoadingFacture] = useState(false);
+
   
   // Dependent Queries for Details
   // They automatically run when selectedProduit is set
@@ -101,6 +111,27 @@ export default function Produit() {
   const deleteProduitMutation = useDeleteProduit();
   const adjustStockMutation = useAdjustStock();
   const recalculateRotationMutation = useRecalculateRotation();
+
+  // Handle Movement Click
+  const handleMovementClick = async (item: any) => {
+    if (item.facture && (item.type === 'SORTIE' || item.type === 'RETOUR')) {
+      try {
+        setLoadingFacture(true);
+        setShowSalesModal(true);
+        const response = await axios.get(`/api/factures/${item.facture}/`);
+        setSelectedFacture(response.data);
+      } catch (error) {
+        console.error('Error fetching facture details:', error);
+        toast.error('Erreur lors du chargement des détails de la facture');
+        setShowSalesModal(false);
+      } finally {
+        setLoadingFacture(false);
+      }
+    } else if (item.commande) {
+      // Pour les commandes, on redirige vers la page des commandes avec l'état pour ouvrir les détails
+      navigate('/app/commandes', { state: { openDetailsId: item.commande } });
+    }
+  };
 
   // Formulaire d'édition
   const [editForm, setEditForm] = useState({
@@ -1304,7 +1335,11 @@ export default function Produit() {
                                 ? item.quantity > 0 
                                 : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
                               return (
-                                <tr key={index} className="hover:bg-base-200/30">
+                                <tr 
+                                  key={index} 
+                                  className={`hover:bg-base-200/50 transition-colors ${(item.facture || item.commande) ? 'cursor-pointer' : ''}`}
+                                  onClick={() => handleMovementClick(item)}
+                                >
                                   <td className="whitespace-nowrap text-xs font-mono">
                                     {new Date(item.date).toLocaleDateString('fr-FR')}
                                   </td>
@@ -1318,9 +1353,14 @@ export default function Produit() {
                                     </span>
                                   </td>
                                   <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
-                                    {item.libelle}
+                                    <div className="flex items-center gap-1">
+                                      {(item.facture || item.commande) && (
+                                        <span className="text-primary" title={item.facture ? "Cliquez pour voir la facture" : "Cliquez pour voir la commande"}>🔍</span>
+                                      )}
+                                      {item.libelle}
+                                    </div>
                                   </td>
-                                  <td className="text-xs">{item.user_nom || '-'}</td>
+                                  <td className="text-xs">{item.user || item.user_nom || '-'}</td>
                                   <td className="text-right font-mono text-xs">{item.stock_avant}</td>
                                   <td className={`text-right font-bold text-xs ${isPositive ? 'text-success' : 'text-error'}`}>
                                     {isPositive ? '+' : ''}{item.quantity}
@@ -1412,6 +1452,13 @@ export default function Produit() {
                   onClick={() => setActiveTab('stats')}
                 >
                   📊 Stats Mensuelles
+                </a>
+                <a
+                  role="tab"
+                  className={`tab ${activeTab === 'mouvements' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('mouvements')}
+                >
+                  📋 Mouvements
                 </a>
               </div>
 
@@ -2090,6 +2137,15 @@ export default function Produit() {
         fournisseurs={fournisseurs}
         formes={formes}
         groupes={groupes}
+      />
+      <SalesDetailsModal
+        isOpen={showSalesModal}
+        onClose={() => {
+          setShowSalesModal(false);
+          setSelectedFacture(null);
+        }}
+        facture={selectedFacture}
+        loading={loadingFacture}
       />
     </div>
   )

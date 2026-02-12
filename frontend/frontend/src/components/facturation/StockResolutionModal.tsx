@@ -1,3 +1,4 @@
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ProduitModel } from '../../types'
 
@@ -32,36 +33,55 @@ export default function StockResolutionModal({
 }: StockResolutionModalProps) {
   const { t } = useTranslation()
 
-  if (!isOpen) return null
+  // --- Local States for Inputs (Performance & Robustness) ---
+  const [localClientName, setLocalClientName] = useState(promisClientName)
+  const [localPhone, setLocalPhone] = useState(promisPhone)
 
-  // Assuming these variables are defined elsewhere in the component's scope
-  // For the purpose of this replacement, I'm using the names from the provided snippet.
-  // You might need to adjust these based on your actual component state/props.
-  const conflicts = stockResolutionItems.map(item => ({
+  // Sync local states when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setLocalClientName(promisClientName)
+      setLocalPhone(promisPhone)
+    }
+  }, [isOpen, promisClientName, promisPhone])
+
+  // --- Memoized Data ---
+  const conflicts = useMemo(() => stockResolutionItems.map(item => ({
     id: item.product.id,
     nom: item.product.name,
-    cip: item.product.cip1 || '', // Using cip1 as cip property
+    cip: item.product.cip1 || '',
     qty: item.quantity
-  }));
-  const stockMap = stockResolutionItems.reduce((acc, item) => {
+  })), [stockResolutionItems]);
+
+  const stockMap = useMemo(() => stockResolutionItems.reduce((acc, item) => {
     acc[item.product.id] = item.stock;
     return acc;
-  }, {} as Record<number, number>);
+  }, {} as Record<number, number>), [stockResolutionItems]);
 
-  const itemsToPromis = Array.from(promisSelections); // Convert Set to Array for comparison with `includes`
+  const itemsToPromis = useMemo(() => Array.from(promisSelections), [promisSelections]);
 
-  const setItemsToPromis = (newItems: number[]) => {
-    setPromisSelections(new Set(newItems));
-  };
+  // --- Callbacks ---
+  const handleTogglePromis = useCallback((productId: number, checked: boolean) => {
+    const newSelections = new Set(promisSelections)
+    if (checked) {
+      newSelections.add(productId)
+    } else {
+      newSelections.delete(productId)
+    }
+    setPromisSelections(newSelections)
+  }, [promisSelections, setPromisSelections])
 
-  const clientName = promisClientName;
-  const setClientName = setPromisClientName;
-  const clientPhone = promisPhone;
-  const setClientPhone = setPromisPhone;
+  const handleConfirm = useCallback(() => {
+    // Sync local states back to parent only on confirm
+    setPromisClientName(localClientName)
+    setPromisPhone(localPhone)
+    // Small delay to ensure state update before parent's logic runs
+    setTimeout(() => {
+      onConfirm()
+    }, 0)
+  }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm])
 
-  const response = { onCancel: onClose }; // Mocking response for the replacement
-  const handleConfirm = onConfirm; // Mocking handleConfirm for the replacement
-
+  if (!isOpen) return null
 
   return (
     <dialog className="modal modal-open">
@@ -96,10 +116,10 @@ export default function StockResolutionModal({
                 const isPromis = itemsToPromis.includes(item.id)
                 
                 return (
-                  <tr key={item.id} className={isPromis ? "bg-info/10" : "bg-error/10"}>
+                  <tr key={item.id} className={isPromis ? "bg-info/10 text-info-content" : "bg-error/10 text-error-content"}>
                     <td>
                         <div className="font-bold">{item.nom}</div>
-                        <div className="text-xs opacity-50">{item.cip}</div>
+                        <div className="text-xs opacity-60">{item.cip}</div>
                     </td>
                     <td className="font-mono">{item.qty}</td>
                     <td className="text-right font-mono">{stock}</td>
@@ -109,13 +129,7 @@ export default function StockResolutionModal({
                             type="checkbox" 
                             className="toggle toggle-info" 
                             checked={isPromis}
-                            onChange={(e) => {
-                                if (e.target.checked) {
-                                    setItemsToPromis([...itemsToPromis, item.id])
-                                } else {
-                                    setItemsToPromis(itemsToPromis.filter(id => id !== item.id))
-                                }
-                            }}
+                            onChange={(e) => handleTogglePromis(item.id, e.target.checked)}
                         />
                     </td>
                   </tr>
@@ -130,25 +144,25 @@ export default function StockResolutionModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">{t('facturation.stock_resolution.client_name')} <span className="text-xs opacity-50">{t('facturation.stock_resolution.optional')}</span></span>
+                            <span className="label-text font-semibold">{t('facturation.stock_resolution.client_name')} <span className="text-xs font-normal opacity-50">({t('facturation.stock_resolution.optional')})</span></span>
                         </label>
                         <input 
                             type="text" 
-                            className="input input-bordered" 
-                            value={clientName}
-                            onChange={(e) => setClientName(e.target.value)}
+                            className="input input-bordered focus:input-primary" 
+                            value={localClientName}
+                            onChange={(e) => setLocalClientName(e.target.value)}
                             placeholder={t('facturation.client.manual_placeholder')}
                         />
                     </div>
                     <div className="form-control">
                         <label className="label">
-                            <span className="label-text">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
+                            <span className="label-text font-semibold">{t('facturation.stock_resolution.client_phone_for_promised_ticket')}</span>
                         </label>
                         <input 
                             type="text" 
-                            className="input input-bordered" 
-                            value={clientPhone}
-                            onChange={(e) => setClientPhone(e.target.value)}
+                            className="input input-bordered focus:input-primary" 
+                            value={localPhone}
+                            onChange={(e) => setLocalPhone(e.target.value)}
                             placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
                         />
                     </div>
@@ -157,10 +171,10 @@ export default function StockResolutionModal({
         )}
 
         <div className="modal-action">
-          <button className="btn btn-ghost" onClick={response?.onCancel}>
+          <button className="btn btn-ghost" onClick={onClose}>
           {t('facturation.stock_resolution.cancel_and_edit_cart')}
           </button>
-          <button className="btn btn-primary" onClick={handleConfirm}>
+          <button className="btn btn-primary px-8" onClick={handleConfirm}>
           {t('facturation.stock_resolution.validate_and_cash')}
           </button>
         </div>

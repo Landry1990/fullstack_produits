@@ -6,7 +6,6 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 const commandesEndpoint = `${apiBaseUrl}/api/commandes/`;
 const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
 const rayonsEndpoint = `${apiBaseUrl}/api/rayons/`;
-const commandeProduitsEndpoint = `${apiBaseUrl}/api/commande-produits/`;
 
 // Types
 interface CommandesFilters {
@@ -140,41 +139,23 @@ export const useSaveCommande = () => {
 
             if (!commandeId) throw new Error("ID de commande manquant");
 
-            // 2. Handle products
-            const { data: currentOrder } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
-            const existingProducts = currentOrder.produits ? currentOrder.produits.map((p) => ({ id: p.id })) : [];
-            const existingIds = new Set(existingProducts.map(ep => ep.id));
+            // 2. Handle products with bulk_sync
+            const productsPayload = commandeProduits.map(p => ({
+                id: p.id && !String(p.id).startsWith('temp-') ? p.id : null,
+                produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
+                quantity: parseInt(String(p.quantity)),
+                unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
+                price: parseFloat(String(p.price)).toFixed(2),
+                price_cost: parseFloat(String(p.price)).toFixed(2),
+                selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(2) : '0.00',
+                prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(2) : null,
+                tva: parseFloat(String(p.tva || 18)).toFixed(2),
+                marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
+                lot: p.lot || null,
+                date_expiration: parseMMYYToDate(p.date_expiration)
+            }));
 
-            for (const p of commandeProduits) {
-                const payload = {
-                    commande: commandeId,
-                    produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
-                    quantity: parseInt(String(p.quantity)),
-                    unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
-                    price: parseFloat(String(p.price)).toFixed(2),
-                    price_cost: parseFloat(String(p.price)).toFixed(2),
-                    selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(2) : '0.00',
-                    prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(2) : null,
-                    tva: parseFloat(String(p.tva || 18)).toFixed(2),
-                    marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
-                    lot: p.lot || null,
-                    date_expiration: parseMMYYToDate(p.date_expiration)
-                };
-
-                if (p.id && existingIds.has(p.id)) {
-                    await axios.patch(`${commandeProduitsEndpoint}${p.id}/`, payload);
-                } else {
-                    await axios.post(commandeProduitsEndpoint, payload);
-                }
-            }
-
-            // Handle deletions
-            const currentIds = new Set(commandeProduits.filter(p => p.id && existingIds.has(p.id)).map(p => p.id));
-            for (const exist of existingProducts) {
-                if (!currentIds.has(exist.id)) {
-                    await axios.delete(`${commandeProduitsEndpoint}${exist.id}/`);
-                }
-            }
+            await axios.post(`${commandesEndpoint}${commandeId}/bulk_sync/`, { produits: productsPayload });
 
             // Return the created/updated commande
             const { data: updatedCommande } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);

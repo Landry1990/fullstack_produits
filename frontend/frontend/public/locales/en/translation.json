@@ -1128,6 +1128,14 @@
             "error_delete": "Error deleting client",
             "network_error": "Network error",
             "unknown_error": "Unknown error"
+        },
+        "purchase_history": {
+            "title": "Purchase History",
+            "invoices": "invoice(s)",
+            "date": "Date",
+            "invoice_number": "Invoice #",
+            "total": "Total TTC",
+            "empty": "No purchases recorded"
         }
     },
     "products": {

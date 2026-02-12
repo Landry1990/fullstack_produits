@@ -1,3 +1,4 @@
+import { extractErrorMessage } from '../utils/errorHandling';
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -7,8 +8,7 @@ import type {
     Facture,
     TicketCaisse,
     AyantDroit,
-    LigneFacture,
-    Promis
+    LigneFacture
 } from '../types';
 import { normalizeNumberInput } from '../utils/formatters';
 import { generatePromisTicket } from '../utils/promisPdf';
@@ -194,10 +194,16 @@ function validateProfessionalClient(params: SaleCompletionParams, client: Client
     const plafond = Number(client.plafond || 0);
     if (plafond > 0) {
         const currentDebt = Number(client.current_debt || 0);
-        const newTotal = currentDebt + totals.totalTtc;
+
+        // Calculer le paiement immédiat total
+        const immediatePayment = Number(params.montantPaye || 0) +
+            params.paiements.reduce((acc, p) => acc + (p.montant || 0), 0);
+
+        const debtIncrement = Math.max(0, totals.totalTtc - immediatePayment);
+        const newTotal = currentDebt + debtIncrement;
 
         if (newTotal > plafond) {
-            return `⚠️ PLAFOND DÉPASSÉ !\nDette actuelle: ${Math.round(currentDebt).toLocaleString()} F\nNouvelle facture: ${Math.round(totals.totalTtc).toLocaleString()} F\nTotal: ${Math.round(newTotal).toLocaleString()} F\nPlafond: ${Math.round(plafond).toLocaleString()} F`;
+            return `⚠️ PLAFOND DÉPASSÉ !\nDette actuelle: ${Math.round(currentDebt).toLocaleString()} F\nIncrément dette (TTC - Payé): ${Math.round(debtIncrement).toLocaleString()} F\nTotal: ${Math.round(newTotal).toLocaleString()} F\nPlafond: ${Math.round(plafond).toLocaleString()} F`;
         }
     }
 
@@ -208,21 +214,6 @@ function validateProfessionalClient(params: SaleCompletionParams, client: Client
 
 /**
  * Hook pour gérer la finalisation d'une vente
- * 
- * @example
- * ```tsx
- * const { completeSale, loading, error } = useSaleCompletion({
- *   apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
- *   onSuccess: (result) => {
- *     toast.success(`Vente ${result.facture?.numero_facture} validée !`);
- *     resetForm();
- *   }
- * });
- * 
- * const handlePayment = async () => {
- *   await completeSale({ selectedClient, lignesFacture, ... });
- * };
- * ```
  */
 export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
     const { apiBaseUrl = '', onSuccess, onError, onReset } = options;
@@ -235,12 +226,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
     // Endpoints
     const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/';
-    const factureProduitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/facture-produits/` : '/api/facture-produits/';
-    const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/';
-    const ayantsDroitEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ayants-droit/` : '/api/ayants-droit/';
-    const couponsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/coupons/` : '/api/coupons/';
-    const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/';
-    const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/';
 
     /**
      * Créer ou récupérer l'ayant droit
@@ -263,14 +248,13 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 if (existingLocal) {
                     ayantDroitId = existingLocal.id || null;
                 } else {
-                    // Créer un nouveau
+                    const ayantsDroitEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ayants-droit/` : '/api/ayants-droit/';
                     const payload = {
                         client: params.selectedClient,
                         nom: params.ayantDroitNom,
                         matricule: params.ayantDroitMatricule,
                         societe: params.ayantDroitSociete || null
                     };
-
                     const { data: created } = await axios.post<AyantDroit>(ayantsDroitEndpoint, payload);
                     ayantDroitId = created.id || null;
                 }
@@ -278,7 +262,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         }
 
         return ayantDroitId;
-    }, [ayantsDroitEndpoint]);
+    }, [apiBaseUrl]);
 
     /**
      * Gérer le mode modification (facture existante)
@@ -305,8 +289,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             remise: params.totals.remiseMontant.toString(),
             client: params.useManualClient ? null : params.selectedClient,
             client_name_override: params.useManualClient ? params.manualClientName : null,
-            // Sudo for Modification? Usually validation is separate. 
-            // But if modifying validates immediately... currently logic separates them.
         });
 
         const difference = result.difference;
@@ -319,104 +301,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         }
 
         return { success: true, facture: result.facture };
-    }, [facturesEndpoint]);
-
-    /**
-     * Créer ou récupérer la facture
-     */
-    const createOrGetInvoice = useCallback(async (
-        params: SaleCompletionParams,
-        ayantDroitId: number | null,
-        client: Client | undefined
-    ): Promise<Facture> => {
-        if (params.devisIdToValidate) {
-            const { data } = await axios.get<Facture>(`${facturesEndpoint}${params.devisIdToValidate}/`);
-            return data;
-        }
-
-        const facturePayload = {
-            client: params.useManualClient ? null : params.selectedClient,
-            client_name_override: params.useManualClient ? params.manualClientName : null,
-            remise: (Number(params.totals.remiseMontant) || 0).toFixed(2),
-            tva: '0',
-            ayant_droit: ayantDroitId,
-            part_client: (client?.client_type === 'PROFESSIONNEL' && params.totals.tauxCouverture > 0)
-                ? params.totals.partPatient
-                : null,
-            type: params.isRetrocession ? 'RETRO' : 'STD',
-            // Note: We don't pass validated_by_id here because creation is technical. 
-            // The logic override happens at 'valider' step.
-        };
-
-        console.log("DEBUG: Creating Invoice Payload:", facturePayload);
-
-        try {
-            const { data } = await axios.post<Facture>(facturesEndpoint, facturePayload);
-            return data;
-        } catch (err: any) {
-            console.error("Facture Creation Error Details:", err.response?.data);
-            throw err;
-        }
-    }, [facturesEndpoint]);
-
-    /**
-     * Ajouter les produits à la facture
-     */
-    const addProductsToInvoice = useCallback(async (
-        params: SaleCompletionParams,
-        factureId: number
-    ): Promise<void> => {
-        if (params.devisIdToValidate) return; // Les produits existent déjà
-
-        const produitsPayload = params.lignesFacture.map(ligne => {
-            const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 });
-            const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 });
-            const prixNet = prixUnitaire * (1 - remiseProduit / 100);
-
-            return {
-                facture: factureId,
-                produit: ligne.produit.id,
-                quantity: Number(ligne.quantite),
-                selling_price: prixNet.toString(),
-                discount: (prixUnitaire - prixNet).toFixed(2),
-                stock_lot: ligne.lotId ? Number(ligne.lotId) : null,
-                lot: null,
-                date_expiration: ligne.produit.expire_date || null,
-            };
-        });
-
-        await Promise.all(
-            produitsPayload.map(payload => axios.post(factureProduitsEndpoint, payload))
-        );
-    }, [factureProduitsEndpoint]);
-
-    /**
-     * Appliquer le coupon si présent
-     */
-    const applyCoupon = useCallback(async (
-        couponNumero: string,
-        factureId: number
-    ): Promise<void> => {
-        if (!couponNumero.trim()) return;
-
-        try {
-            const searchResponse = await axios.get(couponsEndpoint, {
-                params: { numero: couponNumero.trim() }
-            });
-
-            if (searchResponse.data.results?.length > 0) {
-                const coupon = searchResponse.data.results[0];
-                const utiliserEndpoint = `${couponsEndpoint}${coupon.id}/utiliser/`;
-                await axios.post(utiliserEndpoint, { facture_id: factureId });
-                toast.success(t('sales.messages.coupon_applied', { numero: coupon.numero, amount: Math.round(Number(coupon.montant)) }));
-            } else {
-                toast.error(t('sales.messages.coupon_not_found', { numero: couponNumero }));
-            }
-        } catch (err: any) {
-            console.error('Erreur application coupon:', err);
-            toast.error(err.response?.data?.detail || t('sales.messages.coupon_error'));
-        }
-    }, [couponsEndpoint]);
+    }, [facturesEndpoint, t]);
 
     /**
      * Construire la liste des paiements
@@ -495,161 +380,14 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
     }, []);
 
     /**
-     * Enregistrer les paiements en caisse
-     */
-    const recordPayments = useCallback(async (
-        paiementsList: PaymentDetails[],
-        factureId: number,
-        reference: string,
-        // Sudo params
-        validatedById?: number | null,
-        sudoPassword?: string
-    ): Promise<number> => {
-        let totalVerse = 0;
-
-        await Promise.all(paiementsList.map(async (paiement) => {
-            const payload: any = {
-                facture: factureId,
-                mode_paiement: paiement.mode,
-                montant: paiement.montant,
-                reference: reference || null,
-                statut: 'completee',
-            };
-
-            if (paiement.part_patient !== null && paiement.part_patient !== undefined) {
-                payload.part_patient = paiement.part_patient;
-            }
-            if (paiement.part_assurance !== null && paiement.part_assurance !== undefined) {
-                payload.part_assurance = paiement.part_assurance;
-            }
-
-            // Sudo
-            if (validatedById) {
-                payload.validated_by_id = validatedById;
-                payload.sudo_password = sudoPassword;
-            }
-
-            await axios.post(caisseEndpoint, payload);
-            totalVerse += paiement.montant;
-        }));
-
-        return totalVerse;
-    }, [caisseEndpoint]);
-
-    /**
-     * Créer les promis
-     */
-    const createPromis = useCallback(async (
-        params: SaleCompletionParams,
-        finalFacture: Facture
-    ): Promise<number[]> => {
-        const promisLines = params.lignesFacture.filter(
-            l => l.isPromis && l.promisQuantity && l.promisQuantity > 0
-        );
-        const createdPromisIds: number[] = [];
-        const createdPromisList: any[] = []; // Store full objects for PDF
-
-        for (const line of promisLines) {
-            try {
-                const payload = {
-                    facture: finalFacture.id,
-                    client: finalFacture.client,
-                    client_name: finalFacture.client_name || (params.useManualClient ? params.manualClientName : ''),
-                    client_phone: line.promisPhone,
-                    produit: line.produit.id,
-                    quantite: line.promisQuantity,
-                    status: 'ATT'
-                };
-
-                const { data } = await axios.post<Promis>(promisEndpoint, payload);
-                createdPromisIds.push(data.id);
-                // Enhance data with product name if missing in response (it might be in expanded relation, but let's be safe)
-                createdPromisList.push({
-                    ...data,
-                    produit_nom: line.produit.name,
-                    produit: line.produit // Keep full product for barcode
-                });
-            } catch (err) {
-                console.error("Erreur création promis:", err);
-            }
-        }
-
-        // Generate PDF on Frontend
-        if (createdPromisList.length > 0) {
-            try {
-                generatePromisTicket({
-                    client_name: finalFacture.client_name || params.manualClientName || 'Client',
-                    client_phone: params.lignesFacture.find(l => l.promisPhone)?.promisPhone, // Try to find phone from lines
-                    items: createdPromisList,
-                    pharmacy: pharmacySettings,
-                    facture_id: finalFacture.numero_facture || finalFacture.id,
-                    is_paid: !params.centralizedCashRegister // If sent to central, it's not paid yet
-                });
-            } catch (err) {
-                console.error("Erreur génération PDF promis:", err);
-                toast.error(t('sales.messages.promis_error'));
-            }
-        }
-
-        return createdPromisIds;
-    }, [promisEndpoint, pharmacySettings]);
-
-    /**
-     * Sauvegarder l'ordonnancier
-     */
-    const saveOrdonnancier = useCallback(async (
-        data: OrdonnanceData | null,
-        factureId: number
-    ): Promise<void> => {
-        if (!data) return;
-
-        try {
-            const lignesForBackend = data.lignes.map(ligne => ({
-                produit: ligne.produit_id,
-                produit_nom: ligne.produit_nom,
-                quantite: ligne.quantite,
-                surveillance_category: ligne.surveillance_category
-            }));
-
-            await axios.post(ordonnancierEndpoint, {
-                patient_nom: data.patient_nom,
-                prescripteur_nom: data.prescripteur_nom,
-                facture: factureId,
-                lignes: lignesForBackend
-            });
-
-            toast.success(t('sales.messages.ordonnancier_saved'));
-        } catch (err) {
-            console.error("Erreur enregistrement ordonnancier:", err);
-            toast.error(t('sales.messages.ordonnancier_error'));
-        }
-    }, [ordonnancierEndpoint]);
-
-    /**
-     * Annuler une facture (rollback)
-     */
-    const rollbackInvoice = useCallback(async (factureId: number): Promise<void> => {
-        try {
-            await axios.post(`${facturesEndpoint}${factureId}/annuler/`, {
-                motif: "Échec du paiement (Annulation automatique)"
-            });
-
-        } catch (err) {
-            console.error("Critical: Failed to rollback invoice after payment failure", err);
-        }
-    }, [facturesEndpoint]);
-
-    /**
      * Fonction principale de finalisation de vente
      */
     const completeSale = useCallback(async (params: SaleCompletionParams): Promise<SaleCompletionResult> => {
         setLoading(true);
         setError(null);
 
-        let validatedFactureForRollback: Facture | null = null;
-
         try {
-            // Validations de base
+            // 1. Validations de base
             const validationError = validateSaleData(params);
             if (validationError) {
                 setError(validationError);
@@ -660,7 +398,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             // Trouver le client
             const client = params.clients.find(c => c.id === params.selectedClient);
 
-            // Validation client professionnel
+            // 2. Validation client professionnel
             if (client) {
                 const proError = validateProfessionalClient(params, client);
                 if (proError) {
@@ -674,9 +412,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 }
             }
 
-            // Résoudre l'ayant droit
-            const ayantDroitId = await resolveAyantDroit(params, client);
-
             // === MODE MODIFICATION ===
             if (params.isModificationMode && params.modificationInvoiceId) {
                 const result = await handleModificationMode(params);
@@ -686,163 +421,148 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 return result;
             }
 
-            // === FLUX NORMAL ===
-            // 1. Créer ou récupérer la facture
-            const createdFacture = await createOrGetInvoice(params, ayantDroitId, client);
+            // === FLUX ATOMIQUE (OU CAISSE CENTRALISÉE) ===
 
-            // 2. Ajouter les produits
-            await addProductsToInvoice(params, createdFacture.id);
+            // Préparer les produits
+            const produitsPayload = params.lignesFacture.map(ligne => {
+                const prixUnitaire = normalizeNumberInput(ligne.prix_unitaire, { min: 0 });
+                const remiseProduit = normalizeNumberInput(ligne.remise_produit, { min: 0, max: 100 });
+                const prixNet = prixUnitaire * (1 - remiseProduit / 100);
 
-            // 3. Appliquer le coupon
-            await applyCoupon(params.couponNumero, createdFacture.id);
+                return {
+                    produit: ligne.produit.id,
+                    quantity: Number(ligne.quantite),
+                    selling_price: prixNet.toString(),
+                    discount: (prixUnitaire - prixNet).toFixed(2),
+                    lot_id: ligne.lotId ? Number(ligne.lotId) : null,
+                    is_promis: !!ligne.isPromis,
+                    promis_quantity: ligne.isPromis ? ligne.promisQuantity : 0,
+                    promis_phone: ligne.isPromis ? (ligne.promisPhone || '') : ''
+                };
+            });
 
-            // === CLIENT PRO 100% ===
-            const clientIsPro100 = client?.client_type === 'PROFESSIONNEL' &&
-                params.totals.partPatient === 0 &&
-                params.totals.partAssurance > 0;
+            // Résoudre l'ayant droit
+            const ayantDroitId = await resolveAyantDroit(params, client);
 
-            if (clientIsPro100) {
-                toast('Client professionnel 100% - Validation automatique', { icon: 'ℹ️' });
+            // Préparer les paiements
+            const paiementsList = buildPaymentsList(params);
 
-                const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`;
-                const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
+            // Payload atomique final
+            const finalPayload = {
+                client: params.useManualClient ? null : params.selectedClient,
+                client_name_override: params.useManualClient ? params.manualClientName : null,
+                ayant_droit: ayantDroitId,
+                remise: (Number(params.totals.remiseMontant) || 0).toFixed(2),
+                produits: produitsPayload,
+                paiements: paiementsList,
+                loyalty: {
                     use_pending_discount: params.usePendingDiscount,
-                    points_to_use: params.pointsToUse,
+                    points_to_use: params.pointsToUse
+                },
+                ordonnance: params.tempOrdonnanceData ? {
+                    patient_nom: params.tempOrdonnanceData.patient_nom,
+                    prescripteur_nom: params.tempOrdonnanceData.prescripteur_nom,
+                    lignes: params.tempOrdonnanceData.lignes.map(l => ({
+                        produit_id: l.produit_id,
+                        produit_nom: l.produit_nom,
+                        quantite: l.quantite,
+                        surveillance_category: l.surveillance_category || 'NONE'
+                    }))
+                } : null,
+                sudo: {
                     validated_by_id: params.validated_by_id,
                     sudo_password: params.sudo_password
-                });
-
-                await axios.post(caisseEndpoint, {
-                    facture: validatedFacture.id,
-                    mode_paiement: 'en_compte',
-                    montant: params.totals.partAssurance,
-                    reference: null,
-                    statut: 'completee',
-                    part_patient: 0,
-                    part_assurance: params.totals.partAssurance
-                });
-
-                toast.success(t('sales.messages.tiers_payant_validated', { number: validatedFacture.numero_facture }));
-
-                const result: SaleCompletionResult = { success: true, facture: validatedFacture };
-                setLastResult(result);
-                onSuccess?.(result);
-                onReset?.();
-                return result;
-            }
-
-            // 3.5 Gérer les Promis et Ordonnancier (Avant check caisse centralisée)
-            // On le fait même si la vente part en caisse centralisée, car c'est une action de saisie
-            await createPromis(params, createdFacture);
-            await saveOrdonnancier(params.tempOrdonnanceData, createdFacture.id);
-
-            // === CAISSE CENTRALISÉE ===
-            if (params.centralizedCashRegister) {
-                if (createdFacture.status === 'PROF' || createdFacture.status === 'PROFORMA') {
-                    await axios.patch(`${facturesEndpoint}${createdFacture.id}/`, { status: 'BROU' });
-                }
-
-                toast.success(t('sales.messages.sent_to_caisse', { id: createdFacture.id }));
-
-                const result: SaleCompletionResult = {
-                    success: true,
-                    facture: { ...createdFacture, status: 'BROU' as any }
-                };
-                setLastResult(result);
-                onSuccess?.(result);
-                onReset?.();
-                return result;
-            }
-
-            // === VALIDATION ET PAIEMENT DIRECT ===
-            // 4. Valider la facture
-            const validerEndpoint = `${facturesEndpoint}${createdFacture.id}/valider/`;
-            const { data: validatedFacture } = await axios.post<Facture>(validerEndpoint, {
-                use_pending_discount: params.usePendingDiscount,
-                points_to_use: params.pointsToUse,
-                validated_by_id: params.validated_by_id, // Add Sudo Params
-                sudo_password: params.sudo_password       // Add Sudo Params
-            });
-            validatedFactureForRollback = validatedFacture;
-
-            // 5. Enregistrer les paiements
-            const paiementsList = buildPaymentsList(params);
-            const totalVerse = await recordPayments(
-                paiementsList,
-                validatedFacture.id,
-                params.reference,
-                params.validated_by_id,
-                params.sudo_password
-            );
-
-            // 6. Mettre à jour le statut
-            await axios.patch(`${facturesEndpoint}${validatedFacture.id}/`, { status: 'PAY' });
-
-            // 7. Récupérer la facture finale
-            const { data: finalFacture } = await axios.get<Facture>(`${facturesEndpoint}${validatedFacture.id}/`);
-
-            // 10. Construire le résultat
-
-            // 10. Construire le résultat
-            const rendu = totalVerse - Number(finalFacture.total_ttc);
-
-            // Ouvrir la page d'impression
-            window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
-
-            // Construire le ticket
-            const clientName = params.useManualClient
-                ? params.manualClientName
-                : client?.name || 'Client';
-
-            const ticketCaisse: TicketCaisse = {
-                id: 0,
-                facture: finalFacture,
-                mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
-                montant: finalFacture.total_ttc,
-                montant_verse: totalVerse.toString(),
-                rendu: rendu.toString(),
-                created_at: finalFacture.date || new Date().toISOString(),
-                updated_at: finalFacture.date || new Date().toISOString(),
-                statut: 'completee',
-                date_paiement: finalFacture.date || new Date().toISOString(),
-                client_name: clientName,
-                paiements_details: paiementsList
-            } as TicketCaisse;
-
-            const result: SaleCompletionResult = {
-                success: true,
-                facture: finalFacture,
-                ticketCaisse,
-                rendu
+                },
+                type: params.isRetrocession ? 'RETRO' : 'STD',
+                centralized_cash_register: params.centralizedCashRegister,
+                coupon_numero: params.couponNumero
             };
 
-            setLastResult(result);
-            onSuccess?.(result);
-            onReset?.();
-            return result;
+            const finaliserEndpoint = `${facturesEndpoint}finaliser/`;
+            const { data: finalFacture } = await axios.post<Facture>(finaliserEndpoint, finalPayload);
 
-        } catch (err: any) {
-            // Rollback si nécessaire
-            if (validatedFactureForRollback) {
-                await rollbackInvoice(validatedFactureForRollback.id);
+            // Gestion des impressions post-vente
+
+            // 1. Promis (On génère le PDF côté client comme avant)
+            const promisLines = params.lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0);
+            if (promisLines.length > 0) {
+                try {
+                    generatePromisTicket({
+                        client_name: finalFacture.client_name || params.manualClientName || 'Client',
+                        client_phone: params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
+                        items: promisLines.map(l => ({
+                            id: 0,
+                            produit_nom: l.produit.name,
+                            quantite: l.promisQuantity || 0,
+                            promisQuantity: l.promisQuantity || 0,
+                            produit: l.produit,
+                            date_promis: new Date().toISOString(),
+                            status: 'ATT'
+                        })) as any,
+                        pharmacy: pharmacySettings,
+                        facture_id: finalFacture.numero_facture || finalFacture.id,
+                        is_paid: !params.centralizedCashRegister
+                    });
+                } catch (err) {
+                    console.error("Erreur génération PDF promis:", err);
+                }
             }
 
-            const errorMessage = err.response?.data?.detail ||
-                err.message ||
-                "Une erreur est survenue lors de l'enregistrement de la vente.";
+            // 2. Impression Facture/Ticket et Notifications
+            if (!params.centralizedCashRegister) {
+                window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
 
+                const totalVerse = paiementsList.reduce((acc, p) => acc + p.montant, 0);
+                const rendu = totalVerse - Number(finalFacture.total_ttc);
+
+                // Construire le ticket pour l'UI si besoin
+                const ticketCaisse: TicketCaisse = {
+                    id: 0,
+                    facture: finalFacture,
+                    mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode || 'N/A'),
+                    montant: finalFacture.total_ttc,
+                    montant_verse: totalVerse.toString(),
+                    rendu: rendu.toString(),
+                    statut: 'completee',
+                    client_name: finalFacture.client_name || params.manualClientName || 'Client',
+                    paiements_details: paiementsList
+                } as any;
+
+                toast.success(t('sales.messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
+
+                const result: SaleCompletionResult = { success: true, facture: finalFacture, ticketCaisse, rendu };
+                setLastResult(result);
+                onSuccess?.(result);
+                onReset?.();
+                return result;
+            } else {
+                toast.success(t('sales.messages.sent_to_caisse', { id: finalFacture.numero_facture || finalFacture.id }));
+                const result: SaleCompletionResult = { success: true, facture: finalFacture };
+                setLastResult(result);
+                onSuccess?.(result);
+                onReset?.();
+                return result;
+            }
+
+
+
+
+        } catch (err: any) {
+            console.error('Sale Finalization Error:', err);
+            const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
             onError?.(errorMessage);
-
+            toast.error(errorMessage, {
+                duration: 5000,
+                style: { background: '#ef4444', color: '#fff' }
+            });
             return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
         }
     }, [
-        resolveAyantDroit, handleModificationMode, createOrGetInvoice,
-        addProductsToInvoice, applyCoupon, buildPaymentsList,
-        recordPayments, createPromis, saveOrdonnancier, rollbackInvoice,
-        facturesEndpoint, caisseEndpoint, onSuccess, onError, onReset
+        resolveAyantDroit, handleModificationMode, buildPaymentsList,
+        facturesEndpoint, pharmacySettings, t, onSuccess, onError, onReset
     ]);
 
     return {

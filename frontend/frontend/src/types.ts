@@ -172,6 +172,7 @@ export interface LigneInventaire {
   lot_numero?: string | null;
   lot_expiration?: string | null;
   lot_quantity_remaining?: number | null;
+  isLocalOnly?: boolean;
 }
 
 export interface Inventaire {
@@ -209,6 +210,8 @@ export interface FactureProduit {
   produit_nom?: string
   quantity: number
   selling_price: string
+  discount?: string
+  tva?: string
   lot?: string
   date_expiration?: string
 }
@@ -234,7 +237,7 @@ export interface Facture {
   produits: FactureProduit[]
   created_by_name?: string // Added operator name
   is_remise_auto?: boolean
-  part_client?: string | number | null
+  part_client?: string | null
   reste_a_payer?: string
   paiements?: any[]
   validated_by_name?: string

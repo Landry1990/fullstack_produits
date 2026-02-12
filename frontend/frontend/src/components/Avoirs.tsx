@@ -6,6 +6,7 @@ import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot } from '../
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 import { useLocation } from 'react-router-dom'
+import SudoValidationModal from './common/SudoValidationModal'
 
 export default function Avoirs() {
   const [avoirs, setAvoirs] = useState<Avoir[]>([])
@@ -14,6 +15,11 @@ export default function Avoirs() {
   
   // Selection
   const [selectedAvoir, setSelectedAvoir] = useState<Avoir | null>(null)
+  
+  // Sudo Validation State
+  const [showValidationModal, setShowValidationModal] = useState(false)
+  const [savingValidation, setSavingValidation] = useState(false)
+  const [avoirToValidate, setAvoirToValidate] = useState<Avoir | null>(null)
   
   // Create/Edit State
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT' | 'DETAILS'>('LIST')
@@ -417,17 +423,30 @@ export default function Avoirs() {
 
   // Validate
   const handleValidate = async (avoir: Avoir) => {
-    if (!confirm(`Confirmer la validation de l'avoir ${avoir.numero} ? \nCela retirera les produits du stock.`)) return
-    
+    // Open Sudo Modal instead of direct validation
+    setAvoirToValidate(avoir)
+    setShowValidationModal(true)
+  }
+
+  const handleSudoValidate = async (validatorId: number, password: string) => {
+    if (!avoirToValidate) return
+
     try {
-        setLoading(true)
-        await axios.post(`${avoirsEndpoint}${avoir.id}/valider/`)
+        setSavingValidation(true)
+        await axios.post(`${avoirsEndpoint}${avoirToValidate.id}/valider/`, {
+            validated_by_id: validatorId,
+            password: password
+        })
         toast.success('Avoir validé et stock mis à jour')
         fetchAvoirs()
         if (viewMode === 'DETAILS') setViewMode('LIST')
+        setShowValidationModal(false)
+        setAvoirToValidate(null)
     } catch (err: any) {
+        toast.error('Erreur: ' + (err.response?.data?.error || err.message))
+        console.error(err)
     } finally {
-        setLoading(false)
+        setSavingValidation(false)
     }
   }
 
@@ -1052,8 +1071,24 @@ export default function Avoirs() {
     )
   }
 
-  if (viewMode === 'CREATE' || viewMode === 'EDIT') return renderCreate()
-  if (viewMode === 'DETAILS') return renderDetails()
-      
-  return renderListCheck()
+  return (
+    <>
+      {(viewMode === 'CREATE' || viewMode === 'EDIT') && renderCreate()}
+      {viewMode === 'DETAILS' && renderDetails()}
+      {viewMode === 'LIST' && renderListCheck()}
+
+      {/* Sudo Validation Modal */}
+      <SudoValidationModal
+        isOpen={showValidationModal}
+        onClose={() => {
+            setShowValidationModal(false)
+            setAvoirToValidate(null)
+        }}
+        onValidate={handleSudoValidate}
+        saving={savingValidation}
+        title={`Valider l'avoir ${avoirToValidate?.numero}`}
+        message={`Confirmer la validation de l'avoir <strong>${avoirToValidate?.numero}</strong> ? <br/>Cela retirera les produits du stock.`}
+      />
+    </>
+  )
 }

@@ -10,6 +10,9 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
 import io
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
 
 # ReportLab imports
 from reportlab.lib import colors
@@ -75,14 +78,42 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     def sortir_perimes(self, request, pk=None):
         """
         Sort un lot du stock (destruction/retour).
+        Supporte le mode SUDO pour valider par un autre utilisateur.
         """
         lot = self.get_object()
         quantity_to_remove = int(request.data.get('quantity', lot.quantity_remaining))
         reason = request.data.get('reason', 'Périmé')
         
+        # --- LOGIQUE SUDO MODE ---
+        validated_by_id = request.data.get('validated_by_id')
+        validation_user = request.user
+        
+        if validated_by_id:
+            try:
+                from django.contrib.auth.models import User
+                sudo_user = User.objects.get(id=validated_by_id)
+                
+                # Vérifier le mot de passe si un mot de passe est fourni (ou obligatoire selon politique)
+                password = request.data.get('password')
+                if password:
+                    if not sudo_user.check_password(password):
+                        return Response({'error': 'Mot de passe incorrect pour le validateur.'}, status=status.HTTP_403_FORBIDDEN)
+                    validation_user = sudo_user
+                else:
+                    # Si pas de mdp fourni mais ID fourni, on peut soit bloquer soit accepter si l'admin fait l'action
+                    # Pour Sudo Mode strict, le mot de passe est généralement requis
+                    return Response({'error': 'Mot de passe requis pour la validation.'}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            except User.DoesNotExist:
+                 return Response({'error': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+        # -------------------------
+        
         if quantity_to_remove > lot.quantity_remaining:
             return Response({'detail': 'Quantité insuffisante dans le lot.'}, status=status.HTTP_400_BAD_REQUEST)
             
+        # Capture quantity before for adjustment record
+        quantity_before = lot.quantity_remaining
+
         # Update lot
         lot.quantity_remaining -= quantity_to_remove
         lot.save()
@@ -98,35 +129,48 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # Refresh to get actual stock value for MouvementStock
         produit.refresh_from_db()
+
+        # Create StockAdjustment for traceability in Adjustment Journal
+        StockAdjustment.objects.create(
+            produit=produit,
+            stock_lot=lot,
+            user=validation_user,
+            quantity_before=quantity_before,
+            quantity_after=lot.quantity_remaining,
+            quantity_change=-quantity_to_remove,
+            reason_type=StockAdjustment.ReasonType.PERIME,
+            reason_detail=f"Sortie périmés: {reason}"
+        )
         
         # Create MouvementStock for traceability
         MouvementStock.objects.create(
             produit=produit,
-            type_mouvement=MouvementStock.TypeMouvement.AVOIR,
+            type_mouvement=MouvementStock.TypeMouvement.AVOIR, # ou AJUSTEMENT ? AVOIR semble utilisé pour "Sortie diverses" ici
             quantite=-quantity_to_remove,
             stock_apres=produit.stock,
-            user=request.user,
+            user=validation_user, # Utilise le validateur Sudo
             description=f"Sortie périmés - Lot {lot.lot}: {reason}"
         )
         
         # Log Audit
         log_audit(
-            user=request.user,
+            user=validation_user, # Utilise le validateur Sudo
             action=AuditLog.Action.STOCK_ADJUST,
             model_name='StockLot',
             object_id=lot.id,
-            description=f"Sortie périmés: {quantity_to_remove} unités (Lot {lot.lot})",
+            description=f"Sortie périmés par {validation_user.username}: {quantity_to_remove} unités (Lot {lot.lot})",
             details={
                 'produit_id': produit.id,
                 'produit_nom': produit.name,
                 'quantity': -quantity_to_remove,
                 'reason': reason,
-                'lot': lot.lot
+                'lot': lot.lot,
+                'sudo_mode': bool(validated_by_id)
             },
             request=request
         )
 
-        return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.'})
+        return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.', 'validated_by': validation_user.username})
 
     @action(detail=False, methods=['get'])
     def stats_perimes(self, request):
@@ -354,131 +398,82 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
         inventaire.validated_by = validator
 
-        # Mettre à jour le stock pour chaque ligne
-        # On itère sur une COPIE de la liste car on peut supprimer des lignes (merge)
+        # Préparation du traitement groupé et recalcul
         lignes = list(inventaire.lignes.select_related('produit', 'stock_lot').all())
-        
-        # Set pour traquer les (produit, lot) traités et éviter les conflits
-        processed_keys = set()
+        products_to_recalculate = set()
         
         for ligne in lignes:
             produit = ligne.produit
+            products_to_recalculate.add(produit)
             
-            # Déterminer le lot cible
             target_lot = ligne.stock_lot
-            
             if not target_lot:
-                # Mode PRODUIT GLOBAL : Attribution du lot auto
                 lot_number = f"LOT-INV-{inventaire.id}"
-                
-                # Chercher ou créer le lot
                 target_lot, created = StockLot.objects.get_or_create(
-                    produit=produit,
-                    lot=lot_number,
+                    produit=produit, lot=lot_number,
                     defaults={
                         'quantity_initial': ligne.quantite_physique,
                         'quantity_remaining': ligne.quantite_physique,
-                        'quantity_paid': ligne.quantite_physique,
-                        'quantity_free': 0,
                         'price_cost': ligne.pmp_snapshot or produit.cost_price or 0,
                         'date_reception': inventaire.date,
                         'fournisseur': produit.fournisseur
                     }
                 )
-                
                 if not created:
-                   # Si le lot existait déjà, on met à jour sa quantité restante avec la valeur de cette ligne
-                   # Attention : si plusieurs lignes pointent vers ce lot, on va écraser à chaque fois ?
-                   # Non, la logique ci-dessous va fusionner les lignes.
-                   # Pour l'instant, disons qu'on prend la valeur de la ligne courante comme base si c'était pas mis à jour
-                   target_lot.quantity_remaining = ligne.quantite_physique
-                   target_lot.save()
-
-            # --- DÉTECTION ET FUSION DES DOUBLONS ---
-            # Vérifier si une autre ligne de cet inventaire a DÉJÀ été traitée pour ce (produit, lot)
-            # Ou si une ligne existe déjà en base (pour le cas où on vient d'assigner target_lot qui était None avant)
-            
-            # On cherche s'il existe une ligne concurrente DANS L'INVENTAIRE pour ce lot
-            # Note: Si on vient de créer le lot, ligne.stock_lot est encore None en DB.
-            
-            conflict_line = LigneInventaire.objects.filter(
-                inventaire=inventaire, 
-                stock_lot=target_lot
-            ).exclude(id=ligne.id).first()
-            
-            if conflict_line:
-                # CONFLIT DÉTECTÉ : Une ligne existe déjà pour ce lot dans cet inventaire !
-                # Solution : Fusionner la ligne actuelle dans la ligne existante
-                print(f"Fusion de ligne {ligne.id} vers {conflict_line.id} (Produit {produit.id}, Lot {target_lot.lot})")
+                    target_lot.quantity_remaining = ligne.quantite_physique
+                    target_lot.save()
                 
-                conflict_line.quantite_physique += ligne.quantite_physique
-                conflict_line.save()
-                
-                # Supprimer la ligne courante
-                ligne.delete()
-                
-                # Mettre à jour le target_lot avec la somme
-                target_lot.quantity_remaining = conflict_line.quantite_physique
-                target_lot.save()
-                
-                # On passe à la ligne suivante
-                continue
-            
-            # Si pas de conflit, on assigne le lot et on sauvegarde
-            if ligne.stock_lot != target_lot:
                 ligne.stock_lot = target_lot
                 ligne.save(update_fields=['stock_lot'])
+
+            # Mise à jour physique (Verrouillage du lot)
+            StockLot.objects.filter(id=target_lot.id).select_for_update().update(
+                quantity_remaining=ligne.quantite_physique
+            )
             
-            # Mise à jour du stock réel du lot (écrasement avec la quantité physique)
-            # Note: Si fusion a eu lieu, c'est déjà fait ci-dessus. Sinon on le fait ici.
-            target_lot.quantity_remaining = ligne.quantite_physique
-            target_lot.save()
-                
-            # Recalculer le stock global du produit
-            if not produit.use_lot_management:
-                produit.use_lot_management = True
-                produit.save(update_fields=['use_lot_management'])
-            
-            produit.calculate_stock_from_lots()
-            
-            # Créer un enregistrement StockAdjustment pour le journal des ajustements
+            # Traçabilité
             ecart = ligne.quantite_physique - ligne.stock_theorique
             if ecart != 0:
                 StockAdjustment.objects.create(
-                    produit=produit,
-                    stock_lot=target_lot,
-                    user=validator,
+                    produit=produit, stock_lot=target_lot, user=validator,
                     quantity_before=ligne.stock_theorique,
                     quantity_after=ligne.quantite_physique,
                     quantity_change=ecart,
                     reason_type='INVENTAIRE',
-                    reason_detail=f"Inventaire #{inventaire.id} - {inventaire.description or 'Sans description'}"
+                    reason_detail=f"Inventaire #{inventaire.id}"
+                )
+
+                MouvementStock.objects.create(
+                    produit=produit,
+                    inventaire=inventaire, # TRAÇABILITÉ
+                    type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+                    quantite=ecart,
+                    user=validator,
+                    description=f"Inventaire #{inventaire.id} (Lot {target_lot.lot})",
+                    date=timezone.now()
                 )
              
+        # Recalcul groupé (Hors boucle)
+        for prod in products_to_recalculate:
+            if not prod.use_lot_management:
+                prod.use_lot_management = True
+                prod.save(update_fields=['use_lot_management'])
+            prod.calculate_stock_from_lots()
+            MouvementStock.objects.filter(produit=prod, inventaire=inventaire).update(stock_apres=prod.stock)
+
         inventaire.status = Inventaire.Status.VALIDEE
         inventaire.save()
         
-        # Log d'audit explicite
-        final_lignes_count = inventaire.lignes.count()
-        # Recalcul ecart total car des lignes ont pu disparaitre
-        total_ecart = sum(l.quantite_physique - l.stock_theorique for l in inventaire.lignes.all())
-        
         log_audit(
-            user=validator, # Use validator for audit log too? or actual user? usually request.user performs action
+            user=request.user,
             action=AuditLog.Action.INVENTORY_VALIDATE,
             model_name='Inventaire',
             object_id=inventaire.id,
-            description=f"Inventaire validé par {validator.username}: {final_lignes_count} lignes",
-            details={
-                'inventaire_id': inventaire.id,
-                'validator_id': validator.id,
-                'lignes_count': final_lignes_count,
-                'ecart_total': total_ecart
-            },
+            description=f"Inventaire #{inventaire.id} validé par {validator.username}",
             request=request
         )
         
-        return Response({'status': 'Inventaire validé. Stocks mis à jour.', 'validated_by': validator.username})
+        return Response({'status': 'Inventaire validé.', 'validated_by': validator.username})
 
     @action(detail=True, methods=['get', 'post'], url_path='lignes')
     def lignes(self, request, pk=None):
@@ -564,89 +559,83 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     @transaction.atomic
     def bulk_lignes(self, request, pk=None):
         """
-        Import en masse de lignes d'inventaire (ex: synchronisation offline).
-        URL: /api/inventaires/{id}/lignes/bulk/
+        Import en masse de lignes d'inventaire optimisé (Réduction N+1).
         """
         inventaire = self.get_object()
         lignes_data = request.data.get('lignes', [])
         
         if not isinstance(lignes_data, list):
-            return Response({'error': 'Format invalide, une liste "lignes" est attendue'}, status=status.HTTP_400_BAD_REQUEST)
-            
+            return Response({'error': 'Format invalide'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # PRE-CHARGEMENT pour éviter le N+1
+        produit_ids = {d.get('produit') for d in lignes_data if d.get('produit')}
+        lot_ids = {d.get('stock_lot') for d in lignes_data if d.get('stock_lot')}
+        
+        produits_map = {p.id: p for p in Produit.objects.filter(id__in=produit_ids)}
+        lots_map = {l.id: l for l in StockLot.objects.filter(id__in=lot_ids)}
+        
+        # Pour les recherches par numéro de lot
+        lot_tuples = {(d.get('produit'), d.get('lot_numero')) for d in lignes_data if d.get('lot_numero') and d.get('produit')}
+        existing_lots_by_num = {}
+        if lot_tuples:
+            for l in StockLot.objects.filter(produit_id__in=produit_ids):
+                existing_lots_by_num[(l.produit_id, l.lot)] = l
+
         imported_count = 0
         errors = []
-        
+        lignes_a_creer = []
+
         for index, data in enumerate(lignes_data):
             try:
-                data = data.copy()
-                data['inventaire'] = inventaire.id
+                p_id = data.get('produit')
+                produit = produits_map.get(p_id)
+                if not produit:
+                    errors.append(f"Ligne {index}: Produit {p_id} inconnu")
+                    continue
+
+                target_lot = None
                 
-                # --- LOGIQUE DE GESTION DES LOTS (Copie de la méthode lignes) ---
-                if 'stock_lot' in data and data['stock_lot']:
-                    try:
-                        lot = StockLot.objects.get(id=data['stock_lot'])
-                        data['stock_theorique'] = lot.quantity_remaining
-                        if 'quantite_physique' not in data: # Should ideally be there
-                            data['quantite_physique'] = lot.quantity_remaining
-                    except StockLot.DoesNotExist:
-                        errors.append(f"Ligne {index}: Lot ID {data['stock_lot']} non trouvé")
-                        continue
+                # 1. Par ID de lot
+                if data.get('stock_lot'):
+                    target_lot = lots_map.get(data['stock_lot'])
                 
-                elif 'lot_numero' in data and data['lot_numero']:
-                    lot_num = data.get('lot_numero')
-                    lot_exp = data.get('lot_expiration')
-                    produit_id = data.get('produit')
-                    
-                    try:
-                        produit = Produit.objects.get(id=produit_id)
-                    except Produit.DoesNotExist:
-                        errors.append(f"Ligne {index}: Produit ID {produit_id} non trouvé")
-                        continue
-                        
-                    existing_lot = StockLot.objects.filter(produit=produit, lot=lot_num).first()
-                    
-                    if existing_lot:
-                        data['stock_lot'] = existing_lot.id
-                        data['stock_theorique'] = existing_lot.quantity_remaining
-                    else:
-                        new_lot = StockLot.objects.create(
+                # 2. Par Numéro de lot
+                elif data.get('lot_numero'):
+                    key = (p_id, data['lot_numero'])
+                    target_lot = existing_lots_by_num.get(key)
+                    if not target_lot:
+                        # Création à la volée du lot manquant
+                        target_lot = StockLot.objects.create(
                             produit=produit,
-                            lot=lot_num,
-                            date_expiration=lot_exp if lot_exp else None,
+                            lot=data['lot_numero'],
+                            date_expiration=data.get('lot_expiration'),
                             quantity_remaining=0,
                             quantity_initial=0,
-                            price_cost=produit.cost_price,
-                            selling_price=produit.selling_price,
+                            price_cost=produit.cost_price or 0,
+                            selling_price=produit.selling_price or 0,
                             date_reception=timezone.now()
                         )
-                        data['stock_lot'] = new_lot.id
-                        data['stock_theorique'] = 0
-                    
-                    if 'quantite_physique' not in data:
-                        data['quantite_physique'] = data.get('quantite_comptee', 0)
+                        existing_lots_by_num[key] = target_lot
 
-                else:
-                    # Mode PRODUIT GLOBAL
-                    try:
-                        produit = Produit.objects.get(id=data['produit'])
-                        if 'stock_theorique' not in data:
-                            data['stock_theorique'] = produit.stock
-                        if 'quantite_physique' not in data:
-                            data['quantite_physique'] = data.get('quantite_comptee', produit.stock)
-                    except Produit.DoesNotExist:
-                        errors.append(f"Ligne {index}: Produit non trouvé")
-                        continue
-                
-                # Sauvegarde via Serializer
-                serializer = LigneInventaireSerializer(data=data)
-                if serializer.is_valid():
-                    serializer.save()
-                    imported_count += 1
-                else:
-                    errors.append(f"Ligne {index}: {serializer.errors}")
-                    
+                # Déterminer le stock théorique
+                stock_theorique = target_lot.quantity_remaining if target_lot else produit.stock
+                quantite_physique = data.get('quantite_physique', data.get('quantite_comptee', stock_theorique))
+
+                lignes_a_creer.append(LigneInventaire(
+                    inventaire=inventaire,
+                    produit=produit,
+                    stock_lot=target_lot,
+                    stock_theorique=stock_theorique,
+                    quantite_physique=quantite_physique,
+                    pmp_snapshot=produit.cost_price or 0
+                ))
+                imported_count += 1
+
             except Exception as e:
-                errors.append(f"Ligne {index}: Erreur inattendue - {str(e)}")
+                errors.append(f"Ligne {index}: {str(e)}")
+
+        if lignes_a_creer:
+            LigneInventaire.objects.bulk_create(lignes_a_creer)
         
         return Response({
             'status': 'Import terminé',
@@ -1148,6 +1137,65 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
             'positive_sum': int(positive),
             'negative_sum': int(negative)
         })
+
+    @action(detail=False, methods=['get'])
+    def export_excel(self, request):
+        """
+        Exporte le journal des ajustements filtré au format Excel.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Journal des Ajustements"
+        
+        # En-têtes
+        headers = [
+            "Date", "Heure", "Produit", "CIP", "Lot", 
+            "Utilisateur", "Avant", "Après", "Diff", 
+            "Motif", "Détails"
+        ]
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.font = Font(bold=True)
+            cell.alignment = Alignment(horizontal='center')
+            # Ajuster largeur colonnes
+            column_letter = cell.column_letter
+            ws.column_dimensions[column_letter].width = 15
+            
+        ws.column_dimensions['C'].width = 30 # Produit
+        ws.column_dimensions['K'].width = 40 # Détails
+        
+        # Données
+        for row_num, adj in enumerate(queryset, 2):
+            created_at = adj.created_at.astimezone(timezone.get_current_timezone())
+            
+            ws.cell(row=row_num, column=1, value=created_at.strftime('%d/%m/%Y'))
+            ws.cell(row=row_num, column=2, value=created_at.strftime('%H:%M'))
+            ws.cell(row=row_num, column=3, value=adj.produit.name if adj.produit else "N/A")
+            ws.cell(row=row_num, column=4, value=adj.produit.cip1 if adj.produit else "")
+            ws.cell(row=row_num, column=5, value=adj.stock_lot.lot if adj.stock_lot else "")
+            ws.cell(row=row_num, column=6, value=adj.user.username if adj.user else "")
+            ws.cell(row=row_num, column=7, value=adj.quantity_before)
+            ws.cell(row=row_num, column=8, value=adj.quantity_after)
+            ws.cell(row=row_num, column=9, value=adj.quantity_change)
+            ws.cell(row=row_num, column=10, value=adj.get_reason_type_display())
+            ws.cell(row=row_num, column=11, value=adj.reason_detail)
+            
+        # Préparer la réponse
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        
+        filename = f"ajustements_stock_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
 
 class StatsUGViewSet(viewsets.GenericViewSet):
     """

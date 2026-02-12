@@ -180,36 +180,11 @@ export default function InventaireComponent() {
   const fetchStats = async (id: number) => {
       setLoadingStats(true);
       try {
-          // Calculer les stats localement depuis 'lignes'
-          // Note: On simule une requête async pour ne pas bloquer l'UI
-          await new Promise(r => setTimeout(r, 100));
-          
-          const linesWithVal = lignes.map(l => {
-               let price = parseFloat(l.pmp_snapshot || '0');
-               if (price === 0) price = parseFloat(l.produit_cost_price || '0');
-               if (price === 0 && l.produit && typeof l.produit === 'object' && l.produit.cost_price) {
-                   price = parseFloat(l.produit.cost_price);
-               }
-               return { ...l, val: l.ecart * price };
-          });
-          
-          const pertes = linesWithVal.filter(l => l.val < 0)
-              .sort((a, b) => a.val - b.val).slice(0, 10).map(l => ({
-                   produit_nom: typeof l.produit === 'object' ? l.produit.name : l.produit_nom,
-                   ecart: l.ecart,
-                   valeur: l.val
-               }));
-               
-          const rayonMap: Record<string, number> = {};
-          linesWithVal.forEach(l => {
-               const r = (typeof l.produit === 'object' ? l.produit.rayon_name : l.produit_rayon) || 'Autres';
-               rayonMap[r] = (rayonMap[r] || 0) + l.val;
-          });
-          const par_rayon = Object.entries(rayonMap).map(([k, v]) => ({ rayon: k, total: v })).sort((a, b) => a.total - b.total);
-          
-          setInventoryStats({ top_pertes: pertes, par_rayon });
+          const res = await axios.get(`${inventairesEndpoint}${id}/stats/`);
+          setInventoryStats(res.data);
       } catch (err) {
           console.error("Erreur stats", err);
+          toast.error("Impossible de charger les statistiques");
       } finally {
           setLoadingStats(false);
       }
@@ -396,9 +371,9 @@ export default function InventaireComponent() {
           return;
       }
       
-      // CREATE MODE logic: If no ID, create draft.
-      let invId = activeInventaire?.id;
-      if (!invId) {
+      // CREATE MODE logic: If no ID, create draft header first if it doesn't exist.
+      let invId: number;
+      if (!activeInventaire?.id) {
           try {
               const res = await axios.post(inventairesEndpoint, {
                   date: dateInventaire,
@@ -407,63 +382,76 @@ export default function InventaireComponent() {
               });
               invId = res.data.id;
               setActiveInventaire(res.data);
-              // Update list 
               setInventaires(prev => [res.data, ...prev]);
           } catch(err) {
               console.error("Erreur création inventaire", err);
               toast.error("Impossible de créer l'inventaire automatiquement.");
               return;
           }
+      } else {
+          invId = activeInventaire.id;
       }
 
-      // Inject full product details for local display immediately (before re-fetch)
+      // AJOUT LOCAL (Mode Saisie Groupée)
       const cost = product.cost_price || '0';
       const pmp = product.pmp || '0';
+      
+      const newLine: LigneInventaire = {
+          id: -Date.now(), // ID temporaire négatif
+          inventaire: invId,
+          produit: product, 
+          produit_nom: product.name,
+          produit_cip: product.cip1 || undefined,
+          produit_rayon: product.rayon_name,
+          produit_description: product.description,
+          produit_cost_price: cost,
+          produit_pmp: pmp || undefined,
+          stock_lot: stockLotId,
+          stock_theorique: product.stock, 
+          quantite_physique: product.stock,
+          ecart: 0,
+          pmp_snapshot: cost,
+          isLocalOnly: true 
+      };
 
-      try {
-          const payload: any = {
-              inventaire: invId,
-              produit: product.id,
-              stock_theorique: product.stock, 
-              quantite_physique: product.stock, 
-          };
-          
-          if (stockLotId) {
-              payload.stock_lot = stockLotId;
-              // If lot provided, backend handles theorical stock from lot (via our `create` view modification? 
-              // Wait, I didn't modify `create` in backend yet?
-              // The plan said "Backend is already compatible".
-              // Let's re-verify ViewSet logic for `create`.
-              // ViewSet LigneInventaireViewSet.create does check `stock_lot` and sets `stock_theorique` from it!
-              // YES, I saw it in `views.py` lines 3165+. perfect.
-          } else {
-              // Backward compat logic
-          }
-
-          const res = await axios.post(lignesEndpoint, payload);
-          
-           const newLine: LigneInventaire = {
-               ...res.data,
-               produit: product, 
-               produit_nom: product.name,
-               produit_cip: product.cip1,
-               produit_rayon: product.rayon_name,
-               produit_description: product.description,
-               produit_cost_price: cost,
-               produit_pmp: pmp,
-           };
-           const newLignes = [...lignes, newLine];
-           setLignes(newLignes);
-           toast.success("Produit ajouté");
-           
-           setTimeout(() => focusInput(newLignes.length - 1), 100);
-
-      } catch (err: any) {
-          console.error("Erreur ajout ligne", err);
-          const msg = err.response?.data?.error || err.response?.data?.detail || "Erreur inconnue";
-          toast.error(`Erreur: ${msg}`);
-      }
+      const newLignes = [...lignes, newLine];
+      setLignes(newLignes);
+      toast.success("Produit ajouté (en attente de sauvegarde)");
       setSearchQuery('');
+      setTimeout(() => focusInput(newLignes.length - 1), 100);
+  };
+
+  const handleSyncLines = async () => {
+      if (!activeInventaire) return;
+      const localLines = lignes.filter(l => l.isLocalOnly);
+      if (localLines.length === 0) {
+          toast.success("Tout est synchronisé");
+          return;
+      }
+
+      setSaving(true);
+      try {
+          const payload = localLines.map(l => ({
+              produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
+              stock_lot: l.stock_lot,
+              quantite_physique: l.quantite_physique,
+              // lot_numero if needed for new lots? usually stock_lot is enough
+          }));
+
+          const res = await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, { lignes: payload });
+          
+          if (res.status === 201) {
+              toast.success(`${res.data.imported} lignes synchronisées`);
+              // Re-fetch clean lines from server to get real IDs and theoretical stocks
+              const resLines = await axios.get(`${lignesEndpoint}?inventaire=${activeInventaire.id}`);
+              setLignes(resLines.data.results || resLines.data);
+          }
+      } catch (err) {
+          console.error("Erreur synchronisation", err);
+          toast.error("Échec de la synchronisation");
+      } finally {
+          setSaving(false);
+      }
   };
 
   // Use search navigation hook (must be after handleAddProduct is declared)
@@ -1229,13 +1217,13 @@ export default function InventaireComponent() {
                                Actually, since we save line by line, this is mostly for the header or just status.
                                User requested SEPARATE buttons. One for Validating.
                            */}
-                           <button className="btn btn-warning" disabled>{t('stock.inventaire.detail.saved_auto')}</button> {/* Feedback only */}
+                           {lignes.some(l => l.isLocalOnly) && (<button className="btn btn-warning animate-pulse" onClick={handleSyncLines} disabled={saving}>{saving ? <span className="loading loading-spinner loading-sm"></span> : null}{t('stock.inventaire.detail.sync_now', { count: lignes.filter(l => l.isLocalOnly).length })}</button>)}
 
                            <button className="btn btn-info text-white" onClick={() => setShowMergeModal(true)}>
                                {t('stock.inventaire.detail.merge_to')}
                            </button>
 
-                           <button className="btn btn-success text-white" onClick={handleOpenValidateModal} disabled={saving}>
+                           <button className="btn btn-success text-white" onClick={handleOpenValidateModal} disabled={saving || lignes.some(l => l.isLocalOnly)}>
                                {saving ? t('stock.inventaire.detail.validating') : t('stock.inventaire.detail.validate')}
                            </button>
                        </>
@@ -1463,7 +1451,7 @@ export default function InventaireComponent() {
                                   )}
                                   <td>
                                       <div className="font-bold">
-                                          {typeof ligne.produit === 'object' ? ligne.produit.name : ligne.produit_nom}
+                                          {typeof ligne.produit === 'object' ? ligne.produit.name : ligne.produit_nom} {ligne.isLocalOnly && <span className="badge badge-warning badge-xs">Local</span>}
                                       </div>
                                       <div className="text-xs opacity-50">
                                           {typeof ligne.produit === 'object' ? ligne.produit.cip1 : ligne.produit_cip}

@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from django.db import transaction
 from django.db.models import ProtectedError, F, Sum, DecimalField, Value
+from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.http import HttpResponse
@@ -321,6 +322,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 quantite=total_qty,
                 stock_apres=produit.stock,
                 user=request.user,
+                commande=commande,
                 description=f"Réception commande #{commande.id} - Lot: {item.lot or 'N/A'} - Fournisseur: {commande.fournisseur.name if commande.fournisseur else 'N/A'}"
             ))
         
@@ -720,6 +722,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 quantite=-int(qty_to_remove),  # Négatif car on retire
                 stock_apres=int(new_stock),
                 user=request.user,
+                commande=commande,
                 description=f"Annulation réception commande #{commande.id}"
             ))
         
@@ -1275,12 +1278,26 @@ class AvoirViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def valider(self, request, pk=None):
-        '''Valider l avoir et retirer du stock'''
+        '''Valider l avoir et retirer du stock (avec support Sudo Mode)'''
         avoir = self.get_object()
         
         if avoir.status == 'VALIDEE':
             return Response({'error': 'Avoir déjà validé'}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Sudo Mode: Check for specific user validation
+        validation_user = request.user
+        validated_by_id = request.data.get('validated_by_id')
+        password = request.data.get('password')
+
+        if validated_by_id and password:
+            try:
+                user_to_check = User.objects.get(id=validated_by_id)
+                if not user_to_check.check_password(password):
+                    return Response({'error': 'Mot de passe invalide pour l\'utilisateur sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
+                validation_user = user_to_check
+            except User.DoesNotExist:
+                return Response({'error': 'Utilisateur validateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
         try:
             with transaction.atomic():
                 # Retirer du stock pour chaque ligne
@@ -1324,29 +1341,31 @@ class AvoirViewSet(viewsets.ModelViewSet):
                         type_mouvement=MouvementStock.TypeMouvement.AVOIR,
                         quantite=-ligne.quantity,  # Négatif car sortie de stock
                         stock_apres=produit.stock,
-                        user=request.user,
+                        user=validation_user, # Use the Sudo Validator
                         description=f"Avoir {avoir.numero} - {avoir.fournisseur.name if avoir.fournisseur else 'Fournisseur'}{lot_info}"
                     )
                     
                     # Log audit (backup)
                     log_audit(
-                        user=request.user,
+                        user=request.user, # The actual logged in user triggered the action
                         action='STOCK_ADJ',
                         model_name='Avoir',
                         object_id=avoir.numero,
-                        description=f"Validation Avoir {avoir.numero}",
+                        description=f"Validation Avoir {avoir.numero} (Validé par: {validation_user.username})",
                         details={
                             'produit_id': produit.id,
                             'produit_nom': ligne.produit_nom,
                             'quantity': -ligne.quantity,
                             'lot': ligne.lot,
-                            'type_avoir': avoir.get_type_avoir_display()
+                            'type_avoir': avoir.get_type_avoir_display(),
+                            'validated_by': validation_user.username
                         },
                         request=request
                     )
                 
                 # Marquer comme validé
                 avoir.status = 'VALIDEE'
+                avoir.validated_by = validation_user
                 avoir.save()
                 
                 return Response({

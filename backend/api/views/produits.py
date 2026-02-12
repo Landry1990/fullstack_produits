@@ -188,6 +188,36 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         serializer = ProduitDetailSerializer(produit)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'])
+    def bulk_refresh(self, request):
+        """
+        Rafraîchit les données de stock pour une liste d'IDs de produits.
+        Evite de faire de multiples appels individuels.
+        Payload: { "ids": [1, 2, 3, ...] }
+        """
+        product_ids = request.data.get('ids', [])
+        if not product_ids:
+            return Response({'detail': 'Liste d\'IDs requise'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Récupérer les produits avec uniquement les champs essentiels pour l'UI de facturation
+        produits = Produit.objects.filter(id__in=product_ids).only(
+            'id', 'name', 'stock', 'selling_price', 'cip1', 'is_active'
+        )
+        
+        # Utiliser un serializer ou retourner un dictionnaire simple pour la performance
+        data = []
+        for p in produits:
+            data.append({
+                'id': p.id,
+                'name': p.name,
+                'stock': p.stock,
+                'selling_price': str(p.selling_price),
+                'cip1': p.cip1,
+                'is_active': p.is_active
+            })
+            
+        return Response(data)
+
     @action(detail=True, methods=['post'])
     def toggle_public(self, request, pk=None):
         """Action pour basculer rapidement la visibilité publique d'un produit."""
@@ -317,11 +347,18 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         
         # 1. Mouvements de stock génériques (ajustements, transformations, etc.)
         mouvements = MouvementStock.objects.filter(produit=produit).select_related('user').values(
-            'date', 'type_mouvement', 'quantite', 'stock_apres', 'description', 'user__username', 'id'
+            'date', 'type_mouvement', 'quantite', 'stock_apres', 'description', 'user__username', 'id', 'facture', 'commande'
         )
         
+        import re
+        def extract_commande_id(desc):
+            if not desc: return None
+            match = re.search(r"[Cc]ommande\s*#(\d+)", desc)
+            return int(match.group(1)) if match else None
+
         history = []
         for m in mouvements:
+            commande_id = m['commande'] or extract_commande_id(m['description'])
             history.append({
                 'date': m['date'],
                 'type': m['type_mouvement'],
@@ -331,7 +368,9 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 'prix_unitaire': 0, # Non applicable ou à récupérer
                 'user': m['user__username'],
                 'source': 'MOUVEMENT',
-                'id': m['id']
+                'id': m['id'],
+                'facture': m['facture'],
+                'commande': commande_id
             })
             
         # 2. Ventes (Factures Validées)
@@ -345,6 +384,10 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         )
         
         for v in ventes:
+            # Éviter les doublons si un MouvementStock existe déjà pour cette facture
+            if any(h.get('facture') == v['facture__id'] for h in history):
+                continue
+
             history.append({
                 'date': v['facture__date'],
                 'type': 'SORTIE',
@@ -354,7 +397,8 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 'prix_unitaire': v['selling_price'],
                 'user': '',
                 'source': 'VENTE',
-                'id': v['facture__id']
+                'id': v['facture__id'],
+                'facture': v['facture__id']
             })
             
         # 3. Achats (Commandes Clôturées) - SUPPRIMÉ car dupliqué avec MouvementStock
@@ -375,19 +419,43 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             'created_at', 'quantity_change', 'quantity_after', 'reason_type', 'reason_detail', 'user__username', 'id'
         )
         
+        # Créer un ensemble de mouvements existants pour filtrer les doublons
+        # On stocke (date_timestamp_min, quantite) pour une recherche rapide
+        # Timestamp arrondi à la minute pour tolérer les légères différences
+        existing_movements = []
+        for m in history:
+             if m['source'] == 'MOUVEMENT':
+                 existing_movements.append(m)
+
         for adj in adjustments:
-            type_mouvement = 'ENTREE' if adj['quantity_change'] >= 0 else 'SORTIE'
-            history.append({
-                'date': adj['created_at'],
-                'type': type_mouvement,
-                'quantity': adj['quantity_change'],  # Peut être négatif
-                'stock_apres': adj['quantity_after'],  # Déjà disponible
-                'libelle': f"Ajustement: {adj['reason_detail'] or adj['reason_type']}",
-                'prix_unitaire': 0,
-                'user': adj['user__username'] or '',
-                'source': 'AJUSTEMENT',
-                'id': adj['id']
-            })
+            # Vérifier si ce mouvement existe déjà dans MouvementStock
+            # Critères : Même quantité ET date proche (à +/- 1 minute)
+            is_duplicate = False
+            adj_time = adj['created_at'].timestamp()
+            
+            for m in existing_movements:
+                m_time = m['date'].timestamp()
+                time_diff = abs(m_time - adj_time)
+                
+                # Si même quantité et moins de 60s d'écart, c'est probablement le même événement
+                if time_diff < 60 and m['quantity'] == adj['quantity_change']:
+                    is_duplicate = True
+                    break
+            
+            if not is_duplicate:
+                type_mouvement = 'ENTREE' if adj['quantity_change'] >= 0 else 'SORTIE'
+                history.append({
+                    'date': adj['created_at'],
+                    'type': type_mouvement,
+                    'quantity': adj['quantity_change'],  # Peut être négatif
+                    'stock_apres': adj['quantity_after'],  # Déjà disponible
+                    'libelle': f"Ajustement: {adj['reason_detail'] or adj['reason_type']}",
+                    'commande': extract_commande_id(adj['reason_detail'] or adj['reason_type']),
+                    'prix_unitaire': 0,
+                    'user': adj['user__username'] or '',
+                    'source': 'AJUSTEMENT',
+                    'id': adj['id']
+                })
 
 
         # Trier par date DESC
