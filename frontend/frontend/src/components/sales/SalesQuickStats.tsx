@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, UserCheck, RefreshCw } from 'lucide-react';
+import { TrendingUp, UserCheck } from 'lucide-react';
 import axios from 'axios';
 import { safeStorage } from '../../utils/storage';
 
@@ -17,13 +17,13 @@ interface SalesStats {
 
 export const SalesQuickStats: React.FC = () => {
     const [stats, setStats] = useState<SalesStats | null>(null);
-    const [loading, setLoading] = useState(false);
+
 
     const fetchStats = async () => {
-        setLoading(true);
+
         try {
             const token = safeStorage.getItem('authToken');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
             const response = await axios.get(`${apiBaseUrl}/factures/stats_jour/`, {
                 headers: { Authorization: `Token ${token}` }
             });
@@ -31,7 +31,7 @@ export const SalesQuickStats: React.FC = () => {
         } catch (error) {
             console.error("Failed to fetch quick stats", error);
         } finally {
-            setLoading(false);
+
         }
     };
 

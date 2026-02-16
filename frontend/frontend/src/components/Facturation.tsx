@@ -3,7 +3,7 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { useQueryClient } from '@tanstack/react-query'
-import type { ProduitModel, Facture, TicketCaisse, LigneFacture } from '../types'
+import type { ProduitModel, Facture, LigneFacture } from '../types'
 import { useProductSearch } from '../hooks/useProductSearch'
 import { useCart } from '../hooks/useCart'
 import { useFacturationClients } from '../hooks/useFacturationClients'
@@ -25,10 +25,13 @@ import ProductSearchSection from './facturation/ProductSearchSection'
 import ClientSection from './facturation/ClientSection'
 import ClinicalAlerts from './clinical/ClinicalAlerts'
 import ClientCreateModal from './facturation/ClientCreateModal'
-import StockResolutionModal from './facturation/StockResolutionModal'
 import PendingSalesDrawer from './facturation/PendingSalesDrawer'
 import TicketPreviewModal from './facturation/TicketPreviewModal'
+import SudoValidationModal from './common/SudoValidationModal'
+import { useSudo } from '../hooks/useSudo'
+import { StockResolutionHandler } from './facturation/StockResolutionHandler'
 import { useSaleCompletion } from '../hooks/useSaleCompletion'
+import { useFacturationUI } from '../hooks/useFacturationUI'
 
 
 // FactureProduitPayload removed as it's now handled by useSaleCompletion
@@ -61,7 +64,6 @@ export default function Facturation() {
   const handleRequirePrescription = useCallback(() => {
     setShowOrdonnanceModal(true)
   }, [])
-
   // useCart Hook - Manages all cart logic (must be before useProductSearch for barcode callback)
   const {
       lignesFacture,
@@ -78,6 +80,55 @@ export default function Facturation() {
       onRequirePrescription: handleRequirePrescription,
       quantityInputsRef
   })
+
+  const { sudoState, requireSudo, closeSudo } = useSudo()
+
+  const secureUpdateQuantite = useCallback((produitId: number, newQty: number) => {
+    if (newQty < 0) {
+      const currentLine = lignesFacture.find(l => l.produit.id === produitId);
+      requireSudo(async (validatorId, password) => {
+          setActiveSudoCreds({ validatorId, password });
+          updateQuantite(produitId, newQty);
+      }, {
+          title: `Validation Quantité Négative`,
+          message: `Confirmer la quantité <strong>${newQty}</strong> pour le produit <strong>${currentLine?.produit.name}</strong> ?`
+      });
+    } else {
+      updateQuantite(produitId, newQty);
+    }
+  }, [updateQuantite, lignesFacture, requireSudo]);
+
+  const secureUpdatePrix = useCallback((produitId: number, newPrice: string) => {
+    const currentLine = lignesFacture.find(l => l.produit.id === produitId);
+    if (!currentLine) return;
+    if (newPrice !== currentLine.prix_unitaire) {
+      requireSudo(async (validatorId, password) => {
+          setActiveSudoCreds({ validatorId, password });
+          updatePrix(produitId, newPrice);
+      }, {
+          title: `Modification de Prix`,
+          message: `Confirmer le changement de prix de <strong>${currentLine.prix_unitaire}</strong> à <strong>${newPrice}</strong> pour <strong>${currentLine.produit.name}</strong> ?`
+      });
+    } else {
+      updatePrix(produitId, newPrice);
+    }
+  }, [updatePrix, lignesFacture, requireSudo]);
+
+  const secureUpdateRemiseProduit = useCallback((produitId: number, newRemise: string) => {
+    const currentLine = lignesFacture.find(l => l.produit.id === produitId);
+    if (!currentLine) return;
+    if (Number(newRemise) > 0 && newRemise !== currentLine.remise_produit) {
+      requireSudo(async (validatorId, password) => {
+          setActiveSudoCreds({ validatorId, password });
+          updateRemiseProduit(produitId, newRemise);
+      }, {
+          title: `Validation Remise`,
+          message: `Confirmer une remise de <strong>${newRemise}%</strong> sur le produit <strong>${currentLine.produit.name}</strong> ?`
+      });
+    } else {
+      updateRemiseProduit(produitId, newRemise);
+    }
+  }, [updateRemiseProduit, lignesFacture, requireSudo]);
 
   // Clinical Check
   const { alerts: clinicalAlerts } = useClinicalCheck(lignesFacture)
@@ -174,7 +225,6 @@ export default function Facturation() {
                   // `updateRemiseProduit` takes percentage or amount? 
                   // If we want exact match, better to update price net.
                   // But `updatePrix` might just change unit price. 
-                  const newUnitPrice = Number(product.selling_price) * ratio
                   // updatePrix(product.id, newUnitPrice.toFixed(2)) 
                   // Let's rely on standard price but apply global discount? 
                   // No, bundle discount is specific.
@@ -227,83 +277,88 @@ export default function Facturation() {
   // useSaleCompletion Hook
   const { 
     completeSale, 
+    completeExistingInvoicePayment,
     loading: saleLoading
   } = useSaleCompletion({
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     onSuccess: (result) => {
-      if (result.success && result.facture) {
-        setSuccessInfo(result.facture)
-        setTicketCaisse(result.ticketCaisse || null)
-        if (result.ticketCaisse) {
-           setShowTicketPreview(true)
+        if (result.success && result.facture) {
+            setSuccessInfo(result.facture) // Keep only this local state for toast notifications
+            setTicketCaisse(result.ticketCaisse || null)
+            if (result.ticketCaisse) setShowTicketPreview(true)
+            
+            // Clean up
+            resetUIState()
+            _resetSaleDataOnly() // Clear cart
+            closePaymentModal()
+            queryClient.invalidateQueries({ queryKey: ['produits'] })
         }
-        _resetSaleDataOnly()
-        setIsPaymentModalOpen(false)
-        queryClient.invalidateQueries({ queryKey: ['produits'] })
-      }
     },
     onError: (msg) => setError(msg)
   })
 
-  const [remise, setRemise] = useState('0')
-  const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant') // Mode de remise globale
+  // We keep only essential local UI state not covered by hook
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
-  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
-  const [montantPaye, setMontantPaye] = useState('')
-  const [paiements, setPaiements] = useState<{ mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]>([])
-  const [reference, setReference] = useState('')
-  const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
-  const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
-  const [showTicketPreview, setShowTicketPreview] = useState(false)
-
-  // Lot Selection Modal State
-  const [lotModal, setLotModal] = useState<{
-    isOpen: boolean
-    product: ProduitModel | null
-    currentLotId: string | null
-  }>({
-    isOpen: false,
-    product: null,
-    currentLotId: null
-  })
-
-  // Promis Logic State - Deferred Resolution
-  const [showStockResolution, setShowStockResolution] = useState(false)
-  const [stockResolutionItems, setStockResolutionItems] = useState<{product: ProduitModel, quantity: number, stock: number}[]>([])
-  const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
-  const [promisPhone, setPromisPhone] = useState('')
-  const [promisClientName, setPromisClientName] = useState('')
-
-  // Ordonnancier Temporary Data Storage
-  const [tempOrdonnanceData, setTempOrdonnanceData] = useState<OrdonnanceData | null>(null)
-
-  // Loyalty State
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
-
-  // Ordonnancier State
-  const [showOrdonnanceModal, setShowOrdonnanceModal] = useState(false)
-  const [pendingOrdonnanceFacture, setPendingOrdonnanceFacture] = useState<Facture | null>(null)
-
-  // Settings State - Mode Caisse Centralisée
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
+  const [activeSudoCreds, setActiveSudoCreds] = useState<{ validatorId: number, password: string } | null>(null);
 
-  // Devis to validate (when loading from Ventes)
-  const [devisIdToValidate, setDevisIdToValidate] = useState<number | null>(null)
-  
-  // Modification mode (for validated/paid invoices)
-  const [isModificationMode, setIsModificationMode] = useState(false)
-  const [modificationInvoiceId, setModificationInvoiceId] = useState<number | null>(null)
-  const [originalTotalTtc, setOriginalTotalTtc] = useState<number>(0)
+  // New UI Hook replacing local state
+  const {
+      // States
+      remiseGlobale, setRemiseGlobale,
+      remiseMode, setRemiseMode,
+      modePaiement, setModePaiement,
+      montantPaye, setMontantPaye,
+      paiements, setPaiements,
+      reference, setReference,
+      
+      isPaymentModalOpen,
+      facturePourPaiement,
+      openPaymentModal,
+      closePaymentModal,
 
-  // Confirmation Modal State
-  const [confirmModal, setConfirmModal] = useState<{
-    isOpen: boolean;
-    message: string;
-    onConfirm: () => void;
-  } | null>(null);
+      showTicketPreview, setShowTicketPreview,
+      ticketCaisse, setTicketCaisse,
+
+      showStockResolution, setShowStockResolution,
+      stockResolutionItems, setStockResolutionItems,
+      promisSelections, setPromisSelections,
+      promisPhone, setPromisPhone,
+      promisClientName, setPromisClientName,
+
+      lotModal, openLotModal, closeLotModal,
+      confirmModal, setConfirmModal,
+
+      showOrdonnanceModal, setShowOrdonnanceModal,
+      tempOrdonnanceData, setTempOrdonnanceData,
+      pendingOrdonnanceFacture, setPendingOrdonnanceFacture,
+      devisIdToValidate, setDevisIdToValidate,
+
+
+      isModificationMode, setIsModificationMode,
+      modificationInvoiceId, setModificationInvoiceId,
+      originalTotalTtc, setOriginalTotalTtc,
+
+      // Actions
+      resetUIState,
+      calculateTotals
+  } = useFacturationUI()
+
+  // Computed Totals
+  const totals = useMemo(() => 
+      calculateTotals(cartStats, clients.find(c => c.id === selectedClient)),
+      [cartStats, selectedClient, calculateTotals]
+  )
+
+  // Derived state (replaces previous local isNewSale logic if needed)
+  // Logic: It's a new sale if we don't have a specific invoice ID being paid (standard checkout)
+  // BUT: Facturation logic was a bit fuzzy. Let's assume !facturePourPaiement means new sale from cart.
+  const isNewSale = !facturePourPaiement
+
+
 
   // Keyboard Navigation Hook - NOW PLACED AFTER STATE DECLARATIONS
   const hasItems = lignesFacture.length > 0;
@@ -419,7 +474,7 @@ export default function Facturation() {
         
         // Charger la remise
         if (devis.remise) {
-          setRemise(devis.remise)
+          setRemiseGlobale(devis.remise)
           setRemiseMode('montant')
         }
         
@@ -448,6 +503,15 @@ export default function Facturation() {
     }
     
     loadDevis()
+  }, [])
+
+  // Auto-focus search input on mount
+  useEffect(() => {
+    // Small timeout to ensure the DOM is fully ready and transition animations don't interfere
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus()
+    }, 300)
+    return () => clearTimeout(timer)
   }, [])
 
   const apiBaseUrl = useMemo(() => {
@@ -502,54 +566,14 @@ export default function Facturation() {
 
     const client = clients.find(c => c.id === selectedClient)
     if (client?.remise_automatique && Number(client.remise_automatique) > 0) {
-      setRemise(client.remise_automatique)
+      setRemiseGlobale(client.remise_automatique)
       setRemiseMode('taux') // La remise automatique est toujours en pourcentage
     }
   }, [selectedClient, clients, useManualClient])
 
 
 
-  const handleStockResolutionConfirm = () => {
-      // Apply Promis selections to the invoice lines
-      const updatedLignes = lignesFacture.map(ligne => {
-          if (promisSelections.has(ligne.produit.id)) {
-              // Fix: Treat negative stock as 0. If we have 20 demanded and stock is -5, we need to promise 20, not 25.
-              // Wait, if stock is -5, it means we physically have 0. So promised quantity should be the full demanded quantity.
-              // Logic: PromisQty = Demanded - Available. Available = Max(0, Stock).
-              const stock = Math.max(0, ligne.produit.stock ?? 0)
-              const promisQty = Math.max(0, ligne.quantite - stock)
-              return {
-                  ...ligne,
-                  isPromis: true,
-                  promisQuantity: promisQty,
-                  promisPhone: promisPhone || undefined
-              }
-          } else {
-              // Forced sale (or normal if stock came back?)
-              // If user didn't select Promis, acts as Force Sale for the deficit
-              return {
-                  ...ligne,
-                  isPromis: false,
-                  promisQuantity: 0,
-              }
-          }
-      })
-      setLignesFacture(updatedLignes)
-      
-      // Update Client Name if provided in modal and we are not using a specific DB client (or if we overrides)
-      if (promisClientName.trim() !== '') {
-          // If no client selected from DB, or if we were already in manual mode, update it
-          if (!selectedClient || useManualClient) {
-              setUseManualClient(true)
-              setManualClientName(promisClientName)
-              setSelectedClient(null) // Ensure we detach from DB client if we are setting a manual name that might differ
-          }
-      }
 
-      setShowStockResolution(false)
-      setIsNewSale(true)
-      setIsPaymentModalOpen(true)
-  }
 
   const handlePaymentClick = async () => {
       // Check for out-of-stock items before payment
@@ -632,12 +656,18 @@ export default function Facturation() {
 
           setShowStockResolution(true)
       } else {
-          setIsNewSale(true)
           // Auto-fill montant with total to pay (Part Patient if Tiers Payant, else Total TTC)
           const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
           setMontantPaye(montantInitial.toString()) // Keep precision, don't round immediately for editing
-          setIsPaymentModalOpen(true)
+          openPaymentModal()
       }
+  }
+
+  const handlePaymentClickWithSudo = async (sudoCredentials?: { validatorId: number, password: string }) => {
+      if (sudoCredentials) {
+          setActiveSudoCreds(sudoCredentials);
+      }
+      await handlePaymentClick();
   }
 
   // Global Keyboard Shortcuts
@@ -683,9 +713,9 @@ export default function Facturation() {
       if (e.key === 'Escape') {
         // Priority: Close top-most modal
         if (showTicketPreview) { setShowTicketPreview(false); return }
-        if (isPaymentModalOpen) { setIsPaymentModalOpen(false); return }
+        if (isPaymentModalOpen) { closePaymentModal(); return }
         if (showOrdonnanceModal) { setShowOrdonnanceModal(false); return }
-        if (lotModal.isOpen) { setLotModal({...lotModal, isOpen: false}); return }
+        if (lotModal.isOpen) { closeLotModal(); return }
         if (showClientCreateModal) { setShowClientCreateModal(false); return }
         if (showStockResolution) { setShowStockResolution(false); return }
         if (confirmModal) { setConfirmModal(null); return }
@@ -714,7 +744,7 @@ export default function Facturation() {
 
       updateLineLot(lotModal.product.id, lot)
 
-      setLotModal({ isOpen: false, product: null, currentLotId: null })
+      closeLotModal()
       
       // Return focus to search
       setTimeout(() => searchInputRef.current?.focus(), 100)
@@ -724,86 +754,16 @@ export default function Facturation() {
 
 
 
-  const totals = useMemo(() => {
-    // Sous-total via hook useCart
-    const sousTotal = cartStats.sousTotal
-    
-    // Calculer la remise globale selon le mode
-    let remiseMontant = 0
-    if (remiseMode === 'montant') {
-      remiseMontant = Math.min(sousTotal, Number(remise))
-    } else {
-      // Mode taux (pourcentage)
-      const tauxRemise = Number(remise)
-      remiseMontant = sousTotal * (tauxRemise / 100)
-    }
-    
-    // TVA calculée par ligne (depuis cartStats)
-    const montantTva = cartStats.totalTva
-    const baseHT = sousTotal - remiseMontant
-    const totalTtcBase = baseHT + montantTva
-
-    // Calcul tiers payant
-    let tauxCouverture = 0
-    let partAssurance = 0
-    let partPatient = totalTtcBase
-    
-    let currentPoints = 0
-    let pendingDiscountVal = 0
-    
-    if (!useManualClient && selectedClient) {
-      const client = clients.find(c => c.id === selectedClient)
-      
-      if (client?.client_type === 'PROFESSIONNEL' && client.taux_couverture !== undefined && client.taux_couverture !== null) {
-        tauxCouverture = Number(client.taux_couverture)
-        if (tauxCouverture > 0) {
-          partAssurance = Math.round(totalTtcBase * (tauxCouverture / 100))
-          partPatient = totalTtcBase - partAssurance
-        }
-      }
-      // Loyalty Data
-      if (client && client.client_type !== 'PROFESSIONNEL' && (client as any).is_loyalty_member) {
-          currentPoints = (client as any).points_fidelite || 0
-          pendingDiscountVal = Number((client as any).pending_discount || 0)
-      }
-    }
-    
-    // Loyalty Calculations
-    let loyaltyDeduction = 0
-    const pointsValue = pointsToUse * 10 // Est. 10F/point
-    if (usePendingDiscount && pendingDiscountVal > 0) {
-        loyaltyDeduction += totalTtcBase * (pendingDiscountVal / 100)
-    }
-    loyaltyDeduction += pointsValue
-    
-    const finalTotalTtc = Math.max(0, totalTtcBase - loyaltyDeduction)
-    const finalPartPatient = Math.max(0, partPatient - loyaltyDeduction)
-
-    return {
-      sousTotal,
-      remiseMontant,
-      montantTva,
-      totalTtc: finalTotalTtc,
-      originalTotalTtc: totalTtcBase,
-      loyaltyDeduction,
-      tauxCouverture,
-      partAssurance,
-      partPatient: finalPartPatient,
-      currentPoints,
-      pendingDiscountVal
-    }
-  }, [lignesFacture, remise, remiseMode, selectedClient, useManualClient, clients, pointsToUse, usePendingDiscount])
-
-  const [isNewSale, setIsNewSale] = useState(false)
-
   // Reset loyalty when client changes or new sale starts
   useEffect(() => {
     setPointsToUse(0)
     setUsePendingDiscount(false)
   }, [selectedClient, isNewSale])
 
-  const handleCompleteSale = async (validatedBy?: number, password?: string) => {
+  const handleCompleteSale = async (sudoCredentials?: { validatorId: number, password: string }) => {
     // Collect all data for the hook
+    const effectiveSudo = sudoCredentials || activeSudoCreds;
+
     const params = {
         selectedClient,
         useManualClient,
@@ -818,7 +778,7 @@ export default function Facturation() {
         lignesFacture,
         totals: {
             totalHt: totals.sousTotal,
-            totalTva: totals.montantTva,
+            totalTva: totals.totalTva,
             totalTtc: totals.totalTtc,
             remiseMontant: totals.remiseMontant,
             tauxCouverture: totals.tauxCouverture,
@@ -835,12 +795,12 @@ export default function Facturation() {
         isRetrocession,
         centralizedCashRegister,
         isModificationMode,
-        modificationInvoiceId,
-        devisIdToValidate,
+        devisIdToValidate: null,
         tempOrdonnanceData,
-        // Sudo Mode - pass the operator selected in PaymentModal
-        validated_by_id: validatedBy || null,
-        sudo_password: password || undefined
+        // Sudo Mode - pass the operator selected during line edits or stock force
+        validated_by_id: effectiveSudo?.validatorId || null,
+        sudo_password: effectiveSudo?.password || undefined,
+        modificationInvoiceId: modificationInvoiceId
     };
 
     await completeSale(params);
@@ -849,12 +809,16 @@ export default function Facturation() {
   // Helper pour vider les données de vente sans fermer les modals de succès éventuels
   const _resetSaleDataOnly = () => {
       setLignesFacture([])
+      setClientSearch('')
+      setManualClientName('')
+      setSelectedClient(null)
+      setActiveSudoCreds(null)
       // Auto-select "clients divers" after a sale
       const clientsDivers = clients.find(c => c.name.toLowerCase() === 'clients divers')
       setSelectedClient(clientsDivers ? clientsDivers.id : null)
       setUseManualClient(false)
       setManualClientName('')
-      setRemise('0')
+      setRemiseGlobale('0')
       setRemiseMode('montant')
       setAyantDroitNom('')
       setAyantDroitMatricule('')
@@ -869,7 +833,7 @@ export default function Facturation() {
   const handleQuantityShortcut = useCallback((qty: number) => {
     if (lignesFacture.length > 0) {
       const lastLine = lignesFacture[lignesFacture.length - 1];
-      updateQuantite(lastLine.produit.id, qty);
+      secureUpdateQuantite(lastLine.produit.id, qty);
       toast.success(`Quantité mise à jour : ${qty} x ${lastLine.produit.name}`, { icon: '🔢' });
     } else {
       toast.error("Aucun produit dans le panier pour appliquer une quantité");
@@ -1005,180 +969,13 @@ export default function Facturation() {
     }
   }
 
-  const enregistrerPaiement = async (facture?: Facture) => {
-    const factureAPayer = facture || facturePourPaiement
-    if (!factureAPayer) {
-      setError('Aucune facture sélectionnée')
-      return
-    }
 
-    if (!montantPaye || Number(montantPaye) <= 0) {
-      setError('Veuillez entrer un montant valide')
-      return
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
-      const caisseEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/caisse/`
-        : '/api/caisse/'
-
-      const paiementsList = paiements.length > 0 
-        ? paiements 
-        : [{ mode: modePaiement, montant: Number(montantPaye) }]
-
-      let totalVerse = 0
-
-      // Enregistrer chaque paiement
-      await Promise.all(paiementsList.map(async (paiement) => {
-          const paiementPayload = {
-            facture: factureAPayer.id,
-            mode_paiement: paiement.mode,
-            montant: paiement.montant,
-            reference: reference || null,
-            statut: 'completee',
-          }
-          await axios.post(caisseEndpoint, paiementPayload)
-          totalVerse += paiement.montant
-      }))
-      
-      // Mettre à jour le statut de la facture à "PAYEE"
-      const factureUpdateEndpoint = apiBaseUrl
-        ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/factures/${factureAPayer.id}/`
-        : `/api/factures/${factureAPayer.id}/`
-
-      await axios.patch(factureUpdateEndpoint, { status: 'PAY' })
-      
-      // Rafraîchir les données de la facture
-      const { data: factureUpdated } = await axios.get<Facture>(factureUpdateEndpoint)
-
-      const rendu = totalVerse - Number(factureUpdated.total_ttc)
-
-      setSuccessInfo(factureUpdated)
-
-      // trigger premium print
-      window.open(`/app/print-invoice/${factureUpdated.id}`, '_blank')
-
-      // Construction ticket simulé
-      setTicketCaisse({
-        id: 0,
-        facture: factureUpdated,
-        mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
-        montant: factureUpdated.total_ttc,
-        montant_verse: totalVerse.toString(),
-        rendu: rendu.toString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        statut: 'completee',
-        date_paiement: new Date().toISOString(),
-        paiements_details: paiementsList
-      } as TicketCaisse)
-
-      // --- GESTION DES PROMIS (Manquant dans la version précédente) ---
-      // --- GESTION DES PROMIS (Manquant dans la version précédente) ---
-      const promisLines = lignesFacture.filter(
-          l => l.isPromis && l.promisQuantity && l.promisQuantity > 0
-      )
-      
-      if (promisLines.length > 0) {
-          const promisIds: number[] = []
-          const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/'
-
-          // 1. Création des Promis
-          for (const line of promisLines) {
-              console.log("DEBUG: Processing Promis line:", line)
-              // Si on est en mode "Client Manuel", on utilise le nom saisi.
-              // Sinon on utilise le client de la facture (qui peut être null ou 'Client divers')
-              const factureClient = factureUpdated.client as any // Cast to avoid TS error if types are mixed
-              const clientNameForPromis = promisClientName || (useManualClient ? manualClientName : (factureClient?.name || ''))
-              
-              const payload = {
-                  facture: factureUpdated.id,
-                  client: factureClient?.id || null, // ID client DB si dispo
-                  client_name: clientNameForPromis,          // Nom texte (crucial pour promis)
-                  client_phone: line.promisPhone || promisPhone,
-                  produit: line.produit.id,
-                  quantite: line.promisQuantity,
-                  status: 'ATT'
-              }
-              console.log("DEBUG: Promis Payload:", payload)
-
-              try {
-                  const { data: promisCreated } = await axios.post(promisEndpoint, payload)
-                  if (promisCreated && promisCreated.id) {
-                      promisIds.push(promisCreated.id)
-                  }
-              } catch (err) {
-                  console.error("Erreur création promis:", err)
-                  toast.error(`Erreur création promis pour ${line.produit.name}`)
-              }
-          }
-
-          // 2. Impression Ticket Groupé
-          if (promisIds.length > 0) {
-              toast.success(`${promisIds.length} article(s) enregistré(s) dans Promis !`)
-              
-              try {
-                  const printEndpoint = `${promisEndpoint}imprimer_ticket_groupe/`
-                  // Petit délai pour assurer que le backend a fini les écritures si nécessaire
-                  await new Promise(resolve => setTimeout(resolve, 500))
-
-                  const response = await axios.post(printEndpoint, { promis_ids: promisIds }, { responseType: 'blob' })
-                  const url = window.URL.createObjectURL(new Blob([response.data]))
-                  const link = document.createElement('a')
-                  link.href = url
-                  link.setAttribute('download', `ticket_promis_groupe_${factureUpdated.id}.pdf`)
-                  document.body.appendChild(link)
-                  link.click()
-                  link.parentNode?.removeChild(link)
-              } catch (err) {
-                  console.error("Erreur impression ticket promis:", err)
-              }
-          }
-      }
-
-      // Save ordonnancier data if it was collected earlier
-      if (tempOrdonnanceData) {
-        try {
-          const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/'
-          
-          // Transform lignes to match backend format (produit instead of produit_id)
-          const lignesForBackend = tempOrdonnanceData.lignes.map(ligne => ({
-            produit: ligne.produit_id,  // Backend expects 'produit' (ID)
-            produit_nom: ligne.produit_nom,
-            quantite: ligne.quantite,
-            surveillance_category: ligne.surveillance_category
-          }))
-          
-          await axios.post(ordonnancierEndpoint, {
-            patient_nom: tempOrdonnanceData.patient_nom,
-            prescripteur_nom: tempOrdonnanceData.prescripteur_nom,
-            facture: factureUpdated.id,
-            lignes: lignesForBackend
-          })
-          toast.success("Ordonnancier enregistré")
-          setTempOrdonnanceData(null)
-        } catch (err) {
-          toast.error("Erreur lors de l'enregistrement de l'ordonnancier")
-        }
-      }
-      
-      setIsPaymentModalOpen(false)
-    } catch (err) {
-      handleApiError(err, "Erreur lors de l'enregistrement du paiement")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const ouvrirModalPaiement = (facture?: Facture) => {
     if (facture) {
       // Paiement d'une facture existante
-      setFacturePourPaiement(facture)
       setMontantPaye(Math.round(Number(facture.total_ttc)).toString())
-      setIsNewSale(false)
+      openPaymentModal(facture)
     } else {
       // Nouvelle vente (Encaisser)
       if (!selectedClient) {
@@ -1189,15 +986,12 @@ export default function Facturation() {
         setError('Veuillez ajouter au moins un produit')
         return
       }
-      setFacturePourPaiement(null)
       setMontantPaye(Math.round(totals.totalTtc).toString())
-      setIsNewSale(true)
+      openPaymentModal()
     }
     setModePaiement('especes')
     setReference('')
-    setIsPaymentModalOpen(true)
     setPaiements([]) // Reset paiements list
-
     
     // Focus sur le montant après un court délai pour laisser la modale s'ouvrir
     setTimeout(() => {
@@ -1237,29 +1031,13 @@ export default function Facturation() {
         useManualClient,
         manualClientName,
         lignes: lignesFacture,
-        remise,
+        remise: remiseGlobale,
         remiseMode,
         ayantDroit: ayantDroitData
     })
     
     // Réinitialiser la vente actuelle
-    setLignesFacture([])
-    setSelectedClient(null)
-    setUseManualClient(false)
-    setManualClientName('')
-    setRemise('0')
-    setRemiseMode('montant')
-    setMontantPaye('')
-    setFacturePourPaiement(null)
-    setSuccessInfo(null)
-    setError(null)
-    
-    // Reset ayant droit
-    setAyantDroitNom('')
-    setAyantDroitMatricule('')
-    setAyantDroitSociete('')
-    setSelectedAyantDroit(null)
-    setShowNewAyantDroit(false)
+    _resetSale()
     
     toast.success('Vente mise en attente')
   }
@@ -1277,7 +1055,6 @@ export default function Facturation() {
   }
 
   const _resetSale = () => {
-
     // Clear everything
     setLignesFacture([])
     // Auto-select "clients divers" after reset
@@ -1285,8 +1062,9 @@ export default function Facturation() {
     setSelectedClient(clientsDivers ? clientsDivers.id : null)
     setUseManualClient(false)
     setManualClientName('')
-    setRemise('0')
-    setRemiseMode('montant')
+    
+    resetUIState()
+
     setAyantDroitNom('')
     setAyantDroitMatricule('')
     setAyantDroitSociete('')
@@ -1295,7 +1073,7 @@ export default function Facturation() {
     setShowNewAyantDroit(false)
     setSearchQuery('')
     setError(null)
-    setTempOrdonnanceData(null) // Clear temp data
+    setTempOrdonnanceData(null)
     
     searchInputRef.current?.focus()
   }
@@ -1314,7 +1092,7 @@ export default function Facturation() {
       setLignesFacture(vente.lignes)
       setUseManualClient(vente.useManualClient)
       setManualClientName(vente.manualClientName)
-      setRemise(vente.remise)
+      setRemiseGlobale(vente.remise)
       setRemiseMode(vente.remiseMode)
       
       if (vente.client) {
@@ -1376,7 +1154,7 @@ export default function Facturation() {
       
       if (e.key === 'Escape') {
         if (isPaymentModalOpen) {
-           setIsPaymentModalOpen(false)
+           closePaymentModal()
         } else if (showTicketPreview) {
             setShowTicketPreview(false)
         } else if (successInfo) {
@@ -1597,19 +1375,14 @@ export default function Facturation() {
             <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation.items_count', { count: lignesFacture.length })}</div>
           </div>
 
-          {/* Table */}
           <div className="flex-1 overflow-x-auto overflow-y-auto">
             <CartTable
               lignesFacture={lignesFacture}
-              updateQuantite={updateQuantite}
-              updatePrix={updatePrix}
-              updateRemiseProduit={updateRemiseProduit}
+              updateQuantite={secureUpdateQuantite}
+              updatePrix={secureUpdatePrix}
+              updateRemiseProduit={secureUpdateRemiseProduit}
               removeLigne={removeLigne}
-              onOpenLotModal={(product, currentLotId) => setLotModal({
-                isOpen: true,
-                product,
-                currentLotId
-              })}
+              onOpenLotModal={(product, currentLotId) => openLotModal(product, currentLotId || null)}
               quantityInputsRef={quantityInputsRef}
               onReturnFocus={() => searchInputRef.current?.focus()}
               selectedIndex={selectedIndex}
@@ -1620,12 +1393,12 @@ export default function Facturation() {
           {/* Footer Totals */}
           <TotalsSection
             totalHT={totals.sousTotal}
-            remiseGlobale={remise}
-            setRemiseGlobale={setRemise}
+            remiseGlobale={remiseGlobale}
+            setRemiseGlobale={setRemiseGlobale}
             remiseMode={remiseMode}
             setRemiseMode={setRemiseMode}
             remiseMontant={totals.remiseMontant}
-            tvaAmount={totals.montantTva}
+            tvaAmount={totals.totalTva}
             totalTTC={totals.totalTtc}
             tauxCouverture={totals.tauxCouverture}
             partAssurance={totals.partAssurance}
@@ -1652,7 +1425,7 @@ export default function Facturation() {
       {isPaymentModalOpen && (
         <PaymentModal
           isOpen={isPaymentModalOpen}
-          onClose={() => setIsPaymentModalOpen(false)}
+          onClose={closePaymentModal}
           loading={saleLoading || loading}
           facturePourPaiement={facturePourPaiement}
           isNewSale={isNewSale}
@@ -1664,7 +1437,19 @@ export default function Facturation() {
           paiements={paiements}
           setPaiements={setPaiements}
           onCompleteSale={handleCompleteSale}
-          onRegisterPayment={() => enregistrerPaiement()}
+          onRegisterPayment={async () => {
+             if (facturePourPaiement) {
+                 await completeExistingInvoicePayment({
+                    facture: facturePourPaiement,
+                    paiements,
+                    montantPaye,
+                    modePaiement,
+                    reference,
+                    lignesFacture,
+                    tempOrdonnanceData
+                 })
+             }
+          }}
           selectedClient={selectedClient}
           useManualClient={useManualClient}
           paymentInputRef={paymentInputRef}
@@ -1680,7 +1465,8 @@ export default function Facturation() {
       />
 
       {/* Stock Resolution Modal */}
-      <StockResolutionModal
+      {/* Stock Resolution Handler (replaces Modal) */}
+      <StockResolutionHandler
         isOpen={showStockResolution}
         onClose={() => setShowStockResolution(false)}
         stockResolutionItems={stockResolutionItems}
@@ -1690,8 +1476,16 @@ export default function Facturation() {
         setPromisPhone={setPromisPhone}
         promisClientName={promisClientName}
         setPromisClientName={setPromisClientName}
-        onConfirm={handleStockResolutionConfirm}
-      />
+        lignesFacture={lignesFacture}
+        setLignesFacture={setLignesFacture as any}
+        clients={clients}
+        selectedClient={selectedClient}
+        setSelectedClient={setSelectedClient}
+        useManualClient={useManualClient}
+        setUseManualClient={setUseManualClient}
+        setManualClientName={setManualClientName}
+        onComplete={handlePaymentClickWithSudo}
+    />
 
       {/* Pending Sales Drawer */}
       <PendingSalesDrawer
@@ -1728,7 +1522,7 @@ export default function Facturation() {
       {lotModal.isOpen && (
         <LotSelectionModal
           isOpen={lotModal.isOpen}
-          onClose={() => setLotModal({ ...lotModal, isOpen: false })}
+          onClose={closeLotModal}
           produit={lotModal.product}
           onSelectLot={handleLotSelect}
           currentLotId={lotModal.currentLotId}
@@ -1759,6 +1553,16 @@ export default function Facturation() {
               loading={loading}
           />
       )}
+
+      {/* Sudo Validation Modal */}
+      <SudoValidationModal
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
+        saving={false}
+        title={sudoState.title || "Validation Requise"}
+        message={sudoState.message || ""}
+      />
     </div>
   )
 }

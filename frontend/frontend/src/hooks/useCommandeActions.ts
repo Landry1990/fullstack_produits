@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -43,19 +43,7 @@ export function useCommandeActions({
 }: UseCommandeActionsProps) {
     const { t } = useTranslation();
 
-    // Password Confirmation State
-    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-    const [passwordModalConfig, setPasswordModalConfig] = useState({ title: '', message: '' });
-    const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
-
-    const handlePasswordConfirmed = () => {
-        if (pendingAction) {
-            pendingAction();
-            setPendingAction(null);
-        }
-    };
-
-    const handleApiError = (err: unknown, defaultMessage: string) => {
+    const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
         // Safely log error without triggering circular reference issues
         try {
             if (axios.isAxiosError(err)) {
@@ -79,7 +67,7 @@ export function useCommandeActions({
         } else {
             toast.error(defaultMessage);
         }
-    };
+    }, [t]);
 
     // ============== SAUVEGARDE ==============
 
@@ -121,13 +109,13 @@ export function useCommandeActions({
         }
     };
 
-    async function handleSaveCommande(
+    const handleSaveCommande = async (
         commandeData: Partial<Commande>,
         commandeProduits: CommandeProduit[],
         viewMode: 'CREATE' | 'EDIT',
         selectedCommande: Commande | null,
         isAutoSave: boolean = false
-    ) {
+    ) => {
         // Validation basique
         if (!commandeData.fournisseur) {
             // Pas de toast en auto-save pour ne pas spammer, sauf erreur critique
@@ -146,9 +134,6 @@ export function useCommandeActions({
 
             // Clean the command data to remove any non-serializable references
             const cleanedCommandeData = cleanPayload(commandeData);
-            if (!isAutoSave) {
-                // debug log removed
-            }
 
             // 1. Créer ou mettre à jour la commande
             if (viewMode === 'CREATE') {
@@ -214,13 +199,9 @@ export function useCommandeActions({
                 produits: produitsPayload
             });
 
-
             if (!isAutoSave) {
                 fetchCommandes();
                 setViewMode('LIST');
-            } else {
-                // En auto-save, on refetch juste pour avoir l'état à jour sans changer de vue
-                // fetchCommandes(); // Peut-être pas nécessaire de refresh toute la liste tout de suite
             }
 
         } catch (err) {
@@ -233,9 +214,10 @@ export function useCommandeActions({
     }
 
     // ============== SUPPRESSION ==============
-    const executeDelete = async (commandeId: number) => {
+    const handleDeleteCommande = async (commande: Commande, sudoCredentials?: { validated_by_id: number; sudo_password: string }) => {
         try {
-            await axios.delete(`${commandesEndpoint}${commandeId}/`);
+            const payload = sudoCredentials ? { ...sudoCredentials } : {};
+            await axios.delete(`${commandesEndpoint}${commande.id}/`, { data: payload });
             toast.success(t('orders.messages.delete_success'));
             fetchCommandes();
             setSelectedCommande(null);
@@ -245,61 +227,21 @@ export function useCommandeActions({
         }
     };
 
-    const handleDeleteCommande = async (commande: Commande) => {
-        // Permission Check
-        if (!user?.is_superuser && !user?.can_delete_commande) {
-            toast.error(t('orders.messages.access_denied_delete'));
-            return;
-        }
-
-        const confirmed = await confirm({
-            title: t('orders.details.delete'), // "Supprimer la commande" title key reused or delete_btn
-            message: t('orders.messages.delete_confirm_body', { id: commande.id }),
-            variant: 'danger',
-            confirmText: t('orders.details.delete')
-        });
-
-        if (confirmed) {
-            setPasswordModalConfig({
-                title: t('orders.messages.password_confirm_delete_title'),
-                message: t('orders.messages.password_confirm_delete_body')
-            });
-            setPendingAction(() => () => executeDelete(commande.id));
-            setIsPasswordModalOpen(true);
-        }
-    };
-
     // ============== CLÔTURE ==============
-    const executeCloture = async (commandeId: number) => {
+    const handleCloturerCommande = async (commande: Commande, sudoCredentials?: { validated_by_id: number; sudo_password: string }) => {
         try {
-            const response = await axios.post(`${commandesEndpoint}${commandeId}/cloturer/`);
+            const payload = sudoCredentials ? { ...sudoCredentials } : {};
+            const response = await axios.post(`${commandesEndpoint}${commande.id}/cloturer/`, payload);
             toast.success(response.data.message || t('orders.messages.close_success'));
 
             fetchCommandes();
 
             // Update selected commande if it's the one we just closed
-            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
+            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
             setSelectedCommande(updated);
 
         } catch (err) {
-            handleApiError(err, "Erreur lors de la clôture"); // Could add specific key
-        }
-    };
-
-    const handleCloturerCommande = async (commande: Commande) => {
-        const confirmed = await confirm({
-            title: t('orders.details.close'),
-            message: t('orders.messages.close_confirm'),
-            confirmText: t('common.actions.confirm') // Reuse common confirm key or "Confirmer la réception" -> maybe orders.details.close?
-        });
-
-        if (confirmed) {
-            setPasswordModalConfig({
-                title: t('orders.messages.password_confirm_close_title'),
-                message: t('orders.messages.password_confirm_close_body')
-            });
-            setPendingAction(() => () => executeCloture(commande.id));
-            setIsPasswordModalOpen(true);
+            handleApiError(err, "Erreur lors de la clôture");
         }
     };
 
@@ -322,31 +264,23 @@ export function useCommandeActions({
     };
 
     // ============== ANNULER RÉCEPTION ==============
-    const executeAnnulerReception = async (commandeId: number) => {
-        try {
-            const response = await axios.post(`${commandesEndpoint}${commandeId}/annuler_reception/`);
-            toast.success(t('orders.messages.cancel_reception_success', { count: response.data.details?.produits_affectes || 0 }));
-
-            fetchCommandes();
-            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
-            setSelectedCommande(updated);
-        } catch (err) {
-            handleApiError(err, "Erreur lors de l'annulation de la réception");
-        }
-    };
-
-    const handleAnnulerReception = (commande: Commande) => {
+    const handleAnnulerReception = async (commande: Commande, sudoCredentials?: { validated_by_id: number; sudo_password: string }) => {
         if (commande.status !== 'CLOT') {
             toast.error(t('orders.messages.cancel_reception_error'));
             return;
         }
 
-        setPasswordModalConfig({
-            title: t('orders.messages.password_confirm_cancel_title'),
-            message: t('orders.messages.password_confirm_cancel_body')
-        });
-        setPendingAction(() => () => executeAnnulerReception(commande.id));
-        setIsPasswordModalOpen(true);
+        try {
+            const payload = sudoCredentials ? { ...sudoCredentials } : {};
+            const response = await axios.post(`${commandesEndpoint}${commande.id}/annuler_reception/`, payload);
+            toast.success(t('orders.messages.cancel_reception_success', { count: response.data.details?.produits_affectes || 0 }));
+
+            fetchCommandes();
+            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
+            setSelectedCommande(updated);
+        } catch (err) {
+            handleApiError(err, "Erreur lors de l'annulation de la réception");
+        }
     };
 
     // ============== IMPRESSION ==============
@@ -373,12 +307,7 @@ export function useCommandeActions({
         handleCloturerCommande,
         handleMettreEnAttente,
         handleAnnulerReception,
-        handleImprimerReception,
-
-        // Password Modal Exports
-        isPasswordModalOpen,
-        setIsPasswordModalOpen,
-        passwordModalConfig,
-        handlePasswordConfirmed
+        handleImprimerReception
     };
 }
+

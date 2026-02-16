@@ -24,6 +24,12 @@ class Profile(models.Model):
     can_delete_commande = models.BooleanField(default=False, verbose_name="Supprimer des commandes")
     can_close_commande = models.BooleanField(default=False, verbose_name="Clôturer des commandes")
     can_generate_coupon = models.BooleanField(default=False, verbose_name="Générer des coupons")
+    
+    # New Sudo-Specific Permissions
+    can_cancel_invoice = models.BooleanField(default=False, verbose_name="Annuler des factures")
+    can_cancel_promis = models.BooleanField(default=False, verbose_name="Annuler des promis")
+    can_manage_perimes = models.BooleanField(default=False, verbose_name="Gérer les produits périmés")
+    can_manage_avoirs = models.BooleanField(default=False, verbose_name="Gérer les avoirs fournisseurs")
 
     # Price & Discount Control
     can_modify_price = models.BooleanField(default=False, verbose_name="Modifier le prix de vente")

@@ -8,7 +8,10 @@ import type {
     Facture,
     TicketCaisse,
     AyantDroit,
-    LigneFacture
+    LigneFacture,
+    PaymentDetails,
+    TotalsData,
+    OrdonnanceData
 } from '../types';
 import { normalizeNumberInput } from '../utils/formatters';
 import { generatePromisTicket } from '../utils/promisPdf';
@@ -16,40 +19,7 @@ import { usePharmacySettings } from './usePharmacySettings';
 
 // ============== TYPES ==============
 
-export interface PaymentDetails {
-    mode: string;
-    montant: number;
-    part_patient?: number | null;
-    part_assurance?: number | null;
-}
 
-export interface TotalsData {
-    totalHt: number;
-    totalTva: number;
-    totalTtc: number;
-    remiseMontant: number;
-    tauxCouverture: number;
-    partPatient: number;
-    partAssurance: number;
-}
-
-export interface AyantDroitData {
-    id?: number | null;
-    nom: string;
-    matricule: string;
-    societe?: string;
-}
-
-export interface OrdonnanceData {
-    patient_nom: string;
-    prescripteur_nom: string;
-    lignes: Array<{
-        produit_id: number;
-        produit_nom: string;
-        quantite: number;
-        surveillance_category?: string;
-    }>;
-}
 
 export interface SaleCompletionParams {
     // Client
@@ -150,7 +120,7 @@ function validateSaleData(params: SaleCompletionParams): string | null {
         const montantSaisi = Number(montantPaye);
         const totalSplit = paiements.reduce((acc, p) => acc + p.montant, 0);
 
-        if (paiements.length === 0 && (!montantPaye || montantSaisi <= 0)) {
+        if (paiements.length === 0 && (!montantPaye || montantSaisi === 0)) {
             return 'Veuillez entrer un montant valide';
         }
 
@@ -277,8 +247,10 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
             return {
                 produit: ligne.produit.id,
-                quantity: ligne.quantite,
-                selling_price: prixNet.toString(),
+                quantity: Number(ligne.quantite),
+                selling_price: prixUnitaire.toString(),
+                discount: (prixUnitaire - prixNet).toFixed(2),
+                tva: ligne.produit.tva || 0,
                 lot_id: ligne.lotId ? Number(ligne.lotId) : null
             };
         });
@@ -432,8 +404,9 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 return {
                     produit: ligne.produit.id,
                     quantity: Number(ligne.quantite),
-                    selling_price: prixNet.toString(),
+                    selling_price: prixUnitaire.toString(), // On envoie le prix BRUT
                     discount: (prixUnitaire - prixNet).toFixed(2),
+                    tva: ligne.produit.tva || 0, // On envoie le taux de TVA
                     lot_id: ligne.lotId ? Number(ligne.lotId) : null,
                     is_promis: !!ligne.isPromis,
                     promis_quantity: ligne.isPromis ? ligne.promisQuantity : 0,
@@ -565,12 +538,160 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         facturesEndpoint, pharmacySettings, t, onSuccess, onError, onReset
     ]);
 
+    /**
+     * Gérer le paiement d'une facture existante (devis, proforma, attente)
+     */
+    const completeExistingInvoicePayment = useCallback(async (params: {
+        facture: Facture;
+        paiements?: PaymentDetails[];
+        montantPaye: string;
+        modePaiement: string;
+        reference?: string;
+        lignesFacture: LigneFacture[]; // Nécessaire pour Promis
+        tempOrdonnanceData: OrdonnanceData | null;
+        promisPhone?: string;
+        promisClientName?: string;
+        useManualClient?: boolean;
+        manualClientName?: string;
+    }): Promise<SaleCompletionResult> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { facture, paiements, montantPaye, modePaiement, reference } = params;
+            const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/';
+
+            const paiementsList = (paiements && paiements.length > 0)
+                ? paiements
+                : [{ mode: modePaiement, montant: Number(montantPaye) }];
+
+            let totalVerse = 0;
+
+            // 1. Enregistrer les paiements
+            await Promise.all(paiementsList.map(async (p) => {
+                const payload = {
+                    facture: facture.id,
+                    mode_paiement: p.mode,
+                    montant: p.montant,
+                    reference: reference || null,
+                    statut: 'completee',
+                };
+                await axios.post(caisseEndpoint, payload);
+                totalVerse += p.montant;
+            }));
+
+            // 2. Mettre à jour le statut de la facture
+            const updateUrl = `${facturesEndpoint}${facture.id}/`;
+            await axios.patch(updateUrl, { status: 'PAY' });
+
+            // 3. Rafraîchir les données
+            const { data: updatedFacture } = await axios.get<Facture>(updateUrl);
+
+            const rendu = totalVerse - Number(updatedFacture.total_ttc);
+
+            // 4. GESTION DES PROMIS (Unifiée)
+            const promisLines = params.lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0);
+            if (promisLines.length > 0) {
+                try {
+                    generatePromisTicket({
+                        client_name: updatedFacture.client_name || params.manualClientName || 'Client',
+                        client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
+                        items: promisLines.map(l => ({
+                            id: 0,
+                            produit_nom: l.produit.name,
+                            quantite: l.promisQuantity || 0,
+                            promisQuantity: l.promisQuantity || 0,
+                            produit: l.produit,
+                            date_promis: new Date().toISOString(),
+                            status: 'ATT'
+                        })) as any,
+                        pharmacy: pharmacySettings,
+                        facture_id: updatedFacture.numero_facture || updatedFacture.id,
+                        is_paid: true
+                    });
+                    toast.success(t('sales.messages.promis_recorded'));
+                } catch (err) {
+                    console.error("Erreur génération PDF promis:", err);
+                }
+            }
+
+            // 5. GESTION ORDONNANCIER (Unifiée)
+            if (params.tempOrdonnanceData) {
+                try {
+                    const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/';
+                    await axios.post(ordonnancierEndpoint, {
+                        ...params.tempOrdonnanceData,
+                        facture: updatedFacture.id,
+                        lignes: params.tempOrdonnanceData.lignes.map(l => ({
+                            produit: l.produit_id,
+                            produit_nom: l.produit_nom,
+                            quantite: l.quantite,
+                            surveillance_category: l.surveillance_category || 'NONE'
+                        }))
+                    });
+                    toast.success(t('sales.messages.prescription_recorded'));
+                } catch (err) {
+                    console.error("Erreur ordonnancier:", err);
+                }
+            }
+
+            // 6. Impression Facture A4
+            window.open(`/app/print-invoice/${updatedFacture.id}`, '_blank');
+
+            // 7. Ticket UI
+            const ticketCaisse: TicketCaisse = {
+                id: 0,
+                facture: updatedFacture,
+                mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
+                montant: updatedFacture.total_ttc,
+                montant_verse: totalVerse.toString(),
+                rendu: rendu.toString(),
+                statut: 'completee',
+                paiements_details: paiementsList
+            } as any;
+
+            const result: SaleCompletionResult = { success: true, facture: updatedFacture, ticketCaisse, rendu };
+            setLastResult(result);
+            onSuccess?.(result);
+            onReset?.();
+            return result;
+
+        } catch (err: any) {
+            console.error('Invoice Payment Error:', err);
+            const errorMessage = extractErrorMessage(err);
+            setError(errorMessage);
+            onError?.(errorMessage);
+            return { success: false, error: errorMessage };
+        } finally {
+            setLoading(false);
+        }
+    }, [apiBaseUrl, facturesEndpoint, pharmacySettings, t, onSuccess, onError, onReset]);
+
     return {
         completeSale,
+        completeExistingInvoicePayment,
         loading,
         error,
         lastResult
     };
 }
 
-export default useSaleCompletion;
+export interface UseSaleCompletionReturn {
+    completeSale: (params: SaleCompletionParams) => Promise<SaleCompletionResult>;
+    completeExistingInvoicePayment: (params: {
+        facture: Facture;
+        paiements?: PaymentDetails[];
+        montantPaye: string;
+        modePaiement: string;
+        reference?: string;
+        lignesFacture: LigneFacture[];
+        tempOrdonnanceData: OrdonnanceData | null;
+        promisPhone?: string;
+        promisClientName?: string;
+        useManualClient?: boolean;
+        manualClientName?: string;
+    }) => Promise<SaleCompletionResult>;
+    loading: boolean;
+    error: string | null;
+    lastResult: SaleCompletionResult | null;
+}

@@ -12,7 +12,7 @@ const PrintPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
     const [searchParams] = useSearchParams();
     const clientNameOverride = searchParams.get('client_name');

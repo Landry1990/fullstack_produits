@@ -11,12 +11,13 @@ import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 import SimplePrintLabelsModal from './SimplePrintLabelsModal'
 import SuggestionCommandeModal from './SuggestionCommandeModal'
-import PasswordConfirmModal from './PasswordConfirmModal'
+import SudoValidationModal from './common/SudoValidationModal'
 import CommandeList from './Commandes/CommandeList'
 import CommandeForm from './Commandes/CommandeForm'
 import TransferCommandeModal from './Commandes/TransferCommandeModal'
 import MergeCommandesModal from './Commandes/MergeCommandesModal'
 import { useCommandeActions } from '../hooks/useCommandeActions';
+import { useSudo } from '../hooks/useSudo';
 // import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
@@ -208,10 +209,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
       handleMettreEnAttente,
       handleAnnulerReception,
       handleImprimerReception,
-      isPasswordModalOpen,
-      setIsPasswordModalOpen,
-      passwordModalConfig,
-      handlePasswordConfirmed
   } = useCommandeActions({
       apiBaseUrl,
       commandesEndpoint,
@@ -221,6 +218,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
       confirm,
       user
   });
+
+  const { sudoState, requireSudo, closeSudo } = useSudo();
 
   // Reset selection when selectedCommande changes
   useEffect(() => {
@@ -257,20 +256,72 @@ export default function Commandes({ forcedType }: CommandesProps) {
       handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande);
   };
 
-  const onDelete = () => {
-      if (selectedCommande) handleDeleteCommande(selectedCommande);
-  };
+   const onCloture = async () => {
+      if (!selectedCommande) return;
 
-  const onCloture = () => {
-      if (selectedCommande) handleCloturerCommande(selectedCommande);
+      const confirmed = await confirm({
+          title: t('orders.details.close'),
+          message: t('orders.messages.close_confirm'),
+          confirmText: t('common.actions.confirm')
+      });
+
+      if (confirmed) {
+          requireSudo(
+              (validatorId, password) => handleCloturerCommande(selectedCommande, { 
+                  validated_by_id: validatorId, 
+                  sudo_password: password 
+              }),
+              { 
+                  permission: 'can_close_commande',
+                  title: t('orders.messages.password_confirm_close_title'),
+                  message: t('orders.messages.password_confirm_close_body')
+              }
+          );
+      }
   }
+
+  const onDelete = async () => {
+      if (!selectedCommande) return;
+
+      const confirmed = await confirm({
+          title: t('orders.details.delete'),
+          message: t('orders.messages.delete_confirm_body', { id: selectedCommande.id }),
+          variant: 'danger',
+          confirmText: t('orders.details.delete')
+      });
+
+      if (confirmed) {
+          requireSudo(
+              (validatorId, password) => handleDeleteCommande(selectedCommande, { 
+                  validated_by_id: validatorId, 
+                  sudo_password: password 
+              }),
+              { 
+                  permission: 'can_delete_commande',
+                  title: t('orders.messages.password_confirm_delete_title'),
+                  message: t('orders.messages.password_confirm_delete_body')
+              }
+          );
+      }
+  };
 
   const onMettreEnAttente = () => {
       if (selectedCommande) handleMettreEnAttente(selectedCommande);
   }
 
   const onAnnulerReception = () => {
-      if (selectedCommande) handleAnnulerReception(selectedCommande);
+      if (!selectedCommande) return;
+      requireSudo(
+          (validatorId, password) => handleAnnulerReception(selectedCommande, { 
+              validated_by_id: validatorId, 
+              sudo_password: password 
+          }),
+          { 
+              permission: 'can_close_commande',
+              title: t('orders.messages.password_confirm_cancel_title'),
+              message: t('orders.messages.password_confirm_cancel_body')
+          }
+      );
   }
 
   const onImprimer = () => {
@@ -1869,13 +1920,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
         />
       )}
 
-      {/* Password Confirmation Modal */}
-      <PasswordConfirmModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        onConfirm={handlePasswordConfirmed}
-        title={passwordModalConfig.title}
-        message={passwordModalConfig.message}
+      {/* Sudo Validation Modal */}
+      <SudoValidationModal
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
+        saving={false}
+        title={sudoState.title || "Validation Requise"}
+        message={sudoState.message || ""}
       />
 
       {/* Modal de Transfert vers autre Fournisseur (Refactored) */}

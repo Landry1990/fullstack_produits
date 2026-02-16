@@ -36,6 +36,7 @@ from ..serializers import (
 from ..serializers_optimized import FactureListSerializer, FactureDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..audit_helpers import log_audit
+from ..sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
 
@@ -197,7 +198,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             remise=remise_montant,
             status=Facture.Status.BROUILLON,
             created_by=user,
-            validated_by=validation_user if not centralized else None,
+            validated_by=validation_user,
             ticket_session=get_next_ticket_session() if centralized else None
         )
 
@@ -208,6 +209,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             qty = int(p_item.get('quantity', 0))
             price = Decimal(str(p_item.get('selling_price', '0')))
             discount = Decimal(str(p_item.get('discount', '0')))
+            tva_rate = Decimal(str(p_item.get('tva', '0')))
             lot_id = p_item.get('lot_id')
 
             facture_produits_to_create.append(FactureProduit(
@@ -216,6 +218,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 quantity=qty,
                 selling_price=price,
                 discount=discount,
+                tva=tva_rate,
                 stock_lot_id=lot_id
             ))
         
@@ -380,30 +383,15 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'detail': f'Impossible de valider une facture avec le statut {facture.get_status_display()}.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        validation_user = request.user
+        validation_user = facture.validated_by or request.user
 
-        # --- MODE SUDO / VALIDATION TIERS ---
-        validated_by_id = request.data.get('validated_by_id')
-        sudo_password = request.data.get('sudo_password')
-        
-        if validated_by_id:
-            try:
-                from django.contrib.auth.models import User
-                validator_user = User.objects.get(id=validated_by_id)
-            except User.DoesNotExist:
-                return Response({'detail': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not sudo_password:
-                return Response({'detail': 'Mot de passe requis pour la validation par un tiers.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Verify Password
-            if not validator_user.check_password(sudo_password):
-                return Response({'detail': 'Mot de passe incorrect pour l\'utilisateur sélectionné.'}, status=status.HTTP_403_FORBIDDEN)
-            
-            # Set validator
-            validation_user = validator_user
-        
-        facture.validated_by = validation_user
+        validation_user, error_res = validate_sudo_mode(request)
+        if error_res:
+            return error_res
+    
+        # Ensure the invoice tracks who finally validated it if not already set
+        if not facture.validated_by:
+            facture.validated_by = validation_user
         # --- FIN MODE SUDO ---
 
         # Récupérer les lignes de facture
@@ -457,9 +445,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 return Response({'detail': f'Impossible de comparer les quantités pour le produit {produit.id}.'}, status=status.HTTP_400_BAD_REQUEST)
 
             if qty > 0:
-                can_sell_negative = request.user.is_superuser
-                if not can_sell_negative and hasattr(request.user, 'profile'):
-                    can_sell_negative = request.user.profile.can_sell_negative_stock
+                can_sell_negative = validation_user.is_superuser
+                if not can_sell_negative and hasattr(validation_user, 'profile'):
+                    can_sell_negative = validation_user.profile.can_sell_negative_stock
                 
                 if stock < qty and not can_sell_negative:
                     return Response(
@@ -467,9 +455,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         status=status.HTTP_400_BAD_REQUEST
                     )
             elif qty < 0:
-                can_return = False
-                if hasattr(request.user, 'profile'):
-                    can_return = request.user.profile.can_do_returns
+                can_return = validation_user.is_superuser
+                if not can_return and hasattr(validation_user, 'profile'):
+                    can_return = validation_user.profile.can_do_returns
                 
                 if not can_return:
                     return Response(
@@ -560,8 +548,34 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         lots_updated = True
 
                     if used_lots_names:
-                        item.lot = ",".join(used_lots_names)[:20]
+                        # Filtrer les None pour éviter TypeError: expected str instance, NoneType found
+                        valid_names = [name for name in used_lots_names if name is not None]
+                        item.lot = ",".join(valid_names)[:20] if valid_names else "FIFO"
                         items_to_update.append(item)
+            
+            # 3. Gestion des retours (qty < 0)
+            elif item.quantity < 0:
+                target_lot = None
+                if item.stock_lot_id:
+                    target_lot = locked_lots_dict.get(item.stock_lot_id)
+                    if not target_lot: 
+                        try:
+                            target_lot = StockLot.objects.select_for_update().get(id=item.stock_lot_id)
+                        except StockLot.DoesNotExist:
+                            target_lot = None
+                
+                # Si pas de lot spécifié (ou invalide) mais gestion par lot active, on prend le dernier lot
+                if not target_lot and produit.use_lot_management:
+                    target_lot = StockLot.objects.filter(produit=produit).order_by('-created_at').first()
+                
+                if target_lot:
+                    # Incrémenter le stock du lot pour un retour
+                    target_lot.quantity_remaining -= item.quantity # item.quantity est négatif, donc on soustrait une valeur négative (ajout)
+                    lots_to_update_set.add(target_lot)
+                    
+                    item.lot = (target_lot.lot or "RETOUR")[:20] 
+                    items_to_update.append(item)
+                    lots_updated = True
             
             # 2. Préparation du calcul du stock global
             if produit.use_lot_management and lots_updated:
@@ -607,21 +621,23 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         product_stock_map = {p.id: p.stock for p in updated_products}
         
         for item in items:
-            if item.quantity <= 0:
-                continue # On ne trace pas les retours ici (géré ailleurs) ou les quantités nulles
-                
+            if item.quantity == 0:
+                continue
+
             current_stock = product_stock_map.get(item.produit_id)
             
             # Description avec infos utiles
-            desc = f"Vente Facture #{facture.numero_facture or facture.id}"
+            is_return = item.quantity < 0
+            prefix = "Retour" if is_return else "Vente"
+            desc = f"{prefix} Facture #{facture.numero_facture or facture.id}"
             if facture.client or facture.client_name_override:
                 client_name = facture.client.name if facture.client else facture.client_name_override
                 desc += f" - Client: {client_name}"
             
             mouvements_to_create.append(MouvementStock(
                 produit_id=item.produit_id,
-                type_mouvement=MouvementStock.TypeMouvement.SORTIE,
-                quantite=-item.quantity, # Sortie = négatif
+                type_mouvement=MouvementStock.TypeMouvement.RETOUR if is_return else MouvementStock.TypeMouvement.SORTIE,
+                quantite=-item.quantity, # Sortie = négatif, Retour = positif (- * -)
                 stock_apres=current_stock,
                 user=validation_user, # Le vendeur / validateur
                 facture=facture, # Lien vers la facture
@@ -739,30 +755,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         motif = request.data.get('motif', '')
 
-        # --- MODE SUDO / VALIDATION TIERS ---
-        cancelled_by_id = request.data.get('cancelled_by_id') # Changed param name to be explicit
-        sudo_password = request.data.get('sudo_password')
-        
-        # Default cancellation user is request.user
-        cancellation_user = request.user
-        
-        if cancelled_by_id:
-            try:
-                from django.contrib.auth.models import User
-                canceller_user = User.objects.get(id=cancelled_by_id)
-            except User.DoesNotExist:
-                return Response({'detail': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            if not sudo_password:
-                return Response({'detail': 'Mot de passe requis pour la validation par un tiers.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Verify Password
-            if not canceller_user.check_password(sudo_password):
-                return Response({'detail': 'Mot de passe incorrect pour l\'utilisateur sélectionné.'}, status=status.HTTP_403_FORBIDDEN)
-            
-            cancellation_user = canceller_user
-        
-        facture.cancelled_by = cancellation_user
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_cancel_invoice')
+        if error_res:
+            return error_res
+    
+        facture.cancelled_by = validation_user
         # --- FIN MODE SUDO ---
 
         was_validated = facture.status in [Facture.Status.VALIDEE, Facture.Status.PAYEE]
@@ -795,7 +792,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     quantite=item.quantity, # Positive because product comes BACK to stock
                     stock_apres=item.produit.stock + item.quantity, # Approximation (concurrency safe enough for history)
                     description=f"Annulation Facture #{facture.numero_facture or facture.id}",
-                    user=cancellation_user,
+                    user=validation_user,
                     facture=facture
                 ))
             
@@ -828,7 +825,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'montant': float(facture.total_ttc),
                 'motif': motif,
                 'client': facture.client.name if facture.client else None,
-                'cancelled_by': cancellation_user.username
+                'cancelled_by': validation_user.username
             },
             request=request
         )
@@ -887,6 +884,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             produit_id = prod_data.get('produit')
             quantity = int(prod_data.get('quantity', 1))
             selling_price = prod_data.get('selling_price', '0')
+            discount = Decimal(str(prod_data.get('discount', '0')))
+            tva_rate = Decimal(str(prod_data.get('tva', '0')))
             lot_id = prod_data.get('lot_id')
             
             fp = FactureProduit.objects.create(
@@ -894,6 +893,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 produit_id=produit_id,
                 quantity=quantity,
                 selling_price=selling_price,
+                discount=discount,
+                tva=tva_rate,
                 stock_lot_id=lot_id if lot_id else None
             )
             
@@ -1418,7 +1419,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
 
         serializer.save(user=user)
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='get_totals')
     def get_totals(self, request):
         """
         Retourne les totaux.
@@ -1466,6 +1467,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
                 pass
 
         if not start_date:
+            from ..models import ClotureCaisse # Lazy import to avoid circular dependency if any
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
@@ -1514,7 +1516,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'details': details
         })
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='cloturer')
     @transaction.atomic
     def cloturer(self, request):
         """
@@ -2033,19 +2035,11 @@ class CaisseViewSet(viewsets.ModelViewSet):
     search_fields = ['reference', 'facture__numero_facture', 'facture__client__name'] 
 
     def perform_create(self, serializer):
-        # Sudo Mode Logic
-        validated_by_id = self.request.data.get('validated_by_id')
-        sudo_password = self.request.data.get('sudo_password')
-        user = self.request.user
-
-        if validated_by_id:
-             from django.contrib.auth.models import User
-             try:
-                 validator_user = User.objects.get(id=validated_by_id)
-                 if sudo_password and validator_user.check_password(sudo_password):
-                      user = validator_user
-             except User.DoesNotExist:
-                 pass # Fallback to request.user if invalid (should be caught by frontend val)
+        validation_user, error_res = validate_sudo_mode(self.request)
+        # On ne bloque pas si erreur ici car perform_create est déjà appelé
+        # Mais dans FactureViewSet on bloque, ici c'est pour Caisse.
+        # En fait Caisse n'a pas forcément besoin de permission specifique autre que can_cash_out
+        user = validation_user if not error_res else self.request.user
         
         serializer.save(user=user)
         
@@ -2131,3 +2125,5 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
             request=request
         )
         return response
+
+

@@ -8,16 +8,13 @@ import { useConfirm } from '../hooks/useConfirm';
 import type { ProduitModel, Inventaire, LigneInventaire, StockLot } from '../types';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import { useProductSearch } from '../hooks/useProductSearch';
+import { useSudo } from '../hooks/useSudo';
+import SudoValidationModal from './common/SudoValidationModal';
 
 type SortOption = 'CHRONOLOGICAL' | 'NAME' | 'GAP_VALUE' | 'GAP_QTY';
 type SortOrder = 'ASC' | 'DESC';
 
-interface User {
-    id: number;
-    username: string;
-    first_name?: string;
-    last_name?: string;
-}
+
 
 interface InventoryStats {
     top_pertes: Array<{
@@ -84,12 +81,6 @@ export default function InventaireComponent() {
   const [sortBy, setSortBy] = useState<SortOption>('CHRONOLOGICAL');
   const [sortOrder, setSortOrder] = useState<SortOrder>('DESC');
   
-  // Validation Sudo Mode
-  const [showValidationModal, setShowValidationModal] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
-  const [sudoPassword, setSudoPassword] = useState('');
-  
   // Analysis State
   const [inventoryStats, setInventoryStats] = useState<InventoryStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -135,12 +126,7 @@ export default function InventaireComponent() {
   const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/api/lignes-inventaire/`;
   // produitsEndpoint removed - products are loaded via useProductSearch hook
 
-  // === FETCH LIST ===
-  useEffect(() => {
-    if (viewMode === 'LIST') {
-      fetchInventaires();
-    }
-  }, [viewMode]);
+  const { sudoState, requireSudo, closeSudo } = useSudo();
 
   const fetchInventaires = async (url?: string) => {
     try {
@@ -176,6 +162,13 @@ export default function InventaireComponent() {
       setLoading(false);
     }
   };
+
+  // === FETCH LIST ===
+  useEffect(() => {
+    if (viewMode === 'LIST') {
+      fetchInventaires();
+    }
+  }, [viewMode]);
 
   const fetchStats = async (id: number) => {
       setLoadingStats(true);
@@ -491,37 +484,27 @@ export default function InventaireComponent() {
       }
   };
 
-  const fetchUsers = async () => {
-      try {
-          const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/`);
-          setUsers(response.data.results || response.data);
-      } catch (err) {
-          console.error("Erreur chargement utilisateurs", err);
-      }
-  };
-
   const handleOpenValidateModal = () => {
       if (!activeInventaire) return;
-      setShowValidationModal(true);
-      fetchUsers();
+      
+      requireSudo(
+          async (validatorId, password) => {
+              await handleValidateConfirm({ validated_by_id: validatorId, sudo_password: password });
+          },
+          {
+              title: t('stock.inventaire.validation.title'),
+              message: t('stock.inventaire.validation.message')
+          }
+      );
   };
 
-  const handleValidateConfirm = async () => {
+  const handleValidateConfirm = async (creds: { validated_by_id: number; sudo_password: string }) => {
       if (!activeInventaire) return;
 
       try {
           setSaving(true);
-          const payload: any = {};
-          if (selectedValidator) {
-              payload.validated_by_id = selectedValidator;
-              payload.sudo_password = sudoPassword;
-          }
-          
-          await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`, payload);
+          await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`, creds);
           toast.success(t('stock.inventaire.validation.success'));
-          setShowValidationModal(false);
-          setSelectedValidator(null);
-          setSudoPassword('');
           setViewMode('LIST');
           fetchInventaires();
       } catch (err: any) {
@@ -1691,66 +1674,15 @@ export default function InventaireComponent() {
               </dialog>
           )}
 
-          {/* Validation Modal with Sudo Mode */}
-          {showValidationModal && (
-              <dialog className="modal modal-open">
-                  <div className="modal-box">
-                      <h3 className="font-bold text-lg">{t('stock.inventaire.modals.validate_title')}</h3>
-                      <p className="py-4" dangerouslySetInnerHTML={{ __html: t('stock.inventaire.modals.validate_warning') }}>
-                      </p>
-                      
-                      <div className="form-control w-full max-w-xs mt-2">
-                          <label className="label">
-                              <span className="label-text">{t('stock.inventaire.modals.validate_as')}</span>
-                              <span className="label-text-alt text-warning">{t('stock.inventaire.modals.validate_admin')}</span>
-                          </label>
-                          <select 
-                              className="select select-bordered"
-                              value={selectedValidator || ''}
-                              onChange={(e) => setSelectedValidator(e.target.value ? parseInt(e.target.value) : null)}
-                          >
-                              <option value="">{t('stock.inventaire.modals.validate_me')}</option>
-                              {users.map(u => (
-                                  <option key={u.id} value={u.id}>
-                                      {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username} ({u.username})
-                                  </option>
-                              ))}
-                          </select>
-                      </div>
-
-                      {selectedValidator && (
-                          <div className="form-control w-full max-w-xs mt-4">
-                              <label className="label">
-                                  <span className="label-text">{t('stock.inventaire.modals.validate_password')}</span>
-                                  <span className="label-text-alt text-error">{t('stock.inventaire.modals.validate_required')}</span>
-                              </label>
-                              <input 
-                                  type="password" 
-                                  className="input input-bordered" 
-                                  placeholder={t('stock.inventaire.modals.validate_password')}
-                                  value={sudoPassword}
-                                  onChange={e => setSudoPassword(e.target.value)}
-                              />
-                          </div>
-                      )}
-
-                      <div className="modal-action">
-                          <button className="btn btn-ghost" onClick={() => {
-                                  setShowValidationModal(false);
-                                  setSelectedValidator(null);
-                                  setSudoPassword('');
-                              }}>{t('stock.inventaire.modals.cancel')}</button>
-                          <button 
-                              className="btn btn-success" 
-                              onClick={handleValidateConfirm}
-                              disabled={saving}
-                          >
-                              {saving ? <span className="loading loading-spinner"></span> : t('stock.inventaire.modals.validate_confirm_btn')}
-                          </button>
-                      </div>
-                  </div>
-              </dialog>
-          )}
+      {/* Sudo Validation Modal */}
+      <SudoValidationModal
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
+        saving={saving}
+        title={sudoState.title || "Validation Requise"}
+        message={sudoState.message || ""}
+      />
 
   </div>
   );

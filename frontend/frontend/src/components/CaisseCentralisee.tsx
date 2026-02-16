@@ -315,7 +315,7 @@ export default function CaisseCentralisee() {
     // Calculer le total des paiements
     const montantTotal = paiementsValides.reduce((acc, p) => acc + p.montant, 0)
 
-    if (montantTotal <= 0) {
+    if (montantTotal === 0) {
       toast.error(t('messages.invalid_amount'))
       return
     }
@@ -1088,7 +1088,7 @@ export default function CaisseCentralisee() {
   ` : ''}
   
   <div class="warning">
-    ⚠️ Ce coupon est valable uniquement dans cette pharmacie
+    Ce coupon est valable uniquement dans cette pharmacie
   </div>
   
   <div class="footer">

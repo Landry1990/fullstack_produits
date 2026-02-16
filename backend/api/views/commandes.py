@@ -30,6 +30,7 @@ from ..serializers_optimized import CommandeListSerializer, CommandeDetailSerial
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
+from ..sudo_utils import validate_sudo_mode
 import logging
 
 logger = logging.getLogger(__name__)
@@ -149,16 +150,17 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         """
         Clôture une commande, met à jour le stock et calcule le PMP.
         Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.
-        
-        Optimisations:
-        - Prefetch des produits pour éviter les requêtes N+1
-        - Bulk create des lots de stock
-        - Bulk update des produits
         """
         commande = self.get_object()
         if commande.status == Commande.Status.CLOTUREE:
             return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # Validation Sudo
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_close_commande')
+        if error_res:
+             return error_res
+        # -------------------------
+
         # Enregistrer la date de clôture (maintenant, en timezone local)
         commande.date_cloture = timezone.now()
 
@@ -1285,18 +1287,9 @@ class AvoirViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Avoir déjà validé'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Sudo Mode: Check for specific user validation
-        validation_user = request.user
-        validated_by_id = request.data.get('validated_by_id')
-        password = request.data.get('password')
-
-        if validated_by_id and password:
-            try:
-                user_to_check = User.objects.get(id=validated_by_id)
-                if not user_to_check.check_password(password):
-                    return Response({'error': 'Mot de passe invalide pour l\'utilisateur sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
-                validation_user = user_to_check
-            except User.DoesNotExist:
-                return Response({'error': 'Utilisateur validateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_avoirs')
+        if error_res:
+             return error_res
 
         try:
             with transaction.atomic():

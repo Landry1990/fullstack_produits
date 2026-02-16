@@ -299,6 +299,9 @@ export interface CaisseTransaction {
   releve_reference?: string
   releve_id?: number
   is_creance_settlement?: boolean
+  // Nouveaux champs pour traçabilité
+  facture_created_by_name?: string
+  facture_validated_by_name?: string
 }
 
 export interface StockLot {
@@ -583,3 +586,30 @@ export interface CouponMonnaie {
   notes?: string
 }
 
+export interface PaymentDetails {
+  mode: string;
+  montant: number;
+  part_patient?: number | null;
+  part_assurance?: number | null;
+}
+
+export interface TotalsData {
+  totalHt: number;
+  totalTva: number;
+  totalTtc: number;
+  remiseMontant: number;
+  tauxCouverture: number;
+  partPatient: number;
+  partAssurance: number;
+}
+
+export interface OrdonnanceData {
+  patient_nom: string;
+  prescripteur_nom: string;
+  lignes: Array<{
+    produit_id: number;
+    produit_nom: string;
+    quantite: number;
+    surveillance_category?: string;
+  }>;
+}

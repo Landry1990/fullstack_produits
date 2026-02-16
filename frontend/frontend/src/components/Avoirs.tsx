@@ -7,6 +7,7 @@ import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import { useProductSearch } from '../hooks/useProductSearch'
 import { useLocation } from 'react-router-dom'
 import SudoValidationModal from './common/SudoValidationModal'
+import { useSudo } from '../hooks/useSudo'
 
 export default function Avoirs() {
   const [avoirs, setAvoirs] = useState<Avoir[]>([])
@@ -17,9 +18,8 @@ export default function Avoirs() {
   const [selectedAvoir, setSelectedAvoir] = useState<Avoir | null>(null)
   
   // Sudo Validation State
-  const [showValidationModal, setShowValidationModal] = useState(false)
+  const { sudoState, requireSudo, closeSudo } = useSudo()
   const [savingValidation, setSavingValidation] = useState(false)
-  const [avoirToValidate, setAvoirToValidate] = useState<Avoir | null>(null)
   
   // Create/Edit State
   const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT' | 'DETAILS'>('LIST')
@@ -423,31 +423,26 @@ export default function Avoirs() {
 
   // Validate
   const handleValidate = async (avoir: Avoir) => {
-    // Open Sudo Modal instead of direct validation
-    setAvoirToValidate(avoir)
-    setShowValidationModal(true)
-  }
-
-  const handleSudoValidate = async (validatorId: number, password: string) => {
-    if (!avoirToValidate) return
-
-    try {
-        setSavingValidation(true)
-        await axios.post(`${avoirsEndpoint}${avoirToValidate.id}/valider/`, {
-            validated_by_id: validatorId,
-            password: password
-        })
-        toast.success('Avoir validé et stock mis à jour')
-        fetchAvoirs()
-        if (viewMode === 'DETAILS') setViewMode('LIST')
-        setShowValidationModal(false)
-        setAvoirToValidate(null)
-    } catch (err: any) {
-        toast.error('Erreur: ' + (err.response?.data?.error || err.message))
-        console.error(err)
-    } finally {
-        setSavingValidation(false)
-    }
+    requireSudo(async (validatorId, password) => {
+        try {
+            setSavingValidation(true)
+            await axios.post(`${avoirsEndpoint}${avoir.id}/valider/`, {
+                validated_by_id: validatorId,
+                password: password
+            })
+            toast.success('Avoir validé et stock mis à jour')
+            fetchAvoirs()
+            if (viewMode === 'DETAILS') setViewMode('LIST')
+        } catch (err: any) {
+            toast.error('Erreur: ' + (err.response?.data?.error || err.message || 'Erreur inconnue'))
+            console.error(err)
+        } finally {
+            setSavingValidation(false)
+        }
+    }, {
+        title: `Validation Avoir - ${avoir.numero}`,
+        message: `Confirmer la validation de l'avoir fournisseur <strong>${avoir.numero}</strong> ?<br/>Cela réintégrera les produits en stock (ou ajustera selon le type).`
+    });
   }
 
   // Handle Line Closing
@@ -1079,15 +1074,12 @@ export default function Avoirs() {
 
       {/* Sudo Validation Modal */}
       <SudoValidationModal
-        isOpen={showValidationModal}
-        onClose={() => {
-            setShowValidationModal(false)
-            setAvoirToValidate(null)
-        }}
-        onValidate={handleSudoValidate}
+        isOpen={sudoState.isOpen}
+        onClose={closeSudo}
+        onValidate={sudoState.onValidate}
         saving={savingValidation}
-        title={`Valider l'avoir ${avoirToValidate?.numero}`}
-        message={`Confirmer la validation de l'avoir <strong>${avoirToValidate?.numero}</strong> ? <br/>Cela retirera les produits du stock.`}
+        title={sudoState.title || "Validation Avoir"}
+        message={sudoState.message || ""}
       />
     </>
   )

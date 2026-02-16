@@ -3,6 +3,7 @@
 Application settings models: Loyalty, Pharmacy, and Invoice settings (Singletons).
 """
 from django.db import models
+import uuid
 
 
 class LoyaltySetting(models.Model):
@@ -58,6 +59,23 @@ class PharmacySettings(models.Model):
         upload_to='pharmacy_logos/', blank=True, null=True, 
         help_text="Logo de la pharmacie"
     )
+    
+    # Monitoring Configuration
+    monitoring_id = models.UUIDField(
+        default=uuid.uuid4, 
+        editable=False, 
+        help_text="Identifiant unique de cette instance pour le monitoring"
+    )
+    central_server_url = models.URLField(
+        blank=True, 
+        default="", 
+        help_text="URL du serveur central (ex: https://monitor.ma-pharma.com)"
+    )
+    monitoring_enabled = models.BooleanField(
+        default=False,
+        help_text="Activer l'envoi de données au serveur central"
+    )
+
     coefficient_direct_commande = models.DecimalField(
         max_digits=5, 
         decimal_places=2, 

@@ -40,7 +40,7 @@ export default function ImportProductsModal({ onClose, onSuccess }: ImportProduc
     setProgress(0)
 
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
       const response = await axios.post(`${apiBaseUrl}/import/products/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

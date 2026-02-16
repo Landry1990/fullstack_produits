@@ -37,7 +37,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
         const fetchUsers = async () => {
             try {
                 const token = safeStorage.getItem('authToken');
-                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
                 const response = await axios.get(`${apiBaseUrl}/users/`, {
                     headers: { Authorization: `Token ${token}` }
                 });

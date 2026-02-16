@@ -88,12 +88,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               // Récupérer le coupon appliqué à CETTE facture spécifique
               const couponPourCetteFacture = couponsParFacture[facture.id]
               const montantAPayer = Math.round(
-                Math.max(0,
-                  ((facture.part_client !== null && Number(facture.part_client) >= 0)
-                    ? Number(facture.part_client)
-                    : Number(facture.total_ttc))
-                  - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
-                )
+                (facture.part_client !== null
+                  ? Number(facture.part_client)
+                  : Number(facture.total_ttc))
+                - (couponPourCetteFacture ? Number(couponPourCetteFacture.montant) : 0)
               )
               const hasTiersPayant = facture.part_client !== null && Number(facture.part_client) >= 0
               const isSelected = index === selectedRowIndex
