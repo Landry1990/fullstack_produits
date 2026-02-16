@@ -17,6 +17,8 @@ interface StockResolutionModalProps {
   promisClientName: string
   setPromisClientName: (val: string) => void
   onConfirm: () => void
+  clients?: any[]
+  selectedClientName?: string
 }
 
 export default function StockResolutionModal({

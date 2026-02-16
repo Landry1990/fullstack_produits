@@ -1,0 +1,228 @@
+import { useState, useMemo, useCallback } from 'react'
+import type { ProduitModel, Facture, TicketCaisse, OrdonnanceData } from '../types'
+
+export interface FacturationUIState {
+    // Modals Visibility
+    isPaymentModalOpen: boolean
+    showTicketPreview: boolean
+    showStockResolution: boolean
+    showOrdonnanceModal: boolean
+
+    // Data for Modals
+    paymentModalData: {
+        facture: Facture | null
+    }
+    ticketPreviewData: {
+        ticket: TicketCaisse | null
+    }
+    stockResolutionData: {
+        items: { product: ProduitModel, quantity: number, stock: number }[]
+        promisSelections: Set<number>
+        promisPhone: string
+        promisClientName: string
+    }
+    lotModal: {
+        isOpen: boolean
+        product: ProduitModel | null
+        currentLotId: string | null
+    }
+    confirmModal: {
+        isOpen: boolean
+        message: string
+        onConfirm: () => void
+    } | null
+
+    // Payment State
+    modePaiement: 'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'
+    montantPaye: string
+    paiements: { mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]
+    reference: string
+
+    // Global Discount
+    remiseGlobale: string
+    remiseMode: 'montant' | 'taux'
+
+    // Devis / Modification
+    devisIdToValidate: number | null
+    isModificationMode: boolean
+    modificationInvoiceId: number | null
+    originalTotalTtc: number
+
+    // Ordonnancier
+    tempOrdonnanceData: OrdonnanceData | null
+    pendingOrdonnanceFacture: Facture | null
+}
+
+export function useFacturationUI() {
+    // --- STATE DEFINITIONS ---
+
+    // Global Discount
+    const [remiseGlobale, setRemiseGlobale] = useState('0')
+    const [remiseMode, setRemiseMode] = useState<'montant' | 'taux'>('montant')
+
+    // Payment Form State
+    const [modePaiement, setModePaiement] = useState<'especes' | 'cheque' | 'carte' | 'virement' | 'en_compte'>('especes')
+    const [montantPaye, setMontantPaye] = useState('')
+    const [paiements, setPaiements] = useState<{ mode: string; montant: number; part_patient?: number | null; part_assurance?: number | null }[]>([])
+    const [reference, setReference] = useState('')
+
+    // Modals State
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
+    const [facturePourPaiement, setFacturePourPaiement] = useState<Facture | null>(null)
+
+    const [showTicketPreview, setShowTicketPreview] = useState(false)
+    const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
+
+    const [showStockResolution, setShowStockResolution] = useState(false)
+    const [stockResolutionItems, setStockResolutionItems] = useState<{ product: ProduitModel, quantity: number, stock: number }[]>([])
+    const [promisSelections, setPromisSelections] = useState<Set<number>>(new Set())
+    const [promisPhone, setPromisPhone] = useState('')
+    const [promisClientName, setPromisClientName] = useState('')
+
+    const [lotModal, setLotModal] = useState<{
+        isOpen: boolean
+        product: ProduitModel | null
+        currentLotId: string | null
+    }>({
+        isOpen: false,
+        product: null,
+        currentLotId: null
+    })
+
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        message: string;
+        onConfirm: () => void;
+    } | null>(null)
+
+    // Ordonnancier State
+    const [showOrdonnanceModal, setShowOrdonnanceModal] = useState(false)
+    const [tempOrdonnanceData, setTempOrdonnanceData] = useState<OrdonnanceData | null>(null)
+    const [pendingOrdonnanceFacture, setPendingOrdonnanceFacture] = useState<Facture | null>(null)
+
+    // Devis / Modification State
+    const [devisIdToValidate, setDevisIdToValidate] = useState<number | null>(null)
+    const [isModificationMode, setIsModificationMode] = useState(false)
+    const [modificationInvoiceId, setModificationInvoiceId] = useState<number | null>(null)
+    const [originalTotalTtc, setOriginalTotalTtc] = useState<number>(0)
+
+
+    // --- HELPERS ---
+
+    const resetUIState = useCallback(() => {
+        setRemiseGlobale('0')
+        setRemiseMode('montant')
+        setModePaiement('especes')
+        setMontantPaye('')
+        setPaiements([])
+        setReference('')
+        setFacturePourPaiement(null)
+        setTicketCaisse(null)
+        setStockResolutionItems([])
+        setPromisSelections(new Set())
+        setPromisPhone('')
+        setPromisClientName('')
+        setTempOrdonnanceData(null)
+        setPendingOrdonnanceFacture(null)
+        setDevisIdToValidate(null)
+        setIsModificationMode(false)
+        setModificationInvoiceId(null)
+        setOriginalTotalTtc(0)
+    }, [])
+
+    const openPaymentModal = useCallback((facture?: Facture) => {
+        if (facture) setFacturePourPaiement(facture)
+        setIsPaymentModalOpen(true)
+    }, [])
+
+    const closePaymentModal = useCallback(() => {
+        setIsPaymentModalOpen(false)
+        setFacturePourPaiement(null)
+    }, [])
+
+    const openLotModal = useCallback((product: ProduitModel, currentLotId: string | null) => {
+        setLotModal({ isOpen: true, product, currentLotId })
+    }, [])
+
+    const closeLotModal = useCallback(() => {
+        setLotModal(prev => ({ ...prev, isOpen: false }))
+    }, [])
+
+    // --- TOTALS CALCULATION ---
+    const calculateTotals = useCallback((cartStats: { sousTotal: number, totalTva: number, totalTTC: number }, selectedClient: any) => {
+        let finalTTC = cartStats.totalTTC
+        let remiseMontant = 0
+
+        // 1. Remise Globale
+        const remiseVal = parseFloat(remiseGlobale) || 0
+        if (remiseVal > 0) {
+            if (remiseMode === 'taux') {
+                remiseMontant = finalTTC * (remiseVal / 100)
+            } else {
+                remiseMontant = remiseVal
+            }
+            finalTTC = Math.max(0, finalTTC - remiseMontant)
+        }
+
+        // 2. Tiers Payant
+        let tauxCouverture = 0
+        let partAssurance = 0
+        let partPatient = finalTTC
+
+        if (selectedClient && selectedClient.taux_couverture > 0) {
+            tauxCouverture = selectedClient.taux_couverture
+            partAssurance = finalTTC * (tauxCouverture / 100)
+            partPatient = finalTTC - partAssurance
+        }
+
+        return {
+            sousTotal: cartStats.sousTotal,
+            totalTva: cartStats.totalTva,
+            totalTtc: finalTTC,
+            remiseMontant,
+            tauxCouverture,
+            partAssurance,
+            partPatient
+        }
+    }, [remiseGlobale, remiseMode])
+
+    return {
+        // States
+        remiseGlobale, setRemiseGlobale,
+        remiseMode, setRemiseMode,
+        modePaiement, setModePaiement,
+        montantPaye, setMontantPaye,
+        paiements, setPaiements,
+        reference, setReference,
+
+        isPaymentModalOpen,
+        facturePourPaiement,
+        openPaymentModal,
+        closePaymentModal,
+
+        showTicketPreview, setShowTicketPreview,
+        ticketCaisse, setTicketCaisse,
+
+        showStockResolution, setShowStockResolution,
+        stockResolutionItems, setStockResolutionItems,
+        promisSelections, setPromisSelections,
+        promisPhone, setPromisPhone,
+        promisClientName, setPromisClientName,
+
+        lotModal, openLotModal, closeLotModal,
+        confirmModal, setConfirmModal,
+
+        showOrdonnanceModal, setShowOrdonnanceModal,
+        tempOrdonnanceData, setTempOrdonnanceData,
+        pendingOrdonnanceFacture, setPendingOrdonnanceFacture,
+
+        devisIdToValidate, setDevisIdToValidate,
+        isModificationMode, setIsModificationMode,
+        modificationInvoiceId, setModificationInvoiceId,
+        originalTotalTtc, setOriginalTotalTtc,
+
+        // Actions
+        resetUIState,
+        calculateTotals
+    }
+}

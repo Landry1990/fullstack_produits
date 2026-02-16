@@ -5,6 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from django.db import transaction
 from ..models import Produit
+from rest_framework.permissions import IsAuthenticated
 import logging
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ class ProductImportView(APIView):
     - Si public = 0 -> TVA = 19.25% (produits non remboursables/parapharmacie)
     - Si public > 0 -> TVA = 0% (médicaments remboursables)
     """
+    permission_classes = [IsAuthenticated]
     parser_classes = (MultiPartParser, FormParser)
 
     def post(self, request, *args, **kwargs):

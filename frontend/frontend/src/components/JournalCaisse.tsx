@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import type { CaisseTransaction, MouvementCaisse } from '../types'
@@ -276,15 +276,7 @@ export default function JournalCaisse() {
   }
 
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false)
-  const [globalTotals, setGlobalTotals] = useState<{
-    start_date: string | null,
-    end_date?: string | null,
-    total_theorique: number,
-    total_entrees: number,
-    total_sorties: number,
-    details: Record<string, number>,
-    user?: string
-  } | null>(null)
+
 
 
   const [closingTotals, setClosingTotals] = useState<{
@@ -319,7 +311,7 @@ export default function JournalCaisse() {
       if (dateFin) params.date_fin = formatLocalISOString(dateFin)
       
       const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
-      setGlobalTotals(response.data)
+
       return response.data
     } catch (err) {
       console.error('Erreur chargement totaux:', err)
@@ -493,467 +485,518 @@ export default function JournalCaisse() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-base-100 overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-white shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">Journal de Caisse</h1>
-          <p className="text-sm text-base-content/60 mt-1">Historique de toutes les transactions</p>
-        </div>
-        <button
-          onClick={fetchData}
-          className="btn btn-sm btn-ghost gap-2"
-          disabled={loading}
-        >
-          {loading ? <span className="loading loading-spinner loading-xs"></span> : ''}
-          Actualiser
-        </button>
-        
-        {/* Quick Date Filter */}
-        <button
-          onClick={() => {
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            const endToday = new Date()
-            endToday.setHours(23, 59, 59, 999)
-            setDateDebut(today)
-            setDateFin(endToday)
-          }}
-          className="btn btn-sm btn-secondary gap-2 ml-2"
-        >
-          Aujourd'hui
-        </button>
-        
-        {/* Entry/Exit Type Filter */}
-        <div className="btn-group ml-2">
-          <button 
-            className={`btn btn-sm ${filterType === 'all' ? 'btn-active' : ''}`}
-            onClick={() => setFilterType('all')}
-          >
-            Tout
-          </button>
-          <button 
-            className={`btn btn-sm ${filterType === 'entrees' ? 'btn-active btn-success' : ''}`}
-            onClick={() => setFilterType('entrees')}
-          >
-            Entrées
-          </button>
-          <button 
-            className={`btn btn-sm ${filterType === 'sorties' ? 'btn-active btn-error' : ''}`}
-            onClick={() => setFilterType('sorties')}
-          >
-            Sorties
-          </button>
-        </div>
-        
-        <button
-            onClick={() => setIsMovementModalOpen(true)}
-            className="btn btn-sm btn-outline gap-2 ml-2"
-        >
-            Opération
-        </button>
-        <button
-          onClick={openClosingModal}
-          className="btn btn-sm btn-primary gap-2 ml-2"
-          disabled={loading}
-        >
-          Clôturer la Caisse
-        </button>
-      </div>
-
-      {/* Filtres */}
-      <div className="px-6 py-4 bg-base-50 border-b border-base-200 shrink-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Recherche */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Rechercher</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Client, facture, opérateur..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input input-bordered input-sm"
-            />
-          </div>
-
-          {/* Mode de paiement */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Mode de paiement</span>
-            </label>
-            <select
-              value={filterMode}
-              onChange={(e) => setFilterMode(e.target.value)}
-              className="select select-bordered select-sm"
-            >
-              <option value="all">Tous</option>
-              <option value="especes">Espèces</option>
-              <option value="cheque">Chèque</option>
-              <option value="carte">Carte</option>
-              <option value="virement">Virement</option>
-              <option value="om">Orange Money</option>
-              <option value="momo">Mobile Money</option>
-            </select>
-          </div>
-
-          {/* Date début */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Début (Date & Heure)</span>
-            </label>
-            <DatePicker
-              selected={dateDebut}
-              onChange={(date: Date | null) => setDateDebut(date)}
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              dateFormat="dd/MM/yyyy HH:mm"
-              placeholderText="jj/mm/aaaa hh:mm"
-              locale="fr"
-              className="input input-bordered input-sm w-full"
-              isClearable
-            />
-          </div>
-
-          {/* Date fin */}
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs font-bold uppercase">Fin (Date & Heure)</span>
-            </label>
-            <DatePicker
-              selected={dateFin}
-              onChange={(date: Date | null) => setDateFin(date)}
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              dateFormat="dd/MM/yyyy HH:mm"
-              placeholderText="jj/mm/aaaa hh:mm"
-              locale="fr"
-              className="input input-bordered input-sm w-full"
-              isClearable
-            />
-          </div>
-        </div>
-
-        {/* Bouton reset filtres */}
-        {(searchQuery || filterMode !== 'all' || filterType !== 'all' || dateDebut || dateFin) && (
-          <div className="mt-3">
-            <button
-              onClick={() => {
-                setSearchQuery('')
-                setFilterMode('all')
-                setFilterType('all')
-                setDateDebut(null)
-                setDateFin(null)
-              }}
-              className="btn btn-xs btn-ghost"
-            >
-              ✕ Réinitialiser les filtres
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Totaux */}
-      <div className="px-6 py-3 bg-white border-b border-base-200 shrink-0">
-        <div className="flex flex-wrap gap-4 text-sm">
-          <div className="badge badge-lg badge-ghost gap-2">
-            Espèces: <span className="font-bold">{Math.round(totauxParMode.especes)} F</span>
-          </div>
-          <div className="badge badge-lg badge-ghost gap-2">
-            Chèque: <span className="font-bold">{Math.round(totauxParMode.cheque)} F</span>
-          </div>
-          <div className="badge badge-lg badge-ghost gap-2">
-            Carte: <span className="font-bold">{Math.round(totauxParMode.carte)} F</span>
-          </div>
-          <div className="badge badge-lg badge-ghost gap-2">
-            Virement: <span className="font-bold">{Math.round(totauxParMode.virement)} F</span>
-          </div>
-          <div className="badge badge-lg badge-ghost gap-2">
-            OM: <span className="font-bold">{Math.round(totauxParMode.om)} F</span>
-          </div>
-          <div className="badge badge-lg badge-ghost gap-2">
-            MoMo: <span className="font-bold">{Math.round(totauxParMode.momo)} F</span>
-          </div>
-
-          <div className="badge badge-lg badge-primary gap-2">
-            SOLDE THÉORIQUE: <span className="font-bold">{Math.round(totauxParMode.total)} F</span>
-          </div>
-          
-          <div className="ml-4 flex gap-2">
-               <div className="badge badge-md badge-success gap-1">
-                Entrées: {Math.round(totauxParMode.entrees)} F
-               </div>
-               <div className="badge badge-md badge-error gap-1 text-white">
-                Sorties: {Math.round(totauxParMode.sorties)} F
-               </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Messages d'erreur */}
-      {error && (
-        <div className="px-6 pt-4 shrink-0">
-          <div role="alert" className="alert alert-error">
-            <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{error}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Tableau */}
-      <div className="flex-1 overflow-auto px-6 py-4">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <span className="loading loading-spinner loading-lg"></span>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-base-content/40">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <p className="text-lg">Aucune transaction trouvée</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-            <table className="table table-zebra w-full">
-              <thead>
-                <tr className="bg-base-200">
-                  <th className="text-xs uppercase">Date & Heure</th>
-                  <th className="text-xs uppercase">Opérateur</th>
-                  <th className="text-xs uppercase">Client</th>
-                  <th className="text-xs uppercase">N° Facture</th>
-                  <th className="text-xs uppercase text-right">Montant</th>
-                  <th className="text-xs uppercase">Mode de règlement</th>
-                  <th className="text-xs uppercase">Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupedItems.map((item: any) => {
-                  if (item._kind === 'mouvement') {
-                      // Rendering Mouvement Row
-                      const mouv = item as MouvementCaisse
-                      return (
-                        <tr key={`mouv-${mouv.id}`} className={mouv.type === 'ENTREE' ? 'bg-success/5' : 'bg-error/5'}>
-                            <td className="font-mono text-sm whitespace-nowrap">{formatDate(mouv.date)}</td>
-                            <td>
-                                <div className="flex flex-col">
-                                    <span className="font-medium text-sm">{mouv.user_nom || 'Utilisateur'}</span>
-                                    <span className="text-xs text-base-content/60">Opération Spéciale</span>
-                                </div>
-                            </td>
-                            <td className="font-medium">{mouv.motif}</td>
-                            <td className="text-xs italic opacity-70">{mouv.description || '-'}</td>
-                            <td className={`text-right font-bold text-lg ${mouv.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
-                                {mouv.type === 'ENTREE' ? '+' : '-'}{Math.round(parseFloat(mouv.montant))} F
-                            </td>
-                            <td>
-                                <div className={`badge badge-outline gap-2 ${mouv.type === 'ENTREE' ? 'badge-success' : 'badge-error'}`}>
-                                    {mouv.type === 'ENTREE' ? 'Entrée' : 'Sortie'}
-                                </div>
-                            </td>
-                            <td>
-                                <div className="badge badge-xs badge-success gap-1 py-2 px-3">
-                                    <span className="font-semibold">Validé</span>
-                                </div>
-                            </td>
-                        </tr>
-                      )
-                  }
-                  
-                  // Rendering Transaction Row
-                  const transaction = item as CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] }
-                  return (
-                  <>
-                  <tr 
-                    key={transaction.id} 
-                    className={`hover ${transaction.isReleveGroup ? 'bg-primary/5 cursor-pointer border-l-4 border-l-primary' : ''}`}
-                    onClick={() => transaction.isReleveGroup && transaction.releve_id && toggleReleve(transaction.releve_id)}
-                  >
-                    <td className="font-mono text-sm whitespace-nowrap">
-                        {formatDate(transaction.date_paiement)}
-                        {transaction.isReleveGroup && (
-                            <div className="text-[10px] font-bold text-primary uppercase mt-1 flex items-center gap-1">
-                                {expandedReleves.has(transaction.releve_id!) ? '▼' : '▶'} Relevé Groupé
-                            </div>
-                        )}
-                    </td>
-                    <td>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">
-                          {transaction.user_details?.full_name || 'Non renseigné'}
-                        </span>
-                        {transaction.user_details && (
-                          <span className="text-xs text-base-content/60">
-                            @{transaction.user_details.username}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="font-medium">
-                        {transaction.client_name}
-                        {transaction.is_creance_settlement && (
-                            <div className="badge badge-sm badge-info badge-outline ml-2 gap-1" title="Règlement de créance">
-                                Créance
-                            </div>
-                        )}
-                        {transaction.isReleveGroup && (
-                            <div className="badge badge-sm badge-primary badge-outline ml-2">Relevé {transaction.releve_reference?.split('-').pop()}</div>
-                        )}
-                    </td>
-                    <td className="font-mono text-sm">
-                        {transaction.isReleveGroup ? (
-                            <span className="italic opacity-70">{transaction.items?.length} factures</span>
-                        ) : (
-                            transaction.facture_numero || '-'
-                        )}
-                    </td>
-                    <td className="text-right font-bold text-lg">{Math.round(parseFloat(transaction.montant))} F</td>
-                    <td>
-                      <div className="badge badge-outline gap-2">
-                        {getModeIcon(transaction.mode_paiement)}
-                        {transaction.mode_paiement_display}
-                      </div>
-                      {transaction.reference && (
-                          <div className="text-xs opacity-60 mt-1 truncate max-w-[150px]">{transaction.reference}</div>
-                      )}
-                    </td>
-                     <td>
-                        {transaction.statut === 'completee' ? (
-                        <div className="badge badge-xs badge-success gap-1 py-2 px-3">
-                            <span className="font-semibold">Complété</span>
-                        </div>
-                        ) : transaction.statut === 'annulee' ? (
-                        <div className="badge badge-xs badge-error gap-1 py-2 px-3">
-                            <span className="font-semibold">Annulé</span>
-                        </div>
-                        ) : (
-                        <div className="badge badge-xs badge-warning gap-1 py-2 px-3">
-                            <span className="font-semibold">En attente</span>
-                        </div>
-                        )}
-                    </td>
-                  </tr>
-                  
-                  {/* Expanded Rows for Releve Items */}
-                  {transaction.isReleveGroup && transaction.releve_id && expandedReleves.has(transaction.releve_id) && transaction.items?.map(item => (
-                    <tr key={item.id} className="bg-base-100/40 text-sm">
-                        <td className="pl-8 text-xs opacity-60">↳ {formatDate(item.date_paiement).split(' ')[1]}</td>
-                        <td className="opacity-50 text-xs">Same</td>
-                        <td className="opacity-50 text-xs">Same</td>
-                        <td className="font-mono text-xs">{item.facture_numero}</td>
-                        <td className="text-right text-xs opacity-80">{Math.round(parseFloat(item.montant))} F</td>
-                        <td className="text-xs opacity-60">{item.reference || '-'}</td>
-                        <td className="text-center opacity-50"><span className="text-[10px] uppercase">Détail</span></td>
-                    </tr>
-                   ))}
-                  </>
-                )})}
-            </tbody>
-            </table>
-          </div>
-        )}
-
-      </div>
-
-      {/* Footer avec pagination */}
-      <div className="px-6 py-3 border-t border-base-200 bg-base-50 shrink-0">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-base-content/60">
-            {filteredItems.length} ligne{filteredItems.length > 1 ? 's' : ''} affichée{filteredItems.length > 1 ? 's' : ''} sur {totalCount} total
-          </p>
-          
-          {!loading && totalCount > 0 && (
-            <div className="flex justify-center items-center gap-2">
-              <button 
-                className="btn btn-xs btn-outline" 
-                disabled={page === 1} 
-                onClick={() => setPage(page - 1)}
-              >
-                ← Précédent
-              </button>
-              <div className="px-2 py-1 bg-white rounded border border-base-200">
-                <span className="font-semibold">Page {page}</span>
-                {totalPages > 1 && <span className="text-gray-500"> / {totalPages}</span>}
-              </div>
-              <button 
-                className="btn btn-xs btn-outline" 
-                disabled={page >= totalPages} 
-                onClick={() => setPage(page + 1)}
-              >
-                Suivant →
-              </button>
+    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+      
+      {/* Header & Filters Section */}
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
+          <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-base-content tracking-tight">
+                Journal de Caisse
+              </h1>
+              <p className="text-base-content/60 text-sm mt-1">
+                Historique de toutes les transactions et mouvements de fonds
+              </p>
             </div>
-          )}
-        </div>
-      </div>
+            
+            <div className="flex flex-wrap items-center gap-2">
+                <button
+                    onClick={fetchData}
+                    className="btn btn-sm btn-ghost gap-2 border border-base-300"
+                    disabled={loading}
+                >
+                    {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
+                    Actualiser
+                </button>
+                
+                <button
+                    onClick={() => {
+                        const today = new Date()
+                        today.setHours(0, 0, 0, 0)
+                        const endToday = new Date()
+                        endToday.setHours(23, 59, 59, 999)
+                        setDateDebut(today)
+                        setDateFin(endToday)
+                    }}
+                    className="btn btn-sm btn-outline gap-2"
+                >
+                    Aujourd'hui
+                </button>
 
-      {/* Modal de Clôture */}
-      <dialog className={`modal ${isClosingModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Clôture de Caisse</h3>
-          
-          {closingTotals && (
-            <div className="space-y-4">
-              <div className="alert alert-info text-sm">
-                <span>Période : {closingTotals.start_date ? `Depuis le ${formatDate(closingTotals.start_date)}` : 'Depuis le début'}</span>
-              </div>
+                <div className="divider divider-horizontal mx-1"></div>
 
-              <div className="stats shadow w-full">
-                <div className="stat">
-                  <div className="stat-title">Total Théorique</div>
-                  <div className="stat-value text-primary">{Math.round(closingTotals.total_theorique)} F</div>
-                  <div className="stat-desc">Calculé d'après les transactions</div>
+                <button
+                    onClick={() => setIsMovementModalOpen(true)}
+                    className="btn btn-sm btn-outline btn-secondary gap-2"
+                >
+                    ➕ Opération
+                </button>
+                <button
+                    onClick={openClosingModal}
+                    className="btn btn-sm btn-primary gap-2"
+                    disabled={loading}
+                >
+                    🔒 Clôturer la Caisse
+                </button>
+            </div>
+          </div>
+
+          {/* Filtres internes à la carte */}
+          <div className="p-6 bg-base-50/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Recherche */}
+              <div className="form-control">
+                <label className="label py-1">
+                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Rechercher</span>
+                </label>
+                <div className="relative">
+                    <input
+                    type="text"
+                    placeholder="Client, facture, opérateur..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="input input-bordered input-sm w-full pl-9"
+                    />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40">🔍</span>
                 </div>
               </div>
 
-              <div className="form-control w-full">
-                <label className="label">
-                  <span className="label-text font-bold">Montant Réel en Caisse</span>
+              {/* Mode de paiement */}
+              <div className="form-control">
+                <label className="label py-1">
+                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Mode de paiement</span>
                 </label>
-                <input 
-                  type="number" 
-                  placeholder="Entrez le montant compté..." 
-                  className="input input-bordered w-full input-lg" 
-                  value={actualAmount}
-                  onChange={(e) => setActualAmount(e.target.value)}
+                <select
+                  value={filterMode}
+                  onChange={(e) => setFilterMode(e.target.value)}
+                  className="select select-bordered select-sm w-full"
+                >
+                  <option value="all">Tous les modes</option>
+                  <option value="especes">💵 Espèces</option>
+                  <option value="cheque">✍️ Chèque</option>
+                  <option value="carte">💳 Carte</option>
+                  <option value="virement">🏦 Virement</option>
+                  <option value="om">📶 Orange Money</option>
+                  <option value="momo">📶 Mobile Money</option>
+                </select>
+              </div>
+
+              {/* Date début */}
+              <div className="form-control">
+                <label className="label py-1">
+                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Début</span>
+                </label>
+                <DatePicker
+                  selected={dateDebut}
+                  onChange={(date: Date | null) => setDateDebut(date)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  placeholderText="jj/mm/aaaa hh:mm"
+                  locale="fr"
+                  className="input input-bordered input-sm w-full"
+                  isClearable
                 />
-                <label className="label">
-                  <span className="label-text-alt">
-                    Ecart : {actualAmount ? Math.round(parseFloat(actualAmount) - closingTotals.total_theorique) : 0} F
-                  </span>
-                </label>
               </div>
 
-              <div className="collapse collapse-arrow bg-base-100 border border-base-200">
-                <input type="checkbox" /> 
-                <div className="collapse-title font-medium">
-                  Détails par mode de paiement
-                </div>
-                <div className="collapse-content"> 
-                  <ul className="menu menu-compact bg-base-100 w-full p-2 rounded-box">
-                    {Object.entries(closingTotals.details).map(([mode, montant]) => (
-                      <li key={mode} className="flex-row justify-between">
-                        <span>{getModeIcon(mode)} {mode}</span>
-                        <span className="font-bold">{Math.round(montant)} F</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {/* Date fin */}
+              <div className="form-control">
+                <label className="label py-1">
+                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Fin</span>
+                </label>
+                <DatePicker
+                  selected={dateFin}
+                  onChange={(date: Date | null) => setDateFin(date)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="dd/MM/yyyy HH:mm"
+                  placeholderText="jj/mm/aaaa hh:mm"
+                  locale="fr"
+                  className="input input-bordered input-sm w-full"
+                  isClearable
+                />
               </div>
             </div>
-          )}
 
-          <div className="modal-action flex justify-between items-center">
-             <button className="btn btn-ghost" onClick={handleImprimerCloture}>🖨️ Imprimer Ticket</button>
-             <div className="flex gap-2">
-                <button className="btn" onClick={() => setIsClosingModalOpen(false)}>Annuler</button>
-                <button className="btn btn-primary" onClick={handleCloseCaisse}>Confirmer la Clôture</button>
-             </div>
+            <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex gap-2">
+                    <button 
+                        className={`btn btn-xs rounded-full px-4 ${filterType === 'all' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
+                        onClick={() => setFilterType('all')}
+                    >
+                        Tout
+                    </button>
+                    <button 
+                        className={`btn btn-xs rounded-full px-4 ${filterType === 'entrees' ? 'btn-success text-white' : 'btn-ghost border-base-300'}`}
+                        onClick={() => setFilterType('entrees')}
+                    >
+                        Entrées
+                    </button>
+                    <button 
+                        className={`btn btn-xs rounded-full px-4 ${filterType === 'sorties' ? 'btn-error text-white' : 'btn-ghost border-base-300'}`}
+                        onClick={() => setFilterType('sorties')}
+                    >
+                        Sorties
+                    </button>
+                </div>
+
+                {(searchQuery || filterMode !== 'all' || filterType !== 'all' || dateDebut || dateFin) && (
+                    <button
+                    onClick={() => {
+                        setSearchQuery('')
+                        setFilterMode('all')
+                        setFilterType('all')
+                        setDateDebut(null)
+                        setDateFin(null)
+                    }}
+                    className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
+                    >
+                    ✕ Réinitialiser les filtres
+                    </button>
+                )}
+            </div>
+          </div>
+      </div>
+
+      {/* Quick Stats Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="bg-base-100 p-5 rounded-2xl shadow-sm border border-base-300">
+              <div className="text-xs font-bold uppercase text-base-content/40 mb-1">Solde Théorique</div>
+              <div className="text-2xl font-black text-primary">{Math.round(totauxParMode.total).toLocaleString()} F</div>
+              <div className="text-[10px] text-base-content/50 mt-1">Cash + Digital</div>
+          </div>
+          <div className="bg-base-100 p-5 rounded-2xl shadow-sm border border-base-300">
+              <div className="text-xs font-bold uppercase text-base-content/40 mb-1">Espèces</div>
+              <div className="text-2xl font-black text-base-content">{Math.round(totauxParMode.especes).toLocaleString()} F</div>
+              <div className="text-[10px] text-success font-bold mt-1">En Caisse</div>
+          </div>
+          <div className="bg-base-100 p-5 rounded-2xl shadow-sm border border-base-300">
+              <div className="text-xs font-bold uppercase text-base-content/40 mb-1">Total Entrées</div>
+              <div className="text-2xl font-black text-success">{Math.round(totauxParMode.entrees).toLocaleString()} F</div>
+              <div className="text-[10px] text-base-content/50 mt-1">Opérations diverses</div>
+          </div>
+          <div className="bg-base-100 p-5 rounded-2xl shadow-sm border border-base-300">
+              <div className="text-xs font-bold uppercase text-base-content/40 mb-1">Total Sorties</div>
+              <div className="text-2xl font-black text-error">{Math.round(totauxParMode.sorties).toLocaleString()} F</div>
+              <div className="text-[10px] text-base-content/50 mt-1">Dépenses diverse</div>
+          </div>
+          <div className="bg-base-100 p-5 rounded-2xl shadow-sm border border-base-300 lg:col-span-2 xl:col-span-1">
+              <div className="text-xs font-bold uppercase text-base-content/40 mb-1">Digital (OM/MoMo)</div>
+              <div className="text-2xl font-black text-info">{Math.round(totauxParMode.om + totauxParMode.momo).toLocaleString()} F</div>
+              <div className="text-[10px] text-base-content/50 mt-1">Paiements mobiles</div>
+          </div>
+      </div>
+
+      {/* Main Content: Table Wrapper */}
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+        {error && (
+            <div className="p-4 bg-error/10 border-b border-error/20 flex items-center gap-3 text-error text-sm font-medium">
+                <span className="text-xl">⚠️</span>
+                {error}
+            </div>
+        )}
+
+        <div className="overflow-x-auto">
+            {loading ? (
+                <div className="flex flex-col items-center justify-center py-20 bg-base-100 gap-4">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                    <p className="text-base-content/60 font-medium animate-pulse">Chargement du journal...</p>
+                </div>
+            ) : filteredItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-base-content/30 gap-3">
+                    <span className="text-6xl opacity-20">📂</span>
+                    <p className="text-lg font-medium italic">Aucune transaction trouvée</p>
+                </div>
+            ) : (
+                <table className="table table-md w-full border-separate border-spacing-0">
+                    <thead>
+                        <tr className="bg-base-50 selection:bg-transparent">
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4 pl-6">Date & Heure</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4">Caissier</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4">Saisie par</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4">Client / Libellé</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4">N° Pièce</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4 text-right">Montant</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4">Mode</th>
+                            <th className="bg-base-100 border-b border-base-200 text-xs uppercase font-bold text-base-content/50 py-4 pr-6">Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-base-200">
+                        {groupedItems.map((item: any) => {
+                            if (item._kind === 'mouvement') {
+                                const mouv = item as MouvementCaisse
+                                return (
+                                    <tr key={`mouv-${mouv.id}`} className={`hover:bg-base-50/50 transition-colors ${mouv.type === 'ENTREE' ? 'bg-success/5' : 'bg-error/5'}`}>
+                                        <td className="font-mono text-xs whitespace-nowrap pl-6 py-4">{formatDate(mouv.date)}</td>
+                                        <td className="py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/50 border border-base-300">
+                                                    {(mouv.user_nom || 'U')[0]}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-sm">{mouv.user_nom || 'Utilisateur'}</span>
+                                                    <span className="text-[10px] text-base-content/40 uppercase tracking-widest font-bold">🛠️ Opération</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-4">
+                                            <span className="text-xs text-base-content/30 italic">-</span>
+                                        </td>
+                                        <td className="py-4">
+                                            <div className="font-bold text-sm text-base-content">{mouv.motif}</div>
+                                            <div className="text-xs text-base-content/50 italic line-clamp-1">{mouv.description || 'Pas de description'}</div>
+                                        </td>
+                                        <td className="font-mono text-[10px] py-4 opacity-50">MOUV-{mouv.id}</td>
+                                        <td className={`text-right font-black text-base py-4 ${mouv.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
+                                            {mouv.type === 'ENTREE' ? '+' : '-'}{Math.round(parseFloat(mouv.montant)).toLocaleString()} F
+                                        </td>
+                                        <td className="py-4">
+                                            <div className={`badge badge-sm font-bold gap-1 py-3 px-3 border-none ${mouv.type === 'ENTREE' ? 'bg-success text-white' : 'bg-error text-white'}`}>
+                                                {mouv.type === 'ENTREE' ? '↑ ENTRÉE' : '↓ SORTIE'}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 pr-6">
+                                            <span className="flex items-center gap-1.5 text-success font-bold text-[10px] uppercase">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse"></span>
+                                                Validé
+                                            </span>
+                                        </td>
+                                    </tr>
+                                )
+                            }
+                            
+                            const transaction = item as CaisseTransaction & { isReleveGroup?: boolean, items?: CaisseTransaction[] }
+                            const isExpanded = transaction.isReleveGroup && transaction.releve_id && expandedReleves.has(transaction.releve_id)
+
+                            return (
+                                <React.Fragment key={transaction.id}>
+                                    <tr 
+                                        className={`hover:bg-base-50/50 transition-colors group ${transaction.isReleveGroup ? 'bg-primary/5 cursor-pointer border-l-4 border-l-primary' : ''}`}
+                                        onClick={() => transaction.isReleveGroup && transaction.releve_id && toggleReleve(transaction.releve_id)}
+                                    >
+                                        <td className="font-mono text-xs whitespace-nowrap pl-6 py-4">
+                                            <div className="flex flex-col">
+                                                <span>{formatDate(transaction.date_paiement)}</span>
+                                                {transaction.isReleveGroup && (
+                                                    <span className="text-[9px] font-black text-primary uppercase mt-1 flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-primary/20 w-fit">
+                                                        {isExpanded ? '▼' : '▶'} Relevé Groupé
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20">
+                                                    {(transaction.user_details?.full_name || 'U')[0]}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-sm">
+                                                        {transaction.user_details?.full_name || 'Inconnu'}
+                                                    </span>
+                                                    <span className="text-[10px] text-base-content/40 font-mono tracking-tight">
+                                                        @{transaction.user_details?.username || 'user'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-4">
+                                            {transaction.facture_created_by_name ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-base-200 flex items-center justify-center text-[10px] font-bold text-base-content/50">
+                                                        {transaction.facture_created_by_name[0]}
+                                                    </div>
+                                                    <span className="text-sm border-b border-dashed border-base-content/20" title="Utilisateur ayant saisi la facture">
+                                                        {transaction.facture_created_by_name}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-base-content/30 italic">-</span>
+                                            )}
+                                        </td>
+                                        <td className="py-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-sm text-base-content">{transaction.client_name}</span>
+                                                {transaction.is_creance_settlement && (
+                                                    <span className="badge badge-sm badge-info text-white font-bold text-[9px] px-1.5">CRÉANCE</span>
+                                                )}
+                                            </div>
+                                            {transaction.isReleveGroup && (
+                                                <div className="text-[10px] text-primary font-bold mt-1">Réf: {transaction.releve_reference}</div>
+                                            )}
+                                        </td>
+                                        <td className="font-mono text-xs py-4">
+                                            {transaction.isReleveGroup ? (
+                                                <span className="text-primary/70 font-bold italic">{transaction.items?.length} pièces</span>
+                                            ) : (
+                                                <span className="bg-base-200 px-2 py-1 rounded font-bold text-base-content/60">{transaction.facture_numero || '-'}</span>
+                                            )}
+                                        </td>
+                                        <td className="text-right font-black text-base py-4 text-base-content">
+                                            {Math.round(parseFloat(transaction.montant)).toLocaleString()} F
+                                        </td>
+                                        <td className="py-4">
+                                            <div className="flex flex-col">
+                                                <div className="badge badge-outline badge-sm font-bold text-[10px] gap-1.5 h-6">
+                                                    {getModeIcon(transaction.mode_paiement)}
+                                                    {transaction.mode_paiement_display?.toUpperCase()}
+                                                </div>
+                                                {transaction.reference && (
+                                                    <span className="text-[10px] text-base-content/40 mt-1 truncate max-w-[120px]" title={transaction.reference}>
+                                                        {transaction.reference}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 pr-6">
+                                            {transaction.statut === 'completee' ? (
+                                                <span className="badge badge-success text-[10px] font-bold text-white h-5">PAYÉ</span>
+                                            ) : transaction.statut === 'annulee' ? (
+                                                <span className="badge badge-error text-[10px] font-bold text-white h-5">ANNULÉ</span>
+                                            ) : (
+                                                <span className="badge badge-warning text-[10px] font-bold text-white h-5">ATTENTE</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    
+                                    {isExpanded && transaction.items?.map(subItem => (
+                                        <tr key={subItem.id} className="bg-primary/[0.02] border-l-4 border-l-primary/30">
+                                            <td className="pl-12 py-3 text-[11px] opacity-60 font-mono">↳ {formatDate(subItem.date_paiement).split(' ')[1]}</td>
+                                            <td className="py-3 opacity-30 text-[11px]">Idem</td>
+                                            <td className="py-3 opacity-30 text-[11px]">Idem</td>
+                                            <td className="font-mono text-[11px] py-3 font-bold text-primary/60">{subItem.facture_numero}</td>
+                                            <td className="text-right text-[11px] py-3 pr-4 font-bold text-base-content/70">
+                                                {Math.round(parseFloat(subItem.montant)).toLocaleString()} F
+                                            </td>
+                                            <td className="py-3 pr-4">
+                                                <span className="text-[10px] opacity-60 italic">{subItem.reference || '-'}</span>
+                                            </td>
+                                            <td className="py-3 text-[10px] font-black text-primary/30 pr-6">PIÈCE</td>
+                                        </tr>
+                                    ))}
+                                </React.Fragment>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            )}
+        </div>
+
+        {/* Footer avec pagination unifié */}
+        <div className="p-6 border-t border-base-200 bg-base-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-base-content/50 font-medium">
+                Affichage de <span className="text-base-content">{filteredItems.length}</span> ligne{filteredItems.length > 1 ? 's' : ''} sur <span className="text-base-content">{totalCount}</span> au total
+            </div>
+            
+            {!loading && totalCount > 0 && (
+                <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-base-content/40 uppercase tracking-widest">Page {page} / {totalPages}</span>
+                    <div className="flex gap-1.5">
+                        <button 
+                            className="btn btn-sm px-4 bg-white hover:bg-base-200 border-base-300 shadow-sm transition-all" 
+                            disabled={page === 1} 
+                            onClick={() => setPage(page - 1)}
+                        >
+                            Précédent
+                        </button>
+                        <button 
+                            className="btn btn-sm px-4 bg-white hover:bg-base-200 border-base-300 shadow-sm transition-all" 
+                            disabled={page >= totalPages} 
+                            onClick={() => setPage(page + 1)}
+                        >
+                            Suivant
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+      </div>
+
+      {/* Modal de Clôture - Unifiée avec Style Ventes */}
+      <dialog className={`modal ${isClosingModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box max-w-md p-0 overflow-hidden rounded-2xl border border-base-300 shadow-2xl">
+          <div className="bg-primary p-6 text-white overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl">🔒</div>
+            <h3 className="font-black text-2xl tracking-tight">Clôture de Caisse</h3>
+            <p className="text-primary-content/80 text-xs mt-1 font-bold uppercase tracking-widest">SÉCURISATION DES FONDS</p>
+          </div>
+          
+          <div className="p-8 space-y-6">
+            {closingTotals && (
+                <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="p-4 bg-base-100 border border-base-300 rounded-xl shadow-sm">
+                            <div className="text-[10px] font-black text-base-content/40 uppercase mb-1">Théorique</div>
+                            <div className="text-xl font-black text-primary">{Math.round(closingTotals.total_theorique).toLocaleString()} F</div>
+                        </div>
+                        <div className="p-4 bg-base-100 border border-base-300 rounded-xl shadow-sm">
+                            <div className="text-[10px] font-black text-base-content/40 uppercase mb-1">Période</div>
+                            <div className="text-[10px] font-bold text-base-content leading-tight">
+                                {closingTotals.start_date ? formatDate(closingTotals.start_date).split(' ')[0] : 'Inconnue'}
+                                <br/>au {new Date().toLocaleDateString()}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="form-control w-full">
+                        <label className="label py-1">
+                            <span className="label-text text-xs font-black text-base-content/50 uppercase">Montant Réel (Physique)</span>
+                        </label>
+                        <div className="relative">
+                            <input 
+                                type="number" 
+                                placeholder="0" 
+                                className="input input-bordered w-full input-lg font-black text-2xl text-center focus:ring-4 focus:ring-primary/10 transition-all" 
+                                value={actualAmount}
+                                onChange={(e) => setActualAmount(e.target.value)}
+                                autoFocus
+                            />
+                            <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-base-content/20">CFA</span>
+                        </div>
+                        <div className="mt-4 flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                            <span className="text-xs font-bold text-base-content/60 uppercase">Écart de caisse</span>
+                            <span className={`text-sm font-black ${
+                                !actualAmount ? 'text-base-content/20' : 
+                                (parseFloat(actualAmount) - closingTotals.total_theorique) >= 0 ? 'text-success' : 'text-error'
+                            }`}>
+                                {actualAmount ? Math.round(parseFloat(actualAmount) - closingTotals.total_theorique).toLocaleString() + ' F' : '---'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="collapse collapse-arrow bg-base-100 border border-base-200 rounded-xl">
+                        <input type="checkbox" /> 
+                        <div className="collapse-title text-sm font-bold flex items-center gap-2">
+                           📊 Détails par mode
+                        </div>
+                        <div className="collapse-content"> 
+                            <div className="space-y-2 pt-2 border-t border-base-200 mt-2">
+                                {Object.entries(closingTotals.details).filter(([,v]) => v > 0).map(([mode, montant]) => (
+                                <div key={mode} className="flex items-center justify-between text-xs">
+                                    <span className="font-medium text-base-content/60 capitalize ">{mode}</span>
+                                    <span className="font-black text-base-content">{Math.round(montant).toLocaleString()} F</span>
+                                </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+                <button className="btn btn-primary btn-lg rounded-xl font-black shadow-lg shadow-primary/20" onClick={handleCloseCaisse}>
+                    CONFIRMER LA CLÔTURE
+                </button>
+                <div className="grid grid-cols-2 gap-3">
+                    <button className="btn btn-outline border-base-300 font-bold" onClick={handleImprimerCloture}>
+                        🖨️ TICKET
+                    </button>
+                    <button className="btn btn-ghost font-bold opacity-50" onClick={() => setIsClosingModalOpen(false)}>
+                        ANNULER
+                    </button>
+                </div>
+            </div>
           </div>
         </div>
       </dialog>

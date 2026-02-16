@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, CreditCard, SearchX, Receipt } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt } from 'lucide-react';
 import type { Facture } from '../../types';
 
 interface SalesTableProps {
@@ -106,7 +106,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                         <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.discount', {defaultValue: "Remise"})}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.status')}</th>
-                        <th className="px-6 py-4 text-center">{t('sales.table.payment_mode')}</th>
+
                         <th className="px-6 py-4 text-right rounded-tr-2xl">
                              {selectedIds.length > 0 && onBulkDelete ? (
                                 <button 
@@ -184,17 +184,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     {facture.status_display}
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center">
-                                {facture.paiements && facture.paiements.length > 0 ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-base-200 text-base-content/70 border border-base-300">
-                                        <CreditCard className="w-3 h-3" />
-                                        {facture.paiements[0].mode_paiement_display}
-                                        {facture.paiements.length > 1 && ' (+)'}
-                                    </span>
-                                ) : (
-                                    <span className="text-base-content/30 text-xs italic">-</span>
-                                )}
-                            </td>
+
                             <td className="px-6 py-4 text-right">
                                 <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
                                     <button

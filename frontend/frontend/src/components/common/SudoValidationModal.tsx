@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 interface User {
     id: number;
@@ -12,10 +13,11 @@ interface User {
 interface SudoValidationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onValidate: (validatorId: number, password: string) => Promise<void>;
+    onValidate: (validatorId: number, password: string) => void | Promise<void>;
     saving: boolean;
     title?: string;
     message?: string;
+    permission?: string;
 }
 
 export default function SudoValidationModal({ 
@@ -24,13 +26,16 @@ export default function SudoValidationModal({
     onValidate, 
     saving,
     title,
-    message 
+    message,
+    permission
 }: SudoValidationModalProps) {
     const { t } = useTranslation();
+    const { user: currentUser } = useAuth();
     const [users, setUsers] = useState<User[]>([]);
     const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
     const [password, setPassword] = useState('');
     const [loadingUsers, setLoadingUsers] = useState(false);
+    const passwordInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -40,14 +45,30 @@ export default function SudoValidationModal({
         }
     }, [isOpen]);
 
+    // Auto-focus password field when a validator is selected
+    useEffect(() => {
+        if (selectedValidator && isOpen) {
+            setTimeout(() => {
+                passwordInputRef.current?.focus();
+            }, 100);
+        }
+    }, [selectedValidator, isOpen]);
+
     const fetchUsers = async () => {
         try {
             setLoadingUsers(true);
             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-            // Assuming users endpoint is available and accessible
-            // We might need a specific endpoint for 'validators' or just all users
             const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/users/`);
-            setUsers(res.data.results || res.data);
+            const userList = res.data.results || res.data;
+            setUsers(userList);
+
+            // Auto-select current user if found in list
+            if (currentUser) {
+                const found = userList.find((u: any) => u.username === currentUser.username);
+                if (found) {
+                    setSelectedValidator(found.id);
+                }
+            }
         } catch (err) {
             console.error("Error fetching users", err);
         } finally {
@@ -81,7 +102,7 @@ export default function SudoValidationModal({
                         onChange={(e) => setSelectedValidator(e.target.value ? parseInt(e.target.value) : null)}
                         disabled={loadingUsers}
                     >
-                        <option value="">{t('stock.inventaire.modals.validate_me')}</option>
+                        <option value="" disabled>{t('stock.inventaire.modals.validate_me')}</option>
                         {users.map(u => (
                             <option key={u.id} value={u.id}>
                                 {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username} ({u.username})
@@ -97,11 +118,13 @@ export default function SudoValidationModal({
                             <span className="label-text-alt text-error">{t('stock.inventaire.modals.validate_required')}</span>
                         </label>
                         <input 
+                            ref={passwordInputRef}
                             type="password" 
                             className="input input-bordered" 
                             placeholder={t('stock.inventaire.modals.validate_password')}
                             value={password}
                             onChange={e => setPassword(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
                         />
                     </div>
                 )}

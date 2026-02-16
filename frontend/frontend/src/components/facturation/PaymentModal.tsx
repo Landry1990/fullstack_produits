@@ -1,6 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
-import axios from 'axios'
-import { toast } from 'react-hot-toast'
+import { useEffect, useRef } from 'react'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
 
@@ -31,7 +29,7 @@ type PaymentModalProps = {
     setModePaiement: (val: any) => void
     paiements: PaymentItem[]
     setPaiements: (items: any[]) => void
-    onCompleteSale: (validatedBy?: number, password?: string) => void
+    onCompleteSale: (sudoCredentials?: { validatorId: number, password: string }) => void
     onRegisterPayment: () => void
     selectedClient: number | null
     useManualClient: boolean
@@ -59,110 +57,18 @@ export default function PaymentModal({
 }: PaymentModalProps) {
     const { t } = useTranslation()
 
-    // Sudo Mode State
-    const [selectedValidator, setSelectedValidator] = useState<number | null>(null);
-    const [sudoPassword, setSudoPassword] = useState('');
-    const [users, setUsers] = useState<any[]>([]);
-    const [passwordVerified, setPasswordVerified] = useState(false);
-    const [verifying, setVerifying] = useState(false);
-
     // Refs for keyboard-driven flow
-    const validatorSelectRef = useRef<HTMLSelectElement>(null);
-    const sudoPasswordRef = useRef<HTMLInputElement>(null);
     const submitBtnRef = useRef<HTMLButtonElement>(null);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
-        ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')
-        : '';
-
+    // Cleanup unused effect for validator selection
     useEffect(() => {
         if (isOpen) {
-            // Fetch users for Sudo selection
-            const fetchUsers = async () => {
-                try {
-                    const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/operators/` : '/api/users/operators/';
-                    const response = await axios.get(endpoint);
-                    const data = response.data.results || response.data;
-                    setUsers(Array.isArray(data) ? data : []);
-                } catch (err) {
-                    console.error("Erreur chargement utilisateurs", err);
-                }
-            };
-            fetchUsers();
-            
-            // Focus on user select after modal renders
+            // Focus on input after modal renders
             setTimeout(() => {
-                validatorSelectRef.current?.focus();
+                paymentInputRef.current?.focus();
             }, 150)
-        } else {
-            // Reset Sudo state on close
-            setSelectedValidator(null);
-            setSudoPassword('');
-            setPasswordVerified(false);
         }
-    }, [isOpen, apiBaseUrl])
-
-    // Reset password state when validator changes
-    useEffect(() => {
-        setSudoPassword('');
-        setPasswordVerified(false);
-    }, [selectedValidator]);
-
-    // Verify password via API
-    const verifyPassword = useCallback(async (userId: number, password: string) => {
-        if (!userId || !password) return false;
-        setVerifying(true);
-        try {
-            const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/verify_password/` : '/api/users/verify_password/';
-            const response = await axios.post(endpoint, { user_id: userId, password });
-            if (response.data.valid) {
-                setPasswordVerified(true);
-                toast.success('✅ Mot de passe vérifié');
-                // Focus on submit button
-                setTimeout(() => submitBtnRef.current?.focus(), 100);
-                return true;
-            } else {
-                setPasswordVerified(false);
-                toast.error('❌ Mot de passe incorrect');
-                // Focus back to validator select
-                setSudoPassword('');
-                setTimeout(() => validatorSelectRef.current?.focus(), 100);
-                return false;
-            }
-        } catch (err) {
-            setPasswordVerified(false);
-            toast.error('❌ Mot de passe incorrect');
-            setSudoPassword('');
-            setTimeout(() => validatorSelectRef.current?.focus(), 100);
-            return false;
-        } finally {
-            setVerifying(false);
-        }
-    }, [apiBaseUrl]);
-
-    // Handle select keydown: Enter → focus password field
-    const handleSelectKeyDown = (e: React.KeyboardEvent<HTMLSelectElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (selectedValidator) {
-                // User selected → go to password
-                setTimeout(() => sudoPasswordRef.current?.focus(), 50);
-            } else {
-                // No user selected (Moi-même) → go straight to submit
-                setTimeout(() => submitBtnRef.current?.focus(), 50);
-            }
-        }
-    };
-
-    // Handle password keydown: Enter → verify password
-    const handlePasswordKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (selectedValidator && sudoPassword) {
-                await verifyPassword(selectedValidator, sudoPassword);
-            }
-        }
-    };
+    }, [isOpen]);
 
     return (
         <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
@@ -176,65 +82,12 @@ export default function PaymentModal({
             <form onSubmit={(e) => { 
               e.preventDefault(); 
               if (isNewSale) {
-                onCompleteSale(selectedValidator || undefined, sudoPassword || undefined);
+                onCompleteSale();
               } else {
                 onRegisterPayment(); 
               }
             }} className="p-6 space-y-5">
               
-              {/* Sudo Mode Section - FIRST for keyboard flow */}
-              <div className="bg-base-50 p-3 rounded-lg border border-base-200">
-                  <div className="form-control w-full">
-                      <label className="label py-1">
-                          <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.validate_by')}</span>
-                      </label>
-                      <select 
-                          ref={validatorSelectRef}
-                          className={`select select-bordered select-sm w-full ${passwordVerified ? 'select-success' : ''}`}
-                          value={selectedValidator || ''}
-                          onChange={(e) => setSelectedValidator(e.target.value ? Number(e.target.value) : null)}
-                          onKeyDown={handleSelectKeyDown}
-                      >
-                          <option value="">{t('facturation.payment.sudo_self')}</option>
-                          {Array.isArray(users) && users.map(u => (
-                              <option key={u.id} value={u.id}>
-                                  {u.username}
-                              </option>
-                          ))}
-                      </select>
-                  </div>
-                  
-                  {selectedValidator && (
-                      <div className="form-control w-full mt-2">
-                          <label className="label py-1">
-                              <span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.sudo_mode.password')}</span>
-                          </label>
-                          <div className="relative">
-                              <input 
-                                  ref={sudoPasswordRef}
-                                  type="password" 
-                                  className={`input input-bordered input-sm w-full pr-10 ${passwordVerified ? 'input-success border-success' : ''}`}
-                                  placeholder={t('facturation.payment.password_placeholder')}
-                                  value={sudoPassword}
-                                  onChange={(e) => {
-                                      setSudoPassword(e.target.value);
-                                      setPasswordVerified(false);
-                                  }}
-                                  onKeyDown={handlePasswordKeyDown}
-                                  disabled={verifying}
-                              />
-                              {verifying && (
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                                      <span className="loading loading-spinner loading-xs"></span>
-                                  </span>
-                              )}
-                              {passwordVerified && (
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-success text-lg">✓</span>
-                              )}
-                          </div>
-                      </div>
-                  )}
-              </div>
 
               <div className="text-center mb-6">
                 <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">
@@ -244,7 +97,7 @@ export default function PaymentModal({
                     {isNewSale 
                         ? Math.round(totals.tauxCouverture > 0 
                             ? totals.partPatient 
-                            : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
+                            : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                         : Math.round(Number(facturePourPaiement?.total_ttc))} F
                 </div>
                 {(totals.couponMontant && totals.couponMontant > 0) && (
@@ -290,7 +143,7 @@ export default function PaymentModal({
                                         </div>
                                     ))}
                                     <div className="text-right text-xs text-base-content/60 pt-1 border-t border-base-200">
-                                        {t('facturation.payment.remaining_to_allocate')} <span className="font-bold text-error">{Math.max(0, totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0))} F</span>
+                                        {t('facturation.payment.remaining_to_allocate')} <span className="font-bold text-error">{totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0)} F</span>
                                     </div>
                                 </div>
                             )}
@@ -314,12 +167,12 @@ export default function PaymentModal({
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault()
-                                            if (montantPaye && Number(montantPaye) > 0) {
+                                            if (montantPaye && Number(montantPaye) !== 0) {
                                                 setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                                 // Calc rest
                                                 const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                                const reste = Math.max(0, totals.partPatient - dejaAlloue)
-                                                setMontantPaye(reste > 0 ? reste.toString() : '')
+                                                const reste = totals.partPatient - dejaAlloue
+                                                setMontantPaye(reste !== 0 ? reste.toString() : '')
                                             }
                                         }
                                     }}
@@ -329,11 +182,11 @@ export default function PaymentModal({
                                 type="button"
                                 className="btn btn-sm btn-square btn-ghost border border-base-300"
                                 onClick={() => {
-                                    if (montantPaye && Number(montantPaye) > 0) {
+                                    if (montantPaye && Number(montantPaye) !== 0) {
                                         setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                         const dejaAlloue = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                        const reste = Math.max(0, totals.partPatient - dejaAlloue)
-                                        setMontantPaye(reste > 0 ? reste.toString() : '')
+                                        const reste = totals.partPatient - dejaAlloue
+                                        setMontantPaye(reste !== 0 ? reste.toString() : '')
                                     }
                                 }}
                                 title="Ajouter ce paiement"
@@ -397,18 +250,18 @@ export default function PaymentModal({
                           onKeyDown={(e) => {
                               if (e.key === 'Enter') {
                                   e.preventDefault()
-                                  if (montantPaye && Number(montantPaye) > 0) {
+                                  if (montantPaye && Number(montantPaye) !== 0) {
                                       setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                       // Calculer le reste à payer pour la prochaine entrée
                                       const totalAPayer = isNewSale 
                                         ? (totals.tauxCouverture > 0 
                                             ? totals.partPatient 
-                                            : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
+                                            : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                                         : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                                       
                                       const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                      const reste = Math.max(0, totalAPayer - dejaVerse)
-                                      setMontantPaye(reste > 0 ? reste.toString() : '')
+                                      const reste = totalAPayer - dejaVerse
+                                      setMontantPaye(reste !== 0 ? reste.toString() : '')
                                   }
                               }
                           }}
@@ -419,19 +272,19 @@ export default function PaymentModal({
                       <button
                         type="button"
                         className="btn btn-primary h-[3rem]" // Match input height roughly
-                        disabled={!montantPaye || Number(montantPaye) <= 0}
+                        disabled={!montantPaye || Number(montantPaye) === 0}
                         onClick={() => {
-                            if (montantPaye && Number(montantPaye) > 0) {
+                            if (montantPaye && Number(montantPaye) !== 0) {
                                 setPaiements([...paiements, { mode: modePaiement as any, montant: Number(montantPaye) }])
                                 const totalAPayer = isNewSale 
                                     ? (totals.tauxCouverture > 0 
                                         ? totals.partPatient 
-                                        : Math.max(0, totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
+                                        : (totals.totalTtc - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                                     : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                                 
                                 const dejaVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + Number(montantPaye)
-                                const reste = Math.max(0, totalAPayer - dejaVerse)
-                                setMontantPaye(reste > 0 ? reste.toString() : '')
+                                const reste = totalAPayer - dejaVerse
+                                setMontantPaye(reste !== 0 ? reste.toString() : '')
                             }
                         }}
                       >
@@ -445,7 +298,7 @@ export default function PaymentModal({
                 const totalAPayer = isNewSale 
                     ? (totals.tauxCouverture > 0 
                         ? totals.partPatient 
-                        : Math.max(0, (totals.totalTtc || 0) - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
+                        : ((totals.totalTtc || 0) - (totals.couponMontant || 0) - (totals.loyaltyDeduction || 0)))
                     : (facturePourPaiement?.total_ttc ? Number(facturePourPaiement.total_ttc) : 0)
                 
                 const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0) + (paiements.length === 0 && Number(montantPaye) > 0 ? Number(montantPaye) : 0)
@@ -468,8 +321,8 @@ export default function PaymentModal({
                     <button 
                         ref={submitBtnRef}
                         type="submit" 
-                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient) || (selectedValidator !== null && !passwordVerified)}
-                        className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''} ${passwordVerified ? 'btn-success' : ''}`}
+                        disabled={loading || (isNewSale && rendu < -1 && !selectedClient)}
+                        className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
                     >
                         {loading ? 'Traitement...' : isNewSale ? t('facturation.payment.validate_sale') : t('facturation.payment.register_payment')}
                     </button>

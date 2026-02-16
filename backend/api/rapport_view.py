@@ -34,7 +34,7 @@ class RapportViewSet(viewsets.ViewSet):
         
         for facture in factures:
             ca_ttc += facture.total_ttc
-            ca_ht += (facture.total_ht - facture.remise)
+            ca_ht += facture.total_ht
         
         return {
             'ca_ttc': ca_ttc,
@@ -139,7 +139,10 @@ class RapportViewSet(viewsets.ViewSet):
             
             for ligne in facture.produits.all():
                 taux = ligne.tva
-                montant_ligne_ttc = Decimal(str(ligne.quantity)) * Decimal(str(ligne.selling_price))
+                # CA Brut de la ligne = (PU Brut - Remise Ligne) * Quantité
+                prix_unitaire_net = ligne.selling_price - (ligne.discount or Decimal('0.00'))
+                montant_ligne_ttc = Decimal(str(ligne.quantity)) * prix_unitaire_net
+                
                 if taux not in lignes_stats:
                     lignes_stats[taux] = Decimal('0.00')
                 lignes_stats[taux] += montant_ligne_ttc
@@ -956,17 +959,17 @@ class RapportViewSet(viewsets.ViewSet):
         lignes = FactureProduit.objects.filter(
             facture__date__range=(date_debut, date_fin),
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            produit__tva__gt=0
+            tva__gt=0 # Utiliser le taux sauvegardé sur la ligne
         ).values(
-            'produit__name', 'produit__cip1', 'produit__tva'
+            'produit__name', 'produit__cip1', 'tva'
         ).annotate(
             total_qty=Sum('quantity'),
-            total_ttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
+            total_ttc=Sum(F('quantity') * (F('selling_price') - F('discount')), output_field=DecimalField()),
         ).order_by('produit__name')
         
         data = []
         for l in lignes:
-            tva_rate = l['produit__tva'] or Decimal(0)
+            tva_rate = l['tva'] or Decimal(0)
             ttc = l['total_ttc'] or Decimal(0)
             qty = l['total_qty'] or 0
             

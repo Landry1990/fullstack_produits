@@ -19,7 +19,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onConfirm,
   loading
 }) => {
-  const { t } = useTranslation()
+  const { t: _t } = useTranslation()
   const [montantPaye, setMontantPaye] = useState('')
   const [modePaiement, setModePaiement] = useState('especes')
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
@@ -32,15 +32,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     && Number(facture.part_client) < Number(facture.total_ttc)
 
   const montantDu = Math.round(
-    Math.max(0,
-      (hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc))
-      - (coupon ? Number(coupon.montant) : 0)
-    )
+    (hasTiersPayant ? Number(facture.part_client) : Number(facture.total_ttc))
+    - (coupon ? Number(coupon.montant) : 0)
   )
 
   const totalVerse = paiements.reduce((acc, p) => acc + p.montant, 0)
-  const resteAPayer = Math.max(0, montantDu - totalVerse)
-  const renduMonnaie = Math.max(0, totalVerse - montantDu)
+  const resteAPayer = montantDu - totalVerse
   const peutValider = totalVerse >= montantDu && paiements.length > 0
 
   const paymentModes = [
@@ -81,7 +78,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleAddPayment = () => {
     const montant = Number(montantPaye)
-    if (!montant || montant <= 0) return
+    if (!montant || montant === 0) return
     
     const newPaiements = [...paiements, { mode: modePaiement, montant }]
     setPaiements(newPaiements)
@@ -184,7 +181,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               type="button"
               className="btn btn-sm btn-primary"
               onClick={handleAddPayment}
-              disabled={!montantPaye || Number(montantPaye) <= 0}
+              disabled={!montantPaye || Number(montantPaye) === 0}
             >
               +
             </button>
@@ -224,10 +221,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <span className="font-mono font-bold text-warning text-lg">{resteAPayer} F</span>
                 </div>
               )}
-              {renduMonnaie > 0 && (
+              {resteAPayer < 0 && (
                 <div className="flex justify-between items-center px-3 py-3 bg-success/10 border border-success/30 rounded-lg">
-                  <span className="text-sm font-semibold text-success">💰 Rendu monnaie</span>
-                  <span className="font-mono font-bold text-success text-2xl">{renduMonnaie} F</span>
+                  <span className="text-sm font-semibold text-success">💰 Rendu/Remboursement</span>
+                  <span className="font-mono font-bold text-success text-2xl">{Math.abs(resteAPayer)} F</span>
                 </div>
               )}
             </div>

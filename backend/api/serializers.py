@@ -76,7 +76,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
-            'can_generate_coupon', 'can_modify_price', 'max_discount_rate'
+            'can_generate_coupon', 'can_modify_price', 'max_discount_rate',
+            'can_cancel_invoice', 'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs'
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
@@ -123,6 +124,10 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_delete_commande = profile_data.get('can_delete_commande', False)
             profile.can_close_commande = profile_data.get('can_close_commande', False)
             profile.can_generate_coupon = profile_data.get('can_generate_coupon', False)
+            profile.can_cancel_invoice = profile_data.get('can_cancel_invoice', False)
+            profile.can_cancel_promis = profile_data.get('can_cancel_promis', False)
+            profile.can_manage_perimes = profile_data.get('can_manage_perimes', False)
+            profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', False)
             profile.role = profile_data.get('role', 'VENDEUR')
             profile.save()
             
@@ -154,6 +159,10 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_delete_commande = profile_data.get('can_delete_commande', profile.can_delete_commande)
             profile.can_close_commande = profile_data.get('can_close_commande', profile.can_close_commande)
             profile.can_generate_coupon = profile_data.get('can_generate_coupon', profile.can_generate_coupon)
+            profile.can_cancel_invoice = profile_data.get('can_cancel_invoice', profile.can_cancel_invoice)
+            profile.can_cancel_promis = profile_data.get('can_cancel_promis', profile.can_cancel_promis)
+            profile.can_manage_perimes = profile_data.get('can_manage_perimes', profile.can_manage_perimes)
+            profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', profile.can_manage_avoirs)
             profile.can_modify_price = profile_data.get('can_modify_price', profile.can_modify_price)
             profile.max_discount_rate = profile_data.get('max_discount_rate', profile.max_discount_rate)
             profile.role = profile_data.get('role', profile.role)
@@ -472,6 +481,10 @@ class CaisseSerializer(serializers.ModelSerializer):
     releve_reference = serializers.CharField(source='releve.reference', read_only=True)
     releve_id = serializers.IntegerField(source='releve.id', read_only=True)
     
+    # Nouveaux champs pour traçabilité (Saisie vs Validation)
+    facture_created_by_name = serializers.SerializerMethodField()
+    facture_validated_by_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Caisse
         fields = '__all__'
@@ -503,6 +516,22 @@ class CaisseSerializer(serializers.ModelSerializer):
         if obj.mode_paiement == 'en_compte':
             return False
         return obj.facture.paiements.filter(mode_paiement='en_compte').exists()
+
+    def get_facture_created_by_name(self, obj):
+        try:
+            if obj.facture and obj.facture.created_by:
+                return obj.facture.created_by.get_full_name() or obj.facture.created_by.username
+        except AttributeError:
+            pass
+        return ''
+
+    def get_facture_validated_by_name(self, obj):
+        try:
+            if obj.facture and obj.facture.validated_by:
+                return obj.facture.validated_by.get_full_name() or obj.facture.validated_by.username
+        except AttributeError:
+            pass
+        return ''
 
 class FactureSerializer(serializers.ModelSerializer):
     client_nom = serializers.SerializerMethodField()

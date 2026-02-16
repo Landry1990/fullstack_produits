@@ -18,6 +18,179 @@ interface CartTableProps {
   onSelectLine?: (index: number) => void
 }
 
+interface CartRowProps {
+  ligne: LigneFacture
+  index: number
+  selectedIndex: number
+  onSelectLine?: (index: number) => void
+  updateQuantite: (produitId: number, quantite: number) => void
+  updatePrix: (produitId: number, prix: string) => void
+  updateRemiseProduit: (produitId: number, remise: string) => void
+  removeLigne: (produitId: number) => void
+  onOpenLotModal: (product: ProduitModel, currentLotId: string | null) => void
+  quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
+  onReturnFocus: () => void
+  canModifyPrice: boolean
+  maxDiscount: number
+  t: (key: string, options?: any) => string
+}
+
+const CartRow = React.memo(({
+  ligne,
+  index,
+  selectedIndex,
+  onSelectLine,
+  updateQuantite,
+  updatePrix,
+  updateRemiseProduit,
+  removeLigne,
+  onOpenLotModal,
+  quantityInputsRef,
+  onReturnFocus,
+  canModifyPrice,
+  maxDiscount,
+  t
+}: CartRowProps) => {
+  const [localQty, setLocalQty] = React.useState(ligne.quantite.toString())
+  const [localPrice, setLocalPrice] = React.useState(ligne.prix_unitaire)
+  const [localRemise, setLocalRemise] = React.useState(ligne.remise_produit)
+
+  // Sync local states when external state changes (shortcuts, barcode, etc.)
+  React.useEffect(() => {
+    setLocalQty(ligne.quantite.toString())
+    setLocalPrice(ligne.prix_unitaire)
+    setLocalRemise(ligne.remise_produit)
+  }, [ligne.quantite, ligne.prix_unitaire, ligne.remise_produit])
+
+  const handleQtyChange = (value: string) => {
+    // Regex: allow only digits and a single minus sign at the very beginning
+    const filteredValue = value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '')
+    setLocalQty(filteredValue)
+
+    // Only update parent if it's a valid number and not just a "-" sign
+    const numValue = parseInt(filteredValue)
+    if (!isNaN(numValue) && filteredValue !== '-') {
+      updateQuantite(ligne.produit.id, numValue)
+    }
+  }
+
+  const handlePriceSubmit = () => {
+    if (localPrice !== ligne.prix_unitaire) {
+      updatePrix(ligne.produit.id, localPrice)
+    }
+  }
+
+  const handleRemiseSubmit = () => {
+    const numValue = parseFloat(localRemise)
+    if (!isNaN(numValue) && numValue > maxDiscount) {
+      toast.error(t('facturation.messages.discount_limit_error', { rate: maxDiscount }))
+      setLocalRemise(String(maxDiscount))
+      updateRemiseProduit(ligne.produit.id, String(maxDiscount))
+    } else if (localRemise !== ligne.remise_produit) {
+      updateRemiseProduit(ligne.produit.id, localRemise)
+    }
+  }
+
+  const isReturn = Number(ligne.quantite) < 0
+
+  return (
+    <tr
+      className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 cursor-pointer transition-colors duration-150 
+        ${index === selectedIndex ? '!bg-blue-500/20 border-l-4 border-l-primary' : ''}
+        ${isReturn ? 'bg-red-50 text-red-600 font-semibold' : ''}`}
+      ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
+      onClick={() => onSelectLine?.(index)}
+    >
+      <td className="pl-2 md:pl-4 py-1">
+        <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
+          {ligne.produit.name}
+          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+        </div>
+      </td>
+      <td className="text-right py-1">
+        <input
+          ref={(el) => {
+            if (el) quantityInputsRef.current.set(ligne.produit.id, el)
+            else quantityInputsRef.current.delete(ligne.produit.id)
+          }}
+          type="text"
+          value={localQty}
+          onChange={(e) => handleQtyChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              onReturnFocus()
+            }
+          }}
+          className="input input-ghost input-xs sm:input-sm w-full text-right font-medium focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0"
+        />
+      </td>
+      <td className="text-right py-1">
+        <input
+          type="text"
+          value={localPrice}
+          onChange={(e) => setLocalPrice(e.target.value.replace(/[^0-9.]/g, ''))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handlePriceSubmit()
+              onReturnFocus()
+            }
+          }}
+          className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
+          disabled={!canModifyPrice}
+          title={!canModifyPrice ? t('facturation.messages.price_modification_forbidden') : ""}
+        />
+      </td>
+      <td className="text-right py-1 hidden lg:table-cell">
+        <input
+          type="text"
+          value={localRemise}
+          onChange={(e) => setLocalRemise(e.target.value.replace(/[^0-9.]/g, ''))}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              handleRemiseSubmit()
+              onReturnFocus()
+            }
+          }}
+          className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
+          placeholder="%"
+        />
+      </td>
+      <td className="text-center py-1 hidden md:table-cell">
+        <div className={`font-mono font-bold ${
+          (ligne.produit.stock ?? 0) <= 0 ? 'text-error' :
+          (ligne.produit.stock ?? 0) < 5 ? 'text-warning' : 'text-success'
+        }`}>
+          {ligne.produit.stock ?? 0}
+        </div>
+      </td>
+      <td className="text-center py-1">
+        <button
+          className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
+          onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}
+          title={ligne.lotId ? `Lot: ${ligne.lotText}` : "Lot: Automatique (FEFO)"}
+        >
+          {ligne.lotId ? ligne.lotText : 'Auto'}
+        </button>
+      </td>
+      <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
+        {Math.round(ligne.total_ligne)}
+      </td>
+      <td className="text-center py-1">
+        <button
+          onClick={() => removeLigne(ligne.produit.id)}
+          className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square sm:opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <span className="sr-only">{t('facturation.cart.actions.remove')}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+        </button>
+      </td>
+    </tr>
+  )
+})
+
 export default function CartTable({
   lignesFacture,
   updateQuantite,
@@ -32,20 +205,10 @@ export default function CartTable({
 }: CartTableProps) {
   const { user } = useAuth()
   const { t } = useTranslation()
-  
+
   // Permission Checks
   const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
   const maxDiscount = user?.is_superuser ? 100 : (Number(user?.profile?.max_discount_rate) || 0)
-
-  const handleRemiseChange = (produitId: number, value: string) => {
-      const numValue = parseFloat(value)
-      if (!isNaN(numValue) && numValue > maxDiscount) {
-          toast.error(t('facturation.messages.discount_limit_error', { rate: maxDiscount }))
-          updateRemiseProduit(produitId, String(maxDiscount))
-      } else {
-          updateRemiseProduit(produitId, value)
-      }
-  }
 
   if (lignesFacture.length === 0) {
     return (
@@ -74,85 +237,23 @@ export default function CartTable({
       </thead>
       <tbody>
         {lignesFacture.map((ligne, index) => (
-          <tr 
-             key={ligne.produit.id} 
-             className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 cursor-pointer transition-colors duration-150 ${index === selectedIndex ? '!bg-blue-500/20 border-l-4 border-l-primary' : ''}`}
-             ref={index === selectedIndex ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }) : null}
-             onClick={() => onSelectLine?.(index)}
-          >
-            <td className="pl-2 md:pl-4 py-1">
-              <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
-                {ligne.produit.name}
-                {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
-              </div>
-            </td>
-            <td className="text-right py-1">
-              <input
-                ref={(el) => {
-                  if (el) quantityInputsRef.current.set(ligne.produit.id, el)
-                  else quantityInputsRef.current.delete(ligne.produit.id)
-                }}
-                type="text"
-                value={ligne.quantite}
-                onChange={(e) => updateQuantite(ligne.produit.id, parseInt(e.target.value) || 0)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    onReturnFocus()
-                  }
-                }}
-                className="input input-ghost input-xs sm:input-sm w-full text-right font-medium focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0"
-              />
-            </td>
-            <td className="text-right py-1">
-              <input
-                type="text"
-                value={ligne.prix_unitaire}
-                onChange={(e) => updatePrix(ligne.produit.id, e.target.value)}
-                className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
-                disabled={!canModifyPrice}
-                title={!canModifyPrice ? t('facturation.messages.price_modification_forbidden') : ""}
-              />
-            </td>
-            <td className="text-right py-1 hidden lg:table-cell">
-              <input
-                type="text"
-                value={ligne.remise_produit}
-                onChange={(e) => handleRemiseChange(ligne.produit.id, e.target.value)}
-                className="input input-ghost input-xs w-full text-right focus:bg-base-100 focus:text-primary"
-                placeholder="%"
-              />
-            </td>
-            <td className="text-center py-1 hidden md:table-cell">
-              <div className={`font-mono font-bold ${
-                  (ligne.produit.stock ?? 0) <= 0 ? 'text-error' : 
-                  (ligne.produit.stock ?? 0) < 5 ? 'text-warning' : 'text-success'
-                }`}>
-                {ligne.produit.stock ?? 0}
-              </div>
-            </td>
-            <td className="text-center py-1">
-              <button 
-                className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
-                onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}
-                title={ligne.lotId ? `Lot: ${ligne.lotText}` : "Lot: Automatique (FEFO)"}
-              >
-                {ligne.lotId ? ligne.lotText : 'Auto'}
-              </button>
-            </td>
-            <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
-              {Math.round(ligne.total_ligne)}
-            </td>
-            <td className="text-center py-1">
-              <button
-                onClick={() => removeLigne(ligne.produit.id)}
-                className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square sm:opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <span className="sr-only">{t('facturation.cart.actions.remove')}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
-            </td>
-          </tr>
+          <CartRow
+            key={ligne.produit.id}
+            ligne={ligne}
+            index={index}
+            selectedIndex={selectedIndex}
+            onSelectLine={onSelectLine}
+            updateQuantite={updateQuantite}
+            updatePrix={updatePrix}
+            updateRemiseProduit={updateRemiseProduit}
+            removeLigne={removeLigne}
+            onOpenLotModal={onOpenLotModal}
+            quantityInputsRef={quantityInputsRef}
+            onReturnFocus={onReturnFocus}
+            canModifyPrice={!!canModifyPrice}
+            maxDiscount={maxDiscount}
+            t={t}
+          />
         ))}
       </tbody>
     </table>

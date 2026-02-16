@@ -38,6 +38,7 @@ from ..serializers_optimized import (
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
+from ..sudo_utils import validate_sudo_mode
 
 from django.db.models import F, Sum, DecimalField, Case, When, Value, ExpressionWrapper
 from django.db.models.functions import Coalesce
@@ -84,28 +85,9 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         quantity_to_remove = int(request.data.get('quantity', lot.quantity_remaining))
         reason = request.data.get('reason', 'Périmé')
         
-        # --- LOGIQUE SUDO MODE ---
-        validated_by_id = request.data.get('validated_by_id')
-        validation_user = request.user
-        
-        if validated_by_id:
-            try:
-                from django.contrib.auth.models import User
-                sudo_user = User.objects.get(id=validated_by_id)
-                
-                # Vérifier le mot de passe si un mot de passe est fourni (ou obligatoire selon politique)
-                password = request.data.get('password')
-                if password:
-                    if not sudo_user.check_password(password):
-                        return Response({'error': 'Mot de passe incorrect pour le validateur.'}, status=status.HTTP_403_FORBIDDEN)
-                    validation_user = sudo_user
-                else:
-                    # Si pas de mdp fourni mais ID fourni, on peut soit bloquer soit accepter si l'admin fait l'action
-                    # Pour Sudo Mode strict, le mot de passe est généralement requis
-                    return Response({'error': 'Mot de passe requis pour la validation.'}, status=status.HTTP_400_BAD_REQUEST)
-                    
-            except User.DoesNotExist:
-                 return Response({'error': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_perimes')
+        if error_res:
+             return error_res
         # -------------------------
         
         if quantity_to_remove > lot.quantity_remaining:
@@ -373,28 +355,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if inventaire.status == Inventaire.Status.VALIDEE:
              return Response({'detail': 'Cet inventaire est déjà validé.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Gestion du mode SUDO (Valider en tant que...)
-        validated_by_id = request.data.get('validated_by_id')
-        validator = request.user
-        
-        if validated_by_id and str(validated_by_id) != str(request.user.id):
-            # Check permissions (Simple check: is superuser or ADMIN role)
-            if request.user.is_superuser or (hasattr(request.user, 'profile') and request.user.profile.role == 'ADMIN'):
-               # Verify Admin Password
-               sudo_password = request.data.get('sudo_password')
-               if not sudo_password:
-                    return Response({'error': 'Mot de passe administrateur requis.'}, status=status.HTTP_400_BAD_REQUEST)
-               
-               if not request.user.check_password(sudo_password):
-                    return Response({'error': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
-
-               from django.contrib.auth.models import User
-               try:
-                   validator = User.objects.get(id=validated_by_id)
-               except User.DoesNotExist:
-                   return Response({'error': 'Utilisateur validateur introuvable.'}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response({'error': 'Permission refusée (Admin requis).'}, status=status.HTTP_403_FORBIDDEN)
+        validator, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')
+        if error_res:
+             return error_res
 
         inventaire.validated_by = validator
 

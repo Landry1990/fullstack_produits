@@ -25,6 +25,12 @@ interface User {
     can_delete_commande?: boolean;
     can_close_commande?: boolean;
     can_generate_coupon?: boolean;
+    can_cancel_invoice?: boolean;
+    can_cancel_promis?: boolean;
+    can_manage_perimes?: boolean;
+    can_manage_avoirs?: boolean;
+    can_modify_price?: boolean;
+    max_discount_rate?: string | number;
   };
 }
 
@@ -38,6 +44,10 @@ const AVAILABLE_MENUS = [
   { key: 'fournisseurs', label: 'Fournisseurs' },
   { key: 'clients', label: 'Clients' },
   { key: 'rayons', label: 'Rayons' },
+  { key: 'inventaire', label: 'Inventaire' },
+  { key: 'avoirs', label: 'Avoirs Fournisseurs' },
+  { key: 'promis', label: 'Produits Promis' },
+  { key: 'perimes', label: 'Périmés / Retours' },
   { key: 'statistiques', label: 'Statistiques' },
 ];
 
@@ -80,6 +90,12 @@ export default function GestionUtilisateurs() {
     can_delete_commande: false,
     can_close_commande: false,
     can_generate_coupon: false,
+    can_cancel_invoice: false,
+    can_cancel_promis: false,
+    can_manage_perimes: false,
+    can_manage_avoirs: false,
+    can_modify_price: false,
+    max_discount_rate: 0,
   });
 
   useEffect(() => {
@@ -114,6 +130,12 @@ export default function GestionUtilisateurs() {
       updates.can_delete_commande = true;
       updates.can_close_commande = true;
       updates.can_generate_coupon = true;
+      updates.can_cancel_invoice = true;
+      updates.can_cancel_promis = true;
+      updates.can_manage_perimes = true;
+      updates.can_manage_avoirs = true;
+      updates.can_modify_price = true;
+      updates.max_discount_rate = 100;
       updates.allowed_menus = AVAILABLE_MENUS.map(m => m.key);
     } else if (role === 'CAISSIER') {
       updates.is_superuser = false;
@@ -138,6 +160,12 @@ export default function GestionUtilisateurs() {
       updates.can_delete_commande = false;
       updates.can_close_commande = false;
       updates.can_generate_coupon = false;
+      updates.can_cancel_invoice = false;
+      updates.can_cancel_promis = false;
+      updates.can_manage_perimes = false;
+      updates.can_manage_avoirs = false;
+      updates.can_modify_price = false;
+      updates.max_discount_rate = 0;
       // Vendeur a accès à la caisse pour les rappels seulement (sera géré dans CaisseCentralisee)
       updates.allowed_menus = ['facturation', 'caisse', 'produits', 'clients', 'rayons'];
     }
@@ -166,6 +194,12 @@ export default function GestionUtilisateurs() {
         can_delete_commande: user.profile?.can_delete_commande || false,
         can_close_commande: user.profile?.can_close_commande || false,
         can_generate_coupon: user.profile?.can_generate_coupon || false,
+        can_cancel_invoice: user.profile?.can_cancel_invoice || false,
+        can_cancel_promis: user.profile?.can_cancel_promis || false,
+        can_manage_perimes: user.profile?.can_manage_perimes || false,
+        can_manage_avoirs: user.profile?.can_manage_avoirs || false,
+        can_modify_price: user.profile?.can_modify_price || false,
+        max_discount_rate: Number(user.profile?.max_discount_rate || 0),
       });
     } else {
       setEditingUser(null);
@@ -187,6 +221,12 @@ export default function GestionUtilisateurs() {
         can_delete_commande: false,
         can_close_commande: false,
         can_generate_coupon: false,
+        can_cancel_invoice: false,
+        can_cancel_promis: false,
+        can_manage_perimes: false,
+        can_manage_avoirs: false,
+        can_modify_price: false,
+        max_discount_rate: 0,
       });
       handleRoleChange('VENDEUR'); // Initialize defaults
     }
@@ -261,7 +301,14 @@ export default function GestionUtilisateurs() {
           can_adjust_stock: formData.can_adjust_stock,
           can_delete_fournisseur: formData.can_delete_fournisseur,
           can_delete_commande: formData.can_delete_commande,
-          can_close_commande: formData.can_close_commande
+          can_close_commande: formData.can_close_commande,
+          can_generate_coupon: formData.can_generate_coupon,
+          can_cancel_invoice: formData.can_cancel_invoice,
+          can_cancel_promis: formData.can_cancel_promis,
+          can_manage_perimes: formData.can_manage_perimes,
+          can_manage_avoirs: formData.can_manage_avoirs,
+          can_modify_price: formData.can_modify_price,
+          max_discount_rate: formData.max_discount_rate
         }
       };
       
@@ -613,6 +660,72 @@ export default function GestionUtilisateurs() {
                     />
                     <span className="label-text text-sm">{t('users.permissions.generate_coupon')}</span>
                   </label>
+
+                  <div className="divider my-1">Sudo Actions</div>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs"
+                      checked={formData.can_cancel_invoice}
+                      onChange={e => setFormData({...formData, can_cancel_invoice: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Peut annuler des factures</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs"
+                      checked={formData.can_cancel_promis}
+                      onChange={e => setFormData({...formData, can_cancel_promis: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Peut annuler des promis</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs"
+                      checked={formData.can_manage_perimes}
+                      onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Peut gérer les périmés</span>
+                  </label>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs"
+                      checked={formData.can_manage_avoirs}
+                      onChange={e => setFormData({...formData, can_manage_avoirs: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Peut gérer les avoirs</span>
+                  </label>
+
+                  <div className="divider my-1">Prix & Remises</div>
+
+                  <label className="label cursor-pointer justify-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      className="checkbox checkbox-xs"
+                      checked={formData.can_modify_price}
+                      onChange={e => setFormData({...formData, can_modify_price: e.target.checked})}
+                    />
+                    <span className="label-text text-sm">Peut modifier le prix</span>
+                  </label>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text text-xs">Taux de remise max (%)</span>
+                    </label>
+                    <input 
+                      type="number" 
+                      className="input input-bordered input-sm" 
+                      value={formData.max_discount_rate}
+                      onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
+                    />
+                  </div>
                 </div>
               </div>
 
