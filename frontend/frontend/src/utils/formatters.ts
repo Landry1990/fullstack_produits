@@ -26,3 +26,11 @@ export const normalizeNumberInput = (value: string | number, options?: { min?: n
 export const formatPrice = (price: number) => {
     return price.toLocaleString('fr-FR')
 }
+
+export const formatCurrency = formatPrice;
+
+export const safeFormatNumber = (value: any) => {
+    if (value === undefined || value === null) return formatCurrency(0);
+    const num = Number(value);
+    return isNaN(num) ? formatCurrency(0) : formatCurrency(num);
+}

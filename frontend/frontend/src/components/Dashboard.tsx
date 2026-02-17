@@ -24,6 +24,7 @@ import {
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
+import { formatCurrency, safeFormatNumber } from '../utils/formatters';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -135,32 +136,32 @@ export default function Dashboard() {
       <div className={`grid grid-cols-1 md:grid-cols-2 ${stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER' ? 'xl:grid-cols-2' : 'xl:grid-cols-4'} gap-4`}>
         {stats && (stats.role === 'VENDEUR' || stats.role === 'CAISSIER' ? (
            // VIEW VENDEUR / CAISSIER (Restricted)
-           [
-             {
-              title: "MES VENTES (JOUR)",
-              value: `${Math.round(stats.user_stats?.sales || 0).toLocaleString('fr-FR')} F`,
-              change: `${stats.user_stats?.count || 0} ventes`,
-              icon: "👤",
-              color: "bg-indigo-100 text-indigo-700",
-              isPositive: true,
-              details: "Encaissements personnels"
-             },
-             {
-              title: "MON PANIER MOYEN",
-              value: `${Math.round(stats.user_stats?.avg_basket || 0).toLocaleString('fr-FR')} F`,
-              change: "Moyenne par client",
-              icon: "🛍️",
-              color: "bg-fuchsia-100 text-fuchsia-700",
-              isPositive: true
-             }
-           ]
+             [
+               {
+                title: "MES VENTES (JOUR)",
+                value: formatCurrency(stats?.user_stats?.sales),
+                change: `${stats?.user_stats?.count || 0} ventes`,
+                icon: "👤",
+                color: "bg-indigo-100 text-indigo-700",
+                isPositive: true,
+                details: "Encaissements personnels"
+               },
+               {
+                title: "MON PANIER MOYEN",
+                value: formatCurrency(stats?.user_stats?.avg_basket),
+                change: "Moyenne par client",
+                icon: "🛍️",
+                color: "bg-fuchsia-100 text-fuchsia-700",
+                isPositive: true
+               }
+             ]
         ) : (
            // VIEW PHARMACIEN / ADMIN (Full)
            [
-            ...(stats.user_stats ? [
+            ...(stats?.user_stats ? [
                 {
                 title: "MES VENTES (JOUR)",
-                value: `${Math.round(stats.user_stats.sales).toLocaleString('fr-FR')} F`,
+                value: formatCurrency(stats.user_stats.sales),
                 change: `${stats.user_stats.count} ventes`,
                 icon: "👤",
                 color: "bg-indigo-100 text-indigo-700",
@@ -169,7 +170,7 @@ export default function Dashboard() {
                 },
                 {
                 title: "MON PANIER MOYEN",
-                value: `${Math.round(stats.user_stats.avg_basket).toLocaleString('fr-FR')} F`,
+                value: formatCurrency(stats.user_stats.avg_basket),
                 change: "Moyenne par client",
                 icon: "🛍️",
                 color: "bg-fuchsia-100 text-fuchsia-700",
@@ -177,15 +178,15 @@ export default function Dashboard() {
                 }
             ] : []),
             { title: t('dashboard.stats.revenue'), 
-                value: `${Math.round(stats.revenue?.value || 0).toLocaleString('fr-FR')} F`, 
-                change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
+                value: formatCurrency(stats?.revenue?.value), 
+                change: `${(stats?.revenue?.change || 0) > 0 ? '+' : ''}${stats?.revenue?.change || 0}%`, 
                 icon: "💰", 
                 color: "bg-emerald-100 text-emerald-700", 
-                isPositive: (stats.revenue?.change || 0) >= 0,
-                details: t('dashboard.stats.revenue_details', { amount: Math.round(stats.discount?.value || 0).toLocaleString('fr-FR') })
+                isPositive: (stats?.revenue?.change || 0) >= 0,
+                details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats?.discount?.value) })
             },
-            { title: t('dashboard.stats.receivables'), value: `${Math.round(stats.receivables?.value || 0).toLocaleString('fr-FR')} F`, change: `${stats.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
-            { title: t('dashboard.stats.stock_value'), value: `${Math.round(stats.stock_value?.value || 0).toLocaleString('fr-FR')} F`, change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
+            { title: t('dashboard.stats.receivables'), value: formatCurrency(stats?.receivables?.value), change: `${stats?.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
+            { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats?.stock_value?.value), change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
            ]
         )).map((stat: any, index) => {
           const content = (
@@ -272,30 +273,30 @@ export default function Dashboard() {
                     <tr key={index} className="hover:bg-base-200/50">
                       <td className="font-medium">{stat.fournisseur_nom}</td>
                       <td className="text-right font-medium text-purple-900">
-                        {Math.round(stat.valeur_acquise).toLocaleString('fr-FR')} F
+                        {formatCurrency(stat.valeur_acquise)}
                       </td>
                       <td className="text-right font-medium text-green-900">
-                        {Math.round(stat.valeur_vendue).toLocaleString('fr-FR')} F
+                        {formatCurrency(stat.valeur_vendue)}
                       </td>
                       <td className="text-right font-medium text-blue-900">
-                        {Math.round(stat.valeur_restante).toLocaleString('fr-FR')} F
+                        {formatCurrency(stat.valeur_restante)}
                       </td>
                     </tr>
                   ))}
                    {/* Total Row */}
                   {(ugStats as any).results.length > 0 && (
-                     <tr className="bg-base-200 font-bold border-t-2 border-base-300">
-                       <td>{t('dashboard.ug.total')}</td>
-                       <td className="text-right text-purple-700">
-                         {Math.round((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0)).toLocaleString('fr-FR')} F
-                       </td>
-                       <td className="text-right text-green-700">
-                         {Math.round((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_vendue, 0)).toLocaleString('fr-FR')} F
-                       </td>
-                       <td className="text-right text-blue-700">
-                         {Math.round((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_restante, 0)).toLocaleString('fr-FR')} F
-                       </td>
-                     </tr>
+                      <tr className="bg-base-200 font-bold border-t-2 border-base-300">
+                        <td>{t('dashboard.ug.total')}</td>
+                        <td className="text-right text-purple-700">
+                          {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0))}
+                        </td>
+                        <td className="text-right text-green-700">
+                          {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_vendue, 0))}
+                        </td>
+                        <td className="text-right text-blue-700">
+                          {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_restante, 0))}
+                        </td>
+                      </tr>
                   )}
                 </tbody>
               </table>
@@ -333,9 +334,9 @@ export default function Dashboard() {
                         tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                         domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
                       />
-                      <Tooltip 
-                        formatter={(value: number) => [`${Math.round(value).toLocaleString('fr-FR')} F`, 'Montant']}
-                        contentStyle={{ 
+                       <Tooltip 
+                         formatter={(value: number) => [formatCurrency(value), 'Montant']}
+                         contentStyle={{ 
                           backgroundColor: '#fff',
                           border: '1px solid #e5e7eb',
                           borderRadius: '8px',
@@ -405,11 +406,11 @@ export default function Dashboard() {
                     Dettes Fournisseurs
                  </h2>
                  <div className="flex items-center gap-2">
-                     {supplierDebts?.total_debt > 0 && (
-                        <div className="badge badge-error text-white font-bold p-3">
-                            Total: {Math.round(supplierDebts.total_debt).toLocaleString('fr-FR')} F
-                        </div>
-                     )}
+                      {supplierDebts?.total_debt > 0 && (
+                         <div className="badge badge-error text-white font-bold p-3">
+                             Total: {formatCurrency(supplierDebts.total_debt)}
+                         </div>
+                      )}
                      <button 
                         className={`btn btn-ghost btn-sm btn-circle ${isRefetchingSupplierDebts ? 'loading' : ''}`}
                         onClick={() => refetchSupplierDebts()}
@@ -438,9 +439,9 @@ export default function Dashboard() {
                             {supplierDebts.suppliers.map((supplier: any) => (
                                 <tr key={supplier.id} className="hover:bg-base-200/50">
                                     <td className="font-medium">{supplier.name}</td>
-                                    <td className="text-right font-mono font-bold text-error">
-                                        {Math.round(supplier.debt).toLocaleString('fr-FR')} F
-                                    </td>
+                                     <td className="text-right font-mono font-bold text-error">
+                                         {formatCurrency(supplier.debt)}
+                                     </td>
                                     <td className="text-center">
                                         <Link 
                                             to="/app/fournisseurs" 

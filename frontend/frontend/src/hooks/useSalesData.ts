@@ -20,13 +20,16 @@ export const useSalesData = () => {
     const [totalItems, setTotalItems] = useState(0);
     const PAGE_SIZE = 50; // Or configurable
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
     const fetchFactures = useCallback(async (page = 1) => {
         setLoading(true);
         try {
             const token = safeStorage.getItem('authToken');
-            if (!token) return;
+            if (!token) {
+                setLoading(false);
+                return;
+            }
 
             // Update page state if manually called with a page
             if (page !== currentPage) setCurrentPage(page);
@@ -65,7 +68,7 @@ export const useSalesData = () => {
             }
         } catch (error) {
             console.error('Erreur chargement factures:', error);
-            // toast.error(t('sales.messages.load_error')); // Silent fail or toast?
+            toast.error(t('sales.messages.load_error'));
             setFactures([]);
         } finally {
             setLoading(false);

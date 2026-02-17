@@ -18,9 +18,7 @@ interface SalesStats {
 export const SalesQuickStats: React.FC = () => {
     const [stats, setStats] = useState<SalesStats | null>(null);
 
-
     const fetchStats = async () => {
-
         try {
             const token = safeStorage.getItem('authToken');
             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -30,8 +28,7 @@ export const SalesQuickStats: React.FC = () => {
             setStats(response.data);
         } catch (error) {
             console.error("Failed to fetch quick stats", error);
-        } finally {
-
+            setStats(null);
         }
     };
 
@@ -53,7 +50,7 @@ export const SalesQuickStats: React.FC = () => {
                         <div>
                             <div className="text-lg font-bold text-base-content">{stats.top_vendeur.name}</div>
                             <div className="text-xs text-base-content/60">
-                                {stats.top_vendeur.count} vente(s) • {stats.top_vendeur.amount.toLocaleString()} F
+                                {stats.top_vendeur.count} vente(s) • {(stats.top_vendeur.amount || 0).toLocaleString()} F
                             </div>
                         </div>
                     ) : (

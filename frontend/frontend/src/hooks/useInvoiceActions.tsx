@@ -16,7 +16,7 @@ interface UseInvoiceActionsProps {
 export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvoiceActionsProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
     // States for Modals
     const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null);

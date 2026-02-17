@@ -74,6 +74,7 @@ export default function Facturation() {
       updateRemiseProduit,
       updateLineLot,
       removeLigne,
+      bulkAddProduits,
       cartStats
   } = useCart({
       apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
@@ -201,38 +202,17 @@ export default function Facturation() {
           // Ratio for discount
           const ratio = totalNormalPrice > 0 ? packPrice / totalNormalPrice : 1
           
-          for (const { product, quantity } of items) {
-              // Add product
-              addProduitToFacture(product)
-              
-              // We need to set quantity. 
-              // Since addProduit adds 1, we might need to wait or rely on it being present.
-              // To avoid race conditions, we use a timeout or assume addProduit is synchronous enough in state dispatch
-              // Actually, useCart `addProduit` usually sets state. 
-              // Multiple `setState` in loop is fine in React 18 (batched).
-              // But accessing `lignesFacture` immediately after might fail if we needed to check it.
-              // Luckily `updateQuantite` usually takes ID.
-              
-              // We'll queue quantity updates? 
-              // Better: just call updateQuantite immediately.
-              updateQuantite(product.id, quantity)
-              
-              // Apply price adjustment (Remise)
-              if (ratio < 1) {
-                  // Calculate discount percentage
-                  // Or set specific price? `updatePrix`?
-                  // Let's use Remise logic if possible, or just change selling_price?
-                  // `updateRemiseProduit` takes percentage or amount? 
-                  // If we want exact match, better to update price net.
-                  // But `updatePrix` might just change unit price. 
-                  // updatePrix(product.id, newUnitPrice.toFixed(2)) 
-                  // Let's rely on standard price but apply global discount? 
-                  // No, bundle discount is specific.
-                  // Let's apply a discount percent.
-                  const discountPercent = (1 - ratio) * 100
-                  updateRemiseProduit(product.id, discountPercent.toFixed(2))
+          // Prepare items for bulk addition
+          const itemsToBulkAdd = items.map(({ product, quantity }) => {
+              const itemToSet = {
+                  product,
+                  quantity,
+                  discountPercent: ratio < 1 ? (Math.round((1 - ratio) * 10000) / 100).toFixed(2) : '0'
               }
-          }
+              return itemToSet
+          })
+
+          bulkAddProduits(itemsToBulkAdd)
           
           toast.success(t('facturation.messages.pack_added', { name: pack.name }), { id: toastId })
           

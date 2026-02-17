@@ -103,7 +103,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     
     def get_queryset(self):
         # Base optimization for all views: select related foreign keys
-        queryset = Facture.objects.select_related('client', 'ayant_droit').order_by('-date')
+        queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').order_by('-date')
         
         # Add prefetch only for detail view where products/payments are shown
         if self.action == 'retrieve':
@@ -1393,31 +1393,32 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
 
 class CaisseViewSet(viewsets.ModelViewSet):
     """API endpoint for caisse (paiements)."""
-    queryset = Caisse.objects.select_related('facture', 'facture__client', 'user').order_by('-date_paiement')
+    queryset = Caisse.objects.select_related(
+        'facture', 'facture__client', 'user', 
+        'facture__created_by', 'facture__validated_by'
+    ).order_by('-date_paiement')
     serializer_class = CaisseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['facture', 'mode_paiement', 'statut', 'user']
     permission_classes = [IsAuthenticated]
     
     def perform_create(self, serializer):
-        user = self.request.user
+        validation_user, error_res = validate_sudo_mode(self.request)
+        # On ne bloque pas si erreur ici car perform_create est déjà appelé
+        user = validation_user if not error_res else self.request.user
         
-        # Gestion Sudo Mode
-        validated_by_id = self.request.data.get('validated_by_id')
-        sudo_password = self.request.data.get('sudo_password')
-        
-        if validated_by_id:
-            try:
-                from django.contrib.auth.models import User
-                validator_user = User.objects.get(id=validated_by_id)
-                if sudo_password and validator_user.check_password(sudo_password):
-                    user = validator_user
-            except Exception as e:
-                # En cas d'erreur ou mot de passe incorrect, on garde l'utilisateur connecté
-                # (Ou on pourrait lever une erreur, mais ici on sécurise le flux)
-                pass
-
         serializer.save(user=user)
+        
+        # Mise à jour du statut de la facture si tout est payé
+        instance = serializer.instance
+        if instance.facture:
+            facture = instance.facture
+            total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
+            
+            if total_paye >= facture.total_ttc:
+                 if facture.status != Facture.Status.PAYEE:
+                     facture.status = Facture.Status.PAYEE
+                     facture.save()
 
     @action(detail=False, methods=['get'], url_path='get_totals')
     def get_totals(self, request):
@@ -1426,6 +1427,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         """
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
+        user_id = request.query_params.get('user_id')
         
         start_date = None
         end_date = None
@@ -1477,6 +1479,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
+        
+        if user_id:
+            transactions = transactions.filter(user_id=user_id)
 
         # SEPARATION: Ventes (Clients normaux) vs Recouvrement (Clients Pros)
         paiements_pro = transactions.filter(facture__client__client_type='PROFESSIONNEL')
@@ -1495,6 +1500,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
             mouvements = mouvements.filter(date__gte=start_date)
         if end_date:
             mouvements = mouvements.filter(date__lte=end_date)
+            
+        if user_id:
+            mouvements = mouvements.filter(user_id=user_id)
             
         moves_aggregated = mouvements.aggregate(
             entrees=Coalesce(Sum('montant', filter=Q(type='ENTREE')), Value(0, output_field=DecimalField())),
@@ -1533,6 +1541,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
 
         date_debut = request.data.get('date_debut')
         date_fin = request.data.get('date_fin')
+        user_id = request.data.get('user_id')
         
         start_date = None
         end_date = None
@@ -1574,6 +1583,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
             start_date = last_cloture.date if last_cloture else None
         
         transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
+        if user_id:
+            transactions = transactions.filter(user_id=user_id)
+            
         if start_date:
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
@@ -2022,39 +2034,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({'detail': 'Contenu de la facture vidé.'})
 
 
-class CaisseViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint pour gérer les mouvements de caisse liés aux ventes.
-    """
-    queryset = Caisse.objects.all().order_by('-date_paiement')
-    serializer_class = CaisseSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
-    
-    filterset_fields = ['facture', 'mode_paiement', 'statut']
-    search_fields = ['reference', 'facture__numero_facture', 'facture__client__name'] 
 
-    def perform_create(self, serializer):
-        validation_user, error_res = validate_sudo_mode(self.request)
-        # On ne bloque pas si erreur ici car perform_create est déjà appelé
-        # Mais dans FactureViewSet on bloque, ici c'est pour Caisse.
-        # En fait Caisse n'a pas forcément besoin de permission specifique autre que can_cash_out
-        user = validation_user if not error_res else self.request.user
-        
-        serializer.save(user=user)
-        
-        # Mise à jour du statut de la facture si tout est payé
-        instance = serializer.instance
-        if instance.facture:
-            facture = instance.facture
-            total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(Sum('montant'))['montant__sum'] or 0
-            
-            # Note: total_ttc est Decimal, total_paye est Decimal
-            # On utilise une petite marge d'erreur pour les flottants si nécessaire, mais Decimal est précis
-            if total_paye >= facture.total_ttc:
-                 if facture.status != Facture.Status.PAYEE:
-                     facture.status = Facture.Status.PAYEE
-                     facture.save()
 
 
 class MouvementCaisseViewSet(viewsets.ModelViewSet):

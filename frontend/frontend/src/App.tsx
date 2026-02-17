@@ -173,6 +173,7 @@ const router = createBrowserRouter([
   },
 ])
 
+import { Suspense } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
 
 export default function App() {
@@ -181,7 +182,9 @@ export default function App() {
       <AuthProvider>
         <ConfirmProvider>
           <Toaster position="top-right" />
-          <RouterProvider router={router} />
+          <Suspense fallback={<div className="h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>}>
+            <RouterProvider router={router} />
+          </Suspense>
         </ConfirmProvider>
       </AuthProvider>
     </ErrorBoundary>

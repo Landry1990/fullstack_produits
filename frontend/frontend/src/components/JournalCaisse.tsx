@@ -7,6 +7,7 @@ import DatePicker, { registerLocale } from 'react-datepicker'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { formatCurrency, safeFormatNumber } from '../utils/formatters'
 
 // Register French locale
 registerLocale('fr', fr)
@@ -24,6 +25,10 @@ export default function JournalCaisse() {
   const [dateFin, setDateFin] = useState<Date | null>(null)
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
   const { settings: pharmacySettings } = usePharmacySettings()
+
+  // User/Cashier filtering
+  const [users, setUsers] = useState<any[]>([])
+  const [selectedUser, setSelectedUser] = useState<string>('')
   
   // Pagination
   const [page, setPage] = useState(1)
@@ -51,6 +56,7 @@ export default function JournalCaisse() {
 
   useEffect(() => {
     fetchData()
+    fetchUsers()
   }, [])
 
   // Re-fetch transactions when page changes
@@ -58,12 +64,18 @@ export default function JournalCaisse() {
     fetchTransactions()
   }, [page])
 
-  // Re-fetch totals when date filters change
+  // Re-fetch totals when date filters or user change
   useEffect(() => {
-    if (dateDebut || dateFin) {
+    if (dateDebut || dateFin || selectedUser) {
       fetchTotals()
     }
-  }, [dateDebut, dateFin])
+  }, [dateDebut, dateFin, selectedUser])
+
+  // Re-fetch transactions when filter changes (if relying on backend filtering)
+  useEffect(() => {
+      setPage(1)
+      fetchTransactions()
+  }, [selectedUser])
 
   const fetchData = async () => {
     setLoading(true)
@@ -81,9 +93,21 @@ export default function JournalCaisse() {
     }
   }
 
+  const fetchUsers = async () => {
+      try {
+          const response = await axios.get(`${apiBaseUrl}/api/users/operators/`)
+          setUsers(response.data)
+      } catch (err) {
+          console.error("Erreur chargement utilisateurs", err)
+      }
+  }
+
   const fetchMouvements = async () => {
       try {
-          const response = await axios.get(`${apiBaseUrl}/api/mouvements-caisse/`)
+          const params = new URLSearchParams()
+          if (selectedUser) params.append('user', selectedUser)
+          
+          const response = await axios.get(`${apiBaseUrl}/api/mouvements-caisse/`, { params })
           // Handle both array and paginated responses
           const data: any = response.data
           setMouvements(Array.isArray(data) ? data : (data.results || []))
@@ -97,6 +121,7 @@ export default function JournalCaisse() {
     try {
       const params = new URLSearchParams()
       params.append('page', page.toString())
+      if (selectedUser) params.append('user', selectedUser)
       
       const response = await axios.get(caisseEndpoint, { params })
       const data: any = response.data
@@ -309,6 +334,7 @@ export default function JournalCaisse() {
       // Use local time formatting to avoid UTC shifting
       if (dateDebut) params.date_debut = formatLocalISOString(dateDebut)
       if (dateFin) params.date_fin = formatLocalISOString(dateFin)
+      if (selectedUser) params.user_id = selectedUser
       
       const response = await axios.get(`${caisseEndpoint}get_totals/`, { params })
 
@@ -351,7 +377,8 @@ export default function JournalCaisse() {
       await axios.post(`${caisseEndpoint}cloturer/`, {
         montant_reel: parseFloat(actualAmount),
         date_debut: dateDebut ? formatLocalISOString(dateDebut) : undefined,
-        date_fin: dateFin ? formatLocalISOString(dateFin) : undefined
+        date_fin: dateFin ? formatLocalISOString(dateFin) : undefined,
+        user_id: selectedUser || undefined
       })
       setIsClosingModalOpen(false)
       toast.success('Caisse clôturée avec succès !')
@@ -382,8 +409,8 @@ export default function JournalCaisse() {
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black;">
             <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px;">
-                <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">${pharmacySettings.pharmacy_name}</h2>
-                <div style="font-size: 0.9em;">${pharmacySettings.city}, ${pharmacySettings.country}</div>
+                <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">${pharmacySettings?.pharmacy_name || 'Ma Pharmacie'}</h2>
+                <div style="font-size: 0.9em;">${pharmacySettings?.city || ''}, ${pharmacySettings?.country || ''}</div>
                 <div style="font-size: 0.9em;">CLÔTURE DE CAISSE</div>
             </div>
 
@@ -415,7 +442,7 @@ export default function JournalCaisse() {
                 ${Object.entries(closingTotals.details).map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
                         <span>${getModeIcon(mode)} ${mode.toUpperCase()}</span>
-                        <span>${Math.round(montant)} F</span>
+                        <span>${formatCurrency(montant)}</span>
                     </div>
                 `).join('')}
             </div>
@@ -423,26 +450,26 @@ export default function JournalCaisse() {
             <div style="margin-bottom: 15px; border-top: 1px dashed black; padding-top: 5px;">
                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
                     <span>AUTRES ENTRÉES</span>
-                    <span>${Math.round(closingTotals.total_entrees)} F</span>
+                    <span>${formatCurrency(closingTotals.total_entrees)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 3px;">
                     <span>SORTIES DIVERSES</span>
-                    <span>-${Math.round(closingTotals.total_sorties)} F</span>
+                    <span>-${formatCurrency(closingTotals.total_sorties)}</span>
                 </div>
             </div>
 
             <div style="border-top: 2px solid black; padding-top: 10px; margin-top: 10px;">
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-bottom: 5px;">
                     <span>TOTAL THÉORIQUE</span>
-                    <span>${Math.round(closingTotals.total_theorique)} F</span>
+                    <span>${formatCurrency(closingTotals.total_theorique)}</span>
                 </div>
                  <div style="display: flex; justify-content: space-between; font-size: 0.9em; border-top: 1px dashed black; padding-top: 5px; margin-top: 5px;">
                     <span>Montant Réel (Compté)</span>
-                    <span>${actualAmount ? Math.round(parseFloat(actualAmount)) + ' F' : '_________'}</span>
+                    <span>${actualAmount ? formatCurrency(parseFloat(actualAmount)) : '_________'}</span>
                 </div>
                  <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-top: 5px;">
                     <span>Ecart Caisse</span>
-                    <span>${actualAmount ? Math.round(parseFloat(actualAmount) - closingTotals.total_theorique) + ' F' : '_________'}</span>
+                    <span>${actualAmount ? formatCurrency(parseFloat(actualAmount) - closingTotals.total_theorique) : '_________'}</span>
                 </div>
             </div>
 
@@ -489,26 +516,127 @@ export default function JournalCaisse() {
       
       {/* Header & Filters Section */}
       <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-          <div className="p-6 border-b border-base-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                Journal de Caisse
-              </h1>
-              <p className="text-base-content/60 text-sm mt-1">
-                Historique de toutes les transactions et mouvements de fonds
-              </p>
+          <div className="p-4 border-b border-base-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 className="text-xl font-bold text-base-content tracking-tight">Journal de Caisse</h1>
+                    <div className="text-xs text-base-content/50 flex items-center gap-2">
+                        <span>Historique des flux</span>
+                        <span className="w-1 h-1 rounded-full bg-base-300"></span>
+                        <span className="font-mono text-primary">{totalCount} opérations</span>
+                    </div>
+                </div>
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
                 <button
                     onClick={fetchData}
-                    className="btn btn-sm btn-ghost gap-2 border border-base-300"
+                    className="btn btn-sm btn-ghost btn-square"
                     disabled={loading}
+                    title="Actualiser"
                 >
                     {loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
-                    Actualiser
                 </button>
                 
+                <div className="h-8 w-px bg-base-200 mx-1"></div>
+
+                <button
+                    onClick={() => setIsMovementModalOpen(true)}
+                    className="btn btn-sm btn-ghost hover:bg-base-200 gap-2 font-normal"
+                >
+                    ➕ Opération
+                </button>
+                <button
+                    onClick={openClosingModal}
+                    className="btn btn-sm btn-primary gap-2 shadow-sm"
+                    disabled={loading}
+                >
+                    🔒 Clôturer
+                </button>
+            </div>
+          </div>
+
+          {/* Toolbar de filtres compacte */}
+          <div className="p-3 bg-base-50/50 flex flex-col xl:flex-row items-center gap-3 text-sm">
+            
+            {/* Groupe 1: Recherche & Mode */}
+            <div className="flex items-center gap-2 w-full xl:w-auto flex-1">
+                <div className="relative flex-1 min-w-[200px]">
+                    <input
+                        type="text"
+                        placeholder="Rechercher..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="input input-sm input-bordered w-full pl-8 bg-white focus:outline-none focus:border-primary"
+                    />
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-40 text-xs">🔍</span>
+                </div>
+                
+                <select
+                    value={filterMode}
+                    onChange={(e) => setFilterMode(e.target.value)}
+                    className="select select-bordered select-sm bg-white focus:outline-none focus:border-primary max-w-[150px]"
+                >
+                    <option value="all">Tous modes</option>
+                    <option value="especes">💵 Espèces</option>
+                    <option value="cheque">✍️ Chèque</option>
+                    <option value="carte">💳 Carte</option>
+                    <option value="virement">🏦 Virement</option>
+                    <option value="om">📶 Orange Money</option>
+                    <option value="momo">📶 Mobile Money</option>
+                </select>
+                
+                <div className="h-8 w-px bg-base-200 mx-1"></div>
+
+                <select
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="select select-bordered select-sm bg-white focus:outline-none focus:border-primary max-w-[150px]"
+                >
+                    <option value="">👤 Tous</option>
+                    {users.map((u: any) => (
+                        <option key={u.id} value={u.id}>
+                            {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            {/* Groupe 2: Dates */}
+            <div className="flex items-center gap-2 w-full xl:w-auto bg-white p-1 rounded-lg border border-base-200 shadow-sm">
+                <div className="flex items-center gap-1 px-2">
+                    <span className="opacity-30 text-xs">📅</span>
+                    <DatePicker
+                        selected={dateDebut}
+                        onChange={(date: Date | null) => setDateDebut(date)}
+                        showTimeSelect
+                        timeFormat="HH:mm"
+                        dateFormat="dd/MM/yy HH:mm"
+                        placeholderText="Début"
+                        locale="fr"
+                        className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
+                        isClearable
+                    />
+                </div>
+                <span className="text-base-content/20">→</span>
+                <div className="flex items-center gap-1 px-2">
+                     <DatePicker
+                        selected={dateFin}
+                        onChange={(date: Date | null) => setDateFin(date)}
+                        showTimeSelect
+                        timeFormat="HH:mm"
+                        dateFormat="dd/MM/yy HH:mm"
+                        placeholderText="Fin"
+                        locale="fr"
+                        className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
+                        isClearable
+                    />
+                </div>
                 <button
                     onClick={() => {
                         const today = new Date()
@@ -518,132 +646,38 @@ export default function JournalCaisse() {
                         setDateDebut(today)
                         setDateFin(endToday)
                     }}
-                    className="btn btn-sm btn-outline gap-2"
+                    className="btn btn-xs btn-ghost text-primary px-2 ml-1"
+                    title="Aujourd'hui"
                 >
-                    Aujourd'hui
-                </button>
-
-                <div className="divider divider-horizontal mx-1"></div>
-
-                <button
-                    onClick={() => setIsMovementModalOpen(true)}
-                    className="btn btn-sm btn-outline btn-secondary gap-2"
-                >
-                    ➕ Opération
-                </button>
-                <button
-                    onClick={openClosingModal}
-                    className="btn btn-sm btn-primary gap-2"
-                    disabled={loading}
-                >
-                    🔒 Clôturer la Caisse
+                    J
                 </button>
             </div>
-          </div>
 
-          {/* Filtres internes à la carte */}
-          <div className="p-6 bg-base-50/50">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Recherche */}
-              <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Rechercher</span>
-                </label>
-                <div className="relative">
-                    <input
-                    type="text"
-                    placeholder="Client, facture, opérateur..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="input input-bordered input-sm w-full pl-9"
-                    />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40">🔍</span>
-                </div>
-              </div>
-
-              {/* Mode de paiement */}
-              <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Mode de paiement</span>
-                </label>
-                <select
-                  value={filterMode}
-                  onChange={(e) => setFilterMode(e.target.value)}
-                  className="select select-bordered select-sm w-full"
+            {/* Groupe 3: Type de flux */}
+            <div className="join shadow-sm border border-base-200 rounded-lg overflow-hidden bg-white">
+                <button 
+                    className={`join-item btn btn-sm border-none font-medium px-4 ${filterType === 'all' ? 'bg-neutral text-white hover:bg-neutral-focus' : 'bg-transparent hover:bg-base-100'}`}
+                    onClick={() => setFilterType('all')}
                 >
-                  <option value="all">Tous les modes</option>
-                  <option value="especes">💵 Espèces</option>
-                  <option value="cheque">✍️ Chèque</option>
-                  <option value="carte">💳 Carte</option>
-                  <option value="virement">🏦 Virement</option>
-                  <option value="om">📶 Orange Money</option>
-                  <option value="momo">📶 Mobile Money</option>
-                </select>
-              </div>
-
-              {/* Date début */}
-              <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Début</span>
-                </label>
-                <DatePicker
-                  selected={dateDebut}
-                  onChange={(date: Date | null) => setDateDebut(date)}
-                  showTimeSelect
-                  timeFormat="HH:mm"
-                  timeIntervals={15}
-                  dateFormat="dd/MM/yyyy HH:mm"
-                  placeholderText="jj/mm/aaaa hh:mm"
-                  locale="fr"
-                  className="input input-bordered input-sm w-full"
-                  isClearable
-                />
-              </div>
-
-              {/* Date fin */}
-              <div className="form-control">
-                <label className="label py-1">
-                  <span className="label-text text-xs font-bold uppercase text-base-content/50">Fin</span>
-                </label>
-                <DatePicker
-                  selected={dateFin}
-                  onChange={(date: Date | null) => setDateFin(date)}
-                  showTimeSelect
-                  timeFormat="HH:mm"
-                  timeIntervals={15}
-                  dateFormat="dd/MM/yyyy HH:mm"
-                  placeholderText="jj/mm/aaaa hh:mm"
-                  locale="fr"
-                  className="input input-bordered input-sm w-full"
-                  isClearable
-                />
-              </div>
+                    Tout
+                </button>
+                <button 
+                    className={`join-item btn btn-sm border-none font-medium px-4 ${filterType === 'entrees' ? 'bg-success text-white hover:bg-success-focus' : 'bg-transparent hover:bg-base-100'}`}
+                    onClick={() => setFilterType('entrees')}
+                >
+                    Entrées
+                </button>
+                <button 
+                    className={`join-item btn btn-sm border-none font-medium px-4 ${filterType === 'sorties' ? 'bg-error text-white hover:bg-error-focus' : 'bg-transparent hover:bg-base-100'}`}
+                    onClick={() => setFilterType('sorties')}
+                >
+                    Sorties
+                </button>
             </div>
 
-            <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex gap-2">
-                    <button 
-                        className={`btn btn-xs rounded-full px-4 ${filterType === 'all' ? 'btn-neutral' : 'btn-ghost border-base-300'}`}
-                        onClick={() => setFilterType('all')}
-                    >
-                        Tout
-                    </button>
-                    <button 
-                        className={`btn btn-xs rounded-full px-4 ${filterType === 'entrees' ? 'btn-success text-white' : 'btn-ghost border-base-300'}`}
-                        onClick={() => setFilterType('entrees')}
-                    >
-                        Entrées
-                    </button>
-                    <button 
-                        className={`btn btn-xs rounded-full px-4 ${filterType === 'sorties' ? 'btn-error text-white' : 'btn-ghost border-base-300'}`}
-                        onClick={() => setFilterType('sorties')}
-                    >
-                        Sorties
-                    </button>
-                </div>
-
-                {(searchQuery || filterMode !== 'all' || filterType !== 'all' || dateDebut || dateFin) && (
-                    <button
+            {/* Reset Filter Button */}
+            {(searchQuery || filterMode !== 'all' || filterType !== 'all' || dateDebut || dateFin) && (
+                <button
                     onClick={() => {
                         setSearchQuery('')
                         setFilterMode('all')
@@ -651,12 +685,13 @@ export default function JournalCaisse() {
                         setDateDebut(null)
                         setDateFin(null)
                     }}
-                    className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
-                    >
-                    ✕ Réinitialiser les filtres
-                    </button>
-                )}
-            </div>
+                    className="btn btn-ghost btn-sm btn-circle text-error"
+                    title="Réinitialiser les filtres"
+                >
+                    ✕
+                </button>
+            )}
+
           </div>
       </div>
 

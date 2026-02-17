@@ -695,3 +695,5 @@ export interface UseSaleCompletionReturn {
     error: string | null;
     lastResult: SaleCompletionResult | null;
 }
+
+export default useSaleCompletion;
