@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ProduitModel } from '../../types'
 import { useSearchNavigation } from '../../hooks/useSearchNavigation'
 import { Package, Pill } from 'lucide-react'
 import { safeStorage } from '../../utils/storage'
 import { toast } from 'react-hot-toast'
+import axios from 'axios'
 
 interface ProductSearchSectionProps {
   searchQuery: string
@@ -63,15 +64,25 @@ export default function ProductSearchSection({
       }
       setPackLoading(true)
       try {
-          const token = safeStorage.getItem('authToken')
-          // Assuming backend supports ?search and ?discount_type
-          const response = await fetch(`http://127.0.0.1:8000/api/promotions/?search=${query}&discount_type=BUNDLE`, {
-              headers: { 'Authorization': `Token ${token}` }
-          })
-          if (response.ok) {
-              const data = await response.json()
-              // Handle pagination if needed, assuming direct list or results
-              setPackResults(Array.isArray(data) ? data : data.results || [])
+          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+          const baseUrl = apiBaseUrl.replace(/\/$/, '');
+          const url = `${baseUrl}/api/promotions/`;
+          const token = safeStorage.getItem('authToken');
+          
+          const response = await axios.get(url, {
+              params: {
+                  search: query,
+                  discount_type: 'BUNDLE',
+                  active: true
+              },
+              headers: {
+                  'Authorization': `Token ${token}`
+              }
+          });
+          
+          if (response.status === 200) {
+              const data = response.data;
+              setPackResults(Array.isArray(data) ? data : data.results || []);
           }
       } catch (e) {
           console.error("Pack search error", e)

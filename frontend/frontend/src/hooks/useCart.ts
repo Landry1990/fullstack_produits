@@ -249,10 +249,50 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
         return { totalLines, totalQty, sousTotal: totalHT, totalTva, totalTTC }
     }, [lignesFacture])
 
+    const bulkAddProduits = useCallback((items: { product: ProduitModel, quantity: number, discountPercent?: string }[]) => {
+        setLignesFacture(prevLignes => {
+            const newLignes = [...prevLignes]
+            items.forEach(({ product, quantity, discountPercent }) => {
+                const existingIndex = newLignes.findIndex(l => l.produit.id === product.id)
+                const remise = discountPercent || '0'
+                const prixBase = product.selling_price || '0'
+
+                if (existingIndex >= 0) {
+                    const existing = newLignes[existingIndex]
+                    const newQty = existing.quantite + quantity
+                    // For bulk add, we might want to override remise if specified, or keep existing.
+                    // Usually for a Pack, we want to apply the pack discount.
+                    const finalRemise = discountPercent !== undefined ? remise : existing.remise_produit
+
+                    newLignes[existingIndex] = {
+                        ...existing,
+                        produit: product,
+                        quantite: newQty,
+                        remise_produit: finalRemise,
+                        total_ligne: calculateLigneTotal(newQty, existing.prix_unitaire, finalRemise)
+                    }
+                } else {
+                    newLignes.push({
+                        produit: product,
+                        quantite: quantity,
+                        prix_unitaire: prixBase,
+                        remise_produit: remise,
+                        total_ligne: calculateLigneTotal(quantity, prixBase, remise),
+                        lotId: null,
+                        lotText: null,
+                        lotExpiration: null
+                    })
+                }
+            })
+            return newLignes
+        })
+    }, [calculateLigneTotal])
+
     return {
         lignesFacture,
-        setLignesFacture, // Exposed for special cases (like restoring cart)
+        setLignesFacture,
         addProduit,
+        bulkAddProduits,
         updateQuantite,
         updatePrix,
         updateRemiseProduit,

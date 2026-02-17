@@ -17,8 +17,7 @@ const OrdonnancierPage: React.FC = () => {
     const [filterSurveillance, setFilterSurveillance] = useState('NONE');
     
     // Force URL absolue pour éviter les problèmes de proxy/env temporairement
-    const apiBaseUrl = 'http://127.0.0.1:8000';
-    // const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
     useEffect(() => {
         fetchOrdonnancier();

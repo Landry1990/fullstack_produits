@@ -41,9 +41,7 @@ export {
     useSaleCompletion,
     type SaleCompletionParams,
     type SaleCompletionResult,
-    type UseSaleCompletionOptions,
-    type UseSaleCompletionReturn,
-    type PaymentDetails,
-    type TotalsData,
-    type AyantDroitData
+    type UseSaleCompletionReturn
 } from './useSaleCompletion';
+
+export type { PaymentDetails, TotalsData, AyantDroit as AyantDroitData } from '../types';

@@ -17,7 +17,8 @@ const PromotionList: React.FC = () => {
     const fetchPromotions = async () => {
         try {
             const token = safeStorage.getItem('authToken');
-            const response = await fetch('http://127.0.0.1:8000/api/promotions/', {
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+            const response = await fetch(`${apiBaseUrl}/api/promotions/`, {
                 headers: {
                     'Authorization': `Token ${token}`,
                     'Content-Type': 'application/json'
@@ -56,7 +57,8 @@ const PromotionList: React.FC = () => {
         
         try {
             const token = safeStorage.getItem('authToken');
-            const response = await fetch(`http://127.0.0.1:8000/api/promotions/${id}/`, {
+            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+            const response = await fetch(`${apiBaseUrl}/api/promotions/${id}/`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Token ${token}`

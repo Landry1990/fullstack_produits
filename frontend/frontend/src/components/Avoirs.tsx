@@ -8,6 +8,7 @@ import { useProductSearch } from '../hooks/useProductSearch'
 import { useLocation } from 'react-router-dom'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
+import { formatCurrency, safeFormatNumber } from '../utils/formatters'
 
 export default function Avoirs() {
   const [avoirs, setAvoirs] = useState<Avoir[]>([])
@@ -596,7 +597,7 @@ export default function Avoirs() {
                                     <div className="badge badge-outline">{avoir.type_avoir}</div>
                                 </td>
                                 <td className="text-right font-bold text-error">
-                                    -{Number(avoir.total_ht).toLocaleString()} F
+                                    -{formatCurrency(avoir.total_ht)}
                                 </td>
                                 <td>
                                     <div className={`badge ${avoir.status === 'VALIDEE' ? 'badge-success text-white' : 'badge-warning'}`}>
@@ -850,7 +851,7 @@ export default function Avoirs() {
                                         />
                                     </td>
                                     <td className="text-right text-error font-bold">
-                                        -{Number(line.total).toLocaleString()} F
+                                        -{formatCurrency(line.total)}
                                     </td>
                                     <td>
                                         <button 
@@ -875,7 +876,7 @@ export default function Avoirs() {
                             <tr className="bg-base-100 font-bold">
                                 <td colSpan={5} className="text-right">TOTAL AVOIR :</td>
                                 <td className="text-right text-error text-lg">
-                                    -{lignes.reduce((acc, l) => acc + Number(l.total), 0).toLocaleString()} F
+                                    -{formatCurrency(lignes.reduce((acc, l) => acc + Number(l.total), 0))}
                                 </td>
                                 <td></td>
                             </tr>
@@ -1011,9 +1012,9 @@ export default function Avoirs() {
                                     <div className="text-xs text-gray-500">{p.produit_cip}</div>
                                 </td>
                                 <td className="text-right text-error font-bold">-{p.quantity}</td>
-                                <td className="text-right">{Number(p.price).toLocaleString()} F</td>
+                                <td className="text-right">{formatCurrency(p.price)}</td>
                                 <td>{p.lot} <span className="text-xs text-gray-400">{p.date_expiration}</span></td>
-                                <td className="text-right text-error">-{Number(p.total).toLocaleString()} F</td>
+                                <td className="text-right text-error">-{formatCurrency(p.total)}</td>
                                 {selectedAvoir.status === 'VALIDEE' && (
                                     <td className="text-center">
                                         <label className="cursor-pointer label justify-center">
@@ -1033,7 +1034,7 @@ export default function Avoirs() {
                     <tfoot>
                          <tr className="bg-base-100 font-bold">
                             <td colSpan={4} className="text-right">TOTAL</td>
-                            <td className="text-right text-error text-lg">-{Number(selectedAvoir.total_ht).toLocaleString()} F</td>
+                            <td className="text-right text-error text-lg">-{formatCurrency(selectedAvoir.total_ht)}</td>
                             {selectedAvoir.status === 'VALIDEE' && <td></td>}
                         </tr>
                     </tfoot>
