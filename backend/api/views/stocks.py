@@ -1300,6 +1300,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['post'])
     def transformer(self, request, pk=None):
         relation = self.get_object()
         quantite = int(request.data.get('quantite', 1))
@@ -1308,46 +1309,142 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             return Response({'error': 'La quantité doit être positive'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            if relation.produit_source.stock < quantite:
-                return Response({'error': f'Stock insuffisant pour {relation.produit_source.name}'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            quantite_dest = int(quantite * relation.ratio)
-            
+            # Verrouillage des produits pour éviter les conditions de course
             source = Produit.objects.select_for_update().get(pk=relation.produit_source.pk)
             destination = Produit.objects.select_for_update().get(pk=relation.produit_destination.pk)
 
+            if source.stock < quantite:
+                return Response({'error': f'Stock insuffisant pour {source.name}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # --- 1. CONSOMMATION SOURCE (FIFO) ---
+            consumed_lots_info = []
+            
+            if source.use_lot_management:
+                # Vérification de cohérence
+                total_lots = source.stock_lots.filter(quantity_remaining__gt=0).aggregate(total=Sum('quantity_remaining'))['total'] or 0
+                
+                # Si le stock global dit qu'on en a, mais les lots sont vides/insuffisants
+                if total_lots < quantite:
+                    # On pourrait bloquer, mais pour la résilience, on prévient juste ou on log
+                    # Ici on va essayer de consommer ce qu'on peut et le reste sera "hors lot" (anomalie)
+                    pass
+
+                # FIFO Consumption : on prend les lots avec du stock du plus vieux au plus récent (date expiration)
+                # Si date expiration identique, on prend le plus vieux par création
+                lots = source.stock_lots.filter(quantity_remaining__gt=0).select_for_update().order_by('date_expiration', 'created_at')
+                qty_remaining_to_consume = quantite
+                
+                for lot in lots:
+                    if qty_remaining_to_consume <= 0:
+                        break
+                        
+                    taken = min(lot.quantity_remaining, qty_remaining_to_consume)
+                    
+                    # Mise à jour du lot source
+                    lot.quantity_remaining -= taken
+                    lot.save()
+                    
+                    # Traceability (Utilisation de USAGE_INT comme motif générique)
+                    StockAdjustment.objects.create(
+                        produit=source,
+                        stock_lot=lot,
+                        user=request.user,
+                        quantity_before=lot.quantity_remaining + taken,
+                        quantity_after=lot.quantity_remaining,
+                        quantity_change=-taken,
+                        reason_type=StockAdjustment.ReasonType.USAGE_INTERNE, 
+                        reason_detail=f"Transformation vers {destination.name}"
+                    )
+                    
+                    consumed_lots_info.append({'lot': lot, 'qty': taken})
+                    qty_remaining_to_consume -= taken
+                
+                # S'il reste de la quantité à consommer mais plus de lot (incohérence stock), 
+                # cela sera déduit du stock global ci-dessous, mais sans traçabilité lot.
+                
+            # Décrémentation Stock Global
             source.stock -= quantite
             source.save()
+                
+            # --- 2. CRÉATION DESTINATION ---
+            quantite_dest = int(quantite * relation.ratio)
             
+            if destination.use_lot_management:
+                # Déterminer date expiration : min(lots sources consommés)
+                ref_expiry = None
+                if consumed_lots_info:
+                    valid_expiries = [l['lot'].date_expiration for l in consumed_lots_info if l['lot'].date_expiration]
+                    if valid_expiries:
+                        ref_expiry = min(valid_expiries)
+                
+                # Si pas d'expiration héritée (source sans date), on laisse NULL ou on pourrait appliquer une logique produit
+                
+                # Créer nouveau lot
+                # Format numéro lot : TRANS-{ID_REL}-{TIMESTAMP}
+                import time
+                lot_number = f"TR{relation.id}-{int(time.time())}"
+                
+                new_lot_dest = StockLot.objects.create(
+                    produit=destination,
+                    lot=lot_number,
+                    quantity_initial=quantite_dest,
+                    quantity_remaining=quantite_dest,
+                    quantity_paid=quantite_dest,     # Considéré comme "payé" car issu de stock payé
+                    quantity_free=0,
+                    price_cost=destination.cost_price or 0,
+                    selling_price=destination.selling_price or 0,
+                    date_expiration=ref_expiry,
+                    date_reception=timezone.now(),
+                    fournisseur=source.fournisseur # Héritage du fournisseur source
+                )
+                
+                # Traceability Lot Dest
+                StockAdjustment.objects.create(
+                     produit=destination,
+                     stock_lot=new_lot_dest,
+                     user=request.user,
+                     quantity_before=0,
+                     quantity_after=quantite_dest,
+                     quantity_change=quantite_dest,
+                     reason_type=StockAdjustment.ReasonType.USAGE_INTERNE,
+                     reason_detail=f"Transformation depuis {source.name}"
+                )
+
+            # Incrémentation Stock Global Destination
             destination.stock += quantite_dest
             destination.save()
             
+            # --- 3. HISTORIQUE & MOUVEMENTS GLOBAUX ---
+            
+            # Mouvement Source
+            MouvementStock.objects.create(
+                produit=source,
+                type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_SORTIE,
+                quantite=-quantite,
+                stock_apres=source.stock,
+                user=request.user,
+                description=f"Transformation vers {destination.name}"
+            )
+            
+            # Mouvement Destination
+            MouvementStock.objects.create(
+                produit=destination,
+                type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_ENTREE,
+                quantite=quantite_dest,
+                stock_apres=destination.stock,
+                user=request.user,
+                description=f"Transformation depuis {source.name}"
+            )
+
+            # Historique Transformation
             HistoriqueTransformation.objects.create(
                 relation=relation,
-                produit_source=relation.produit_source,
-                produit_destination=relation.produit_destination,
+                produit_source=source,
+                produit_destination=destination,
                 quantite_source=quantite,
                 quantite_destination=quantite_dest,
                 user=request.user,
                 notes=request.data.get('notes', '')
-            )
-            
-            MouvementStock.objects.create(
-                produit=relation.produit_source,
-                type_mouvement='TRANSFORMATION_SORTIE',
-                quantite=-quantite,
-                stock_apres=source.stock,
-                user=request.user,
-                description=f"Transformation vers {relation.produit_destination.name}"
-            )
-            
-            MouvementStock.objects.create(
-                produit=relation.produit_destination,
-                type_mouvement='TRANSFORMATION_ENTREE',
-                quantite=quantite_dest,
-                stock_apres=destination.stock,
-                user=request.user,
-                description=f"Transformation depuis {relation.produit_source.name}"
             )
 
             # Log Audit transaction
@@ -1359,12 +1456,10 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 description=f"Transformation: {quantite} {source.name} -> {quantite_dest} {destination.name}",
                 details={
                     'source_id': source.id,
-                    'source_nom': source.name,
                     'destination_id': destination.id,
-                    'destination_nom': destination.name,
-                    'quantite_source': -quantite,
-                    'quantite_destination': quantite_dest,
-                    'quantity': -quantite # Convention: negative for source consumption
+                    'qty_src': -quantite,
+                    'qty_dest': quantite_dest,
+                    'source_lots_used': [l['lot'].lot for l in consumed_lots_info]
                 },
                 request=request
             )
