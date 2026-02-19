@@ -1,0 +1,13 @@
+[Unit]
+Description=gunicorn daemon for Fullstack Produits
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/var/www/fullstack/backend
+ExecStart=/var/www/fullstack/backend/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/var/www/fullstack/backend/fullstack.sock backend.wsgi:application
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

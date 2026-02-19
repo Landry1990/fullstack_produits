@@ -14,7 +14,7 @@ import type {
     OrdonnanceData
 } from '../types';
 import { normalizeNumberInput } from '../utils/formatters';
-import { generatePromisTicket } from '../utils/promisPdf';
+import { generatePromisTicket, type PromisItem } from '../utils/promisPdf';
 import { usePharmacySettings } from './usePharmacySettings';
 
 // ============== TYPES ==============
@@ -466,17 +466,16 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                         items: promisLines.map(l => ({
                             id: 0,
                             produit_nom: l.produit.name,
-                            quantite: l.promisQuantity || 0,
                             promisQuantity: l.promisQuantity || 0,
                             produit: l.produit,
                             date_promis: new Date().toISOString(),
                             status: 'ATT'
-                        })) as any,
+                        } satisfies PromisItem)),
                         pharmacy: pharmacySettings,
                         facture_id: finalFacture.numero_facture || finalFacture.id,
                         is_paid: !params.centralizedCashRegister
                     });
-                } catch (err) {
+                } catch (err: unknown) {
                     console.error("Erreur génération PDF promis:", err);
                 }
             }
@@ -492,14 +491,15 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 const ticketCaisse: TicketCaisse = {
                     id: 0,
                     facture: finalFacture,
-                    mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode || 'N/A'),
+                    mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode as any || 'N/A'), // mode is string, cast specific type if needed or adjust interface
                     montant: finalFacture.total_ttc,
                     montant_verse: totalVerse.toString(),
                     rendu: rendu.toString(),
                     statut: 'completee',
                     client_name: finalFacture.client_name || params.manualClientName || 'Client',
-                    paiements_details: paiementsList
-                } as any;
+                    paiements_details: paiementsList,
+                    date_paiement: new Date().toISOString()
+                };
 
                 toast.success(t('sales.messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
 
@@ -520,7 +520,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
 
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Sale Finalization Error:', err);
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);
@@ -599,18 +599,17 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                         items: promisLines.map(l => ({
                             id: 0,
                             produit_nom: l.produit.name,
-                            quantite: l.promisQuantity || 0,
                             promisQuantity: l.promisQuantity || 0,
                             produit: l.produit,
                             date_promis: new Date().toISOString(),
                             status: 'ATT'
-                        })) as any,
+                        } satisfies PromisItem)),
                         pharmacy: pharmacySettings,
                         facture_id: updatedFacture.numero_facture || updatedFacture.id,
                         is_paid: true
                     });
                     toast.success(t('sales.messages.promis_recorded'));
-                } catch (err) {
+                } catch (err: unknown) {
                     console.error("Erreur génération PDF promis:", err);
                 }
             }
@@ -630,7 +629,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                         }))
                     });
                     toast.success(t('sales.messages.prescription_recorded'));
-                } catch (err) {
+                } catch (err: unknown) {
                     console.error("Erreur ordonnancier:", err);
                 }
             }
@@ -642,13 +641,14 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             const ticketCaisse: TicketCaisse = {
                 id: 0,
                 facture: updatedFacture,
-                mode_paiement: paiementsList.length > 1 ? 'Mixte' : paiementsList[0].mode,
+                mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0].mode as any), // Cast string to union type if needed
                 montant: updatedFacture.total_ttc,
                 montant_verse: totalVerse.toString(),
                 rendu: rendu.toString(),
                 statut: 'completee',
+                date_paiement: new Date().toISOString(),
                 paiements_details: paiementsList
-            } as any;
+            };
 
             const result: SaleCompletionResult = { success: true, facture: updatedFacture, ticketCaisse, rendu };
             setLastResult(result);
@@ -656,7 +656,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             onReset?.();
             return result;
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Invoice Payment Error:', err);
             const errorMessage = extractErrorMessage(err);
             setError(errorMessage);

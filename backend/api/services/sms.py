@@ -3,6 +3,7 @@ from django.utils import timezone
 from ..models import SmsLog
 
 logger = logging.getLogger(__name__)
+business_logger = logging.getLogger('api.business')
 
 class SmsService:
     """Service de gestion de l'envoi de SMS."""
@@ -69,10 +70,7 @@ class SmsService:
         # Simuler latence réseau
         # time.sleep(0.5)
         
-        logger.info(f"== SMS SENT ==")
-        logger.info(f"To: {recipient}")
-        logger.info(f"Message: {message}")
-        logger.info("==============")
+        business_logger.info(f"[SMS] SENT to {recipient} | type={sms_type} | user={user.username if user else 'system'}")
         
         return {
             "success": True, 

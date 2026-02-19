@@ -9,7 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.http import HttpResponse
 from datetime import datetime, date, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import io
 import logging
 
@@ -39,6 +39,7 @@ from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
 
 logger = logging.getLogger(__name__)
+business_logger = logging.getLogger('api.business')
 
 def header_footer_facture(canvas, doc, company_info, facture_info, facture):
     canvas.saveState()
@@ -176,6 +177,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         if not produits_data:
             return Response({'detail': 'La liste des produits ne peut pas être vide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        business_logger.info(
+            f"[VENTE] Finalisation demandee par {user.username} | "
+            f"client={client_id or 'passager'} | produits={len(produits_data)} | centralisee={centralized}"
+        )
 
         # 2. Gestion Sudo Mode pour la validation
         validation_user = user
@@ -324,6 +330,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             # Pas de déduction de stock ici, ce sera fait à la validation en caisse.
             pass
 
+        business_logger.info(
+            f"[VENTE] Finalisation OK facture #{facture.id} ({facture.numero_facture or 'brouillon'}) | "
+            f"total={facture.total_ttc} | client={client_id or 'passager'} | user={user.username}"
+        )
         serializer = self.get_serializer(facture)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -374,7 +384,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         """
         if not facture:
             facture = self.get_object()
+        business_logger.info(f"[VENTE] Validation demandee facture #{facture.id} par {request.user.username}")
         if facture.status == Facture.Status.VALIDEE:
+            business_logger.warning(f"[VENTE] Validation refusee #{facture.id} - deja validee")
             return Response({'detail': 'Cette facture est déjà validée.'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Permettre la validation de BROUILLON ou PROFORMA (devis)
@@ -441,7 +453,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             try:
                 qty = Decimal(str(item.quantity))
                 stock = Decimal(str(produit.stock))
-            except Exception:
+            except (ValueError, TypeError, InvalidOperation):
                 return Response({'detail': f'Impossible de comparer les quantités pour le produit {produit.id}.'}, status=status.HTTP_400_BAD_REQUEST)
 
             if qty > 0:
@@ -739,6 +751,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     user=validation_user
                 )
 
+        business_logger.info(
+            f"[VENTE] Validation OK #{facture.id} ({facture.numero_facture}) | "
+            f"total={facture.total_ttc} | produits={items.count()} | validee_par={validation_user.username}"
+        )
         facture.refresh_from_db()
         serializer = self.get_serializer(facture)
         return Response(serializer.data)
@@ -750,7 +766,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         Annule une facture et restaure le stock.
         """
         facture = self.get_object()
+        business_logger.info(f"[VENTE] Annulation demandee facture #{facture.id} par {request.user.username}")
         if facture.status == Facture.Status.ANNULEE:
+            business_logger.warning(f"[VENTE] Annulation refusee #{facture.id} - deja annulee")
             return Response({'detail': 'Cette facture est déjà annulée.'}, status=status.HTTP_400_BAD_REQUEST)
 
         motif = request.data.get('motif', '')
@@ -1536,7 +1554,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             
         try:
             montant_reel = Decimal(str(montant_reel))
-        except:
+        except (ValueError, TypeError, InvalidOperation):
             return Response({'detail': 'Montant invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
         date_debut = request.data.get('date_debut')

@@ -124,7 +124,7 @@ class Command(BaseCommand):
             file_size = os.path.getsize(backup_file_gz) / (1024 * 1024)  # MB
 
             self.stdout.write(self.style.SUCCESS(
-                f'✅ Backup created successfully: {backup_file_gz} ({file_size:.2f} MB)'
+                f'[OK] Backup created successfully: {backup_file_gz} ({file_size:.2f} MB)'
             ))
 
             # Clean old backups (keep last 30 days)
@@ -149,6 +149,6 @@ class Command(BaseCommand):
 
         if removed_count > 0:
             self.stdout.write(self.style.WARNING(
-                f'🗑️  Removed {removed_count} old backup(s)'
+                f'[CLEANUP] Removed {removed_count} old backup(s)'
             ))
 

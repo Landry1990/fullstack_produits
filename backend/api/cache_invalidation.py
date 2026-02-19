@@ -15,7 +15,7 @@ from django.dispatch import receiver
 from .models import Commande, Facture, StockAdjustment, Produit
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('api.cache')
 
 
 def invalidate_produit_cache():

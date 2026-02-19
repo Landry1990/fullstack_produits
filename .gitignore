@@ -1,0 +1,49 @@
+# ============== Python / Django ==============
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+my_env01/
+venv/
+.venv/
+env/
+
+# Django
+*.log
+db.sqlite3
+staticfiles/
+media/
+logs/
+
+# ============== Node / React ==============
+node_modules/
+.next/
+dist/
+build/
+*.tsbuildinfo
+
+# ============== Secrets & Environment ==============
+.env
+.env.*
+!.env.example
+
+# ============== IDE ==============
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============== OS ==============
+*.pem
+*.key
+*.p12
+*.jks

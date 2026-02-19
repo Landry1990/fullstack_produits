@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import PremiumModal from './common/PremiumModal'
 
 interface SimplePrintLabelsModalProps {
   commandeId: number
@@ -27,15 +28,11 @@ export default function SimplePrintLabelsModal({
         responseType: 'blob'
       })
       
-      // Créer un Blob URL et ouvrir dans un nouvel onglet
       const blob = new Blob([response.data], { type: 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       window.open(url, '_blank')
       
-      // Libérer la mémoire après un délai
       setTimeout(() => window.URL.revokeObjectURL(url), 10000)
-      
-      // Fermer le modal après succès
       onClose()
     } catch (err: any) {
       console.error('Erreur impression étiquettes:', err)
@@ -46,35 +43,26 @@ export default function SimplePrintLabelsModal({
   }
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="font-bold text-xl flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-              Impression d'Étiquettes
-            </h3>
-            <p className="text-sm text-base-content/60 mt-1">
-              Commande: <span className="font-semibold">{commandeNumero}</span>
-            </p>
-          </div>
-          <button onClick={onClose} className="btn btn-ghost btn-sm btn-circle">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
+    <PremiumModal
+      isOpen={true}
+      onClose={onClose}
+      title="Impression d'Étiquettes"
+      subtitle={`Commande: ${commandeNumero}`}
+      icon={
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+      }
+      gradientFrom="primary/10"
+      gradientTo="info/10"
+      disableClose={printing}
+    >
+      <div className="p-6 space-y-5">
         {/* Format Selection */}
-        <div className="form-control mb-6">
-          <label className="label">
-            <span className="label-text font-semibold">Format des étiquettes</span>
-          </label>
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Format des étiquettes</label>
           <div className="flex gap-4">
-            <label className="label cursor-pointer gap-2 border rounded-lg p-4 flex-1 hover:bg-base-200 transition-colors">
+            <label className="label cursor-pointer gap-2 border rounded-xl p-4 flex-1 hover:bg-base-200 transition-colors">
               <input
                 type="radio"
                 name="format"
@@ -87,7 +75,7 @@ export default function SimplePrintLabelsModal({
                 <p className="text-xs text-base-content/60">Format standard</p>
               </div>
             </label>
-            <label className="label cursor-pointer gap-2 border rounded-lg p-4 flex-1 hover:bg-base-200 transition-colors">
+            <label className="label cursor-pointer gap-2 border rounded-xl p-4 flex-1 hover:bg-base-200 transition-colors">
               <input
                 type="radio"
                 name="format"
@@ -104,8 +92,8 @@ export default function SimplePrintLabelsModal({
         </div>
 
         {/* Info */}
-        <div className="alert alert-info mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
+        <div className="alert alert-info rounded-xl">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
           <div className="text-sm">
@@ -122,8 +110,8 @@ export default function SimplePrintLabelsModal({
         </div>
 
         {/* Debug Mode */}
-        <div className="form-control mb-4">
-          <label className="label cursor-pointer justify-start gap-3">
+        <div>
+          <label className="label cursor-pointer justify-start gap-3 rounded-xl border p-3">
             <input
               type="checkbox"
               className="checkbox checkbox-warning checkbox-sm"
@@ -138,13 +126,13 @@ export default function SimplePrintLabelsModal({
         </div>
 
         {/* Actions */}
-        <div className="modal-action">
-          <button onClick={onClose} className="btn btn-ghost">
+        <div className="flex justify-end gap-3 pt-2">
+          <button onClick={onClose} className="btn btn-ghost px-6 rounded-xl">
             Annuler
           </button>
           <button
             onClick={handlePrint}
-            className="btn btn-primary gap-2"
+            className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20 gap-2"
             disabled={printing}
           >
             {printing ? (
@@ -154,7 +142,7 @@ export default function SimplePrintLabelsModal({
               </>
             ) : (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                 </svg>
                 Générer PDF
@@ -163,7 +151,7 @@ export default function SimplePrintLabelsModal({
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
-    </div>
+    </PremiumModal>
   )
 }
+

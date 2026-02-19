@@ -5,6 +5,7 @@ import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import PasswordConfirmModal from './PasswordConfirmModal';
+import PremiumModal from './common/PremiumModal';
 import type { Fournisseur } from '../types';
 import FinanceFournisseurModal from './FinanceFournisseurModal';
 
@@ -729,250 +730,207 @@ export default function Fournisseurs() {
       </div>
 
       {/* Add Modal */}
-      <dialog className={`modal ${isAddModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">{t('providers.form.add_title')}</h3>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeAddModal}
-              disabled={isSubmitting}
-            >
-              ✕
+      <PremiumModal
+        isOpen={isAddModalOpen}
+        onClose={closeAddModal}
+        title={t('providers.form.add_title')}
+        subtitle="Enregistrer un nouveau fournisseur"
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        }
+        maxWidth="max-w-2xl"
+        disableClose={isSubmitting}
+      >
+        <form className="p-6 space-y-6" onSubmit={handleAddFournisseur}>
+          {/* Informations de l'entreprise */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+              {t('providers.form.company_info')}
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.name')} *</label>
+                <input 
+                  type="text" 
+                  placeholder={t('providers.form.name_placeholder')}
+                  value={newFournisseur.name} 
+                  onChange={e => setNewFournisseur(f => ({...f, name: e.target.value}))} 
+                  className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                  required 
+                  disabled={isSubmitting}
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.phone')} *</label>
+                <input 
+                  type="tel" 
+                  placeholder={t('providers.form.phone_placeholder')}
+                  value={newFournisseur.phone} 
+                  onChange={e => setNewFournisseur(f => ({...f, phone: e.target.value}))} 
+                  className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                  required 
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.email')} *</label>
+              <input 
+                type="email" 
+                placeholder={t('providers.form.email_placeholder')}
+                value={newFournisseur.email} 
+                onChange={e => setNewFournisseur(f => ({...f, email: e.target.value}))} 
+                className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                required 
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+
+          {/* Adresse */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+              {t('providers.form.address_section')}
+            </h4>
+            
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.address')} *</label>
+              <textarea 
+                placeholder={t('providers.form.address_placeholder')}
+                value={newFournisseur.address} 
+                onChange={e => setNewFournisseur(f => ({...f, address: e.target.value}))} 
+                className="textarea textarea-bordered w-full h-24 rounded-xl resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                required 
+                disabled={isSubmitting}
+              />
+              <p className="text-[11px] text-gray-400 mt-1">{t('providers.form.address_hint')}</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={closeAddModal} disabled={isSubmitting}>
+              {t('providers.form.cancel')}
+            </button>
+            <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  {t('providers.form.saving')}
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  {t('providers.form.add_btn')}
+                </>
+              )}
             </button>
           </div>
-          
-          <form className="space-y-6" onSubmit={handleAddFournisseur}>
+        </form>
+      </PremiumModal>
+
+      {/* Edit Modal */}
+      <PremiumModal
+        isOpen={isEditModalOpen}
+        onClose={closeEditModal}
+        title={t('providers.form.edit_title')}
+        subtitle={editingFournisseur?.name || ''}
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+        }
+        gradientFrom="secondary/10"
+        gradientVia="primary/5"
+        gradientTo="accent/10"
+        maxWidth="max-w-2xl"
+      >
+        {editingFournisseur && (
+          <form className="p-6 space-y-6" onSubmit={handleEditFournisseur}>
             {/* Informations de l'entreprise */}
             <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
                 {t('providers.form.company_info')}
               </h4>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">{t('providers.form.name')} *</span>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.name')} *</label>
                   <input 
                     type="text" 
                     placeholder={t('providers.form.name_placeholder')}
-                    value={newFournisseur.name} 
-                    onChange={e => setNewFournisseur(f => ({...f, name: e.target.value}))} 
-                    className="input input-bordered w-full" 
+                    value={editingFournisseur.name} 
+                    onChange={e => setEditingFournisseur(f => f ? {...f, name: e.target.value} : null)} 
+                    className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                     required 
-                    disabled={isSubmitting}
                   />
-                </label>
+                </div>
                 
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">{t('providers.form.phone')} *</span>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.phone')} *</label>
                   <input 
                     type="tel" 
                     placeholder={t('providers.form.phone_placeholder')}
-                    value={newFournisseur.phone} 
-                    onChange={e => setNewFournisseur(f => ({...f, phone: e.target.value}))} 
-                    className="input input-bordered w-full" 
+                    value={editingFournisseur.phone} 
+                    onChange={e => setEditingFournisseur(f => f ? {...f, phone: e.target.value} : null)} 
+                    className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                     required 
-                    disabled={isSubmitting}
                   />
-                </label>
+                </div>
               </div>
               
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text font-medium">{t('providers.form.email')} *</span>
-                </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.email')} *</label>
                 <input 
                   type="email" 
                   placeholder={t('providers.form.email_placeholder')}
-                  value={newFournisseur.email} 
-                  onChange={e => setNewFournisseur(f => ({...f, email: e.target.value}))} 
-                  className="input input-bordered w-full" 
+                  value={editingFournisseur.email} 
+                  onChange={e => setEditingFournisseur(f => f ? {...f, email: e.target.value} : null)} 
+                  className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                   required 
-                  disabled={isSubmitting}
                 />
-              </label>
+              </div>
             </div>
 
             {/* Adresse */}
             <div className="space-y-4">
-              <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
                 {t('providers.form.address_section')}
               </h4>
               
-              <label className="form-control w-full">
-                <div className="label">
-                  <span className="label-text font-medium">{t('providers.form.address')} *</span>
-                </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.address')} *</label>
                 <textarea 
                   placeholder={t('providers.form.address_placeholder')}
-                  value={newFournisseur.address} 
-                  onChange={e => setNewFournisseur(f => ({...f, address: e.target.value}))} 
-                  className="textarea textarea-bordered w-full h-24 resize-none" 
+                  value={editingFournisseur.address} 
+                  onChange={e => setEditingFournisseur(f => f ? {...f, address: e.target.value} : null)} 
+                  className="textarea textarea-bordered w-full h-24 rounded-xl resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                   required 
-                  disabled={isSubmitting}
                 />
-                <div className="label">
-                  <span className="label-text-alt">{t('providers.form.address_hint')}</span>
-                </div>
-              </label>
+                <p className="text-[11px] text-gray-400 mt-1">{t('providers.form.address_hint')}</p>
+              </div>
             </div>
 
             {/* Actions */}
-            <div className="modal-action pt-4">
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                onClick={closeAddModal} 
-                disabled={isSubmitting}
-              >
+            <div className="flex justify-end gap-3 pt-2">
+              <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={closeEditModal}>
                 {t('providers.form.cancel')}
               </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm"></span>
-                    {t('providers.form.saving')}
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    {t('providers.form.add_btn')}
-                  </>
-                )}
+              <button type="submit" className="btn btn-secondary px-8 rounded-xl shadow-lg shadow-secondary/20">
+                {t('providers.form.save_btn')}
               </button>
             </div>
           </form>
-        </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeAddModal}>
-          <button>close</button>
-        </form>
-      </dialog>
-
-      {/* Edit Modal */}
-      <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-bold text-xl">{t('providers.form.edit_title')}</h3>
-            <button 
-              type="button" 
-              className="btn btn-sm btn-circle btn-ghost" 
-              onClick={closeEditModal}
-            >
-              ✕
-            </button>
-          </div>
-          
-          {editingFournisseur && (
-            <form className="space-y-6" onSubmit={handleEditFournisseur}>
-              {/* Informations de l'entreprise */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  {t('providers.form.company_info')}
-                </h4>
-                
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text font-medium">{t('providers.form.name')} *</span>
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder={t('providers.form.name_placeholder')}
-                      value={editingFournisseur.name} 
-                      onChange={e => setEditingFournisseur(f => f ? {...f, name: e.target.value} : null)} 
-                      className="input input-bordered w-full" 
-                      required 
-                    />
-                  </label>
-                  
-                  <label className="form-control w-full">
-                    <div className="label">
-                      <span className="label-text font-medium">{t('providers.form.phone')} *</span>
-                    </div>
-                    <input 
-                      type="tel" 
-                      placeholder={t('providers.form.phone_placeholder')}
-                      value={editingFournisseur.phone} 
-                      onChange={e => setEditingFournisseur(f => f ? {...f, phone: e.target.value} : null)} 
-                      className="input input-bordered w-full" 
-                      required 
-                    />
-                  </label>
-                </div>
-                
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">{t('providers.form.email')} *</span>
-                  </div>
-                  <input 
-                    type="email" 
-                    placeholder={t('providers.form.email_placeholder')}
-                    value={editingFournisseur.email} 
-                    onChange={e => setEditingFournisseur(f => f ? {...f, email: e.target.value} : null)} 
-                    className="input input-bordered w-full" 
-                    required 
-                  />
-                </label>
-              </div>
-
-              {/* Adresse */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-base-content/80 border-b border-base-300 pb-2">
-                  {t('providers.form.address_section')}
-                </h4>
-                
-                <label className="form-control w-full">
-                  <div className="label">
-                    <span className="label-text font-medium">{t('providers.form.address')} *</span>
-                  </div>
-                  <textarea 
-                    placeholder={t('providers.form.address_placeholder')}
-                    value={editingFournisseur.address} 
-                    onChange={e => setEditingFournisseur(f => f ? {...f, address: e.target.value} : null)} 
-                    className="textarea textarea-bordered w-full h-24 resize-none" 
-                    required 
-                  />
-                  <div className="label">
-                    <span className="label-text-alt">{t('providers.form.address_hint')}</span>
-                  </div>
-                </label>
-              </div>
-
-              {/* Actions */}
-              <div className="modal-action pt-4">
-                <button 
-                  type="button" 
-                  className="btn btn-ghost" 
-                  onClick={closeEditModal}
-                >
-                  {t('providers.form.cancel')}
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                >
-                  {t('providers.form.save_btn')}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-        <form method="dialog" className="modal-backdrop" onSubmit={closeEditModal}>
-          <button>close</button>
-        </form>
-      </dialog>
+        )}
+      </PremiumModal>
 
       {/* Finance Modal */}
       {selectedFournisseur && (

@@ -24,7 +24,7 @@ from reportlab.platypus import Paragraph, Table, TableStyle, Spacer, Frame, Page
 from ..models import (
     StockLot, Inventaire, LigneInventaire, StockAdjustment, Produit, 
     MouvementStock, RelationTransformation, HistoriqueTransformation, 
-    Fournisseur, CommandeProduit, AuditLog
+    Fournisseur, Commande, CommandeProduit, AuditLog
 )
 from ..serializers import (
     StockLotSerializer, InventaireSerializer, LigneInventaireSerializer, 
@@ -1592,9 +1592,16 @@ class StockAnalysisOverstockView(APIView):
 
 class StockAnalysisShortageView(APIView):
     """
-    Prévision des ruptures de stock.
-    Calcule le nombre de jours avant rupture pour chaque produit
-    en se basant sur la consommation moyenne des 30 derniers jours.
+    Prévision intelligente des ruptures de stock.
+    
+    Améliorations par rapport à une moyenne simple :
+    1. Moyenne pondérée : les 7 derniers jours pèsent 2x plus que les 23 précédents
+       → détecte les hausses/baisses récentes de demande
+    2. Commandes en cours : les commandes PREP/ATT sont prises en compte
+       comme réapprovisionnement attendu
+    3. Tendance : compare la semaine récente à la période précédente
+       → identifie si la demande accélère ou ralentit
+    4. Suggestion commande : quantité recommandée pour assurer 30j de couverture
     """
     permission_classes = [IsAuthenticated]
 
@@ -1602,52 +1609,133 @@ class StockAnalysisShortageView(APIView):
         from ..models import Facture, FactureProduit
 
         fournisseur_id = request.query_params.get('fournisseur', None)
+        horizon_jours = int(request.query_params.get('horizon', 30))
         today = timezone.now().date()
         date_30_days_ago = today - timedelta(days=30)
+        date_7_days_ago = today - timedelta(days=7)
 
-        # Get all products with stock > 0
+        # ── 1. Produits avec stock > 0 ──
         produits = Produit.objects.filter(stock__gt=0).select_related('fournisseur')
         if fournisseur_id:
             produits = produits.filter(fournisseur_id=fournisseur_id)
 
-        # Aggregate total quantity sold per product in the last 30 days
-        # Only count validated or paid invoices
-        sales_data = (
+        # ── 2. Ventes des 30 derniers jours (séparées en 2 périodes) ──
+        # Période récente : 7 derniers jours
+        ventes_recentes = (
             FactureProduit.objects
             .filter(
                 facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-                facture__date__gte=date_30_days_ago,
+                facture__date__date__gte=date_7_days_ago,
                 produit__isnull=False
             )
             .values('produit_id')
-            .annotate(total_sold=Sum('quantity'))
+            .annotate(total_vendu=Sum('quantity'))
         )
+        map_recentes = {v['produit_id']: v['total_vendu'] for v in ventes_recentes}
 
-        # Build a dict: produit_id -> total_sold
-        sales_map = {item['produit_id']: item['total_sold'] for item in sales_data}
+        # Période ancienne : jours 8 à 30
+        ventes_anciennes = (
+            FactureProduit.objects
+            .filter(
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture__date__date__gte=date_30_days_ago,
+                facture__date__date__lt=date_7_days_ago,
+                produit__isnull=False
+            )
+            .values('produit_id')
+            .annotate(total_vendu=Sum('quantity'))
+        )
+        map_anciennes = {v['produit_id']: v['total_vendu'] for v in ventes_anciennes}
 
+        # ── 3. Commandes en cours (réapprovisionnement attendu) ──
+        commandes_en_cours = (
+            CommandeProduit.objects
+            .filter(
+                commande__status__in=[Commande.Status.EN_PREPARATION, Commande.Status.EN_ATTENTE],
+                produit__isnull=False
+            )
+            .values('produit_id')
+            .annotate(
+                qte_commandee=Sum('quantity'),
+                ug_commandees=Sum('unites_gratuites')
+            )
+        )
+        map_commandes = {
+            c['produit_id']: (c['qte_commandee'] or 0) + (c['ug_commandees'] or 0)
+            for c in commandes_en_cours
+        }
+
+        # ── 4. Calcul prédictif pour chaque produit ──
         results = []
         total_value_at_risk = Decimal('0.00')
 
         for produit in produits:
-            total_sold = sales_map.get(produit.id, 0)
-            if total_sold <= 0:
-                continue  # No sales = no predicted shortage
+            vendu_recent = map_recentes.get(produit.id, 0)    # 7 derniers jours
+            vendu_ancien = map_anciennes.get(produit.id, 0)    # jours 8-30
+            qte_en_commande = map_commandes.get(produit.id, 0)
 
-            avg_daily_sales = total_sold / 30.0
-            days_until_stockout = produit.stock / avg_daily_sales
+            # Pas de ventes du tout → pas de prédiction possible
+            if vendu_recent + vendu_ancien <= 0:
+                continue
 
-            if days_until_stockout > 30:
-                continue  # Only show products at risk within 30 days
+            # ── Moyenne pondérée ──
+            # Poids 2x pour la période récente (7j) vs ancienne (23j)
+            # Formule : (vendu_recent * 2 / 7 + vendu_ancien / 23) / 3
+            # Le "3" normalise les poids (2 + 1)
+            taux_journalier_recent = vendu_recent / 7.0
+            taux_journalier_ancien = vendu_ancien / 23.0 if vendu_ancien > 0 else 0
 
-            # Determine urgency level
-            if days_until_stockout < 7:
-                urgency = 'critical'
-            elif days_until_stockout < 14:
-                urgency = 'warning'
+            if taux_journalier_ancien > 0:
+                # Moyenne pondérée : récent pèse 2x
+                ventes_jour = (taux_journalier_recent * 2 + taux_journalier_ancien) / 3.0
             else:
-                urgency = 'caution'
+                # Pas de données anciennes, utiliser uniquement le récent
+                ventes_jour = taux_journalier_recent
 
+            if ventes_jour <= 0:
+                continue
+
+            # ── Tendance (hausse/baisse de demande) ──
+            # Compare le taux récent au taux ancien
+            if taux_journalier_ancien > 0:
+                tendance_pct = ((taux_journalier_recent - taux_journalier_ancien) / taux_journalier_ancien) * 100
+            else:
+                tendance_pct = 0
+
+            # Déterminer direction de la tendance
+            if tendance_pct > 15:
+                tendance = 'hausse'
+            elif tendance_pct < -15:
+                tendance = 'baisse'
+            else:
+                tendance = 'stable'
+
+            # ── Stock effectif (stock actuel + commandes en cours) ──
+            stock_effectif = produit.stock + qte_en_commande
+
+            # ── Jours avant rupture ──
+            jours_avant_rupture = produit.stock / ventes_jour  # Sans les commandes
+            jours_avec_commandes = stock_effectif / ventes_jour  # Avec les commandes
+
+            # Filtrer : n'afficher que les produits à risque dans l'horizon
+            if jours_avant_rupture > horizon_jours:
+                continue
+
+            # ── Niveau d'urgence ──
+            if jours_avant_rupture < 7:
+                urgence = 'critical'
+            elif jours_avant_rupture < 14:
+                urgence = 'warning'
+            else:
+                urgence = 'caution'
+
+            # ── Quantité suggérée à commander ──
+            # Objectif : assurer 30 jours de couverture totale
+            couverture_cible = 30
+            besoin_total = ventes_jour * couverture_cible
+            qte_suggeree = max(0, int(besoin_total - stock_effectif + 0.5))
+
+            # ── Valeur à risque ──
             value_at_risk = Decimal(str(produit.stock)) * Decimal(str(produit.cost_price or 0))
             total_value_at_risk += value_at_risk
 
@@ -1655,21 +1743,30 @@ class StockAnalysisShortageView(APIView):
                 'id': produit.id,
                 'name': produit.name,
                 'stock': produit.stock,
-                'avg_daily_sales': round(avg_daily_sales, 2),
-                'days_until_stockout': round(days_until_stockout, 1),
+                'avg_daily_sales': round(ventes_jour, 2),
+                'days_until_stockout': round(jours_avant_rupture, 1),
+                'days_with_pending_orders': round(jours_avec_commandes, 1),
                 'cost_price': float(produit.cost_price or 0),
                 'selling_price': float(produit.selling_price or 0),
                 'value': float(value_at_risk),
-                'urgency': urgency,
-                'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A'
+                'urgency': urgence,
+                'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A',
+                # Nouvelles données intelligentes
+                'pending_orders': qte_en_commande,
+                'suggested_order_qty': qte_suggeree,
+                'trend': tendance,
+                'trend_pct': round(tendance_pct, 1),
+                'sold_last_7d': vendu_recent,
+                'sold_prev_23d': vendu_ancien,
             })
 
-        # Sort by urgency: fewest days first
+        # Trier par urgence (jours restants croissants)
         results.sort(key=lambda x: x['days_until_stockout'])
 
-        # Count by urgency
+        # Compteurs par urgence
         critical_count = sum(1 for r in results if r['urgency'] == 'critical')
         warning_count = sum(1 for r in results if r['urgency'] == 'warning')
+        trending_up = sum(1 for r in results if r['trend'] == 'hausse')
 
         return Response({
             'type': 'shortage',
@@ -1678,5 +1775,7 @@ class StockAnalysisShortageView(APIView):
             'total_value': float(total_value_at_risk),
             'critical_count': critical_count,
             'warning_count': warning_count,
+            'trending_up_count': trending_up,
             'items': results
         })
+

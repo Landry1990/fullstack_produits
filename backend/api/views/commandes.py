@@ -34,6 +34,7 @@ from ..sudo_utils import validate_sudo_mode
 import logging
 
 logger = logging.getLogger(__name__)
+business_logger = logging.getLogger('api.business')
 
 def header_footer(canvas, doc, company_info, commande_info, total_achat):
     canvas.saveState()
@@ -152,7 +153,9 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.
         """
         commande = self.get_object()
+        business_logger.info(f"[COMMANDE] Cloture demandee #{commande.id} par {request.user.username}")
         if commande.status == Commande.Status.CLOTUREE:
+            business_logger.warning(f"[COMMANDE] Cloture refusee #{commande.id} - deja cloturee")
             return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Validation Sudo
@@ -331,6 +334,11 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         if mouvements_to_create:
             MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
 
+        business_logger.info(
+            f"[COMMANDE] Cloture OK #{commande.id} | "
+            f"fournisseur={commande.fournisseur.name if commande.fournisseur else 'N/A'} | "
+            f"produits={len(product_ids)} | lots={len(lots_to_create)} | user={request.user.username}"
+        )
         return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
 
     @action(detail=True, methods=['post'])
@@ -656,8 +664,10 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         - Repasse la commande en statut PREP
         """
         commande = self.get_object()
+        business_logger.info(f"[COMMANDE] Annulation reception demandee #{commande.id} par {request.user.username}")
         
         if commande.status != Commande.Status.CLOTUREE:
+            business_logger.warning(f"[COMMANDE] Annulation refusee #{commande.id} - status={commande.status}")
             return Response(
                 {'detail': 'Seule une commande clôturée peut être annulée.'}, 
                 status=status.HTTP_400_BAD_REQUEST
@@ -762,6 +772,10 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             request=request
         )
         
+        business_logger.info(
+            f"[COMMANDE] Annulation reception OK #{commande.id} | "
+            f"produits={len(produits_dict)} | lots_supprimes={deleted_lots_count} | user={request.user.username}"
+        )
         return Response({
             'status': 'Réception annulée avec succès.',
             'details': {

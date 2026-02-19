@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import PremiumModal from '../common/PremiumModal'
 
 interface ClientCreateModalProps {
   isOpen: boolean
@@ -27,160 +28,139 @@ export default function ClientCreateModal({
 }: ClientCreateModalProps) {
   const { t } = useTranslation()
 
-  if (!isOpen) return null
-
   return (
-    <dialog className="modal modal-open">
-      <div className="modal-box max-w-lg">
-        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-          ➕ {t('facturation.create_client.title')}
-          <span className="badge badge-sm badge-primary">
-            {newClientForm.client_type === 'PARTICULIER' 
-              ? t('facturation.create_client.individual') 
-              : t('facturation.create_client.professional')}
-          </span>
-        </h3>
-
-        <form onSubmit={handleCreateClient} className="space-y-4">
-          {/* Type de client */}
-          <div className="flex gap-4">
-            <label className="label cursor-pointer gap-2">
-              <input
-                type="radio"
-                className="radio radio-primary radio-sm"
-                checked={newClientForm.client_type === 'PARTICULIER'}
-                onChange={() => setNewClientForm((prev: any) => ({ ...prev, client_type: 'PARTICULIER' }))}
-              />
-              <span className="label-text">{t('facturation.create_client.individual')}</span>
-            </label>
-            <label className="label cursor-pointer gap-2">
-              <input
-                type="radio"
-                className="radio radio-secondary radio-sm"
-                checked={newClientForm.client_type === 'PROFESSIONNEL'}
-                onChange={() => setNewClientForm((prev: any) => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
-              />
-              <span className="label-text">{t('facturation.create_client.professional')}</span>
-            </label>
-          </div>
-
-          {/* Infos de base */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-xs">{t('facturation.create_client.name')} *</span>
-              </label>
-              <input
-                type="text"
-                value={newClientForm.name}
-                onChange={e => setNewClientForm((prev: any) => ({ ...prev, name: e.target.value }))}
-                className="input input-bordered input-sm w-full"
-                placeholder={t('facturation.create_client.name')}
-                required
-              />
-            </div>
-            <div className="form-control">
-              <label className="label py-1">
-                <span className="label-text text-xs">{t('facturation.create_client.phone')} *</span>
-              </label>
-              <input
-                type="tel"
-                value={newClientForm.phone}
-                onChange={e => setNewClientForm((prev: any) => ({ ...prev, phone: e.target.value }))}
-                className="input input-bordered input-sm w-full"
-                placeholder="0612345678"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs">{t('facturation.create_client.email')} *</span>
-            </label>
+    <PremiumModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`➕ ${t('facturation.create_client.title')}`}
+      subtitle={newClientForm.client_type === 'PARTICULIER' 
+        ? t('facturation.create_client.individual') 
+        : t('facturation.create_client.professional')}
+      icon={
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      }
+      maxWidth="max-w-lg"
+      disableClose={isCreatingClient}
+    >
+      <form onSubmit={handleCreateClient} className="p-6 space-y-5">
+        {/* Type de client */}
+        <div className="flex gap-4">
+          <label className="label cursor-pointer gap-2">
             <input
-              type="email"
-              value={newClientForm.email}
-              onChange={e => setNewClientForm((prev: any) => ({ ...prev, email: e.target.value }))}
-              className="input input-bordered input-sm w-full"
-              placeholder="email@exemple.com"
+              type="radio"
+              className="radio radio-primary radio-sm"
+              checked={newClientForm.client_type === 'PARTICULIER'}
+              onChange={() => setNewClientForm((prev: any) => ({ ...prev, client_type: 'PARTICULIER' }))}
+            />
+            <span className="label-text">{t('facturation.create_client.individual')}</span>
+          </label>
+          <label className="label cursor-pointer gap-2">
+            <input
+              type="radio"
+              className="radio radio-secondary radio-sm"
+              checked={newClientForm.client_type === 'PROFESSIONNEL'}
+              onChange={() => setNewClientForm((prev: any) => ({ ...prev, client_type: 'PROFESSIONNEL' }))}
+            />
+            <span className="label-text">{t('facturation.create_client.professional')}</span>
+          </label>
+        </div>
+
+        {/* Infos de base */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.create_client.name')} *</label>
+            <input
+              type="text"
+              value={newClientForm.name}
+              onChange={e => setNewClientForm((prev: any) => ({ ...prev, name: e.target.value }))}
+              className="input input-bordered input-sm w-full rounded-xl"
+              placeholder={t('facturation.create_client.name')}
               required
             />
           </div>
-
-          <div className="form-control">
-            <label className="label py-1">
-              <span className="label-text text-xs">{t('facturation.create_client.address')} *</span>
-            </label>
-            <textarea
-              value={newClientForm.address}
-              onChange={e => setNewClientForm((prev: any) => ({ ...prev, address: e.target.value }))}
-              className="textarea textarea-bordered textarea-sm w-full h-16 resize-none"
-              placeholder={t('facturation.create_client.address')}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.create_client.phone')} *</label>
+            <input
+              type="tel"
+              value={newClientForm.phone}
+              onChange={e => setNewClientForm((prev: any) => ({ ...prev, phone: e.target.value }))}
+              className="input input-bordered input-sm w-full rounded-xl"
+              placeholder="0612345678"
               required
             />
           </div>
+        </div>
 
-          {/* Champs professionnels */}
-          {newClientForm.client_type === 'PROFESSIONNEL' && (
-            <div className="bg-base-200 p-3 rounded-lg space-y-3">
-              <h4 className="text-sm font-bold text-secondary">{t('facturation.create_client.pro_options')}</h4>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="form-control">
-                  <label className="label py-1">
-                    <span className="label-text text-xs">{t('facturation.create_client.credit_limit')}</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={newClientForm.plafond}
-                    onChange={e => setNewClientForm((prev: any) => ({ ...prev, plafond: e.target.value }))}
-                    className="input input-bordered input-sm w-full"
-                    min="0"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label py-1">
-                    <span className="label-text text-xs">{t('facturation.create_client.coverage')}</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={newClientForm.taux_couverture}
-                    onChange={e => setNewClientForm((prev: any) => ({ ...prev, taux_couverture: e.target.value }))}
-                    className="input input-bordered input-sm w-full"
-                    min="0"
-                    max="100"
-                  />
-                </div>
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.create_client.email')} *</label>
+          <input
+            type="email"
+            value={newClientForm.email}
+            onChange={e => setNewClientForm((prev: any) => ({ ...prev, email: e.target.value }))}
+            className="input input-bordered input-sm w-full rounded-xl"
+            placeholder="email@exemple.com"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.create_client.address')} *</label>
+          <textarea
+            value={newClientForm.address}
+            onChange={e => setNewClientForm((prev: any) => ({ ...prev, address: e.target.value }))}
+            className="textarea textarea-bordered textarea-sm w-full h-16 resize-none rounded-xl"
+            placeholder={t('facturation.create_client.address')}
+            required
+          />
+        </div>
+
+        {/* Champs professionnels */}
+        {newClientForm.client_type === 'PROFESSIONNEL' && (
+          <div className="bg-base-200 p-4 rounded-xl space-y-3">
+            <h4 className="text-sm font-bold text-secondary">{t('facturation.create_client.pro_options')}</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.create_client.credit_limit')}</label>
+                <input
+                  type="number"
+                  value={newClientForm.plafond}
+                  onChange={e => setNewClientForm((prev: any) => ({ ...prev, plafond: e.target.value }))}
+                  className="input input-bordered input-sm w-full rounded-xl"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.create_client.coverage')}</label>
+                <input
+                  type="number"
+                  value={newClientForm.taux_couverture}
+                  onChange={e => setNewClientForm((prev: any) => ({ ...prev, taux_couverture: e.target.value }))}
+                  className="input input-bordered input-sm w-full rounded-xl"
+                  min="0"
+                  max="100"
+                />
               </div>
             </div>
-          )}
-
-          {/* Actions */}
-          <div className="modal-action mt-6">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={onClose}
-            >
-              {t('facturation.create_client.cancel')}
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary gap-2"
-              disabled={isCreatingClient}
-            >
-              {isCreatingClient ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                <> {t('facturation.create_client.submit')}</>
-              )}
-            </button>
           </div>
-        </form>
-      </div>
-      <form method="dialog" className="modal-backdrop" onClick={onClose}>
-        <button>close</button>
+        )}
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-2">
+          <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose}>
+            {t('facturation.create_client.cancel')}
+          </button>
+          <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={isCreatingClient}>
+            {isCreatingClient ? (
+              <span className="loading loading-spinner loading-sm"></span>
+            ) : (
+              <> {t('facturation.create_client.submit')}</>
+            )}
+          </button>
+        </div>
       </form>
-    </dialog>
+    </PremiumModal>
   )
 }
+
