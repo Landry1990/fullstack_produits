@@ -25,7 +25,7 @@ interface DashboardStats {
     low_stock?: { value: number; change: number };
     receivables?: { value: number; count: number };
     discount?: { value: number; change: number };
-    stock_value?: { value: number };
+    stock_value?: { value: number; count: number };
     user_stats?: {
         sales: number;
         count: number;

@@ -1,37 +1,46 @@
 import React from 'react'
 import { useStockLots } from '../hooks/useStockLots'
 import type { ProduitModel, StockLot } from '../types'
+import PremiumModal from './common/PremiumModal'
 
 type LotSelectionModalProps = {
   isOpen: boolean
   onClose: () => void
   produit: ProduitModel | null
-  onSelectLot: (lot: StockLot | null) => void // null means "Auto (FEFO)"
-  currentLotId?: string | null // To highlight selected
+  onSelectLot: (lot: StockLot | null) => void
+  currentLotId?: string | null
 }
 
 export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLot, currentLotId }: LotSelectionModalProps) {
   const { lots, loading, error } = useStockLots(produit?.id || null)
 
-  if (!isOpen || !produit) return null
+  if (!produit) return null
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">
-          Sélection du lot pour {produit.name}
-        </h3>
-        
+    <PremiumModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Sélection du lot`}
+      subtitle={produit.name}
+      icon={
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      }
+      gradientFrom="info/10"
+      gradientTo="primary/10"
+    >
+      <div className="p-6">
         {loading ? (
           <div className="flex justify-center py-8">
-            <span className="loading loading-spinner loading-lg"></span>
+            <span className="loading loading-spinner loading-lg text-primary"></span>
           </div>
         ) : error ? (
-          <div className="alert alert-error text-sm">{error}</div>
+          <div className="alert alert-error text-sm rounded-xl">{error}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-gray-100">
             <table className="table table-sm w-full">
-              <thead>
+              <thead className="bg-gray-50">
                 <tr>
                   <th>Lot</th>
                   <th>Expiration</th>
@@ -57,7 +66,6 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
 
                 {lots.map(lot => {
                     const isSelected = String(lot.id) === String(currentLotId)
-                    // Determine status color based on expiry
                     const now = new Date()
                     const expire = lot.date_expiration ? new Date(lot.date_expiration) : null
                     let expiryColor = "text-success"
@@ -103,13 +111,11 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
           </div>
         )}
 
-        <div className="modal-action">
-          <button className="btn" onClick={onClose}>Fermer</button>
+        <div className="flex justify-end gap-3 pt-4">
+          <button className="btn btn-ghost px-6 rounded-xl" onClick={onClose}>Fermer</button>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button onClick={onClose}>Fermer</button>
-      </form>
-    </div>
+    </PremiumModal>
   )
 }
+

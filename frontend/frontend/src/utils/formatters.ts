@@ -24,7 +24,7 @@ export const normalizeNumberInput = (value: string | number, options?: { min?: n
 }
 
 export const formatPrice = (price: number) => {
-    return price.toLocaleString('fr-FR')
+    return Math.round(price).toLocaleString('fr-FR')
 }
 
 export const formatCurrency = formatPrice;

@@ -11,6 +11,7 @@ from ..models import Facture, Caisse, FactureProduit
 import logging
 
 logger = logging.getLogger(__name__)
+business_logger = logging.getLogger('api.business')
 
 class HistoriqueVentesViewSet(viewsets.ViewSet):
     """API endpoint for daily sales history."""

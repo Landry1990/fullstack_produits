@@ -139,7 +139,7 @@ export default function Dashboard() {
              [
                {
                 title: "MES VENTES (JOUR)",
-                value: formatCurrency(stats?.user_stats?.sales),
+                value: formatCurrency(stats?.user_stats?.sales ?? 0),
                 change: `${stats?.user_stats?.count || 0} ventes`,
                 icon: "👤",
                 color: "bg-indigo-100 text-indigo-700",
@@ -148,7 +148,7 @@ export default function Dashboard() {
                },
                {
                 title: "MON PANIER MOYEN",
-                value: formatCurrency(stats?.user_stats?.avg_basket),
+                value: formatCurrency(stats?.user_stats?.avg_basket ?? 0),
                 change: "Moyenne par client",
                 icon: "🛍️",
                 color: "bg-fuchsia-100 text-fuchsia-700",
@@ -178,15 +178,15 @@ export default function Dashboard() {
                 }
             ] : []),
             { title: t('dashboard.stats.revenue'), 
-                value: formatCurrency(stats?.revenue?.value), 
+                value: formatCurrency(stats?.revenue?.value ?? 0), 
                 change: `${(stats?.revenue?.change || 0) > 0 ? '+' : ''}${stats?.revenue?.change || 0}%`, 
                 icon: "💰", 
                 color: "bg-emerald-100 text-emerald-700", 
                 isPositive: (stats?.revenue?.change || 0) >= 0,
-                details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats?.discount?.value) })
+                details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats?.discount?.value ?? 0) })
             },
-            { title: t('dashboard.stats.receivables'), value: formatCurrency(stats?.receivables?.value), change: `${stats?.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
-            { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats?.stock_value?.value), change: t('dashboard.stats.stock_value_sub'), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
+            { title: t('dashboard.stats.receivables'), value: formatCurrency(stats?.receivables?.value ?? 0), change: `${stats?.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
+            { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats?.stock_value?.value ?? 0), change: `${stats?.stock_value?.count ?? 0} produits`, icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
            ]
         )).map((stat: any, index) => {
           const content = (

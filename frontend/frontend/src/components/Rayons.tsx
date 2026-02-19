@@ -4,6 +4,7 @@ import { safeStorage } from '../utils/storage';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
+import PremiumModal from './common/PremiumModal';
 
 interface Rayon {
   id: number;
@@ -298,77 +299,91 @@ export default function Rayons() {
       </div>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{editingRayon ? t('rayons.modal.title_edit') : t('rayons.modal.title_new')}</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="form-control w-full mb-4">
-                <label className="label"><span className="label-text">{t('rayons.modal.name')}</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full" 
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  required
-                />
-              </div>
-              
-              <div className="form-control w-full mb-6">
-                <label className="label"><span className="label-text">{t('rayons.modal.parent')}</span></label>
-                <select 
-                  className="select select-bordered w-full"
-                  value={formData.parent}
-                  onChange={e => setFormData({...formData, parent: e.target.value})}
-                >
-                  <option value="">{t('rayons.modal.none')}</option>
-                  {availableParents.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>{t('rayons.modal.cancel')}</button>
-                <button type="submit" className="btn btn-primary">{t('rayons.modal.save')}</button>
-              </div>
-            </form>
+      <PremiumModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingRayon ? t('rayons.modal.title_edit') : t('rayons.modal.title_new')}
+        subtitle={editingRayon ? 'Modifier les informations du rayon' : 'Ajouter un nouveau rayon'}
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        }
+      >
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('rayons.modal.name')}</label>
+            <input 
+              type="text" 
+              className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              required
+              autoFocus
+            />
           </div>
-          <div className="modal-backdrop" onClick={closeModal}></div>
-        </div>
-      )}
+          
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('rayons.modal.parent')}</label>
+            <select 
+              className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              value={formData.parent}
+              onChange={e => setFormData({...formData, parent: e.target.value})}
+            >
+              <option value="">{t('rayons.modal.none')}</option>
+              {availableParents.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={closeModal}>{t('rayons.modal.cancel')}</button>
+            <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20">{t('rayons.modal.save')}</button>
+          </div>
+        </form>
+      </PremiumModal>
 
       {/* Print Options Modal */}
-      {isPrintModalOpen && printTarget && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-             <h3 className="font-bold text-lg mb-4">{t('rayons.print_modal.title')}</h3>
-             <p className="mb-4">
-               {t('rayons.print_modal.rayon')} : <span className="font-bold text-primary">{printTarget.name}</span>
-             </p>
+      <PremiumModal
+        isOpen={isPrintModalOpen && !!printTarget}
+        onClose={() => setIsPrintModalOpen(false)}
+        title={t('rayons.print_modal.title')}
+        subtitle={printTarget?.name || ''}
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+        }
+        gradientFrom="info/10"
+        gradientVia="primary/5"
+        gradientTo="accent/10"
+      >
+        <div className="p-6 space-y-5">
+          <p>
+            {t('rayons.print_modal.rayon')} : <span className="font-bold text-primary">{printTarget?.name}</span>
+          </p>
 
-             <div className="form-control">
-               <label className="label cursor-pointer justify-start gap-4">
-                 <input 
-                   type="checkbox" 
-                   className="checkbox checkbox-primary"
-                   checked={excludeZeroStock}
-                   onChange={e => setExcludeZeroStock(e.target.checked)}
-                 />
-                 <span className="label-text">{t('rayons.print_modal.exclude_zero')}</span>
-               </label>
-             </div>
-
-             <div className="modal-action">
-               <button className="btn btn-ghost" onClick={() => setIsPrintModalOpen(false)}>{t('rayons.modal.cancel')}</button>
-               <button className="btn btn-primary" onClick={handleConfirmPrint}>
-                 <span className="mr-2">🖨️</span> {t('rayons.print_modal.validate')}
-               </button>
-             </div>
+          <div className="form-control">
+            <label className="label cursor-pointer justify-start gap-4">
+              <input 
+                type="checkbox" 
+                className="checkbox checkbox-primary"
+                checked={excludeZeroStock}
+                onChange={e => setExcludeZeroStock(e.target.checked)}
+              />
+              <span className="label-text">{t('rayons.print_modal.exclude_zero')}</span>
+            </label>
           </div>
-          <div className="modal-backdrop" onClick={() => setIsPrintModalOpen(false)}></div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button className="btn btn-ghost px-6 rounded-xl" onClick={() => setIsPrintModalOpen(false)}>{t('rayons.modal.cancel')}</button>
+            <button className="btn btn-info px-8 rounded-xl shadow-lg shadow-info/20" onClick={handleConfirmPrint}>
+              🖨️ {t('rayons.print_modal.validate')}
+            </button>
+          </div>
         </div>
-      )}
+      </PremiumModal>
     </div>
   );
 }

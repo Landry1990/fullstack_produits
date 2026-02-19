@@ -6,6 +6,10 @@ from django.utils import timezone
 from ..models import CouponMonnaie, Facture, Caisse, AuditLog
 from ..serializers import CouponMonnaieSerializer
 from ..audit_helpers import log_audit
+import logging
+
+logger = logging.getLogger(__name__)
+business_logger = logging.getLogger('api.business')
 
 class CouponMonnaieViewSet(viewsets.ModelViewSet):
     """
@@ -72,9 +76,7 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
         coupon = self.get_object()
         
         # Log pour debug
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f"Tentative d'utilisation du coupon #{coupon.numero} (ID: {coupon.id}, Statut actuel: {coupon.status})")
+        business_logger.info(f"[COUPON] Tentative d'utilisation #{coupon.numero} par {request.user.username}")
         
         if coupon.status != CouponMonnaie.Status.ACTIF:
             logger.warning(f"Coupon #{coupon.numero} n'est pas actif (Statut: {coupon.status})")
@@ -108,7 +110,7 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
         coupon.save()
         coupon.refresh_from_db()
         
-        logger.info(f"Coupon #{coupon.numero} marqué comme utilisé (Statut après save: {coupon.status})")
+        business_logger.info(f"[COUPON] Utilise avec succes #{coupon.numero} | facture={facture_id or 'N/A'} | user={request.user.username}")
         
         # Vérifier que le statut a bien été mis à jour
         if coupon.status != CouponMonnaie.Status.UTILISE:

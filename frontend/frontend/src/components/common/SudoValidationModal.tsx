@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import PremiumModal from './PremiumModal';
 
 interface User {
     id: number;
@@ -45,7 +46,6 @@ export default function SudoValidationModal({
         }
     }, [isOpen]);
 
-    // Auto-focus password field when a validator is selected
     useEffect(() => {
         if (selectedValidator && isOpen) {
             setTimeout(() => {
@@ -62,7 +62,6 @@ export default function SudoValidationModal({
             const userList = res.data.results || res.data;
             setUsers(userList);
 
-            // Auto-select current user if found in list
             if (currentUser) {
                 const found = userList.find((u: any) => u.username === currentUser.username);
                 if (found) {
@@ -82,22 +81,34 @@ export default function SudoValidationModal({
         }
     };
 
-    if (!isOpen) return null;
-
     return (
-        <dialog className="modal modal-open">
-            <div className="modal-box">
-                <h3 className="font-bold text-lg">{title || t('stock.inventaire.modals.validate_title')}</h3>
-                <p className="py-4" dangerouslySetInnerHTML={{ __html: message || t('stock.inventaire.modals.validate_warning') }}>
-                </p>
-                
-                <div className="form-control w-full max-w-xs mt-2">
-                    <label className="label">
-                        <span className="label-text">{t('stock.inventaire.modals.validate_as')}</span>
-                        <span className="label-text-alt text-warning">{t('stock.inventaire.modals.validate_admin')}</span>
+        <PremiumModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={title || t('stock.inventaire.modals.validate_title')}
+            subtitle="Validation par un administrateur"
+            icon={
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+            }
+            gradientFrom="success/10"
+            gradientVia="warning/5"
+            gradientTo="success/10"
+            disableClose={saving}
+        >
+            <div className="p-6 space-y-5">
+                {message && (
+                    <p className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: message }}></p>
+                )}
+
+                <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                        {t('stock.inventaire.modals.validate_as')}
+                        <span className="text-warning ml-2 normal-case">{t('stock.inventaire.modals.validate_admin')}</span>
                     </label>
                     <select 
-                        className="select select-bordered"
+                        className="select select-bordered w-full h-12 rounded-xl"
                         value={selectedValidator || ''}
                         onChange={(e) => setSelectedValidator(e.target.value ? parseInt(e.target.value) : null)}
                         disabled={loadingUsers}
@@ -112,15 +123,15 @@ export default function SudoValidationModal({
                 </div>
 
                 {selectedValidator && (
-                    <div className="form-control w-full max-w-xs mt-4">
-                        <label className="label">
-                            <span className="label-text">{t('stock.inventaire.modals.validate_password')}</span>
-                            <span className="label-text-alt text-error">{t('stock.inventaire.modals.validate_required')}</span>
+                    <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
+                            {t('stock.inventaire.modals.validate_password')}
+                            <span className="text-error ml-2 normal-case">{t('stock.inventaire.modals.validate_required')}</span>
                         </label>
                         <input 
                             ref={passwordInputRef}
                             type="password" 
-                            className="input input-bordered" 
+                            className="input input-bordered w-full h-12 rounded-xl focus:border-success focus:ring-2 focus:ring-success/20 transition-all" 
                             placeholder={t('stock.inventaire.modals.validate_password')}
                             value={password}
                             onChange={e => setPassword(e.target.value)}
@@ -129,16 +140,12 @@ export default function SudoValidationModal({
                     </div>
                 )}
 
-                <div className="modal-action">
-                    <button 
-                        className="btn btn-ghost" 
-                        onClick={onClose}
-                        disabled={saving}
-                    >
+                <div className="flex justify-end gap-3 pt-2">
+                    <button className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={saving}>
                         {t('stock.inventaire.modals.cancel')}
                     </button>
                     <button 
-                        className="btn btn-success" 
+                        className="btn btn-success px-8 rounded-xl shadow-lg shadow-success/20" 
                         onClick={handleConfirm}
                         disabled={saving || !selectedValidator || !password}
                     >
@@ -146,6 +153,7 @@ export default function SudoValidationModal({
                     </button>
                 </div>
             </div>
-        </dialog>
+        </PremiumModal>
     );
 }
+

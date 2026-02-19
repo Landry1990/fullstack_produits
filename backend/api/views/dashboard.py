@@ -104,10 +104,12 @@ class DashboardViewSet(viewsets.ViewSet):
         ).aggregate(total=Coalesce(Sum('remise'), Decimal('0')))['total']
         
         # 6. Stock value (Valeur totale du stock au PMP)
-        # 6. Stock value (Valeur totale du stock au PMP)
-        stock_value = Produit.objects.aggregate(
-            total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0'))
-        )['total']
+        stock_agg = Produit.objects.filter(stock__gt=0).aggregate(
+            total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0')),
+            count=Count('id')
+        )
+        stock_value = stock_agg['total']
+        stock_count = stock_agg['count']
 
         # 7. User specific stats (My Daily Stats - for Seller motivation)
         user_daily_invoices = Facture.objects.filter(
@@ -154,7 +156,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 'low_stock': {'value': stock_critique, 'change': 0},
                 'receivables': {'value': float(receivables_data['total_debt'] or 0), 'count': receivables_data['count'] or 0},
                 'discount': {'value': float(discount_total), 'change': 0},
-                'stock_value': {'value': float(stock_value), 'change': 0}
+                'stock_value': {'value': float(stock_value), 'count': stock_count}
             })
             
         return Response(response_data)
@@ -528,47 +530,49 @@ class DashboardViewSet(viewsets.ViewSet):
         # We calculate debt via annotation to avoid N+1 queries
         # Debt = Sum(Commandes.total WHERE status=CLOT) - Sum(Paiements.montant)
         
-        from ..models import Fournisseur
-        
-        # Get all suppliers with potentially active debts
-        # We fetch all suppliers and calculate in Python to avoid Cartesian product issues with multiple Sum annotations
-        # given the complexity of the relationships (Fournisseur -> Commande -> CommandeProduit AND Fournisseur -> PaiementFournisseur)
-        
-        suppliers = Fournisseur.objects.prefetch_related(
-            'commande_set', 
-            'commande_set__produits', 
-            'paiements_effectues'
-        )
+        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value
+        from django.db.models.functions import Coalesce
+        from ..models import CommandeProduit, PaiementFournisseur, Commande
+
+        # Subquery for Total Ordered (Commandes CLOTUREE)
+        # Sum of (quantity * price) for all lines in CLOT orders
+        ordered_sub = CommandeProduit.objects.filter(
+            commande__status='CLOT',
+            commande__fournisseur=OuterRef('pk')
+        ).values('commande__fournisseur').annotate(
+            total=Sum(F('quantity') * F('price'))
+        ).values('total')
+
+        # Subquery for Total Paid
+        paid_sub = PaiementFournisseur.objects.filter(
+            fournisseur=OuterRef('pk')
+        ).values('fournisseur').annotate(
+            total=Sum('montant')
+        ).values('total')
+
+        # Annotate suppliers with calculations
+        suppliers = Fournisseur.objects.annotate(
+            total_ordered_db=Coalesce(Subquery(ordered_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            total_paid_db=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Value(0, output_field=DecimalField()))
+        ).annotate(
+            debt_db=F('total_ordered_db') - F('total_paid_db')
+        ).filter(
+            debt_db__gt=0
+        ).order_by('-debt_db')
         
         data = []
         total_debt_global = Decimal('0.00')
         
         for s in suppliers:
-            # 1. Calculate Total Ordered (Sum of quantity * price for CLOT orders)
-            total_ordered = Decimal('0.00')
-            for cmd in s.commande_set.all():
-                if cmd.status == 'CLOT':
-                    # Use the property logic or manual sum
-                    for line in cmd.produits.all():
-                        total_ordered += (line.quantity * line.price)
+            debt = s.debt_db
+            total_debt_global += debt
             
-            # 2. Calculate Total Paid
-            total_paid = sum((p.montant for p in s.paiements_effectues.all()), Decimal('0.00'))
-            
-            # 3. Debt
-            debt = total_ordered - total_paid
-            
-            if debt > 0:
-                total_debt_global += debt
-                data.append({
-                    'id': s.id,
-                    'name': s.name,
-                    'debt': float(debt),
-                    'phone': s.phone
-                })
-        
-        # Sort by highest debt
-        data.sort(key=lambda x: x['debt'], reverse=True)
+            data.append({
+                'id': s.id,
+                'name': s.name,
+                'debt': float(debt),
+                'phone': s.phone
+            })
         
         return Response({
             'total_debt': float(total_debt_global),

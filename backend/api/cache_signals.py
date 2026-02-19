@@ -63,7 +63,7 @@ class CacheMonitor:
         """
         # Pour l'instant, juste un log simple
         import logging
-        logger = logging.getLogger('cache_monitor')
+        logger = logging.getLogger('api.cache')
         
         if hit:
             logger.debug(f"Cache HIT: {cache_key}")

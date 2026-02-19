@@ -1,0 +1,46 @@
+services:
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=fullstack_db
+      - POSTGRES_USER=fullstack_user
+      - POSTGRES_PASSWORD=fullstack_password
+    restart: always
+
+  # Backend Django
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app  # Montage pour le développement (hot-reload possible)
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DEBUG=False
+      - DJANGO_SECRET_KEY=votre_cle_secrete_production_a_changer
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=fullstack_db
+      - DB_USER=fullstack_user
+      - DB_PASSWORD=fullstack_password
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      - db
+    restart: always
+
+  # Frontend (React servi par Nginx)
+  frontend:
+    build: ./frontend/frontend
+    ports:
+      - "80:80"  # Expose le frontend sur le port 80 de la machine hôte
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:
+  static_volume:
+  media_volume:
