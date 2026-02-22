@@ -171,11 +171,17 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
              if (fullFacture.paiements.length > 1) modePaiement = 'Mixte';
         }
 
+        // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
+        const clientNameForTicket = fullFacture.client_name_override 
+            || fullFacture.client_name 
+            || (fullFacture.client?.name) 
+            || 'Client de passage';
+        
         const ticket: TicketCaisse = {
             id: fullFacture.session_ticket_number || fullFacture.id, // Utiliser num ticket session si dispo
             facture: fullFacture,
             facture_numero: fullFacture.numero_facture || undefined,
-            client_name: fullFacture.client_name_override || fullFacture.client_name || 'Passage',
+            client_name: clientNameForTicket,
             mode_paiement: modePaiement,
             montant: fullFacture.total_ttc,
             statut: 'completee',
@@ -186,7 +192,7 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
             user_details: {
                 id: 0,
                 // Utiliser le nom retourné par l'API (qui est maintenant ajouté au serializer)
-                username: fullFacture.created_by_name || 'Vendeur'
+                username: fullFacture.created_by_name || '?'
             },
             paiements_details: fullFacture.paiements || [] // Structure compatible ?
         };
@@ -224,6 +230,56 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
         navigate('/app/facturation');
     };
 
+    // --- DUPLICATE ---
+    const handleDuplicateInvoice = async (facture: Facture) => {
+        let fullFacture = facture;
+
+        // Si les produits ne sont pas complets, on charge le détail
+        if (!facture.produits || facture.produits.length === 0) {
+            const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Chargement...' }));
+            try {
+                const token = safeStorage.getItem('authToken');
+                const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/`, {
+                    headers: { Authorization: `Token ${token}` }
+                });
+                fullFacture = response.data;
+                toast.dismiss(toastId);
+            } catch (error) {
+                console.error("Erreur chargement détails pour duplication", error);
+                toast.error("Impossible de charger le détail de la vente à dupliquer.");
+                toast.dismiss(toastId);
+                return; // Stop if failed
+            }
+        }
+
+        // On crée une copie expurgée des données d'identification unique
+        // On supprime aussi spécifiquement les lots car ils peuvent ne plus exister
+        const duplicatedProduits = fullFacture.produits?.map(p => ({
+            ...p,
+            lot: null,
+            stock_lot: null,
+            date_expiration: null
+        })) || [];
+
+        const duplicatedFacture: Partial<Facture> = {
+            ...fullFacture,
+            produits: duplicatedProduits as any, // Cast pour outrepasser les Partial strict
+            id: undefined as any, // On supprime l'ID pour que Facturation la traite comme nouvelle (ou devis à valider)
+            numero_facture: undefined as any,
+            status: 'BROU', // On la force en brouillon ou devis
+            paiements: [], // Pas de paiements liés
+            session_ticket_number: undefined,
+            date: new Date().toISOString()
+        };
+
+        // Sauvegarder la facture "dupliquée" pour le chargement dans Facturation
+        safeStorage.setItem('devis_to_load', JSON.stringify(duplicatedFacture), 'local');
+        toast.success(t('sales.messages.duplicated_to_cart', { defaultValue: 'Facture copiée vers la facturation' }));
+        
+        // Rediriger vers la facturation
+        navigate('/app/facturation');
+    };
+
     return {
         // State
         modals: {
@@ -241,7 +297,8 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
             handlePrintInvoice,
             handleConfirmPrintClientName,
             handlePrintTicket, // New action
-            handleEditInvoice 
+            handleEditInvoice,
+            handleDuplicateInvoice
         }
     };
 };

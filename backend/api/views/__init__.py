@@ -19,7 +19,7 @@ from .stocks import (
 )
 from .users import CustomAuthToken, UserViewSet
 from .auth import verify_password
-from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView, ConfigurationOptionViewSet
+from .settings import LoyaltySettingViewSet, InvoiceConfigurationView, PharmacySettingsView, ConfigurationOptionViewSet, TVAViewSet
 from .dashboard import DashboardViewSet, StatistiquesViewSet
 from .audit import AuditLogViewSet
 from .historique_ventes import HistoriqueVentesViewSet
@@ -54,5 +54,5 @@ __all__ = [
     'AuditLogViewSet',
     'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
     'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet',
-    'PromotionViewSet', 'TemporalAnalysisViewSet'
+    'PromotionViewSet', 'TemporalAnalysisViewSet', 'TVAViewSet'
 ]

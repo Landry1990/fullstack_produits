@@ -51,9 +51,28 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   
   // Use ticket amount as final authority, fallback to facture total
   const totalTTC = Number(ticket.montant || facture?.total_ttc || 0);
+  
+  // Ensure ticket is 80mm width (standard thermal printer width)
+  const ticketWidth = settings.ticket_paper_width || 80;
+  
+  // Get client name with proper priority: ticket.client_name > facture.client_name_override > facture.client_name > facture.client.name
+  const clientName = ticket.client_name 
+      || facture?.client_name_override 
+      || facture?.client_name 
+      || (facture?.client && typeof facture.client === 'object' ? facture.client.name : null)
+      || 'Client de passage';
 
   return (
-    <div ref={ref} className="p-4 bg-white text-black font-mono text-xs leading-relaxed" style={{ width: '80mm', margin: '0 auto' }}>
+    <div 
+      ref={ref} 
+      className="p-4 bg-white text-black font-mono text-xs leading-relaxed" 
+      style={{ 
+        width: `${ticketWidth}mm`, 
+        maxWidth: `${ticketWidth}mm`,
+        margin: '0 auto',
+        minWidth: `${ticketWidth}mm`
+      }}
+    >
       
       {/* HEADER */}
       <div className="text-center mb-4 border-b-2 border-black pb-3">
@@ -90,7 +109,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         </div>
         <div className="flex justify-between">
             <span className="font-semibold">Client:</span>
-            <span className="text-right max-w-[50%] truncate">{ticket.client_name || 'Passage'}</span>
+            <span className="text-right max-w-[50%] truncate">{clientName}</span>
         </div>
         {facture?.created_by_name && (
              <div className="flex justify-between">
@@ -147,7 +166,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
 
         <div className="flex justify-between text-base border-y-2 border-black py-1 my-1">
             <span>TOTAL TTC</span>
-            <span>{Math.round(totalTTC).toLocaleString('fr-FR')} F</span>
+            <span>{Math.round(totalTTC).toLocaleString('fr-FR')} {settings.currency_symbol || 'FCFA'}</span>
         </div>
 
         {/* PAYMENTS */}
@@ -159,7 +178,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                     return (
                         <div key={idx} className="flex justify-between">
                             <span>
-                                {getModeLabel(paiement.mode || paiement.mode_paiement || '')}
+                                {getModeLabel(paiement.mode)}
                                 {isPartPatient && ' (Patient)'}
                                 {isPartAssurance && ' (Assur)'}
                             </span>

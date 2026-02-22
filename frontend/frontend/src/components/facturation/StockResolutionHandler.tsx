@@ -28,8 +28,8 @@ interface StockResolutionHandlerProps {
     setUseManualClient: (val: boolean) => void
     setManualClientName: (name: string) => void
     
-    // Completion Callback
-    onComplete: (sudoCredentials?: { validatorId: number, password: string }) => void
+    // Completion Callback - receives updated lines to avoid state update timing issues
+    onComplete: (updatedLignes?: LigneFacture[], sudoCredentials?: { validatorId: number, password: string }) => void
 }
 
 export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
@@ -56,12 +56,19 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
     const { requireSudo } = useSudo()
 
     const handleConfirm = () => {
+        console.log('[DEBUG StockResolutionHandler] handleConfirm appelé')
+        console.log('[DEBUG StockResolutionHandler] lignesFacture initiales:', lignesFacture)
+        console.log('[DEBUG StockResolutionHandler] promisSelections:', Array.from(promisSelections))
+        console.log('[DEBUG StockResolutionHandler] promisPhone:', promisPhone)
+        console.log('[DEBUG StockResolutionHandler] promisClientName:', promisClientName)
+        
         // Apply Promis selections to the invoice lines
         const updatedLignes = lignesFacture.map(ligne => {
             if (promisSelections.has(ligne.produit.id)) {
                 // Logic: PromisQty = Demanded - Available. Available = Max(0, Stock).
                 const stock = Math.max(0, ligne.produit.stock ?? 0)
                 const promisQty = Math.max(0, ligne.quantite - stock)
+                console.log(`[DEBUG StockResolutionHandler] Produit ${ligne.produit.id} (${ligne.produit.name}) marqué comme PROMIS. Stock: ${stock}, Qty: ${ligne.quantite}, PromisQty: ${promisQty}`)
                 return {
                     ...ligne,
                     isPromis: true,
@@ -70,6 +77,7 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
                 }
             } else {
                 // Forced sale 
+                console.log(`[DEBUG StockResolutionHandler] Produit ${ligne.produit.id} (${ligne.produit.name}) marqué comme FORCED SALE`)
                 return {
                     ...ligne,
                     isPromis: false,
@@ -77,6 +85,11 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
                 }
             }
         })
+        
+        console.log('[DEBUG StockResolutionHandler] updatedLignes après traitement:', updatedLignes)
+        console.log('[DEBUG StockResolutionHandler] Lignes avec isPromis=true:', updatedLignes.filter(l => l.isPromis))
+        console.log('[DEBUG StockResolutionHandler] Lignes avec isPromis=false:', updatedLignes.filter(l => !l.isPromis))
+        
         setLignesFacture(updatedLignes)
         
         // Update Client Name if provided in modal logic
@@ -90,18 +103,22 @@ export const StockResolutionHandler: React.FC<StockResolutionHandlerProps> = ({
 
         // CHECK IF SUDO IS NEEDED FOR FORCE SALE
         const hasForceSale = updatedLignes.some(l => !l.isPromis && l.quantite > (l.produit.stock || 0));
+        console.log('[DEBUG StockResolutionHandler] hasForceSale:', hasForceSale)
 
         if (hasForceSale) {
+            console.log('[DEBUG StockResolutionHandler] Requiert SUDO pour vente forcée')
             requireSudo(async (validatorId, password) => {
+                console.log('[DEBUG StockResolutionHandler] SUDO validé, fermeture du modal et appel onComplete avec credentials et lignes mises à jour')
                 onClose() // Close Stock Modal
-                onComplete({ validatorId, password }) // Trigger Payment Modal with creds
+                onComplete(updatedLignes, { validatorId, password }) // Trigger Payment Modal with creds and updated lines
             }, {
                 title: `Validation Vente à Perte / Stock Insuffisant`,
                 message: `Confirmer la vente forcée de produits avec stock insuffisant ?`
             });
         } else {
+            console.log('[DEBUG StockResolutionHandler] Pas de vente forcée, fermeture du modal et appel onComplete() avec lignes mises à jour')
             onClose()
-            onComplete()
+            onComplete(updatedLignes) // Pass updated lines directly to avoid state timing issues
         }
     }
 

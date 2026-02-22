@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import axios from 'axios'
+import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
 
 export interface PharmacySettings {
@@ -16,6 +16,12 @@ export interface PharmacySettings {
     receipt_header: string
     logo?: string
     coefficient_direct_commande?: string
+    low_stock_threshold_days?: number
+    dormant_stock_days?: number
+    debt_alert_threshold?: string
+    ticket_paper_width?: number
+    currency_symbol?: string
+    locale?: string
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {
@@ -31,7 +37,13 @@ const DEFAULT_SETTINGS: PharmacySettings = {
     ticket_footer_message: 'Merci de votre visite!',
     receipt_header: '',
     logo: undefined,
-    coefficient_direct_commande: '1.35'
+    coefficient_direct_commande: '1.35',
+    low_stock_threshold_days: 15,
+    dormant_stock_days: 90,
+    debt_alert_threshold: '100000',
+    ticket_paper_width: 80,
+    currency_symbol: 'FCFA',
+    locale: 'fr-FR'
 }
 
 export function usePharmacySettings() {

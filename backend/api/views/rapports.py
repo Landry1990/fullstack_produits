@@ -203,7 +203,7 @@ class RapportViewSet(viewsets.ViewSet):
         
         produits = Produit.objects.filter(
             stock__gt=0
-        ).annotate(
+        ).select_related('rayon', 'fournisseur').annotate(
             valeur_stock=F('stock') * F('pmp')
         ).filter(
             valeur_stock__gte=min_value
@@ -216,11 +216,14 @@ class RapportViewSet(viewsets.ViewSet):
             data.append({
                 'id': p.id,
                 'name': p.name,
+                'cip': p.cip1,
                 'stock': p.stock,
-                'pmp': p.pmp,
-                'valeur_stock': p.valeur_stock,
+                'pmp': float(p.pmp) if p.pmp else 0,
+                'valeur': float(p.valeur_stock) if p.valeur_stock else 0,
                 'dernier_vente': p.dernier_vente,
-                'selling_price': p.selling_price
+                'rayon': p.rayon.name if p.rayon else '-',
+                'fournisseur': p.fournisseur.name if p.fournisseur else '-',
+                'selling_price': float(p.selling_price) if p.selling_price else 0
             })
             
         return Response(data)

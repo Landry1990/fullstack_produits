@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Facture } from '../../types'
 import { useTranslation } from 'react-i18next'
+import PremiumModal from '../common/PremiumModal'
 
 type PaymentItem = {
     mode: string
@@ -71,14 +72,14 @@ export default function PaymentModal({
     }, [isOpen]);
 
     return (
-        <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
-          <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-50">
-            <h3 className="font-bold text-lg">{t('facturation.payment.modal_title')}</h3>
-            <button type="button" className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
-          </div>
-
-          {(facturePourPaiement || isNewSale) && (
+        <PremiumModal
+          isOpen={isOpen}
+          onClose={onClose}
+          title={t('facturation.payment.modal_title')}
+          icon={<span className="text-primary text-xl">💰</span>}
+          maxWidth="max-w-md"
+        >
+          {(facturePourPaiement || isNewSale) ? (
             <form onSubmit={(e) => { 
               e.preventDefault(); 
               if (isNewSale) {
@@ -88,7 +89,6 @@ export default function PaymentModal({
               }
             }} className="p-6 space-y-5">
               
-
               <div className="text-center mb-6">
                 <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">
                     {isNewSale && totals.tauxCouverture > 0 ? t('facturation.totals.part_patient') : t('facturation.payment.amount_due')}
@@ -107,12 +107,11 @@ export default function PaymentModal({
                 )}
               </div>
 
-
               {/* Tiers Payant Display - Show breakdown if applicable */}
               {isNewSale && totals.tauxCouverture > 0 && totals.partAssurance > 0 ? (
                 <div className="space-y-4">
-                  <div className="alert alert-info">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <div className="alert alert-info py-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span className="text-sm">{t('facturation.payment.tiers_payant_active', { rate: totals.tauxCouverture })}</span>
                   </div>
                   
@@ -330,14 +329,11 @@ export default function PaymentModal({
                 )
               })()}
             </form>
-          )}
-
-          {!facturePourPaiement && !isNewSale && (
+          ) : (
             <div className="p-8 text-center text-base-content/50">
                 Aucune facture sélectionnée.
             </div>
           )}
-        </div>
-        </dialog>
+        </PremiumModal>
     )
 }

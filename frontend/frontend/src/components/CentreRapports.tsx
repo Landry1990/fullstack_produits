@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import axios from 'axios'
+import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { fr } from 'date-fns/locale'
@@ -50,16 +50,6 @@ const QUERIES: QueryDefinition[] = [
       { key: 'mois', label: 'Mois', type: 'month', required: true }
     ],
     resultType: 'cards'
-  },
-  {
-    id: 'historique_client',
-    name: 'Historique Client',
-    description: 'Tous les produits achetés par un client avec dates et quantités',
-    endpoint: '/api/facture-produits/',
-    params: [
-      { key: 'facture__client', label: 'Client', type: 'client_id', required: true }
-    ],
-    resultType: 'table'
   },
   {
     id: 'ca_periode',
@@ -229,7 +219,8 @@ const COLUMN_LABELS: Record<string, string> = {
   nbre_ventes: 'Nb Ventes',
   date: 'Date',
   total: 'Total',
-  status: 'Statut'
+  status: 'Statut',
+  dernier_vente: 'Dernière Vente'
 }
 
 const formatColumnHeader = (col: string): string => {
@@ -697,80 +688,6 @@ export default function CentreRapports() {
           <div className="text-center py-12 text-base-content/50">
             <div className="text-4xl mb-2">📭</div>
             <div>Aucun résultat</div>
-          </div>
-        )
-      }
-      
-      // Affichage spécial pour Historique Client - groupé par facture
-      if (selectedQuery?.id === 'historique_client') {
-        // Grouper par facture
-        const groupedByFacture: Record<string, { date: string; numero: string; items: any[] }> = {}
-        
-        results.forEach((item: any) => {
-          const factureId = typeof item.facture === 'object' ? item.facture.id : item.facture
-          const factureNumero = item.facture_numero || (typeof item.facture === 'object' ? item.facture.numero_facture : `#${factureId}`)
-          const factureDate = item.facture_date || (typeof item.facture === 'object' ? item.facture.created_at : '') || item.created_at || ''
-          
-          if (!groupedByFacture[factureId]) {
-            groupedByFacture[factureId] = {
-              date: factureDate,
-              numero: factureNumero,
-              items: []
-            }
-          }
-          groupedByFacture[factureId].items.push(item)
-        })
-        
-        // Trier par date décroissante
-        const sortedGroups = Object.entries(groupedByFacture).sort((a, b) => {
-          return new Date(b[1].date).getTime() - new Date(a[1].date).getTime()
-        })
-        
-        return (
-          <div className="space-y-4">
-            {sortedGroups.map(([factureId, group]) => (
-              <div key={factureId} className="collapse collapse-arrow bg-base-100 border border-base-200 rounded-lg">
-                <input type="checkbox" defaultChecked />
-                <div className="collapse-title font-medium flex items-center gap-4">
-                  <span className="badge badge-primary">{group.numero}</span>
-                  <span className="text-sm text-base-content/70">
-                    {group.date ? new Date(group.date).toLocaleDateString('fr-FR', { 
-                      day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' 
-                    }) : '-'}
-                  </span>
-                  <span className="text-xs text-base-content/50">
-                    {group.items.length} produit(s)
-                  </span>
-                </div>
-                <div className="collapse-content">
-                  <table className="table table-sm w-full">
-                    <thead>
-                      <tr>
-                        <th className="text-xs">Produit</th>
-                        <th className="text-xs text-center">Qté</th>
-                        <th className="text-xs text-right">Prix U.</th>
-                        <th className="text-xs text-right">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.items.map((item: any, idx: number) => (
-                        <tr key={idx}>
-                          <td className="text-sm">{item.produit?.name || item.produit_nom || '-'}</td>
-                          <td className="text-sm text-center">{item.quantity}</td>
-                          <td className="text-sm text-right">{Math.round(Number(item.selling_price || 0)).toLocaleString('fr-FR')} F</td>
-                          <td className="text-sm text-right font-medium">
-                            {Math.round(item.quantity * Number(item.selling_price || 0)).toLocaleString('fr-FR')} F
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            ))}
-            <div className="text-sm text-base-content/50 text-center">
-              Total: {pagination ? pagination.count : results.length} ligne(s) réparties sur {sortedGroups.length} facture(s)
-            </div>
           </div>
         )
       }

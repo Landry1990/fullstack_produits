@@ -80,6 +80,7 @@ const Ventes: React.FC = () => {
                     onPrint={actions.handlePrintInvoice}
                     onPrintTicket={actions.handlePrintTicket}
                     onRefund={actions.handleEditInvoice}
+                    onDuplicate={actions.handleDuplicateInvoice}
                     onDelete={deleteFacture}
                     onBulkDelete={bulkDeleteFactures}
                 />

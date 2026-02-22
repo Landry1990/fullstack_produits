@@ -488,6 +488,13 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 const rendu = totalVerse - Number(finalFacture.total_ttc);
 
                 // Construire le ticket pour l'UI si besoin
+                // Priorité: client_name_override > client_name > manualClientName > nom du client > 'Client de passage'
+                const clientNameForTicket = finalFacture.client_name_override 
+                    || finalFacture.client_name 
+                    || params.manualClientName 
+                    || (finalFacture.client?.name) 
+                    || 'Client de passage';
+                
                 const ticketCaisse: TicketCaisse = {
                     id: 0,
                     facture: finalFacture,
@@ -496,7 +503,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     montant_verse: totalVerse.toString(),
                     rendu: rendu.toString(),
                     statut: 'completee',
-                    client_name: finalFacture.client_name || params.manualClientName || 'Client',
+                    client_name: clientNameForTicket,
                     paiements_details: paiementsList,
                     date_paiement: new Date().toISOString()
                 };
@@ -638,6 +645,12 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             window.open(`/app/print-invoice/${updatedFacture.id}`, '_blank');
 
             // 7. Ticket UI
+            // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
+            const clientNameForTicket = updatedFacture.client_name_override 
+                || updatedFacture.client_name 
+                || (updatedFacture.client?.name) 
+                || 'Client de passage';
+            
             const ticketCaisse: TicketCaisse = {
                 id: 0,
                 facture: updatedFacture,
@@ -646,6 +659,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 montant_verse: totalVerse.toString(),
                 rendu: rendu.toString(),
                 statut: 'completee',
+                client_name: clientNameForTicket,
                 date_paiement: new Date().toISOString(),
                 paiements_details: paiementsList
             };

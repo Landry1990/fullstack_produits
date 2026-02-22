@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { ProduitModel } from '../../types'
+import PremiumModal from '../common/PremiumModal'
+import type { ProduitModel, Client } from '../../types'
 
 interface StockResolutionModalProps {
   isOpen: boolean
@@ -17,7 +18,7 @@ interface StockResolutionModalProps {
   promisClientName: string
   setPromisClientName: (val: string) => void
   onConfirm: () => void
-  clients?: any[]
+  clients?: Client[]
   selectedClientName?: string
 }
 
@@ -74,35 +75,57 @@ export default function StockResolutionModal({
   }, [promisSelections, setPromisSelections])
 
   const handleConfirm = useCallback(() => {
+    console.log('[DEBUG StockResolutionModal] handleConfirm appelé')
+    console.log('[DEBUG StockResolutionModal] promisSelections:', Array.from(promisSelections))
+    console.log('[DEBUG StockResolutionModal] localClientName:', localClientName)
+    console.log('[DEBUG StockResolutionModal] localPhone:', localPhone)
+    
     // Sync local states back to parent only on confirm
     setPromisClientName(localClientName)
     setPromisPhone(localPhone)
+    
     // Small delay to ensure state update before parent's logic runs
     setTimeout(() => {
+      console.log('[DEBUG StockResolutionModal] Appel de onConfirm()')
       onConfirm()
     }, 0)
-  }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm])
+  }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm, promisSelections])
 
   if (!isOpen) return null
 
   return (
-    <dialog className="modal modal-open">
-      <div className="modal-box w-11/12 max-w-5xl">
-        <h3 className="font-bold text-lg text-warning flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            {t('facturation.stock_resolution.title')}
-        </h3>
-        
-        <div className="alert alert-warning shadow-lg my-4">
-            <div>
+    <PremiumModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t('facturation.stock_resolution.title')}
+      icon={
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      }
+      maxWidth="max-w-5xl"
+      footer={
+        <div className="flex justify-end gap-3 w-full">
+          <button className="btn btn-ghost" onClick={onClose}>
+            {t('facturation.stock_resolution.cancel_and_edit_cart')}
+          </button>
+          <button className="btn btn-primary px-8" onClick={handleConfirm}>
+            {t('facturation.stock_resolution.validate_and_cash')}
+          </button>
+        </div>
+      }
+    >
+      <div className="p-6">
+        <div className="alert alert-warning shadow-lg mb-6">
+            <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                 <span>{t('facturation.stock_resolution.message')}</span>
             </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border border-base-200 rounded-xl mb-6">
           <table className="table w-full">
-            <thead>
+            <thead className="bg-base-100">
               <tr>
                 <th>{t('common.product')}</th>
                 <th>{t('facturation.stock_resolution.demand')}</th>
@@ -118,7 +141,7 @@ export default function StockResolutionModal({
                 const isPromis = itemsToPromis.includes(item.id)
                 
                 return (
-                  <tr key={item.id} className={isPromis ? "bg-info/10 text-info-content" : "bg-error/10 text-error-content"}>
+                  <tr key={item.id} className={isPromis ? "bg-info/5 text-info-content" : "bg-error/5 text-error-content"}>
                     <td>
                         <div className="font-bold">{item.nom}</div>
                         <div className="text-xs opacity-60">{item.cip}</div>
@@ -142,7 +165,7 @@ export default function StockResolutionModal({
         </div>
 
         {itemsToPromis.length > 0 && (
-            <div className="mt-4 p-4 bg-base-200 rounded-lg">
+            <div className="p-5 bg-base-50 rounded-xl border border-dashed border-base-300">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="form-control">
                         <label className="label">
@@ -150,7 +173,7 @@ export default function StockResolutionModal({
                         </label>
                         <input 
                             type="text" 
-                            className="input input-bordered focus:input-primary" 
+                            className="input input-bordered focus:input-primary rounded-xl" 
                             value={localClientName}
                             onChange={(e) => setLocalClientName(e.target.value)}
                             placeholder={t('facturation.client.manual_placeholder')}
@@ -162,7 +185,7 @@ export default function StockResolutionModal({
                         </label>
                         <input 
                             type="text" 
-                            className="input input-bordered focus:input-primary" 
+                            className="input input-bordered focus:input-primary rounded-xl" 
                             value={localPhone}
                             onChange={(e) => setLocalPhone(e.target.value)}
                             placeholder={t('facturation.stock_resolution.phone_number_placeholder')}
@@ -171,16 +194,7 @@ export default function StockResolutionModal({
                 </div>
             </div>
         )}
-
-        <div className="modal-action">
-          <button className="btn btn-ghost" onClick={onClose}>
-          {t('facturation.stock_resolution.cancel_and_edit_cart')}
-          </button>
-          <button className="btn btn-primary px-8" onClick={handleConfirm}>
-          {t('facturation.stock_resolution.validate_and_cash')}
-          </button>
-        </div>
       </div>
-    </dialog>
+    </PremiumModal>
   )
 }

@@ -444,6 +444,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+        # Récupérer les quantités PROMIS associées à cette facture
+        promis_map = {p.produit_id: p.quantite for p in Promis.objects.filter(facture=facture)}
+
         # Vérifier le stock avant validation en utilisant les instances VERROUILLÉES
         for item in items:
             produit = product_map.get(item.produit_id)
@@ -451,7 +454,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 continue 
             
             try:
-                qty = Decimal(str(item.quantity))
+                # On ne vérifie que la quantité réellement livrée (Totale - Promise)
+                promis_qty = promis_map.get(item.produit_id, 0)
+                qty = Decimal(str(item.quantity - promis_qty))
                 stock = Decimal(str(produit.stock))
             except (ValueError, TypeError, InvalidOperation):
                 return Response({'detail': f'Impossible de comparer les quantités pour le produit {produit.id}.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -505,6 +510,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             
             # 1. Gestion des lots pour les VENTES (qty > 0)
             if item.quantity > 0:
+                # IMPORTANT: On déduit TOUTE la quantité (y compris le promis) 
+                # car le stock doit passer en négatif immédiatement.
                 qty_to_alloc = item.quantity
                 
                 # CAS 1: Un lot spécifique est ciblé
@@ -1491,26 +1498,31 @@ class CaisseViewSet(viewsets.ModelViewSet):
             last_cloture = ClotureCaisse.objects.order_by('-date').first()
             start_date = last_cloture.date if last_cloture else None
         
-        transactions = Caisse.objects.filter(statut='completee').exclude(mode_paiement='en_compte')
-        
+        # Initialiser le queryset des transactions de caisse
+        transactions = Caisse.objects.filter(statut='completee')
         if start_date:
             transactions = transactions.filter(date_paiement__gte=start_date)
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
-        
         if user_id:
             transactions = transactions.filter(user_id=user_id)
 
-        # SEPARATION: Ventes (Clients normaux) vs Recouvrement (Clients Pros)
-        paiements_pro = transactions.filter(facture__client__client_type='PROFESSIONNEL')
-        paiements_standards = transactions.exclude(facture__client__client_type='PROFESSIONNEL')
+        # SEPARATION: Ventes vs Recouvrement
+        # Désormais basé sur le mode_paiement spécial
+        recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
+        
+        paiements_recouvrement = transactions.filter(recouvrement_q)
+        paiements_sales = transactions.exclude(recouvrement_q).exclude(mode_paiement='en_compte')
 
         # Calculer les montants séparés
-        montant_recouvrement = paiements_pro.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_ventes = paiements_standards.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        montant_recouvrement = paiements_recouvrement.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        # IMPORTANT: Le total théorique de CAISSE PHYSIQUE ne concerne QUE les espèces opérationnelles
+        total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
-        # Pour les détails par mode, on garde tout (c'est la caisse physique)
-        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        # Pour les détails par mode, on ne garde QUE les ventes opérationnelles (exclut les recouvrements)
+        modes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(item['total']) for item in modes}
 
         mouvements = MouvementCaisse.objects.all()
@@ -1526,11 +1538,15 @@ class CaisseViewSet(viewsets.ModelViewSet):
             entrees=Coalesce(Sum('montant', filter=Q(type='ENTREE')), Value(0, output_field=DecimalField())),
             sorties=Coalesce(Sum('montant', filter=Q(type='SORTIE')), Value(0, output_field=DecimalField()))
         )
-        # On ajoute le recouvrement pro aux entrées pour l'équilibre de caisse
-        total_entrees = moves_aggregated['entrees'] + montant_recouvrement
+        # On n'ajoute PLUS le recouvrement aux entrées opérationnelles
+        total_entrees = moves_aggregated['entrees']
         total_sorties = moves_aggregated['sorties']
         
-        total_theorique = total_ventes + total_entrees - total_sorties
+        # Le total théorique de CAISSE PHYSIQUE exclut les coupons (qui ne sont pas des espèces)
+        # On calcule le montant total des coupons pour l'ajustement
+        total_coupons = transactions.filter(mode_paiement='coupon').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        
+        total_theorique = total_ventes_especes + total_entrees - total_sorties - total_coupons
         
         return Response({
             'start_date': start_date,
@@ -1539,6 +1555,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'total_ventes': total_ventes,
             'total_entrees': total_entrees,
             'total_sorties': total_sorties,
+            'total_coupons': total_coupons,
             'details': details
         })
 
@@ -1609,15 +1626,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if end_date:
             transactions = transactions.filter(date_paiement__lte=end_date)
             
-        # SEPARATION: Ventes (Clients normaux) vs Recouvrement (Clients Pros)
-        paiements_pro = transactions.filter(facture__client__client_type='PROFESSIONNEL')
-        paiements_standards = transactions.exclude(facture__client__client_type='PROFESSIONNEL')
+        # SEPARATION: Ventes vs Recouvrement (Hybride: nouveau mode + anciens marqueurs)
+        recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
+        
+        paiements_recouvrement = transactions.filter(recouvrement_q)
+        paiements_sales = transactions.exclude(recouvrement_q)
 
         # Calculer les montants séparés
-        montant_recouvrement = paiements_pro.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_ventes = paiements_standards.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        montant_recouvrement = paiements_recouvrement.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_ventes = paiements_sales.aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
-        modes = transactions.values('mode_paiement').annotate(total=Sum('montant'))
+        # Détails par mode : UNIQUEMENT les ventes opérationnelles
+        modes = paiements_sales.values('mode_paiement').annotate(total=Sum('montant'))
         details = {item['mode_paiement']: float(item['total']) for item in modes}
         
         mouvements = MouvementCaisse.objects.all()
@@ -1626,8 +1646,9 @@ class CaisseViewSet(viewsets.ModelViewSet):
         if end_date:
             mouvements = mouvements.filter(date__lte=end_date)
         
+        # Entrées : Uniquement les mouvements de flux (ENTREE), pas de recouvrement
         entrees_mouvements = mouvements.filter(type='ENTREE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-        total_entrees = entrees_mouvements + montant_recouvrement
+        total_entrees = entrees_mouvements
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:
@@ -1635,7 +1656,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
                  'detail': 'Impossible de clôturer : aucun mouvement (vente, entrée ou sortie) détecté depuis la dernière clôture.'
              }, status=status.HTTP_400_BAD_REQUEST)
 
-        total_theorique = total_ventes + total_entrees - total_sorties
+        total_theorique = total_ventes_especes + total_entrees - total_sorties
         ecart = montant_reel - total_theorique
         
         details['__meta__'] = {
@@ -1707,6 +1728,41 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
         
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # Pagination parameters
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 31))
+        
+        total_count = queryset.count()
+        
+        # Global totals for the period
+        totals_agg = queryset.aggregate(
+            total_theorique=Sum('montant_theorique'),
+            total_reel=Sum('montant_reel'),
+            total_ecart=Sum('ecart_caisse')
+        )
+        
+        global_totals = {
+            'montant_theorique': float(totals_agg['total_theorique'] or 0),
+            'montant_reel': float(totals_agg['total_reel'] or 0),
+            'ecart_caisse': float(totals_agg['total_ecart'] or 0)
+        }
+        
+        # Slice for current page
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_queryset = queryset[start:end]
+        
+        serializer = self.get_serializer(paginated_queryset, many=True)
+        
+        return Response({
+            'count': total_count,
+            'results': serializer.data,
+            'totals': global_totals
+        })
+
 
 class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -1723,6 +1779,8 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         from django.db.models import Sum, F, Q, Value, DecimalField
         from django.db.models.functions import Coalesce
 
+        history = self.request.query_params.get('history', 'false').lower() == 'true'
+
         queryset = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
@@ -1731,9 +1789,21 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 Value(0, output_field=DecimalField())
             ),
             remainder=F('total_ttc') - F('paid_amount')
-        ).filter(
-            remainder__gt=0
-        ).distinct().select_related(
+        )
+        
+        if history:
+            # Mode Histoire : montre les dettes EPOREES (solde <= 0) 
+            # MAIS on doit s'assurer que c'étaient bien des créances à l'origine
+            # (existence d'au moins un paiement 'en_compte')
+            queryset = queryset.filter(
+                remainder__lte=0,
+                paiements__mode_paiement='en_compte'
+            )
+        else:
+            # Mode En cours : montre les dettes ACTIVES (solde > 0)
+            queryset = queryset.filter(remainder__gt=0)
+
+        queryset = queryset.distinct().select_related(
             'client', 'ayant_droit'
         ).prefetch_related('paiements').order_by('-date')
         
@@ -1788,6 +1858,114 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'count': count
         })
     
+    @action(detail=True, methods=['get'])
+    def imprimer_recu(self, request, pk=None):
+        """
+        Génère un reçu de paiement pour une créance.
+        """
+        facture = self.get_object()
+        paiement_id = request.query_params.get('paiement_id')
+        
+        paiement = None
+        if paiement_id:
+            try:
+                paiement = Caisse.objects.get(id=paiement_id, facture=facture)
+            except Caisse.DoesNotExist:
+                return Response({'detail': 'Paiement non trouvé.'}, status=404)
+        else:
+            # Par défaut, on prend le dernier paiement complété qui n'est pas 'en_compte'
+            paiement = facture.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').order_by('-date_paiement').first()
+
+        if not paiement:
+            return Response({'detail': 'Aucun paiement trouvé pour cette facture.'}, status=400)
+
+        # Récupérer les paramètres de l'entreprise
+        settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
+        
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"recu_{paiement.id}_{facture.numero_facture or facture.id}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+        story = []
+        styles = getSampleStyleSheet()
+        
+        style_company = ParagraphStyle('Company', parent=styles['Heading2'], fontSize=14, spaceAfter=4, textColor=HexColor(settings.primary_color))
+        style_normal = styles['Normal']
+        style_title = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=1, spaceAfter=20, textColor=HexColor(settings.primary_color))
+        style_label = ParagraphStyle('Label', parent=styles['Normal'], fontName='Helvetica-Bold')
+        style_right = ParagraphStyle('Right', parent=styles['Normal'], alignment=2)
+        
+        # En-tête
+        story.append(Paragraph(f"<b>{settings.company_name}</b>", style_company))
+        address = settings.company_address or ""
+        story.append(Paragraph(address.replace('\n', '<br/>'), style_normal))
+        story.append(Spacer(1, 1*cm))
+        
+        story.append(Paragraph("REÇU DE PAIEMENT", style_title))
+        
+        # Infos Client et Facture
+        client_name = facture.client_name_override or (facture.client.name if facture.client else "Client")
+        date_paiement = paiement.date_paiement.strftime('%d/%m/%Y à %H:%M')
+        ayant_droit = facture.ayant_droit.nom if hasattr(facture, 'ayant_droit') and facture.ayant_droit else None
+        
+        info_data = [
+            [Paragraph("<b>Client :</b>", style_normal), Paragraph(client_name, style_normal)],
+        ]
+        
+        if ayant_droit:
+            info_data.append([Paragraph("<b>Bénéficiaire :</b>", style_normal), Paragraph(ayant_droit, style_normal)])
+            
+        info_data.extend([
+            [Paragraph("<b>Facture N° :</b>", style_normal), Paragraph(facture.numero_facture or str(facture.id), style_normal)],
+            [Paragraph("<b>Date du paiement :</b>", style_normal), Paragraph(date_paiement, style_normal)],
+            [Paragraph("<b>Mode de règlement :</b>", style_normal), Paragraph(paiement.get_mode_paiement_display(), style_normal)],
+        ])
+        
+        info_table = Table(info_data, colWidths=[4*cm, 10*cm])
+        info_table.setStyle(TableStyle([
+            ('VALIGN', (0,0), (-1,-1), 'TOP'),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ]))
+        story.append(info_table)
+        story.append(Spacer(1, 1*cm))
+        
+        # Montants
+        total_paye_avant = facture.paiements.filter(
+            statut='completee',
+            date_paiement__lt=paiement.date_paiement
+        ).exclude(mode_paiement='en_compte').aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+        
+        reste_avant = facture.total_ttc - total_paye_avant
+        reste_apres = reste_avant - paiement.montant
+        
+        amount_data = [
+            [Paragraph("Dette avant paiement", style_normal), f"{reste_avant:,.0f} F"],
+            [Paragraph("<b>MONTANT PAYÉ CE JOUR</b>", style_label), Paragraph(f"<b>{paiement.montant:,.0f} F</b>", style_label)],
+            [Paragraph("RESTE À PAYER", style_label), f"{reste_apres:,.0f} F"],
+        ]
+        
+        amount_table = Table(amount_data, colWidths=[10*cm, 4*cm])
+        amount_table.setStyle(TableStyle([
+            ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+            ('LINEABOVE', (0,1), (-1,1), 1, colors.black),
+            ('LINEBELOW', (0,1), (-1,1), 1, colors.black),
+            ('TOPPADDING', (0,0), (-1,-1), 8),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 8),
+            ('BACKGROUND', (0,1), (-1,1), colors.whitesmoke),
+        ]))
+        story.append(amount_table)
+        
+        story.append(Spacer(1, 2*cm))
+        story.append(Paragraph("Merci de votre confiance.", ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
+        
+        doc.build(story)
+        
+        buffer.seek(0)
+        response.write(buffer.getvalue())
+        return response
+
     @action(detail=True, methods=['post'])
     @transaction.atomic
     def ajouter_paiement(self, request, pk=None):
@@ -1808,10 +1986,20 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Validation par mot de passe (Sudo) - Nécessite le droit d'encaisser (Superviseur/Caissier Senior)
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_cash_out')
+        if error_response:
+            return error_response
+
         # Récupérer les données du paiement
         mode_paiement = request.data.get('mode_paiement')
         montant = request.data.get('montant')
-        reference = request.data.get('reference', '')
+        reference_base = request.data.get('reference', '')
+        
+        # Désormais on forcer le mode 'recouvrement' pour isolation comptable
+        # On garde le mode réel dans la référence pour information
+        reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
+        mode_paiement = 'recouvrement'
         
         # Validation
         if not mode_paiement or not montant:
@@ -1854,7 +2042,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             montant=montant,
             reference=reference,
             statut='completee',
-            user=request.user
+            user=validation_user
         )
         
         # Rafraîchir la facture pour obtenir les données à jour
@@ -1950,9 +2138,18 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
             'reference': 'REF123'
         }
         """
+        # Validation par mot de passe (Sudo)
+        validation_user, error_response = validate_sudo_mode(request, permission_attr='can_view_dashboard')
+        if error_response:
+            return error_response
+
         facture_ids = request.data.get('facture_ids', [])
         mode_paiement = request.data.get('mode_paiement')
-        reference = request.data.get('reference', '')
+        reference_base = request.data.get('reference', '')
+        
+        # Marquer comme recouvrement et forcer le mode technique
+        reference = f"{reference_base} [{mode_paiement.upper()}] [RECOUV]".strip()
+        mode_paiement = 'recouvrement'
 
         if not facture_ids or not isinstance(facture_ids, list):
              return Response(
@@ -2014,7 +2211,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 montant=reste,
                 reference=reference,
                 statut='completee',
-                user=request.user if request.user.is_authenticated else None,
+                user=validation_user,
                 releve=releve
             )
             total_paid_bulk += reste
@@ -2025,9 +2222,161 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response({
             'detail': f'Règlement groupé effectué avec succès. {count_processed} factures traitées.',
+            'releve_id': releve.id,
             'releve_reference': releve.reference,
             'total_amount': str(total_paid_bulk)
         })
+
+
+    @action(detail=False, methods=['get'])
+    def imprimer_releve_paiement(self, request):
+        """
+        Génère un PDF pour un relevé de paiement groupé (RelevePaiement).
+        """
+        releve_id = request.query_params.get('releve_id')
+        if not releve_id:
+            return Response({'detail': 'releve_id est requis.'}, status=400)
+            
+        try:
+            releve = RelevePaiement.objects.select_related('client').get(id=releve_id)
+        except RelevePaiement.DoesNotExist:
+            return Response({'detail': 'Relevé non trouvé.'}, status=404)
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération du relevé {releve_id}: {str(e)}")
+            return Response({'detail': f'Erreur lors de la récupération du relevé: {str(e)}'}, status=500)
+        
+        try:
+            # Récupérer les paramètres de l'entreprise
+            settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
+            
+            response = HttpResponse(content_type='application/pdf')
+            filename = f"recapitulatif_reglement_{releve.reference}.pdf"
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+            story = []
+            styles = getSampleStyleSheet()
+            
+            # Gestion des couleurs par défaut si primary_color est invalide
+            try:
+                primary_color = HexColor(settings.primary_color) if settings.primary_color else colors.HexColor('#000000')
+            except:
+                primary_color = colors.HexColor('#000000')
+            
+            style_company = ParagraphStyle('Company', parent=styles['Heading2'], fontSize=14, spaceAfter=4, textColor=primary_color)
+            style_normal = styles['Normal']
+            style_title = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=1, spaceAfter=20, textColor=primary_color)
+            style_label = ParagraphStyle('Label', parent=styles['Normal'], fontName='Helvetica-Bold')
+            
+            # En-tête
+            company_name = settings.company_name or "Entreprise"
+            story.append(Paragraph(f"<b>{company_name}</b>", style_company))
+            address = settings.company_address or ""
+            if address:
+                story.append(Paragraph(address.replace('\n', '<br/>'), style_normal))
+            story.append(Spacer(1, 1*cm))
+            
+            story.append(Paragraph("RÉCAPITULATIF DE RÈGLEMENT", style_title))
+            
+            # Infos Relevé
+            date_releve = releve.created_at.strftime('%d/%m/%Y à %H:%M') if releve.created_at else datetime.now().strftime('%d/%m/%Y à %H:%M')
+            client_name = releve.client.name if releve.client else "Client inconnu"
+            releve_ref = releve.reference or f"REL-{releve.id}"
+            
+            info_data = [
+                [Paragraph("<b>Client :</b>", style_normal), Paragraph(client_name, style_normal)],
+                [Paragraph("<b>Référence Relevé :</b>", style_normal), Paragraph(releve_ref, style_normal)],
+                [Paragraph("<b>Date :</b>", style_normal), Paragraph(date_releve, style_normal)],
+            ]
+            
+            info_table = Table(info_data, colWidths=[5*cm, 9*cm])
+            info_table.setStyle(TableStyle([
+                ('VALIGN', (0,0), (-1,-1), 'TOP'),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+            ]))
+            story.append(info_table)
+            story.append(Spacer(1, 0.5*cm))
+            
+            # Tableau des factures réglées
+            table_data = [['N° Facture', 'Date Facture', 'Bénéficiaire', 'Montant TTC', 'Réglé']]
+            
+            paiements = releve.paiements_caisse.all().select_related('facture', 'facture__ayant_droit')
+            
+            if not paiements.exists():
+                story.append(Paragraph("<i>Aucun paiement trouvé pour ce relevé.</i>", style_normal))
+            else:
+                for p in paiements:
+                    try:
+                        f = p.facture
+                        if not f:
+                            continue
+                            
+                        # Gestion sécurisée de l'ayant droit
+                        ayant_droit = "-"
+                        if f.ayant_droit:
+                            ayant_droit = f.ayant_droit.nom or "-"
+                        
+                        # Formatage sécurisé des montants
+                        montant_ttc = float(f.total_ttc) if f.total_ttc else 0.0
+                        montant_regle = float(p.montant) if p.montant else 0.0
+                        
+                        numero_facture = f.numero_facture or str(f.id)
+                        date_facture = f.date.strftime('%d/%m/%Y') if f.date else "-"
+                        
+                        table_data.append([
+                            numero_facture,
+                            date_facture,
+                            ayant_droit,
+                            f"{montant_ttc:,.0f} F",
+                            f"{montant_regle:,.0f} F"
+                        ])
+                    except Exception as e:
+                        logger.error(f"Erreur lors du traitement du paiement {p.id}: {str(e)}")
+                        continue
+                
+                if len(table_data) > 1:  # Si on a au moins une ligne de données (en plus de l'en-tête)
+                    story.append(Spacer(1, 0.5*cm))
+                    
+                    t = Table(table_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 2*cm, 2*cm])
+                    t.setStyle(TableStyle([
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),
+                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                        ('ALIGN', (3, 1), (4, -1), 'RIGHT'),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, -1), 9),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                    ]))
+                    story.append(t)
+            
+            # Total global
+            story.append(Spacer(1, 1*cm))
+            total_amount = float(releve.total_amount) if releve.total_amount else 0.0
+            total_data = [
+                ["", "", Paragraph("<b>TOTAL RÈGLEMENT :</b>", style_label), Paragraph(f"<b>{total_amount:,.0f} F</b>", style_label)]
+            ]
+            total_table = Table(total_data, colWidths=[3.5*cm, 2.5*cm, 4*cm, 4*cm])
+            total_table.setStyle(TableStyle([
+                ('ALIGN', (3, 0), (3, 0), 'RIGHT'),
+            ]))
+            story.append(total_table)
+            
+            story.append(Spacer(1, 2*cm))
+            story.append(Paragraph("Merci de votre confiance.", ParagraphStyle('Thanks', parent=style_normal, alignment=1, italic=True)))
+            
+            doc.build(story)
+            
+            buffer.seek(0)
+            response.write(buffer.getvalue())
+            return response
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de la génération du PDF du relevé {releve_id}: {str(e)}", exc_info=True)
+            return Response({
+                'detail': f'Erreur lors de la génération du PDF: {str(e)}'
+            }, status=500)
 
 
     @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])

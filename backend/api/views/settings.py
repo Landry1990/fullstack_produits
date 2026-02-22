@@ -51,19 +51,34 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
     """
     queryset = LoyaltySetting.objects.all()
     serializer_class = LoyaltySettingSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = None
 
     def list(self, request, *args, **kwargs):
         # Ensure at least one setting exists
-        if not self.queryset.exists():
+        if not LoyaltySetting.objects.exists():
             LoyaltySetting.objects.create()
+        # Refresh queryset to include the newly created object if necessary
+        self.queryset = LoyaltySetting.objects.all()
         return super().list(request, *args, **kwargs)
 
+    def create(self, request, *args, **kwargs):
+        # For singleton pattern, always update existing or create if doesn't exist
+        obj, created = LoyaltySetting.objects.get_or_create(pk=1)
+        serializer = self.get_serializer(obj, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
     def perform_create(self, serializer):
-        obj = serializer.save()
+        # This should not be called for singleton, but kept for compatibility
+        obj, created = LoyaltySetting.objects.update_or_create(
+            pk=1,
+            defaults=serializer.validated_data
+        )
         log_audit(
             user=self.request.user,
-            action=AuditLog.Action.UPDATE,
+            action=AuditLog.Action.UPDATE if not created else AuditLog.Action.CREATE,
             model_name='LoyaltySetting',
             object_id=obj.pk,
             description="Mise à jour des paramètres de fidélité",
@@ -84,8 +99,8 @@ class LoyaltySettingViewSet(viewsets.ModelViewSet):
         )
 
     def get_object(self):
-        # Always return the first object
-        obj, created = LoyaltySetting.objects.get_or_create(pd=1)
+        # Always return the first object (singleton pattern)
+        obj, created = LoyaltySetting.objects.get_or_create(pk=1)
         self.check_object_permissions(self.request, obj)
         return obj
 
@@ -149,3 +164,49 @@ class PharmacySettingsView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class TVAViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for managing VAT rates.
+    """
+    from ..models import TVA
+    from ..serializers import TVASerializer
+    
+    queryset = TVA.objects.all()
+    serializer_class = TVASerializer
+    permission_classes = [permissions.IsAuthenticated] # Read/Write for authenticated users (manage in settings)
+    
+    def perform_create(self, serializer):
+        obj = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.CREATE,
+            model_name='TVA',
+            object_id=obj.pk,
+            description=f"Création taux TVA: {obj.taux}%",
+            details=serializer.data,
+            request=self.request
+        )
+
+    def perform_update(self, serializer):
+        obj = serializer.save()
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='TVA',
+            object_id=obj.pk,
+            description=f"Modification taux TVA: {obj.taux}%",
+            details=serializer.data,
+            request=self.request
+        )
+
+    def perform_destroy(self, instance):
+        log_audit(
+            user=self.request.user,
+            action=AuditLog.Action.DELETE,
+            model_name='TVA',
+            object_id=instance.pk,
+            description=f"Suppression taux TVA: {instance.taux}%",
+            request=self.request
+        )
+        instance.delete()

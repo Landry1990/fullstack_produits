@@ -42,7 +42,7 @@ export default function Dashboard() {
   const { data: hourlyTraffic } = useHourlyTraffic();
 
   const loading = statsLoading || chartLoading;
-  const error = statsError ? 'Impossible de charger les données du tableau de bord.' : null;
+  const error = statsError ? t('dashboard.error_loading') : null;
 
   // Refresh all dashboard data
   const handleRefreshAll = async () => {
@@ -52,7 +52,7 @@ export default function Dashboard() {
       refetchLowStock(),
       refetchExpiring()
     ]);
-    toast.success('Données mises à jour', { icon: '🔄' });
+    toast.success(t('dashboard.refresh_success'), { icon: '🔄' });
   };
 
   // Transform data for Recharts
@@ -83,7 +83,7 @@ export default function Dashboard() {
     if (criticalLots.length > 0) {
       // Use specific ID to prevent duplicates
       toast.error(
-        `⚠️ ${criticalLots.length} lot${criticalLots.length > 1 ? 's' : ''} expire${criticalLots.length > 1 ? 'nt' : ''} dans moins de 7 jours!`,
+        t('dashboard.alerts.critical_lots_toast', { count: criticalLots.length }),
         { duration: 5000, id: 'critical-expiration-dashboard' }
       );
     }
@@ -93,7 +93,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (promisDisponibles.length > 0) {
       toast.success(
-        `📦 ${promisDisponibles.length} produit(s) promis disponible(s) !`,
+        t('dashboard.alerts.promis_toast', { count: promisDisponibles.length }),
         { duration: 5000, id: 'promis-dispo-dashboard' }
       );
     }
@@ -138,18 +138,18 @@ export default function Dashboard() {
            // VIEW VENDEUR / CAISSIER (Restricted)
              [
                {
-                title: "MES VENTES (JOUR)",
+                title: t('dashboard.stats.my_sales'),
                 value: formatCurrency(stats?.user_stats?.sales ?? 0),
-                change: `${stats?.user_stats?.count || 0} ventes`,
+                change: t('dashboard.stats.sales_count', { count: stats?.user_stats?.count || 0 }),
                 icon: "👤",
                 color: "bg-indigo-100 text-indigo-700",
                 isPositive: true,
-                details: "Encaissements personnels"
+                details: t('dashboard.stats.personal_cash')
                },
                {
-                title: "MON PANIER MOYEN",
+                title: t('dashboard.stats.my_avg_basket'),
                 value: formatCurrency(stats?.user_stats?.avg_basket ?? 0),
-                change: "Moyenne par client",
+                change: t('dashboard.stats.avg_per_client'),
                 icon: "🛍️",
                 color: "bg-fuchsia-100 text-fuchsia-700",
                 isPositive: true
@@ -160,18 +160,18 @@ export default function Dashboard() {
            [
             ...(stats?.user_stats ? [
                 {
-                title: "MES VENTES (JOUR)",
+                title: t('dashboard.stats.my_sales'),
                 value: formatCurrency(stats.user_stats.sales),
-                change: `${stats.user_stats.count} ventes`,
+                change: t('dashboard.stats.sales_count', { count: stats.user_stats.count }),
                 icon: "👤",
                 color: "bg-indigo-100 text-indigo-700",
                 isPositive: true,
-                details: "Encaissements personnels"
+                details: t('dashboard.stats.personal_cash')
                 },
                 {
-                title: "MON PANIER MOYEN",
+                title: t('dashboard.stats.my_avg_basket'),
                 value: formatCurrency(stats.user_stats.avg_basket),
-                change: "Moyenne par client",
+                change: t('dashboard.stats.avg_per_client'),
                 icon: "🛍️",
                 color: "bg-fuchsia-100 text-fuchsia-700",
                 isPositive: true
@@ -185,8 +185,8 @@ export default function Dashboard() {
                 isPositive: (stats?.revenue?.change || 0) >= 0,
                 details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats?.discount?.value ?? 0) })
             },
-            { title: t('dashboard.stats.receivables'), value: formatCurrency(stats?.receivables?.value ?? 0), change: `${stats?.receivables?.count || 0} factures`, icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
-            { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats?.stock_value?.value ?? 0), change: `${stats?.stock_value?.count ?? 0} produits`, icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
+            { title: t('dashboard.stats.receivables'), value: formatCurrency(stats?.receivables?.value ?? 0), change: t('dashboard.stats.invoices_count', { count: stats?.receivables?.count || 0 }), icon: "credit_card", color: "bg-orange-100 text-orange-700", isPositive: false, link: '/creances' },
+            { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats?.stock_value?.value ?? 0), change: t('dashboard.stats.products_count', { count: stats?.stock_value?.count ?? 0 }), icon: "inventory", color: "bg-amber-100 text-amber-700", isPositive: true }
            ]
         )).map((stat: any, index) => {
           const content = (
@@ -194,8 +194,8 @@ export default function Dashboard() {
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-base-content/70">{stat.title}</p>
                 <h3 className="text-lg sm:text-2xl font-bold text-base-content mt-1 truncate">{stat.value}</h3>
-                <span className={`text-xs font-medium ${['Alertes Stock', t('dashboard.stats.stock_alerts'), 'Valeur Stock', t('dashboard.stats.stock_value')].includes(stat.title) ? 'text-base-content/60' : ['Créances Clients', t('dashboard.stats.receivables'), 'MON PANIER MOYEN'].includes(stat.title) ? 'text-primary' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
-                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{['Alertes Stock', t('dashboard.stats.stock_alerts')].includes(stat.title) ? '' : ['Valeur Stock', t('dashboard.stats.stock_value')].includes(stat.title) ? t('dashboard.stats.stock_value_details') : ['Créances Clients', t('dashboard.stats.receivables')].includes(stat.title) ? t('dashboard.stats.receivables_pending') : ['MES VENTES (JOUR)', 'MON PANIER MOYEN'].includes(stat.title) ? '' : 'vs hier'}</span>
+                <span className={`text-xs font-medium ${[t('dashboard.stats.stock_alerts'), t('dashboard.stats.stock_value')].includes(stat.title) ? 'text-base-content/60' : [t('dashboard.stats.receivables'), t('dashboard.stats.my_avg_basket')].includes(stat.title) ? 'text-primary' : (stat.isPositive ? 'text-emerald-600' : 'text-red-600')}`}>
+                  {stat.change} <span className="text-base-content/60 hidden sm:inline">{[t('dashboard.stats.stock_alerts')].includes(stat.title) ? '' : [t('dashboard.stats.stock_value')].includes(stat.title) ? t('dashboard.stats.stock_value_details') : [t('dashboard.stats.receivables')].includes(stat.title) ? t('dashboard.stats.receivables_pending') : [t('dashboard.stats.my_sales'), t('dashboard.stats.my_avg_basket')].includes(stat.title) ? '' : t('dashboard.stats.vs_yesterday')}</span>
                 </span>
                 {stat.details && (
                   <div className="text-xs text-base-content/50 mt-1 font-medium hidden sm:block">
@@ -335,7 +335,7 @@ export default function Dashboard() {
                         domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
                       />
                        <Tooltip 
-                         formatter={(value: number) => [formatCurrency(value), 'Montant']}
+                         formatter={(value: number) => [formatCurrency(value), t('dashboard.charts.amount')]}
                          contentStyle={{ 
                           backgroundColor: '#fff',
                           border: '1px solid #e5e7eb',
@@ -361,7 +361,7 @@ export default function Dashboard() {
           /* Hourly Traffic Chart */
           <div className="card bg-base-100 shadow-sm border border-base-200">
             <div className="card-body p-4">
-              <h2 className="card-title text-lg font-bold text-base-content mb-4">Moyenne Fréquentation Horaire (30 jours)</h2>
+              <h2 className="card-title text-lg font-bold text-base-content mb-4">{t('dashboard.charts.hourly_traffic_title')}</h2>
               {hourlyTraffic && (
                   <ResponsiveContainer width="100%" height={250}>
                     <AreaChart data={hourlyTraffic} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -387,7 +387,7 @@ export default function Dashboard() {
                         stroke="#8884d8" 
                         fillOpacity={1} 
                         fill="url(#colorTraffic)" 
-                        name="Ventes"
+                        name={t('dashboard.charts.sales_label')}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -403,18 +403,18 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-4">
                  <h2 className="card-title text-lg font-bold text-base-content flex items-center gap-2">
                     <span className="text-xl">📉</span>
-                    Dettes Fournisseurs
+                    {t('dashboard.debts.supplier_debts_title')}
                  </h2>
                  <div className="flex items-center gap-2">
                       {supplierDebts?.total_debt > 0 && (
                          <div className="badge badge-error text-white font-bold p-3">
-                             Total: {formatCurrency(supplierDebts.total_debt)}
+                             {t('dashboard.debts.total_debt')}: {formatCurrency(supplierDebts.total_debt)}
                          </div>
                       )}
                      <button 
                         className={`btn btn-ghost btn-sm btn-circle ${isRefetchingSupplierDebts ? 'loading' : ''}`}
                         onClick={() => refetchSupplierDebts()}
-                        title="Actualiser les dettes"
+                        title={t('dashboard.debts.refresh_debts')}
                      >
                         {!isRefetchingSupplierDebts && (
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -430,9 +430,9 @@ export default function Dashboard() {
                     <table className="table table-xs sm:table-sm w-full">
                         <thead className="sticky top-0 bg-base-100 z-10">
                             <tr>
-                                <th>Fournisseur</th>
-                                <th className="text-right">Dette</th>
-                                <th className="text-center">Action</th>
+                                <th>{t('dashboard.debts.supplier')}</th>
+                                <th className="text-right">{t('dashboard.debts.debt')}</th>
+                                <th className="text-center">{t('dashboard.debts.action')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -446,7 +446,7 @@ export default function Dashboard() {
                                         <Link 
                                             to="/app/fournisseurs" 
                                             className="btn btn-ghost btn-xs text-primary"
-                                            title="Gérer les paiements"
+                                            title={t('dashboard.debts.manage_payments')}
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -463,7 +463,7 @@ export default function Dashboard() {
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm font-medium">Aucune dette fournisseur</p>
+                      <p className="text-sm font-medium">{t('dashboard.debts.no_supplier_debts')}</p>
                   </div>
               )}
             </div>
@@ -608,7 +608,7 @@ export default function Dashboard() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    Générer Commande
+                    {t('dashboard.actions.generate_order')}
                   </button>
                 )}
                 <Link 
@@ -649,11 +649,11 @@ export default function Dashboard() {
                   onChange={(e) => setExpirationMonths(Number(e.target.value))}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <option value={1}>1 mois</option>
-                  <option value={2}>2 mois</option>
-                  <option value={3}>3 mois</option>
-                  <option value={6}>6 mois</option>
-                  <option value={12}>1 an</option>
+                  <option value={1}>{t('dashboard.alerts.periods.1m', '1 mois')}</option>
+                  <option value={2}>{t('dashboard.alerts.periods.2m', '2 mois')}</option>
+                  <option value={3}>{t('dashboard.alerts.periods.3m', '3 mois')}</option>
+                  <option value={6}>{t('dashboard.alerts.periods.6m', '6 mois')}</option>
+                  <option value={12}>{t('dashboard.alerts.periods.12m', '1 an')}</option>
                 </select>
               </div>
 
@@ -688,7 +688,7 @@ export default function Dashboard() {
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium text-base-content block truncate">{lot.produit_nom}</span>
                             <div className="flex gap-2 text-xs text-base-content/60">
-                              <span>Lot: {lot.lot || 'N/A'}</span>
+                              <span>{t('dashboard.alerts.lot_label', 'Lot: ')}{lot.lot || 'N/A'}</span>
                               <span>•</span>
                               <span>
                                 {lot.date_expiration ? (() => { const d = new Date(lot.date_expiration); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; })() : 'N/A'}

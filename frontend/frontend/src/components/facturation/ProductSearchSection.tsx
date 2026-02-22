@@ -17,6 +17,7 @@ interface ProductSearchSectionProps {
   searchInputRef: React.RefObject<HTMLInputElement | null>
   placeholder?: string
   onQuantityShortcut?: (qty: number) => void
+  onCsvImport?: (file: File) => void
 }
 
 export default function ProductSearchSection({
@@ -28,7 +29,8 @@ export default function ProductSearchSection({
   addPackToFacture,
   searchInputRef,
   placeholder,
-  onQuantityShortcut
+  onQuantityShortcut,
+  onCsvImport
 }: ProductSearchSectionProps) {
   const { t } = useTranslation()
   const [searchMode, setSearchMode] = useState<'products' | 'packs'>('products')
@@ -125,7 +127,7 @@ export default function ProductSearchSection({
             </label>
             
             {/* Tabs */}
-            <div className="flex bg-gray-100 p-1 rounded-lg">
+            <div className="flex bg-gray-100 p-1 rounded-lg items-center gap-1">
                 <button 
                     className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'products' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => { setSearchMode('products'); setSearchQuery(''); searchInputRef.current?.focus() }}
@@ -138,6 +140,34 @@ export default function ProductSearchSection({
                 >
                     <Package size={14} /> {t('facturation.search.tabs_packs')}
                 </button>
+                
+                {/* File Upload for CSV */}
+                {onCsvImport && (
+                    <div className="relative border-l border-gray-300 pl-1 ml-1 flex items-center">
+                        <input 
+                            type="file" 
+                            accept=".csv" 
+                            id="csv_import"
+                            className="hidden" 
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file && onCsvImport) {
+                                  onCsvImport(file);
+                                }
+                                // Reset input so same file can be selected again if needed
+                                e.target.value = '';
+                            }}
+                        />
+                        <label 
+                            htmlFor="csv_import" 
+                            className="btn btn-xs btn-ghost text-gray-500 hover:text-primary hover:bg-white rounded-md flex items-center gap-1 cursor-pointer"
+                            title="Importer un fichier CSV (CIP, Quantité)"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                            CSV
+                        </label>
+                    </div>
+                )}
             </div>
       </div>
 

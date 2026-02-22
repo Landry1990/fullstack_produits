@@ -29,12 +29,47 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
     }, [isOpen])
 
     const fetchSettings = async () => {
+        console.log("LoyaltyConfigModal: Fetching settings...")
         setLoading(true)
         try {
-            let res = await axios.get(`${apiBaseUrl}/api/loyalty-settings/`)
-            setSettings(res.data)
+            const url = `${apiBaseUrl}/api/loyalty-settings/`
+            console.log("LoyaltyConfigModal: GET", url)
+            let res = await axios.get(url)
+            console.log("LoyaltyConfigModal: Response", res.data)
+            
+            // Handle paginated, array, or single object response
+            let data = res.data
+            if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+                data = data.results[0]
+            } else if (Array.isArray(data)) {
+                data = data[0]
+            }
+            
+            if (data && typeof data === 'object' && 'amount_per_point' in data) {
+                console.log("LoyaltyConfigModal: Setting data", data)
+                setSettings(data)
+            } else {
+                console.warn("LoyaltyConfigModal: No data found, using defaults")
+                // Fallback default values if backend returns empty
+                setSettings({
+                    id: 0,
+                    amount_per_point: "1000",
+                    point_value: "10",
+                    auto_reward_threshold: 0,
+                    auto_reward_percent: "0"
+                } as LoyaltySetting)
+            }
         } catch (err) {
-            console.error(err)
+            console.error("LoyaltyConfigModal: Fetch error", err)
+            // Even on error, set default settings so the modal isn't empty
+            setSettings({
+                id: 0,
+                amount_per_point: "1000",
+                point_value: "10",
+                auto_reward_threshold: 0,
+                auto_reward_percent: "0"
+            } as LoyaltySetting)
+            toast.error('Erreur lors du chargement des paramètres')
         } finally {
             setLoading(false)
         }
@@ -45,7 +80,14 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
         if (!settings) return
         setSaving(true)
         try {
-            await axios.post(`${apiBaseUrl}/api/loyalty-settings/`, settings)
+            // For singleton, use PUT to update existing or POST will handle it
+            // Check if settings has an id
+            if (settings.id) {
+                await axios.put(`${apiBaseUrl}/api/loyalty-settings/${settings.id}/`, settings)
+            } else {
+                // POST will use update_or_create in backend
+                await axios.post(`${apiBaseUrl}/api/loyalty-settings/`, settings)
+            }
             onClose()
             toast.success('Configuration enregistrée !')
         } catch (err) {

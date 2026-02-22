@@ -210,6 +210,15 @@ class DashboardViewSet(viewsets.ViewSet):
         # 5. Smart Alerts
         alerts = []
         
+        # Load Settings (with fallback defaults if singleton missing)
+        from ..models import PharmacySettings
+        settings = PharmacySettings.objects.first()
+        
+        perf_drop_threshold = Decimal('0.7') # 30% drop
+        stock_days_alert = settings.low_stock_threshold_days if settings else 15
+        debt_alert_val = settings.debt_alert_threshold if settings else Decimal('100000')
+        dormant_days_limit = settings.dormant_stock_days if settings else 90
+
         # Performance Alert (if CA < 70% of target after 14h)
         day_actual = ca_jour # Use the already calculated ca_jour
         day_target = obj_jour # Use the already calculated obj_jour
@@ -239,8 +248,8 @@ class DashboardViewSet(viewsets.ViewSet):
             })
 
         # --- IMPORTANT DEBTORS ALERT ---
-        # Find clients with significant debt (> 100k)
-        debt_threshold = Decimal('100000.00')
+        # Find clients with significant debt defined in settings
+        debt_threshold = Decimal(debt_alert_val)
         clients_with_debt = Client.objects.filter(is_active=True).annotate(
             paid_amount=Coalesce(
                 Sum('facture__paiements__montant', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], facture__paiements__statut='completee') & ~Q(facture__paiements__mode_paiement='en_compte')),
@@ -270,8 +279,8 @@ class DashboardViewSet(viewsets.ViewSet):
             })
 
         # --- DORMANT STOCKS ALERT ---
-        # Products with stock > 0 and no sales in last 90 days
-        limit_date = today - timedelta(days=90)
+        # Products with stock > 0 and no sales in last X days (from settings)
+        limit_date = today - timedelta(days=dormant_days_limit)
         dormant_count = Produit.objects.filter(
             stock__gt=0,
             is_active=True
@@ -285,7 +294,7 @@ class DashboardViewSet(viewsets.ViewSet):
                 'type': 'warning',
                 'title_key': 'manager_dashboard.alerts.dormant_title',
                 'message_key': 'manager_dashboard.alerts.dormant_msg',
-                'params': {'count': dormant_count, 'days': 90}
+                'params': {'count': dormant_count, 'days': dormant_days_limit}
             })
 
         # Week over Week Performance Drop (Compare strictly same days so far)
@@ -312,7 +321,7 @@ class DashboardViewSet(viewsets.ViewSet):
         ).aggregate(ca=Coalesce(Sum('total_ttc'), Decimal('0')))['ca']
         
         # Only alert if we have enough history to compare and significant drop
-        if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * Decimal('0.7'):
+        if last_week_partial_ca > 0 and current_week_ca < last_week_partial_ca * perf_drop_threshold:
              alerts.append({
                 'type': 'warning',
                 'title_key': 'manager_dashboard.alerts.drop_title',
@@ -497,10 +506,25 @@ class DashboardViewSet(viewsets.ViewSet):
         Retourne la liste des clients professionnels ayant dépassé leur plafond de crédit.
         Utilisé pour les alertes du tableau de bord.
         """
+        from django.db.models import Sum, F, Q, Value, DecimalField
+        from django.db.models.functions import Coalesce
+
+        # Optimisation : On génère le "current_debt_annotated" directement en SQL (Évite les requêtes N+1 de current_debt)
         clients = Client.objects.filter(
             client_type='PROFESSIONNEL',
             plafond__gt=0
-        ).exclude(name__icontains='DIVERS')
+        ).exclude(name__icontains='DIVERS').annotate(
+            paid_amount=Coalesce(
+                Sum('facture__paiements__montant', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], facture__paiements__statut='completee') & ~Q(facture__paiements__mode_paiement='en_compte')),
+                Value(0, output_field=DecimalField())
+            ),
+            total_billed=Coalesce(
+                Sum('facture__total_ttc', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])),
+                Value(0, output_field=DecimalField())
+            )
+        ).annotate(
+            current_debt_annotated=F('total_billed') - F('paid_amount')
+        )
         
         alert_clients = []
         for client in clients:

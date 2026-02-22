@@ -41,6 +41,7 @@ export default function InventaireComponent() {
   const [inventaires, setInventaires] = useState<Inventaire[]>([]);
   const [activeInventaire, setActiveInventaire] = useState<Inventaire | null>(null);
   const [lignes, setLignes] = useState<LigneInventaire[]>([]);
+  const [searchLignesQuery, setSearchLignesQuery] = useState('');
   
   // Form Data (Header)
   const [description, setDescription] = useState('');
@@ -229,6 +230,7 @@ export default function InventaireComponent() {
   const handleCreate = () => {
       setActiveInventaire(null);
       setLignes([]);
+      setSearchLignesQuery('');
       setDescription('');
       setDateInventaire(new Date().toISOString().split('T')[0]);
       setViewMode('CREATE');
@@ -238,6 +240,7 @@ export default function InventaireComponent() {
       setActiveInventaire(inv);
       setDescription(inv.description);
       setDateInventaire(inv.date.split('T')[0]);
+      setSearchLignesQuery('');
       setViewMode('EDIT');
       setViewTab('DATA'); // Reset tab
       setInventoryStats(null); // Reset stats
@@ -1334,25 +1337,47 @@ export default function InventaireComponent() {
                           </button>
                       </div>
                   ) : (
-                    <div className="bg-base-200 p-2 flex justify-end items-center px-4 border-b border-base-300 gap-2">
-                        <span className="text-xs opacity-50 uppercase font-bold mr-2">{t('stock.inventaire.lines.sort_by')}</span>
-                        <select 
-                            className="select select-bordered select-xs" 
-                            value={sortBy} 
-                            onChange={(e) => setSortBy(e.target.value as SortOption)}
-                        >
-                            <option value="CHRONOLOGICAL">{t('stock.inventaire.lines.sort_chronological')}</option>
-                            <option value="NAME">{t('stock.inventaire.lines.sort_name')}</option>
-                            <option value="GAP_VALUE">{t('stock.inventaire.lines.sort_gap_value')}</option>
-                            <option value="GAP_QTY">{t('stock.inventaire.lines.sort_gap_qty')}</option>
-                        </select>
-                        <button 
-                            className="btn btn-ghost btn-xs btn-square"
-                            onClick={() => setSortOrder(prev => prev === 'ASC' ? 'DESC' : 'ASC')}
-                            title={sortOrder === 'ASC' ? 'Croissant' : 'Décroissant'}
-                        >
-                            {sortOrder === 'ASC' ? '⬆️' : '⬇️'}
-                        </button>
+                    <div className="bg-base-200 p-2 flex justify-between items-center px-4 border-b border-base-300 gap-2 max-sm:flex-col">
+                        <div className="relative w-full sm:w-auto mb-2 sm:mb-0">
+                            <input
+                                type="text"
+                                placeholder={t('stock.inventaire.lines.search_placeholder', 'Rechercher un produit...')}
+                                className="input input-xs input-bordered w-full sm:w-64 pl-8"
+                                value={searchLignesQuery}
+                                onChange={(e) => setSearchLignesQuery(e.target.value)}
+                            />
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 absolute left-2.5 top-1.5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            {searchLignesQuery && (
+                                <button 
+                                    className="btn btn-ghost btn-xs btn-circle absolute right-1 top-0.5"
+                                    onClick={() => setSearchLignesQuery('')}
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center w-full sm:w-auto justify-end">
+                            <span className="text-xs opacity-50 uppercase font-bold mr-2">{t('stock.inventaire.lines.sort_by')}</span>
+                            <select 
+                                className="select select-bordered select-xs" 
+                                value={sortBy} 
+                                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                            >
+                                <option value="CHRONOLOGICAL">{t('stock.inventaire.lines.sort_chronological')}</option>
+                                <option value="NAME">{t('stock.inventaire.lines.sort_name')}</option>
+                                <option value="GAP_VALUE">{t('stock.inventaire.lines.sort_gap_value')}</option>
+                                <option value="GAP_QTY">{t('stock.inventaire.lines.sort_gap_qty')}</option>
+                            </select>
+                            <button 
+                                className="btn btn-ghost btn-xs btn-square ml-1"
+                                onClick={() => setSortOrder(prev => prev === 'ASC' ? 'DESC' : 'ASC')}
+                                title={sortOrder === 'ASC' ? 'Croissant' : 'Décroissant'}
+                            >
+                                {sortOrder === 'ASC' ? '⬆️' : '⬇️'}
+                            </button>
+                        </div>
                     </div>
                   )}
                   <table className="table table-zebra w-full table-xs">
@@ -1383,7 +1408,13 @@ export default function InventaireComponent() {
                       </thead>
                       <tbody>
                           {/* Apply Sorting before map */}
-                          {[...lignes].sort((a, b) => {
+                          {[...lignes].filter(l => {
+                              if (!searchLignesQuery) return true;
+                              const q = searchLignesQuery.toLowerCase();
+                              const name = (typeof l.produit === 'object' ? l.produit.name : l.produit_nom) || '';
+                              const cip = (typeof l.produit === 'object' ? l.produit.cip1 : l.produit_cip) || '';
+                              return name.toLowerCase().includes(q) || cip.toLowerCase().includes(q);
+                          }).sort((a, b) => {
                               let comparison = 0;
                               switch (sortBy) {
                                   case 'NAME':

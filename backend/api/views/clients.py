@@ -2,7 +2,8 @@ from rest_framework import viewsets, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery
+from django.db import transaction
+from django.db.models import F, Sum, Value, DecimalField, OuterRef, Subquery, ProtectedError
 from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -119,6 +120,31 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'total_factures': len(result),
             'factures': result
         })
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        """Supprime plusieurs clients par lot."""
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=400)
+            
+        try:
+            with transaction.atomic():
+                clients = Client.objects.filter(id__in=ids)
+                count = clients.count()
+                clients.delete()
+                
+                return Response({
+                    'status': 'success',
+                    'message': f'{count} clients supprimés avec succès.'
+                })
+        except ProtectedError as e:
+            return Response({
+                'error': 'Impossible de supprimer certains clients',
+                'detail': 'Certains clients sont liés à des factures ou d\'autres enregistrements et ne peuvent pas être supprimés.'
+            }, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 class AyantDroitViewSet(viewsets.ModelViewSet):
     """API endpoint for ayants droit."""

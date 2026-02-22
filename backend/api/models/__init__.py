@@ -10,8 +10,9 @@ Usage: from api.models import Produit, Facture, etc.
 from .users import Profile, create_user_profile, save_user_profile
 
 # Settings
-from .settings import LoyaltySetting, PharmacySettings, InvoiceSettings, ConfigurationOption
-
+from .settings import (
+    LoyaltySetting, PharmacySettings, InvoiceSettings, ConfigurationOption, TVA
+)
 # Products
 from .products import (
     Rayon, Forme, Groupe, FamilleRisque, 

@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Groupe, ProduitModel } from '../types';
 import ImportProductsModal from './products/ImportProductsModal';
+import PremiumModal from './common/PremiumModal';
 
 interface ScopedProduit extends ProduitModel {
   // Add any extra fields if needed for UI
@@ -417,112 +418,120 @@ export default function Groupes() {
       </div>
 
       {/* MODAL: CREATE/EDIT GROUPE */}
-      {isModalOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{editingGroupe ? 'Modifier le groupe' : 'Nouveau groupe'}</h3>
-            <form onSubmit={handleSubmitGroupe}>
-              <div className="form-control w-full mb-4">
-                <label className="label"><span className="label-text">Nom du groupe</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full" 
-                  value={formData.nom}
-                  onChange={e => setFormData({...formData, nom: e.target.value})}
-                  required
-                  autoFocus
-                />
-              </div>
-              
-              <div className="form-control w-full mb-6">
-                <label className="label"><span className="label-text">Description (Optionnel)</span></label>
-                <textarea 
-                  className="textarea textarea-bordered w-full"
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-
-              <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>Annuler</button>
-                <button type="submit" className="btn btn-primary">Enregistrer</button>
-              </div>
-            </form>
+      <PremiumModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingGroupe ? 'Modifier le groupe' : 'Nouveau groupe'}
+        gradientFrom="primary/20"
+        gradientTo="secondary/20"
+        icon={editingGroupe ? <span>✏️</span> : <span>📂</span>}
+      >
+        <form onSubmit={handleSubmitGroupe} className="p-6">
+          <div className="form-control w-full mb-4">
+            <label className="label"><span className="label-text font-semibold">Nom du groupe</span></label>
+            <input 
+              type="text" 
+              className="input input-bordered w-full" 
+              value={formData.nom}
+              onChange={e => setFormData({...formData, nom: e.target.value})}
+              required
+              autoFocus
+            />
           </div>
-          <div className="modal-backdrop" onClick={closeModal}></div>
-        </div>
-      )}
+          
+          <div className="form-control w-full mb-6">
+            <label className="label"><span className="label-text font-semibold">Description (Optionnel)</span></label>
+            <textarea 
+              className="textarea textarea-bordered w-full"
+              value={formData.description}
+              onChange={e => setFormData({...formData, description: e.target.value})}
+              rows={3}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button type="button" className="btn btn-ghost" onClick={closeModal}>Annuler</button>
+            <button type="submit" className="btn btn-primary px-8">Enregistrer</button>
+          </div>
+        </form>
+      </PremiumModal>
+
 
       {/* MODAL: ADD PRODUCT TO GROUPE */}
-      {isAddProductModalOpen && (
-         <div className="modal modal-open">
-           <div className="modal-box w-11/12 max-w-3xl h-[600px] flex flex-col">
-              <h3 className="font-bold text-lg mb-2">Ajouter des produits à "{selectedGroupe?.nom}"</h3>
-              <p className="text-sm opacity-60 mb-4">Recherchez des produits et cliquez sur le <b>+</b> pour les associer à ce groupe.</p>
-              
-              <div className="form-control mb-4">
-                 <input 
-                   type="text" 
-                   placeholder="Rechercher par nom ou CIP..." 
-                   className="input input-bordered w-full"
-                   value={productSearchTerm}
-                   onChange={e => handleSearchProducts(e.target.value)}
-                   autoFocus
-                 />
-              </div>
+      <PremiumModal
+        isOpen={isAddProductModalOpen}
+        onClose={() => setIsAddProductModalOpen(false)}
+        title={`Ajouter des produits à "${selectedGroupe?.nom}"`}
+        subtitle="Recherchez des produits et cliquez sur le + pour les associer à ce groupe."
+        maxWidth="max-w-3xl"
+        icon={<span>➕</span>}
+        gradientFrom="primary/10"
+        gradientTo="accent/10"
+      >
+        <div className="p-6 flex flex-col h-[500px]">
+          <div className="form-control mb-4">
+             <input 
+               type="text" 
+               placeholder="Rechercher par nom ou CIP..." 
+               className="input input-bordered w-full"
+               value={productSearchTerm}
+               onChange={e => handleSearchProducts(e.target.value)}
+               autoFocus
+             />
+          </div>
 
-              <div className="flex-1 overflow-auto bg-base-200 rounded-lg p-2 border border-base-300">
-                  {isSearching ? (
-                     <div className="text-center p-8"><span className="loading loading-spinner"></span></div>
-                  ) : searchResults.length > 0 ? (
-                     <table className="table table-sm w-full bg-base-100">
-                        <thead>
-                           <tr>
-                             <th>Produit</th>
-                             <th>Groupe Actuel</th>
-                             <th className="text-right">Action</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {searchResults.map(p => (
-                              <tr key={p.id} className="hover">
-                                 <td>
-                                    <div className="font-bold">{p.name}</div>
-                                    <div className="text-xs opacity-50">{p.cip1} • Stock: {p.stock}</div>
-                                 </td>
-                                 <td>
-                                    {p.groupe_nom ? (
-                                       <span className="badge badge-sm badge-ghost">{p.groupe_nom}</span>
-                                    ) : (
-                                       <span className="text-xs opacity-40 italic">Aucun</span>
-                                    )}
-                                 </td>
-                                 <td className="text-right">
-                                    <button 
-                                      className="btn btn-sm btn-circle btn-primary btn-outline"
-                                      onClick={() => handleAddProductToGroupe(p)}
-                                    >
-                                       +
-                                    </button>
-                                 </td>
-                              </tr>
-                           ))}
-                        </tbody>
-                     </table>
-                  ) : productSearchTerm.length > 1 ? (
-                     <div className="text-center p-8 text-base-content/50">Aucun produit trouvé</div>
-                  ) : (
-                     <div className="text-center p-8 text-base-content/50">Tapez au moins 2 caractères pour rechercher</div>
-                  )}
-              </div>
+          <div className="flex-1 overflow-auto bg-base-200 rounded-xl p-2 border border-base-300">
+              {isSearching ? (
+                 <div className="text-center p-8"><span className="loading loading-spinner"></span></div>
+              ) : searchResults.length > 0 ? (
+                 <table className="table table-sm w-full bg-white rounded-lg overflow-hidden">
+                    <thead>
+                       <tr className="bg-base-100">
+                         <th>Produit</th>
+                         <th>Groupe Actuel</th>
+                         <th className="text-right">Action</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       {searchResults.map(p => (
+                          <tr key={p.id} className="hover">
+                             <td>
+                                <div className="font-bold">{p.name}</div>
+                                <div className="text-xs opacity-50">{p.cip1} • Stock: {p.stock}</div>
+                             </td>
+                             <td>
+                                {p.groupe_nom ? (
+                                   <span className="badge badge-sm badge-ghost">{p.groupe_nom}</span>
+                                ) : (
+                                   <span className="text-xs opacity-40 italic">Aucun</span>
+                                )
+                                }
+                             </td>
+                             <td className="text-right">
+                                <button 
+                                  className="btn btn-sm btn-circle btn-primary btn-outline"
+                                  onClick={() => handleAddProductToGroupe(p)}
+                                >
+                                   +
+                                </button>
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
+              ) : productSearchTerm.length > 1 ? (
+                 <div className="text-center p-8 text-base-content/50">Aucun produit trouvé</div>
+              ) : (
+                 <div className="text-center p-8 text-base-content/50 italic">Tapez au moins 2 caractères pour rechercher</div>
+              )}
+          </div>
 
-              <div className="modal-action">
-                 <button className="btn" onClick={() => setIsAddProductModalOpen(false)}>Fermer</button>
-              </div>
-           </div>
-           <div className="modal-backdrop" onClick={() => setIsAddProductModalOpen(false)}></div>
-         </div>
-      )}
+          <div className="mt-6 flex justify-end">
+             <button className="btn btn-ghost px-8" onClick={() => setIsAddProductModalOpen(false)}>Fermer</button>
+          </div>
+        </div>
+      </PremiumModal>
+
 
     </div>
   );

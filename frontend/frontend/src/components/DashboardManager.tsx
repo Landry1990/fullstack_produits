@@ -7,6 +7,7 @@ import {
 import { toast } from 'react-hot-toast';
 import axios from '../config/axios';
 import { useQueryClient } from '@tanstack/react-query';
+import * as XLSX from 'xlsx';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('fr-FR', {
@@ -62,7 +63,33 @@ export default function DashboardManager() {
         const year = now.getFullYear();
         url = `${rapportsEndpoint}rapport_mensuel_pdf/?mois=${year}-${month}`;
       } else if (type === 'dead_stock') {
-        url = `${rapportsEndpoint}stocks_morts/?min_value=10000&months=6&format=csv`;
+        const url = `${rapportsEndpoint}stocks_morts/?min_value=100000&months=6`;
+        const response = await axios.get(url);
+        const data = response.data;
+
+        if (Array.isArray(data) && data.length > 0) {
+          const excelData = data.map(item => ({
+            'Nom': item.name,
+            'CIP': item.cip || '-',
+            'Stock': item.stock,
+            'Valeur': item.valeur,
+            'PMP': item.pmp,
+            'Dernière Vente': item.dernier_vente || 'Jamais vendu',
+            'Rayon': item.rayon || '-',
+            'Fournisseur': item.fournisseur || '-'
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(excelData);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Stocks Morts');
+          
+          const filename = `stocks_morts_${now.toISOString().split('T')[0]}.xlsx`;
+          XLSX.writeFile(wb, filename);
+          toast.success(t('common.export_success', 'Export réussi'));
+        } else {
+          toast("Aucun stock mort trouvé.");
+        }
+        return;
       }
 
       const response = await axios.get(url, { responseType: 'blob' });
@@ -72,8 +99,7 @@ export default function DashboardManager() {
       link.href = downloadUrl;
       
       const filename = type === 'csv' ? `export_comptable_${now.toISOString().split('T')[0]}.csv` :
-                       type === 'pdf' ? `rapport_mensuel_${now.getMonth() + 1}.pdf` :
-                       `stocks_morts_${now.toISOString().split('T')[0]}.csv`;
+                       `rapport_mensuel_${now.getMonth() + 1}.pdf`;
                        
       link.setAttribute('download', filename);
       document.body.appendChild(link);
@@ -96,12 +122,12 @@ export default function DashboardManager() {
         : '/api/objectifs-commerciaux/';
       
       await axios.post(endpoint, editingObjectif);
-      toast.success('Objectif enregistré avec succès');
+      toast.success(t('manager_dashboard.messages.save_success'));
       setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['objectifs'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard', 'managerStats'] });
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'enregistrement');
+      toast.error(error.response?.data?.error || t('manager_dashboard.messages.save_error'));
     }
   };
 

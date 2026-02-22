@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Facture, CouponMonnaie } from '../../types'
+import PremiumModal from '../common/PremiumModal'
 
 interface PaymentModalProps {
   isOpen: boolean
@@ -19,7 +20,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onConfirm,
   loading
 }) => {
-  const { t: _t } = useTranslation()
+  const { t } = useTranslation('caisse')
   const [montantPaye, setMontantPaye] = useState('')
   const [modePaiement, setModePaiement] = useState('especes')
   const [paiements, setPaiements] = useState<{ mode: string; montant: number }[]>([])
@@ -41,12 +42,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const peutValider = totalVerse >= montantDu && paiements.length > 0
 
   const paymentModes = [
-    { value: 'especes', label: 'Espèces' },
-    { value: 'carte', label: 'Carte bancaire' },
-    { value: 'om', label: 'Orange Money' },
-    { value: 'momo', label: 'Mobile Money' },
-    { value: 'cheque', label: 'Chèque' },
-    { value: 'virement', label: 'Virement' },
+    { value: 'especes', label: t('payment.modes.especes') },
+    { value: 'carte', label: t('payment.modes.carte') },
+    { value: 'om', label: t('payment.modes.om') },
+    { value: 'momo', label: t('payment.modes.momo') },
+    { value: 'cheque', label: t('payment.modes.cheque') },
+    { value: 'virement', label: t('payment.modes.virement') },
   ]
 
   const getModeLabel = (value: string) => paymentModes.find(m => m.value === value)?.label || value
@@ -113,31 +114,57 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   }
 
   return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-md p-0 overflow-hidden">
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-base-200 flex justify-between items-center">
-          <h3 className="font-bold text-lg">
-            Encaissement — #{facture.numero_facture}
-          </h3>
-          <button className="btn btn-sm btn-circle btn-ghost" onClick={onClose}>✕</button>
+    <PremiumModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={t('payment.title_with_num', { num: facture.numero_facture })}
+      icon={<span className="text-primary text-xl">💰</span>}
+      footer={
+        <div className="flex justify-end gap-2 w-full">
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={onClose}
+            disabled={loading}
+          >
+            {t('payment.cancel')}
+          </button>
+          <button
+            ref={validateBtnRef}
+            onClick={handleConfirm}
+            className={`btn btn-sm ${peutValider ? 'btn-success text-white' : 'btn-disabled'}`}
+            disabled={loading || !peutValider}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && peutValider && !loading) {
+                e.preventDefault()
+                handleConfirm()
+              }
+            }}
+          >
+            {loading 
+              ? <span className="loading loading-spinner loading-sm"></span>
+              : peutValider 
+                ? `✓ ${t('payment.validate')}` 
+                : t('payment.remaining', { amount: resteAPayer })
+            }
+          </button>
         </div>
-
+      }
+    >
         <div className="p-5 space-y-4">
           {/* Montant dû */}
           <div className="text-center">
             <div className="text-xs uppercase tracking-wider text-base-content/50 mb-1">
-              {hasTiersPayant ? 'Part Patient' : 'Montant à payer'}
+              {hasTiersPayant ? t('payment.part_patient') : t('payment.amount_to_pay')}
             </div>
             <div className="text-4xl font-light text-primary">{montantDu} F</div>
             {coupon && (
               <div className="text-xs text-success mt-1">
-                Coupon #{coupon.numero} : -{Number(coupon.montant)} F
+                {t('payment.coupon_discount', { num: coupon.numero, amount: Number(coupon.montant) })}
               </div>
             )}
             {hasTiersPayant && (
               <div className="text-xs text-info mt-1">
-                Tiers payant — Part assurance: {Math.round(Number(facture.total_ttc) - Number(facture.part_client!))} F
+                {t('payment.part_assurance', { amount: Math.round(Number(facture.total_ttc) - Number(facture.part_client!)) })}
               </div>
             )}
           </div>
@@ -146,7 +173,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <div className="flex gap-2 items-end">
             <div className="form-control flex-1">
               <label className="label py-1">
-                <span className="label-text text-xs font-semibold">Mode</span>
+                <span className="label-text text-xs font-semibold">{t('payment.mode')}</span>
               </label>
               <select
                 className="select select-bordered select-sm w-full"
@@ -160,7 +187,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
             <div className="form-control flex-1">
               <label className="label py-1">
-                <span className="label-text text-xs font-semibold">Montant</span>
+                <span className="label-text text-xs font-semibold">{t('payment.amount')}</span>
               </label>
               <input
                 ref={montantInputRef}
@@ -191,7 +218,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           {paiements.length > 0 && (
             <div className="bg-base-100 rounded-lg border border-base-200 overflow-hidden">
               <div className="px-3 py-2 bg-base-200/50 text-xs font-bold uppercase tracking-wider text-base-content/50">
-                Règlements
+                {t('payment.payments_list')}
               </div>
               {paiements.map((p, idx) => (
                 <div key={idx} className="flex justify-between items-center px-3 py-2 border-t border-base-200">
@@ -206,7 +233,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
               ))}
               <div className="flex justify-between items-center px-3 py-2 border-t border-base-300 bg-base-200/30">
-                <span className="text-sm font-bold">Total versé</span>
+                <span className="text-sm font-bold">{t('payment.total_paid')}</span>
                 <span className="font-mono font-bold text-primary">{totalVerse} F</span>
               </div>
             </div>
@@ -217,51 +244,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <div className="space-y-2">
               {resteAPayer > 0 && (
                 <div className="flex justify-between items-center px-3 py-2 bg-warning/10 border border-warning/30 rounded-lg">
-                  <span className="text-sm font-semibold text-warning">Reste à payer</span>
+                  <span className="text-sm font-semibold text-warning">{t('payment.remaining', { amount: '' }).replace(' F', '')}</span>
                   <span className="font-mono font-bold text-warning text-lg">{resteAPayer} F</span>
                 </div>
               )}
               {resteAPayer < 0 && (
                 <div className="flex justify-between items-center px-3 py-3 bg-success/10 border border-success/30 rounded-lg">
-                  <span className="text-sm font-semibold text-success">💰 Rendu/Remboursement</span>
+                  <span className="text-sm font-semibold text-success">💰 {t('payment.change_back')}</span>
                   <span className="font-mono font-bold text-success text-2xl">{Math.abs(resteAPayer)} F</span>
                 </div>
               )}
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="px-5 py-4 border-t border-base-200 flex justify-end gap-2">
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={onClose}
-            disabled={loading}
-          >
-            Annuler
-          </button>
-          <button
-            ref={validateBtnRef}
-            onClick={handleConfirm}
-            className={`btn btn-sm ${peutValider ? 'btn-success' : 'btn-disabled'}`}
-            disabled={loading || !peutValider}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && peutValider && !loading) {
-                e.preventDefault()
-                handleConfirm()
-              }
-            }}
-          >
-            {loading 
-              ? <span className="loading loading-spinner loading-sm"></span>
-              : peutValider 
-                ? '✓ Valider l\'encaissement' 
-                : `Reste ${resteAPayer} F`
-            }
-          </button>
-        </div>
-      </div>
-      <div className="modal-backdrop" onClick={onClose}></div>
-    </div>
+    </PremiumModal>
   )
 }

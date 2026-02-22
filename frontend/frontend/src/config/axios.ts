@@ -9,7 +9,21 @@ import { safeStorage } from '../utils/storage';
 // Track si on a déjà montré le toast de session expirée
 let hasShownExpiredToast = false;
 
-// Intercepteur de réponse pour gérer les erreurs globalement
+// Intercepteur de REQUÊTE pour ajouter automatiquement le token
+axios.interceptors.request.use(
+    (config) => {
+        const token = safeStorage.getItem('authToken');
+        if (token) {
+            config.headers.Authorization = `Token ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Intercepteur de RÉPONSE pour gérer les erreurs globalement
 axios.interceptors.response.use(
     // Succès - on laisse passer
     (response) => response,
@@ -32,10 +46,12 @@ axios.interceptors.response.use(
                 safeStorage.clear('session');
                 delete axios.defaults.headers.common['Authorization'];
 
-                // Rediriger vers login après un délai, UNIQUEMENT si on n'y est pas déjà
+                // Rediriger vers l'accueil (qui est le login) après un délai
+                // Note: La route de login est '/' dans App.tsx
                 setTimeout(() => {
-                    if (!window.location.pathname.includes('/login')) {
-                        window.location.href = '/login';
+                    const currentPath = window.location.pathname;
+                    if (currentPath !== '/') {
+                        window.location.href = '/';
                     }
                 }, 1500);
             }

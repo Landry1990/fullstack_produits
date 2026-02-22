@@ -38,18 +38,20 @@ export default function ActionButtons({
           </button>
 
         <div className="grid grid-cols-2 md:flex md:flex-row gap-1.5 sm:gap-3 w-full md:w-auto">
-          <div className="flex items-center space-x-2 bg-yellow-50 dark:bg-yellow-900/20 px-2 sm:px-3 py-1 sm:py-2 rounded-lg border border-yellow-100 dark:border-yellow-800/30 transition-colors col-span-2 sm:col-span-1">
+          <label 
+            className={`btn btn-xs sm:btn-md gap-1.5 sm:gap-2 col-span-2 sm:col-span-1 border-dashed ${isRetrocession ? 'btn-warning' : 'btn-outline btn-warning'}`}
+            title={t('facturation.retrocession_mode')}
+          >
             <input
               type="checkbox"
-              id="retro-toggle"
               checked={isRetrocession}
               onChange={(e) => setIsRetrocession?.(e.target.checked)}
-              className="checkbox checkbox-xs checkbox-warning"
+              className={`checkbox checkbox-xs ${isRetrocession ? 'border-yellow-900' : 'checkbox-warning'}`}
             />
-            <label htmlFor="retro-toggle" className="text-[8px] sm:text-[10px] font-bold text-yellow-800 dark:text-yellow-400 cursor-pointer select-none uppercase tracking-wider whitespace-nowrap">
+            <span className="text-[10px] sm:text-base font-bold uppercase tracking-wider whitespace-nowrap">
               {t('facturation.retrocession_mode')}
-            </label>
-          </div>
+            </span>
+          </label>
 
           <button
             onClick={onSuspend}

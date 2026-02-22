@@ -25,6 +25,8 @@ export interface Fournisseur {
   email: string;
   solde_dette?: string; // Dette totale (Factures CLOT - Paiements)
   is_active?: boolean;
+  type_reglement?: 'FACTURE' | 'RELEVE';
+  delai_paiement_jours?: number;
 }
 
 export interface AyantDroit {
@@ -101,6 +103,7 @@ export interface ProduitForm {
   requires_prescription?: boolean
   surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
   is_supplier_exclusive?: boolean
+  use_lot_management?: boolean
 }
 
 export interface AchatProduit {
@@ -296,6 +299,7 @@ export interface CaisseTransaction {
     full_name: string
   } | null
   client_name: string
+  client_type?: 'PARTICULIER' | 'PROFESSIONNEL'
   releve_reference?: string
   releve_id?: number
   is_creance_settlement?: boolean
@@ -332,6 +336,8 @@ export interface Paiement {
     username: string
     full_name: string
   } | null
+  releve_id?: number
+  releve_reference?: string
 }
 
 export interface PaiementFournisseur {
@@ -346,8 +352,9 @@ export interface PaiementFournisseur {
   reference?: string | null;
   created_by?: number;
   created_by_name?: string;
-  notes?: string;
-  created_at?: string;
+  notes?: string | null;
+  created_at: string;
+  commandes_liees?: string[];
 }
 
 export interface Creance {
@@ -567,6 +574,12 @@ export interface PharmacySettings {
   accent_color?: string
   font_family?: string
   website?: string
+  low_stock_threshold_days?: number
+  dormant_stock_days?: number
+  debt_alert_threshold?: string
+  ticket_paper_width?: number
+  currency_symbol?: string
+  locale?: string
 }
 
 export interface CouponMonnaie {
@@ -613,3 +626,11 @@ export interface OrdonnanceData {
     surveillance_category?: string;
   }>;
 }
+
+export interface TVA {
+  id: number;
+  taux: string;
+  libelle: string;
+  is_active: boolean;
+}
+

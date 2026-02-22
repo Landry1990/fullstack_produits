@@ -70,12 +70,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
         try {
           const resp = await axios.get(`/api/commandes/${openDetailsId}/`);
           setSelectedCommande(resp.data);
+          setSearchDetailQuery('');
           setViewMode('DETAILS');
-          // Nettoyer l'état pour éviter de réouvrir au refresh/navigation
-          navigate(location.pathname, { replace: true, state: {} });
         } catch (err) {
           console.error("Erreur lors du chargement de la commande via navigation:", err);
-          toast.error("Impossible de charger les détails de cette commande");
+          toast.error("Impossible de charger les détails de cette commande. Elle a peut-être été supprimée.");
+        } finally {
+          // Nettoyer l'état dans tous les cas pour éviter de réouvrir ou boucler au refresh/navigation
+          navigate(location.pathname, { replace: true, state: {} });
         }
       };
       fetchAndShow();
@@ -150,6 +152,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   // Tri pour les produits dans la vue détails
   const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
   const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [searchDetailQuery, setSearchDetailQuery] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -192,7 +195,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
     : '/api/commandes/'
   // Endpoints for reference
   const produitsEndpoint = `${apiBaseUrl}/api/produits/`
-  const rayonsEndpoint = `${apiBaseUrl}/api/rayons/`
   const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`
 
 
@@ -1470,6 +1472,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     try {
       const response = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
       setSelectedCommande(response.data);
+      setSearchDetailQuery('');
       setViewMode('DETAILS');
     } catch (err) {
       handleApiError(err, "Erreur lors du chargement des détails de la commande");
@@ -1715,6 +1718,33 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
           {/* Liste des produits (Read Only) */}
           <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col max-h-[calc(100vh-350px)]">
+            <div className="p-3 border-b border-base-200 flex justify-between items-center gap-4 bg-base-50">
+              <h3 className="font-bold text-sm text-base-content/80">{t('orders.details.products_list', 'Produits de la commande')}</h3>
+              
+              {selectedCommande.produits && selectedCommande.produits.length > 0 && (
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder={t('orders.product_table.search_placeholder', 'Rechercher un produit...')}
+                        className="input input-sm input-bordered w-full sm:w-64 pl-8"
+                        value={searchDetailQuery}
+                        onChange={(e) => setSearchDetailQuery(e.target.value)}
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-2.5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    {searchDetailQuery && (
+                        <button 
+                            className="btn btn-ghost btn-xs btn-circle absolute right-1 top-1.5"
+                            onClick={() => setSearchDetailQuery('')}
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
+              )}
+            </div>
+            
             <div className="overflow-y-auto flex-1">
             {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
               <p className="text-base-content/70 text-center py-8 text-sm">{t('orders.details.empty_products')}</p>
@@ -1765,6 +1795,12 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         const cip = (p as any).produit_cip || produitData?.cip1 || '-';
                         
                         return { ...p, produitName, cip, originalIndex };
+                      })
+                      .filter(p => {
+                        if (!searchDetailQuery) return true;
+                        const q = searchDetailQuery.toLowerCase();
+                        return p.produitName.toLowerCase().includes(q) || 
+                               p.cip.toLowerCase().includes(q);
                       })
                       .sort((a, b) => {
                         let comparison = 0;
@@ -1902,8 +1938,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
         open={isCreateProduitModalOpen}
         onClose={() => setIsCreateProduitModalOpen(false)}
         produitsEndpoint={produitsEndpoint}
-        rayonsEndpoint={rayonsEndpoint}
-        fournisseursEndpoint={fournisseursEndpoint}
         onCreated={handleProduitCreated}
         rayons={rayons}
         fournisseurs={fournisseurs}

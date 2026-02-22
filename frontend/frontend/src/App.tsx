@@ -99,6 +99,10 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
+    path: '/login',
+    element: <Login />,
+  },
+  {
     path: '/app',
     element: <ProtectedRoute />,
     children: [
@@ -167,11 +171,13 @@ const router = createBrowserRouter([
               </AdminRoute>
             ) 
           },
+          { path: '*', element: <Navigate to="/" replace /> },
         ],
       },
     ],
   },
 ])
+
 
 import { Suspense } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'

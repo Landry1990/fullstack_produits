@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 import { useTranslation } from 'react-i18next';
 
@@ -59,6 +59,7 @@ export default function CommandeProductTable({
     onRemoveProduct
 }: CommandeProductTableProps) {
     const { t } = useTranslation();
+    const [searchQuery, setSearchQuery] = useState('');
     
     // Auto-select content when input receives focus
     const handleSelectAll = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -68,10 +69,33 @@ export default function CommandeProductTable({
     return (
         <div className="flex-1 min-h-0 flex flex-col bg-white rounded-xl shadow-sm border border-base-200">
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
-            <div className="flex items-center gap-4">
-                <h2 className="font-bold text-sm md:text-base text-base-content">
+            <div className="flex items-center gap-4 flex-wrap">
+                <h2 className="font-bold text-sm md:text-base text-base-content whitespace-nowrap">
                 {t('orders.product_table.title', { count: commandeProduits.length })}
                 </h2>
+                {/* SEARCH INPUT */}
+                {commandeProduits.length > 0 && (
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder={t('orders.product_table.search_placeholder', 'Rechercher un produit...')}
+                            className="input input-sm input-bordered w-full sm:w-64 pl-8"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-2.5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        {searchQuery && (
+                            <button 
+                                className="btn btn-ghost btn-xs btn-circle absolute right-1 top-1.5"
+                                onClick={() => setSearchQuery('')}
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                )}
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
                     {saving && <span className="text-sm text-warning animate-pulse">{t('orders.form.saving')}</span>}
                     {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders.product_table.saved_at', { time: lastSaved.toLocaleTimeString() })}</span>}
@@ -174,54 +198,62 @@ export default function CommandeProductTable({
                     </tr>
                 </thead>
                 <tbody>
-                    {commandeProduits.map((p, index) => (
-                    <tr 
-                        key={p.id} 
-                        className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 ${selectedRows.has(index) ? 'bg-primary/5' : ''}`}
-                    >
-                        <td>
-                        <input
-                            type="checkbox"
-                            className="checkbox checkbox-xs"
-                            checked={selectedRows.has(index)}
-                            onChange={() => toggleRowSelection(index)}
-                        />
-                        </td>
-                        <td className="pl-4 py-2 md:py-3">
-                        <div className="font-medium text-sm">
-                            {(() => {
-                            let name = '';
-                            let cip = '';
-                            let isExclusive = false;
-                            let supplierName = '';
+                    {commandeProduits.map((p, index) => {
+                        let name = '';
+                        let cip = '';
+                        let isExclusive = false;
+                        let supplierName = '';
 
-                            // Resolve Product Data
-                            if (typeof p.produit === 'object' && p.produit.name) {
-                                name = p.produit.name;
-                                cip = p.produit.cip1 || '';
-                                isExclusive = p.produit.is_supplier_exclusive || false;
-                                supplierName = p.produit.fournisseur_name || '';
+                        // Resolve Product Data
+                        if (typeof p.produit === 'object' && p.produit.name) {
+                            name = p.produit.name;
+                            cip = p.produit.cip1 || '';
+                            isExclusive = p.produit.is_supplier_exclusive || false;
+                            supplierName = p.produit.fournisseur_name || '';
+                        } else {
+                            // Try to find in produitsList
+                            const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                            const found = produitsList.find(prod => prod.id === produitId);
+                            if (found) {
+                                name = found.name;
+                                cip = found.cip1 || '';
+                                isExclusive = found.is_supplier_exclusive || false;
+                                supplierName = found.fournisseur_name || '';
+                            } else if ((p as any).produit_nom) {
+                                 // Fallback to flattened fields from API
+                                 name = (p as any).produit_nom;
+                                 cip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref || ''; 
+                                 if (cip === name) cip = ''; // Avoid dupes if ref is name
                             } else {
-                                // Try to find in produitsList
-                                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
-                                const found = produitsList.find(prod => prod.id === produitId);
-                                if (found) {
-                                    name = found.name;
-                                    cip = found.cip1 || '';
-                                    isExclusive = found.is_supplier_exclusive || false;
-                                    supplierName = found.fournisseur_name || '';
-                                } else if ((p as any).produit_nom) {
-                                     // Fallback to flattened fields from API
-                                     name = (p as any).produit_nom;
-                                     // Try to find CIP in known fields or fallback to ref if it looks like a CIP
-                                     cip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref || ''; 
-                                     if (cip === name) cip = ''; // Avoid dupes if ref is name
-                                } else {
-                                    name = `Produit #${produitId}`;
-                                }
+                                name = `Produit #${produitId}`;
                             }
+                        }
 
-                            return (
+                        // Local Search Filter
+                        if (searchQuery) {
+                            const q = searchQuery.toLowerCase();
+                            const matchesName = name.toLowerCase().includes(q);
+                            const matchesCip = cip.toLowerCase().includes(q);
+                            if (!matchesName && !matchesCip) {
+                                return null;
+                            }
+                        }
+
+                        return (
+                        <tr 
+                            key={p.id || `row-${index}`} 
+                            className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 ${selectedRows.has(index) ? 'bg-primary/5' : ''}`}
+                        >
+                            <td>
+                            <input
+                                type="checkbox"
+                                className="checkbox checkbox-xs"
+                                checked={selectedRows.has(index)}
+                                onChange={() => toggleRowSelection(index)}
+                            />
+                            </td>
+                            <td className="pl-4 py-2 md:py-3">
+                            <div className="font-medium text-sm">
                                 <div className="flex items-center gap-1 flex-wrap">
                                     <span className="break-words max-w-[200px]">
                                         {name}
@@ -237,11 +269,9 @@ export default function CommandeProductTable({
                                         </div>
                                     )}
                                 </div>
-                            );
-                            })()}
-                        </div>
-                        </td>
-                        {/* CIP Column */}
+                            </div>
+                            </td>
+                            {/* CIP Column */}
                         <td className="pl-2 py-2 md:py-3">
                             <span className="text-xs font-mono text-base-content/70">
                                 {(() => {
@@ -454,7 +484,8 @@ export default function CommandeProductTable({
                         </button>
                         </td>
                     </tr>
-                    ))}
+                    );
+                    })}
                 </tbody>
                 </table>
             )}

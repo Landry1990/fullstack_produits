@@ -12,7 +12,7 @@ from .views import (
     PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet,
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
-    PromotionViewSet
+    PromotionViewSet, TVAViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -75,6 +75,7 @@ router.register(r'promotions', PromotionViewSet, basename='promotion')
 router.register(r'finance-stats', FinanceStatsViewSet, basename='finance-stats')
 router.register(r'objectifs-commerciaux', ObjectifViewSet, basename='objectif-commercial')
 router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
+router.register(r'tva', TVAViewSet, basename='tva')
 
 
 # The API URLs are now determined automatically by the router.

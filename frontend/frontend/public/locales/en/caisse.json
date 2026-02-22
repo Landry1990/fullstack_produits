@@ -19,7 +19,10 @@
         "modify": "Modify",
         "cancel": "Cancel",
         "apply_coupon": "Apply Coupon",
-        "cash_in": "Cash In"
+        "remove_coupon": "Remove coupon",
+        "coupon_applied": "Coupon applied",
+        "cash_in": "Cash In",
+        "not_authorized": "Not authorized"
     },
     "ticket": {
         "title": "Receipt"
@@ -27,10 +30,21 @@
     "coupons": {
         "title": "Coupon Management",
         "search": "Search...",
+        "search_placeholder": "Search by number...",
         "generate": "Generate Coupon",
+        "permission_required": "Permission required",
         "active": "Active",
         "used": "Used",
+        "none": "No coupons found",
         "empty": "No coupons",
+        "system": "System",
+        "by": "By {{name}}",
+        "headers": {
+            "num_amount": "No. / Amount",
+            "creation": "Creation",
+            "usage": "Usage",
+            "status": "Status"
+        },
         "apply_to_sale": "Apply to sale",
         "details_modal": {
             "title": "Coupon Details",
@@ -59,15 +73,29 @@
     },
     "payment": {
         "title": "Payment",
+        "title_with_num": "Payment — #{{num}}",
+        "cancel": "Cancel",
         "amount_to_pay": "Amount to pay",
         "payment_mode": "Payment method",
         "amount_received": "Amount received",
         "change": "Change",
+        "part_patient": "Patient share",
+        "part_assurance": "Third party — Insurance share: {{amount}} F",
+        "coupon_discount": "Coupon #{{num}}: -{{amount}} F",
+        "mode": "Method",
+        "amount": "Amount",
+        "remaining": "Remaining {{amount}} F",
+        "validate": "Validate payment",
+        "payments_list": "Payments",
+        "total_paid": "Total paid",
+        "change_back": "Change/Refund",
         "modes": {
-            "cash": "Cash",
-            "card": "Credit Card",
-            "mobile": "Mobile Money",
-            "check": "Check",
+            "especes": "Cash",
+            "carte": "Credit Card",
+            "om": "Orange Money",
+            "momo": "Mobile Money",
+            "cheque": "Check",
+            "virement": "Bank Transfer",
             "credit": "On Account"
         },
         "confirm": "Confirm payment",

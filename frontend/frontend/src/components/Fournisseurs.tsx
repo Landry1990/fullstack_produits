@@ -8,6 +8,8 @@ import PasswordConfirmModal from './PasswordConfirmModal';
 import PremiumModal from './common/PremiumModal';
 import type { Fournisseur } from '../types';
 import FinanceFournisseurModal from './FinanceFournisseurModal';
+import EcheancierFournisseursModal from './EcheancierFournisseursModal';
+import PointageReleveModal from './PointageReleveModal';
 
 interface CatalogueItem {
   produit_id: number;
@@ -34,6 +36,8 @@ const emptyForm: Omit<Fournisseur, 'id'> = {
   address: '',
   phone: '',
   email: '',
+  type_reglement: 'FACTURE',
+  delai_paiement_jours: 0,
 };
 
 export default function Fournisseurs() {
@@ -43,6 +47,7 @@ export default function Fournisseurs() {
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [selectedFournisseur, setSelectedFournisseur] = useState<Fournisseur | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Sudo Mode State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -64,8 +69,13 @@ export default function Fournisseurs() {
   const [catalogueSearch, setCatalogueSearch] = useState<string>('');
   const [showCatalogue, setShowCatalogue] = useState<boolean>(true);
   const [showInactive, setShowInactive] = useState<boolean>(false);
-
-  const [isFinanceModalOpen, setIsFinanceModalOpen] = useState(false);
+  const [financeModalState, setFinanceModalState] = useState<{
+    isOpen: boolean;
+    prefilledMontant?: number;
+    commandeIds?: number[];
+  }>({ isOpen: false });
+  const [isEcheancierModalOpen, setIsEcheancierModalOpen] = useState(false);
+  const [isPointageModalOpen, setIsPointageModalOpen] = useState(false);
 
   // Auto-refresh selectedFournisseur when list changes
   useEffect(() => {
@@ -324,6 +334,65 @@ export default function Fournisseurs() {
     }
   }
 
+  const executeBulkDeleteFournisseurs = async () => {
+    try {
+      await axios.post(`${fournisseursEndpoint}bulk_delete/`, { ids: selectedIds });
+      setFournisseurs(prev => prev.filter(f => !selectedIds.includes(f.id!)));
+      setSelectedIds([]);
+      if (selectedFournisseur && selectedIds.includes(selectedFournisseur.id!)) {
+        setSelectedFournisseur(null);
+      }
+      toast.success(`${selectedIds.length} fournisseur(s) supprimé(s) avec succès`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || err.response?.data?.error || "Erreur lors de la suppression groupée");
+      console.error(err);
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+
+    // Permission Check
+    if (!user?.is_superuser && !user?.can_delete_fournisseur) {
+        toast.error(t('providers.messages.access_denied_delete'))
+        return
+    }
+
+    const confirmMessage = selectedIds.length === 1 
+      ? t('providers.messages.delete_confirm_message', { name: fournisseurs.find(f => f.id === selectedIds[0])?.name })
+      : `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} fournisseurs ?`;
+
+    const confirmed = await confirm({
+      title: t('providers.messages.delete_confirm_title'),
+      message: confirmMessage,
+      variant: 'danger',
+      confirmText: t('providers.messages.delete_btn')
+    })
+    
+    if (confirmed) {
+        setPasswordModalConfig({
+            title: t('providers.messages.sudo_title'),
+            message: t('providers.messages.sudo_message')
+        })
+        setPendingAction(() => () => executeBulkDeleteFournisseurs());
+        setIsPasswordModalOpen(true);
+    }
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.length === filteredFournisseurs.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredFournisseurs.map(f => f.id!));
+    }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  }
+
   async function handleDeleteFournisseur() {
     if (!selectedFournisseur) return;
     
@@ -383,7 +452,20 @@ export default function Fournisseurs() {
                   {loading ? (
                       <span className="loading loading-spinner loading-xs text-primary"></span>
                   ) : (
-                      <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold">{fournisseurs.length}</span>
+                      <div className="flex items-center gap-2">
+                         <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold">{fournisseurs.length}</span>
+                         {selectedIds.length > 0 && (
+                            <button 
+                               className="btn btn-xs btn-error gap-1 animate-in zoom-in duration-200"
+                               onClick={handleBulkDelete}
+                            >
+                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                               </svg>
+                               {selectedIds.length}
+                            </button>
+                         )}
+                      </div>
                   )}
                </div>
                
@@ -414,6 +496,18 @@ export default function Fournisseurs() {
                  >
                     {showInactive ? '👁️' : '🙈'}
                  </button>
+                 <button className="btn btn-secondary btn-sm gap-2 h-9" onClick={() => setIsEcheancierModalOpen(true)}>
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                   </svg>
+                   Échéancier
+                 </button>
+                 <button className="btn btn-neutral btn-sm gap-2 h-9 text-white" onClick={() => setIsPointageModalOpen(true)}>
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                   </svg>
+                   Pointer
+                 </button>
                  <button className="btn btn-primary btn-sm gap-2 h-9" onClick={openAddModal}>
                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -428,6 +522,14 @@ export default function Fournisseurs() {
                <table className="table table-xs table-pin-rows w-full">
                  <thead className="bg-[#f8fafc] text-[#64748b]">
                     <tr>
+                      <th className="py-2 px-2 w-10">
+                         <input 
+                            type="checkbox" 
+                            className="checkbox checkbox-xs"
+                            checked={selectedIds.length === filteredFournisseurs.length && filteredFournisseurs.length > 0}
+                            onChange={toggleSelectAll}
+                         />
+                      </th>
                       <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-left">{t('providers.table.provider')}</th>
                       <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-center">{t('providers.table.phone')}</th>
                     </tr>
@@ -445,6 +547,15 @@ export default function Fournisseurs() {
                            onClick={() => selectFournisseur(fournisseur)}
                          >
                            <td className="py-1.5 px-2">
+                              <input 
+                                 type="checkbox" 
+                                 className="checkbox checkbox-xs"
+                                 checked={selectedIds.includes(fournisseur.id!)}
+                                 onChange={() => toggleSelect(fournisseur.id!)}
+                                 onClick={(e) => e.stopPropagation()}
+                              />
+                           </td>
+                           <td className="py-1.5 px-2">
                              <div className="font-semibold text-sm truncate max-w-[140px]" title={fournisseur.name}>{fournisseur.name}</div>
                            </td>
                            <td className="py-1.5 px-2 text-center">
@@ -454,7 +565,7 @@ export default function Fournisseurs() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={2} className="text-center py-6 opacity-50">
+                        <td colSpan={3} className="text-center py-6 opacity-50">
                            <div className="flex flex-col items-center gap-1">
                              <span className="text-xl">📭</span>
                              <span className="text-xs">{searchTerm ? t('providers.no_result') : t('providers.empty_list')}</span>
@@ -550,8 +661,12 @@ export default function Fournisseurs() {
                              {t('providers.details.financial_situation')}
                           </h3>
                           <button 
-                            className="btn btn-sm btn-outline btn-primary gap-2"
-                            onClick={() => setIsFinanceModalOpen(true)}
+                            className="btn btn-ghost btn-sm text-primary hover:bg-primary/10 rounded-lg px-3 flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // setSelectedFournisseur est déjà au bon state ici (selectedFournisseur).
+                              setFinanceModalState({ isOpen: true });
+                            }}
                           >
                             {t('providers.details.manage_payments')}
                           </button>
@@ -793,6 +908,41 @@ export default function Fournisseurs() {
             </div>
           </div>
 
+          {/* Conditions Paiement */}
+          <div className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+              Conditions de paiement
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Type de règlement</label>
+                <select 
+                  value={newFournisseur.type_reglement} 
+                  onChange={e => setNewFournisseur(f => ({...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'}))} 
+                  className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                  disabled={isSubmitting}
+                >
+                  <option value="FACTURE">À la facture</option>
+                  <option value="RELEVE">Sur relevé (ex: Ubipharm, Laborex)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Délai (jours)</label>
+                <input 
+                  type="number" 
+                  min="0"
+                  placeholder="0 (au comptant)"
+                  value={newFournisseur.delai_paiement_jours} 
+                  onChange={e => setNewFournisseur(f => ({...f, delai_paiement_jours: parseInt(e.target.value) || 0}))} 
+                  className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Adresse */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
@@ -900,6 +1050,39 @@ export default function Fournisseurs() {
               </div>
             </div>
 
+            {/* Conditions Paiement */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
+                Conditions de paiement
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Type de règlement</label>
+                  <select 
+                    value={editingFournisseur.type_reglement || 'FACTURE'} 
+                    onChange={e => setEditingFournisseur(f => f ? {...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'} : null)} 
+                    className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                  >
+                    <option value="FACTURE">À la facture</option>
+                    <option value="RELEVE">Sur relevé (ex: Ubipharm, Laborex)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Délai (jours)</label>
+                  <input 
+                    type="number" 
+                    min="0"
+                    placeholder="0 (au comptant)"
+                    value={editingFournisseur.delai_paiement_jours ?? 0} 
+                    onChange={e => setEditingFournisseur(f => f ? {...f, delai_paiement_jours: parseInt(e.target.value) || 0} : null)} 
+                    className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Adresse */}
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
@@ -935,12 +1118,12 @@ export default function Fournisseurs() {
       {/* Finance Modal */}
       {selectedFournisseur && (
           <FinanceFournisseurModal 
-            isOpen={isFinanceModalOpen}
-            onClose={() => {
-                setIsFinanceModalOpen(false);
-            }}
+            isOpen={financeModalState.isOpen}
+            onClose={() => setFinanceModalState({ isOpen: false })}
             fournisseur={selectedFournisseur}
             onSuccess={fetchFournisseurs}
+            prefilledMontant={financeModalState.prefilledMontant}
+            commandeIds={financeModalState.commandeIds}
           />
       )}
 
@@ -952,6 +1135,49 @@ export default function Fournisseurs() {
         onConfirm={pendingAction}
         title={passwordModalConfig.title}
         message={passwordModalConfig.message}
+      />
+
+      {/* Modal Échéancier */}
+      <EcheancierFournisseursModal 
+        isOpen={isEcheancierModalOpen}
+        onClose={() => setIsEcheancierModalOpen(false)}
+        onRegler={(fournisseurId) => {
+          setIsEcheancierModalOpen(false);
+          const f = fournisseurs.find(x => x.id === fournisseurId);
+          if (f) {
+            setSelectedFournisseur(f);
+            setFinanceModalState({ isOpen: true });
+          }
+        }}
+        onPointer={(id) => {
+          setIsEcheancierModalOpen(false);
+          setIsPointageModalOpen(true);
+          const f = fournisseurs.find(x => x.id === id);
+          if (f) setSelectedFournisseur(f);
+        }}
+      />
+
+      {/* Modal Pointage des Factures Global */}
+      <PointageReleveModal 
+          isOpen={isPointageModalOpen}
+          initialFournisseurId={selectedFournisseur?.id}
+          onClose={() => setIsPointageModalOpen(false)}
+          fournisseurs={fournisseurs}
+          onReglerSelection={(fId, cmds, montant) => {
+             // 1. Fermer le pointage
+             setIsPointageModalOpen(false);
+             // 2. Ouvrir la finance pour ce fId
+             const f = fournisseurs.find(x => x.id === fId);
+             if (f) {
+                // On stocke temporairement les infos de pointage pour prepopuler le modal finance
+                setSelectedFournisseur(f);
+                setFinanceModalState({
+                   isOpen: true,
+                   prefilledMontant: montant,
+                   commandeIds: cmds
+                });
+             }
+          }}
       />
 
     </div>
