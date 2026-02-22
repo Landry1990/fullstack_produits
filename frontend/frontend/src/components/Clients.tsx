@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast';
 
 import type { Client } from '../types';
 import LoyaltyConfigModal from './LoyaltyConfigModal';
+import PremiumModal from './common/PremiumModal';
 
 interface AyantDroit {
   id?: number;
@@ -69,6 +70,7 @@ export default function Clients() {
   const [selectedClient, setSelectedClient] = useState<ExtendedClient | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showInactive, setShowInactive] = useState<boolean>(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   
   // View/Navigation State - REPLACED with Modals
@@ -347,6 +349,43 @@ export default function Clients() {
     }
   }
 
+  async function handleBulkDelete() {
+    if (selectedIds.length === 0) return;
+    
+    const confirmMessage = selectedIds.length === 1 
+      ? t('clients.modals.delete_confirm', { name: clients.find(c => c.id === selectedIds[0])?.name })
+      : `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} clients ?`;
+
+    if (window.confirm(confirmMessage)) {
+      try {
+        await axios.post(`${clientsEndpoint}bulk_delete/`, { ids: selectedIds });
+        setClients(prev => prev.filter(c => !selectedIds.includes(c.id!)));
+        setSelectedIds([]);
+        if (selectedClient && selectedIds.includes(selectedClient.id!)) {
+            setSelectedClient(null);
+        }
+        toast.success(`${selectedIds.length} client(s) supprimé(s) avec succès`);
+      } catch (err: any) {
+        toast.error(err.response?.data?.detail || err.response?.data?.error || "Erreur lors de la suppression groupée");
+        console.error(err);
+      }
+    }
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.length === filteredClients.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredClients.map(c => c.id!));
+    }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  }
+
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden">
       {/* LEFT PANEL: CLIENT LIST (1/3) */}
@@ -355,7 +394,16 @@ export default function Clients() {
            <div className="p-4 border-b border-base-200 flex flex-col gap-3 bg-base-100 relative z-10 shrink-0">
              <div className="flex justify-between items-center">
                 <h2 className="font-bold text-xl">{t('clients.title')}</h2>
-                <div className="flex gap-1">
+                <div className="flex gap-1 items-center">
+                   {selectedIds.length > 0 && (
+                      <button 
+                         className="btn btn-sm btn-error mr-2" 
+                         onClick={handleBulkDelete}
+                         title="Supprimer la sélection"
+                      >
+                         🗑️ ({selectedIds.length})
+                      </button>
+                   )}
                    <button 
                       className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'btn-active btn-neutral' : 'text-slate-400'}`} 
                       onClick={() => setShowInactive(!showInactive)}
@@ -395,23 +443,47 @@ export default function Clients() {
              {loading && clients.length === 0 ? (
                <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>
              ) : (
-                <ul className="menu bg-base-100 w-full rounded-box p-0">
+                 <ul className="menu bg-base-100 w-full rounded-box p-0">
+                   {filteredClients.length > 0 && (
+                      <li className="mb-1 border-b border-base-200">
+                         <div className="flex items-center gap-3 px-4 py-2 hover:bg-transparent">
+                            <input 
+                               type="checkbox" 
+                               className="checkbox checkbox-sm checkbox-primary"
+                               checked={selectedIds.length === filteredClients.length && filteredClients.length > 0}
+                               onChange={toggleSelectAll}
+                            />
+                            <span className="text-xs font-semibold opacity-60 uppercase">Tout sélectionner</span>
+                         </div>
+                      </li>
+                   )}
                    {filteredClients.map(client => (
-                      <li key={client.id} className="mb-1 border-b border-base-100 last:border-0">
-                         <a 
-                           className={`flex flex-col items-start gap-1 py-3 ${selectedClient?.id === client.id ? 'active' : ''}`}
-                           onClick={() => selectClient(client)}
-                         >
-                            <div className="flex justify-between w-full">
-                               <span className="font-bold text-base">{client.name}</span>
-                               <span className={`badge badge-sm ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
-                                  {client.client_type === 'PROFESSIONNEL' ? t('clients.types.professional') : t('clients.types.individual')}
-                               </span>
+                      <li key={client.id} className="mb-1 border-b border-base-100 last:border-0 group">
+                         <div className="flex items-center p-0">
+                            <div className="px-4">
+                               <input 
+                                  type="checkbox" 
+                                  className="checkbox checkbox-sm"
+                                  checked={selectedIds.includes(client.id!)}
+                                  onChange={() => toggleSelect(client.id!)}
+                                  onClick={(e) => e.stopPropagation()}
+                               />
                             </div>
-                            <div className="flex justify-between w-full text-sm opacity-70">
-                               <span className="font-mono">{client.phone}</span>
-                            </div>
-                         </a>
+                            <a 
+                              className={`flex-1 flex flex-col items-start gap-1 py-3 ${selectedClient?.id === client.id ? 'active' : ''}`}
+                              onClick={() => selectClient(client)}
+                            >
+                               <div className="flex justify-between w-full">
+                                  <span className="font-bold text-base">{client.name}</span>
+                                  <span className={`badge badge-sm ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
+                                     {client.client_type === 'PROFESSIONNEL' ? t('clients.types.professional') : t('clients.types.individual')}
+                                  </span>
+                               </div>
+                               <div className="flex justify-between w-full text-sm opacity-70">
+                                  <span className="font-mono">{client.phone}</span>
+                               </div>
+                            </a>
+                         </div>
                       </li>
                    ))}
                    {filteredClients.length === 0 && (
@@ -574,79 +646,109 @@ export default function Clients() {
                        )}
 
                         {/* Section 4: Historique des Achats */}
-                        <div className="lg:col-span-2 card bg-white shadow-sm border border-base-200">
-                           <div className="card-body p-4">
-                              <div className="flex justify-between items-center border-b pb-2 mb-2">
-                                 <h3 className="card-title text-sm uppercase opacity-50">
-                                    📜 {t('clients.purchase_history.title', 'Historique des Achats')}
+                        {selectedClient && !selectedClient.name.toLowerCase().includes('divers') && (
+                        <div className="lg:col-span-2 card bg-white shadow-sm border border-base-200 overflow-hidden">
+                           <div className="card-body p-0">
+                              <div className="flex justify-between items-center p-5 border-b border-base-100 bg-gray-50/30">
+                                 <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                                    <span className="p-1.5 bg-primary/10 text-primary rounded-lg">🛒</span>
+                                    {t('clients.purchase_history.title', 'Historique des Achats')}
                                  </h3>
                                  {purchaseHistory && (
-                                    <span className="badge badge-primary badge-sm">
+                                    <span className="badge badge-primary badge-outline font-medium">
                                        {purchaseHistory.total_factures} {t('clients.purchase_history.invoices', 'facture(s)')}
                                     </span>
                                  )}
                               </div>
                               
                               {loadingHistory ? (
-                                 <div className="flex justify-center py-8">
-                                    <span className="loading loading-spinner loading-md"></span>
+                                 <div className="flex justify-center items-center py-12">
+                                    <span className="loading loading-spinner text-primary"></span>
                                  </div>
                               ) : purchaseHistory && purchaseHistory.factures.length > 0 ? (
-                                 <div className="overflow-y-auto max-h-80">
-                                    <table className="table table-xs w-full">
-                                       <thead className="bg-base-100 sticky top-0">
+                                 <div className="overflow-x-auto">
+                                    <table className="table w-full relative">
+                                       <thead className="bg-gray-50 text-gray-500 font-medium">
                                           <tr>
-                                             <th></th>
-                                             <th>{t('clients.purchase_history.date', 'Date')}</th>
-                                             <th>{t('clients.purchase_history.invoice_number', 'N° Facture')}</th>
-                                             <th className="text-right">{t('clients.purchase_history.total', 'Total TTC')}</th>
+                                             <th className="w-12 text-center rounded-none font-medium">#</th>
+                                             <th className="font-medium">{t('clients.purchase_history.date', 'Date')}</th>
+                                             <th className="font-medium">{t('clients.purchase_history.invoice_number', 'N° Facture')}</th>
+                                             <th className="text-right font-medium rounded-none">{t('clients.purchase_history.total', 'Total TTC')}</th>
                                           </tr>
                                        </thead>
-                                       <tbody>
-                                          {purchaseHistory.factures.map(facture => (
-                                             <React.Fragment key={facture.id}>
-                                                <tr 
-                                                   className="hover cursor-pointer"
-                                                   onClick={() => setExpandedInvoice(expandedInvoice === facture.id ? null : facture.id)}
-                                                >
-                                                   <td className="w-6">
-                                                      <span className="text-xs">{expandedInvoice === facture.id ? '▼' : '▶'}</span>
-                                                   </td>
-                                                   <td className="font-mono text-xs">
-                                                      {new Date(facture.date).toLocaleDateString('fr-FR')}
-                                                   </td>
-                                                   <td className="font-bold">{facture.numero_facture}</td>
-                                                   <td className="text-right font-bold text-success">
-                                                      {Math.round(facture.total_ttc).toLocaleString('fr-FR')} F
-                                                   </td>
-                                                </tr>
-                                                {expandedInvoice === facture.id && (
-                                                   <tr>
-                                                      <td colSpan={4} className="bg-base-50 p-2">
-                                                         <div className="text-xs space-y-1">
-                                                            {facture.produits.map((prod, idx) => (
-                                                               <div key={idx} className="flex justify-between px-2">
-                                                                  <span>• {prod.nom} x{prod.quantite}</span>
-                                                                  <span className="font-mono">{Math.round(prod.total).toLocaleString('fr-FR')} F</span>
-                                                               </div>
-                                                            ))}
-                                                         </div>
-                                                      </td>
-                                                   </tr>
-                                                )}
-                                             </React.Fragment>
-                                          ))}
+                                       <tbody className="divide-y divide-gray-100">
+                                          {purchaseHistory.factures.map(facture => {
+                                              const isExpanded = expandedInvoice === facture.id;
+                                              const dateObj = new Date(facture.date);
+                                              const formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                                              const formattedTime = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                              
+                                              return (
+                                              <React.Fragment key={facture.id}>
+                                                 <tr 
+                                                    className={`hover:bg-primary/5 cursor-pointer transition-colors duration-200 ${isExpanded ? 'bg-primary/5' : ''}`}
+                                                    onClick={() => setExpandedInvoice(isExpanded ? null : facture.id)}
+                                                 >
+                                                    <td className="text-center text-gray-400">
+                                                       <div className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                                                          ▶
+                                                       </div>
+                                                    </td>
+                                                    <td>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-semibold text-gray-700">{formattedDate}</span>
+                                                            <span className="text-xs text-gray-400">{formattedTime}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-mono font-medium border border-gray-200">
+                                                            🧾 {facture.numero_facture}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-right">
+                                                       <span className="font-bold text-gray-900 border-b border-gray-200 border-dashed pb-0.5">
+                                                          {Math.round(facture.total_ttc).toLocaleString('fr-FR')} F
+                                                       </span>
+                                                    </td>
+                                                 </tr>
+                                                 {isExpanded && (
+                                                    <tr className="bg-gray-50/50">
+                                                       <td colSpan={4} className="p-0 border-b-2 border-primary/10">
+                                                            <div className="p-4 pl-12">
+                                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Détails des articles</h4>
+                                                                <div className="space-y-2">
+                                                                    {facture.produits.map((prod, idx) => (
+                                                                        <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0 hover:bg-white rounded px-2 transition-colors">
+                                                                            <div className="flex items-center gap-3">
+                                                                                <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shadow-sm">{prod.quantite}</span>
+                                                                                <span className="text-sm font-medium text-gray-700">{prod.nom}</span>
+                                                                            </div>
+                                                                            <span className="font-mono text-sm font-semibold text-gray-600">
+                                                                                {Math.round(prod.total).toLocaleString('fr-FR')} F
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                       </td>
+                                                    </tr>
+                                                 )}
+                                              </React.Fragment>
+                                              );
+                                          })}
                                        </tbody>
                                     </table>
                                  </div>
                               ) : (
-                                 <div className="text-center py-8 text-base-content/50">
-                                    <div className="text-3xl mb-2">📋</div>
-                                    <p>{t('clients.purchase_history.empty', 'Aucun achat enregistré')}</p>
+                                 <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-full border border-gray-100 flex items-center justify-center text-2xl mb-4 shadow-sm">🛒</div>
+                                    <h4 className="text-lg font-bold text-gray-700 mb-1">{t('clients.purchase_history.empty', 'Aucun achat enregistré')}</h4>
+                                    <p className="text-sm text-gray-400 max-w-sm">Ce client n'a pas encore effectué d'achats ou l'historique est vide.</p>
                                  </div>
                               )}
                            </div>
                         </div>
+                        )}
                    </div>
                </div>
             </>
@@ -662,11 +764,24 @@ export default function Clients() {
       </div>
 
       {/* MODAL: CREATION CLIENT */}
-      {isCreateModalOpen && (
-        <dialog className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-3xl">
-            <h3 className="font-bold text-lg mb-4">{t('clients.modals.create_title')}</h3>
-             <form onSubmit={handleAddClient} className="flex flex-col gap-4">
+      <PremiumModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title={t('clients.modals.create_title')}
+        icon={<span className="text-primary text-xl">👥</span>}
+        footer={
+          <div className="flex justify-end gap-2 w-full">
+            <button type="button" className="btn btn-base-200" onClick={() => setIsCreateModalOpen(false)} disabled={isSubmitting}>
+              {t('clients.actions.cancel')}
+            </button>
+            <button type="submit" form="create-client-form" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : t('clients.actions.create')}
+            </button>
+          </div>
+        }
+      >
+        <div className="p-6">
+             <form id="create-client-form" onSubmit={handleAddClient} className="flex flex-col gap-4">
                 {/* Type Client */}
                 <div className="form-control">
                     <label className="label cursor-pointer justify-start gap-4">
@@ -811,24 +926,30 @@ export default function Clients() {
                     </div>
                 )}
 
-                <div className="modal-action">
-                    <button type="button" className="btn btn-ghost" onClick={() => setIsCreateModalOpen(false)} disabled={isSubmitting}>{t('clients.actions.cancel')}</button>
-                    <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                        {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : t('clients.actions.create')}
-                    </button>
-                </div>
              </form>
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsCreateModalOpen(false)}></div>
-        </dialog>
-      )}
+        </div>
+      </PremiumModal>
 
       {/* MODAL: EDITION CLIENT */}
-      {isEditModalOpen && editingClient && (
-        <dialog className="modal modal-open">
-            <div className="modal-box w-11/12 max-w-3xl">
-                <h3 className="font-bold text-lg mb-4">{t('clients.modals.edit_title')}</h3>
-                <form onSubmit={handleEditClient} className="flex flex-col gap-4">
+      <PremiumModal
+        isOpen={isEditModalOpen && !!editingClient}
+        onClose={() => setIsEditModalOpen(false)}
+        title={t('clients.modals.edit_title')}
+        icon={<span className="text-primary text-xl">✏️</span>}
+        footer={
+          <div className="flex justify-end gap-2 w-full">
+            <button type="button" className="btn btn-base-200" onClick={() => setIsEditModalOpen(false)} disabled={isSubmitting}>
+              {t('clients.actions.cancel')}
+            </button>
+            <button type="submit" form="edit-client-form" className="btn btn-primary" disabled={isSubmitting}>
+               {isSubmitting ? <span className="loading loading-spinner loading-sm"></span> : t('common.save', { defaultValue: 'Enregistrer' })}
+            </button>
+          </div>
+        }
+      >
+        <div className="p-6">
+             {editingClient && (
+             <form id="edit-client-form" onSubmit={handleEditClient} className="flex flex-col gap-4">
                      <div className="form-control">
                         <label className="label cursor-pointer justify-start gap-4">
                             <span className="label-text font-semibold">{t('clients.types.title')}:</span>
@@ -968,15 +1089,10 @@ export default function Clients() {
                         </div>
                     )}
 
-                    <div className="modal-action">
-                        <button type="button" className="btn btn-ghost" onClick={() => setIsEditModalOpen(false)}>{t('clients.actions.cancel')}</button>
-                        <button type="submit" className="btn btn-primary">{t('clients.actions.create')}</button>
-                    </div>
                 </form>
-            </div>
-            <div className="modal-backdrop" onClick={() => setIsEditModalOpen(false)}></div>
-        </dialog>
-      )}
+             )}
+        </div>
+      </PremiumModal>
       <LoyaltyConfigModal isOpen={isLoyaltyConfigOpen} onClose={() => setIsLoyaltyConfigOpen(false)} />
     </div>
   );

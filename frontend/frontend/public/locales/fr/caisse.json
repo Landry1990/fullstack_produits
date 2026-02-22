@@ -19,7 +19,10 @@
         "modify": "Modifier",
         "cancel": "Annuler",
         "apply_coupon": "Appliquer Coupon",
-        "cash_in": "Encaisser"
+        "remove_coupon": "Retirer le coupon",
+        "coupon_applied": "Coupon appliqué",
+        "cash_in": "Encaisser",
+        "not_authorized": "Non autorisé"
     },
     "ticket": {
         "title": "Ticket de Caisse"
@@ -27,10 +30,21 @@
     "coupons": {
         "title": "Gestion des Coupons",
         "search": "Rechercher...",
+        "search_placeholder": "Rechercher par numéro...",
         "generate": "Générer un Coupon",
+        "permission_required": "Permission requise",
         "active": "Actifs",
         "used": "Utilisés",
+        "none": "Aucun coupon trouvé",
         "empty": "Aucun coupon",
+        "system": "Système",
+        "by": "Par {{name}}",
+        "headers": {
+            "num_amount": "N° / Montant",
+            "creation": "Création",
+            "usage": "Utilisation",
+            "status": "Statut"
+        },
         "apply_to_sale": "Appliquer à la vente",
         "details_modal": {
             "title": "Détails du Coupon",
@@ -59,15 +73,29 @@
     },
     "payment": {
         "title": "Encaissement",
+        "title_with_num": "Encaissement — #{{num}}",
+        "cancel": "Annuler",
         "amount_to_pay": "Montant à payer",
         "payment_mode": "Mode de paiement",
         "amount_received": "Montant reçu",
         "change": "Rendu",
+        "part_patient": "Part Patient",
+        "part_assurance": "Tiers payant — Part assurance: {{amount}} F",
+        "coupon_discount": "Coupon #{{num}} : -{{amount}} F",
+        "mode": "Mode",
+        "amount": "Montant",
+        "remaining": "Reste {{amount}} F",
+        "validate": "Valider l'encaissement",
+        "payments_list": "Règlements",
+        "total_paid": "Total versé",
+        "change_back": "Rendu/Remboursement",
         "modes": {
-            "cash": "Espèces",
-            "card": "Carte Bancaire",
-            "mobile": "Mobile Money",
-            "check": "Chèque",
+            "especes": "Espèces",
+            "carte": "Carte Bancaire",
+            "om": "Orange Money",
+            "momo": "Mobile Money",
+            "cheque": "Chèque",
+            "virement": "Virement",
             "credit": "En Compte"
         },
         "confirm": "Valider le paiement",

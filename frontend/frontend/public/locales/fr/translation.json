@@ -165,6 +165,10 @@
             "dormant_msg": "{{count}} produits n'ont pas eu de vente depuis {{days}} jours. Envisager une promotion.",
             "drop_title": "Baisse Hebdomadaire",
             "drop_msg": "Le CA de cette semaine est nettement inférieur à la semaine dernière (-30%+)."
+        },
+        "messages": {
+            "save_success": "Objectif enregistré avec succès",
+            "save_error": "Erreur lors de l'enregistrement"
         }
     },
     "finance": {
@@ -893,7 +897,15 @@
     "dashboard": {
         "title": "Tableau de bord",
         "subtitle": "Aperçu de l'activité de la pharmacie",
+        "refresh_success": "Données mises à jour",
+        "error_loading": "Impossible de charger les données du tableau de bord.",
         "stats": {
+            "my_sales": "MES VENTES (JOUR)",
+            "my_avg_basket": "MON PANIER MOYEN",
+            "personal_cash": "Encaissements personnels",
+            "avg_per_client": "Moyenne par client",
+            "sales_count": "{{count}} ventes",
+            "vs_yesterday": "vs hier",
             "revenue": "Chiffre d'affaires",
             "revenue_details": "Dont {{amount}} F de remises",
             "receivables": "Créances Clients",
@@ -902,17 +914,32 @@
             "stock_value_sub": "Prix d'achat",
             "stock_value_details": "valorisation",
             "stock_alerts": "Alertes Stock",
-            "stock_alerts_sub": "en rupture ou faible"
+            "stock_alerts_sub": "en rupture ou faible",
+            "invoices_count": "{{count}} factures",
+            "products_count": "{{count}} produits"
         },
         "actions": {
             "title": "Actions Rapides",
             "new_invoice": "Nouvelle Facture",
             "manage_products": "Gérer Produits",
-            "new_client": "Nouveau Client"
+            "new_client": "Nouveau Client",
+            "generate_order": "Générer Commande"
         },
         "charts": {
             "revenue_evolution": "Évolution du Chiffre d'Affaires (7 derniers jours)",
-            "sales_trend": "Tendance des Ventes (7 derniers jours)"
+            "sales_trend": "Tendance des Ventes (7 derniers jours)",
+            "hourly_traffic": "Moyenne Fréquentation Horaire (30 jours)",
+            "sales_label": "Ventes"
+        },
+        "debts": {
+            "supplier_debts_title": "Dettes Fournisseurs",
+            "total_debt": "Total",
+            "supplier": "Fournisseur",
+            "debt": "Dette",
+            "action": "Action",
+            "manage_payments": "Gérer les paiements",
+            "no_supplier_debts": "Aucune dette fournisseur",
+            "refresh_debts": "Actualiser les dettes"
         },
         "ug": {
             "title": "Statistiques UG par Fournisseur",
@@ -923,7 +950,21 @@
             "remaining": "Val. Restante",
             "total": "TOTAL"
         },
+        "supplier_debts": {
+            "title": "Dettes Fournisseurs",
+            "total": "Total: ",
+            "refresh": "Actualiser les dettes",
+            "provider": "Fournisseur",
+            "debt": "Dette",
+            "action": "Action",
+            "manage": "Gérer les paiements",
+            "empty": "Aucune dette fournisseur"
+        },
         "alerts": {
+            "critical_lots_toast_one": "⚠️ {{count}} lot expire dans moins de 7 jours!",
+            "critical_lots_toast_other": "⚠️ {{count}} lots expirent dans moins de 7 jours!",
+            "promis_toast": "📦 {{count}} produit(s) promis disponible(s) !",
+            "generate_order": "Générer Commande",
             "promis_title": "Promis Disponibles",
             "deliver_promis": "Livrer les Promis",
             "stock_title": "Alertes Stock",
@@ -940,202 +981,6 @@
             "coverage": "Couverture: {{days}}j",
             "expired": "Expiré!",
             "days_left": "{{count}}j"
-        }
-    },
-    "facturation": {
-        "pending_sales": {
-            "title": "Ventes en attente",
-            "items_count": "{{count}} article(s)"
-        },
-        "payment": {
-            "modal_title": "Paiement",
-            "amount_due": "Reste à payer",
-            "amount_paid": "Montant versé",
-            "change_due": "Monnaie à rendre",
-            "part_patient": "Part Patient (Tiers Payant actif)",
-            "detail_title": "Détail du paiement",
-            "part_assurance": "Part Assurance",
-            "tiers_payant_active": "Tiers Payant {{rate}}% actif - Paiement automatiquement réparti",
-            "remaining_to_allocate": "Reste à allouer:",
-            "mode_label": "Mode",
-            "amount_label": "Montant",
-            "caisse_centrale": "Caisse Centrale",
-            "en_compte_auto": "En compte (automatique)",
-            "payment_mode_label": "Mode de paiement",
-            "add_btn": "Ajouter",
-            "sudo_mode": {
-                "validate_by": "Validé par",
-                "password": "Mot de passe (Sudo)"
-            },
-            "sudo_self": "(Moi-même)",
-            "password_placeholder": "Mot de passe du validateur...",
-            "change_due_label": "Rendu monnaie:",
-            "remaining_due_label": "Reste à payer:",
-            "total_label": "Total:",
-            "no_invoice": "Aucune facture sélectionnée.",
-            "modes": {
-                "especes": "Espèces",
-                "cheque": "Chèque",
-                "carte": "Carte Bancaire",
-                "virement": "Virement",
-                "mobile": "Mobile Money",
-                "momo": "Mobile Money",
-                "other": "Autre",
-                "credit": "Crédit Client"
-            },
-            "validate": "Valider le Paiement",
-            "validate_sale": "Valider la vente",
-            "register_payment": "Enregistrer le paiement",
-            "cancel": "Annuler",
-            "print_ticket": "Imprimer le Ticket",
-            "print_invoice": "Imprimer la Facture A4"
-        },
-        "title": "Facturation",
-        "sale_recorded": "Vente enregistrée",
-        "invoice": "Facture",
-        "subtitle": "Création de facture",
-        "search_placeholder": "Scanner un code-barres ou rechercher un produit (Nom, CIP...)",
-        "search_label": "Rechercher un produit (F2)",
-        "items_count": "{{count}} article(s)",
-        "shortcuts": {
-            "search": "Recherche (F2)",
-            "client": "Client (F4)",
-            "pay": "Encaisser (Ctrl+Entrée)",
-            "cancel": "Réinitialiser (Echap)"
-        },
-        "retrocession_mode": "Mode Rétrocession",
-        "search_min_chars": "Tapez au moins 2 caractères",
-        "search_no_results": "Aucun produit trouvé",
-        "search": {
-            "tabs_products": "Produits",
-            "tabs_packs": "Packs",
-            "label_pack": "Rechercher un Pack",
-            "placeholder_pack": "Nom du pack...",
-            "no_results_pack": "Aucun pack trouvé",
-            "error_search_packs": "Erreur recherche packs",
-            "products_count": "produits"
-        },
-        "create_client": {
-            "title": "Nouveau Client",
-            "individual": "Particulier",
-            "professional": "Professionnel / Assurance",
-            "name": "Nom complet",
-            "phone": "Téléphone",
-            "email": "Email",
-            "address": "Adresse",
-            "pro_options": "Options professionnelles",
-            "credit_limit": "Plafond crédit",
-            "coverage": "Couverture (%)",
-            "cancel": "Annuler",
-            "submit": "Créer et sélectionner"
-        },
-        "client": {
-            "label": "Client (F4)",
-            "select_list_tooltip": "Sélectionner dans la liste",
-            "manual_input_tooltip": "Saisir manuellement",
-            "list_button": "Liste",
-            "manual_button": "Saisir",
-            "manual_placeholder": "Nom du client...",
-            "search_placeholder": "🔍 Rechercher un client...",
-            "clear_tooltip": "Effacer",
-            "no_results": "Aucun client trouvé",
-            "create_button": "Créer",
-            "results_count": "{{count}} résultat(s) sur {{total}}",
-            "ayant_droit": {
-                "label": "Ayant Droit",
-                "select_existing_tooltip": "Sélectionner existant",
-                "new_tooltip": "Nouveau",
-                "existing_button": "Existant",
-                "new_button": "Nouveau",
-                "name_placeholder": "Nom de l'ayant droit *",
-                "matricule_placeholder": "Matricule *",
-                "societe_placeholder": "Société (optionnel)",
-                "select_placeholder": "Sélectionner un ayant droit..."
-            }
-        },
-        "actions": {
-            "reset_tooltip": "Réinitialiser la facture (Esc)",
-            "cancel": "Annuler",
-            "suspend_tooltip": "Mettre en attente pour plus tard",
-            "suspend": "Mettre en attente",
-            "suspend_short": "Attente",
-            "view_pending_tooltip": "Voir les ventes en attente",
-            "pending": "En attente",
-            "proforma_tooltip": "Générer une facture proforma",
-            "proforma": "Proforma",
-            "pay_tooltip": "Valider et encaisser (Ctrl+Entrée)",
-            "pay": "Encaisser (Ctrl+Enter)",
-            "validate": "Encaisser / Valider",
-            "clear": "Vider le panier"
-        },
-        "cart_title": "Panier",
-        "cart": {
-            "headers": {
-                "product": "Produit",
-                "qty": "Qté",
-                "price": "P.U.",
-                "total": "Total",
-                "stock": "Stock",
-                "discount": "Remise",
-                "lot": "Lot"
-            },
-            "empty": "Le panier est vide. Scannez un produit ou utilisez la recherche.",
-            "actions": {
-                "remove": "Supprimer la ligne"
-            }
-        },
-        "totals": {
-            "subtotal": "Sous-total HT",
-            "discount": "Remise Globale",
-            "tva": "TVA",
-            "total_ttc": "Total TTC",
-            "part_patient": "Part Patient / Net à payer",
-            "part_assurance": "Part Assurance"
-        },
-        "stock_resolution": {
-            "title": "Résolution de Stock / Promis",
-            "message": "Certains produits demandés ont une quantité supérieure au stock disponible. Veuillez indiquer pour chaque produit si la quantité manquante doit être traitée comme un 'Promis' (le client reviendra le chercher) ou forcée (vente malgré stock négatif).",
-            "demand": "Demandé",
-            "stock": "Stock",
-            "missing": "Manquant",
-            "promised": "Promis ?",
-            "client_name": "Nom du Client",
-            "optional": "(Optionnel)",
-            "client_phone_for_promised_ticket": "Numéro de téléphone pour le ticket promis",
-            "phone_number_placeholder": "Ex: 77...",
-            "cancel_and_edit_cart": "Annuler et modifier panier",
-            "validate_and_cash": "Valider et Encaisser"
-        },
-        "ordonnance": {
-            "title": "Saisie Ordonnancier",
-            "description": "Cette vente contient des produits nécessitant une ordonnance ou sous surveillance. Veuillez renseigner les informations ci-dessous.",
-            "patient_name": "Nom du Patient *",
-            "patient_placeholder": "Nom complet du patient",
-            "prescriber_name": "Prescripteur (Médecin) *",
-            "prescriber_placeholder": "Dr. Nom du médecin",
-            "order_number": "Numéro d'Ordonnance (facultatif)",
-            "order_placeholder": "Ex: ORD-2024-001",
-            "prescription_date": "Date Prescription",
-            "affected_products": "Produits Concernés",
-            "product_col": "Produit",
-            "qty_col": "Qté",
-            "surveillance_col": "Surveillance",
-            "surveillance_renforcee": "Renforcée",
-            "surveillance_standard": "Standard",
-            "surveillance_ordonnance": "Ordonnance",
-            "ignore_btn": "Ignorer (Déconseillé)",
-            "save_btn": "Enregistrer Ordonnancier"
-        },
-        "messages": {
-            "cart_empty": "Le panier est vide",
-            "pack_empty": "Ce pack est vide",
-            "adding_pack": "Ajout du pack...",
-            "pack_items_error": "Aucun produit du pack n'a pu être récupéré",
-            "pack_added": "Pack \"{{name}}\" ajouté",
-            "pack_error": "Erreur lors de l'ajout du pack",
-            "scan_added": "✅ {{name}} ajouté (scan)",
-            "price_modification_forbidden": "Modification de prix interdite",
-            "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil"
         }
     },
     "clients": {
@@ -1575,146 +1420,6 @@
         },
         "top_perimes": "Produits Périmés en Stock"
     },
-    "caisse": {
-        "title": "Caisse Centralisée",
-        "subtitle": "Les ventes en attente de règlement s'affichent automatiquement",
-        "auto_refresh": "Actualisation auto (20s)",
-        "coupons_active": "Coupons ({{count}} actifs)",
-        "coupons_applied": "{{count}} coupon(s) appliqué(s)",
-        "pending_count": "{{count}} en attente",
-        "no_pending": "Aucune facture en attente",
-        "no_pending_desc": "Les nouvelles factures apparaîtront ici automatiquement.",
-        "table": {
-            "ticket": "#Ticket",
-            "invoice": "Facture",
-            "client": "Client",
-            "date": "Date",
-            "products": "Produits",
-            "amount": "Montant",
-            "actions": "Actions",
-            "tiers_payant": "Tiers Payant",
-            "coupon_applied": "Coupon appliqué",
-            "remove_coupon": "Retirer le coupon",
-            "modify": "Modifier",
-            "cancel": "Annuler",
-            "apply_coupon": "Appliquer un coupon",
-            "cash_in": "Encaisser",
-            "not_authorized": "Non autorisé"
-        },
-        "coupons": {
-            "title": "Coupons",
-            "generate": "Générer un coupon",
-            "permission_required": "Permission requise",
-            "search_placeholder": "Rechercher #...",
-            "none": "Aucun coupon",
-            "headers": {
-                "num_amount": "N° / Montant",
-                "creation": "Création",
-                "usage": "Utilisation",
-                "status": "Statut"
-            },
-            "by": "Par: {{name}}",
-            "system": "Système",
-            "status": {
-                "active": "ACTIF",
-                "used": "UTILISE",
-                "expired": "EXPIRE"
-            },
-            "generate_modal": {
-                "title": "Générer un Coupon",
-                "amount": "Montant",
-                "notes": "Notes",
-                "placeholder_notes": "Commentaire...",
-                "submit": "Générer"
-            },
-            "details_modal": {
-                "title": "Détails du Coupon",
-                "print": "Imprimer"
-            }
-        },
-        "payment_modes": {
-            "especes": "Espèces",
-            "carte": "Carte Bancaire",
-            "cheque": "Chèque",
-            "virement": "Virement",
-            "om_short": "OM",
-            "momo_short": "MoMo"
-        },
-        "payment_modal": {
-            "title": "Encaissement - Facture #{{numero}}",
-            "total": "Total à payer",
-            "coupon_label": "Coupon #{{numero}}: -{{montant}} F",
-            "part_patient": "Part Patient (Tiers Payant actif)",
-            "recorded_payments": "Paiements enregistrés",
-            "total_paid": "Total versé",
-            "balance": "Reste à payer: {{amount}} F",
-            "step1": "1. Saisissez le montant puis appuyez sur Entrée",
-            "enter_hint": "Appuyez sur Entrée après avoir saisi le montant",
-            "step2": "2. Utilisez ↑↓←→ et Entrée pour choisir le mode",
-            "modify_amount": "Modifier le montant",
-            "change": "Monnaie à rendre",
-            "validate_hint": "✓ Valider le paiement (Entrée)",
-            "balance_short": "Reste {{amount}} F"
-        },
-        "payment": {
-            "modal_title": "Encaissement - Facture #{{numero}}",
-            "total_to_pay": "Total à payer",
-            "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
-            "tiers_payant_alert": "Part Client (Tiers Payant actif)",
-            "recorded_payments": "Paiements enregistrés:",
-            "total_paid": "Total versé:",
-            "remaining": "Reste à payer: {{amount}} F",
-            "step1": "1. Saisissez le montant puis appuyez sur Entrée",
-            "step1_hint": "Appuyez sur Entrée après avoir saisi le montant",
-            "amount_label": "Montant:",
-            "step2": "2. Utilisez ↑↓←→ et Entrée pour choisir le mode",
-            "modify_amount": "← Modifier le montant",
-            "change_to_give": "Monnaie à rendre",
-            "confirm": "✓ Valider le paiement (Entrée)",
-            "missing": "Reste {{amount}} F",
-            "sudo_mode": {
-                "validate_by": "Validé par",
-                "password": "Mot de passe (Sudo)"
-            },
-            "validate_sale": "Valider la vente",
-            "register_payment": "Enregistrer le paiement"
-        },
-        "ticket": {
-            "title": "Ticket de Caisse",
-            "invoice_num": "Facture",
-            "date": "Date",
-            "client": "Client",
-            "subtotal_ht": "Sous-total HT",
-            "discount": "Remise",
-            "tva": "TVA",
-            "total_ttc": "TOTAL TTC",
-            "amount_paid": "Montant Versé",
-            "change": "Rendu",
-            "settlements": "Règlements",
-            "part_patient": "Part Patient",
-            "part_assurance": "Part Assurance"
-        },
-        "messages": {
-            "invalid_amount": "Veuillez entrer un montant valide",
-            "coupon_generated": "Coupon #{{numero}} généré avec succès !",
-            "error_generation": "Erreur lors de la génération du coupon",
-            "coupon_not_active": "Ce coupon n'est pas actif",
-            "coupon_already_applied": "Ce coupon est déjà appliqué à une autre vente",
-            "coupon_applied_to": "Coupon #{{numero}} appliqué à la vente #{{ticket}}",
-            "coupon_removed": "Coupon retiré",
-            "coupon_not_found": "Coupon introuvable",
-            "search_error": "Erreur lors de la recherche",
-            "refreshed": "Liste rafraîchie",
-            "cancel_confirm": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
-            "cancelled": "Facture annulée",
-            "cancel_error": "Erreur lors de l'annulation",
-            "modify_confirm": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",
-            "empty_invoice": "Cette facture ne contient aucun produit",
-            "load_error": "Impossible de charger la facture pour modification",
-            "cash_in_success": "Facture #{{numero}} encaissée avec succès !",
-            "payment_error": "Erreur lors de l'enregistrement du paiement"
-        }
-    },
     "rayons": {
         "title": "Gestion des Rayons",
         "new_main": "Nouveau Rayon Principal",
@@ -1861,72 +1566,6 @@
             "comparison": "Comparaison CA"
         }
     },
-    "caisse": {
-        "title": "Caisse Centralisée",
-        "subtitle": "Gestion des encaissements",
-        "auto_refresh": "Actualisation auto",
-        "coupons_active": "Coupons actifs",
-        "pending_count": "{{count}} facture(s) en attente",
-        "table": {
-            "ticket": "Ticket",
-            "invoice": "Facture",
-            "client": "Client",
-            "date": "Date",
-            "products": "Produits",
-            "amount": "Montant",
-            "actions": "Actions",
-            "tiers_payant": "Tiers Payant",
-            "modify": "Modifier",
-            "cancel": "Annuler",
-            "apply_coupon": "Appliquer Coupon",
-            "cash_in": "Encaisser"
-        },
-        "empty": "Aucune facture en attente d'encaissement",
-        "payment": {
-            "title": "Encaissement",
-            "amount_to_pay": "Montant à payer",
-            "payment_mode": "Mode de paiement",
-            "modes": {
-                "cash": "Espèces",
-                "card": "Carte Bancaire",
-                "mobile": "Mobile Money",
-                "check": "Chèque",
-                "credit": "En Compte"
-            },
-            "confirm": "Valider le paiement",
-            "success": "Paiement enregistré"
-        }
-    },
-    "caisse": {
-        "payment_modal": {
-            "title": "Paiement - {{numero}}",
-            "total": "Total à payer",
-            "coupon_label": "🎟️ Coupon #{{numero}} : -{{montant}} F",
-            "part_patient": "Part Patient",
-            "recorded_payments": "Paiements enregistrés",
-            "total_paid": "Total versé",
-            "balance": "Reste à payer : {{amount}} F",
-            "balance_short": "Reste {{amount}} F",
-            "step1": "Étape 1 : Montant à payer",
-            "enter_hint": "Appuyez sur Entrée pour choisir le mode",
-            "step2": "Étape 2 : Mode de paiement",
-            "modify_amount": "Modifier le montant",
-            "change": "Monnaie à rendre",
-            "validate_hint": "✅ Valider le paiement"
-        },
-        "payment_modes": {
-            "especes": "Espèces",
-            "carte": "Carte",
-            "cheque": "Chèque",
-            "virement": "Virement",
-            "om_short": "OM",
-            "momo_short": "MoMo"
-        },
-        "table": {
-            "amount": "Montant",
-            "cancel": "Annuler"
-        }
-    },
     "salesHistory": {
         "title": "Historique des Ventes par Jour",
         "start_date": "Date début",
@@ -2005,6 +1644,355 @@
             "overstock": "Aucun produit en surstock",
             "shortage": "Aucune rupture prévue",
             "all_good": "Tout semble en ordre !"
+        }
+    },
+    "caisse": {
+        "title": "Caisse Centralisée",
+        "subtitle": "Gestion des encaissements",
+        "auto_refresh": "Actualisation auto",
+        "coupons_active": "Coupons actifs",
+        "coupons_applied": "{{count}} coupon(s) appliqué(s)",
+        "pending_count": "{{count}} facture(s) en attente",
+        "no_pending": "Aucune facture en attente",
+        "no_pending_desc": "Les nouvelles factures apparaîtront ici automatiquement.",
+        "table": {
+            "ticket": "Ticket",
+            "invoice": "Facture",
+            "client": "Client",
+            "date": "Date",
+            "products": "Produits",
+            "amount": "Montant",
+            "actions": "Actions",
+            "tiers_payant": "Tiers Payant",
+            "coupon_applied": "Coupon appliqué",
+            "remove_coupon": "Retirer le coupon",
+            "modify": "Modifier",
+            "cancel": "Annuler",
+            "apply_coupon": "Appliquer Coupon",
+            "cash_in": "Encaisser",
+            "not_authorized": "Non autorisé"
+        },
+        "coupons": {
+            "title": "Coupons",
+            "generate": "Générer un coupon",
+            "permission_required": "Permission requise",
+            "search_placeholder": "Rechercher #...",
+            "none": "Aucun coupon",
+            "headers": {
+                "num_amount": "N° / Montant",
+                "creation": "Création",
+                "usage": "Utilisation",
+                "status": "Statut"
+            },
+            "by": "Par: {{name}}",
+            "system": "Système",
+            "status": {
+                "active": "ACTIF",
+                "used": "UTILISE",
+                "expired": "EXPIRE"
+            },
+            "generate_modal": {
+                "title": "Générer un Coupon",
+                "amount": "Montant",
+                "notes": "Notes",
+                "placeholder_notes": "Commentaire...",
+                "submit": "Générer"
+            },
+            "details_modal": {
+                "title": "Détails du Coupon",
+                "print": "Imprimer"
+            }
+        },
+        "payment_modes": {
+            "especes": "Espèces",
+            "carte": "Carte",
+            "cheque": "Chèque",
+            "virement": "Virement",
+            "om_short": "OM",
+            "momo_short": "MoMo"
+        },
+        "payment_modal": {
+            "title": "Paiement - {{numero}}",
+            "total": "Total à payer",
+            "coupon_label": "🎟️ Coupon #{{numero}} : -{{montant}} F",
+            "part_patient": "Part Patient",
+            "recorded_payments": "Paiements enregistrés",
+            "total_paid": "Total versé",
+            "balance": "Reste à payer : {{amount}} F",
+            "step1": "Étape 1 : Montant à payer",
+            "enter_hint": "Appuyez sur Entrée pour choisir le mode",
+            "step2": "Étape 2 : Mode de paiement",
+            "modify_amount": "Modifier le montant",
+            "change": "Monnaie à rendre",
+            "validate_hint": "✅ Valider le paiement",
+            "balance_short": "Reste {{amount}} F"
+        },
+        "payment": {
+            "modal_title": "Encaissement - Facture #{{numero}}",
+            "total_to_pay": "Total à payer",
+            "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
+            "tiers_payant_alert": "Part Client (Tiers Payant actif)",
+            "recorded_payments": "Paiements enregistrés:",
+            "total_paid": "Total versé:",
+            "remaining": "Reste à payer: {{amount}} F",
+            "step1": "1. Saisissez le montant puis appuyez sur Entrée",
+            "step1_hint": "Appuyez sur Entrée après avoir saisi le montant",
+            "amount_label": "Montant:",
+            "step2": "2. Utilisez ↑↓←→ et Entrée pour choisir le mode",
+            "modify_amount": "← Modifier le montant",
+            "change_to_give": "Monnaie à rendre",
+            "confirm": "Valider le paiement",
+            "missing": "Reste {{amount}} F",
+            "sudo_mode": {
+                "validate_by": "Validé par",
+                "password": "Mot de passe (Sudo)"
+            },
+            "validate_sale": "Valider la vente",
+            "register_payment": "Enregistrer le paiement",
+            "title": "Encaissement",
+            "amount_to_pay": "Montant à payer",
+            "payment_mode": "Mode de paiement",
+            "modes": {
+                "cash": "Espèces",
+                "card": "Carte Bancaire",
+                "mobile": "Mobile Money",
+                "check": "Chèque",
+                "credit": "En Compte"
+            },
+            "success": "Paiement enregistré"
+        },
+        "ticket": {
+            "title": "Ticket de Caisse",
+            "invoice_num": "Facture",
+            "date": "Date",
+            "client": "Client",
+            "subtotal_ht": "Sous-total HT",
+            "discount": "Remise",
+            "tva": "TVA",
+            "total_ttc": "TOTAL TTC",
+            "amount_paid": "Montant Versé",
+            "change": "Rendu",
+            "settlements": "Règlements",
+            "part_patient": "Part Patient",
+            "part_assurance": "Part Assurance"
+        },
+        "messages": {
+            "invalid_amount": "Veuillez entrer un montant valide",
+            "coupon_generated": "Coupon #{{numero}} généré avec succès !",
+            "error_generation": "Erreur lors de la génération du coupon",
+            "coupon_not_active": "Ce coupon n'est pas actif",
+            "coupon_already_applied": "Ce coupon est déjà appliqué à une autre vente",
+            "coupon_applied_to": "Coupon #{{numero}} appliqué à la vente #{{ticket}}",
+            "coupon_removed": "Coupon retiré",
+            "coupon_not_found": "Coupon introuvable",
+            "search_error": "Erreur lors de la recherche",
+            "refreshed": "Liste rafraîchie",
+            "cancel_confirm": "Voulez-vous vraiment annuler la facture #{{numero}} ?",
+            "cancelled": "Facture annulée",
+            "cancel_error": "Erreur lors de l'annulation",
+            "modify_confirm": "Modifier cette facture ?\nElle sera retirée de la liste et rechargée dans l'écran de vente.",
+            "empty_invoice": "Cette facture ne contient aucun produit",
+            "load_error": "Impossible de charger la facture pour modification",
+            "cash_in_success": "Facture #{{numero}} encaissée avec succès !",
+            "payment_error": "Erreur lors de l'enregistrement du paiement"
+        },
+        "empty": "Aucune facture en attente d'encaissement"
+    },
+    "facturation": {
+        "pending_sales": {
+            "title": "Ventes en attente",
+            "items_count": "{{count}} article(s)"
+        },
+        "payment": {
+            "modal_title": "Paiement",
+            "amount_due": "Reste à payer",
+            "amount_paid": "Montant versé",
+            "change_due": "Monnaie à rendre",
+            "part_patient": "Part Patient (Tiers Payant actif)",
+            "detail_title": "Détail du paiement",
+            "part_assurance": "Part Assurance",
+            "tiers_payant_active": "Tiers Payant {{rate}}% actif - Paiement automatiquement réparti",
+            "remaining_to_allocate": "Reste à allouer:",
+            "mode_label": "Mode",
+            "amount_label": "Montant",
+            "caisse_centrale": "Caisse Centrale",
+            "en_compte_auto": "En compte (automatique)",
+            "payment_mode_label": "Mode de paiement",
+            "add_btn": "Ajouter",
+            "sudo_mode": {
+                "validate_by": "Validé par",
+                "password": "Mot de passe (Sudo)"
+            },
+            "sudo_self": "(Moi-même)",
+            "password_placeholder": "Mot de passe du validateur...",
+            "change_due_label": "Rendu monnaie:",
+            "remaining_due_label": "Reste à payer:",
+            "total_label": "Total:",
+            "no_invoice": "Aucune facture sélectionnée.",
+            "modes": {
+                "especes": "Espèces",
+                "cheque": "Chèque",
+                "carte": "Carte Bancaire",
+                "virement": "Virement",
+                "mobile": "Mobile Money",
+                "momo": "Mobile Money",
+                "other": "Autre",
+                "credit": "Crédit Client"
+            },
+            "validate": "Valider le Paiement",
+            "validate_sale": "Valider la vente",
+            "register_payment": "Enregistrer le paiement",
+            "cancel": "Annuler",
+            "print_ticket": "Imprimer le Ticket",
+            "print_invoice": "Imprimer la Facture A4"
+        },
+        "title": "Facturation",
+        "sale_recorded": "Vente enregistrée",
+        "invoice": "Facture",
+        "subtitle": "Création de facture",
+        "search_placeholder": "Scanner un code-barres ou rechercher un produit (Nom, CIP...)",
+        "search_label": "Rechercher un produit (F2)",
+        "items_count": "article(s)",
+        "shortcuts": {
+            "search": "Rechercher",
+            "client": "Client (F4)",
+            "pay": "Payer",
+            "cancel": "Réinitialiser (Echap)"
+        },
+        "retrocession_mode": "Mode Rétrocession",
+        "search_min_chars": "Tapez au moins 2 caractères",
+        "search_no_results": "Aucun produit trouvé",
+        "search": {
+            "tabs_products": "Produits",
+            "tabs_packs": "Packs",
+            "label_pack": "Rechercher un Pack",
+            "placeholder_pack": "Nom du pack...",
+            "no_results_pack": "Aucun pack trouvé",
+            "error_search_packs": "Erreur recherche packs",
+            "products_count": "produits"
+        },
+        "create_client": {
+            "title": "Nouveau Client",
+            "individual": "Particulier",
+            "professional": "Professionnel / Assurance",
+            "name": "Nom complet",
+            "phone": "Téléphone",
+            "email": "Email",
+            "address": "Adresse",
+            "pro_options": "Options professionnelles",
+            "credit_limit": "Plafond crédit",
+            "coverage": "Couverture (%)",
+            "cancel": "Annuler",
+            "submit": "Créer et sélectionner"
+        },
+        "client": {
+            "label": "Client (F4)",
+            "select_list_tooltip": "Sélectionner dans la liste",
+            "manual_input_tooltip": "Saisir manuellement",
+            "list_button": "Liste",
+            "manual_button": "Saisir",
+            "manual_placeholder": "Nom du client...",
+            "search_placeholder": "🔍 Rechercher un client...",
+            "clear_tooltip": "Effacer",
+            "no_results": "Aucun client trouvé",
+            "create_button": "Créer",
+            "results_count": "{{count}} résultat(s) sur {{total}}",
+            "ayant_droit": {
+                "label": "Ayant Droit",
+                "select_existing_tooltip": "Sélectionner existant",
+                "new_tooltip": "Nouveau",
+                "existing_button": "Existant",
+                "new_button": "Nouveau",
+                "name_placeholder": "Nom de l'ayant droit *",
+                "matricule_placeholder": "Matricule *",
+                "societe_placeholder": "Société (optionnel)",
+                "select_placeholder": "Sélectionner un ayant droit..."
+            }
+        },
+        "actions": {
+            "reset_tooltip": "Réinitialiser la facture (Esc)",
+            "cancel": "Annuler",
+            "suspend_tooltip": "Mettre en attente pour plus tard",
+            "suspend": "Mettre en attente",
+            "suspend_short": "Attente",
+            "view_pending_tooltip": "Voir les ventes en attente",
+            "pending": "En attente",
+            "proforma_tooltip": "Générer une facture proforma",
+            "proforma": "Proforma",
+            "pay_tooltip": "Valider et encaisser (Ctrl+Entrée)",
+            "pay": "Encaisser (Ctrl+Enter)",
+            "validate": "Encaisser / Valider",
+            "clear": "Vider le panier"
+        },
+        "cart_title": "Panier d'Achat",
+        "cart": {
+            "headers": {
+                "product": "Produit",
+                "qty": "Qté",
+                "price": "P.U.",
+                "total": "Total",
+                "stock": "Stock",
+                "discount": "Remise",
+                "lot": "Lot"
+            },
+            "empty": "Le panier est vide. Scannez un produit ou utilisez la recherche.",
+            "actions": {
+                "remove": "Supprimer la ligne"
+            }
+        },
+        "totals": {
+            "subtotal": "Sous-total HT",
+            "discount": "Remise Globale",
+            "tva": "TVA",
+            "total_ttc": "Total TTC",
+            "part_patient": "Part Patient / Net à payer",
+            "part_assurance": "Part Assurance"
+        },
+        "stock_resolution": {
+            "title": "Résolution de Stock / Promis",
+            "message": "Certains produits demandés ont une quantité supérieure au stock disponible. Veuillez indiquer pour chaque produit si la quantité manquante doit être traitée comme un 'Promis' (le client reviendra le chercher) ou forcée (vente malgré stock négatif).",
+            "demand": "Demandé",
+            "stock": "Stock",
+            "missing": "Manquant",
+            "promised": "Promis ?",
+            "client_name": "Nom du Client",
+            "optional": "(Optionnel)",
+            "client_phone_for_promised_ticket": "Numéro de téléphone pour le ticket promis",
+            "phone_number_placeholder": "Ex: 77...",
+            "cancel_and_edit_cart": "Annuler et modifier panier",
+            "validate_and_cash": "Valider et Encaisser"
+        },
+        "ordonnance": {
+            "title": "Saisie Ordonnancier",
+            "description": "Cette vente contient des produits nécessitant une ordonnance ou sous surveillance. Veuillez renseigner les informations ci-dessous.",
+            "patient_name": "Nom du Patient *",
+            "patient_placeholder": "Nom complet du patient",
+            "prescriber_name": "Prescripteur (Médecin) *",
+            "prescriber_placeholder": "Dr. Nom du médecin",
+            "order_number": "Numéro d'Ordonnance (facultatif)",
+            "order_placeholder": "Ex: ORD-2024-001",
+            "prescription_date": "Date Prescription",
+            "affected_products": "Produits Concernés",
+            "product_col": "Produit",
+            "qty_col": "Qté",
+            "surveillance_col": "Surveillance",
+            "surveillance_renforcee": "Renforcée",
+            "surveillance_standard": "Standard",
+            "surveillance_ordonnance": "Ordonnance",
+            "ignore_btn": "Ignorer (Déconseillé)",
+            "save_btn": "Enregistrer Ordonnancier"
+        },
+        "messages": {
+            "cart_empty": "Le panier est vide",
+            "pack_empty": "Ce pack est vide",
+            "adding_pack": "Ajout du pack...",
+            "pack_items_error": "Aucun produit du pack n'a pu être récupéré",
+            "pack_added": "Pack \"{{name}}\" ajouté",
+            "pack_error": "Erreur lors de l'ajout du pack",
+            "scan_added": "✅ {{name}} ajouté (scan)",
+            "price_modification_forbidden": "Modification de prix interdite",
+            "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil",
+            "cancel_sale_confirm": "Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu."
         }
     }
 }

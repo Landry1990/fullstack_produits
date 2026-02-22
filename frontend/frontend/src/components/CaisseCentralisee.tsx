@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -12,9 +12,10 @@ import { PaymentModal } from './caisse/PaymentModal'
 import { FacturesTable } from './caisse/FacturesTable'
 import { CouponPanel } from './caisse/CouponPanel'
 import { useTranslation } from 'react-i18next'
+import PremiumModal from './common/PremiumModal'
+import { TicketTemplate } from './printing/TicketTemplate'
 
-// Lazy load barcode component
-const Barcode = lazy(() => import('react-barcode'))
+// TicketTemplate is used for preview and print
 
 export default function CaisseCentralisee() {
   const queryClient = useQueryClient()
@@ -343,6 +344,20 @@ export default function CaisseCentralisee() {
             : Number(factureValidee.total_ttc))
 
       // 2. Enregistrer les paiements
+      
+      // Ajouter le paiement par coupon si présent
+      const couponUtilise = couponsParFacture[factureValidee.id]
+      if (couponUtilise) {
+        const couponPayload: any = {
+          facture: factureValidee.id,
+          mode_paiement: 'coupon',
+          montant: couponUtilise.montant,
+          reference: `COUPON-${couponUtilise.numero}`,
+          statut: 'completee',
+        }
+        await axios.post(caisseEndpoint, couponPayload)
+      }
+
       for (const paiement of paiementsValides) {
         const paiementPayload: any = {
           facture: factureValidee.id,
@@ -371,6 +386,13 @@ export default function CaisseCentralisee() {
 
       // 5. Créer le ticket de caisse (calculer le rendu sur la base du montant encaissé, pas du total)
       const rendu = montantTotal - montantAEncaisser
+      
+      // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
+      const clientNameForTicket = factureFinale.client_name_override 
+          || factureFinale.client_name 
+          || (factureFinale.client?.name) 
+          || 'Client de passage';
+      
       setTicketCaisse({
         id: 0,
         facture: factureFinale,
@@ -382,6 +404,7 @@ export default function CaisseCentralisee() {
         updated_at: new Date().toISOString(),
         statut: 'completee',
         date_paiement: new Date().toISOString(),
+        client_name: clientNameForTicket,
         paiements_details: (factureFinale as any).paiements || []
       } as any)
 
@@ -395,8 +418,7 @@ export default function CaisseCentralisee() {
       // Invalidate product cache to refresh stock data (if on same machine)
       queryClient.invalidateQueries({ queryKey: ['products'] })
       
-      // 8. Si un coupon était appliqué à cette facture, le marquer comme utilisé
-      const couponUtilise = couponsParFacture[factureFinale.id]
+      // 8. Si un coupon était appliqué à cette facture, le marquer comme utilisé au niveau du CouponMonnaie
       if (couponUtilise) {
         await utiliserCouponApresEncaissement(couponUtilise.id, factureFinale.id)
         // Retirer le coupon de la map
@@ -586,139 +608,25 @@ export default function CaisseCentralisee() {
         />
       )}
 
-      {/* Modal Ticket */}
-      {showTicketPreview && ticketCaisse && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-md mx-4 p-0 overflow-hidden bg-white">
-            <div className="bg-base-50 p-4 flex justify-between items-center border-b border-base-200">
-              <h3 className="font-bold text-lg">{t('ticket.title')}</h3>
-              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setShowTicketPreview(false)}>✕</button>
-            </div>
-            
-            <div className="p-6 bg-white text-black font-mono text-sm overflow-y-auto max-h-[60vh]" id="ticket-preview">
-                {/* ... Ticket Content (kept mostly same for print compatibility) ... */}
-                <div className="text-center mb-4 border-b-2 border-black pb-4">
-                <h2 className="text-xl font-black">{pharmacySettings.pharmacy_name}</h2>
-                <p>{pharmacySettings.city}, {pharmacySettings.country}</p>
-                {pharmacySettings.phone && <p>Tel: {pharmacySettings.phone}</p>}
-                {pharmacySettings.niu && <p>NIU: {pharmacySettings.niu}</p>}
-                {pharmacySettings.registre_commerce && <p>RC: {pharmacySettings.registre_commerce}</p>}
-              </div>
-              
-              <div className="space-y-1 mb-4">
-                <div className="flex justify-between"><span>{t('table.ticket')}:</span><span>#{ticketCaisse.id}</span></div>
-                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
-                  <div className="flex justify-between"><span>{t('table.invoice')}:</span><span>#{ticketCaisse.facture.numero_facture}</span></div>
-                )}
-                <div className="flex justify-between"><span>{t('table.date')}:</span><span>{new Date().toLocaleDateString('fr-FR')} {new Date().toLocaleTimeString('fr-FR')}</span></div>
-                <div className="flex justify-between"><span>{t('table.client')}:</span><span>{typeof ticketCaisse.facture === 'object' ? ticketCaisse.facture.client_name || 'Passage' : ticketCaisse.client_name || 'Passage'}</span></div>
-              </div>
-              
-              <div className="border-y border-dashed border-black py-2 mb-4">
-                {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.produits?.map((p: any) => (
-                  <div key={p.id} className="flex justify-between mb-1">
-                    <span>{typeof p.produit === 'object' ? p.produit.name : (p.produit_nom || `Produit #${p.produit}`)} x{p.quantity}</span>
-                    <span>{Math.round(p.quantity * p.selling_price)}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="space-y-1 font-bold text-right">
-                <div className="flex justify-between text-xs font-normal border-t border-dashed border-black pt-2">
-                  <span>Sous-total HT</span>
-                  <span>{typeof ticketCaisse.facture === 'object' ? Math.round(Number(ticketCaisse.facture.total_ht)) : 0}</span>
-                </div>
-                {typeof ticketCaisse.facture === 'object' && Number(ticketCaisse.facture.remise) > 0 && (
-                  <div className="flex justify-between text-xs font-normal">
-                    <span>Remise</span>
-                    <span>-{Math.round(Number(ticketCaisse.facture.remise))}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-xs font-normal">
-                  <span>TVA</span>
-                  <span>{typeof ticketCaisse.facture === 'object' ? Math.round(Number(ticketCaisse.facture.total_tva)) : 0}</span>
-                </div>
-                <div className="flex justify-between text-lg border-t-2 border-black pt-2 mt-1">
-                  <span>TOTAL TTC</span>
-                  <span>{Math.round(Number(ticketCaisse.montant))} F</span>
-                </div>
-                {ticketCaisse.montant_verse && (
-                  <div className="flex justify-between text-sm font-normal mt-1 border-t border-dashed border-black pt-1">
-                    <span>Montant Versé</span>
-                    <span>{Math.round(Number(ticketCaisse.montant_verse))} F</span>
-                  </div>
-                )}
-                {ticketCaisse.rendu && (
-                  <div className="flex justify-between text-sm font-normal">
-                    <span>Rendu</span>
-                    <span>{Math.round(Number(ticketCaisse.rendu))} F</span>
-                  </div>
-                )}
-                {ticketCaisse.paiements_details && ticketCaisse.paiements_details.length > 0 ? (
-                  <div className="mt-2 text-xs font-normal border-t border-dashed border-black pt-1">
-                    <div className="font-bold mb-1">Règlements:</div>
-                    {ticketCaisse.paiements_details.map((paiement: any, idx: number) => {
-                      const getModeLabel = (mode: string) => {
-                        if (!mode) return 'N/A'
-                        const labels: { [key: string]: string } = {
-                          'especes': 'Espèces',
-                          'carte': 'Carte',
-                          'cheque': 'Chèque',
-                          'virement': 'Virement',
-                          'om': 'Orange Money',
-                          'momo': 'Mobile Money',
-                          'en_compte': 'En compte'
-                        }
-                        return labels[mode] || mode.toUpperCase()
-                      }
-                      
-                      // Check if it's tiers payant payment
-                      const isPartPatient = paiement.part_patient && paiement.part_patient > 0
-                      const isPartAssurance = paiement.part_assurance && paiement.part_assurance > 0
-                      
-                      return (
-                        <div key={idx} className="flex justify-between">
-                          <span>
-                            {getModeLabel(paiement.mode || paiement.mode_paiement || 'N/A')}
-                            {isPartPatient && <span className="text-success"> (Part Patient)</span>}
-                            {isPartAssurance && <span className="text-info"> (Part Assurance)</span>}
-                          </span>
-                          <span>{Math.round(paiement.montant)} F</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                ) : ticketCaisse.mode_paiement ? (
-                  <div className="text-xs font-normal mt-2 text-center">
-                    Mode: {ticketCaisse.mode_paiement.toUpperCase()}
-                  </div>
-                ) : (
-                  <div className="text-xs text-red-500 mt-2 text-center">
-                    [Aucun mode de paiement détecté]
-                  </div>
-                )}
-              </div>
-              
-              <div className="text-center mt-6 text-xs">
-                <p>{pharmacySettings.ticket_footer_message || 'Merci de votre visite !'}</p>
-              </div>
-              
-              {/* Barcode with invoice number at bottom */}
-              {typeof ticketCaisse.facture === 'object' && ticketCaisse.facture.numero_facture && (
-                <Suspense fallback={<div className="text-center py-2">Chargement...</div>}>
-                  <div className="flex justify-center mt-4 bg-white">
-                    <Barcode value={ticketCaisse.facture.numero_facture} height={50} width={1.5} fontSize={12} />
-                  </div>
-                </Suspense>
-              )}
-            </div>
-            
-            <div className="p-4 bg-base-50 border-t border-base-200 flex justify-end gap-2">
+      <PremiumModal
+        isOpen={showTicketPreview && !!ticketCaisse}
+        onClose={() => setShowTicketPreview(false)}
+        title={t('ticket.title')}
+        icon={<span className="text-primary text-xl">📄</span>}
+        maxWidth="max-w-sm"
+        footer={
+            <div className="flex justify-end gap-2 w-full">
               <button className="btn btn-ghost btn-sm" onClick={() => setShowTicketPreview(false)}>{t('coupons.details_modal.close') || 'Fermer'} (Esc)</button>
               <button 
-                className="btn btn-primary btn-sm"
+                className="btn btn-primary btn-sm px-6"
                 onClick={() => {
-                  const content = DOMPurify.sanitize(document.getElementById('ticket-preview')?.innerHTML || '');
+                  const ticketElement = document.getElementById('ticket-preview');
+                  if (!ticketElement) return;
+                  
+                  const ticketWidth = pharmacySettings.ticket_paper_width || 80;
+                  const clonedElement = ticketElement.cloneNode(true) as HTMLElement;
+                  const content = clonedElement.outerHTML;
+                  
                   const win = window.open('', '', 'height=600,width=400');
                   if (win && content) {
                     win.document.write(`<!DOCTYPE html>
@@ -727,89 +635,142 @@ export default function CaisseCentralisee() {
   <title>Ticket de Caisse</title>
   <style>
     @media print {
-      @page {
-        size: 80mm auto;
-        margin: 0;
+      @page { 
+        size: ${ticketWidth}mm auto; 
+        margin: 0; 
       }
-      body {
-        margin: 0;
-        padding: 10mm 5mm;
+      body { 
+        margin: 0; 
+        padding: 0; 
+      }
+      #ticket-print {
+        width: ${ticketWidth}mm !important;
+        max-width: ${ticketWidth}mm !important;
+        min-width: ${ticketWidth}mm !important;
+        margin: 0 auto;
       }
     }
     body {
+      margin: 0;
+      padding: 0;
+      background: white;
       font-family: 'Courier New', monospace;
-      width: 80mm;
+    }
+    #ticket-print {
+      width: ${ticketWidth}mm;
+      max-width: ${ticketWidth}mm;
+      min-width: ${ticketWidth}mm;
       margin: 0 auto;
-      padding: 10mm 5mm;
+      padding: 1rem;
+      background: white;
+      color: black;
+      font-family: 'Courier New', monospace;
       font-size: 11px;
       line-height: 1.4;
-      color: #000;
-      background: #fff;
     }
+    /* Preserve Tailwind-like classes */
     .text-center { text-align: center; }
-    .flex { display: flex; justify-content: space-between; }
+    .text-right { text-align: right; }
     .font-bold { font-weight: bold; }
+    .font-semibold { font-weight: 600; }
+    .font-black { font-weight: 900; }
+    .uppercase { text-transform: uppercase; }
+    .border-b { border-bottom: 1px solid black; }
     .border-b-2 { border-bottom: 2px solid black; }
-    .border-t-2 { border-top: 2px solid black; }
     .border-t { border-top: 1px solid black; }
+    .border-y { border-top: 1px solid black; border-bottom: 1px solid black; }
+    .border-y-2 { border-top: 2px solid black; border-bottom: 2px solid black; }
     .border-dashed { border-style: dashed; }
-    .mb-4 { margin-bottom: 1rem; }
+    .border-dotted { border-style: dotted; }
+    .border-black { border-color: black; }
+    .flex { display: flex; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .justify-end { justify-content: flex-end; }
+    .items-start { align-items: flex-start; }
+    .space-y-1 > * + * { margin-top: 0.25rem; }
+    .space-y-0\.5 > * + * { margin-top: 0.125rem; }
     .mb-1 { margin-bottom: 0.25rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
     .mt-1 { margin-top: 0.25rem; }
     .mt-2 { margin-top: 0.5rem; }
     .mt-4 { margin-top: 1rem; }
-    .mt-6 { margin-top: 1.5rem; }
+    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
     .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .pb-2 { padding-bottom: 0.5rem; }
+    .pb-3 { padding-bottom: 0.75rem; }
     .pt-1 { padding-top: 0.25rem; }
     .pt-2 { padding-top: 0.5rem; }
-    .pb-4 { padding-bottom: 1rem; }
-    .space-y-1 > * + * { margin-top: 0.25rem; }
-    .text-xs { font-size: 10px; }
-    .text-sm { font-size: 11px; }
-    .text-lg { font-size: 16px; }
-    .text-xl { font-size: 18px; }
-    .text-2xl { font-size: 20px; }
-    .text-3xl { font-size: 24px; }
-    .text-4xl { font-size: 28px; }
-    .font-black { font-weight: 900; }
-    .text-success { color: #10b981; }
-    .text-info { color: #3b82f6; }
-    .text-red-500 { color: #ef4444; }
+    .pr-2 { padding-right: 0.5rem; }
+    .p-4 { padding: 1rem; }
+    .text-xs { font-size: 0.75rem; }
+    .text-\[11px\] { font-size: 11px; }
+    .text-\[10px\] { font-size: 10px; }
+    .text-base { font-size: 1rem; }
+    .text-lg { font-size: 1.125rem; }
+    .leading-relaxed { line-height: 1.625; }
+    .whitespace-nowrap { white-space: nowrap; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .max-w-\[50\%\] { max-width: 50%; }
+    .flex-1 { flex: 1 1 0%; }
   </style>
 </head>
-<body>`);
-                    win.document.write(content);
-                    win.document.write('</body></html>');
+<body>
+  <div id="ticket-print">
+    ${content}
+  </div>
+</body>
+</html>`);
                     win.document.close();
-                    // Attendre que le contenu soit chargé avant d'imprimer
-                    win.onload = () => {
-                      setTimeout(() => {
-                        win.print();
-                      }, 250);
-                    };
+                    win.focus();
+                    setTimeout(() => {
+                      win.print();
+                      win.close();
+                    }, 250);
                   }
                 }}
               >
-                {t('coupons.details_modal.print')}
+                {t('common.print')}
               </button>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
-          <div className="modal-backdrop" onClick={() => setShowTicketPreview(false)}></div>
+        }
+      >
+        <div className="max-h-[70vh] overflow-y-auto bg-gray-50 flex justify-center py-4">
+          {ticketCaisse && (
+            <div id="ticket-preview" className="shadow-lg bg-white">
+              <TicketTemplate ticket={ticketCaisse} settings={pharmacySettings} />
+            </div>
+          )}
         </div>
-      )}
+      </PremiumModal>
 
       </div> {/* Fin du Flex Wrapper (Sidebar + Contenu) */}
 
       {/* Modals pour les Coupons */}
-      {isGenererCouponModalOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-sm">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              {t('coupons.generate_modal.title')}
-            </h3>
-            
+      <PremiumModal
+        isOpen={isGenererCouponModalOpen}
+        onClose={() => setIsGenererCouponModalOpen(false)}
+        title={t('coupons.generate_modal.title')}
+        icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}
+        footer={
+            <div className="flex justify-end gap-2 w-full">
+              <button className="btn btn-ghost" onClick={() => setIsGenererCouponModalOpen(false)}>{t('table.cancel')}</button>
+              <button 
+                className="btn btn-primary gap-2" 
+                onClick={() => setIsSudoModalOpen(true)}
+                disabled={loading || !nouveauCouponMontant}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Valider (Mode Sudo)
+              </button>
+            </div>
+        }
+      >
+        <div className="p-6">
             <div className="form-control w-full mb-4">
               <label className="label">
                 <span className="label-text">Montant à rendre (F)</span>
@@ -835,24 +796,8 @@ export default function CaisseCentralisee() {
                 onChange={(e) => setNouveauCouponNotes(e.target.value)}
               ></textarea>
             </div>
-
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => setIsGenererCouponModalOpen(false)}>{t('table.cancel')}</button>
-              <button 
-                className="btn btn-primary gap-2" 
-                onClick={() => setIsSudoModalOpen(true)}
-                disabled={loading || !nouveauCouponMontant}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Valider (Mode Sudo)
-              </button>
-            </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => setIsGenererCouponModalOpen(false)}></div>
         </div>
-      )}
+      </PremiumModal>
 
       {/* Modal Confirmation Sudo pour Coupon */}
       <PasswordConfirmModal
@@ -864,67 +809,17 @@ export default function CaisseCentralisee() {
       />
 
       {/* Modal Détails Coupon */}
-      {isDetailsCouponModalOpen && couponTrouve && (
-        <div className="modal modal-open">
-          <div className="modal-box max-w-sm border-2 border-primary">
-            <div className="text-center p-4 border-2 border-dashed border-base-300 rounded-xl bg-base-50">
-              <div className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-1">Coupon de Monnaie</div>
-              <div className="text-4xl font-black text-primary font-mono mb-2">#{couponTrouve.numero}</div>
-              <div className="text-3xl font-bold mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
-              <div className="divider"></div>
-              <div className="text-left space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span>Status:</span>
-                  <span className={`badge badge-xs ${
-                    couponTrouve.status === 'ACTIF' ? 'badge-success' : 
-                    couponTrouve.status === 'UTILISE' ? 'badge-neutral' : 'badge-ghost'
-                  }`}>
-                    {couponTrouve.status_display || couponTrouve.status}
-                  </span>
-                </div>
-                
-                <div className="divider my-1"></div>
-                
-                <div className="bg-base-100 p-2 rounded border border-base-200 space-y-1">
-                  <div className="font-bold text-[10px] uppercase opacity-50 mb-1">Création</div>
-                  <div className="flex justify-between">
-                    <span>Généré par:</span>
-                    <span className="font-medium">{couponTrouve.cree_par_nom || 'Système'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Date:</span>
-                    <span>{new Date(couponTrouve.date_creation).toLocaleString('fr-FR')}</span>
-                  </div>
-                </div>
-
-                {couponTrouve.status === 'UTILISE' && (
-                  <div className="bg-success/5 p-2 rounded border border-success/20 space-y-1">
-                    <div className="font-bold text-[10px] uppercase text-success opacity-70 mb-1">Utilisation</div>
-                    <div className="flex justify-between">
-                      <span>Utilisé par:</span>
-                      <span className="font-medium">{couponTrouve.utilise_par_nom || 'N/A'}</span>
-                    </div>
-                    {couponTrouve.date_utilisation && (
-                      <div className="flex justify-between">
-                        <span>Date:</span>
-                        <span>{new Date(couponTrouve.date_utilisation).toLocaleString('fr-FR')}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {couponTrouve.notes && (
-                  <div className="mt-2 p-2 bg-white rounded italic border border-base-200">
-                    <span className="font-bold not-italic opacity-50 block text-[10px] mb-1">Notes:</span>
-                    "{couponTrouve.notes}"
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="modal-action flex justify-between gap-2">
+      <PremiumModal
+        isOpen={isDetailsCouponModalOpen && !!couponTrouve}
+        onClose={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}
+        title="Détails du Coupon"
+        icon={<span className="text-primary text-xl">🎫</span>}
+        footer={
+            <div className="flex justify-between gap-2 w-full">
               <button 
                 className="btn btn-sm btn-outline"
                 onClick={() => {
+                  if (!couponTrouve) return;
                   const win = window.open('', '', 'height=600,width=400');
                   if (win) {
                     const dateStr = new Date(couponTrouve.date_creation).toLocaleString('fr-FR', {
@@ -1108,20 +1003,77 @@ export default function CaisseCentralisee() {
               > {t('coupons.details_modal.print')} </button>
               <div className="flex gap-2">
                 <button className="btn btn-sm btn-ghost" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}>{t('coupons.details_modal.close') || 'Fermer'}</button>
-                {couponTrouve.status === 'ACTIF' && factureForCoupon && (
+                {couponTrouve && couponTrouve.status === 'ACTIF' && factureForCoupon && (
                   <button className="btn btn-sm btn-success text-white" onClick={() => handleAppliquerCouponAFacture(couponTrouve, factureForCoupon)}>
                     {t('table.apply_coupon')} #{factureForCoupon.session_ticket_number}
                   </button>
                 )}
-                {couponTrouve.status === 'ACTIF' && !factureForCoupon && (
+                {couponTrouve && couponTrouve.status === 'ACTIF' && !factureForCoupon && (
                   <div className="text-xs text-warning">Sélectionnez d'abord une vente pour appliquer le coupon</div>
                 )}
               </div>
             </div>
-          </div>
-          <div className="modal-backdrop" onClick={() => { setIsDetailsCouponModalOpen(false); setCouponTrouve(null); setSearchCouponNumero(''); }}></div>
+        }
+      >
+        <div className="p-6">
+            {couponTrouve && (
+            <div className="text-center p-4 border-2 border-dashed border-base-300 rounded-xl bg-base-50">
+              <div className="text-xs font-bold text-base-content/40 uppercase tracking-widest mb-1">Coupon de Monnaie</div>
+              <div className="text-4xl font-black text-primary font-mono mb-2">#{couponTrouve.numero}</div>
+              <div className="text-3xl font-bold mb-4">{Math.round(Number(couponTrouve.montant))} F</div>
+              <div className="divider"></div>
+              <div className="text-left space-y-2 text-xs">
+                <div className="flex justify-between">
+                  <span>Status:</span>
+                  <span className={`badge badge-xs ${
+                    couponTrouve.status === 'ACTIF' ? 'badge-success' : 
+                    couponTrouve.status === 'UTILISE' ? 'badge-neutral' : 'badge-ghost'
+                  }`}>
+                    {couponTrouve.status_display || couponTrouve.status}
+                  </span>
+                </div>
+                
+                <div className="divider my-1"></div>
+                
+                <div className="bg-base-100 p-2 rounded border border-base-200 space-y-1">
+                  <div className="font-bold text-[10px] uppercase opacity-50 mb-1">Création</div>
+                  <div className="flex justify-between">
+                    <span>Généré par:</span>
+                    <span className="font-medium">{couponTrouve.cree_par_nom || 'Système'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Date:</span>
+                    <span>{new Date(couponTrouve.date_creation).toLocaleString('fr-FR')}</span>
+                  </div>
+                </div>
+
+                {couponTrouve.status === 'UTILISE' && (
+                  <div className="bg-success/5 p-2 rounded border border-success/20 space-y-1">
+                    <div className="font-bold text-[10px] uppercase text-success opacity-70 mb-1">Utilisation</div>
+                    <div className="flex justify-between">
+                      <span>Utilisé par:</span>
+                      <span className="font-medium">{couponTrouve.utilise_par_nom || 'N/A'}</span>
+                    </div>
+                    {couponTrouve.date_utilisation && (
+                      <div className="flex justify-between">
+                        <span>Date:</span>
+                        <span>{new Date(couponTrouve.date_utilisation).toLocaleString('fr-FR')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {couponTrouve.notes && (
+                  <div className="mt-2 p-2 bg-white rounded italic border border-base-200">
+                    <span className="font-bold not-italic opacity-50 block text-[10px] mb-1">Notes:</span>
+                    "{couponTrouve.notes}"
+                  </div>
+                )}
+              </div>
+            </div>
+            )}
         </div>
-      )}
+      </PremiumModal>
     </div>
   )
 }

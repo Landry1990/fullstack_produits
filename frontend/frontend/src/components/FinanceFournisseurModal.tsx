@@ -9,9 +9,11 @@ interface FinanceFournisseurModalProps {
     onClose: () => void;
     fournisseur: Fournisseur;
     onSuccess?: () => void;
+    prefilledMontant?: number;
+    commandeIds?: number[];
 }
 
-export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, onSuccess }: FinanceFournisseurModalProps) {
+export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, onSuccess, prefilledMontant, commandeIds }: FinanceFournisseurModalProps) {
     const { t } = useTranslation();
     const { 
         paiements, 
@@ -30,13 +32,13 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
     useEffect(() => {
         if (isOpen && fournisseur) {
             fetchPaiements(fournisseur.id);
-            // Reset form
-            setMontant('');
+            // Reset form or use prefilled
+            setMontant(prefilledMontant ? prefilledMontant.toString() : '');
             setModePaiement('ESP');
             setReference('');
-            setNotes('');
+            setNotes(commandeIds && commandeIds.length > 0 ? `Règlement global du Pointage des factures (Qté: ${commandeIds.length})` : '');
         }
-    }, [isOpen, fournisseur, fetchPaiements]);
+    }, [isOpen, fournisseur, fetchPaiements, prefilledMontant, commandeIds]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,13 +46,20 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
 
         setIsSubmitting(true);
         try {
-            await createPaiement({
+            const payload: any = {
                 fournisseur: fournisseur.id,
                 montant: parseFloat(montant).toFixed(2),
                 mode_paiement: modePaiement as any,
                 reference: reference,
                 notes: notes
-            });
+            };
+            
+            // Si on vient d'un pointage global, relier le paiement à ces factures
+            if (commandeIds && commandeIds.length > 0) {
+               payload.commande_ids = commandeIds;
+            }
+
+            await createPaiement(payload);
             setMontant('');
             setReference('');
             setNotes('');
@@ -108,15 +117,15 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                             <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.finance.amount')}</label>
                             <div className="relative">
                                 <input 
-                                    type="number" 
-                                    className="input input-bordered w-full pl-9 font-mono font-bold text-lg h-12 rounded-xl" 
-                                    placeholder="0"
-                                    value={montant}
-                                    onChange={(e) => setMontant(e.target.value)}
-                                    required
-                                    min="0"
-                                />
-                                <span className="absolute left-3 top-3.5 text-slate-400 font-bold">F</span>
+                                type="number" 
+                                min="0" 
+                                step="0.01" 
+                                value={montant}
+                                onChange={e => setMontant(e.target.value)}
+                                className={`input input-bordered w-full font-mono font-bold text-lg rounded-xl focus:border-emerald-500 focus:ring-emerald-500/20 ${prefilledMontant ? 'bg-emerald-50 border-emerald-200' : ''}`}
+                                placeholder="0.00"
+                                required 
+                            />    <span className="absolute left-3 top-3.5 text-slate-400 font-bold">F</span>
                             </div>
                         </div>
 
@@ -217,6 +226,13 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                 {paiement.notes && (
                                                     <div className="text-xs text-slate-400 truncate max-w-[150px]" title={paiement.notes}>
                                                         {paiement.notes}
+                                                    </div>
+                                                )}
+                                                {paiement.commandes_liees && paiement.commandes_liees.length > 0 && (
+                                                    <div className="mt-1 flex flex-wrap gap-1">
+                                                       {paiement.commandes_liees.map(cmd => (
+                                                          <span key={cmd} className="badge badge-xs badge-neutral font-mono text-[9px]">{cmd}</span>
+                                                       ))}
                                                     </div>
                                                 )}
                                             </td>

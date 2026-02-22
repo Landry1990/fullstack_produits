@@ -28,6 +28,7 @@ class LoyaltySetting(models.Model):
     class Meta:
         verbose_name = "Configuration Fidélité"
         verbose_name_plural = "Configuration Fidélité"
+        ordering = ['pk']
 
     def save(self, *args, **kwargs):
         self.pk = 1  # Singleton
@@ -81,6 +82,39 @@ class PharmacySettings(models.Model):
         decimal_places=2, 
         default=1.35, 
         help_text="Coefficient multiplicateur pour les commandes directes (Euro -> Revient)"
+    )
+
+    # --- Paramètres Avancés (Règles Métier) ---
+    low_stock_threshold_days = models.IntegerField(
+        default=15,
+        help_text="Seuil d'alerte stock bas (en jours de couverture)"
+    )
+    dormant_stock_days = models.IntegerField(
+        default=90,
+        help_text="Seuil pour considérer un stock comme dormant (sans vente depuis X jours)"
+    )
+    debt_alert_threshold = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        default=100000,
+        help_text="Seuil d'alerte pour la dette client (FCFA)"
+    )
+    
+    # --- Paramètres Impression & Affichage ---
+    ticket_paper_width = models.IntegerField(
+        default=80,
+        choices=[(80, '80mm'), (58, '58mm')],
+        help_text="Largeur du papier pour les tickets (mm)"
+    )
+    currency_symbol = models.CharField(
+        max_length=10,
+        default="FCFA",
+        help_text="Symbole de la devise (ex: FCFA, €, $)"
+    )
+    locale = models.CharField(
+        max_length=10,
+        default="fr-FR",
+        help_text="Code locale pour le formatage (ex: fr-FR, en-US)"
     )
     
     class Meta:
@@ -149,3 +183,29 @@ class ConfigurationOption(models.Model):
 
     def __str__(self):
         return f"[{self.get_type_display()}] {self.label}"
+
+
+class TVA(models.Model):
+    """
+    Table de gestion des taux de TVA configurables.
+    Ex: 19.25%, 0%, etc.
+    """
+    taux = models.DecimalField(
+        max_digits=5, decimal_places=2, unique=True,
+        help_text="Taux de TVA en pourcentage (ex: 19.25)"
+    )
+    libelle = models.CharField(
+        max_length=50, blank=True, 
+        help_text="Description optionnelle (ex: Taux Normal)"
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Taux de TVA"
+        verbose_name_plural = "Taux de TVA"
+        ordering = ['-taux']
+
+    def __str__(self):
+        return f"{self.taux}%"

@@ -38,6 +38,10 @@ class Commande(models.Model):
     numero_facture = models.CharField(max_length=100, null=True, blank=True)
     date = models.DateTimeField(default=timezone.now)
     date_cloture = models.DateTimeField(null=True, blank=True)
+    date_echeance = models.DateField(
+        null=True, blank=True, 
+        help_text="Calculée automatiquement selon le délai du fournisseur."
+    )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.EN_PREPARATION)
     
     # Tracking

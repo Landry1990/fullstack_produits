@@ -28,6 +28,7 @@ import ClientCreateModal from './facturation/ClientCreateModal'
 import PendingSalesDrawer from './facturation/PendingSalesDrawer'
 import TicketPreviewModal from './facturation/TicketPreviewModal'
 import SudoValidationModal from './common/SudoValidationModal'
+import PremiumModal from './common/PremiumModal'
 import { useSudo } from '../hooks/useSudo'
 import { StockResolutionHandler } from './facturation/StockResolutionHandler'
 import { useSaleCompletion } from '../hooks/useSaleCompletion'
@@ -221,6 +222,114 @@ export default function Facturation() {
           toast.error(t('facturation.messages.pack_error'), { id: toastId })
       }
   }, [addProduitToFacture, updateQuantite, updateRemiseProduit, updatePrix])
+
+  // CSV Import Logic
+  const handleCsvImport = useCallback(async (file: File) => {
+      const toastId = toast.loading('Analyse et importation du fichier CSV...');
+      try {
+          const text = await file.text();
+          // Lignes séparées par saut de ligne, puis par virgule ou point-virgule
+          const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+          
+          if (lines.length === 0) {
+              toast.error('Le fichier CSV est vide.', { id: toastId });
+              return;
+          }
+
+          const params: { identifiers: string[], quantities: Record<string, number> } = {
+              identifiers: [],
+              quantities: {}
+          };
+
+          // On saute la première ligne si on suspecte un en-tête (cip, qte) etc.
+          // Pour plus de souplesse, on regarde chaque ligne.
+          for (let i = 0; i < lines.length; i++) {
+              const parts = lines[i].split(/[,;]/).map(s => s.trim());
+              if (parts.length >= 2) {
+                  const identifier = parts[0];
+                  // Si identifier ressemble à 'CIP' ou 'ID', c'est l'en-tête, on passe
+                  if (identifier.toLowerCase() === 'cip' || identifier.toLowerCase() === 'id') continue;
+
+                  const quantity = parseInt(parts[1], 10);
+                  if (identifier && !isNaN(quantity) && quantity > 0) {
+                      params.identifiers.push(identifier);
+                      params.quantities[identifier] = quantity;
+                  }
+              }
+          }
+
+          if (params.identifiers.length === 0) {
+              toast.error('Aucune donnée valide trouvée dans le CSV. Format attendu: CIP,Quantité', { id: toastId });
+              return;
+          }
+
+          // Rechercher les produits dans l'API par CIP (ou ID si match)
+          const apiBase = import.meta.env.VITE_API_BASE_URL ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '') : '';
+          const endpoint = apiBase ? `${apiBase}/api/produits/bulk_search/` : '/api/produits/bulk_search/';
+          
+          let fetchedProducts: ProduitModel[] = [];
+
+          try {
+              // Si le endpoint bulk_search existe (très pratique pour ça), 
+              // sinon fallback boucle
+              const res = await axios.post(endpoint, { identifiers: params.identifiers });
+              fetchedProducts = res.data;
+          } catch (e) {
+             // Fallback: chercher un par un si le endpoint bulk_search n'existe pas
+             console.warn("Endpoint bulk_search introuvable, fallback requêtes unitaires.");
+             const productPromises = params.identifiers.map(async (ident) => {
+                  try {
+                      // Cherche avec le terme 'ident' (souvent le CIP1 ou l'ID direct)
+                      const searchUrl = `${apiBase ? apiBase : ''}/api/produits/?search=${ident}`;
+                      const res = await axios.get(searchUrl);
+                      const results = res.data.results || res.data;
+                      if (results && results.length > 0) {
+                          // On prend le premier match exact si possible
+                          const match = results.find((p: any) => p.cip1 === ident || String(p.id) === ident) || results[0];
+                          return { identifier: ident, product: match };
+                      }
+                  } catch (err) {
+                      return null;
+                  }
+                  return null;
+             });
+
+             const results = await Promise.all(productPromises);
+             // reconstruire
+             const items = results.filter(i => i !== null) as { identifier: string; product: ProduitModel }[];
+             fetchedProducts = items.map(i => {
+                // Attach l'identifier matché pour faire le lien qte
+                (i.product as any)._matched_identifier = i.identifier; 
+                return i.product;
+             });
+          }
+
+          if (fetchedProducts.length === 0) {
+              toast.error('Aucun produit correspondant trouvé dans la base.', { id: toastId });
+              return;
+          }
+
+          // Préparer pour bulkAddProduits
+          const itemsToBulkAdd = fetchedProducts.map(product => {
+              // Si l'API retourne le product avec son identifier original, on l'utilise, 
+              // sinon on essaie de matcher le CIP ou l'ID avec nos params.
+              const identifier = (product as any)._matched_identifier || product.cip1 || String(product.id);
+              const qty = params.quantities[identifier] || 1;
+              return {
+                  product,
+                  quantity: qty,
+                  discountPercent: '0'
+              }
+          });
+
+          bulkAddProduits(itemsToBulkAdd);
+          toast.success(`${itemsToBulkAdd.length} produit(s) importé(s) du CSV.`, { id: toastId });
+
+      } catch (err) {
+          console.error("Erreur lecture CSV:", err);
+          toast.error("Erreur lors de la lecture du fichier CSV.", { id: toastId });
+      }
+  }, [bulkAddProduits]);
 
   // useFacturationClients Hook - Manages all client/AD logic
   const {
@@ -459,18 +568,22 @@ export default function Facturation() {
         }
         
         // Détecter si c'est une facture validée/payée (mode modification)
+        // Les factures dupliquées auront status === 'BROU' et id === undefined
         const isValidatedOrPaid = devis.status === 'VAL' || devis.status === 'PAY'
         
-        if (isValidatedOrPaid) {
+        if (isValidatedOrPaid && devis.id) {
           // Mode modification - facture déjà validée/payée
           setIsModificationMode(true)
           setModificationInvoiceId(devis.id)
           setOriginalTotalTtc(Number(devis.total_ttc || 0))
           toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
-        } else {
-          // Mode normal - devis/proforma/brouillon à valider
+        } else if (devis.id) {
+          // Mode normal - devis/proforma existant à valider
           setDevisIdToValidate(devis.id)
           toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
+        } else {
+          // Mode duplication - nouvelle vente basée sur copie
+          toast.success(`Panier pré-rempli à partir de la copie`)
         }
         
         // Nettoyer le stockage
@@ -579,8 +692,12 @@ export default function Facturation() {
           freshLignes = lignesFacture.map(ligne => {
               const freshProduct = productMap.get(ligne.produit.id);
               if (freshProduct) {
-                  return {
+                  const preserved = {
                       ...ligne,
+                      // Preserve promis flags and quantities when refreshing stock data
+                      isPromis: ligne.isPromis,
+                      promisQuantity: ligne.promisQuantity,
+                      promisPhone: ligne.promisPhone,
                       produit: {
                           ...ligne.produit,
                           stock: freshProduct.stock,
@@ -588,6 +705,10 @@ export default function Facturation() {
                           is_active: freshProduct.is_active
                       }
                   };
+                  if (ligne.isPromis) {
+                      console.log(`[DEBUG Facturation] handlePaymentClick - Préservation flags pour produit ${ligne.produit.id} (${ligne.produit.name}): isPromis=${ligne.isPromis}, promisQuantity=${ligne.promisQuantity}, stock_ancien=${ligne.produit.stock}, stock_nouveau=${freshProduct.stock}`)
+                  }
+                  return preserved;
               }
               return ligne;
           });
@@ -598,15 +719,25 @@ export default function Facturation() {
       }
 
       // Update the cart state with fresh data so the UI reflects reality
+      console.log('[DEBUG Facturation] handlePaymentClick - freshLignes après rafraîchissement:', freshLignes)
+      console.log('[DEBUG Facturation] handlePaymentClick - Lignes avec isPromis=true:', freshLignes.filter(l => l.isPromis))
+      console.log('[DEBUG Facturation] handlePaymentClick - Lignes avec isPromis=false:', freshLignes.filter(l => !l.isPromis))
+      
       setLignesFacture(freshLignes)
       setLoading(false)
 
       const problematicLines = freshLignes.filter(l =>
-          // Check if quantity > stock (and product manages stock)
-          l.quantite > (l.produit.stock ?? 0)
+          // On ne considère comme problématique que ce qui n'est pas déjà couvert par un promis
+          // ou une vente forcée déjà validée par sudo
+          !l.isPromis && l.quantite > (l.produit.stock ?? 0)
       )
 
+      console.log('[DEBUG Facturation] handlePaymentClick - problematicLines trouvées:', problematicLines)
+      console.log('[DEBUG Facturation] handlePaymentClick - Nombre de lignes problématiques:', problematicLines.length)
+      console.log('[DEBUG Facturation] handlePaymentClick - showStockResolution:', showStockResolution)
+
       if (problematicLines.length > 0) {
+          console.log('[DEBUG Facturation] handlePaymentClick - OUVERTURE du modal StockResolution')
           const items = problematicLines.map(l => ({
               product: l.produit,
               quantity: l.quantite,
@@ -636,6 +767,7 @@ export default function Facturation() {
 
           setShowStockResolution(true)
       } else {
+          console.log('[DEBUG Facturation] handlePaymentClick - Pas de lignes problématiques, ouverture du modal de paiement')
           // Auto-fill montant with total to pay (Part Patient if Tiers Payant, else Total TTC)
           const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
           setMontantPaye(montantInitial.toString()) // Keep precision, don't round immediately for editing
@@ -643,10 +775,26 @@ export default function Facturation() {
       }
   }
 
-  const handlePaymentClickWithSudo = async (sudoCredentials?: { validatorId: number, password: string }) => {
+  const handlePaymentClickWithSudo = async (updatedLignes?: any[], sudoCredentials?: { validatorId: number, password: string }) => {
+      console.log('[DEBUG Facturation] handlePaymentClickWithSudo appelé')
+      console.log('[DEBUG Facturation] updatedLignes reçues:', updatedLignes)
+      console.log('[DEBUG Facturation] sudoCredentials:', sudoCredentials)
+      console.log('[DEBUG Facturation] lignesFacture au moment de l\'appel:', lignesFacture)
+      
+      // If updated lines are provided, use them directly instead of waiting for state update
+      if (updatedLignes && updatedLignes.length > 0) {
+          console.log('[DEBUG Facturation] Utilisation des lignes mises à jour directement (évite problème de timing)')
+          console.log('[DEBUG Facturation] Lignes avec isPromis dans updatedLignes:', updatedLignes.filter(l => l.isPromis))
+          setLignesFacture(updatedLignes)
+          // Small delay to ensure state is set
+          await new Promise(resolve => setTimeout(resolve, 10))
+      }
+      
       if (sudoCredentials) {
           setActiveSudoCreds(sudoCredentials);
       }
+      
+      console.log('[DEBUG Facturation] Appel handlePaymentClick()')
       await handlePaymentClick();
   }
 
@@ -1026,7 +1174,7 @@ export default function Facturation() {
     if (lignesFacture.length > 0) {
       setConfirmModal({
           isOpen: true,
-          message: 'Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.',
+          message: t('facturation.messages.cancel_sale_confirm', { defaultValue: 'Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu.' }),
           onConfirm: () => _resetSale()
       })
       return
@@ -1341,6 +1489,7 @@ export default function Facturation() {
             searchInputRef={searchInputRef}
             placeholder={t('facturation.search_placeholder')}
             onQuantityShortcut={handleQuantityShortcut}
+            onCsvImport={handleCsvImport}
           />
         </div>
 
@@ -1477,14 +1626,18 @@ export default function Facturation() {
       />
 
       {/* Confirmation Modal */}
-
-      {/* Confirmation Modal */}
-      <dialog className={`modal ${confirmModal?.isOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box">
-          <h3 className="font-bold text-lg text-warning">⚠️ {t('common.confirmation')}</h3>
-          <p className="py-4">{confirmModal?.message}</p>
-          <div className="modal-action">
-            <button className="btn" onClick={() => setConfirmModal(null)}>{t('common.cancel')}</button>
+      <PremiumModal
+        isOpen={!!confirmModal?.isOpen}
+        onClose={() => setConfirmModal(null)}
+        title={t('common.confirmation', { defaultValue: 'Confirmation' })}
+        icon={<span className="text-warning text-xl">⚠️</span>}
+        gradientFrom="warning/10"
+        gradientTo="warning/5"
+        footer={
+          <div className="flex justify-end gap-2 w-full">
+            <button className="btn" onClick={() => setConfirmModal(null)}>
+              {t('common.cancel', { defaultValue: 'Annuler' })}
+            </button>
             <button
               className="btn btn-error"
               onClick={() => {
@@ -1492,12 +1645,15 @@ export default function Facturation() {
                 setConfirmModal(null);
               }}
             >
-              {t('common.confirm')}
+              {t('common.confirm', { defaultValue: 'Confirmer' })}
             </button>
           </div>
+        }
+      >
+        <div className="p-6">
+          <p className="text-base-content/80 text-lg">{confirmModal?.message}</p>
         </div>
-        <form method="dialog" className="modal-backdrop" onClick={() => setConfirmModal(null)}><button>close</button></form>
-      </dialog>
+      </PremiumModal>
       {/* Lot Selection Modal */}
       {lotModal.isOpen && (
         <LotSelectionModal

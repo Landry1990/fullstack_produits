@@ -64,13 +64,17 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_encaissements(self, date_debut, date_fin, factures):
         """Calcule les encaissements par mode, ventes à crédit et coupons."""
-        # Encaissements réels (Cash flow)
+        from django.db.models import Q
+        # Détection Hybride : nouveau mode + anciens marqueurs
+        recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
+
+        # Encaissements réels (Cash flow) - Exclure recouvrement car géré à part
         encaissements = Caisse.objects.filter(
             date_paiement__gte=date_debut,
             date_paiement__lt=date_fin,
             statut='completee'
         ).exclude(
-            mode_paiement='en_compte'
+            recouvrement_q | Q(mode_paiement__in=['en_compte', 'coupon'])
         ).values('mode_paiement').annotate(
             total=Sum('montant')
         ).order_by('-total')
@@ -83,6 +87,14 @@ class RapportViewSet(viewsets.ViewSet):
             }
             for enc in encaissements
         ]
+
+        # Recouvrements (Encaissements de créances anciennes - Hybride)
+        recouvrements_total = Caisse.objects.filter(
+            Q(date_paiement__gte=date_debut),
+            Q(date_paiement__lt=date_fin),
+            Q(statut='completee'),
+            recouvrement_q
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
 
         # Ventes à crédit
         ventes_credit = Caisse.objects.filter(
@@ -101,6 +113,7 @@ class RapportViewSet(viewsets.ViewSet):
         
         return {
             'encaissements': encaissements_data,
+            'recouvrements_total': recouvrements_total,
             'ventes_credit': ventes_credit,
             'coupons_total': coupons_total
         }
@@ -385,6 +398,7 @@ class RapportViewSet(viewsets.ViewSet):
             'ca': ca_stats,
             'marge': marge,
             'encaissements': encaissements['encaissements'],
+            'recouvrements_total': encaissements['recouvrements_total'],
             'ventes_credit': encaissements['ventes_credit'],
             'coupons_total': encaissements['coupons_total'],
             'creances_a_percevoir': creances['total'],
@@ -654,15 +668,17 @@ class RapportViewSet(viewsets.ViewSet):
         story.append(t_enc)
         
         # Ajout section Crédits et Coupons pour équilibrer le CA
-        if data.get('ventes_credit', 0) > 0 or data.get('coupons_total', 0) > 0:
+        if data.get('ventes_credit', 0) > 0 or data.get('coupons_total', 0) > 0 or data.get('recouvrements_total', 0) > 0:
             extra_rows = []
             if data.get('ventes_credit', 0) > 0:
                 extra_rows.append(['Ventes à Crédit', format_currency(data['ventes_credit'])])
             if data.get('coupons_total', 0) > 0:
                 extra_rows.append(['Coupons', format_currency(data['coupons_total'])])
+            if data.get('recouvrements_total', 0) > 0:
+                extra_rows.append(['Recouvrements', format_currency(data['recouvrements_total'])])
             
             # Total explicatif (Enc + Credit + Coupons should match CA approx)
-            total_expl = sum(e['montant'] for e in data['encaissements']) + data.get('ventes_credit', 0) + data.get('coupons_total', 0)
+            total_expl = sum(e['montant'] for e in data['encaissements']) + data.get('ventes_credit', 0) + data.get('coupons_total', 0) + data.get('recouvrements_total', 0)
             extra_rows.append(['TOTAL EXPLIQUÉ', format_currency(total_expl)])
             
             t_extra = Table(extra_rows, colWidths=[5*cm, 3*cm])

@@ -29,7 +29,13 @@ class PaiementFournisseur(models.Model):
         null=True, 
         blank=True,
         related_name='paiements',
-        help_text="Facture spécifique liée à ce paiement (optionnel)"
+        help_text="[Déprécié] Facture spécifique liée à ce paiement (optionnel)"
+    )
+    commandes = models.ManyToManyField(
+        Commande,
+        blank=True,
+        related_name='paiements_multiples',
+        help_text="Les factures (commandes) réglées par ce paiement global (Pointage)"
     )
     montant = models.DecimalField(max_digits=12, decimal_places=2)
     date_paiement = models.DateField(default=datetime.date.today)

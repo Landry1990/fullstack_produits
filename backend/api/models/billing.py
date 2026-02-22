@@ -260,7 +260,9 @@ class Caisse(models.Model):
         ('virement', 'Virement'),
         ('om', 'Orange Money'),
         ('momo', 'Mobile Money'),
+        ('coupon', 'Coupon'),
         ('en_compte', 'En compte'),
+        ('recouvrement', 'Recouvrement'),
     ]
     
     STATUTS = [

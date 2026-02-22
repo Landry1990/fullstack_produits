@@ -97,50 +97,50 @@ export function usePrint(): UsePrintReturn {
         .no-print { display: none !important; }
       }
       .print-container {
-        width: 80mm;
-        max-width: 80mm;
+        width: ${settings.ticket_paper_width || 80}mm;
+        max-width: ${settings.ticket_paper_width || 80}mm;
         margin: 0 auto;
-        padding: 10px;
+        padding: 5px;
       }
       .print-header {
         text-align: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid black;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px dashed black;
       }
       .print-header h2 {
         margin: 0 0 5px 0;
-        font-size: 1.2em;
+        font-size: 1.1em;
         font-weight: bold;
         text-transform: uppercase;
       }
       .print-header p {
-        margin: 2px 0;
+        margin: 1px 0;
         font-size: 0.8em;
       }
       .print-footer {
         text-align: center;
-        margin-top: 20px;
-        padding-top: 10px;
+        margin-top: 15px;
+        padding-top: 5px;
         border-top: 1px dashed black;
-        font-size: 0.75em;
+        font-size: 0.7em;
       }
       .print-row {
         display: flex;
         justify-content: space-between;
-        font-size: 0.9em;
-        margin: 3px 0;
+        font-size: 0.85em;
+        margin: 2px 0;
       }
       .print-divider {
         border-top: 1px dashed black;
-        margin: 10px 0;
+        margin: 5px 0;
       }
       .print-total {
         font-weight: bold;
-        font-size: 1.1em;
-        border-top: 2px solid black;
-        padding-top: 8px;
-        margin-top: 8px;
+        font-size: 1.0em;
+        border-top: 1px solid black;
+        padding-top: 5px;
+        margin-top: 5px;
       }
     `;
   }, []);

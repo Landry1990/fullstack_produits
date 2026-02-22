@@ -306,7 +306,15 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         # IMPORTANT: Mettre aussi la date de la commande à aujourd'hui (date de clôture)
         commande.status = Commande.Status.CLOTUREE
         commande.date = commande.date_cloture  # La commande est datée au jour de clôture
-        commande.save(update_fields=['status', 'date_cloture', 'date'])
+        
+        # Calcul de l'échéance si mode FACTURE
+        if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
+            if commande.fournisseur.delai_paiement_jours > 0:
+                commande.date_echeance = commande.date_cloture.date() + timedelta(days=commande.fournisseur.delai_paiement_jours)
+            else:
+                commande.date_echeance = commande.date_cloture.date()
+
+        commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance'])
         
         # 2.4 Mettre à jour la date de dernier achat pour tous les produits
         today = date.today()
@@ -328,7 +336,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 stock_apres=produit.stock,
                 user=request.user,
                 commande=commande,
-                description=f"Réception commande #{commande.id} - Lot: {item.lot or 'N/A'} - Fournisseur: {commande.fournisseur.name if commande.fournisseur else 'N/A'}"
+                description=f"Réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''} - Lot: {item.lot or 'N/A'} - Fournisseur: {commande.fournisseur.name if commande.fournisseur else 'N/A'}"
             ))
         
         if mouvements_to_create:
@@ -610,7 +618,14 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         # 2.3 Mettre à jour le statut et la date de clôture de la commande
         commande.status = Commande.Status.CLOTUREE
         commande.closed_by = request.user
-        commande.save(update_fields=['status', 'date_cloture', 'closed_by'])
+        
+        if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
+            if commande.fournisseur.delai_paiement_jours > 0:
+                commande.date_echeance = commande.date_cloture.date() + timedelta(days=commande.fournisseur.delai_paiement_jours)
+            else:
+                commande.date_echeance = commande.date_cloture.date()
+
+        commande.save(update_fields=['status', 'date_cloture', 'closed_by', 'date_echeance'])
         
         # 2.4 Créer les MouvementStock pour historique permanent
         mouvements_to_create = []
@@ -735,7 +750,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 stock_apres=int(new_stock),
                 user=request.user,
                 commande=commande,
-                description=f"Annulation réception commande #{commande.id}"
+                description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"
             ))
         
         # Phase 3: Supprimer les lots de stock créés lors de la clôture
@@ -1167,6 +1182,16 @@ class CommandeProduitViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['produit']
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        
+        # Si on cherche par produit (ex: historique d'achats dans l'onglet Produit), 
+        # on ne veut voir que les commandes réellement clôturées et réceptionnées.
+        if 'produit' in self.request.query_params:
+            qs = qs.filter(commande__status='CLOT')
+            
+        return qs
 
     def perform_create(self, serializer):
         selling_price = serializer.validated_data.pop('selling_price', None)

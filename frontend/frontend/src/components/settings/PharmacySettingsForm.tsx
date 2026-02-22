@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
 import { usePharmacySettings, type PharmacySettings } from '../../hooks/usePharmacySettings'
+import { useTVA } from '../../hooks/useTVA'
 
 export default function PharmacySettingsForm() {
   const { settings, loading, updateSettings } = usePharmacySettings()
+  const { tvaList, loading: loadingTVA, addTVA, deleteTVA } = useTVA()
   const [formData, setFormData] = useState<Partial<PharmacySettings>>({})
   const [saving, setSaving] = useState(false)
+  const [newTvaRate, setNewTvaRate] = useState('')
+  const [newTvaLabel, setNewTvaLabel] = useState('')
+  const [addingTva, setAddingTva] = useState(false)
 
   useEffect(() => {
     if (settings) {
@@ -15,6 +20,18 @@ export default function PharmacySettingsForm() {
   const handleChange = (field: keyof PharmacySettings, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
+  
+  const handleAddTva = async () => {
+    if (!newTvaRate) return;
+    setAddingTva(true);
+    const success = await addTVA(newTvaRate, newTvaLabel);
+    if (success) {
+        setNewTvaRate('');
+        setNewTvaLabel('');
+    }
+    setAddingTva(false);
+  }
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -260,6 +277,191 @@ export default function PharmacySettingsForm() {
                 <label className="label">
                   <span className="label-text-alt text-base-content/50">Message de remerciement affiché en bas du ticket</span>
                 </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Section: Paramètres Système & Alertes */}
+          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div className="bg-base-100 px-6 py-4 border-b border-base-200">
+              <h2 className="font-semibold text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Paramètres Système & Alertes
+              </h2>
+            </div>
+            <div className="p-6 space-y-4">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Largeur Ticket (mm)</span>
+                  </label>
+                  <select
+                    value={formData.ticket_paper_width || 80}
+                    onChange={(e) => handleChange('ticket_paper_width', parseInt(e.target.value) as any)}
+                    className="select select-bordered w-full"
+                  >
+                    <option value={80}>80mm (Standard)</option>
+                    <option value={58}>58mm (Petit)</option>
+                  </select>
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Devise</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.currency_symbol || 'FCFA'}
+                    onChange={(e) => handleChange('currency_symbol', e.target.value)}
+                    className="input input-bordered w-full"
+                    placeholder="ex: FCFA, €, $"
+                  />
+                </div>
+              </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Seuil Stock Bas (Jours)</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.low_stock_threshold_days || 15}
+                    onChange={(e) => handleChange('low_stock_threshold_days', parseInt(e.target.value) as any)}
+                    className="input input-bordered w-full"
+                  />
+                  <label className="label">
+                    <span className="label-text-alt text-base-content/50">Alerte si couverture inférieure à ce nombre</span>
+                  </label>
+                </div>
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Seuil Stock Dormant (Jours)</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.dormant_stock_days || 90}
+                    onChange={(e) => handleChange('dormant_stock_days', parseInt(e.target.value) as any)}
+                    className="input input-bordered w-full"
+                  />
+                  <label className="label">
+                    <span className="label-text-alt text-base-content/50">Alerte si aucune vente depuis ce nombre de jours</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="form-control">
+                  <label className="label">
+                    <span className="label-text font-medium">Seuil Alerte Dette Client</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={formData.debt_alert_threshold || '100000'}
+                    onChange={(e) => handleChange('debt_alert_threshold', e.target.value)}
+                    className="input input-bordered w-full"
+                  />
+                   <label className="label">
+                    <span className="label-text-alt text-base-content/50">Montant de dette à partir duquel une alerte est levée</span>
+                  </label>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Section: Gestion de la TVA */}
+
+          {/* Section: Gestion de la TVA */}
+          <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
+            <div className="bg-base-100 px-6 py-4 border-b border-base-200">
+              <h2 className="font-semibold text-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Gestion de la TVA
+              </h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="overflow-x-auto">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Taux (%)</th>
+                      <th>Libellé</th>
+                      <th>Statut</th>
+                      <th className="text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingTVA ? (
+                      <tr><td colSpan={4} className="text-center">Chargement...</td></tr>
+                    ) : !Array.isArray(tvaList) || tvaList.length === 0 ? (
+                      <tr><td colSpan={4} className="text-center text-base-content/60">Aucun taux configuré</td></tr>
+                    ) : (
+                      tvaList.map(tva => (
+                        <tr key={tva.id}>
+                          <td className="font-bold">{tva.taux}%</td>
+                          <td>{tva.libelle || '-'}</td>
+                          <td>
+                            {tva.is_active ? 
+                              <span className="badge badge-success badge-sm">Actif</span> : 
+                              <span className="badge badge-ghost badge-sm">Inactif</span>
+                            }
+                          </td>
+                          <td className="text-right">
+                            <button 
+                                type="button"
+                                onClick={() => deleteTVA(tva.id)} 
+                                className="btn btn-ghost btn-xs text-error"
+                                title="Supprimer"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-base-100 p-4 rounded-lg border border-base-200">
+                  <h3 className="font-medium mb-3 text-sm">Ajouter un nouveau taux</h3>
+                  <div className="flex flex-col sm:flex-row gap-3 items-end">
+                      <div className="form-control w-full sm:w-1/3">
+                          <label className="label py-0 mb-1"><span className="label-text-alt">Taux (%) *</span></label>
+                          <input 
+                              type="number" 
+                              step="0.01" 
+                              placeholder="19.25" 
+                              className="input input-bordered input-sm w-full" 
+                              value={newTvaRate}
+                              onChange={e => setNewTvaRate(e.target.value)}
+                          />
+                      </div>
+                      <div className="form-control w-full sm:w-1/2">
+                          <label className="label py-0 mb-1"><span className="label-text-alt">Libellé (Optionnel)</span></label>
+                          <input 
+                              type="text" 
+                              placeholder="Ex: Taux Normal" 
+                              className="input input-bordered input-sm w-full"
+                              value={newTvaLabel}
+                              onChange={e => setNewTvaLabel(e.target.value)}
+                          />
+                      </div>
+                      <button 
+                          type="button" 
+                          className="btn btn-primary btn-sm"
+                          onClick={handleAddTva}
+                          disabled={addingTva || !newTvaRate}
+                      >
+                          {addingTva ? <span className="loading loading-spinner loading-xs"></span> : 'Ajouter'}
+                      </button>
+                  </div>
               </div>
             </div>
           </div>

@@ -11,7 +11,7 @@ from .models import (
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
-    Promotion, PromotionPackItem, ObjectifCommercial
+    Promotion, PromotionPackItem, ObjectifCommercial, TVA
 )
 from .services import PromotionService
 
@@ -94,6 +94,11 @@ class LoyaltySettingSerializer(serializers.ModelSerializer):
 class PharmacySettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = PharmacySettings
+        fields = '__all__'
+
+class TVASerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TVA
         fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
@@ -253,10 +258,30 @@ class PaiementFournisseurSerializer(serializers.ModelSerializer):
     fournisseur_name = serializers.CharField(source='fournisseur.name', read_only=True)
     commande_numero = serializers.CharField(source='commande.numero_facture', read_only=True, allow_null=True)
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    # Accepter une liste d'IDs pour relier plusieurs commandes lors du pointage global
+    commande_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Commande.objects.all(),
+        many=True,
+        write_only=True,
+        required=False
+    )
+    # Afficher les numéros des factures liées
+    commandes_liees = serializers.SerializerMethodField()
 
     class Meta:
         model = PaiementFournisseur
         fields = '__all__'
+
+    def get_commandes_liees(self, obj):
+        # Retourne une liste de numéros de factures pour un affichage facile
+        return [c.numero_facture or f"CMD-{c.id}" for c in obj.commandes.all()]
+
+    def create(self, validated_data):
+        commande_ids = validated_data.pop('commande_ids', [])
+        paiement = super().create(validated_data)
+        if commande_ids:
+            paiement.commandes.set(commande_ids)
+        return paiement
 
 class ProduitSerializer(serializers.ModelSerializer):
     rayon_nom = serializers.CharField(source='rayon.name', read_only=True)
@@ -286,6 +311,20 @@ class ProduitSerializer(serializers.ModelSerializer):
             'active_promotion'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
+
+    def validate(self, data):
+        """
+        Validations croisées pour le produit.
+        """
+        is_supplier_exclusive = data.get('is_supplier_exclusive', self.instance.is_supplier_exclusive if self.instance else False)
+        fournisseur = data.get('fournisseur', self.instance.fournisseur if self.instance else None)
+
+        if is_supplier_exclusive and not fournisseur:
+            raise serializers.ValidationError({
+                "is_supplier_exclusive": "Un produit ne peut être exclusif sans fournisseur attribué."
+            })
+        
+        return data
 
     def get_valeur_stock(self, obj):
         try:
@@ -481,13 +520,20 @@ class CaisseSerializer(serializers.ModelSerializer):
     releve_reference = serializers.CharField(source='releve.reference', read_only=True)
     releve_id = serializers.IntegerField(source='releve.id', read_only=True)
     
+    client_type = serializers.CharField(source='facture.client.client_type', read_only=True)
+    
     # Nouveaux champs pour traçabilité (Saisie vs Validation)
     facture_created_by_name = serializers.SerializerMethodField()
     facture_validated_by_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Caisse
-        fields = '__all__'
+        fields = [
+            'id', 'facture', 'facture_numero', 'mode_paiement', 'mode_paiement_display',
+            'montant', 'reference', 'statut', 'date_paiement', 'user', 'user_details',
+            'client_name', 'client_type', 'is_creance_settlement', 'releve_reference', 
+            'releve_id', 'facture_created_by_name', 'facture_validated_by_name'
+        ]
         read_only_fields = ['date_paiement']
     
     def get_user_details(self, obj):
@@ -544,9 +590,14 @@ class FactureSerializer(serializers.ModelSerializer):
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     is_remise_auto = serializers.SerializerMethodField()
     paiements = CaisseSerializer(many=True, read_only=True)
-    created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
+    created_by_name = serializers.SerializerMethodField()
     validated_by_name = serializers.SerializerMethodField()
     cancelled_by_name = serializers.SerializerMethodField()
+
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return ''
 
     def get_client_nom(self, obj):
         if obj.client_name_override:

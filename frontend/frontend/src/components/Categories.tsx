@@ -5,6 +5,7 @@ import { safeStorage } from '../utils/storage';
 import { toast } from 'react-hot-toast';
 import { useConfirm } from '../hooks/useConfirm';
 import type { Rayon, ProduitModel } from '../types';
+import PremiumModal from './common/PremiumModal';
 
 interface ScopedProduit extends ProduitModel {
   // Add any extra fields if needed for UI
@@ -430,117 +431,124 @@ export default function Categories() {
       </div>
 
       {/* MODAL: CREATE/EDIT CATEGORY */}
-      {isModalOpen && (
-        <div className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg mb-4">{editingRayon ? t('rayons.modal.title_edit') : t('rayons.modal.title_new')}</h3>
-            <form onSubmit={handleSubmitRayon}>
-              <div className="form-control w-full mb-4">
-                <label className="label"><span className="label-text">{t('rayons.modal.name')}</span></label>
-                <input 
-                  type="text" 
-                  className="input input-bordered w-full" 
-                  value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
-                  required
-                  autoFocus
-                />
-              </div>
-              
-              <div className="form-control w-full mb-6">
-                <label className="label"><span className="label-text">{t('rayons.modal.parent')}</span></label>
-                <select 
-                  className="select select-bordered w-full"
-                  value={formData.parent}
-                  onChange={e => setFormData({...formData, parent: e.target.value})}
-                >
-                  <option value="">{t('rayons.modal.none')}</option>
-                  {availableParents.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="modal-action">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>{t('rayons.modal.cancel')}</button>
-                <button type="submit" className="btn btn-primary">{t('rayons.modal.save')}</button>
-              </div>
-            </form>
+      <PremiumModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingRayon ? t('rayons.modal.title_edit') : t('rayons.modal.title_new')}
+        gradientFrom="primary/20"
+        gradientTo="accent/20"
+        icon={editingRayon ? <span>✏️</span> : <span>📁</span>}
+      >
+        <form onSubmit={handleSubmitRayon} className="p-6">
+          <div className="form-control w-full mb-4">
+            <label className="label"><span className="label-text font-semibold">{t('rayons.modal.name')}</span></label>
+            <input 
+              type="text" 
+              className="input input-bordered w-full" 
+              value={formData.name}
+              onChange={e => setFormData({...formData, name: e.target.value})}
+              required
+              autoFocus
+            />
           </div>
-          <div className="modal-backdrop" onClick={closeModal}></div>
-        </div>
-      )}
+          
+          <div className="form-control w-full mb-6">
+            <label className="label"><span className="label-text font-semibold">{t('rayons.modal.parent')}</span></label>
+            <select 
+              className="select select-bordered w-full"
+              value={formData.parent}
+              onChange={e => setFormData({...formData, parent: e.target.value})}
+            >
+              <option value="">{t('rayons.modal.none')}</option>
+              {availableParents.map(r => (
+                <option key={r.id} value={r.id}>{r.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button type="button" className="btn btn-ghost" onClick={closeModal}>{t('rayons.modal.cancel')}</button>
+            <button type="submit" className="btn btn-primary px-8">{t('rayons.modal.save')}</button>
+          </div>
+        </form>
+      </PremiumModal>
+
 
       {/* MODAL: ADD PRODUCT TO CATEGORY */}
-      {isAddProductModalOpen && (
-         <div className="modal modal-open">
-           <div className="modal-box w-11/12 max-w-3xl h-[600px] flex flex-col">
-              <h3 className="font-bold text-lg mb-2">{t('rayons.add_product_to', { rayon: selectedRayon?.name })}</h3>
-              <p className="text-sm opacity-60 mb-4">{t('rayons.add_product_help')}</p>
-              
-              <div className="form-control mb-4">
-                 <input 
-                   type="text" 
-                   placeholder={t('rayons.search_placeholder')}
-                   className="input input-bordered w-full"
-                   value={productSearchTerm}
-                   onChange={e => handleSearchProducts(e.target.value)}
-                   autoFocus
-                 />
-              </div>
+      <PremiumModal
+        isOpen={isAddProductModalOpen}
+        onClose={() => setIsAddProductModalOpen(false)}
+        title={t('rayons.add_product_to', { rayon: selectedRayon?.name })}
+        subtitle={t('rayons.add_product_help')}
+        maxWidth="max-w-3xl"
+        icon={<span>➕</span>}
+        gradientFrom="primary/10"
+        gradientTo="accent/10"
+      >
+        <div className="p-6 flex flex-col h-[500px]">
+          <div className="form-control mb-4">
+             <input 
+               type="text" 
+               placeholder={t('rayons.search_placeholder')}
+               className="input input-bordered w-full"
+               value={productSearchTerm}
+               onChange={e => handleSearchProducts(e.target.value)}
+               autoFocus
+             />
+          </div>
 
-              <div className="flex-1 overflow-auto bg-base-200 rounded-lg p-2 border border-base-300">
-                  {isSearching ? (
-                     <div className="text-center p-8"><span className="loading loading-spinner"></span></div>
-                  ) : searchResults.length > 0 ? (
-                     <table className="table table-sm w-full bg-base-100">
-                        <thead>
-                           <tr>
-                             <th>{t('rayons.table.product')}</th>
-                             <th>{t('rayons.table.current_rayon')}</th>
-                             <th className="text-right">{t('rayons.table.action')}</th>
-                           </tr>
-                        </thead>
-                        <tbody>
-                           {searchResults.map(p => (
-                              <tr key={p.id} className="hover">
-                                 <td>
-                                    <div className="font-bold">{p.name}</div>
-                                    <div className="text-xs opacity-50">{p.cip1} • Stock: {p.stock}</div>
-                                 </td>
-                                 <td>
-                                    {p.rayon_name ? (
-                                       <span className="badge badge-sm badge-ghost">{p.rayon_name}</span>
-                                    ) : (
-                                       <span className="text-xs opacity-40 italic">{t('rayons.table.none')}</span>
-                                    )}
-                                 </td>
-                                 <td className="text-right">
-                                    <button 
-                                      className="btn btn-sm btn-circle btn-primary btn-outline"
-                                      onClick={() => handleAddProductToRayon(p)}
-                                    >
-                                       +
-                                    </button>
-                                 </td>
-                              </tr>
-                           ))}
-                        </tbody>
-                     </table>
-                  ) : productSearchTerm.length > 1 ? (
-                     <div className="text-center p-8 text-base-content/50">{t('rayons.no_product_found')}</div>
-                  ) : (
-                     <div className="text-center p-8 text-base-content/50">{t('rayons.search_hint')}</div>
-                  )}
-              </div>
+          <div className="flex-1 overflow-auto bg-base-200 rounded-xl p-2 border border-base-300">
+              {isSearching ? (
+                 <div className="text-center p-8"><span className="loading loading-spinner"></span></div>
+              ) : searchResults.length > 0 ? (
+                 <table className="table table-sm w-full bg-white rounded-lg overflow-hidden">
+                    <thead>
+                       <tr className="bg-base-100">
+                         <th>{t('rayons.table.product')}</th>
+                         <th>{t('rayons.table.current_rayon')}</th>
+                         <th className="text-right">{t('rayons.table.action')}</th>
+                       </tr>
+                    </thead>
+                    <tbody>
+                       {searchResults.map(p => (
+                          <tr key={p.id} className="hover">
+                             <td>
+                                <div className="font-bold">{p.name}</div>
+                                <div className="text-xs opacity-50">{p.cip1} • Stock: {p.stock}</div>
+                             </td>
+                             <td>
+                                {p.rayon_name ? (
+                                   <span className="badge badge-sm badge-ghost">{p.rayon_name}</span>
+                                ) : (
+                                   <span className="text-xs opacity-40 italic">{t('rayons.table.none')}</span>
+                                )
+                                }
+                             </td>
+                             <td className="text-right">
+                                <button 
+                                  className="btn btn-sm btn-circle btn-primary btn-outline"
+                                  onClick={() => handleAddProductToRayon(p)}
+                                >
+                                   +
+                                </button>
+                             </td>
+                          </tr>
+                       ))}
+                    </tbody>
+                 </table>
+              ) : productSearchTerm.length > 1 ? (
+                 <div className="text-center p-8 text-base-content/50">{t('rayons.no_product_found')}</div>
+              ) : (
+                 <div className="text-center p-8 text-base-content/50 italic">{t('rayons.search_hint')}</div>
+              )}
+          </div>
 
-              <div className="modal-action">
-                 <button className="btn" onClick={() => setIsAddProductModalOpen(false)}>{t('common.close')}</button>
-              </div>
-           </div>
-           <div className="modal-backdrop" onClick={() => setIsAddProductModalOpen(false)}></div>
-         </div>
-      )}
+          <div className="mt-6 flex justify-end">
+             <button className="btn btn-ghost px-8" onClick={() => setIsAddProductModalOpen(false)}>{t('common.close')}</button>
+          </div>
+        </div>
+      </PremiumModal>
+
 
     </div>
   );

@@ -642,3 +642,4 @@ class ComplexTransactionsTestCase(TransactionTestCase):
         
         facture.refresh_from_db()
         self.assertEqual(facture.status, Facture.Status.VALIDEE)
+

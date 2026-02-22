@@ -59,7 +59,7 @@ export default defineConfig({
     },
     // Amélioration du watch mode sur Windows
     watch: {
-      usePolling: false
+      usePolling: true
     }
   },
 

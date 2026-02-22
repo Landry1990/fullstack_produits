@@ -10,6 +10,7 @@ import PasswordConfirmModal from './PasswordConfirmModal';
 import type { ProduitModel } from '../types'
 import { STOCK_ADJUSTMENT_REASONS } from '../types'
 import ProduitCreateModal from './ProduitFormModal'
+import PremiumModal from './common/PremiumModal'
 
 import {
   useProduits,
@@ -27,6 +28,7 @@ import {
   useDeleteProduit,
   useRecalculateRotation
 } from '../hooks/useProduits';
+import { useTVA } from '../hooks/useTVA';
 
 import { ProductDetailsModal as SalesDetailsModal } from './sales/modals/ProductDetailsModal';
 import type { Facture } from '../types';
@@ -36,8 +38,8 @@ export default function Produit() {
   const confirm = useConfirm()
   const navigate = useNavigate()
   const { t } = useTranslation();
-  
   const { user } = useAuth();
+  const { tvaList, loading: loadingTVA } = useTVA();
   
   // Pagination
   const [page, setPage] = useState(1)
@@ -172,8 +174,6 @@ export default function Produit() {
 
   const apiBaseUrl = useMemo(() => (import.meta.env.VITE_API_BASE_URL ?? ''), [])
   const produitsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/` : '/api/produits/'
-  const rayonsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/categories/` : '/api/categories/'
-  const fournisseursEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/fournisseurs/` : '/api/fournisseurs/'
 
   // Removed manual fetch effects
 
@@ -1358,6 +1358,11 @@ export default function Produit() {
                                         <span className="text-primary" title={item.facture ? "Cliquez pour voir la facture" : "Cliquez pour voir la commande"}>🔍</span>
                                       )}
                                       {item.libelle}
+                                      {item.commande_numero && (
+                                        <span className="badge badge-ghost badge-xs font-mono ml-auto">
+                                          {item.commande_numero}
+                                        </span>
+                                      )}
                                     </div>
                                   </td>
                                   <td className="text-xs">{item.user || item.user_nom || '-'}</td>
@@ -1389,704 +1394,610 @@ export default function Produit() {
       </div>
 
       {/* Modal Détails Produit */}
-      <dialog className={`modal ${isDetailsModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-3xl">
-          <h3 className="font-bold text-lg mb-4">📦 Détails du Produit</h3>
-          
+      <PremiumModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        title={t('products.details.title') || "📦 Détails du Produit"}
+        subtitle={selectedProduit?.name}
+        maxWidth="max-w-4xl"
+        icon={<span>📦</span>}
+        gradientFrom="primary/10"
+        gradientTo="secondary/10"
+      >
+        <div className="p-6">
           {selectedProduit && (
-            <div className="space-y-4">
-              {/* Info Card */}
-              <div className="alert alert-info text-sm">
-                <div className="w-full">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div><strong>Nom:</strong> <span className="uppercase">{selectedProduit.name}</span></div>
-                    <div><strong>Stock:</strong> <span className={`badge ${
-                      (selectedProduit.stock ?? 0) <= 0 ? 'badge-error' :
-                      (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :
-                      'badge-success'
-                    }`}>{selectedProduit.stock ?? 0}</span></div>
-                  </div>
+            <div className="space-y-6">
+              {/* Info Card - Improved design */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-base-200/50 p-4 rounded-2xl border border-base-300 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-base-content/50">CIP1</span>
+                  <span className="font-mono font-bold text-primary">{selectedProduit.cip1 || '-'}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-base-content/50">Stock Total</span>
+                  <span className={`text-xl font-bold ${
+                    (selectedProduit.stock ?? 0) <= 0 ? 'text-error' :
+                    (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'text-warning' :
+                    'text-success'
+                  }`}>{selectedProduit.stock ?? 0}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-base-content/50">Rayon</span>
+                  <span className="font-bold truncate" title={selectedProduit.rayon_name}>{selectedProduit.rayon_name || '-'}</span>
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div role="tablist" className="tabs tabs-boxed">
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'general' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('general')}
-                >
-                  Général
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'prix' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('prix')}
-                >
-                  Prix & Marge
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'achats' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('achats')}
-                >
-                  Achats
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'lots' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('lots')}
-                >
-                  Lots de stock
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'ajustements' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('ajustements')}
-                >
-                  📝 Ajustements
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'stats' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('stats')}
-                >
-                  📊 Stats Mensuelles
-                </a>
-                <a
-                  role="tab"
-                  className={`tab ${activeTab === 'mouvements' ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTab('mouvements')}
-                >
-                  📋 Mouvements
-                </a>
+              {/* Tabs Navigation */}
+              <div className="flex flex-wrap gap-1 bg-base-200 p-1 rounded-xl">
+                {[
+                  { id: 'general', label: 'Général', icon: '📋' },
+                  { id: 'prix', label: 'Prix & Marge', icon: '💰' },
+                  { id: 'achats', label: 'Achats', icon: '🛒' },
+                  { id: 'lots', label: 'Lots', icon: '📦' },
+                  { id: 'ajustements', label: 'Ajustements', icon: '📝' },
+                  { id: 'stats', label: 'Stats', icon: '📊' },
+                  { id: 'mouvements', label: 'Flux', icon: '🔄' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                      activeTab === tab.id 
+                      ? 'bg-white text-primary shadow-sm' 
+                      : 'text-base-content/60 hover:text-base-content hover:bg-base-300'
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
-              {/* Contenu des tabs */}
-              {activeTab === 'general' && (
-                <div className="overflow-x-auto">
-                  <table className="table table-xs">
-                    <tbody>
-                      <tr>
-                        <td className="font-semibold w-1/3">Description</td>
-                        <td className="uppercase">{selectedProduit.description || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td className="font-semibold">CIP1 / CIP2 / CIP3</td>
-                        <td className="font-mono">{selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}</td>
-                      </tr>
-                      <tr>
-                        <td className="font-semibold">Rayon</td>
-                        <td><span className="badge badge-outline">{selectedProduit.rayon_name || '-'}</span></td>
-                      </tr>
-                      <tr>
-                        <td className="font-semibold">Fournisseur</td>
-                        <td><span className="badge badge-ghost">{selectedProduit.fournisseur_name || '-'}</span></td>
-                      </tr>
-                      <tr>
-                        <td className="font-semibold">Stock min / max</td>
-                        <td>{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</td>
-                      </tr>
-                      <tr>
-                        <td className="font-semibold">Seuil alerte</td>
-                        <td><span className="badge badge-warning">{selectedProduit.stock_alert ?? 0}</span></td>
-                      </tr>
-                      <tr>
-                        <td className="font-semibold">Date expiration</td>
-                        <td>{selectedProduit.expire_date ? (() => {
-                          const d = new Date(selectedProduit.expire_date);
-                          return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
-                        })() : '-'}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {activeTab === 'prix' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200">
-                    <div className="stat-title">Prix Revient</div>
-                    <div className="stat-value text-blue-600 text-2xl">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR')} F</div>
-                  </div>
-                  <div className="stat bg-primary text-primary-content rounded-xl">
-                    <div className="stat-title text-primary-content/80">Prix Vente</div>
-                    <div className="stat-value text-2xl">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</div>
-                  </div>
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200">
-                    <div className="stat-title">TVA</div>
-                    <div className="stat-value text-xl">{selectedProduit.tva || '19.25'}%</div>
-                  </div>
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200">
-                    <div className="stat-title">% Marge</div>
-                    <div className="stat-value text-xl">{Number(selectedProduit.pourcentage_marge || 0).toFixed(2)}%</div>
-                  </div>
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200">
-                    <div className="stat-title">Coef. Marge</div>
-                    <div className="stat-value text-xl">{Number(selectedProduit.taux_marge || 0).toFixed(2)}</div>
-                  </div>
-                  <div className="stat bg-base-200/30 rounded-xl border border-base-200">
-                    <div className="stat-title">Rotation Moy.</div>
-                    <div className="stat-value text-xl">{Number(selectedProduit.rotation_moyenne || 0).toFixed(2)}<span className="text-sm"> /mois</span></div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'achats' && (
-<div className="overflow-x-auto">
-                  <table className="table table-xs">
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Fournisseur</th>
-                        <th className="text-right">Qté</th>
-                        <th className="text-right">Prix</th>
-                        <th>Lot</th>
-                        <th>Expiration</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {achats.length === 0 ? (
-                        <tr><td colSpan={6} className="text-center text-base-content/50">Aucun achat enregistré</td></tr>
-                      ) : (
-                        achats.map(a => (
-                          <tr key={a.id}>
-                            <td className="font-mono text-xs">{a.commande_date?.slice(0, 10) || '-'}</td>
-                            <td className="uppercase">{a.fournisseur_name || '-'}</td>
-                            <td className="text-right font-bold">{a.quantity}</td>
-                            <td className="text-right">{a.price} F</td>
-                            <td className="font-mono text-xs">{a.lot || '-'}</td>
-                            <td className="font-mono text-xs">{a.date_expiration ? (() => {
-                              const d = new Date(a.date_expiration);
-                              return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
-                            })() : '-'}</td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {activeTab === 'lots' && (
-                <div className="overflow-x-auto">
-                  <table className="table table-xs">
-                    <thead>
-                      <tr>
-                        <th>Numéro de lot</th>
-                        <th>Date d'expiration</th>
-                        <th className="text-right">Stock restant</th>
-                        <th className="text-right">Prix de vente</th>
-                        <th>Statut</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lots.length === 0 ? (
-                        <tr><td colSpan={5} className="text-center text-base-content/50">Aucun lot disponible</td></tr>
-                      ) : (
-                        lots.map(lot => {
-                          const expirationDate = lot.date_expiration ? new Date(lot.date_expiration) : null
-                          const today = new Date()
-                          const isExpired = expirationDate ? expirationDate < today : false
-                          const monthsDiff = expirationDate 
-                            ? (expirationDate.getFullYear() - today.getFullYear()) * 12 + expirationDate.getMonth() - today.getMonth()
-                            : 999
-                          const isExpiringSoon = monthsDiff <= 3 && monthsDiff >= 0
-                          
-                          return (
-                            <tr key={lot.id} className={lot.quantity_remaining === 0 ? 'opacity-50' : ''}>
-                              <td className="font-mono font-bold">{lot.lot || 'N/A'}</td>
-                              <td>
-                                {expirationDate ? (
-                                  <span className={isExpired ? 'text-error font-bold' : isExpiringSoon ? 'text-warning font-semibold' : ''}>
-                                    {`${(expirationDate.getMonth() + 1).toString().padStart(2, '0')}/${expirationDate.getFullYear().toString().slice(-2)}`}
-                                    {isExpired && ' ⚠️ Expiré'}
-                                    {isExpiringSoon && !isExpired && ' ⏰'}
-                                  </span>
-                                ) : 'N/A'}
-                              </td>
-                              <td className="text-right font-bold">
-                                <span className={lot.quantity_remaining === 0 ? 'text-error' : 'text-success'}>
-                                  {lot.quantity_remaining}
-                                </span>
-                              </td>
-                              <td className="text-right">{lot.selling_price} F</td>
-                              <td>
-                                {lot.quantity_remaining === 0 ? (
-                                  <span className="badge badge-error badge-sm">Épuisé</span>
-                                ) : (
-                                  <span className="badge badge-success badge-sm">Disponible</span>
-                                )}
-                              </td>
-                            </tr>
-                          )
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {activeTab === 'ajustements' && (
-                <div className="overflow-x-auto">
-                  {adjustments.length === 0 ? (
-                    <p className="text-center text-base-content/50 py-4">Aucun ajustement enregistré</p>
-                  ) : (
-                    <table className="table table-xs">
-                      <thead>
-                        <tr className="bg-base-200">
-                          <th>Date</th>
-                          <th>Utilisateur</th>
-                          <th className="text-right">Avant</th>
-                          <th className="text-right">Après</th>
-                          <th className="text-center">Change</th>
-                          <th>Motif</th>
-                        </tr>
-                      </thead>
+              {/* Tab Content Container */}
+              <div className="bg-white border border-base-200 rounded-2xl overflow-hidden min-h-[300px]">
+                {activeTab === 'general' && (
+                  <div className="p-4 overflow-x-auto">
+                    <table className="table table-sm w-full">
                       <tbody>
-                        {adjustments.map(adj => (
-                          <tr key={adj.id}>
-                            <td className="text-xs">
-                              {new Date(adj.created_at).toLocaleDateString('fr-FR')} {new Date(adj.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                            </td>
-                            <td>{adj.user_name || adj.username || '-'}</td>
-                            <td className="text-right">{adj.quantity_before}</td>
-                            <td className="text-right">{adj.quantity_after}</td>
-                            <td className="text-center">
-                              <span className={`badge badge-sm ${adj.quantity_change > 0 ? 'badge-success' : adj.quantity_change < 0 ? 'badge-error' : 'badge-ghost'}`}>
-                                {adj.quantity_change > 0 ? '+' : ''}{adj.quantity_change}
-                              </span>
-                            </td>
-                            <td>
-                              <span className="badge badge-outline badge-xs mr-1">{adj.reason_type_display}</span>
-                              <span className="text-xs text-base-content/70">{adj.reason_detail}</span>
-                            </td>
-                          </tr>
-                        ))}
+                        <tr className="border-b border-base-100">
+                          <td className="font-semibold text-base-content/60 py-3">Description</td>
+                          <td className="uppercase font-medium">{selectedProduit.description || '-'}</td>
+                        </tr>
+                        <tr className="border-b border-base-100">
+                          <td className="font-semibold text-base-content/60 py-3">CIP1 / CIP2 / CIP3</td>
+                          <td className="font-mono text-primary">{selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}</td>
+                        </tr>
+                        <tr className="border-b border-base-100">
+                          <td className="font-semibold text-base-content/60 py-3">Fournisseur attitré</td>
+                          <td>
+                            <span className="badge badge-warning badge-sm font-bold uppercase">{selectedProduit.fournisseur_name || '-'}</span>
+                            {selectedProduit.is_supplier_exclusive && <span className="ml-2 badge badge-error badge-xs text-white">Exclusif</span>}
+                          </td>
+                        </tr>
+                        <tr className="border-b border-base-100">
+                          <td className="font-semibold text-base-content/60 py-3">Stock min / max</td>
+                          <td>
+                             <span className="text-error font-bold">{selectedProduit.stock_minimum ?? 0}</span>
+                             <span className="mx-2 text-base-content/30">/</span>
+                             <span className="text-success font-bold">{selectedProduit.stock_maximum ?? 0}</span>
+                          </td>
+                        </tr>
+                        <tr className="border-b border-base-100">
+                          <td className="font-semibold text-base-content/60 py-3">Seuil alerte</td>
+                          <td><span className="badge badge-error badge-sm font-bold">{selectedProduit.stock_alert ?? 0}</span></td>
+                        </tr>
+                        <tr>
+                          <td className="font-semibold text-base-content/60 py-3">Date expiration</td>
+                          <td>{selectedProduit.expire_date ? (() => {
+                            const d = new Date(selectedProduit.expire_date);
+                            return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                          })() : '-'}</td>
+                        </tr>
                       </tbody>
                     </table>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {activeTab === 'stats' && (
-                <div className="overflow-x-auto max-h-96">
-                  {monthlyStats.length === 0 ? (
-                    <p className="text-center text-base-content/50 py-4">Aucune statistique disponible</p>
-                  ) : (
-                    <table className="table table-xs">
-                      <thead className="bg-base-200 sticky top-0">
+                {activeTab === 'prix' && (
+                  <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-base-100 p-4 rounded-2xl border border-base-200">
+                      <div className="text-xs font-bold text-base-content/40 uppercase mb-1">Prix de Revient</div>
+                      <div className="text-2xl font-black text-slate-700">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR')} F</div>
+                    </div>
+                    <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20">
+                      <div className="text-xs font-bold text-primary/60 uppercase mb-1">Prix de Vente</div>
+                      <div className="text-2xl font-black text-primary">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2">
+                       <div className="bg-base-200/50 p-4 rounded-xl border border-base-200">
+                         <div className="text-xs font-bold text-base-content/40 uppercase mb-1">TVA</div>
+                         <div className="text-xl font-bold">{selectedProduit.tva || '19.25'}%</div>
+                       </div>
+                       <div className="bg-base-200/50 p-4 rounded-xl border border-base-200">
+                         <div className="text-xs font-bold text-base-content/40 uppercase mb-1">Rotation</div>
+                         <div className="text-xl font-bold">{Number(selectedProduit.rotation_moyenne || 0).toFixed(2)}<span className="text-xs ml-1">v/mois</span></div>
+                       </div>
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2 flex items-center justify-between p-4 bg-success/10 rounded-2xl border border-success/20">
+                       <div>
+                          <div className="text-xs font-bold text-success/60 uppercase mb-1">Marge Bénéficiaire</div>
+                          <div className="text-3xl font-black text-success">{Number(selectedProduit.pourcentage_marge || 0).toFixed(1)}%</div>
+                       </div>
+                       <div className="text-right">
+                          <div className="text-xs font-bold text-success/60 uppercase mb-1">Coeff.</div>
+                          <div className="text-2xl font-bold text-success">x{Number(selectedProduit.taux_marge || 0).toFixed(2)}</div>
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'achats' && (
+                  <div className="overflow-x-auto min-h-[300px]">
+                    <table className="table table-xs table-pin-rows">
+                      <thead>
                         <tr>
-                          <th className="text-xs uppercase"></th>
-                          <th className="text-xs uppercase">Mois</th>
-                          <th className="text-xs uppercase text-right text-primary">Qté V</th>
-                          <th className="text-xs uppercase text-right text-warning">Qté C</th>
-                          <th className="text-xs uppercase text-right text-info">Nb C</th>
+                          <th className="bg-base-100">Date</th>
+                          <th className="bg-base-100">Fournisseur</th>
+                          <th className="bg-base-100 text-right">Qté</th>
+                          <th className="bg-base-100 text-right">P.A. HT</th>
+                          <th className="bg-base-100">Lot</th>
+                          <th className="bg-base-100">Exp.</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(() => {
-                          let currentYear: number | null = null;
-                          return monthlyStats.map((stat, index) => {
-                            const showYear = stat.year !== currentYear;
-                            currentYear = stat.year;
+                        {achats.length === 0 ? (
+                          <tr><td colSpan={6} className="text-center py-12 text-base-content/40 italic">Aucun achat enregistré</td></tr>
+                        ) : (
+                          achats.map(a => (
+                            <tr key={a.id} className="hover">
+                              <td className="font-mono text-[10px]">{a.commande_date?.slice(0, 10) || '-'}</td>
+                              <td className="uppercase text-xs font-medium">{a.fournisseur_name || '-'}</td>
+                              <td className="text-right font-bold text-primary">{a.quantity}</td>
+                              <td className="text-right text-xs">{a.price} F</td>
+                              <td className="font-mono text-[10px] text-base-content/60">{a.lot || '-'}</td>
+                              <td className="font-mono text-[10px]">{a.date_expiration ? (() => {
+                                const d = new Date(a.date_expiration);
+                                return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
+                              })() : '-'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {activeTab === 'lots' && (
+                  <div className="overflow-x-auto min-h-[300px]">
+                    <table className="table table-xs table-pin-rows">
+                      <thead>
+                        <tr className="bg-base-100">
+                          <th>Lot #</th>
+                          <th>Expiration</th>
+                          <th className="text-right">Reste</th>
+                          <th className="text-right">P.V.</th>
+                          <th>Statut</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lots.length === 0 ? (
+                          <tr><td colSpan={5} className="text-center py-12 text-base-content/40 italic">Aucun lot en stock</td></tr>
+                        ) : (
+                          lots.map(lot => {
+                            const expirationDate = lot.date_expiration ? new Date(lot.date_expiration) : null
+                            const today = new Date()
+                            const isExpired = expirationDate ? expirationDate < today : false
+                            const monthsDiff = expirationDate 
+                              ? (expirationDate.getFullYear() - today.getFullYear()) * 12 + expirationDate.getMonth() - today.getMonth()
+                              : 999
+                            const isExpiringSoon = monthsDiff <= 3 && monthsDiff >= 0
+                            
                             return (
-                              <tr key={index} className={showYear ? 'border-t-2 border-base-300' : ''}>
-                                <td className="font-bold text-base-content/60">
-                                  {showYear ? stat.year : ''}
+                              <tr key={lot.id} className={`hover ${lot.quantity_remaining === 0 ? 'opacity-40 grayscale' : ''}`}>
+                                <td className="font-mono font-black text-primary">{lot.lot || '---'}</td>
+                                <td>
+                                  {expirationDate ? (
+                                    <div className="flex items-center gap-1">
+                                      <span className={isExpired ? 'badge badge-error badge-xs text-white' : isExpiringSoon ? 'badge badge-warning badge-xs' : 'text-xs'}>
+                                        {`${(expirationDate.getMonth() + 1).toString().padStart(2, '0')}/${expirationDate.getFullYear().toString().slice(-2)}`}
+                                      </span>
+                                      {isExpired && <span className="text-[10px] text-error font-bold italic">EXPIRÉ</span>}
+                                    </div>
+                                  ) : '---'}
                                 </td>
-                                <td>{stat.month_name}</td>
-                                <td className="text-right font-mono font-bold text-primary">
-                                  {stat.qte_v}
+                                <td className="text-right font-bold">
+                                  <span className={lot.quantity_remaining === 0 ? 'text-error' : 'text-success'}>
+                                    {lot.quantity_remaining}
+                                  </span>
                                 </td>
-                                <td className="text-right font-mono text-warning">
-                                  {stat.qte_c}
-                                </td>
-                                <td className="text-right font-mono text-info">
-                                  {stat.nb_c}
+                                <td className="text-right text-xs">{lot.selling_price} F</td>
+                                <td>
+                                  {lot.quantity_remaining === 0 ? (
+                                    <span className="badge badge-ghost badge-xs">Vidé</span>
+                                  ) : (
+                                    <span className="badge badge-success badge-xs text-white">Actif</span>
+                                  )}
                                 </td>
                               </tr>
-                            );
-                          });
-                        })()}
+                            )
+                          })
+                        )}
                       </tbody>
                     </table>
-                  )}
-                  <div className="mt-3 text-xs text-base-content/50 flex justify-between">
-                    <span>Qté V = Quantité Vendue</span>
-                    <span>Qté C = Quantité Commandée</span>
-                    <span>Nb C = Nombre de Commandes</span>
                   </div>
+                )}
+
+                {activeTab === 'ajustements' && (
+                  <div className="overflow-x-auto min-h-[300px]">
+                    {adjustments.length === 0 ? (
+                      <p className="text-center py-12 text-base-content/40 italic">Aucun ajustement manuel</p>
+                    ) : (
+                      <table className="table table-xs table-pin-rows">
+                        <thead>
+                          <tr className="bg-base-100">
+                             <th>Date</th>
+                             <th>Auteur</th>
+                             <th className="text-right">Diff.</th>
+                             <th className="text-right">Final</th>
+                             <th>Motif</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {adjustments.map(adj => (
+                            <tr key={adj.id} className="hover">
+                              <td className="text-[10px] font-mono">
+                                {new Date(adj.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} 
+                                <span className="opacity-50 ml-1">{new Date(adj.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                              </td>
+                              <td className="text-[10px] uppercase">{adj.user_name || adj.username || '-'}</td>
+                              <td className="text-right">
+                                <span className={`font-bold ${adj.quantity_change > 0 ? 'text-success' : 'text-error'}`}>
+                                  {adj.quantity_change > 0 ? '+' : ''}{adj.quantity_change}
+                                </span>
+                              </td>
+                              <td className="text-right font-black">{adj.quantity_after}</td>
+                              <td>
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] font-bold">{adj.reason_type_display}</span>
+                                  <span className="text-[9px] opacity-60 truncate max-w-[150px]">{adj.reason_detail}</span>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'stats' && (
+                  <div className="p-4 min-h-[300px]">
+                    {monthlyStats.length === 0 ? (
+                      <p className="text-center py-12 text-base-content/40 italic">Données statistiques insuffisantes</p>
+                    ) : (
+                      <table className="table table-xs w-full">
+                        <thead className="bg-base-100">
+                          <tr>
+                            <th className="text-[10px]">Période</th>
+                            <th className="text-right text-primary">Ventes</th>
+                            <th className="text-right text-warning">Commandes</th>
+                            <th className="text-right text-info">Nb. Cmd</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthlyStats.slice(0, 12).map((stat, index) => (
+                            <tr key={index} className="hover border-b border-base-50">
+                              <td className="font-bold text-xs">{stat.month_name} {stat.year}</td>
+                              <td className="text-right font-mono font-bold text-primary">{stat.qte_v}</td>
+                              <td className="text-right font-mono text-warning/70">{stat.qte_c}</td>
+                              <td className="text-right font-mono text-info/70">{stat.nb_c}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'mouvements' && (
+                  <div className="overflow-x-auto min-h-[300px]">
+                    {loadingHistory ? (
+                      <div className="flex justify-center py-12"><span className="loading loading-spinner text-primary"></span></div>
+                    ) : stockHistory.length === 0 ? (
+                      <p className="text-center py-12 text-base-content/40 italic">Historique vide</p>
+                    ) : (
+                      <table className="table table-xs table-pin-rows">
+                        <thead>
+                            <tr className="bg-base-100">
+                              <th>Date</th>
+                              <th>Action</th>
+                              <th>LIBELLÉ / DOC</th>
+                              <th className="text-right">VAR.</th>
+                              <th className="text-right">STOCK</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {stockHistory.map((item, index) => {
+                              const isPositive = item.type === 'AJUSTEMENT' 
+                                ? item.quantity > 0 
+                                : ['ENTREE', 'RETOUR', 'TRANSFORMATION_ENTREE'].includes(item.type);
+                              return (
+                                <tr 
+                                  key={index} 
+                                  className={`hover ${(item.facture || item.commande) ? 'cursor-pointer active:bg-base-200' : ''}`}
+                                  onClick={() => handleMovementClick(item)}
+                                >
+                                  <td className="text-[9px] font-mono opacity-60">
+                                    {new Date(item.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}
+                                  </td>
+                                  <td>
+                                    <span className={`text-[8px] px-1 rounded uppercase font-bold border ${
+                                      item.type === 'AJUSTEMENT' ? 'border-warning text-warning' :
+                                      isPositive ? 'border-success text-success' : 'border-error text-error'
+                                    }`}>
+                                      {item.type}
+                                    </span>
+                                  </td>
+                                  <td className="max-w-[120px] truncate text-[10px]" title={item.libelle}>
+                                    <div className="flex items-center gap-1 font-medium">
+                                      {(item.facture || item.commande) && <span className="text-primary">📄</span>}
+                                      {item.libelle}
+                                    </div>
+                                  </td>
+                                  <td className={`text-right font-bold text-xs ${isPositive ? 'text-success' : 'text-error'}`}>
+                                    {isPositive ? '+' : ''}{item.quantity}
+                                  </td>
+                                  <td className="text-right font-mono font-bold text-xs bg-base-50">{item.stock_apres}</td>
+                                </tr>
+                              );
+                            })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons Footer */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-base-200">
+                <div className="flex gap-2">
+                  <button
+                    className="btn btn-warning btn-sm shadow-sm"
+                    onClick={handleOpenAdjustmentModal}
+                  >
+                    📊 Ajuster Stock
+                  </button>
+                  <button
+                    className="btn btn-primary btn-sm shadow-sm"
+                    onClick={() => selectedProduit && handleOpenEditModal(selectedProduit)}
+                  >
+                    ✏️ Modifier
+                  </button>
                 </div>
-              )}
+                <div className="flex gap-2">
+                  <button
+                    className="btn btn-ghost btn-sm text-error"
+                    onClick={() => selectedProduit && handleDeleteProduit(selectedProduit)}
+                  >
+                    🗑️ Supprimer
+                  </button>
+                  <button className="btn btn-neutral btn-sm px-8" onClick={() => setIsDetailsModalOpen(false)}>Fermer</button>
+                </div>
+              </div>
             </div>
           )}
-          
-          <div className="modal-action">
-            <button
-              className="btn btn-sm btn-warning"
-              onClick={handleOpenAdjustmentModal}
-            >
-              📊 Ajuster Stock
-            </button>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={() => selectedProduit && handleOpenEditModal(selectedProduit)}
-            >
-              ✏️ Modifier
-            </button>
-            <button
-              className="btn btn-sm btn-error text-white"
-              onClick={() => selectedProduit && handleDeleteProduit(selectedProduit)}
-            >
-              🗑️ Supprimer
-            </button>
-            <button className="btn btn-sm" onClick={() => setIsDetailsModalOpen(false)}>Fermer</button>
-          </div>
         </div>
-      </dialog>
+      </PremiumModal>
+
 
       {/* Modal Édition Produit */}
-      <dialog className={`modal ${isEditModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-2xl">
-          <h3 className="font-bold text-lg mb-4">✏️ Modifier le Produit</h3>
-          
-          <form onSubmit={handleUpdateProduit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Nom */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Nom *</span></label>
+      <PremiumModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="✏️ Modifier le Produit"
+        subtitle={editForm.name}
+        maxWidth="max-w-4xl"
+        icon={<span>✏️</span>}
+        gradientFrom="warning/20"
+        gradientTo="primary/20"
+      >
+        <form className="p-6 space-y-6" onSubmit={handleUpdateProduit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">Informations Générales</h4>
+              <label className="form-control w-full">
+                <div className="label"><span className="label-text font-semibold">Nom du produit *</span></div>
                 <input
                   type="text"
-                  className="input input-bordered"
+                  className="input input-bordered w-full focus:input-primary"
                   value={editForm.name}
-                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   required
                 />
-              </div>
-
-              {/* Stock */}
-              {/* Stock (Lecture seule) */}
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Stock</span>
-                  <span className="badge badge-sm badge-ghost">🔒 Sécurisé</span>
-                </label>
-                <div className="tooltip" data-tip="Pour la traçabilité, utilisez le bouton 'Ajuster Stock' dans les détails produit">
-                    <input
-                      type="number"
-                      className="input input-bordered bg-base-200 text-base-content/60 w-full cursor-not-allowed font-bold"
-                      value={editForm.stock}
-                      readOnly
-                      disabled
-                    />
-                </div>
-                <label className="label">
-                   <span className="label-text-alt text-info flex items-center gap-1">
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                       <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                     </svg>
-                     Utilisez l'option <strong>Ajuster Stock</strong>
-                   </span>
-                </label>
-              </div>
-
-              {/* Prix de revient */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Prix de revient (F) *</span></label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input input-bordered"
-                  value={editForm.cost_price}
-                  onChange={(e) => setEditForm({...editForm, cost_price: e.target.value})}
-                  required
-                />
-              </div>
-
-              {/* Prix de vente */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Prix de vente (F) *</span></label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input input-bordered"
-                  value={editForm.selling_price}
-                  onChange={(e) => setEditForm({...editForm, selling_price: e.target.value})}
-                  required
-                />
-              </div>
-
-              {/* CIP1 */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">CIP1</span></label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  value={editForm.cip1}
-                  onChange={(e) => setEditForm({...editForm, cip1: e.target.value})}
-                />
-              </div>
-
-              {/* CIP2 */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">CIP2</span></label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  value={editForm.cip2}
-                  onChange={(e) => setEditForm({...editForm, cip2: e.target.value})}
-                />
-              </div>
-
-              {/* CIP3 */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">CIP3</span></label>
-                <input
-                  type="text"
-                  className="input input-bordered"
-                  value={editForm.cip3}
-                  onChange={(e) => setEditForm({...editForm, cip3: e.target.value})}
-                />
-              </div>
-
-              {/* TVA */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">TVA (%)</span></label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="input input-bordered"
-                  value={editForm.tva}
-                  onChange={(e) => setEditForm({...editForm, tva: e.target.value})}
-                />
-              </div>
-
-              {/* Expiration */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Date expiration</span></label>
-                <input
-                  type="date"
-                  className="input input-bordered"
-                  value={editForm.expire_date}
-                  onChange={(e) => setEditForm({...editForm, expire_date: e.target.value})}
-                />
-              </div>
-
-              {/* Seuil alerte */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Seuil alerte</span></label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  value={editForm.stock_alert}
-                  onChange={(e) => setEditForm({...editForm, stock_alert: e.target.value})}
-                />
-              </div>
-
-              {/* Stock min */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Stock minimum</span></label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  value={editForm.stock_minimum}
-                  onChange={(e) => setEditForm({...editForm, stock_minimum: e.target.value})}
-                />
-              </div>
-
-              {/* Stock max */}
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Stock maximum</span></label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  value={editForm.stock_maximum}
-                  onChange={(e) => setEditForm({...editForm, stock_maximum: e.target.value})}
-                />
-              </div>
-            </div>
-
-
-            {/* Gestion par lots */}
-            <div className="form-control">
-              <label className="label cursor-pointer justify-start gap-4">
-                <input
-                  type="checkbox"
-                  checked={editForm.use_lot_management}
-                  onChange={(e) => setEditForm({...editForm, use_lot_management: e.target.checked})}
-                  className="checkbox checkbox-primary"
-                />
-                <div>
-                  <span className="label-text font-semibold">Gestion par lots FIFO</span>
-                  <p className="text-xs text-base-content/60 mt-1">
-                    Activer la traçabilité par lots (recommandé pour médicaments, produits périssables)
-                  </p>
-                </div>
               </label>
-            </div>
 
-            {/* Rayon, Fournisseur et Forme */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-               <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Forme</span></label>
-                <select
-                  className="select select-bordered w-full"
-                  value={editForm.forme}
-                  onChange={(e) => setEditForm({...editForm, forme: e.target.value})}
-                >
-                  <option value="">Sélectionner</option>
-                  {formes.map(f => (
-                    <option key={f.id} value={f.id}>{f.nom}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Rayon</span></label>
-                <select
-                  className="select select-bordered w-full"
-                  value={editForm.rayon}
-                  onChange={(e) => setEditForm({...editForm, rayon: e.target.value})}
-                >
-                  <option value="">Sélectionner un rayon</option>
-                  {rayons
-                    .filter(r => !r.parent) // Parents only first
-                    .map(parent => (
-                      <optgroup key={parent.id} label={parent.name}>
-                        <option value={parent.id}>{parent.name}</option>
-                        {rayons
-                          .filter(child => child.parent === parent.id)
-                          .map(child => (
-                            <option key={child.id} value={child.id}>
-                              &nbsp;&nbsp;&nbsp;↳ {child.name}
-                            </option>
-                          ))
-                        }
-                      </optgroup>
-                    ))
-                  }
-                  {/* Orphelins (au cas où) */}
-                  {rayons.some(r => r.parent && !rayons.find(p => p.id === r.parent)) && (
-                     <optgroup label="Autres">
+              <div className="grid grid-cols-2 gap-4">
+                 <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold">CIP1</span></div>
+                    <input className="input input-bordered w-full font-mono" value={editForm.cip1}
+                      onChange={(e) => setEditForm({ ...editForm, cip1: e.target.value })} />
+                 </label>
+                 <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold text-xs">Rayon</span></div>
+                    <select className="select select-bordered w-full" value={editForm.rayon}
+                       onChange={(e) => setEditForm({ ...editForm, rayon: e.target.value })}>
+                       <option value="">Sélectionner un rayon</option>
                        {rayons
-                         .filter(r => r.parent && !rayons.find(p => p.id === r.parent))
-                         .map(r => <option key={r.id} value={r.id}>{r.name}</option>)
+                         .filter(r => !r.parent)
+                         .map(parent => (
+                           <optgroup key={parent.id} label={parent.name}>
+                             <option value={parent.id}>{parent.name}</option>
+                             {rayons
+                               .filter(child => child.parent === parent.id)
+                               .map(child => (
+                                 <option key={child.id} value={child.id}>
+                                   ↳ {child.name}
+                                 </option>
+                               ))
+                             }
+                           </optgroup>
+                         ))
                        }
-                     </optgroup>
-                  )}
-                </select>
+                    </select>
+                 </label>
               </div>
 
-              <div className="form-control">
-                <label className="label"><span className="label-text font-semibold">Fournisseur</span></label>
-                <select
-                  className="select select-bordered w-full"
-                  value={editForm.fournisseur}
-                  onChange={(e) => setEditForm({...editForm, fournisseur: e.target.value})}
-                >
-                  <option value="">Sélectionner un fournisseur</option>
-                  {fournisseurs.map(f => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
-                  ))}
-                </select>
-                <label className="label cursor-pointer justify-start gap-2 mt-1">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-xs checkbox-primary"
-                    checked={editForm.is_supplier_exclusive}
-                    onChange={(e) => setEditForm({...editForm, is_supplier_exclusive: e.target.checked})}
-                    disabled={!editForm.fournisseur} 
-                  />
-                  <span className={`label-text-alt ${!editForm.fournisseur ? 'text-base-content/30' : ''}`}>
-                    Exclusivité fournisseur
-                  </span>
-                </label>
+              <div className="grid grid-cols-2 gap-4">
+                 <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold">Alerte stock</span></div>
+                    <input type="number" className="input input-bordered w-full" value={editForm.stock_alert}
+                      onChange={(e) => setEditForm({ ...editForm, stock_alert: e.target.value })} />
+                 </label>
+                 <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold">Fournisseur</span></div>
+                    <select className="select select-bordered w-full" value={editForm.fournisseur}
+                       onChange={(e) => {
+                         const val = e.target.value;
+                         setEditForm({ 
+                           ...editForm, 
+                           fournisseur: val,
+                           is_supplier_exclusive: val ? editForm.is_supplier_exclusive : false
+                         });
+                       }}>
+                       <option value="">—</option>
+                       {fournisseurs.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                    </select>
+                 </label>
               </div>
             </div>
 
-            {/* Section Ordonnancier */}
-            <div className="divider text-sm font-semibold text-base-content/50 uppercase tracking-wider">Ordonnance & Surveillance</div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-base-100 p-4 rounded-lg border border-base-200">
-              <div className="form-control">
+            <div className="space-y-4">
+               <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">Prix et Marge</h4>
+               <div className="grid grid-cols-2 gap-4">
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold">Prix Revient</span></div>
+                    <div className="join w-full">
+                      <input type="number" className="input input-bordered join-item w-full" value={editForm.cost_price}
+                        onChange={(e) => setEditForm({ ...editForm, cost_price: e.target.value })} />
+                      <span className="join-item btn btn-disabled bg-base-200">F</span>
+                    </div>
+                  </label>
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold text-primary">Prix Vente</span></div>
+                    <div className="join w-full">
+                      <input type="number" className="input input-bordered join-item w-full font-bold text-primary" value={editForm.selling_price}
+                        onChange={(e) => setEditForm({ ...editForm, selling_price: e.target.value })} />
+                      <span className="join-item btn btn-disabled bg-base-200">F</span>
+                    </div>
+                  </label>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold">TVA (%)</span></div>
+                    <select
+                      className="select select-bordered w-full"
+                      value={editForm.tva}
+                      onChange={(e) => setEditForm({ ...editForm, tva: e.target.value })}
+                    >
+                      {tvaList.map(t => <option key={t.id} value={t.taux}>{t.taux}%</option>)}
+                      {!tvaList.find(t => t.taux === editForm.tva) && (
+                        <option value={editForm.tva}>{editForm.tva}%</option>
+                      )}
+                    </select>
+                  </label>
+                  <label className="form-control w-full">
+                    <div className="label"><span className="label-text font-semibold">Expiration</span></div>
+                    <input type="date" className="input input-bordered w-full" value={editForm.expire_date}
+                      onChange={(e) => setEditForm({ ...editForm, expire_date: e.target.value })} />
+                  </label>
+               </div>
+
+               <div className="form-control">
+                  <label className="label cursor-pointer justify-start gap-4 p-4 rounded-xl border bg-base-100">
+                    <input type="checkbox" className="checkbox checkbox-primary" checked={editForm.use_lot_management}
+                      onChange={(e) => setEditForm({...editForm, use_lot_management: e.target.checked})} />
+                    <div>
+                      <span className="label-text font-bold">Gestion par lots FIFO</span>
+                      <p className="text-[10px] opacity-60">Recommandé pour médicaments et produits périssables</p>
+                    </div>
+                  </label>
+               </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl border bg-info/5 border-info/20">
                 <label className="label cursor-pointer justify-start gap-4">
-                  <input 
-                    type="checkbox" 
-                    className="checkbox checkbox-primary" 
-                    checked={editForm.requires_prescription || false}
-                    onChange={(e) => setEditForm({...editForm, requires_prescription: e.target.checked})}
-                  />
-                  <span className="label-text font-medium">Nécessite une ordonnance</span>
+                  <input type="checkbox" className="checkbox checkbox-primary" checked={editForm.requires_prescription || false}
+                    onChange={(e) => setEditForm({ ...editForm, requires_prescription: e.target.checked })} />
+                  <span className="label-text font-bold">Ordonnance Requise</span>
                 </label>
               </div>
-              
-              <div className="form-control w-full">
-                <label className="label py-0 mb-1"><span className="label-text">Niveau de surveillance</span></label>
-                <select 
-                  className="select select-bordered select-sm w-full"
-                  value={editForm.surveillance_category || 'NONE'}
-                  onChange={(e) => setEditForm({...editForm, surveillance_category: e.target.value as any})}
-                >
-                  <option value="NONE">Aucune</option>
-                  <option value="STANDARD">Surveillance Standard</option>
-                  <option value="RENFORCEE">Surveillance Renforcée</option>
-                </select>
+              <div className={`p-4 rounded-xl border transition-all ${editForm.fournisseur ? 'bg-warning/5 border-warning/20' : 'bg-base-200 opacity-50'}`}>
+                <label className="label cursor-pointer justify-start gap-4">
+                  <input type="checkbox" className="checkbox checkbox-warning" checked={editForm.is_supplier_exclusive} 
+                    disabled={!editForm.fournisseur}
+                    onChange={(e) => setEditForm({ ...editForm, is_supplier_exclusive: e.target.checked })} />
+                  <span className="label-text font-bold">Exclusivité Fournisseur</span>
+                </label>
               </div>
-            </div>
+          </div>
 
-            <div className="modal-action">
-              <button type="button" className="btn btn-sm" onClick={() => setIsEditModalOpen(false)}>Annuler</button>
-              <button type="submit" className="btn btn-sm btn-primary">💾 Enregistrer</button>
-            </div>
-          </form>
-        </div>
-      </dialog>
+          <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
+            <button type="button" className="btn btn-ghost px-8" onClick={() => setIsEditModalOpen(false)}>Annuler</button>
+            <button type="submit" className="btn btn-primary px-10 shadow-lg shadow-primary/20">💾 Enregistrer</button>
+          </div>
+        </form>
+      </PremiumModal>
 
       {/* Modal Ajustement de Stock */}
-      <dialog className={`modal ${isAdjustmentModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-md">
-          <h3 className="font-bold text-lg mb-4">
-            📊 Ajuster le stock
-            {selectedProduit && <span className="text-base-content/70 ml-2">- {selectedProduit.name}</span>}
-          </h3>
+      <PremiumModal
+        isOpen={isAdjustmentModalOpen}
+        onClose={() => setIsAdjustmentModalOpen(false)}
+        title="Ajuster le stock"
+        subtitle={selectedProduit?.name}
+        maxWidth="max-w-md"
+        icon={<span>📊</span>}
+        gradientFrom="info/20"
+        gradientTo="primary/20"
+      >
+        <form className="p-6 space-y-6" onSubmit={handleStockAdjustment}>
+          <div className="bg-info/10 p-4 rounded-xl border border-info/20 text-center">
+            <span className="text-sm opacity-70">Stock actuel :</span>
+            <div className="text-2xl font-black text-info">{selectedProduit?.stock ?? 0}</div>
+          </div>
           
-          <form onSubmit={handleStockAdjustment} className="space-y-4">
-            <div className="alert alert-info py-2">
-              <span>Stock actuel : <strong>{selectedProduit?.stock ?? 0}</strong> unités</span>
-            </div>
-            
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">Nouvelle quantité *</span>
-              </label>
+          <div className="space-y-4">
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text font-bold">Nouvelle quantité *</span></div>
               <input
                 type="number"
-                className="input input-bordered input-sm"
+                className="input input-bordered w-full text-center text-xl font-bold focus:input-primary"
                 value={adjustmentForm.new_quantity}
                 onChange={(e) => setAdjustmentForm(prev => ({ ...prev, new_quantity: e.target.value }))}
                 required
                 min={0}
               />
               {adjustmentForm.new_quantity && selectedProduit && (
-                <label className="label">
-                  <span className={`label-text-alt ${
-                    parseInt(adjustmentForm.new_quantity) > selectedProduit.stock ? 'text-success' : 
-                    parseInt(adjustmentForm.new_quantity) < selectedProduit.stock ? 'text-error' : ''
+                <div className="mt-2 text-center">
+                  <span className={`badge badge-sm font-bold ${
+                    parseInt(adjustmentForm.new_quantity) > selectedProduit.stock ? 'badge-success' : 
+                    parseInt(adjustmentForm.new_quantity) < selectedProduit.stock ? 'badge-error' : 'badge-ghost'
                   }`}>
                     Différence : {parseInt(adjustmentForm.new_quantity) - selectedProduit.stock > 0 ? '+' : ''}
                     {parseInt(adjustmentForm.new_quantity) - selectedProduit.stock}
                   </span>
-                </label>
+                </div>
               )}
-            </div>
+            </label>
             
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text font-semibold">Type de motif *</span>
-              </label>
+            <label className="form-control w-full">
+              <div className="label"><span className="label-text font-bold">Type de motif *</span></div>
               <select
-                className="select select-bordered select-sm"
+                className="select select-bordered w-full"
                 value={adjustmentForm.reason_type}
                 onChange={(e) => setAdjustmentForm(prev => ({ ...prev, reason_type: e.target.value }))}
                 required
@@ -2095,26 +2006,17 @@ export default function Produit() {
                   <option key={reason.value} value={reason.value}>{reason.label}</option>
                 ))}
               </select>
-            </div>
-            
-            <div className="modal-action">
-              <button type="button" className="btn btn-sm" onClick={() => setIsAdjustmentModalOpen(false)}>
-                Annuler
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-sm btn-warning"
-                disabled={!adjustmentForm.new_quantity}
-              >
-                ✓ Confirmer l'ajustement
-              </button>
-            </div>
-          </form>
-        </div>
-        <form method="dialog" className="modal-backdrop">
-          <button onClick={() => setIsAdjustmentModalOpen(false)}>close</button>
+            </label>
+          </div>
+          
+          <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
+            <button type="button" className="btn btn-ghost px-8" onClick={() => setIsAdjustmentModalOpen(false)}>Annuler</button>
+            <button type="submit" className="btn btn-warning px-10 shadow-lg shadow-warning/20 font-bold" disabled={!adjustmentForm.new_quantity}>
+              ✓ Confirmer
+            </button>
+          </div>
         </form>
-      </dialog>
+      </PremiumModal>
 
       {/* Sudo Mode Password Modal */}
       <PasswordConfirmModal
@@ -2131,8 +2033,6 @@ export default function Produit() {
         onClose={() => setIsCreateModalOpen(false)}
         onCreated={handleProduitCreated}
         produitsEndpoint={produitsEndpoint}
-        rayonsEndpoint={rayonsEndpoint}
-        fournisseursEndpoint={fournisseursEndpoint}
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}

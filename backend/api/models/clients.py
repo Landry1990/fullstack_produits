@@ -25,6 +25,21 @@ class Fournisseur(models.Model):
         default=True, 
         help_text="Fournisseur actif (visible dans les recherches)"
     )
+    
+    TYPE_REGLEMENT_CHOICES = [
+        ('FACTURE', 'À la facture'),
+        ('RELEVE', 'Sur relevé'),
+    ]
+    type_reglement = models.CharField(
+        max_length=20, 
+        choices=TYPE_REGLEMENT_CHOICES, 
+        default='FACTURE',
+        help_text="Mode d'échéance des paiements. Ubipharm/Laborex = RELEVE, Autres = FACTURE."
+    )
+    delai_paiement_jours = models.IntegerField(
+        default=0,
+        help_text="Délai de paiement accordé en jours (ex: 10, 15). 0 = au comptant."
+    )
 
     def __str__(self):
         return self.name

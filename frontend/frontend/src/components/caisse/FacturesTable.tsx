@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Facture, CouponMonnaie } from '../../types'
+import PremiumModal from '../common/PremiumModal'
 
 interface FacturesTableProps {
   sortedFactures: Facture[]
@@ -147,6 +148,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         e.stopPropagation()
                         setPreviewFacture(facture)
                       }}
+                      onDoubleClick={(e) => e.stopPropagation()}
                       title="Voir les produits"
                     >
                       {getProductsSummary(facture)}
@@ -162,6 +164,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                             e.stopPropagation()
                             onRemoveCoupon(facture.id) 
                           }}
+                          onDoubleClick={(e) => e.stopPropagation()}
                           className="btn btn-xs btn-circle btn-ghost text-error h-4 w-4 min-h-0"
                           title={t('table.remove_coupon')}
                         >
@@ -177,6 +180,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                            e.stopPropagation()
                            onModify(facture)
                         }}
+                        onDoubleClick={(e) => e.stopPropagation()}
                         className="btn btn-xs btn-outline btn-warning"
                         title={t('table.modify')}
                       >
@@ -189,6 +193,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                            e.stopPropagation()
                            onCancel(facture)
                         }}
+                        onDoubleClick={(e) => e.stopPropagation()}
                         className="btn btn-xs btn-outline btn-error"
                         title={t('table.cancel')}
                       >
@@ -202,6 +207,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                              e.stopPropagation()
                              onApplyCoupon(facture)
                           }}
+                          onDoubleClick={(e) => e.stopPropagation()}
                           className="btn btn-xs btn-outline btn-secondary"
                           title={t('table.apply_coupon')}
                         >
@@ -215,6 +221,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                           e.stopPropagation()
                           onEncaisser(facture)
                         }}
+                        onDoubleClick={(e) => e.stopPropagation()}
                         disabled={!(user as any)?.can_cash_out && !(user?.is_superuser)}
                         className="btn btn-xs btn-success text-white gap-1"
                         title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? t('table.not_authorized') : t('table.cash_in')}
@@ -234,15 +241,17 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
       </div>
 
       {/* Products Preview Popup */}
-      <dialog className={`modal ${previewFacture ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-md">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-lg">
-              📦 Produits — #{previewFacture?.numero_facture}
-            </h3>
-            <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setPreviewFacture(null)}>✕</button>
+      <PremiumModal
+        isOpen={!!previewFacture}
+        onClose={() => setPreviewFacture(null)}
+        title={`📦 Produits — #${previewFacture?.numero_facture}`}
+        footer={
+          <div className="flex justify-end w-full">
+            <button className="btn btn-sm" onClick={() => setPreviewFacture(null)}>Fermer</button>
           </div>
-          
+        }
+      >
+        <div className="p-4">
           {previewFacture?.produits && previewFacture.produits.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="table table-sm table-zebra w-full">
@@ -282,15 +291,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
           ) : (
             <p className="text-center text-base-content/50 py-4">Aucun produit</p>
           )}
-          
-          <div className="modal-action">
-            <button className="btn btn-sm" onClick={() => setPreviewFacture(null)}>Fermer</button>
-          </div>
         </div>
-        <form method="dialog" className="modal-backdrop" onClick={() => setPreviewFacture(null)}>
-          <button>close</button>
-        </form>
-      </dialog>
+      </PremiumModal>
     </>
   )
 }

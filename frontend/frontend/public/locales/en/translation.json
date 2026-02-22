@@ -889,17 +889,38 @@
             "stock_value_sub": "Purchase Price",
             "stock_value_details": "valuation",
             "stock_alerts": "Stock Alerts",
-            "stock_alerts_sub": "out of stock or low"
+            "stock_alerts_sub": "out of stock or low",
+            "sales_user_title": "MY SALES (TODAY)",
+            "sales_user_details": "Personal cashings",
+            "sales_count": "{{count}} sales",
+            "avg_basket_user_title": "MY AVG BASKET",
+            "avg_basket_user_change": "Average per client",
+            "vs_yesterday": "vs yesterday",
+            "invoices_count": "{{count}} invoices",
+            "products_count": "{{count}} products"
         },
         "actions": {
             "title": "Quick Actions",
             "new_invoice": "New Invoice",
             "manage_products": "Manage Products",
-            "new_client": "New Customer"
+            "new_client": "New Customer",
+            "generate_order": "Generate Order"
         },
         "charts": {
             "revenue_evolution": "Revenue Evolution (Last 7 Days)",
-            "sales_trend": "Sales Trend (Last 7 Days)"
+            "sales_trend": "Sales Trend (Last 7 Days)",
+            "hourly_traffic_title": "Average Hourly Traffic (30 days)",
+            "sales_label": "Sales"
+        },
+        "debts": {
+            "supplier_debts_title": "Supplier Debts",
+            "total_debt": "Total",
+            "supplier": "Supplier",
+            "debt": "Debt",
+            "action": "Action",
+            "manage_payments": "Manage payments",
+            "no_supplier_debts": "No supplier debt",
+            "refresh_debts": "Refresh debts"
         },
         "ug": {
             "title": "Free Units (UG) by Supplier",
@@ -927,125 +948,6 @@
             "coverage": "Coverage: {{days}}d",
             "expired": "Expired!",
             "days_left": "{{count}}d"
-        }
-    },
-    "facturation": {
-        "pending_sales": {
-            "title": "Pending Sales",
-            "items_count": "{{count}} item(s)"
-        },
-        "payment": {
-            "modal_title": "Payment",
-            "sudo_mode": {
-                "validate_by": "Validated by",
-                "password": "Password (Sudo)"
-            },
-            "validate_sale": "Validate Sale",
-            "register_payment": "Register Payment"
-        },
-        "title": "Billing",
-        "subtitle": "Invoice Creation",
-        "search_placeholder": "Scan barcode or search product (Name, CIP...)",
-        "search_label": "Search Product (F2)",
-        "search_min_chars": "Type at least 2 chars",
-        "search_no_results": "No product found",
-        "create_client": {
-            "title": "New Client",
-            "individual": "Individual",
-            "professional": "Professional / Insurance",
-            "name": "Full Name",
-            "phone": "Phone"
-        },
-        "client": {
-            "label": "Client (F4)",
-            "select_list_tooltip": "Select from list",
-            "manual_input_tooltip": "Manual input",
-            "list_button": "List",
-            "manual_button": " Input",
-            "manual_placeholder": "Client name...",
-            "search_placeholder": "🔍 Search client...",
-            "clear_tooltip": "Clear",
-            "no_results": "No client found",
-            "create_button": "Create",
-            "results_count": "{{count}} result(s) of {{total}}",
-            "ayant_droit": {
-                "label": "Beneficiary",
-                "select_existing_tooltip": "Select existing",
-                "new_tooltip": "New",
-                "existing_button": "📋 Existing",
-                "new_button": "New",
-                "name_placeholder": "Beneficiary name *",
-                "matricule_placeholder": "Registration number *",
-                "societe_placeholder": "Company (optional)",
-                "select_placeholder": "Select a beneficiary..."
-            }
-        },
-        "actions": {
-            "reset_tooltip": "Reset invoice (Esc)",
-            "cancel": "Cancel",
-            "suspend_tooltip": "Put on hold for later",
-            "suspend": "Suspend",
-            "suspend_short": "Hold",
-            "view_pending_tooltip": "View pending sales",
-            "pending": "Pending",
-            "proforma_tooltip": "Generate proforma invoice",
-            "proforma": "Proforma",
-            "pay_tooltip": "Validate and pay (Ctrl+Enter)",
-            "pay": "Pay (Ctrl+Enter)",
-            "validate": "Validate",
-            "clear": "Clear cart"
-        },
-        "cart": {
-            "headers": {
-                "product": "Product",
-                "qty": "Qty",
-                "price": "U.P.",
-                "total": "Total",
-                "stock": "Stock",
-                "discount": "Discount"
-            },
-            "empty": "Cart is empty. Scan a product or use search.",
-            "actions": {
-                "remove": "Remove line"
-            }
-        },
-        "totals": {
-            "subtotal": "Subtotal",
-            "discount": "Global Discount",
-            "tva": "VAT",
-            "total_ttc": "Total",
-            "part_patient": "Patient Share",
-            "part_assurance": "Insurance Share"
-        },
-        "stock_resolution": {
-            "title": "Stock Resolution / Promised",
-            "message": "Some requested products have a quantity greater than available stock. Please indicate for each product if the missing quantity should be treated as a 'Promised Item' (client will pick it up later) or forced (sale despite negative stock).",
-            "demand": "Demand",
-            "stock": "Stock",
-            "missing": "Missing",
-            "promised": "Promised?",
-            "client_phone_for_promised_ticket": "Phone number for promised ticket",
-            "phone_number_placeholder": "Ex: 77...",
-            "cancel_and_edit_cart": "Cancel and edit cart",
-            "validate_and_cash": "Validate and Cash"
-        },
-        "payment": {
-            "modal_title": "Payment",
-            "amount_due": "Amount Due",
-            "amount_paid": "Amount Paid",
-            "change_due": "Change Due",
-            "modes": {
-                "especes": "Cash",
-                "cheque": "Check",
-                "carte": "Credit Card",
-                "virement": "Transfer",
-                "mobile": "Mobile Money",
-                "credit": "Customer Credit"
-            },
-            "validate": "Validate Payment",
-            "cancel": "Cancel",
-            "print_ticket": "Print Ticket",
-            "print_invoice": "Print Invoice A4"
         }
     },
     "clients": {
@@ -1466,146 +1368,6 @@
         },
         "top_perimes": "Expired Products in Stock"
     },
-    "caisse": {
-        "title": "Centralized Register",
-        "subtitle": "Sales pending settlement are automatically displayed",
-        "auto_refresh": "Auto-refresh (20s)",
-        "coupons_active": "Coupons ({{count}} active)",
-        "coupons_applied": "{{count}} coupon(s) applied",
-        "pending_count": "{{count}} pending",
-        "no_pending": "No pending invoices",
-        "no_pending_desc": "New invoices will appear here automatically.",
-        "table": {
-            "ticket": "#Ticket",
-            "invoice": "Invoice",
-            "client": "Client",
-            "date": "Date",
-            "products": "Products",
-            "amount": "Amount",
-            "actions": "Actions",
-            "tiers_payant": "Third-Party Payer",
-            "coupon_applied": "Coupon applied",
-            "remove_coupon": "Remove coupon",
-            "modify": "Modify",
-            "cancel": "Cancel",
-            "apply_coupon": "Apply coupon",
-            "cash_in": "Cash in",
-            "not_authorized": "Not authorized"
-        },
-        "coupons": {
-            "title": "Coupons",
-            "generate": "Generate coupon",
-            "permission_required": "Permission required",
-            "search_placeholder": "Search #...",
-            "none": "No coupon",
-            "headers": {
-                "num_amount": "N° / Amount",
-                "creation": "Creation",
-                "usage": "Usage",
-                "status": "Status"
-            },
-            "by": "By: {{name}}",
-            "system": "System",
-            "status": {
-                "active": "ACTIVE",
-                "used": "USED",
-                "expired": "EXPIRED"
-            },
-            "generate_modal": {
-                "title": "Generate a Coupon",
-                "amount": "Amount",
-                "notes": "Notes",
-                "placeholder_notes": "Comment...",
-                "submit": "Generate"
-            },
-            "details_modal": {
-                "title": "Coupon Details",
-                "print": "Print"
-            }
-        },
-        "payment_modes": {
-            "especes": "Cash",
-            "carte": "Credit Card",
-            "cheque": "Check",
-            "virement": "Transfer",
-            "om_short": "OM",
-            "momo_short": "MoMo"
-        },
-        "payment_modal": {
-            "title": "Cashing In - Invoice #{{numero}}",
-            "total": "Total to pay",
-            "coupon_label": "Coupon #{{numero}}: -{{montant}} F",
-            "part_patient": "Patient Portion (Third-Party Payer active)",
-            "recorded_payments": "Recorded payments",
-            "total_paid": "Total paid",
-            "balance": "Remaining to pay: {{amount}} F",
-            "step1": "1. Enter amount then press Enter",
-            "enter_hint": "Press Enter after entering the amount",
-            "step2": "2. Use ↑↓←→ and Enter to choose mode",
-            "modify_amount": "Modify amount",
-            "change": "Change to give",
-            "validate_hint": "✓ Validate payment (Enter)",
-            "balance_short": "Remaining {{amount}} F"
-        },
-        "payment": {
-            "modal_title": "Cashing In - Invoice #{{numero}}",
-            "total_to_pay": "Total to pay",
-            "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
-            "tiers_payant_alert": "Client Portion (Third-Party Payer active)",
-            "recorded_payments": "Recorded payments:",
-            "total_paid": "Total paid:",
-            "remaining": "Remaining to pay: {{amount}} F",
-            "step1": "1. Enter amount then press Enter",
-            "step1_hint": "Press Enter after entering the amount",
-            "amount_label": "Amount:",
-            "step2": "2. Use ↑↓←→ and Enter to choose mode",
-            "modify_amount": "← Modify amount",
-            "change_to_give": "Change to give",
-            "confirm": "✓ Validate payment (Enter)",
-            "missing": "Remaining {{amount}} F",
-            "sudo_mode": {
-                "validate_by": "Validated by",
-                "password": "Password (Sudo)"
-            },
-            "validate_sale": "Validate Sale",
-            "register_payment": "Register Payment"
-        },
-        "ticket": {
-            "title": "Cash Receipt",
-            "invoice_num": "Invoice",
-            "date": "Date",
-            "client": "Client",
-            "subtotal_ht": "Subtotal EX-VAT",
-            "discount": "Discount",
-            "tva": "VAT",
-            "total_ttc": "TOTAL INC-VAT",
-            "amount_paid": "Amount Paid",
-            "change": "Change",
-            "settlements": "Settlements",
-            "part_patient": "Patient Portion",
-            "part_assurance": "Insurance Portion"
-        },
-        "messages": {
-            "invalid_amount": "Please enter a valid amount",
-            "coupon_generated": "Coupon #{{numero}} generated successfully!",
-            "error_generation": "Error during coupon generation",
-            "coupon_not_active": "This coupon is not active",
-            "coupon_already_applied": "This coupon is already applied to another sale",
-            "coupon_applied_to": "Coupon #{{numero}} applied to sale #{{ticket}}",
-            "coupon_removed": "Coupon removed",
-            "coupon_not_found": "Coupon not found",
-            "search_error": "Error during search",
-            "refreshed": "List refreshed",
-            "cancel_confirm": "Are you sure you want to cancel invoice #{{numero}}?",
-            "cancelled": "Invoice cancelled",
-            "cancel_error": "Error during cancellation",
-            "modify_confirm": "Modify this invoice? It will be removed from the list and reloaded in the sales screen.",
-            "empty_invoice": "This invoice contains no products",
-            "load_error": "Unable to load invoice for modification",
-            "cash_in_success": "Invoice #{{numero}} cashed in successfully!",
-            "payment_error": "Error during payment recording"
-        }
-    },
     "rayons": {
         "title": "Shelf Management",
         "new_main": "New Main Shelf",
@@ -1752,42 +1514,6 @@
             "comparison": "Revenue Comparison"
         }
     },
-    "caisse": {
-        "title": "Centralized Register",
-        "subtitle": "Payment Management",
-        "auto_refresh": "Auto refresh",
-        "coupons_active": "Active coupons",
-        "pending_count": "{{count}} invoice(s) pending",
-        "table": {
-            "ticket": "Ticket",
-            "invoice": "Invoice",
-            "client": "Client",
-            "date": "Date",
-            "products": "Products",
-            "amount": "Amount",
-            "actions": "Actions",
-            "tiers_payant": "Third Party Payer",
-            "modify": "Modify",
-            "cancel": "Cancel",
-            "apply_coupon": "Apply Coupon",
-            "cash_in": "Cash In"
-        },
-        "empty": "No invoices pending payment",
-        "payment": {
-            "title": "Payment",
-            "amount_to_pay": "Amount to pay",
-            "payment_mode": "Payment method",
-            "modes": {
-                "cash": "Cash",
-                "card": "Credit Card",
-                "mobile": "Mobile Money",
-                "check": "Check",
-                "credit": "On Account"
-            },
-            "confirm": "Confirm payment",
-            "success": "Payment recorded"
-        }
-    },
     "salesHistory": {
         "title": "Daily Sales History",
         "start_date": "Start Date",
@@ -1866,6 +1592,277 @@
             "overstock": "No overstocked products",
             "shortage": "No shortage predicted",
             "all_good": "Everything looks fine!"
+        }
+    },
+    "caisse": {
+        "title": "Centralized Register",
+        "subtitle": "Payment Management",
+        "auto_refresh": "Auto refresh",
+        "coupons_active": "Active coupons",
+        "coupons_applied": "{{count}} coupon(s) applied",
+        "pending_count": "{{count}} invoice(s) pending",
+        "no_pending": "No pending invoices",
+        "no_pending_desc": "New invoices will appear here automatically.",
+        "table": {
+            "ticket": "Ticket",
+            "invoice": "Invoice",
+            "client": "Client",
+            "date": "Date",
+            "products": "Products",
+            "amount": "Amount",
+            "actions": "Actions",
+            "tiers_payant": "Third Party Payer",
+            "coupon_applied": "Coupon applied",
+            "remove_coupon": "Remove coupon",
+            "modify": "Modify",
+            "cancel": "Cancel",
+            "apply_coupon": "Apply Coupon",
+            "cash_in": "Cash In",
+            "not_authorized": "Not authorized"
+        },
+        "coupons": {
+            "title": "Coupons",
+            "generate": "Generate coupon",
+            "permission_required": "Permission required",
+            "search_placeholder": "Search #...",
+            "none": "No coupon",
+            "headers": {
+                "num_amount": "N° / Amount",
+                "creation": "Creation",
+                "usage": "Usage",
+                "status": "Status"
+            },
+            "by": "By: {{name}}",
+            "system": "System",
+            "status": {
+                "active": "ACTIVE",
+                "used": "USED",
+                "expired": "EXPIRED"
+            },
+            "generate_modal": {
+                "title": "Generate a Coupon",
+                "amount": "Amount",
+                "notes": "Notes",
+                "placeholder_notes": "Comment...",
+                "submit": "Generate"
+            },
+            "details_modal": {
+                "title": "Coupon Details",
+                "print": "Print"
+            }
+        },
+        "payment_modes": {
+            "especes": "Cash",
+            "carte": "Credit Card",
+            "cheque": "Check",
+            "virement": "Transfer",
+            "om_short": "OM",
+            "momo_short": "MoMo"
+        },
+        "payment_modal": {
+            "title": "Cashing In - Invoice #{{numero}}",
+            "total": "Total to pay",
+            "coupon_label": "Coupon #{{numero}}: -{{montant}} F",
+            "part_patient": "Patient Portion (Third-Party Payer active)",
+            "recorded_payments": "Recorded payments",
+            "total_paid": "Total paid",
+            "balance": "Remaining to pay: {{amount}} F",
+            "step1": "1. Enter amount then press Enter",
+            "enter_hint": "Press Enter after entering the amount",
+            "step2": "2. Use ↑↓←→ and Enter to choose mode",
+            "modify_amount": "Modify amount",
+            "change": "Change to give",
+            "validate_hint": "✓ Validate payment (Enter)",
+            "balance_short": "Remaining {{amount}} F"
+        },
+        "payment": {
+            "modal_title": "Cashing In - Invoice #{{numero}}",
+            "total_to_pay": "Total to pay",
+            "coupon_sub": "Coupon #{{numero}}: -{{amount}} F",
+            "tiers_payant_alert": "Client Portion (Third-Party Payer active)",
+            "recorded_payments": "Recorded payments:",
+            "total_paid": "Total paid:",
+            "remaining": "Remaining to pay: {{amount}} F",
+            "step1": "1. Enter amount then press Enter",
+            "step1_hint": "Press Enter after entering the amount",
+            "amount_label": "Amount:",
+            "step2": "2. Use ↑↓←→ and Enter to choose mode",
+            "modify_amount": "← Modify amount",
+            "change_to_give": "Change to give",
+            "confirm": "Confirm payment",
+            "missing": "Remaining {{amount}} F",
+            "sudo_mode": {
+                "validate_by": "Validated by",
+                "password": "Password (Sudo)"
+            },
+            "validate_sale": "Validate Sale",
+            "register_payment": "Register Payment",
+            "title": "Payment",
+            "amount_to_pay": "Amount to pay",
+            "payment_mode": "Payment method",
+            "modes": {
+                "cash": "Cash",
+                "card": "Credit Card",
+                "mobile": "Mobile Money",
+                "check": "Check",
+                "credit": "On Account"
+            },
+            "success": "Payment recorded"
+        },
+        "ticket": {
+            "title": "Cash Receipt",
+            "invoice_num": "Invoice",
+            "date": "Date",
+            "client": "Client",
+            "subtotal_ht": "Subtotal EX-VAT",
+            "discount": "Discount",
+            "tva": "VAT",
+            "total_ttc": "TOTAL INC-VAT",
+            "amount_paid": "Amount Paid",
+            "change": "Change",
+            "settlements": "Settlements",
+            "part_patient": "Patient Portion",
+            "part_assurance": "Insurance Portion"
+        },
+        "messages": {
+            "invalid_amount": "Please enter a valid amount",
+            "coupon_generated": "Coupon #{{numero}} generated successfully!",
+            "error_generation": "Error during coupon generation",
+            "coupon_not_active": "This coupon is not active",
+            "coupon_already_applied": "This coupon is already applied to another sale",
+            "coupon_applied_to": "Coupon #{{numero}} applied to sale #{{ticket}}",
+            "coupon_removed": "Coupon removed",
+            "coupon_not_found": "Coupon not found",
+            "search_error": "Error during search",
+            "refreshed": "List refreshed",
+            "cancel_confirm": "Are you sure you want to cancel invoice #{{numero}}?",
+            "cancelled": "Invoice cancelled",
+            "cancel_error": "Error during cancellation",
+            "modify_confirm": "Modify this invoice? It will be removed from the list and reloaded in the sales screen.",
+            "empty_invoice": "This invoice contains no products",
+            "load_error": "Unable to load invoice for modification",
+            "cash_in_success": "Invoice #{{numero}} cashed in successfully!",
+            "payment_error": "Error during payment recording"
+        },
+        "empty": "No invoices pending payment"
+    },
+    "facturation": {
+        "pending_sales": {
+            "title": "Pending Sales",
+            "items_count": "{{count}} item(s)"
+        },
+        "payment": {
+            "modal_title": "Payment",
+            "amount_due": "Amount Due",
+            "amount_paid": "Amount Paid",
+            "change_due": "Change Due",
+            "modes": {
+                "especes": "Cash",
+                "cheque": "Check",
+                "carte": "Credit Card",
+                "virement": "Transfer",
+                "mobile": "Mobile Money",
+                "credit": "Customer Credit"
+            },
+            "validate": "Validate Payment",
+            "cancel": "Cancel",
+            "print_ticket": "Print Ticket",
+            "print_invoice": "Print Invoice A4"
+        },
+        "title": "Billing",
+        "subtitle": "Invoice Creation",
+        "search_placeholder": "Scan barcode or search product (Name, CIP...)",
+        "search_label": "Search Product (F2)",
+        "search_min_chars": "Type at least 2 chars",
+        "search_no_results": "No product found",
+        "create_client": {
+            "title": "New Client",
+            "individual": "Individual",
+            "professional": "Professional / Insurance",
+            "name": "Full Name",
+            "phone": "Phone"
+        },
+        "client": {
+            "label": "Client (F4)",
+            "select_list_tooltip": "Select from list",
+            "manual_input_tooltip": "Manual input",
+            "list_button": "List",
+            "manual_button": " Input",
+            "manual_placeholder": "Client name...",
+            "search_placeholder": "🔍 Search client...",
+            "clear_tooltip": "Clear",
+            "no_results": "No client found",
+            "create_button": "Create",
+            "results_count": "{{count}} result(s) of {{total}}",
+            "ayant_droit": {
+                "label": "Beneficiary",
+                "select_existing_tooltip": "Select existing",
+                "new_tooltip": "New",
+                "existing_button": "📋 Existing",
+                "new_button": "New",
+                "name_placeholder": "Beneficiary name *",
+                "matricule_placeholder": "Registration number *",
+                "societe_placeholder": "Company (optional)",
+                "select_placeholder": "Select a beneficiary..."
+            }
+        },
+        "actions": {
+            "reset_tooltip": "Reset invoice (Esc)",
+            "cancel": "Cancel",
+            "suspend_tooltip": "Put on hold for later",
+            "suspend": "Suspend",
+            "suspend_short": "Hold",
+            "view_pending_tooltip": "View pending sales",
+            "pending": "Pending",
+            "proforma_tooltip": "Generate proforma invoice",
+            "proforma": "Proforma",
+            "pay_tooltip": "Validate and pay (Ctrl+Enter)",
+            "pay": "Pay (Ctrl+Enter)",
+            "validate": "Validate",
+            "clear": "Clear cart"
+        },
+        "cart": {
+            "headers": {
+                "product": "Product",
+                "qty": "Qty",
+                "price": "U.P.",
+                "total": "Total",
+                "stock": "Stock",
+                "discount": "Discount"
+            },
+            "empty": "Cart is empty. Scan a product or use search.",
+            "actions": {
+                "remove": "Remove line"
+            }
+        },
+        "totals": {
+            "subtotal": "Subtotal",
+            "discount": "Global Discount",
+            "tva": "VAT",
+            "total_ttc": "Total",
+            "part_patient": "Patient Share",
+            "part_assurance": "Insurance Share"
+        },
+        "stock_resolution": {
+            "title": "Stock Resolution / Promised",
+            "message": "Some requested products have a quantity greater than available stock. Please indicate for each product if the missing quantity should be treated as a 'Promised Item' (client will pick it up later) or forced (sale despite negative stock).",
+            "demand": "Demand",
+            "stock": "Stock",
+            "missing": "Missing",
+            "promised": "Promised?",
+            "client_phone_for_promised_ticket": "Phone number for promised ticket",
+            "phone_number_placeholder": "Ex: 77...",
+            "cancel_and_edit_cart": "Cancel and edit cart",
+            "validate_and_cash": "Validate and Cash"
+        },
+        "cart_title": "Shopping Cart",
+        "items_count": "item(s)",
+        "shortcuts": {
+            "search": "Search",
+            "pay": "Pay"
+        },
+        "messages": {
+            "cancel_sale_confirm": "Are you sure you want to cancel the current sale? The entire cart will be lost."
         }
     }
 }

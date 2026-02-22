@@ -25,6 +25,11 @@ export default function Creances() {
   const [modePaiement, setModePaiement] = useState('especes')
   const [montantPaiement, setMontantPaiement] = useState('')
   const [referencePaiement, setReferencePaiement] = useState('')
+  
+  // Sudo Validation
+  const [validators, setValidators] = useState<any[]>([])
+  const [validatorId, setValidatorId] = useState('')
+  const [sudoPassword, setSudoPassword] = useState('')
 
   // Bulk / Historique
   const [selectedIds, setSelectedIds] = useState<number[]>([])
@@ -35,7 +40,7 @@ export default function Creances() {
   const [sortConfig, setSortConfig] = useState<{ key: keyof Creance | 'client_name', direction: 'asc' | 'desc' }>({ key: 'date', direction: 'desc' })
 
   // Notification System
-  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [notification, setNotification] = useState<{ type: 'success' | 'error' | 'warning', message: string } | null>(null)
   const { settings: pharmacySettings } = usePharmacySettings()
 
   useEffect(() => {
@@ -55,8 +60,12 @@ export default function Creances() {
 
   useEffect(() => {
     fetchClients()
-    fetchCreances()
+    fetchValidators()
   }, [])
+
+  useEffect(() => {
+    fetchCreances()
+  }, [showHistory, selectedClient])
 
   const fetchClients = async () => {
     try {
@@ -69,6 +78,18 @@ export default function Creances() {
     } catch (err) {
       console.error('Erreur chargement clients:', err)
     }
+  }
+
+  const fetchValidators = async () => {
+      try {
+          const usersEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/` : '/api/users/'
+          const response = await axios.get(usersEndpoint)
+          const data = Array.isArray(response.data) ? response.data : (response.data.results || [])
+          // On peut filtrer ceux qui ont le droit de valider si on veut
+          setValidators(data)
+      } catch (err) {
+          console.error('Erreur chargement validateurs:', err)
+      }
   }
 
   const fetchCreances = async () => {
@@ -101,6 +122,8 @@ export default function Creances() {
     setSelectedClient('')
     setDateDebut('')
     setDateFin('')
+    setValidatorId('')
+    setSudoPassword('')
     fetchCreances()
   }
 
@@ -133,16 +156,29 @@ export default function Creances() {
   
   const confirmBulkPayment = async () => {
     try {
-        await axios.post(`${creancesEndpoint}bulk_paiement/`, {
+        const response = await axios.post(`${creancesEndpoint}bulk_paiement/`, {
             facture_ids: selectedIds,
             mode_paiement: modePaiement,
-            reference: referencePaiement
+            reference: referencePaiement,
+            validated_by_id: validatorId,
+            sudo_password: sudoPassword
         })
+        
+        const releveId = response.data.releve_id
         
         setIsBulkModalOpen(false)
         setSelectedIds([])
+        setValidatorId('')
+        setSudoPassword('')
         fetchCreances()
         setNotification({ type: 'success', message: 'Règlement groupé effectué avec succès !' })
+        
+        if (releveId && window.confirm('Voulez-vous imprimer le reçu récapitulatif pour ce règlement ?')) {
+            await handlePrintBulkReceipt(releveId)
+        } else if (!releveId) {
+            console.error('releve_id manquant dans la réponse:', response.data)
+            setNotification({ type: 'warning', message: 'Règlement effectué mais impossible de récupérer l\'ID du relevé pour l\'impression.' })
+        }
     } catch (err: any) {
         const errorMsg = err.response?.data?.detail || 'Erreur lors du règlement groupé'
         setNotification({ type: 'error', message: errorMsg })
@@ -153,9 +189,79 @@ export default function Creances() {
   const handleOpenPaiementModal = (creance: Creance) => {
     setSelectedCreance(creance)
     setModePaiement('especes')
-    setMontantPaiement('')
+    setMontantPaiement(creance.reste_a_payer) // Par défaut, solde complet
     setReferencePaiement('')
+    setValidatorId('')
+    setSudoPassword('')
     setIsPaiementModalOpen(true)
+  }
+
+  const handlePrintDirectReceipt = async (creanceId: number, paiementId?: number) => {
+      try {
+          const url = `${creancesEndpoint}${creanceId}/imprimer_recu/${paiementId ? `?paiement_id=${paiementId}` : ''}`
+          const response = await axios.get(url, {
+              responseType: 'blob'
+          })
+          
+          // Créer un blob URL et ouvrir dans une nouvelle fenêtre
+          const blob = new Blob([response.data], { type: 'application/pdf' })
+          const blobUrl = window.URL.createObjectURL(blob)
+          const printWindow = window.open(blobUrl, '_blank')
+          
+          if (!printWindow) {
+              // Si la popup est bloquée, télécharger le fichier
+              const link = document.createElement('a')
+              link.href = blobUrl
+              link.setAttribute('download', `recu_paiement_${creanceId}_${paiementId || 'all'}.pdf`)
+              document.body.appendChild(link)
+              link.click()
+              link.parentNode?.removeChild(link)
+          }
+          
+          // Nettoyer l'URL après un délai
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100)
+      } catch (err: any) {
+          console.error('Erreur lors de l\'impression du reçu:', err)
+          const errorMsg = err.response?.data?.detail || 'Erreur lors de l\'impression du reçu'
+          setNotification({ type: 'error', message: errorMsg })
+      }
+  }
+
+  const handlePrintBulkReceipt = async (releveId: number) => {
+      if (!releveId) {
+          console.error('releveId est requis pour l\'impression')
+          setNotification({ type: 'error', message: 'ID du relevé manquant pour l\'impression' })
+          return
+      }
+      
+      try {
+          const response = await axios.get(`${creancesEndpoint}imprimer_releve_paiement/`, {
+              params: { releve_id: releveId },
+              responseType: 'blob'
+          })
+          
+          // Créer un blob URL et ouvrir dans une nouvelle fenêtre
+          const blob = new Blob([response.data], { type: 'application/pdf' })
+          const url = window.URL.createObjectURL(blob)
+          const printWindow = window.open(url, '_blank')
+          
+          if (!printWindow) {
+              // Si la popup est bloquée, télécharger le fichier
+              const link = document.createElement('a')
+              link.href = url
+              link.setAttribute('download', `recapitulatif_reglement_${releveId}.pdf`)
+              document.body.appendChild(link)
+              link.click()
+              link.parentNode?.removeChild(link)
+          }
+          
+          // Nettoyer l'URL après un délai
+          setTimeout(() => window.URL.revokeObjectURL(url), 100)
+      } catch (err: any) {
+          console.error('Erreur lors de l\'impression du relevé:', err)
+          const errorMsg = err.response?.data?.detail || 'Erreur lors de l\'impression du relevé'
+          setNotification({ type: 'error', message: errorMsg })
+      }
   }
 
   const handleOpenDetailsModal = (creance: Creance) => {
@@ -167,15 +273,25 @@ export default function Creances() {
     if (!selectedCreance || !montantPaiement) return
 
     try {
-      await axios.post(`${creancesEndpoint}${selectedCreance.id}/ajouter_paiement/`, {
+      const response = await axios.post(`${creancesEndpoint}${selectedCreance.id}/ajouter_paiement/`, {
         mode_paiement: modePaiement,
         montant: parseFloat(montantPaiement),
-        reference: referencePaiement || undefined
+        reference: referencePaiement || undefined,
+        validated_by_id: validatorId,
+        sudo_password: sudoPassword
       })
       
+      const paiementId = response.data.paiement_id
+      
       setIsPaiementModalOpen(false)
+      setValidatorId('')
+      setSudoPassword('')
       fetchCreances()
       setNotification({ type: 'success', message: 'Paiement enregistré avec succès !' })
+
+      if (window.confirm('Voulez-vous imprimer un reçu pour ce paiement ?')) {
+          await handlePrintDirectReceipt(selectedCreance.id, paiementId)
+      }
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || 'Erreur lors de l\'enregistrement du paiement'
       setNotification({ type: 'error', message: errorMsg })
@@ -307,6 +423,7 @@ export default function Creances() {
       case 'virement': return '🏦'
       case 'om': return '🟧'
       case 'momo': return '📱'
+      case 'recouvrement': return '💸'
       default: return '💰'
     }
   }
@@ -443,7 +560,11 @@ export default function Creances() {
       {/* Notification Toast */}
       {notification && (
         <div className="toast toast-top toast-center z-50">
-          <div className={`alert ${notification.type === 'success' ? 'alert-success' : 'alert-error'} shadow-lg`}>
+          <div className={`alert ${
+            notification.type === 'success' ? 'alert-success' : 
+            notification.type === 'warning' ? 'alert-warning' : 
+            'alert-error'
+          } shadow-lg`}>
             <span>{notification.message}</span>
           </div>
         </div>
@@ -780,7 +901,16 @@ export default function Creances() {
                     Une entrée sera créée dans le journal de caisse pour chaque facture.
                 </div>
 
-                <div className="form-control mt-4">
+                <div className="alert alert-info py-2 my-4">
+                    <span className="text-sm font-semibold">
+                        Montant Total à Régler : {Math.round(selectedIds.reduce((sum, id) => {
+                            const f = creances.find(c => c.id === id);
+                            return sum + (f ? parseFloat(f.reste_a_payer) : 0);
+                        }, 0))} F
+                    </span>
+                </div>
+
+                <div className="form-control">
                     <label className="label">
                         <span className="label-text font-bold">Mode de Paiement</span>
                     </label>
@@ -797,7 +927,8 @@ export default function Creances() {
                         <option value="virement">🏦 Virement</option>
                     </select>
                 </div>
-                 <div className="form-control mt-2">
+
+                <div className="form-control mt-2">
                     <label className="label">
                         <span className="label-text font-bold">Référence (optionnel)</span>
                     </label>
@@ -809,6 +940,36 @@ export default function Creances() {
                         className="input input-bordered"
                     />
                 </div>
+
+                {/* Sudo Section */}
+                <div className="mt-6 p-4 bg-base-200 rounded-lg border border-base-300">
+                    <h4 className="text-sm font-bold mb-3 uppercase text-primary">🔐 Validation Superviseur</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="form-control">
+                            <select
+                                value={validatorId}
+                                onChange={(e) => setValidatorId(e.target.value)}
+                                className="select select-bordered select-sm w-full"
+                                required
+                            >
+                                <option value="">Validateur</option>
+                                {validators.map(v => (
+                                    <option key={v.id} value={v.id}>{v.username}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-control">
+                            <input
+                                type="password"
+                                placeholder="Mot de passe"
+                                value={sudoPassword}
+                                onChange={(e) => setSudoPassword(e.target.value)}
+                                className="input input-bordered input-sm w-full"
+                                required
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
             <div className="modal-action">
                 <button className="btn btn-ghost" onClick={() => setIsBulkModalOpen(false)}>Annuler</button>
@@ -816,8 +977,6 @@ export default function Creances() {
             </div>
         </div>
       </dialog>
-
-
 
       {/* Modal Ajouter Paiement */}
       <dialog className={`modal ${isPaiementModalOpen ? 'modal-open' : ''}`}>
@@ -878,20 +1037,37 @@ export default function Creances() {
                   className="input input-bordered"
                 />
               </div>
-            </div>
-          )}
 
-
-          {/* Modal Bulk Content - Show Total */}
-          {isBulkModalOpen && (
-              <div className="alert alert-info py-2 mb-4">
-                  <span className="text-sm font-semibold">
-                      Montant Total à Régler : {Math.round(selectedIds.reduce((sum, id) => {
-                          const f = creances.find(c => c.id === id);
-                          return sum + (f ? parseFloat(f.reste_a_payer) : 0);
-                      }, 0))} F
-                  </span>
+              {/* Sudo Section */}
+              <div className="mt-6 p-4 bg-base-200 rounded-lg border border-base-300">
+                <h4 className="text-sm font-bold mb-3 uppercase text-primary">🔐 Validation Superviseur</h4>
+                <div className="space-y-3">
+                    <div className="form-control">
+                        <select
+                            value={validatorId}
+                            onChange={(e) => setValidatorId(e.target.value)}
+                            className="select select-bordered w-full"
+                            required
+                        >
+                            <option value="">Choisir un validateur</option>
+                            {validators.map(v => (
+                                <option key={v.id} value={v.id}>{v.username}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="form-control">
+                        <input
+                            type="password"
+                            placeholder="Mot de passe superviseur"
+                            value={sudoPassword}
+                            onChange={(e) => setSudoPassword(e.target.value)}
+                            className="input input-bordered w-full"
+                            required
+                        />
+                    </div>
+                </div>
               </div>
+            </div>
           )}
           
           <div className="modal-action">
@@ -926,6 +1102,7 @@ export default function Creances() {
                       <th className="text-right">Montant</th>
                       <th>Référence</th>
                       <th>Statut</th>
+                      <th className="text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -939,7 +1116,12 @@ export default function Creances() {
                           </div>
                         </td>
                         <td className="text-right font-semibold">{Math.round(parseFloat(paiement.montant))} F</td>
-                        <td className="text-xs">{paiement.reference || '-'}</td>
+                        <td className="text-xs">
+                            {paiement.reference || '-'}
+                            {paiement.releve_reference && (
+                                <div className="text-[10px] text-primary font-bold">{paiement.releve_reference}</div>
+                            )}
+                        </td>
                         <td>
                           <div className={`badge badge-xs ${
                             paiement.statut === 'completee' ? 'badge-success' :
@@ -948,6 +1130,26 @@ export default function Creances() {
                           }`}>
                             {paiement.statut}
                           </div>
+                        </td>
+                        <td className="text-right">
+                            <div className="flex justify-end gap-1">
+                                <button 
+                                    className="btn btn-xs btn-ghost"
+                                    onClick={() => handlePrintDirectReceipt(selectedCreance.id, paiement.id).catch(err => console.error('Erreur impression reçu:', err))}
+                                    title="Imprimer reçu individuel"
+                                >
+                                    📄
+                                </button>
+                                {paiement.releve_id && (
+                                    <button 
+                                        className="btn btn-xs btn-primary btn-outline"
+                                        onClick={() => handlePrintBulkReceipt(paiement.releve_id!).catch(err => console.error('Erreur impression relevé:', err))}
+                                        title="Imprimer le relevé groupé"
+                                    >
+                                        📚
+                                    </button>
+                                )}
+                            </div>
                         </td>
                       </tr>
                     ))}

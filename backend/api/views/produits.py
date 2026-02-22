@@ -458,25 +458,37 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 })
 
 
+        # 5. Verify existence and fetch public reference for extracted command IDs
+        all_potential_cmd_ids = set()
+        for item in history:
+            if item.get('commande'):
+                all_potential_cmd_ids.add(item['commande'])
+        
+        if all_potential_cmd_ids:
+            cmd_data = {
+                c['id']: c['numero_facture']
+                for c in Commande.objects.filter(id__in=all_potential_cmd_ids).values('id', 'numero_facture')
+            }
+            for item in history:
+                cmd_id = item.get('commande')
+                if cmd_id:
+                    if cmd_id in cmd_data:
+                        # On garde l'ID pour le lien et on ajoute le numéro public pour l'affichage
+                        item['commande_numero'] = cmd_data[cmd_id]
+                    else:
+                        # Commande supprimée : on retire le lien
+                        item['commande'] = None
+
         # Trier par date DESC
         history.sort(key=lambda x: x['date'], reverse=True)
         
         # Recalculer les stocks intermédiaires en remontant le temps
-        # Le stock actuel est connu
         current_stock = produit.stock
         running_stock = current_stock
         
         for item in history:
-            # Pour l'item courant (le plus récent non traité), le stock après est le running_stock
             item['stock_apres'] = running_stock
-            
-            # Le stock avant cet item était: stock_apres - quantité (car quantite est signée: + pour entrée, - pour sortie)
-            # stock_avant = stock_apres - delta
-            # Exemple: Entrée de 10. Stock Après = 50. Stock Avant = 50 - 10 = 40.
-            # Exemple: Sortie de 5 (-5). Stock Après = 40. Stock Avant = 40 - (-5) = 45.
-            
             stock_before = running_stock - item['quantity']
-            
             item['stock_avant'] = stock_before
             
             # Ajout des champs pour l'affichage cohérent
@@ -485,7 +497,6 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                 'stock_apres': running_stock
             })
             
-            # Pour la prochaine itération (plus ancienne), le stock courant devient le stock avant de celle-ci
             running_stock = stock_before
             
         return Response(history)
@@ -588,37 +599,47 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
     @action(detail=False, methods=['post'])
     def recalculate_rotation(self, request):
         """
-        Recalcule la rotation moyenne pour tous les produits.
+        Recalcule la rotation moyenne pour tous les produits de manière optimisée.
         Rotation = (Quantité totale vendue) / (Durée de vie du produit en mois)
         """
         try:
-            produits = Produit.objects.all()
-            count = 0
-            
-            # Date de référence pour la durée de vie (aujourd'hui)
             today = timezone.now().date()
             
-            with transaction.atomic():
-                for produit in produits:
-                    # Calculer la durée de vie en mois depuis la création
-                    # Minimum 1 mois pour éviter division par zéro
-                    months_since_creation = (today - produit.created_at.date()).days / 30.0
-                    months = max(1.0, months_since_creation)
-                    
-                    # Total vendu (toutes les factures validées/payées)
-                    total_sold = FactureProduit.objects.filter(
-                        produit=produit,
-                        facture__status__in=['VAL', 'PAY']
-                    ).aggregate(total=Sum('quantity'))['total'] or 0
-                    
-                    # Rotation mensuelle moyenne
-                    rotation = float(total_sold) / months
-                    
+            # 1. Obtenir les ventes totales par produit en une seule requête (N+1 evité)
+            ventes_par_produit = FactureProduit.objects.filter(
+                facture__status__in=['VAL', 'PAY']
+            ).values('produit_id').annotate(
+                total=Sum('quantity')
+            )
+            
+            # Dictionnaire pour accès O(1) {produit_id: total_sold}
+            sold_dict = {item['produit_id']: (item['total'] or 0) for item in ventes_par_produit}
+            
+            produits = Produit.objects.all()
+            produits_to_update = []
+            
+            for produit in produits:
+                # Calculer la durée de vie en mois depuis la création
+                # Minimum 1 mois pour éviter division par zéro
+                months_since_creation = (today - produit.created_at.date()).days / 30.0
+                months = max(1.0, months_since_creation)
+                
+                total_sold = sold_dict.get(produit.id, 0)
+                
+                # Rotation mensuelle moyenne
+                rotation = float(total_sold) / months
+                
+                current_rotation = getattr(produit, 'rotation_moyenne', 0) or 0
+                if abs(float(current_rotation) - rotation) > 0.001:  # Mettre à jour si ça a changé
                     produit.rotation_moyenne = rotation
-                    produit.save(update_fields=['rotation_moyenne'])
-                    count += 1
+                    produits_to_update.append(produit)
+            
+            # 2. Mise à jour de tous les produits nécessitant un changement en lot
+            if produits_to_update:
+                with transaction.atomic():
+                    Produit.objects.bulk_update(produits_to_update, ['rotation_moyenne'], batch_size=1000)
                     
-            return Response({'message': f'Rotation recalculée pour {count} produits'})
+            return Response({'message': f'Rotation recalculée. {len(produits_to_update)} produits mis à jour sur {produits.count()}.'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -1240,6 +1261,221 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             'total_produits': len(result),
             'produits': result
         })
+
+
+    @action(detail=False, methods=['get'])
+    def echeancier(self, request):
+        """
+        Retourne la liste des échéances de paiement fournisseurs (par facture ou par relevé).
+        """
+        from datetime import timedelta, date
+        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery
+        from django.db.models.functions import Coalesce
+        from decimal import Decimal
+        from ..models import Commande, PaiementFournisseur
+        
+        fournisseurs = self.get_queryset()
+        echeances = []
+        today = date.today()
+
+        for f in fournisseurs:
+            total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate(
+                total=Sum('montant', output_field=DecimalField())
+            )['total'] or Decimal('0.00')
+
+            commandes = Commande.objects.filter(
+                fournisseur=f, status=Commande.Status.CLOTUREE
+            ).annotate(
+                total_value=Coalesce(
+                    Sum(F('produits__quantity') * F('produits__price'), output_field=DecimalField()), 
+                    Decimal('0.00')
+                )
+            ).order_by('date_cloture')
+
+            total_du = sum(c.total_value for c in commandes)
+            solde = total_du - total_paye
+
+            if solde <= 0:
+                continue
+
+            if f.type_reglement == 'RELEVE':
+                # Par relevé: On cherche la commande la plus ancienne non encore remboursée par les paiements.
+                paye_cumul = Decimal('0.00')
+                oldest_unpaid_cmd = None
+                
+                for c in commandes:
+                    paye_cumul += c.total_value
+                    if paye_cumul > total_paye:
+                        oldest_unpaid_cmd = c
+                        break
+                
+                if oldest_unpaid_cmd:
+                    base_date = oldest_unpaid_cmd.date_cloture.date() if oldest_unpaid_cmd.date_cloture else today
+                    echeance_date = base_date + timedelta(days=f.delai_paiement_jours)
+                    # Déterminer statut (retard, etc)
+                    jours_restants = (echeance_date - today).days
+                    if jours_restants < 0:
+                        status = "EN RETARD"
+                    elif jours_restants == 0:
+                        status = "AUJOURD'HUI"
+                    else:
+                        status = "À VENIR"
+                        
+                    echeances.append({
+                        'fournisseur_id': f.id,
+                        'fournisseur_nom': f.name,
+                        'type_reglement': 'RELEVE',
+                        'commande_id': None,
+                        'numero_facture': 'Relevé Global',
+                        'montant_du': float(solde),
+                        'date_echeance': echeance_date.isoformat(),
+                        'jours_restants': jours_restants,
+                        'status': status
+                    })
+            
+            else:
+                # Mode FACTURE : Chaque commande a sa propre échéance et son propre montant restant
+                # On répartit le total_paye par ordre chronologique
+                reste_a_repartir = total_paye
+                
+                for c in commandes:
+                    cmd_total = c.total_value
+                    if reste_a_repartir >= cmd_total:
+                        reste_a_repartir -= cmd_total
+                        continue # Cette commande est déjà entièrement payée
+                    
+                    # Reste à payer pour cette commande
+                    cmd_due = cmd_total - reste_a_repartir
+                    reste_a_repartir = Decimal('0.00') # Epuisé
+                    
+                    base_date = c.date_cloture.date() if c.date_cloture else today
+                    echeance_date = base_date + timedelta(days=f.delai_paiement_jours)
+                    jours_restants = (echeance_date - today).days
+                    if jours_restants < 0:
+                        status = "EN RETARD"
+                    elif jours_restants == 0:
+                        status = "AUJOURD'HUI"
+                    else:
+                        status = "À VENIR"
+
+                    echeances.append({
+                        'fournisseur_id': f.id,
+                        'fournisseur_nom': f.name,
+                        'type_reglement': 'FACTURE',
+                        'commande_id': c.id,
+                        'numero_facture': c.numero_facture or f"CMD-{c.id}",
+                        'montant_du': float(cmd_due),
+                        'date_echeance': echeance_date.isoformat(),
+                        'jours_restants': jours_restants,
+                        'status': status
+                    })
+
+        # Trier globalement par jours_restants (les plus urgents d'abord, négatifs en premier)
+        echeances.sort(key=lambda x: x['jours_restants'])
+
+        return Response(echeances)
+
+    @action(detail=True, methods=['get'])
+    def releve_factures(self, request, pk=None):
+        """
+        Retourne les commandes (factures) clôturées d'un fournisseur sur une période donnée.
+        Utilisé pour le pointage des factures au relevé Décade/Quinzième.
+        """
+        from datetime import datetime
+        from django.db.models import Sum, F, DecimalField
+        from django.db.models.functions import Coalesce
+        from decimal import Decimal
+        from ..models import Commande
+
+        fournisseur = self.get_object()
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        commandes_qs = Commande.objects.filter(
+            fournisseur=fournisseur,
+            status=Commande.Status.CLOTUREE
+        )
+
+        if start_date:
+            try:
+                commandes_qs = commandes_qs.filter(date_cloture__date__gte=start_date)
+            except ValueError:
+                return Response({'error': 'Format start_date invalide (YYYY-MM-DD)'}, status=400)
+
+        if end_date:
+            try:
+                commandes_qs = commandes_qs.filter(date_cloture__date__lte=end_date)
+            except ValueError:
+                return Response({'error': 'Format end_date invalide (YYYY-MM-DD)'}, status=400)
+
+        # Annoter avec le vrai total de la commande
+        commandes_qs = commandes_qs.annotate(
+            total_value=Coalesce(
+                Sum(F('produits__quantity') * F('produits__price'), output_field=DecimalField()), 
+                Decimal('0.00')
+            )
+        ).order_by('date_cloture')
+
+        factures = []
+        montant_total = Decimal('0.00')
+
+        for c in commandes_qs:
+            total_cmd = float(c.total_value)
+            montant_total += Decimal(str(total_cmd))
+            factures.append({
+                'id': c.id,
+                'numero_facture': c.numero_facture or f"CMD-{c.id}",
+                'date_cloture': c.date_cloture.isoformat() if c.date_cloture else None,
+                'montant': total_cmd
+            })
+
+        return Response({
+            'fournisseur_id': fournisseur.id,
+            'fournisseur_nom': fournisseur.name,
+            'periode': {
+                'start_date': start_date,
+                'end_date': end_date
+            },
+            'total_factures': len(factures),
+            'montant_total_periode': float(montant_total),
+            'factures': factures
+        })
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        """Supprime plusieurs fournisseurs par lot."""
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=400)
+            
+        try:
+            with transaction.atomic():
+                fournisseurs = Fournisseur.objects.filter(id__in=ids)
+                names = list(fournisseurs.values_list('name', flat=True))
+                count = fournisseurs.count()
+                fournisseurs.delete()
+                
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.DELETE,
+                    model_name='Fournisseur',
+                    object_id=0,
+                    description=f"Suppression groupée de {count} fournisseurs: {', '.join(names)}",
+                    details={'ids': ids, 'names': names},
+                    request=request
+                )
+                
+                return Response({
+                    'status': 'success',
+                    'message': f'{count} fournisseurs supprimés avec succès.'
+                })
+        except ProtectedError as e:
+            return Response({
+                'error': 'Impossible de supprimer certains fournisseurs',
+                'detail': 'Certains fournisseurs sont liés à des produits ou d\'autres enregistrements et ne peuvent pas être supprimés.'
+            }, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 
 
 class CategoriesListView(APIView):

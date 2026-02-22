@@ -21,6 +21,8 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         # Get query parameters
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 31))
         
         # Base queryset: only validated or paid invoices (exclude cancelled, brouillon, and proforma)
         factures = Facture.objects.filter(
@@ -34,7 +36,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             factures = factures.filter(date__date__lte=date_fin)
         
         # Group by date and aggregate
-        daily_stats = factures.annotate(
+        daily_stats_query = factures.annotate(
             jour=TruncDate('date')
         ).values('jour').annotate(
             nb_ventes=Count('id'),
@@ -42,6 +44,36 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             ca_ttc=Sum('total_ttc'),
             tva=Sum('total_tva')
         ).order_by('-jour')
+        
+        # Global totals for the period
+        global_totals_agg = factures.aggregate(
+            total_ttc=Sum('total_ttc'),
+            total_ht=Sum('total_ht'),
+            total_tva=Sum('total_tva'),
+            total_ventes=Count('id')
+        )
+        
+        # Payment totals for the entire filtered period
+        global_paiements = Caisse.objects.filter(
+            facture__in=factures,
+            statut='completee'
+        ).exclude(mode_paiement='en_compte').values('mode_paiement').annotate(
+            total=Sum('montant')
+        )
+        
+        pay_modes = ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon']
+        global_paiements_dict = {m: 0.0 for m in pay_modes}
+        for p in global_paiements:
+            if p['mode_paiement'] in global_paiements_dict:
+                global_paiements_dict[p['mode_paiement']] = float(p['total'] or 0)
+
+        # Total count for pagination
+        total_count = daily_stats_query.count()
+        
+        # Slice for current page
+        start = (page - 1) * page_size
+        end = start + page_size
+        daily_stats = daily_stats_query[start:end]
         
         # Get payment modes for each day
         results = []
@@ -62,14 +94,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             )
             
             # Build payment modes dict
-            modes = {
-                'especes': 0,
-                'carte': 0,
-                'cheque': 0,
-                'virement': 0,
-                'om': 0,
-                'momo': 0
-            }
+            modes = {m: 0 for m in pay_modes}
             
             for p in paiements:
                 mode = p['mode_paiement']
@@ -86,7 +111,17 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 **modes
             })
         
-        return Response(results)
+        return Response({
+            'count': total_count,
+            'results': results,
+            'totals': {
+                'ca_ttc': float(global_totals_agg['total_ttc'] or 0),
+                'ca_ht': float(global_totals_agg['total_ht'] or 0),
+                'tva': float(global_totals_agg['total_tva'] or 0),
+                'nb_ventes': global_totals_agg['total_ventes'] or 0,
+                **global_paiements_dict
+            }
+        })
     
     @action(detail=False, methods=['get'])
     def ventes_par_tranche(self, request):
@@ -173,5 +208,111 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         })
         
         return Response(results)
+
+    @action(detail=False, methods=['get'])
+    def exporter_excel(self, request):
+        """
+        Génère un export Excel de l'historique des ventes.
+        """
+        import openpyxl
+        from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+        from django.http import HttpResponse
+        
+        # Récupérer les données filtrées (sans pagination)
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        factures = Facture.objects.filter(
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )
+        if date_debut:
+            factures = factures.filter(date__date__gte=date_debut)
+        if date_fin:
+            factures = factures.filter(date__date__lte=date_fin)
+            
+        daily_stats = factures.annotate(
+            jour=TruncDate('date')
+        ).values('jour').annotate(
+            nb_ventes=Count('id'),
+            ca_ht=Sum('total_ht'),
+            ca_ttc=Sum('total_ttc'),
+            tva=Sum('total_tva')
+        ).order_by('-jour')
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Historique Ventes"
+        
+        # Styles
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+        alignment = Alignment(horizontal="center", vertical="center")
+        border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+        
+        headers = [
+            "Date", "Ventes", "CA HT", "TVA", "CA TTC", 
+            "Espèces", "Carte", "Chèque", "Virement", "OM", "MOMO", "Coupon", "Panier Moyen"
+        ]
+        
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = alignment
+            cell.border = border
+            
+        row_idx = 2
+        for day in daily_stats:
+            jour = day['jour']
+            nb_ventes = day['nb_ventes'] or 0
+            ca_ttc = float(day['ca_ttc'] or 0)
+            panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
+            
+            paiements = Caisse.objects.filter(
+                facture__date__date=jour,
+                statut='completee'
+            ).exclude(mode_paiement='en_compte').values('mode_paiement').annotate(
+                total=Sum('montant')
+            )
+            
+            modes = {m: 0 for m in ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon']}
+            for p in paiements:
+                if p['mode_paiement'] in modes:
+                    modes[p['mode_paiement']] = float(p['total'] or 0)
+                    
+            data_row = [
+                jour.strftime('%d/%m/%Y'),
+                nb_ventes,
+                round(float(day['ca_ht'] or 0), 0),
+                round(float(day['tva'] or 0), 0),
+                round(ca_ttc, 0),
+                round(modes['especes'], 0), round(modes['carte'], 0), round(modes['cheque'], 0),
+                round(modes['virement'], 0), round(modes['om'], 0), round(modes['momo'], 0), round(modes['coupon'], 0),
+                round(panier_moyen, 0)
+            ]
+            
+            for col_idx, value in enumerate(data_row, 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                cell.value = value
+                cell.border = border
+            row_idx += 1
+            
+        # Ajuster largeur colonnes
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            ws.column_dimensions[column].width = max_length + 2
+            
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename=Historique_Ventes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        wb.save(response)
+        return response
 
 

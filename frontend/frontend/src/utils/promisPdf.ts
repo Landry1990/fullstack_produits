@@ -24,9 +24,9 @@ export interface PromisTicketData {
 }
 
 export const generatePromisTicket = (data: PromisTicketData) => {
-    // 80mm width, dynamic height (start with something tall, jspdf can handle it or we calculate)
-    // For thermal printers, width is key. 80mm = ~226 pts
-    const width = 80;
+    // Dynamic width from settings (default 80mm)
+    const width = data.pharmacy.ticket_paper_width || 80;
+
     // Calculate estimated height needed
     const estimatedHeight = 200 + (data.items.length * 10 * 2) + 50; // Base + items * 2 copies + padding
 
