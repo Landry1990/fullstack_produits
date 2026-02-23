@@ -21,6 +21,11 @@
         "actions": {
             "confirm": "Confirmer"
         },
+        "pagination": {
+            "prev": "Précédent",
+            "next": "Suivant"
+        },
+        "auth_required": "Authentification requise",
         "download": "Télécharger",
         "export_success": "Export réussi",
         "export_error": "Erreur lors de l'export",
@@ -488,6 +493,7 @@
     "stock": {
         "inventaire": {
             "title": "Inventaires",
+            "subtitle": "Gérez et validez vos inventaires de stock",
             "create_btn": "+ Nouvel Inventaire",
             "bulk_action": "{{count}} inventaire(s) sélectionné(s)",
             "deselect": "Désélectionner",
@@ -498,6 +504,15 @@
                 "success": "Inventaire validé avec succès",
                 "error": "Erreur lors de la validation"
             },
+            "filters": {
+                "search_placeholder": "Rechercher un inventaire...",
+                "status_all": "Tous les statuts",
+                "creators_all": "Tous les créateurs"
+            },
+            "status": {
+                "draft": "En cours",
+                "validated": "Validée"
+            },
             "merge": {
                 "modal_title": "Fusionner Inventaires",
                 "confirm_msg": "Fusionner l'inventaire sélectionné dans l'actuel ? L'inventaire source sera supprimé.",
@@ -507,6 +522,7 @@
                 "error": "Erreur lors de la fusion"
             },
             "list": {
+                "title_short": "inventaires",
                 "date": "Date",
                 "desc": "Description",
                 "val_theo": "Val. Théorique",
