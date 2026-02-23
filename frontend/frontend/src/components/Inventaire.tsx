@@ -4,12 +4,23 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { 
+    Search, Calendar, Filter, Plus, Trash2, 
+    ChevronLeft, Download, BarChart3, 
+    Database, Save, CheckCircle2,
+    AlertCircle, History, Package, ArrowUpDown, 
+    FileText, ClipboardList, TrendingDown, Layers, 
+    Info, LayoutGrid, X, ChevronRight, PieChart
+} from 'lucide-react';
 import { useConfirm } from '../hooks/useConfirm';
 import type { ProduitModel, Inventaire, LigneInventaire, StockLot } from '../types';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import { useProductSearch } from '../hooks/useProductSearch';
 import { useSudo } from '../hooks/useSudo';
 import SudoValidationModal from './common/SudoValidationModal';
+import { InventaireFilters } from './inventaire/InventaireFilters';
+import { InventaireQuickStats } from './inventaire/InventaireQuickStats';
+import { InventaireListTable } from './inventaire/InventaireListTable';
 
 type SortOption = 'CHRONOLOGICAL' | 'NAME' | 'GAP_VALUE' | 'GAP_QTY';
 type SortOrder = 'ASC' | 'DESC';
@@ -42,7 +53,13 @@ export default function InventaireComponent() {
   const [activeInventaire, setActiveInventaire] = useState<Inventaire | null>(null);
   const [lignes, setLignes] = useState<LigneInventaire[]>([]);
   const [searchLignesQuery, setSearchLignesQuery] = useState('');
-  
+  // Filters for List Mode
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterSearchTerm, setFilterSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterCreator, setFilterCreator] = useState('');
+
   // Form Data (Header)
   const [description, setDescription] = useState('');
   const [dateInventaire, setDateInventaire] = useState(new Date().toISOString().split('T')[0]);
@@ -132,8 +149,19 @@ export default function InventaireComponent() {
   const fetchInventaires = async (url?: string) => {
     try {
       setLoading(true);
-      const endpoint = url || inventairesEndpoint;
-      const res = await axios.get(endpoint);
+      
+      // Build query string based on filters
+      const params = new URLSearchParams();
+      if (filterStartDate) params.append('date_after', filterStartDate);
+      if (filterEndDate) params.append('date_before', filterEndDate);
+      if (filterSearchTerm) params.append('search', filterSearchTerm);
+      if (filterStatus) params.append('status', filterStatus);
+      if (filterCreator) params.append('created_by', filterCreator);
+      
+      const paramString = params.toString();
+      const finalUrl = url || `${inventairesEndpoint}${paramString ? `?${paramString}` : ''}`;
+
+      const res = await axios.get(finalUrl);
       
       if (Array.isArray(res.data)) {
           // No pagination fallback
@@ -167,9 +195,13 @@ export default function InventaireComponent() {
   // === FETCH LIST ===
   useEffect(() => {
     if (viewMode === 'LIST') {
-      fetchInventaires();
+      // Small debounce for search term could be added, but calling directly is fine for simplicity
+      const timer = setTimeout(() => {
+          fetchInventaires();
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [viewMode]);
+  }, [viewMode, filterStartDate, filterEndDate, filterSearchTerm, filterStatus, filterCreator]);
 
   const fetchStats = async (id: number) => {
       setLoadingStats(true);
@@ -628,6 +660,7 @@ export default function InventaireComponent() {
               const sources = Array.from(selectedInventaireIds).filter(id => id !== targetId);
               let successCount = 0;
               
+              // It's safer to merge one by one to avoid concurrent modification issues on the same target
               for (const sourceId of sources) {
                   await axios.post(`${inventairesEndpoint}${targetId}/merge/`, {
                       source_inventaire_id: sourceId
@@ -929,218 +962,215 @@ export default function InventaireComponent() {
   };
 
   const renderAnalysis = () => {
-      if (loadingStats) return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg"></span></div>;
-      if (!inventoryStats) return <div className="text-center p-8 opacity-50">Aucune donnée disponible.</div>;
+    if (loadingStats) return (
+        <div className="flex flex-col items-center justify-center p-20 gap-4 bg-base-100 rounded-2xl border border-base-300">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <p className="text-sm font-medium text-base-content/40">{t('common.loading', { defaultValue: 'Chargement des analyses...' })}</p>
+        </div>
+    );
+    
+    if (!inventoryStats) return (
+        <div className="flex flex-col items-center justify-center p-20 gap-4 bg-base-100 rounded-2xl border border-base-300">
+            <BarChart3 className="h-12 w-12 opacity-10" />
+            <p className="text-sm font-medium text-base-content/40">{t('stock.inventaire.analysis.no_data')}</p>
+        </div>
+    );
 
-      return (
-          <div className="space-y-6 animate-fade-in">
-              <div className="flex justify-end">
-                  <button className="btn btn-outline gap-2" onClick={handlePrintEcartsFrontend}>
-                      {t('stock.inventaire.analysis.print_ecarts')}
-                  </button>
-              </div>
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in duration-500">
+            {/* Top Losses Card */}
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+                <div className="p-5 border-b border-base-200 bg-base-50/50 flex items-center justify-between">
+                    <h3 className="font-bold text-base-content flex items-center gap-3">
+                        <div className="p-2 bg-error/10 rounded-xl">
+                            <TrendingDown className="h-5 w-5 text-error" />
+                        </div>
+                        {t('stock.inventaire.analysis.top_losses')}
+                    </h3>
+                    <span className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('common.top_10', { defaultValue: 'Top 10' })}</span>
+                </div>
+                <div className="p-5 space-y-4">
+                    {inventoryStats.top_pertes.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-20">
+                            <BarChart3 className="h-10 w-10" />
+                            <p className="text-sm font-medium">{t('stock.inventaire.analysis.no_data')}</p>
+                        </div>
+                    ) : (
+                        inventoryStats.top_pertes.map((p, i) => (
+                            <div key={i} className="flex items-center justify-between group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/40 group-hover:bg-error/10 group-hover:text-error transition-colors">
+                                        {i + 1}
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-sm text-base-content group-hover:text-primary transition-colors">{p.produit_nom}</div>
+                                        <div className="text-[10px] font-bold text-error/60 uppercase tracking-tight mt-0.5">
+                                            {p.ecart} {t('common.units', { defaultValue: 'unités' })}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="font-mono font-bold text-error">{p.valeur.toLocaleString()} F</div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Top 10 Pertes */}
-                  <div className="card bg-base-100 shadow border border-base-200">
-                      <div className="card-body">
-                          <h3 className="card-title text-error">{t('stock.inventaire.analysis.top_losses')}</h3>
-                          <div className="overflow-x-auto">
-                              <table className="table table-xs">
-                                  <thead>
-                                      <tr>
-                                          <th>{t('stock.inventaire.table.product')}</th>
-                                          <th className="text-right">{t('stock.inventaire.table.gap')}</th>
-                                          <th className="text-right">{t('stock.inventaire.analysis.loss')}</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                      {inventoryStats.top_pertes.length === 0 ? (
-                                          <tr><td colSpan={3} className="text-center text-gray-500 py-4">{t('stock.inventaire.analysis.no_data')}</td></tr>
-                                      ) : inventoryStats.top_pertes.map((p, idx) => (
-                                          <tr key={idx}>
-                                              <td className="truncate max-w-[150px]" title={p.produit_nom}>{p.produit_nom}</td>
-                                              <td className="text-right font-bold text-error">{p.ecart}</td>
-                                              <td className="text-right font-mono text-error">{p.valeur.toLocaleString()} F</td>
-                                          </tr>
-                                      ))}
-                                  </tbody>
-                              </table>
-                          </div>
-                      </div>
-                  </div>
-
-                  {/* Ecarts par Rayon */}
-                  <div className="card bg-base-100 shadow border border-base-200">
-                      <div className="card-body">
-                          <h3 className="card-title">{t('stock.inventaire.analysis.ecarts_by_rayon')}</h3>
-                          <div className="overflow-x-auto">
-                              <table className="table table-xs">
-                                  <thead>
-                                      <tr>
-                                          <th>{t('stock.inventaire.lines.rayon')}</th>
-                                          <th className="text-right">{t('stock.inventaire.analysis.total_ecart')}</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>
-                                      {inventoryStats.par_rayon.map((r, idx) => (
-                                          <tr key={idx}>
-                                              <td>{r.rayon}</td>
-                                              <td className={`text-right font-bold ${r.total < 0 ? 'text-error' : r.total > 0 ? 'text-success' : ''}`}>
-                                                  {r.total > 0 ? '+' : ''}{r.total.toLocaleString()} F
-                                              </td>
-                                          </tr>
-                                      ))}
-                                      {inventoryStats.par_rayon.length === 0 && (
-                                          <tr><td colSpan={2} className="text-center text-gray-500 py-4">{t('stock.inventaire.analysis.no_data')}</td></tr>
-                                      )}
-                                  </tbody>
-                              </table>
-                          </div>
-                      </div>
-                  </div>
-              </div>
-          </div>
-      );
+            {/* Discrepancies by Rayon Card */}
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+                <div className="p-5 border-b border-base-200 bg-base-50/50 flex items-center justify-between">
+                    <h3 className="font-bold text-base-content flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-xl">
+                            <Layers className="h-5 w-5 text-primary" />
+                        </div>
+                        {t('stock.inventaire.analysis.gap_by_rayon')}
+                    </h3>
+                </div>
+                <div className="p-5 space-y-3">
+                    {inventoryStats.par_rayon.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-3 opacity-20">
+                            <PieChart className="h-10 w-10" />
+                            <p className="text-sm font-medium">{t('stock.inventaire.analysis.no_data')}</p>
+                        </div>
+                    ) : (
+                        inventoryStats.par_rayon.map((r, i) => {
+                            const isNegative = r.total < 0;
+                            return (
+                                <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-base-200/50 transition-all border border-transparent hover:border-base-300">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-2 h-2 rounded-full ${isNegative ? 'bg-error' : 'bg-success'}`} />
+                                        <span className="font-bold text-sm text-base-content/80">{r.rayon}</span>
+                                    </div>
+                                    <div className={`font-mono font-bold ${isNegative ? 'text-error' : r.total > 0 ? 'text-success' : 'text-base-content/40'}`}>
+                                        {r.total > 0 ? '+' : ''}{r.total.toLocaleString()} F
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+                {inventoryStats.par_rayon.length > 0 && (
+                    <div className="p-5 mt-auto border-t border-base-200 bg-base-50/30">
+                        <button 
+                            className="btn btn-ghost btn-sm w-full rounded-xl gap-2 text-base-content/40 hover:text-primary transition-all"
+                            onClick={handlePrintEcartsFrontend}
+                        >
+                            <Download className="h-4 w-4" />
+                            {t('stock.inventaire.analysis.print_report', { defaultValue: 'Imprimer le rapport d\'écarts' })}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
   };
 
   // === RENDER ===
 
   const renderList = () => (
-          <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                  <h1 className="text-2xl font-bold">{t('stock.inventaire.title')}</h1>
-                  <button className="btn btn-primary" onClick={handleCreate}>
-                      {t('stock.inventaire.create_btn')}
-                  </button>
-              </div>
-
-             {/* Bulk Action Bar */}
-             {selectedInventaireIds.size > 0 && (
-                <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <span className="font-semibold text-sm">{t('stock.inventaire.bulk_action', { count: selectedInventaireIds.size })}</span>
-                    <button
-                        type="button"
-                        className="btn btn-sm btn-ghost"
-                        onClick={() => setSelectedInventaireIds(new Set())}
-                    >
-                        {t('stock.inventaire.deselect')}
-                    </button>
-                    
-                    <button
-                        type="button"
-                        className="btn btn-sm btn-secondary gap-1"
-                        onClick={openMergeModalFromList}
-                        disabled={!canMergeSelectedInventaires().canMerge}
-                        title={canMergeSelectedInventaires().reason || ''}
-                    >
-                        {t('stock.inventaire.merge_btn')}
-                    </button>
+    <>
+    <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+                {/* Title & Filters & QuickStats */}
+                <div className="w-full space-y-4">
+                    <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
+                        <div className="p-6 border-b border-base-200">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-2">
+                                        <ClipboardList className="h-6 w-6 text-primary" />
+                                        {t('stock.inventaire.title')}
+                                    </h1>
+                                    <p className="text-base-content/60 text-sm mt-1">
+                                        {t('stock.inventaire.subtitle', { defaultValue: "Gérez et validez vos inventaires de stock" })}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        type="button"
+                                        className="btn btn-secondary rounded-xl gap-2 shadow-lg shadow-secondary/20"
+                                        onClick={openMergeModalFromList}
+                                        disabled={!canMergeSelectedInventaires().canMerge}
+                                        title={canMergeSelectedInventaires().reason || ''}
+                                    >
+                                        <Database className="h-4 w-4" />
+                                        {t('stock.inventaire.merge_btn')}
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary rounded-xl px-6 shadow-lg shadow-primary/20 gap-2" 
+                                        onClick={handleCreate}
+                                    >
+                                        <Plus className="h-5 w-5" />
+                                        {t('stock.inventaire.create_btn')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <InventaireFilters 
+                            filters={{
+                                startDate: filterStartDate,
+                                setStartDate: setFilterStartDate,
+                                endDate: filterEndDate,
+                                setEndDate: setFilterEndDate,
+                                searchTerm: filterSearchTerm,
+                                setSearchTerm: setFilterSearchTerm,
+                                statusFilter: filterStatus,
+                                setStatusFilter: setFilterStatus,
+                                creatorFilter: filterCreator,
+                                setCreatorFilter: setFilterCreator
+                            }}
+                            onRefresh={() => fetchInventaires()}
+                        />
+                    </div>
                 </div>
-              )}
+                
+                 {/* Quick Stats Dashboard */}
+                 <InventaireQuickStats />
+            </div>
 
-              <div className="card bg-base-100 shadow">
-                  <div className="overflow-x-auto">
-                      <table className="table table-xs">
-                          <thead>
-                              <tr>
-                                  <th className="w-10">
-                                      <label>
-                                          <input 
-                                              type="checkbox" 
-                                              className="checkbox checkbox-xs" 
-                                              checked={inventaires.length > 0 && selectedInventaireIds.size === inventaires.length}
-                                              onChange={toggleSelectAllInventaires}
-                                          />
-                                      </label>
-                                  </th>
-                                  <th>{t('stock.inventaire.list.date')}</th>
-                                  <th>{t('stock.inventaire.list.desc')}</th>
-                                  <th className="text-right">{t('stock.inventaire.list.val_theo')}</th>
-                                  <th className="text-right">{t('stock.inventaire.list.val_phys')}</th>
-                                  <th className="text-right">{t('stock.inventaire.list.ecart')}</th>
-                                  <th>{t('stock.inventaire.list.status')}</th>
-                                  <th>{t('stock.inventaire.list.created_by')}</th>
-                                  <th>{t('stock.inventaire.list.actions')}</th>
-                              </tr>
-                          </thead>
-                          <tbody>
-                              {loading ? (
-                                  <tr>
-                                      <td colSpan={9} className="text-center py-4">
-                                          <span className="loading loading-spinner"></span> {t('common.loading')}
-                                      </td>
-                                  </tr>
-                              ) : inventaires.map(inv => (
-                                  <tr key={inv.id} className={`hover:bg-base-200 cursor-pointer ${selectedInventaireIds.has(inv.id) ? 'bg-primary/5' : ''}`} onClick={() => handleEdit(inv)}>
-                                      <td onClick={e => e.stopPropagation()}>
-                                          <label>
-                                              <input 
-                                                  type="checkbox" 
-                                                  className="checkbox checkbox-xs" 
-                                                  checked={selectedInventaireIds.has(inv.id)}
-                                                  onChange={() => toggleSelectInventaire(inv.id)}
-                                              />
-                                          </label>
-                                      </td>
-                                      <td>{new Date(inv.date).toLocaleDateString('fr-FR')}</td>
-                                      <td>{inv.description || '-'}</td>
-                                      <td className="text-right font-mono">{(inv.total_valeur_theorique || 0).toLocaleString()} F</td>
-                                      <td className="text-right font-bold">{(inv.total_valeur_physique || 0).toLocaleString()} F</td>
-                                      <td className={`text-right font-bold ${(inv.total_ecart_valeur || 0) < 0 ? 'text-error' : (inv.total_ecart_valeur || 0) > 0 ? 'text-success' : ''}`}>
-                                          {(inv.total_ecart_valeur || 0).toLocaleString()} F
-                                      </td>
-                                      <td>
-                                          <span className={`badge ${inv.status === 'VALIDEE' ? 'badge-success' : 'badge-warning'}`}>
-                                              {inv.status}
-                                          </span>
-                                      </td>
-                                      <td>{inv.created_by_name || '-'}</td>
-                                      <td onClick={e => e.stopPropagation()}>
-                                          <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(inv.id)} disabled={inv.status === 'VALIDEE'}>
-                                              {t('rayons.table.delete')}
-                                          </button>
-                                      </td>
-                                  </tr>
-                              ))}
-                              {inventaires.length === 0 && (
-                                  <tr>
-                                      <td colSpan={9} className="text-center py-4 text-gray-500">{t('stock.inventaire.list.empty')}</td>
-                                  </tr>
-                              )}
-                          </tbody>
-                      </table>
-                  </div>
-              </div>
+            {/* Main Content: Table */}
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden mt-6">
+                <InventaireListTable 
+                    inventaires={inventaires}
+                    loading={loading}
+                    selectedIds={selectedInventaireIds}
+                    onSelectAll={toggleSelectAllInventaires}
+                    onSelect={toggleSelectInventaire}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                />
+                
+                {/* Pagination Controls */}
+                <div className="p-4 border-t border-base-200 flex items-center justify-between">
+                    <div className="text-sm text-base-content/60 font-medium">
+                        Page {currentPage} - Total: <span className="text-base-content font-bold">{totalCount}</span> {t('stock.inventaire.list.title_short', { defaultValue: 'inventaires' })}
+                    </div>
+                    <div className="flex gap-2">
+                        <button 
+                            className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
+                            disabled={!prevPage || loading}
+                            onClick={() => prevPage && fetchInventaires(prevPage)}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            {t('common.pagination.prev', { defaultValue: 'Précédent' })}
+                        </button>
+                        <button 
+                            className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
+                            disabled={!nextPage || loading}
+                            onClick={() => nextPage && fetchInventaires(nextPage)}
+                        >
+                            {t('common.pagination.next', { defaultValue: 'Suivant' })}
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+    </div>
+    </>
+  );
 
-              
-              {/* Pagination Controls */}
-              <div className="flex justify-between items-center mt-4 bg-base-100 p-2 rounded-lg shadow-sm">
-                  <div className="text-sm opacity-50">
-                      Total: {totalCount} inventaires
-                  </div>
-                  <div className="join">
-                      <button 
-                          className="join-item btn btn-sm" 
-                          disabled={!prevPage || loading}
-                          onClick={() => prevPage && fetchInventaires(prevPage)}
-                      >
-                          « Précédent
-                      </button>
-                      <button className="join-item btn btn-sm btn-ghost cursor-default no-animation">
-                          Page {currentPage}
-                      </button>
-                      <button 
-                          className="join-item btn btn-sm" 
-                          disabled={!nextPage || loading}
-                          onClick={() => nextPage && fetchInventaires(nextPage)}
-                      >
-                          Suivant »
-                      </button>
-                  </div>
-              </div>
-          </div>
-      );
+
   
 
   // Create / Edit View Variables
@@ -1159,551 +1189,682 @@ export default function InventaireComponent() {
   }, 0);
 
   return (
-      <div className="w-full">
-         {viewMode === 'LIST' ? renderList() : (
-           <div className="space-y-6">
-          <div className="flex justify-between items-center">
-              <div className="flex gap-4 items-center">
-                   <button className="btn btn-ghost" onClick={() => setViewMode('LIST')}>{t('stock.inventaire.detail.back')}</button>
-                   <h1 className="text-2xl font-bold">
-                       {viewMode === 'CREATE' ? t('stock.inventaire.detail.title_new') : t('stock.inventaire.detail.title_edit', { id: activeInventaire?.id })}
-                   </h1>
-                   {isReadOnly && <span className="badge badge-success badge-lg">{t('stock.inventaire.detail.validated')}</span>}
-              </div>
-              <div className="flex gap-2">
-                       <div className="join mr-4">
-                            <button 
-                                className={`join-item btn btn-sm ${viewTab === 'DATA' ? 'btn-active btn-primary' : ''}`}
-                                onClick={() => setViewTab('DATA')}
-                            >
-                                {t('stock.inventaire.detail.tab_data')}
-                            </button>
-                            <button 
-                                className={`join-item btn btn-sm ${viewTab === 'ANALYSIS' ? 'btn-active btn-primary' : ''}`}
-                                onClick={() => {
-                                    setViewTab('ANALYSIS');
-                                    if (activeInventaire) fetchStats(activeInventaire.id);
-                                }}
-                            >
-                                {t('stock.inventaire.detail.tab_analysis')}
-                            </button>
-                        </div>
+    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+      {viewMode === 'LIST' ? renderList() : (
+        <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          
+          {/* Header Card (Editor Mode) */}
+          <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-base-200">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center gap-4">
+                  <button 
+                    className="btn btn-ghost btn-circle rounded-xl hover:bg-base-200" 
+                    onClick={() => setViewMode('LIST')}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-2">
+                       {viewMode === 'CREATE' ? (
+                         <>
+                           <Plus className="h-6 w-6 text-primary" />
+                           {t('stock.inventaire.detail.title_new')}
+                         </>
+                       ) : (
+                         <>
+                           <FileText className="h-6 w-6 text-primary" />
+                           {t('stock.inventaire.detail.title_edit', { id: activeInventaire?.id })}
+                         </>
+                       )}
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        {isReadOnly ? (
+                            <span className="badge badge-success rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none">
+                                <CheckCircle2 className="h-3 w-3" />
+                                {t('stock.inventaire.detail.validated')}
+                            </span>
+                        ) : (
+                            <span className="badge badge-warning rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none">
+                                <History className="h-3 w-3" />
+                                {t('common.status.draft', { defaultValue: 'Brouillon' })}
+                            </span>
+                        )}
+                    </div>
+                  </div>
+                </div>
 
-                       <button 
-                         className="btn btn-primary" 
-                         onClick={handlePrintEtatFrontend}
-                         disabled={!activeInventaire?.id}
-                       >
-                           {t('stock.inventaire.detail.print')}
-                       </button>
+                <div className="flex items-center gap-3">
+                  <div className="bg-base-200 p-1 rounded-xl border border-base-300 flex">
+                    <button 
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all gap-2 flex items-center
+                            ${viewTab === 'DATA' ? 'bg-primary text-primary-content shadow-md' : 'text-base-content/60 hover:bg-base-100'}`}
+                        onClick={() => setViewTab('DATA')}
+                    >
+                        <Database className="h-3.5 w-3.5" />
+                        {t('stock.inventaire.detail.tab_data')}
+                    </button>
+                    <button 
+                        className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all gap-2 flex items-center
+                            ${viewTab === 'ANALYSIS' ? 'bg-primary text-primary-content shadow-md' : 'text-base-content/60 hover:bg-base-100'}`}
+                        onClick={() => {
+                            setViewTab('ANALYSIS');
+                            if (activeInventaire) fetchStats(activeInventaire.id);
+                        }}
+                    >
+                        <BarChart3 className="h-3.5 w-3.5" />
+                        {t('stock.inventaire.detail.tab_analysis')}
+                    </button>
+                  </div>
+
+                  <button 
+                    className="btn btn-primary rounded-xl px-6 gap-2 shadow-lg shadow-primary/20" 
+                    onClick={handlePrintEtatFrontend}
+                    disabled={!activeInventaire?.id}
+                  >
+                    <Download className="h-5 w-5" />
+                    {t('stock.inventaire.detail.print')}
+                  </button>
 
                   {!isReadOnly && activeInventaire && (
-                       <>
-                           {/* Save Button (Implicitly saved via API calls but we can add a global 'Done' or similar if needed) 
-                               Actually, since we save line by line, this is mostly for the header or just status.
-                               User requested SEPARATE buttons. One for Validating.
-                           */}
-                           {lignes.some(l => l.isLocalOnly) && (<button className="btn btn-warning animate-pulse" onClick={handleSyncLines} disabled={saving}>{saving ? <span className="loading loading-spinner loading-sm"></span> : null}{t('stock.inventaire.detail.sync_now', { count: lignes.filter(l => l.isLocalOnly).length })}</button>)}
-
-                           <button className="btn btn-info text-white" onClick={() => setShowMergeModal(true)}>
-                               {t('stock.inventaire.detail.merge_to')}
-                           </button>
-
-                           <button className="btn btn-success text-white" onClick={handleOpenValidateModal} disabled={saving || lignes.some(l => l.isLocalOnly)}>
-                               {saving ? t('stock.inventaire.detail.validating') : t('stock.inventaire.detail.validate')}
-                           </button>
-                       </>
+                    <div className="flex gap-2">
+                        {lignes.some(l => l.isLocalOnly) && (
+                            <button 
+                                className="btn btn-warning rounded-xl gap-2 animate-pulse" 
+                                onClick={handleSyncLines} 
+                                disabled={saving}
+                            >
+                                {saving ? <span className="loading loading-spinner loading-sm"></span> : <Save className="h-5 w-5" />}
+                                {t('stock.inventaire.detail.sync_now', { count: lignes.filter(l => l.isLocalOnly).length })}
+                            </button>
+                        )}
+                        <button 
+                            className="btn btn-info rounded-xl text-white gap-2" 
+                            onClick={() => setShowMergeModal(true)}
+                        >
+                            <ArrowUpDown className="h-5 w-5" />
+                            {t('stock.inventaire.detail.merge_to')}
+                        </button>
+                        <button 
+                            className="btn btn-success rounded-xl text-white gap-2 shadow-lg shadow-success/20" 
+                            onClick={handleOpenValidateModal} 
+                            disabled={saving || lignes.some(l => l.isLocalOnly)}
+                        >
+                            {saving ? (
+                                <span className="loading loading-spinner"></span>
+                            ) : (
+                                <CheckCircle2 className="h-5 w-5" />
+                            )}
+                            {t('stock.inventaire.detail.validate')}
+                        </button>
+                    </div>
                   )}
+                </div>
               </div>
+            </div>
+
+            {/* Header Form Area */}
+            <div className="p-6 bg-base-50/50 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">{t('stock.inventaire.detail.date')}</label>
+                    <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/30" />
+                        <input 
+                            type="date" 
+                            className="input input-bordered w-full pl-11 rounded-xl border-base-300 focus:border-primary focus:ring-1 focus:ring-primary" 
+                            value={dateInventaire} 
+                            onChange={e => setDateInventaire(e.target.value)}
+                            disabled={isReadOnly}
+                            onBlur={handleSaveHeader}
+                        />
+                    </div>
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">{t('stock.inventaire.detail.description')}</label>
+                    <div className="relative">
+                        <FileText className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/30" />
+                        <input 
+                            type="text" 
+                            className="input input-bordered w-full pl-11 rounded-xl border-base-300 focus:border-primary focus:ring-1 focus:ring-primary" 
+                            placeholder={t('stock.inventaire.detail.placeholder_desc')}
+                            value={description}
+                            onChange={e => setDescription(e.target.value)}
+                            disabled={isReadOnly}
+                            onBlur={handleSaveHeader}
+                        />
+                    </div>
+                </div>
+            </div>
           </div>
 
+          {/* Work Area */}
+          <div className="grid grid-cols-1 gap-6">
+            
+            {/* Product Search Card */}
+            {!isReadOnly && (
+              <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-1 overflow-visible relative">
+                <div className="relative">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-base-content/30" />
+                    <input 
+                        ref={searchInputRef}
+                        type="text" 
+                        className="input input-ghost w-full h-16 pl-14 pr-16 text-lg focus:bg-base-200/50 rounded-2xl focus:outline-none" 
+                        placeholder={t('stock.inventaire.detail.search_placeholder')}
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={handleSearchKeyDown}
+                        autoFocus
+                    />
+                    {loadingSearch && (
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                            <span className="loading loading-spinner text-primary"></span>
+                        </div>
+                    )}
+                </div>
 
-
-          {/* Header Form */}
-          <div className="card bg-base-100 shadow p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-control">
-                      <label className="label">{t('stock.inventaire.detail.date')}</label>
-                      <input 
-                          type="date" 
-                          className="input input-bordered" 
-                          value={dateInventaire} 
-                          onChange={e => setDateInventaire(e.target.value)}
-                          disabled={isReadOnly}
-                          onBlur={handleSaveHeader}
-                      />
-                  </div>
-                  <div className="form-control md:col-span-2">
-                      <label className="label">{t('stock.inventaire.detail.description')}</label>
-                      <input 
-                          type="text" 
-                          className="input input-bordered" 
-                          placeholder={t('stock.inventaire.detail.placeholder_desc')}
-                          value={description}
-                          onChange={e => setDescription(e.target.value)}
-                          disabled={isReadOnly}
-                          onBlur={handleSaveHeader}
-                      />
-                  </div>
-              </div>
-          </div>
-
-          {/* Product Search */}
-          {!isReadOnly && (
-              <div className="card bg-base-100 shadow p-4 overflow-visible relative">
-                  <div className="form-control w-full">
-                       <label className="label font-bold">{t('stock.inventaire.detail.add_product_label')}</label>
-                       <input 
-                           ref={searchInputRef}
-                           type="text" 
-                           className="input input-bordered w-full" 
-                           placeholder={t('stock.inventaire.detail.search_placeholder')}
-                           value={searchQuery}
-                           onChange={e => setSearchQuery(e.target.value)}
-                           onKeyDown={handleSearchKeyDown}
-                           autoFocus
-                       />
-                       {loadingSearch && <span className="absolute right-4 top-12 loading loading-spinner"></span>}
-                  </div>
-                  {/* Dropdown Results - Style similaire à ProductSearchSection de Facturation */}
-                  {searchQuery && (
-                      <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-base-200 max-h-[60vh] overflow-y-auto z-50">
-                          {searchResults.length === 0 ? (
-                              <div className="text-center py-8 text-base-content/40 text-sm">
-                                  {loadingSearch ? (
-                                      <span className="loading loading-spinner loading-sm"></span>
-                                  ) : searchQuery.length < 1 ? (
-                                      t('stock.inventaire.detail.hint_min_char')
-                                  ) : (
-                                      t('stock.inventaire.detail.no_result')
-                                  )}
-                              </div>
-                          ) : (
-                              <div className="max-h-96 overflow-y-auto space-y-1 p-1">
-                                  {searchResults.map((p, idx) => {
-                                      const itemProps = getItemProps(idx);
-                                      const hasStock = (p.stock ?? 0) > 0;
-                                      return (
-                                          <div 
-                                              key={p.id}
-                                              {...itemProps}
-                                              onClick={() => handleProductSelect(p)}
-                                              style={itemProps.style}
-                                              className={`
-                                                  group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all
-                                                  ${itemProps.className ? 'shadow-md bg-primary/5' : 'hover:bg-base-100'}
-                                              `}
-                                          >
-                                              <div className="flex-1 min-w-0">
-                                                  <div className="font-medium truncate text-sm">{p.name}</div>
-                                                  <div className="text-xs flex gap-3 mt-0.5 opacity-80">
-                                                      <span className="font-mono text-gray-500">{p.cip1}</span>
-                                                      {p.rayon_name && <span className="text-gray-400">• {p.rayon_name}</span>}
-                                                  </div>
-                                              </div>
-                                              <div className="flex items-center gap-2">
-                                                  <span className={`badge badge-sm ${hasStock ? 'badge-success' : 'badge-error'}`}>
-                                                      Stock: {p.stock}
-                                                  </span>
-                                                  {p.use_lot_management && (
-                                                      <span className="badge badge-sm badge-info">Lots</span>
-                                                  )}
-                                                  <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-primary">
-                                                      +
-                                                  </button>
-                                              </div>
-                                          </div>
-                                      );
-                                  })}
-                              </div>
-                          )}
+                {/* Search Results Dropdown */}
+                {searchQuery && (
+                  <div className="absolute left-0 right-0 top-full mt-2 bg-base-100 rounded-2xl shadow-2xl border border-base-300 max-h-[60vh] overflow-y-auto z-50 animate-in fade-in zoom-in-95 duration-200">
+                    {searchResults.length === 0 ? (
+                      <div className="text-center py-10 text-base-content/40">
+                        {loadingSearch ? (
+                            <span className="loading loading-spinner text-primary"></span>
+                        ) : (
+                            <div className="flex flex-col items-center gap-2">
+                                <Search className="h-8 w-8 opacity-20" />
+                                <p className="text-sm">{t('stock.inventaire.detail.no_result')}</p>
+                            </div>
+                        )}
                       </div>
-                  )}
+                    ) : (
+                      <div className="p-2 space-y-1">
+                        {searchResults.map((p, idx) => {
+                          const itemProps = getItemProps(idx);
+                          return (
+                            <div 
+                              key={p.id}
+                              {...itemProps}
+                              onClick={() => handleProductSelect(p)}
+                              className={`
+                                group flex items-center justify-between p-4 rounded-xl cursor-pointer transition-all
+                                ${itemProps.className ? 'bg-primary text-primary-content shadow-lg shadow-primary/20 scale-[1.01]' : 'hover:bg-base-200'}
+                              `}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="font-bold truncate">{p.name}</div>
+                                <div className={`text-xs flex gap-3 mt-1 opacity-70 ${itemProps.className ? 'text-primary-content/80' : 'text-base-content/60'}`}>
+                                  <span className="font-mono">{p.cip1}</span>
+                                  {p.rayon_name && <span className="opacity-50">• {p.rayon_name}</span>}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${itemProps.className ? 'bg-white/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
+                                  Stock: {p.stock}
+                                </span>
+                                {p.use_lot_management && (
+                                  <div className={`p-1 rounded-lg ${itemProps.className ? 'bg-white/20' : 'bg-info/10'}`}>
+                                    <Database className={`h-4 w-4 ${itemProps.className ? 'text-white' : 'text-info'}`} />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-          )}
+            )}
 
-          {viewTab === 'ANALYSIS' ? renderAnalysis() : ( // WRAPPED DATA VIEW
-          /* Lines Table */
-          <div className="card bg-base-100 shadow">
-              <div className="overflow-x-auto">
+            {viewTab === 'ANALYSIS' ? renderAnalysis() : (
+              <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+                {/* Table Filters & Bulk Actions */}
+                <div className="p-4 border-b border-base-200 bg-base-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
                   {selectedLines.size > 0 ? (
-                      <div className="bg-base-200 p-2 flex justify-between items-center px-4 border-b border-base-300">
-                          <span className="text-sm font-bold">{t('stock.inventaire.lines.selected', { count: selectedLines.size })}</span>
-                          <button 
-                              className="btn btn-sm btn-error text-white"
-                              onClick={handleBulkDelete}
-                          >
-                              {t('stock.inventaire.lines.delete_selection')}
-                          </button>
+                    <div className="flex items-center gap-3 w-full animate-in slide-in-from-left-2 transition-all">
+                       <div className="bg-error text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md">
+                        {selectedLines.size}
                       </div>
+                      <span className="font-bold text-error">{t('stock.inventaire.lines.selected', { count: selectedLines.size })}</span>
+                      <div className="flex gap-2 ml-auto">
+                        <button 
+                            className="btn btn-sm btn-ghost rounded-lg"
+                            onClick={() => setSelectedLines(new Set())}
+                        >
+                            {t('stock.inventaire.deselect')}
+                        </button>
+                        <button 
+                            className="btn btn-sm btn-error text-white rounded-lg gap-2 px-4"
+                            onClick={handleBulkDelete}
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            {t('stock.inventaire.lines.delete_selection')}
+                        </button>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="bg-base-200 p-2 flex justify-between items-center px-4 border-b border-base-300 gap-2 max-sm:flex-col">
-                        <div className="relative w-full sm:w-auto mb-2 sm:mb-0">
+                    <>
+                        <div className="relative w-full md:w-96">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/30" />
                             <input
                                 type="text"
-                                placeholder={t('stock.inventaire.lines.search_placeholder', 'Rechercher un produit...')}
-                                className="input input-xs input-bordered w-full sm:w-64 pl-8"
+                                placeholder={t('stock.inventaire.lines.search_placeholder')}
+                                className="input input-bordered input-sm w-full pl-9 rounded-xl"
                                 value={searchLignesQuery}
                                 onChange={(e) => setSearchLignesQuery(e.target.value)}
                             />
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 absolute left-2.5 top-1.5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                            {searchLignesQuery && (
-                                <button 
-                                    className="btn btn-ghost btn-xs btn-circle absolute right-1 top-0.5"
-                                    onClick={() => setSearchLignesQuery('')}
-                                >
-                                    ✕
-                                </button>
-                            )}
                         </div>
-                        <div className="flex items-center w-full sm:w-auto justify-end">
-                            <span className="text-xs opacity-50 uppercase font-bold mr-2">{t('stock.inventaire.lines.sort_by')}</span>
-                            <select 
-                                className="select select-bordered select-xs" 
-                                value={sortBy} 
-                                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                            >
-                                <option value="CHRONOLOGICAL">{t('stock.inventaire.lines.sort_chronological')}</option>
-                                <option value="NAME">{t('stock.inventaire.lines.sort_name')}</option>
-                                <option value="GAP_VALUE">{t('stock.inventaire.lines.sort_gap_value')}</option>
-                                <option value="GAP_QTY">{t('stock.inventaire.lines.sort_gap_qty')}</option>
-                            </select>
+                        <div className="flex items-center gap-4 w-full md:w-auto">
+                            <div className="flex items-center gap-2">
+                                <ArrowUpDown className="h-4 w-4 text-base-content/30" />
+                                <select 
+                                    className="select select-bordered select-sm rounded-xl" 
+                                    value={sortBy} 
+                                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                                >
+                                    <option value="CHRONOLOGICAL">{t('stock.inventaire.lines.sort_chronological')}</option>
+                                    <option value="NAME">{t('stock.inventaire.lines.sort_name')}</option>
+                                    <option value="GAP_VALUE">{t('stock.inventaire.lines.sort_gap_value')}</option>
+                                    <option value="GAP_QTY">{t('stock.inventaire.lines.sort_gap_qty')}</option>
+                                </select>
+                            </div>
                             <button 
-                                className="btn btn-ghost btn-xs btn-square ml-1"
+                                className="btn btn-ghost btn-sm btn-circle rounded-xl hover:bg-base-200"
                                 onClick={() => setSortOrder(prev => prev === 'ASC' ? 'DESC' : 'ASC')}
-                                title={sortOrder === 'ASC' ? 'Croissant' : 'Décroissant'}
                             >
-                                {sortOrder === 'ASC' ? '⬆️' : '⬇️'}
+                                <ArrowUpDown className={`h-4 w-4 transition-transform ${sortOrder === 'ASC' ? 'rotate-180' : ''}`} />
                             </button>
                         </div>
-                    </div>
+                    </>
                   )}
-                  <table className="table table-zebra w-full table-xs">
-                      <thead>
-                          <tr>
-                              {!isReadOnly && (
-                                  <th className="w-10">
-                                      <label>
-                                          <input 
-                                              type="checkbox" 
-                                              className="checkbox checkbox-xs" 
-                                              checked={lignes.length > 0 && selectedLines.size === lignes.length}
-                                              onChange={toggleSelectAll}
-                                          />
-                                      </label>
-                                  </th>
-                              )}
+                </div>
 
-                              <th>{t('stock.inventaire.lines.product')}</th>
-                              <th>{t('stock.inventaire.lines.rayon')}</th>
-                              <th className="text-right">{t('stock.inventaire.lines.buy_price')}</th>
-                              <th className="text-center">{t('stock.inventaire.lines.stock_theo')}</th>
-                              <th className="text-center">{t('stock.inventaire.lines.qty_saisie')}</th>
-                              <th className="text-center">{t('stock.inventaire.lines.ecart_qty')}</th>
-                              <th className="text-right">{t('stock.inventaire.lines.ecart_val')}</th>
-                              {!isReadOnly && <th>{t('stock.inventaire.list.actions')}</th>}
-                          </tr>
-                      </thead>
-                      <tbody>
-                          {/* Apply Sorting before map */}
-                          {[...lignes].filter(l => {
-                              if (!searchLignesQuery) return true;
-                              const q = searchLignesQuery.toLowerCase();
-                              const name = (typeof l.produit === 'object' ? l.produit.name : l.produit_nom) || '';
-                              const cip = (typeof l.produit === 'object' ? l.produit.cip1 : l.produit_cip) || '';
-                              return name.toLowerCase().includes(q) || cip.toLowerCase().includes(q);
-                          }).sort((a, b) => {
-                              let comparison = 0;
-                              switch (sortBy) {
-                                  case 'NAME':
-                                      const nameA = (typeof a.produit === 'object' ? a.produit.name : a.produit_nom) || '';
-                                      const nameB = (typeof b.produit === 'object' ? b.produit.name : b.produit_nom) || '';
-                                      comparison = nameA.localeCompare(nameB);
-                                      break;
-                                  case 'GAP_VALUE':
-                                      // Calculate absolute gap value for sorting by magnitude? Or just raw? 
-                                      // User asked "Ecart valorise", usually means magnitude of loss/gain.
-                                      // But let's stick to signed value (Loss vs Gain). 
-                                      // Wait, "prioriser les pertes/gains importants".
-                                      // Often finance wants to see biggest LOSS first.
-                                      // Let's sort by raw value. 
-                                      const priceA = parseFloat(a.produit_cost_price || '0');
-                                      const valA = a.ecart * priceA;
-                                      const priceB = parseFloat(b.produit_cost_price || '0');
-                                      const valB = b.ecart * priceB;
-                                      comparison = valA - valB; 
-                                      break;
-                                  case 'GAP_QTY':
-                                      comparison = a.ecart - b.ecart;
-                                      break;
-                                  case 'CHRONOLOGICAL':
-                                  default:
-                                      // Default by ID (insertion order)
-                                      comparison = a.id - b.id;
-                                      break;
-                              }
-                              return sortOrder === 'ASC' ? comparison : -comparison;
-                          }).map((ligne, _index) => {
-                              const price = parseFloat(ligne.produit_cost_price || ligne.pmp_snapshot || '0');
-                              const ecartValeur = ligne.ecart * price;
-                              const isSelected = selectedLines.has(ligne.id);
-                              return (
-                              <tr key={ligne.id} className={isSelected ? "bg-primary/10" : ""}>
-                                  {!isReadOnly && (
-                                      <td>
-                                          <label>
-                                              <input 
-                                                  type="checkbox" 
-                                                  className="checkbox checkbox-xs" 
-                                                  checked={isSelected}
-                                                  onChange={() => toggleSelectLine(ligne.id)}
-                                              />
-                                          </label>
-                                      </td>
-                                  )}
-                                  <td>
-                                      <div className="font-bold">
-                                          {typeof ligne.produit === 'object' ? ligne.produit.name : ligne.produit_nom} {ligne.isLocalOnly && <span className="badge badge-warning badge-xs">Local</span>}
-                                      </div>
-                                      <div className="text-xs opacity-50">
-                                          {typeof ligne.produit === 'object' ? ligne.produit.cip1 : ligne.produit_cip}
-                                      </div>
-                                      {ligne.lot_numero && (
-                                           <div className="text-xs text-blue-600 font-mono mt-1">
-                                               LOT: {ligne.lot_numero} (Exp: {ligne.lot_expiration})
-                                           </div>
-                                      )}
-                                  </td>
-                                  <td className="text-xs">{typeof ligne.produit === 'object' ? ligne.produit.rayon_name : ligne.produit_rayon}</td>
-                                  <td className="text-right text-xs">{price.toLocaleString()} F</td>
-                                  <td className="text-center font-bold opacity-70">{ligne.stock_theorique}</td>
-                                  
-                                  <td className="text-center p-1">
-                                      {isReadOnly ? (
-                                          <span className="font-bold">{ligne.quantite_physique}</span>
-                                      ) : (
-                                          <input 
-                                              id={`qty-input-${lignes.indexOf(ligne)}`}
-                                              type="text" 
-                                              inputMode="numeric"
-                                              className="input input-bordered input-xs w-24 text-center font-bold"
-                                              value={ligne.quantite_physique}
-                                              onChange={(e) => {
-                                                  const val = e.target.value;
-                                                  if (/^\d*$/.test(val)) {
-                                                      handleUpdateQuantity(ligne.id, val === '' ? 0 : parseInt(val));
-                                                  }
-                                              }}
-                                              onFocus={(e) => e.target.select()}
-                                              onKeyDown={(e) => handleKeyDown(e, lignes.indexOf(ligne))}
-                                          />
-                                      )}
-                                  </td>
-                                  
-                                  <td className="text-center">
-                                      <span className={`badge ${ligne.ecart < 0 ? 'badge-error' : ligne.ecart > 0 ? 'badge-success' : 'badge-ghost'} badge-sm`}>
-                                          {ligne.ecart > 0 ? '+' : ''}{ligne.ecart}
-                                      </span>
-                                  </td>
-                                  <td className={`text-right font-bold text-xs ${ecartValeur < 0 ? 'text-error' : ecartValeur > 0 ? 'text-success' : ''}`}>
-                                      {ecartValeur.toLocaleString()} F
-                                  </td>
-                                  {!isReadOnly && (
-                                      <td>
-                                          <button 
-                                            className="btn btn-ghost btn-xs text-error h-6 min-h-0"
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-base-200/50 border-b border-base-300 text-left text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
+                        {!isReadOnly && (
+                          <th className="px-4 py-4 w-10">
+                            <input 
+                                type="checkbox" 
+                                className="checkbox checkbox-xs checkbox-primary" 
+                                checked={lignes.length > 0 && selectedLines.size === lignes.length}
+                                onChange={toggleSelectAll}
+                            />
+                          </th>
+                        )}
+                        <th className="px-6 py-4">{t('stock.inventaire.lines.product')}</th>
+                        <th className="px-6 py-4">{t('stock.inventaire.lines.rayon')}</th>
+                        <th className="px-6 py-4 text-right">{t('stock.inventaire.lines.buy_price')}</th>
+                        <th className="px-6 py-4 text-center">{t('stock.inventaire.lines.stock_theo')}</th>
+                        <th className="px-6 py-4 text-center">{t('stock.inventaire.lines.qty_saisie')}</th>
+                        <th className="px-6 py-4 text-center">{t('stock.inventaire.lines.ecart_qty')}</th>
+                        <th className="px-6 py-4 text-right">{t('stock.inventaire.lines.ecart_val')}</th>
+                        {!isReadOnly && <th className="px-6 py-4 text-right"></th>}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-base-200">
+                      {[...lignes].filter(l => {
+                          if (!searchLignesQuery) return true;
+                          const q = searchLignesQuery.toLowerCase();
+                          const name = (typeof l.produit === 'object' ? l.produit.name : l.produit_nom) || '';
+                          const cip = (typeof l.produit === 'object' ? l.produit.cip1 : l.produit_cip) || '';
+                          return name.toLowerCase().includes(q) || cip.toLowerCase().includes(q);
+                      }).sort((a, b) => {
+                          let comparison = 0;
+                          switch (sortBy) {
+                              case 'NAME':
+                                  const nameA = (typeof a.produit === 'object' ? a.produit.name : a.produit_nom) || '';
+                                  const nameB = (typeof b.produit === 'object' ? b.produit.name : b.produit_nom) || '';
+                                  comparison = nameA.localeCompare(nameB);
+                                  break;
+                              case 'GAP_VALUE':
+                                  const priceA = parseFloat(a.produit_cost_price || '0');
+                                  const valA = a.ecart * priceA;
+                                  const priceB = parseFloat(b.produit_cost_price || '0');
+                                  const valB = b.ecart * priceB;
+                                  comparison = valA - valB; 
+                                  break;
+                              case 'GAP_QTY':
+                                  comparison = a.ecart - b.ecart;
+                                  break;
+                              case 'CHRONOLOGICAL':
+                              default:
+                                  comparison = a.id - b.id;
+                                  break;
+                          }
+                          return sortOrder === 'ASC' ? comparison : -comparison;
+                      }).map((ligne, index) => {
+                          const price = parseFloat(ligne.produit_cost_price || ligne.pmp_snapshot || '0');
+                          const ecartValeur = ligne.ecart * price;
+                          const isSelected = selectedLines.has(ligne.id);
+                          return (
+                            <tr key={ligne.id} className={`group hover:bg-base-200/50 transition-colors ${isSelected ? 'bg-primary/5' : ''}`}>
+                                {!isReadOnly && (
+                                    <td className="px-4 py-4">
+                                        <input 
+                                            type="checkbox" 
+                                            className="checkbox checkbox-xs checkbox-primary" 
+                                            checked={isSelected}
+                                            onChange={() => toggleSelectLine(ligne.id)}
+                                        />
+                                    </td>
+                                )}
+                                <td className="px-6 py-4">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-base-content flex items-center gap-2">
+                                            {typeof ligne.produit === 'object' ? ligne.produit.name : ligne.produit_nom}
+                                            {ligne.isLocalOnly && <span className="badge badge-warning text-[8px] font-bold uppercase px-1.5 h-4 border-none">Local</span>}
+                                        </span>
+                                        <div className="text-xs text-base-content/40 flex items-center gap-2 mt-0.5">
+                                            <span className="font-mono bg-base-200 px-1 rounded">{typeof ligne.produit === 'object' ? ligne.produit.cip1 : ligne.produit_cip}</span>
+                                            {ligne.lot_numero && (
+                                                <span className="text-info flex items-center gap-1 font-medium">
+                                                    <Database className="h-3 w-3" />
+                                                    {ligne.lot_numero}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className="text-xs font-semibold text-base-content/60 bg-base-200/50 px-2 py-1 rounded-lg border border-base-300">
+                                        {typeof ligne.produit === 'object' ? ligne.produit.rayon_name : ligne.produit_rayon}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right font-mono text-base-content/60">
+                                    {price.toLocaleString()} F
+                                </td>
+                                <td className="px-6 py-4 text-center font-bold text-base-content/40">
+                                    {ligne.stock_theorique}
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    {isReadOnly ? (
+                                        <div className="w-24 mx-auto py-1 bg-base-200 rounded-lg font-bold text-base-content">
+                                            {ligne.quantite_physique}
+                                        </div>
+                                    ) : (
+                                        <input 
+                                            id={`qty-input-${index}`}
+                                            type="text" 
+                                            inputMode="numeric"
+                                            className="input input-bordered input-sm w-24 text-center font-bold rounded-xl focus:border-primary focus:ring-1 focus:ring-primary shadow-sm"
+                                            value={ligne.quantite_physique}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (/^\d*$/.test(val)) {
+                                                    handleUpdateQuantity(ligne.id, val === '' ? 0 : parseInt(val));
+                                                }
+                                            }}
+                                            onFocus={(e) => e.target.select()}
+                                            onKeyDown={(e) => handleKeyDown(e, index)}
+                                        />
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold border shadow-xs
+                                        ${ligne.ecart < 0 ? 'bg-error/10 text-error border-error/20' : 
+                                          ligne.ecart > 0 ? 'bg-success/10 text-success border-success/20' : 
+                                          'bg-base-200 text-base-content/40 border-base-300'}`}
+                                    >
+                                        {ligne.ecart > 0 ? '+' : ''}{ligne.ecart}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <span className={`font-mono font-bold text-sm
+                                        ${ecartValeur < 0 ? 'text-error' : ecartValeur > 0 ? 'text-success' : 'text-base-content/40'}`}>
+                                        {ecartValeur > 0 ? '+' : ''}{ecartValeur.toLocaleString()} F
+                                    </span>
+                                </td>
+                                {!isReadOnly && (
+                                    <td className="px-6 py-4 text-right">
+                                        <button 
+                                            className="p-2 text-base-content/20 hover:text-error hover:bg-error/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                             onClick={() => handleDeleteLine(ligne.id)}
-                                            tabIndex={-1}
-                                          >
-                                            🗑️
-                                          </button>
-                                      </td>
-                                  )}
-                              </tr>
-                              );
-                          })}
-                          {lignes.length === 0 && (
-                              <tr>
-                              <td colSpan={!isReadOnly ? 9 : 8} className="text-center py-8 opacity-50">
-                                      {t('stock.inventaire.lines.empty_hint')}
-                                  </td>
-                              </tr>
-                          )}
-                      </tbody>
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </td>
+                                )}
+                            </tr>
+                          );
+                      })}
+                      {lignes.length === 0 && (
+                        <tr>
+                          <td colSpan={!isReadOnly ? 9 : 8} className="py-20 text-center">
+                            <div className="flex flex-col items-center gap-2 opacity-20">
+                                <Package className="h-10 w-10" />
+                                <p className="text-sm font-medium">{t('stock.inventaire.lines.empty_hint')}</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
                   </table>
+                </div>
+
+                {/* Footer Totals area */}
+                <div className="p-6 bg-base-50 border-t border-base-200 flex flex-wrap justify-end gap-10">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock.inventaire.lines.total_theo')}</span>
+                        <span className="text-xl font-mono text-base-content/60">{totalValeurTheorique.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock.inventaire.lines.total_phys')}</span>
+                        <span className="text-xl font-bold text-base-content">{totalValeurPhysique.toLocaleString()} F</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">{t('stock.inventaire.lines.total_gap')}</span>
+                        <span className={`text-2xl font-black font-mono shadow-xs px-3 rounded-xl border
+                            ${totalEcartValeur < 0 ? 'bg-error/5 text-error border-error/10' : 
+                              totalEcartValeur > 0 ? 'bg-success/5 text-success border-success/10' : 
+                              'bg-base-200/50 text-base-content/40 border-base-200'}`}
+                        >
+                            {totalEcartValeur > 0 ? '+' : ''}{totalEcartValeur.toLocaleString()} F
+                        </span>
+                    </div>
+                </div>
               </div>
-              <div className="p-4 bg-base-200 border-t flex justify-end gap-8">
-                  <div className="text-right">
-                      <div className="text-sm opacity-50">{t('stock.inventaire.lines.total_theo')}</div>
-                      <div className="text-xl font-bold">{totalValeurTheorique.toLocaleString()} F</div>
-                  </div>
-                  <div className="text-right">
-                      <div className="text-sm opacity-50">{t('stock.inventaire.lines.total_phys')}</div>
-                      <div className="text-xl font-bold">{totalValeurPhysique.toLocaleString()} F</div>
-                  </div>
-                  <div className="text-right">
-                      <div className="text-sm opacity-50">{t('stock.inventaire.lines.total_gap')}</div>
-                      <div className={`text-xl font-bold ${totalEcartValeur < 0 ? 'text-error' : totalEcartValeur > 0 ? 'text-success' : ''}`}>
-                          {totalEcartValeur > 0 ? '+' : ''}{totalEcartValeur.toLocaleString()} F
-                      </div>
-                  </div>
-              </div>
+            )}
           </div>
-          )} {/* End Data View */}
-
-          {showLotModal && (
-              <dialog className="modal modal-open">
-                  <div className="modal-box" onKeyDown={handleLotModalKeyDown} tabIndex={0} autoFocus>
-                      <h3 className="font-bold text-lg">{t('stock.inventaire.modals.lot_title')}</h3>
-                      <p className="py-2 text-sm text-gray-500">{t('stock.inventaire.modals.lot_for', { name: selectedProductForLot?.name })}</p>
-                      <p className="text-xs text-info mb-2">{t('stock.inventaire.modals.lot_hint')}</p>
-                      
-                      <div className="py-4">
-                          {loadingLots ? (
-                              <div className="flex justify-center"><span className="loading loading-spinner"></span></div>
-                          ) : availableLots.length === 0 ? (
-                              <div className="text-center text-gray-500">
-                                  {t('stock.inventaire.modals.lot_none')} 
-                                  <br/>
-                                  <button 
-                                      className="btn btn-sm btn-outline mt-2" 
-                                      onClick={() => handleAddProduct(selectedProductForLot!)}
-                                  >
-                                      {t('stock.inventaire.modals.add_global')}
-                                  </button>
-                              </div>
-                          ) : (
-                              <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                                  {availableLots.map((lot, index) => (
-                                      <button 
-                                          key={lot.id} 
-                                          className={`btn btn-outline justify-between h-auto py-2 ${index === focusedLotIndex ? 'btn-active ring-2 ring-primary ring-offset-1' : ''}`}
-                                          onClick={() => handleLotSelection(lot.id)}
-                                          onMouseEnter={() => setFocusedLotIndex(index)}
-                                      >
-                                          <div className="text-left">
-                                              <div className="font-bold">Lot: {lot.lot || 'N/A'}</div>
-                                              <div className="text-xs">Exp: {lot.date_expiration || 'N/A'}</div>
-                                          </div>
-                                          <div className="text-right">
-                                              <div className="badge badge-ghost">Reste: {lot.quantity_remaining}</div>
-                                          </div>
-                                      </button>
-                                  ))}
-                              </div>
-                          )}
-                      </div>
-
-                      <div className="modal-action justify-between">
-                          <button 
-                              className="btn btn-ghost" 
-                              onClick={() => { setShowLotModal(false); setSelectedProductForLot(null); }}
-                          >
-                              {t('stock.inventaire.modals.cancel')}
-                          </button>
-                          {availableLots.length > 0 && (
-                             <button 
-                                 className="btn btn-ghost btn-xs"
-                                 onClick={() => handleAddProduct(selectedProductForLot!)}
-                             >
-                                 {t('stock.inventaire.modals.add_global')}
-                             </button>
-                          )}
-                      </div>
-                  </div>
-              </dialog>
-          )}
-
-      </div>
-    )}
-          {/* Merge Modal */}
-          {showMergeModal && (
-              <dialog className="modal modal-open">
-                  <div className="modal-box max-w-2xl">
-                    {viewMode === 'LIST' ? (
-                        /* MODE LISTE : Fusionner la SÉLECTION */
-                        <>
-                             <h3 className="font-bold text-lg mb-4">{t('stock.inventaire.modals.merge_title_list', { count: selectedInventaireIds.size })}</h3>
-                              <div className="alert alert-warning mb-4 text-xs shadow-sm">
-                                  <span dangerouslySetInnerHTML={{ __html: t('stock.inventaire.modals.merge_warning_list') }}></span>
-                              </div>
-                              
-                              <p className="mb-2 font-semibold text-sm">{t('stock.inventaire.modals.merge_target_select')}</p>
-                              <div className="flex flex-col gap-2 max-h-60 overflow-y-auto mb-4">
-                                   {inventaires.filter(i => selectedInventaireIds.has(i.id)).map(inv => (
-                                       <button 
-                                           key={inv.id} 
-                                           className={`btn justify-between h-auto py-3 no-animation border-2 ${selectedMergeSource === inv.id ? 'btn-primary border-primary' : 'btn-outline border-base-200 hover:border-primary/50'}`}
-                                           onClick={() => setSelectedMergeSource(inv.id)}
-                                       >
-                                           <div className="text-left flex-1">
-                                               <div className="font-bold flex items-center gap-2">
-                                                   Inventaire #{inv.id}
-                                                   {selectedMergeSource === inv.id && <span className="badge badge-sm badge-white text-primary">{t('stock.inventaire.modals.merge_target_badge')}</span>}
-                                               </div>
-                                               <div className="text-xs opacity-80">{new Date(inv.date).toLocaleDateString('fr-FR')} - {inv.description || 'Sans description'}</div>
-                                           </div>
-                                            <div className="badge badge-ghost font-mono">{(inv.total_valeur_physique || 0).toLocaleString()} F</div>
-                                       </button>
-                                   ))}
-                              </div>
-                        </>
-                    ) : ( 
-                        /* MODE DETAILS : Fusionner UN EXTERNE VERS ICI */
-                        <>
-                          <h3 className="font-bold text-lg mb-4">{t('stock.inventaire.modals.merge_title_external')}</h3>
-                          <div className="alert alert-warning mb-4 text-xs shadow-sm">
-                              <span dangerouslySetInnerHTML={{ __html: t('stock.inventaire.modals.merge_warning_external', { id: activeInventaire?.id }) }}></span>
-                          </div>
-                          
-                          <p className="py-2 text-sm text-gray-500 mb-2">
-                              {t('stock.inventaire.modals.merge_current_target')} <strong>#{activeInventaire?.id}</strong>
-                          </p>
-
-                          <div className="py-2">
-                               {loadingMergeCandidates ? (
-                                   <div className="flex justify-center py-8"><span className="loading loading-spinner"></span></div>
-                               ) : mergeCandidates.length === 0 ? (
-                                   <div className="text-center text-gray-500 py-8 italic border rounded-lg bg-base-200">
-                                       {t('stock.inventaire.modals.merge_no_candidate')}
-                                   </div>
-                               ) : (
-                                   <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
-                                       {mergeCandidates.map(candidate => (
-                                           <button 
-                                               key={candidate.id} 
-                                               className={`btn justify-between h-auto py-3 no-animation ${selectedMergeSource === candidate.id ? 'btn-primary' : 'btn-outline bg-base-100'}`}
-                                               onClick={() => setSelectedMergeSource(candidate.id)}
-                                           >
-                                               <div className="text-left">
-                                                   <div className="font-bold">Inventaire #{candidate.id}</div>
-                                                   <div className="text-xs opacity-80">{new Date(candidate.date).toLocaleDateString()} - {candidate.description || 'Sans description'}</div>
-                                                   <div className="text-xs opacity-60">Par: {candidate.created_by_name || 'Inconnu'}</div>
-                                               </div>
-                                                <div className="badge badge-sm badge-ghost">{(candidate.total_valeur_physique || 0).toLocaleString()} F</div>
-                                           </button>
-                                       ))}
-                                   </div>
-                               )}
-                          </div>
-                        </>
+        </div>
+      )}{showLotModal && (
+        <dialog className="modal modal-open">
+          <div className="modal-box rounded-2xl shadow-2xl border border-base-300 p-0 overflow-hidden max-w-md" onKeyDown={handleLotModalKeyDown} tabIndex={0} autoFocus>
+            <div className="p-6 border-b border-base-200 bg-base-50 flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-xl">
+                    <Database className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                    <h3 className="font-bold text-lg text-base-content">{t('stock.inventaire.modals.lot_title')}</h3>
+                    <p className="text-xs text-base-content/60 mt-0.5">{t('stock.inventaire.modals.lot_for', { name: selectedProductForLot?.name })}</p>
+                </div>
+            </div>
+            
+            <div className="p-6">
+                <div className="alert alert-info border-none bg-info/10 text-info text-xs font-bold mb-4 flex items-center gap-2">
+                    <Info className="h-4 w-4" />
+                    {t('stock.inventaire.modals.lot_hint')}
+                </div>
+                
+                <div className="space-y-2">
+                    {loadingLots ? (
+                        <div className="flex flex-col items-center justify-center py-12 gap-3">
+                            <span className="loading loading-spinner text-primary"></span>
+                            <span className="text-xs font-medium text-base-content/40">{t('common.loading')}</span>
+                        </div>
+                    ) : availableLots.length === 0 ? (
+                        <div className="text-center py-10 bg-base-200/50 rounded-2xl border border-dashed border-base-300">
+                            <p className="text-sm text-base-content/40 italic mb-4">{t('stock.inventaire.modals.lot_none')}</p>
+                            <button 
+                                className="btn btn-primary btn-sm rounded-xl px-4" 
+                                onClick={() => handleAddProduct(selectedProductForLot!)}
+                            >
+                                <Plus className="h-4 w-4" />
+                                {t('stock.inventaire.modals.add_global')}
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
+                            {availableLots.map((lot, index) => (
+                                <button 
+                                    key={lot.id} 
+                                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left group
+                                        ${index === focusedLotIndex ? 'border-primary bg-primary/5 ring-4 ring-primary/10' : 'border-base-200 hover:border-primary/30 bg-base-100'}`}
+                                    onClick={() => handleLotSelection(lot.id)}
+                                    onMouseEnter={() => setFocusedLotIndex(index)}
+                                >
+                                    <div className="flex flex-col gap-1">
+                                        <div className="font-bold text-base-content">Lot: {lot.lot || 'N/A'}</div>
+                                        <div className="text-[10px] font-bold text-base-content/40 uppercase flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString() : 'N/A'}
+                                        </div>
+                                    </div>
+                                    <div className="badge badge-outline border-base-300 text-[10px] font-bold group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all">
+                                        {lot.quantity_remaining} {t('common.left', { defaultValue: 'restants' })}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     )}
+                </div>
+            </div>
 
-                      <div className="modal-action">
-                          <button className="btn btn-ghost" onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}>{t('stock.inventaire.modals.cancel')}</button>
-                          <button  
-                              className="btn btn-primary" 
-                              disabled={!selectedMergeSource || merging}
-                              onClick={handleMerge}
-                          >
-                              {merging ? <span className="loading loading-spinner"></span> : t('stock.inventaire.modals.merge_confirm_btn')}
-                          </button>
-                      </div>
-                  </div>
-              </dialog>
-          )}
+            <div className="p-4 bg-base-50 border-t border-base-200 flex items-center justify-between">
+                <button 
+                    className="btn btn-ghost rounded-xl px-6" 
+                    onClick={() => { setShowLotModal(false); setSelectedProductForLot(null); }}
+                >
+                    {t('common.cancel', { defaultValue: 'Annuler' })}
+                </button>
+                {availableLots.length > 0 && (
+                   <button 
+                       className="btn btn-ghost btn-sm text-primary/60 hover:text-primary rounded-xl"
+                       onClick={() => handleAddProduct(selectedProductForLot!)}
+                   >
+                       {t('stock.inventaire.modals.add_global')}
+                   </button>
+                )}
+            </div>
+          </div>
+        </dialog>
+      )}
+
+      {/* Merge Modal */}
+      {showMergeModal && (
+        <dialog className="modal modal-open">
+          <div className="modal-box rounded-2xl shadow-2xl border border-base-300 p-0 overflow-hidden max-w-2xl">
+            <div className="p-6 border-b border-base-200 bg-base-50 flex items-center gap-4">
+                <div className="p-3 bg-secondary/10 rounded-xl">
+                    <LayoutGrid className="h-6 w-6 text-secondary" />
+                </div>
+                <div>
+                    <h3 className="font-bold text-lg text-base-content">{t('stock.inventaire.modals.merge_title')}</h3>
+                    <p className="text-xs text-base-content/60 mt-0.5">
+                        {viewMode === 'LIST' 
+                            ? t('stock.inventaire.modals.merge_subtitle_list', { count: selectedInventaireIds.size })
+                            : t('stock.inventaire.modals.merge_subtitle_details')}
+                    </p>
+                </div>
+                <button 
+                  className="btn btn-ghost btn-circle btn-sm ml-auto"
+                  onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+                <div className="flex items-start gap-4 p-4 bg-warning/10 rounded-2xl border border-warning/20">
+                    <AlertCircle className="h-6 w-6 text-warning shrink-0" />
+                    <div className="text-xs text-warning-content font-medium leading-relaxed">
+                        {viewMode === 'LIST' 
+                            ? t('stock.inventaire.modals.merge_warning_list')
+                            : t('stock.inventaire.modals.merge_warning_external', { id: activeInventaire?.id })}
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">
+                        {viewMode === 'LIST' ? t('stock.inventaire.modals.merge_target_select') : t('stock.inventaire.modals.merge_source_select')}
+                    </label>
+                    <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                        {viewMode === 'LIST' ? (
+                            inventaires.filter(i => selectedInventaireIds.has(i.id)).map(inv => (
+                                <button 
+                                    key={inv.id} 
+                                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left
+                                        ${selectedMergeSource === inv.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-base-200 hover:border-primary/20 bg-base-100'}`}
+                                    onClick={() => setSelectedMergeSource(inv.id)}
+                                >
+                                    <div className="flex flex-col">
+                                        <div className="font-bold text-base-content flex items-center gap-2">
+                                            Inventaire #{inv.id}
+                                            {selectedMergeSource === inv.id && (
+                                                <span className="badge badge-primary badge-xs py-2 px-2 text-[8px] font-bold uppercase tracking-widest">Cible</span>
+                                            )}
+                                        </div>
+                                        <div className="text-[10px] text-base-content/40 font-bold uppercase mt-0.5">
+                                            {new Date(inv.date).toLocaleDateString()} — {inv.description || 'Sans description'}
+                                        </div>
+                                    </div>
+                                    <div className="font-mono font-bold text-sm text-base-content/60">{(inv.total_valeur_physique || 0).toLocaleString()} F</div>
+                                </button>
+                            ))
+                        ) : (
+                            loadingMergeCandidates ? (
+                                <div className="flex flex-col items-center justify-center py-10 gap-3">
+                                    <span className="loading loading-spinner text-primary"></span>
+                                    <span className="text-xs font-medium text-base-content/40">{t('common.loading')}</span>
+                                </div>
+                            ) : mergeCandidates.length === 0 ? (
+                                <div className="text-center py-10 bg-base-200/50 rounded-2xl border border-dashed border-base-300">
+                                    <p className="text-sm text-base-content/40 italic">{t('stock.inventaire.modals.merge_no_candidate')}</p>
+                                </div>
+                            ) : (
+                                mergeCandidates.map(candidate => (
+                                    <button 
+                                        key={candidate.id} 
+                                        className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all text-left
+                                            ${selectedMergeSource === candidate.id ? 'border-primary bg-primary/5 shadow-sm' : 'border-base-200 hover:border-primary/20 bg-base-100'}`}
+                                        onClick={() => setSelectedMergeSource(candidate.id)}
+                                    >
+                                        <div className="flex flex-col">
+                                            <div className="font-bold text-base-content">Inventaire #{candidate.id}</div>
+                                            <div className="text-[10px] text-base-content/40 font-bold uppercase mt-0.5">
+                                                {new Date(candidate.date).toLocaleDateString()} — {candidate.description || 'Sans description'}
+                                            </div>
+                                            <div className="text-[10px] text-primary/60 font-medium uppercase mt-1">Par: {candidate.created_by_name}</div>
+                                        </div>
+                                        <div className="font-mono font-bold text-sm text-base-content/60">{(candidate.total_valeur_physique || 0).toLocaleString()} F</div>
+                                    </button>
+                                ))
+                            )
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-4 bg-base-50 border-t border-base-200 flex items-center justify-end gap-3">
+                <button 
+                    className="btn btn-ghost rounded-xl px-6" 
+                    onClick={() => { setShowMergeModal(false); setSelectedMergeSource(null); }}
+                >
+                    {t('common.cancel')}
+                </button>
+                <button  
+                    className="btn btn-primary rounded-xl px-8 shadow-lg shadow-primary/20" 
+                    disabled={!selectedMergeSource || merging}
+                    onClick={handleMerge}
+                >
+                    {merging ? <span className="loading loading-spinner"></span> : t('stock.inventaire.modals.merge_confirm_btn')}
+                </button>
+            </div>
+          </div>
+        </dialog>
+      )}
 
       {/* Sudo Validation Modal */}
       <SudoValidationModal
@@ -1711,10 +1872,9 @@ export default function InventaireComponent() {
         onClose={closeSudo}
         onValidate={sudoState.onValidate}
         saving={saving}
-        title={sudoState.title || "Validation Requise"}
+        title={sudoState.title || t('common.auth_required')}
         message={sudoState.message || ""}
       />
-
-  </div>
+    </div>
   );
 }
