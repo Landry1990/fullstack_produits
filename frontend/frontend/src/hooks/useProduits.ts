@@ -304,16 +304,8 @@ export const useBulkDelete = () => {
     // Actually, `useDeleteProduit` is sufficient if called in loop, or we can make a bulk mutation.
     return useMutation({
         mutationFn: async (ids: number[]) => {
-            const results = [];
-            for (const id of ids) {
-                try {
-                    await axios.delete(`${produitsEndpoint}${id}/`);
-                    results.push({ id, status: 'success' });
-                } catch (error) {
-                    results.push({ id, status: 'error', error });
-                }
-            }
-            return results;
+            const response = await axios.post(`${produitsEndpoint}bulk_delete/`, { ids });
+            return response.data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['produits'] });

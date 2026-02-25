@@ -99,7 +99,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
     from django.db.models import Value
 
     # Base queryset - optimized for LIST (no prefetch of products)
-    queryset = Commande.objects.select_related('fournisseur') \
+    queryset = Commande.objects.select_related('fournisseur', 'closed_by') \
         .annotate(
             total_annotated=Coalesce(
                 Sum(F('produits__quantity') * F('produits__price')), 

@@ -489,12 +489,11 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
                 // Construire le ticket pour l'UI si besoin
                 // Priorité: client_name_override > client_name > manualClientName > nom du client > 'Client de passage'
-                const clientNameForTicket = finalFacture.client_name_override 
-                    || finalFacture.client_name 
-                    || params.manualClientName 
-                    || (finalFacture.client?.name) 
+                const clientNameForTicket = finalFacture.client_name_override
+                    || finalFacture.client_name
+                    || params.manualClientName
                     || 'Client de passage';
-                
+
                 const ticketCaisse: TicketCaisse = {
                     id: 0,
                     facture: finalFacture,
@@ -596,10 +595,24 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
             const rendu = totalVerse - Number(updatedFacture.total_ttc);
 
-            // 4. GESTION DES PROMIS (Unifiée)
+            // 4. GESTION DES PROMIS (Unifiée) — Créer en DB puis générer le ticket
             const promisLines = params.lignesFacture.filter(l => l.isPromis && l.promisQuantity && l.promisQuantity > 0);
             if (promisLines.length > 0) {
                 try {
+                    // Créer les Promis en base de données via l'API
+                    const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/';
+                    await Promise.all(promisLines.map(l =>
+                        axios.post(promisEndpoint, {
+                            facture: facture.id,
+                            produit: l.produit.id,
+                            quantite: l.promisQuantity,
+                            client_phone: params.promisPhone || l.promisPhone || '',
+                            client_name: params.promisClientName || '',
+                            client: facture.client || null,
+                        })
+                    ));
+
+                    // Générer le ticket PDF
                     generatePromisTicket({
                         client_name: updatedFacture.client_name || params.manualClientName || 'Client',
                         client_phone: params.promisPhone || params.lignesFacture.find(l => l.promisPhone)?.promisPhone,
@@ -617,7 +630,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     });
                     toast.success(t('sales.messages.promis_recorded'));
                 } catch (err: unknown) {
-                    console.error("Erreur génération PDF promis:", err);
+                    console.error("Erreur création/génération promis:", err);
                 }
             }
 
@@ -646,11 +659,10 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
             // 7. Ticket UI
             // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
-            const clientNameForTicket = updatedFacture.client_name_override 
-                || updatedFacture.client_name 
-                || (updatedFacture.client?.name) 
+            const clientNameForTicket = updatedFacture.client_name_override
+                || updatedFacture.client_name
                 || 'Client de passage';
-            
+
             const ticketCaisse: TicketCaisse = {
                 id: 0,
                 facture: updatedFacture,

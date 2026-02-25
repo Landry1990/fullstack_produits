@@ -37,20 +37,20 @@ class RapportViewSet(viewsets.ViewSet):
             return Response({'error': 'Format de date invalide (ISO attendu).'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 1. État Initial (Aujourd'hui / Maintenant)
-        # On calcule le stock actuel global
-        produits = Produit.objects.all().only('stock', 'pmp', 'selling_price')
-        
-        current_stock_cost = Decimal('0')
-        current_stock_ttc = Decimal('0')
-        
-        for p in produits:
-            # PMP peut être null, default 0
-            cost = p.pmp or Decimal('0')
-            price = p.selling_price or Decimal('0')
-            stock = p.stock or 0
-            
-            current_stock_cost += (Decimal(str(stock)) * cost)
-            current_stock_ttc += (Decimal(str(stock)) * price)
+        # Calcul du stock actuel global via agrégation SQL (évite boucle N+1)
+        from django.db.models import Value as V
+        stock_totals = Produit.objects.filter(stock__gt=0).aggregate(
+            total_cost=Coalesce(
+                Sum(F('stock') * F('pmp'), output_field=DecimalField()),
+                V(0, output_field=DecimalField())
+            ),
+            total_ttc=Coalesce(
+                Sum(F('stock') * F('selling_price'), output_field=DecimalField()),
+                V(0, output_field=DecimalField())
+            ),
+        )
+        current_stock_cost = stock_totals['total_cost']
+        current_stock_ttc = stock_totals['total_ttc']
 
         # 2. Récupérer les mouvements (Ventes et Achats) sur la période étendue
         # On a besoin des mouvements de (Now) jusqu'à (Date Debut) pour remonter le temps

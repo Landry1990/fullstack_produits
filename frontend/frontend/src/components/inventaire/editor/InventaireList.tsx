@@ -1,0 +1,142 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { ChevronLeft, ChevronRight, ClipboardList, Database, Plus } from 'lucide-react';
+import { InventaireFilters } from '../InventaireFilters';
+import { InventaireQuickStats } from '../InventaireQuickStats';
+import { InventaireListTable } from '../InventaireListTable';
+import { useInventaireList } from '../../../hooks/inventaire/useInventaireList';
+import { useInventaireEditor } from '../../../hooks/inventaire/useInventaireEditor';
+
+interface InventaireListProps {
+    listLogic: ReturnType<typeof useInventaireList>;
+    onEdit: (inventaire: any) => void;
+    onCreate: () => void;
+    onOpenMergeModal: () => void;
+    canMerge: { canMerge: boolean; reason: string | null };
+    editorLogic: ReturnType<typeof useInventaireEditor>;
+}
+
+export const InventaireList: React.FC<InventaireListProps> = ({
+    listLogic,
+    onEdit,
+    onCreate,
+    onOpenMergeModal,
+    canMerge,
+    editorLogic
+}) => {
+    const { t } = useTranslation();
+    const {
+        inventaires, loading, totalCount, currentPage,
+        nextPage, prevPage, fetchInventaires, handleDelete,
+        filterStartDate, setFilterStartDate,
+        filterEndDate, setFilterEndDate,
+        filterSearchTerm, setFilterSearchTerm,
+        filterStatus, setFilterStatus,
+        filterCreator, setFilterCreator,
+        selectedInventaireIds, toggleSelectInventaire, toggleSelectAllInventaires,
+        deleting
+    } = listLogic;
+
+    const isSaving = editorLogic.saving || deleting;
+
+    return (
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+            {/* Title & Filters & QuickStats */}
+            <div className="w-full space-y-4">
+                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
+                    <div className="p-6 border-b border-base-200">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-2">
+                                    <ClipboardList className="h-6 w-6 text-primary" />
+                                    {t('stock.inventaire.title')}
+                                </h1>
+                                <p className="text-base-content/60 text-sm mt-1">
+                                    {t('stock.inventaire.subtitle', { defaultValue: "Gérez et validez vos inventaires de stock" })}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    type="button"
+                                    className="btn btn-secondary rounded-xl gap-2 shadow-lg shadow-secondary/20"
+                                    onClick={onOpenMergeModal}
+                                    disabled={!canMerge.canMerge}
+                                    title={canMerge.reason || ''}
+                                >
+                                    <Database className="h-4 w-4" />
+                                    {t('stock.inventaire.merge_btn')}
+                                </button>
+                                <button 
+                                    className="btn btn-primary rounded-xl px-6 shadow-lg shadow-primary/20 gap-2" 
+                                    onClick={onCreate}
+                                    disabled={listLogic.loading || isSaving}
+                                >
+                                    {isSaving && editorLogic.saving ? <span className="loading loading-spinner loading-sm"></span> : <Plus className="h-5 w-5" />}
+                                    {t('stock.inventaire.create_btn')}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <InventaireFilters 
+                        filters={{
+                            startDate: filterStartDate,
+                            setStartDate: setFilterStartDate,
+                            endDate: filterEndDate,
+                            setEndDate: setFilterEndDate,
+                            searchTerm: filterSearchTerm,
+                            setSearchTerm: setFilterSearchTerm,
+                            statusFilter: filterStatus,
+                            setStatusFilter: setFilterStatus,
+                            creatorFilter: filterCreator,
+                            setCreatorFilter: setFilterCreator
+                        }}
+                        onRefresh={() => fetchInventaires()}
+                    />
+                </div>
+            </div>
+            
+            {/* Quick Stats Dashboard */}
+            <InventaireQuickStats inventaires={inventaires} />
+
+            {/* Main Content: Table */}
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden mt-6">
+                <InventaireListTable 
+                    inventaires={inventaires}
+                    loading={loading}
+                    selectedIds={selectedInventaireIds}
+                    onSelectAll={toggleSelectAllInventaires}
+                    onSelect={toggleSelectInventaire}
+                    onEdit={onEdit}
+                    onDelete={handleDelete}
+                    deleting={deleting}
+                />
+                
+                {/* Pagination Controls */}
+                <div className="p-4 border-t border-base-200 flex items-center justify-between">
+                    <div className="text-sm text-base-content/60 font-medium">
+                        Page {currentPage} - Total: <span className="text-base-content font-bold">{totalCount}</span> {t('stock.inventaire.list.title_short', { defaultValue: 'inventaires' })}
+                    </div>
+                    <div className="flex gap-2">
+                        <button 
+                            className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
+                            disabled={!prevPage || loading}
+                            onClick={() => prevPage && fetchInventaires(prevPage)}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            {t('common.pagination.prev', { defaultValue: 'Précédent' })}
+                        </button>
+                        <button 
+                            className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
+                            disabled={!nextPage || loading}
+                            onClick={() => nextPage && fetchInventaires(nextPage)}
+                        >
+                            {t('common.pagination.next', { defaultValue: 'Suivant' })}
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};

@@ -211,6 +211,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       handleMettreEnAttente,
       handleAnnulerReception,
       handleImprimerReception,
+      executingAction,
   } = useCommandeActions({
       apiBaseUrl,
       commandesEndpoint,
@@ -1523,7 +1524,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           commandes={commandes}
           sortedCommandes={sortedCommandes}
           fournisseurs={fournisseurs}
-          loading={loading}
+          loading={loading || executingAction}
           totalCount={totalCount}
           page={page}
           totalPages={totalPages}
@@ -1563,27 +1564,28 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   <button 
                     className="btn btn-secondary btn-sm"
                      onClick={() => openEditView(selectedCommande)}
-                    disabled={selectedCommande.status === 'CLOT'}
+                    disabled={selectedCommande.status === 'CLOT' || executingAction}
                   >
                     {t('orders.details.edit')}
                   </button>
                   <button 
                     className={`btn btn-sm ${selectedCommande.status === 'ATT' ? 'btn-info' : 'btn-warning'}`}
                     onClick={onMettreEnAttente}
-                    disabled={selectedCommande.status === 'CLOT'}
+                    disabled={selectedCommande.status === 'CLOT' || executingAction}
                   >
-                    {selectedCommande.status === 'ATT' ? t('orders.details.resume') : t('orders.details.suspend')}
+                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : (selectedCommande.status === 'ATT' ? t('orders.details.resume') : t('orders.details.suspend'))}
                   </button>
                   <button 
                     className="btn btn-success btn-sm text-white"
                     onClick={onCloture}
-                    disabled={selectedCommande.status === 'CLOT'}
+                    disabled={selectedCommande.status === 'CLOT' || executingAction}
                   >
-                    {t('orders.details.close')}
+                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders.details.close')}
                   </button>
                   <button
                     onClick={() => setShowPrintLabelsModal(true)}
                     className="btn btn-primary btn-sm"
+                    disabled={executingAction}
                   >
                     {t('orders.details.labels')}
                   </button>
@@ -1591,24 +1593,26 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   <button 
                     className="btn btn-error btn-outline btn-sm"
                     onClick={onDelete}
+                    disabled={executingAction}
                   >
-                    {t('orders.details.delete')}
+                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders.details.delete')}
                   </button>
                   <button 
                     className="btn btn-primary btn-outline btn-sm"
                     onClick={onImprimer}
-                    disabled={selectedCommande.status !== 'CLOT'}
+                    disabled={selectedCommande.status !== 'CLOT' || executingAction}
                   >
-                    {t('orders.details.print_receipt')}
+                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders.details.print_receipt')}
                   </button>
                   {/* Bouton Annuler Réception - visible uniquement pour commandes clôturées */}
                   {selectedCommande.status === 'CLOT' && (
                     <button 
                       className="btn btn-warning btn-outline btn-sm gap-1"
                       onClick={onAnnulerReception}
+                      disabled={executingAction}
                       title={t('orders.details.cancel_reception')}
                     >
-                      ↩️ {t('orders.details.cancel_reception')}
+                      {executingAction ? <span className="loading loading-spinner loading-xs"></span> : `↩️ ${t('orders.details.cancel_reception')}`}
                     </button>
                   )}
                   {/* Bouton Créer Avoir (Visible uniquement si commande clôturée) */}
@@ -1905,7 +1909,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
             commandeProduits={commandeProduits}
             produitsList={produitsList}
             selectedRows={selectedRows}
-            saving={saving}
+            saving={saving || executingAction}
             lastSaved={lastSaved}
             fieldsConfig={fieldsConfig}
             focusedField={focusedField}

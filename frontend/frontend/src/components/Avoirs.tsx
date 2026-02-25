@@ -590,9 +590,9 @@ export default function Avoirs() {
                     <tbody>
                         {avoirs.map(avoir => (
                             <tr key={avoir.id} className="hover">
-                                <td className="font-mono font-bold">{avoir.numero}</td>
-                                <td>{new Date(avoir.created_at).toLocaleDateString('fr-FR')}</td>
-                                <td>{avoir.fournisseur_name}</td>
+                                <td className="font-mono font-bold text-sm">{avoir.numero}</td>
+                                <td className="text-sm">{new Date(avoir.created_at).toLocaleDateString('fr-FR')}</td>
+                                <td className="text-sm">{avoir.fournisseur_name}</td>
                                 <td>
                                     <div className="badge badge-outline">{avoir.type_avoir}</div>
                                 </td>

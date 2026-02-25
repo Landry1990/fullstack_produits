@@ -11,6 +11,7 @@ interface InventaireListTableProps {
     onSelect: (id: number) => void;
     onEdit: (inventaire: Inventaire) => void;
     onDelete: (id: number) => void;
+    deleting?: boolean;
 }
 
 export const InventaireListTable: React.FC<InventaireListTableProps> = ({
@@ -20,7 +21,8 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
     onSelectAll,
     onSelect,
     onEdit,
-    onDelete
+    onDelete,
+    deleting = false
 }) => {
     const { t } = useTranslation();
 
@@ -105,7 +107,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     Par {inv.created_by_name || '-'}
                                 </div>
                             </td>
-                            <td className="px-6 py-4 text-right font-mono text-base-content/70">
+                            <td className="px-6 py-4 text-right font-bold text-base-content">
                                 {(inv.total_valeur_theorique || 0).toLocaleString()} F
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-base-content">
@@ -140,10 +142,10 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     <button 
                                         className="p-2 text-base-content/60 hover:text-error hover:bg-error/10 rounded-lg transition-all" 
                                         onClick={() => onDelete(inv.id)} 
-                                        disabled={inv.status === 'VALIDEE'}
+                                        disabled={inv.status === 'VALIDEE' || deleting}
                                         title={t('rayons.table.delete')}
                                     >
-                                        <Trash2 className="h-4 w-4" />
+                                        {deleting ? <span className="loading loading-spinner loading-xs"></span> : <Trash2 className="h-4 w-4" />}
                                     </button>
                                 </div>
                             </td>

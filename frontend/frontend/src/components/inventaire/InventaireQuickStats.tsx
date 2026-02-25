@@ -1,47 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { PackageSearch, TrendingDown, ClipboardList } from 'lucide-react';
-import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import type { Inventaire } from '../../types';
 
-interface InventaireStats {
-    en_cours_count: number;
-    validees_count: number;
-    valeur_physique_totale: number;
-    ecart_total: number;
+interface InventaireQuickStatsProps {
+    inventaires: Inventaire[];
 }
 
-export const InventaireQuickStats: React.FC = () => {
+export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inventaires }) => {
     const { t } = useTranslation();
-    const [stats, setStats] = useState<InventaireStats | null>(null);
 
-    const fetchStats = async () => {
-        try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
-            // Placeholder for an actual endpoint if one exists, otherwise we'll fetch list and calculate
-            const response = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/api/inventaires/`);
-            
-            // Temporary calculation on frontend until backend endpoint is available
-            const inventaires = Array.isArray(response.data) ? response.data : response.data.results || [];
-            
-            const calcStats: InventaireStats = {
-                en_cours_count: inventaires.filter((i: any) => i.status === 'EN_COURS').length,
-                validees_count: inventaires.filter((i: any) => i.status === 'VALIDEE').length,
-                valeur_physique_totale: inventaires.reduce((sum: number, i: any) => sum + (parseFloat(i.total_valeur_physique) || 0), 0),
-                ecart_total: inventaires.reduce((sum: number, i: any) => sum + (parseFloat(i.total_ecart_valeur) || 0), 0),
-            };
-            
-            setStats(calcStats);
-        } catch (error) {
-            console.error("Failed to fetch inventaire quick stats", error);
-            setStats(null);
-        }
-    };
-
-    useEffect(() => {
-        fetchStats();
-    }, []);
-
-    if (!stats) return null;
+    const stats = useMemo(() => {
+        return {
+            en_cours_count: inventaires.filter((i: any) => i.status === 'EN_COURS').length,
+            validees_count: inventaires.filter((i: any) => i.status === 'VALIDEE').length,
+            valeur_physique_totale: inventaires.reduce((sum: number, i: any) => sum + (parseFloat(i.total_valeur_physique) || 0), 0),
+            ecart_total: inventaires.reduce((sum: number, i: any) => sum + (parseFloat(i.total_ecart_valeur) || 0), 0),
+        };
+    }, [inventaires]);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">

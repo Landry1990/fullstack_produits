@@ -18,6 +18,9 @@ interface StockAnalysisItem {
   selling_price: number
   fournisseur_name: string
   created_at?: string
+  dernier_achat?: string
+  derniere_vente?: string
+  days_since_sale?: number
 }
 
 interface StockAnalysisResponse {
@@ -45,7 +48,7 @@ const StockAnalysis = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
-  const [unsoldDays, setUnsoldDays] = useState<number>(90)
+  const [unsoldDays, setUnsoldDays] = useState<number>(30)
   const navigate = useNavigate()
 
   // Charger les fournisseurs
@@ -319,7 +322,9 @@ const StockAnalysis = () => {
                   <th>{t('stockAnalysis.columns.current_stock')}</th>
                   {activeTab === 'unsold' ? (
                     <>
-                      <th>{t('stockAnalysis.columns.created_at')}</th>
+                      <th>Dernier Achat</th>
+                      <th>Dernière Vente</th>
+                      <th>Jours sans vente</th>
                       <th>{t('stockAnalysis.columns.cost_price')}</th>
                       <th>{t('stockAnalysis.columns.stock_value')}</th>
                     </>
@@ -361,7 +366,13 @@ const StockAnalysis = () => {
                     {activeTab === 'unsold' ? (
                       <>
                         <td className="font-mono text-sm">
-                           {item.created_at ? new Date(item.created_at).toLocaleDateString('fr-FR') : '-'}
+                           {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString('fr-FR') : '-'}
+                        </td>
+                        <td className="font-mono text-sm">
+                           {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString('fr-FR') : <span className="text-error font-semibold">Jamais</span>}
+                        </td>
+                        <td className="font-mono font-bold text-warning">
+                           {item.days_since_sale ?? '-'}j
                         </td>
                         <td>{Math.round(item.cost_price).toLocaleString()} F</td>
                         <td className="font-bold text-error">

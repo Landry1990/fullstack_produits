@@ -1,0 +1,444 @@
+import { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+import type { Inventaire, LigneInventaire, InventoryStats, ProduitModel } from '../../types';
+
+export const useInventaireEditor = (
+    fetchInventaires: () => void,
+    setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT') => void,
+    requireSudo: (action: (validatorId: number, password?: string) => Promise<void>, options?: { title?: string; message?: string; permission?: string }) => void,
+    confirm: (options: any) => Promise<boolean>
+) => {
+    const { t } = useTranslation();
+
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+    const inventairesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/`;
+    const lignesEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/lignes-inventaire/`;
+
+    const [activeInventaire, setActiveInventaire] = useState<Inventaire | null>(null);
+    const [lignes, setLignes] = useState<LigneInventaire[]>([]);
+    const [saving, setSaving] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [inventoryStats, setInventoryStats] = useState<InventoryStats | null>(null);
+
+    // Header fields
+    const [dateInventaire, setDateInventaire] = useState('');
+    const [description, setDescription] = useState('');
+
+    // Line selection and bulk actions
+    const [selectedLines, setSelectedLines] = useState<Set<number>>(new Set());
+
+    const isReadOnly = activeInventaire?.status === 'VALIDEE';
+
+    const handleCreate = async () => {
+        try {
+            setSaving(true);
+            const response = await axios.post(inventairesEndpoint, {
+                date: new Date().toISOString().split('T')[0],
+                description: t('stock.inventaire.detail.placeholder_desc'),
+                status: 'EN_COURS'
+            });
+            setActiveInventaire(response.data);
+            setDateInventaire(response.data.date);
+            setDescription(response.data.description || '');
+            setLignes([]);
+            setViewMode('CREATE');
+        } catch (error) {
+            console.error(error);
+            toast.error(t('stock.inventaire.detail.auto_create_error'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleEdit = async (inv: Inventaire) => {
+        setActiveInventaire(inv);
+        setDateInventaire(inv.date);
+        setDescription(inv.description || '');
+        setViewMode('EDIT');
+        try {
+            const res = await axios.get(`${inventairesEndpoint}${inv.id}/lignes/`);
+            const fetchedLignes = res.data.map((l: any) => ({
+                ...l,
+                isLocalOnly: false
+            }));
+            setLignes(fetchedLignes);
+            await fetchInventoryStats(inv.id);
+        } catch (error) {
+            console.error(error);
+            toast.error(t('common.messages.error_loading'));
+        }
+    };
+
+    const handleSaveHeader = async () => {
+        if (!activeInventaire) return;
+        try {
+            await axios.patch(`${inventairesEndpoint}${activeInventaire.id}/`, {
+                date: dateInventaire,
+                description
+            });
+            toast.success(t('stock.inventaire.detail.header_saved'));
+            // Optionally update the active inventaire object
+            setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
+        } catch (err) {
+            toast.error(t('stock.inventaire.detail.save_error'));
+        }
+    };
+
+
+    const handleUpdateQuantity = async (lineId: number, newQty: number) => {
+        // Optimistic update
+        setLignes(prev => prev.map(l => {
+            if (l.id === lineId) {
+                const ecart = newQty - l.stock_theorique;
+                return { ...l, quantite_physique: newQty, ecart };
+            }
+            return l;
+        }));
+
+        const line = lignes.find(l => l.id === lineId);
+        if (line?.isLocalOnly) return;
+
+        try {
+            await axios.patch(`${lignesEndpoint}${lineId}/`, { quantite_physique: newQty });
+        } catch (err) {
+            console.error("Erreur update quantite", err);
+            // Optionally, revert pessimistic update on error by fetching again
+        }
+    };
+
+    const handleDeleteLine = async (lineId: number) => {
+        const confirmed = await confirm({
+            title: 'Retirer le produit',
+            message: 'Retirer ce produit de l\'inventaire ?',
+            variant: 'warning',
+            confirmText: 'Retirer'
+        });
+        if (!confirmed) return;
+
+        try {
+            const line = lignes.find(l => l.id === lineId);
+            if (line && !line.isLocalOnly) {
+                await axios.delete(`${lignesEndpoint}${lineId}/`);
+            }
+            setLignes(prev => prev.filter(l => l.id !== lineId));
+        } catch (err) {
+            console.error("Erreur suppression ligne", err);
+            toast.error(t('stock.inventaire.lines.delete_error'));
+        }
+    };
+
+    const toggleSelectLine = (id: number) => {
+        const newSet = new Set(selectedLines);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedLines(newSet);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedLines.size === lignes.length) {
+            setSelectedLines(new Set());
+        } else {
+            setSelectedLines(new Set(lignes.map(l => l.id)));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedLines.size === 0) return;
+
+        const confirmed = await confirm({
+            title: t('stock.inventaire.detail.bulk_delete_title'),
+            message: t('stock.inventaire.detail.bulk_delete_message', { count: selectedLines.size }),
+            variant: 'danger',
+            confirmText: t('stock.inventaire.detail.bulk_delete_confirm')
+        });
+        if (!confirmed) return;
+
+        try {
+            setSaving(true);
+            const idsToDelete = Array.from(selectedLines);
+
+            const remoteIds = idsToDelete.filter(id => {
+                const line = lignes.find(l => l.id === id);
+                return line && !line.isLocalOnly;
+            });
+
+            // 1. Suppression distante groupée
+            if (remoteIds.length > 0 && activeInventaire) {
+                await axios.post(`${apiBaseUrl}/api/inventaires/${activeInventaire.id}/lignes/bulk-delete/`, {
+                    ids: remoteIds
+                });
+            }
+
+            // 2. Mise à jour locale
+            setLignes(prev => prev.filter(l => !selectedLines.has(l.id)));
+            setSelectedLines(new Set());
+            toast.success(t('stock.inventaire.detail.bulk_delete_success', { count: idsToDelete.length }));
+
+        } catch (err) {
+            console.error("Erreur suppression bulk", err);
+            toast.error(t('stock.inventaire.detail.save_error'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const fetchInventoryStats = async (id: number) => {
+        try {
+            const res = await axios.get(`${inventairesEndpoint}${id}/stats/`);
+            setInventoryStats(res.data);
+        } catch (error) {
+            console.error("Failed to fetch inventory stats", error);
+        }
+    };
+
+    const handleValidateConfirm = async (creds: { validated_by_id: number; sudo_password: string }) => {
+        if (!activeInventaire) return;
+
+        try {
+            setSaving(true);
+            await axios.post(`${inventairesEndpoint}${activeInventaire.id}/validate/`, creds);
+            toast.success(t('stock.inventaire.validation.success'));
+            setViewMode('LIST');
+            fetchInventaires();
+        } catch (err: any) {
+            toast.error(t('stock.inventaire.validation.error'));
+            console.error(err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleOpenValidateModal = async () => {
+        if (!activeInventaire) return;
+
+        // Auto-save local lines before validation
+        const linesToSync = lignes.filter(l => l.isLocalOnly);
+        if (linesToSync.length > 0) {
+            setSaving(true);
+            try {
+                const payload = {
+                    lignes: linesToSync.map(l => ({
+                        produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
+                        stock_lot: l.stock_lot,
+                        quantite_physique: l.quantite_physique,
+                        lot_numero: l.lot_numero,
+                        lot_expiration: l.lot_expiration
+                    }))
+                };
+                await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
+                const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
+                setLignes(res.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+            } catch (err) {
+                console.error("Auto-save before validate failed", err);
+                toast.error(t('stock.inventaire.detail.save_error'));
+                setSaving(false);
+                return; // Stop if auto-save fails
+            } finally {
+                setSaving(false);
+            }
+        }
+
+        requireSudo(
+            async (validatorId, password) => {
+                await handleValidateConfirm({ validated_by_id: validatorId, sudo_password: password || '' });
+            },
+            {
+                title: t('stock.inventaire.validation.title'),
+                message: t('stock.inventaire.validation.message')
+            }
+        );
+    };
+
+    const handleManualSave = async () => {
+        if (!activeInventaire) return;
+        setSaving(true);
+        try {
+            // 1. Save Header
+            await axios.patch(`${inventairesEndpoint}${activeInventaire.id}/`, {
+                date: dateInventaire,
+                description
+            });
+            setActiveInventaire(prev => prev ? { ...prev, date: dateInventaire, description } : null);
+
+            // 2. Sync Lines
+            const linesToSync = lignes.filter(l => l.isLocalOnly);
+            if (linesToSync.length > 0) {
+                const payload = {
+                    lignes: linesToSync.map(l => ({
+                        produit: typeof l.produit === 'object' ? l.produit.id : l.produit,
+                        stock_lot: l.stock_lot,
+                        quantite_physique: l.quantite_physique,
+                        lot_numero: l.lot_numero,
+                        lot_expiration: l.lot_expiration
+                    }))
+                };
+                await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
+                const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
+                setLignes(res.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                await fetchInventoryStats(activeInventaire.id);
+            }
+
+            toast.success(t('common.messages.saved'));
+        } catch (error) {
+            console.error("Erreur save manual", error);
+            toast.error(t('stock.inventaire.detail.save_error'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleImportCSV = async (file: File) => {
+        if (!activeInventaire) return;
+
+        setImporting(true);
+
+        // 1. Charger TOUS les produits pour le matching (optimisé)
+        let allProducts: ProduitModel[] = [];
+        try {
+            const apiBase = String(apiBaseUrl).replace(/\/$/, '');
+            const response = await axios.get(`${apiBase}/produits/for_import/`);
+            allProducts = Array.isArray(response.data) ? response.data : (response.data.results || []);
+        } catch (err) {
+            toast.error("Erreur lors du chargement des produits pour l'import");
+            console.error(err);
+            setImporting(false);
+            return;
+        }
+
+        // Helper de normalisation CIP (identique à Commandes.tsx)
+        const normalizeCip = (cip: string | null | undefined): string => {
+            if (!cip) return '';
+            let normalized = cip.trim().replace(/[\s\-\.]/g, '');
+            return normalized.toUpperCase();
+        };
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const text = e.target?.result as string;
+            if (!text) {
+                setImporting(false);
+                return;
+            }
+
+            const lines = text.split(/\r\n|\n/);
+            const importMap = new Map<number, number>(); // productId -> totalQuantity
+            let productsFoundCount = 0;
+            const notFoundItems: { cip: string; qty: string }[] = [];
+
+            // Détection du délimiteur (simple sur la première ligne significative)
+            let delimiter = ';';
+            for (const line of lines) {
+                if (line.trim() && line.includes(',')) {
+                    if (!line.includes(';')) delimiter = ',';
+                    break;
+                }
+            }
+
+            // Parsing et Matching
+            lines.forEach((line, index) => {
+                if (!line.trim() || index === 0) return; // Sauter en-tête ou vide
+
+                const parts = line.split(delimiter);
+                const rawCip = parts[0]?.trim();
+                const rawQty = parts[1]?.trim() || '1';
+
+                if (!rawCip) return;
+
+                const normalizedSearchCip = normalizeCip(rawCip);
+                const numericSearch = normalizedSearchCip.replace(/^0+/, '');
+
+                const product = allProducts.find(p => {
+                    const norms = [normalizeCip(p.cip1), normalizeCip(p.cip2), normalizeCip(p.cip3)];
+                    if (norms.includes(normalizedSearchCip)) return true;
+                    if (numericSearch && norms.some(n => n.replace(/^0+/, '') === numericSearch)) return true;
+                    return false;
+                });
+
+                if (product) {
+                    const qty = parseFloat(rawQty.replace(',', '.')) || 0;
+                    if (qty > 0) {
+                        const current = importMap.get(product.id) || 0;
+                        importMap.set(product.id, current + qty);
+                        productsFoundCount++;
+                    }
+                } else {
+                    notFoundItems.push({ cip: rawCip, qty: rawQty });
+                }
+            });
+
+            // 2. Gérer les produits non trouvés
+            if (notFoundItems.length > 0) {
+                const txtContent = notFoundItems.map(item => `${item.cip}${delimiter}${item.qty}`).join('\n');
+                const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+                const link = document.createElement('a');
+                const dateStr = new Date().toISOString().slice(0, 10);
+                link.href = URL.createObjectURL(blob);
+                link.download = `produits_non_reconnus_inventaire_${dateStr}.txt`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                toast.error(`${notFoundItems.length} produits non reconnus. Fichier rapport téléchargé.`);
+            }
+
+            if (importMap.size === 0) {
+                toast.error("Aucun produit valide trouvé dans le fichier.");
+                setImporting(false);
+                return;
+            }
+
+            // 3. Envoyer les données matchées au backend via bulk
+            try {
+                const payload = {
+                    lignes: Array.from(importMap.entries()).map(([productId, qty]) => ({
+                        produit: productId,
+                        quantite_physique: qty,
+                        stock_lot: null // L'import CSV standard ne gère pas encore les lots explicitement
+                    }))
+                };
+
+                await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
+
+                toast.success(`${importMap.size} produits importés (${productsFoundCount} lignes).`);
+
+                // Recharger les lignes et stats
+                const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
+                setLignes(res.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                await fetchInventoryStats(activeInventaire.id);
+            } catch (error: any) {
+                console.error("Erreur lors de l'envoi bulk", error);
+                toast.error("Erreur lors de l'enregistrement des lignes importées.");
+            } finally {
+                setImporting(false);
+            }
+        };
+
+        reader.onerror = () => {
+            toast.error("Erreur de lecture du fichier.");
+            setImporting(false);
+        };
+
+        reader.readAsText(file);
+    };
+
+    return {
+        activeInventaire, setActiveInventaire,
+        lignes, setLignes,
+        dateInventaire, setDateInventaire,
+        description, setDescription,
+        saving, setSaving,
+        isReadOnly, importing,
+        selectedLines, setSelectedLines,
+        handleCreate, handleEdit,
+        handleSaveHeader, handleManualSave, handleImportCSV,
+        handleUpdateQuantity, handleDeleteLine,
+        toggleSelectLine, toggleSelectAll, handleBulkDelete,
+        handleOpenValidateModal,
+        inventoryStats, fetchInventoryStats
+    };
+};

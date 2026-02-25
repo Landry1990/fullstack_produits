@@ -705,9 +705,6 @@ export default function Facturation() {
                           is_active: freshProduct.is_active
                       }
                   };
-                  if (ligne.isPromis) {
-                      console.log(`[DEBUG Facturation] handlePaymentClick - Préservation flags pour produit ${ligne.produit.id} (${ligne.produit.name}): isPromis=${ligne.isPromis}, promisQuantity=${ligne.promisQuantity}, stock_ancien=${ligne.produit.stock}, stock_nouveau=${freshProduct.stock}`)
-                  }
                   return preserved;
               }
               return ligne;
@@ -719,10 +716,6 @@ export default function Facturation() {
       }
 
       // Update the cart state with fresh data so the UI reflects reality
-      console.log('[DEBUG Facturation] handlePaymentClick - freshLignes après rafraîchissement:', freshLignes)
-      console.log('[DEBUG Facturation] handlePaymentClick - Lignes avec isPromis=true:', freshLignes.filter(l => l.isPromis))
-      console.log('[DEBUG Facturation] handlePaymentClick - Lignes avec isPromis=false:', freshLignes.filter(l => !l.isPromis))
-      
       setLignesFacture(freshLignes)
       setLoading(false)
 
@@ -732,12 +725,7 @@ export default function Facturation() {
           !l.isPromis && l.quantite > (l.produit.stock ?? 0)
       )
 
-      console.log('[DEBUG Facturation] handlePaymentClick - problematicLines trouvées:', problematicLines)
-      console.log('[DEBUG Facturation] handlePaymentClick - Nombre de lignes problématiques:', problematicLines.length)
-      console.log('[DEBUG Facturation] handlePaymentClick - showStockResolution:', showStockResolution)
-
       if (problematicLines.length > 0) {
-          console.log('[DEBUG Facturation] handlePaymentClick - OUVERTURE du modal StockResolution')
           const items = problematicLines.map(l => ({
               product: l.produit,
               quantity: l.quantite,
@@ -767,7 +755,6 @@ export default function Facturation() {
 
           setShowStockResolution(true)
       } else {
-          console.log('[DEBUG Facturation] handlePaymentClick - Pas de lignes problématiques, ouverture du modal de paiement')
           // Auto-fill montant with total to pay (Part Patient if Tiers Payant, else Total TTC)
           const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
           setMontantPaye(montantInitial.toString()) // Keep precision, don't round immediately for editing
@@ -775,27 +762,21 @@ export default function Facturation() {
       }
   }
 
-  const handlePaymentClickWithSudo = async (updatedLignes?: any[], sudoCredentials?: { validatorId: number, password: string }) => {
-      console.log('[DEBUG Facturation] handlePaymentClickWithSudo appelé')
-      console.log('[DEBUG Facturation] updatedLignes reçues:', updatedLignes)
-      console.log('[DEBUG Facturation] sudoCredentials:', sudoCredentials)
-      console.log('[DEBUG Facturation] lignesFacture au moment de l\'appel:', lignesFacture)
-      
-      // If updated lines are provided, use them directly instead of waiting for state update
+  const handlePaymentClickWithSudo = (updatedLignes?: any[], sudoCredentials?: { validatorId: number, password: string }) => {
+      // FIX: Ouvrir directement le modal de paiement sans re-passer par handlePaymentClick()
+      // qui re-fetcherait les stocks et écraserait les flags isPromis/promisQuantity
       if (updatedLignes && updatedLignes.length > 0) {
-          console.log('[DEBUG Facturation] Utilisation des lignes mises à jour directement (évite problème de timing)')
-          console.log('[DEBUG Facturation] Lignes avec isPromis dans updatedLignes:', updatedLignes.filter(l => l.isPromis))
           setLignesFacture(updatedLignes)
-          // Small delay to ensure state is set
-          await new Promise(resolve => setTimeout(resolve, 10))
       }
       
       if (sudoCredentials) {
-          setActiveSudoCreds(sudoCredentials);
+          setActiveSudoCreds(sudoCredentials)
       }
       
-      console.log('[DEBUG Facturation] Appel handlePaymentClick()')
-      await handlePaymentClick();
+      // Ouvrir directement le modal de paiement
+      const montantInitial = (totals.tauxCouverture > 0) ? totals.partPatient : totals.totalTtc
+      setMontantPaye(montantInitial.toString())
+      openPaymentModal()
   }
 
   // Global Keyboard Shortcuts

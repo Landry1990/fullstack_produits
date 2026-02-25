@@ -29,16 +29,17 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_ca_stats(self, factures):
         """Calcule CA TTC, CA HT et nombre de ventes."""
-        ca_ttc = Decimal('0.00')
-        ca_ht = Decimal('0.00')
+        from django.db.models import Sum
+        from django.db.models.functions import Coalesce
         
-        for facture in factures:
-            ca_ttc += facture.total_ttc
-            ca_ht += facture.total_ht
+        ca_stats = factures.aggregate(
+            ca_ttc=Coalesce(Sum('total_ttc'), Decimal('0.00')),
+            ca_ht=Coalesce(Sum('total_ht'), Decimal('0.00'))
+        )
         
         return {
-            'ca_ttc': ca_ttc,
-            'ca_ht': ca_ht,
+            'ca_ttc': ca_stats['ca_ttc'],
+            'ca_ht': ca_stats['ca_ht'],
             'nb_ventes': factures.count()
         }
 
@@ -47,14 +48,21 @@ class RapportViewSet(viewsets.ViewSet):
         allocations = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=factures
         )
+        from django.db.models import Sum, F, DecimalField
+        from django.db.models.functions import Coalesce
+
+        cout_achat_total = allocations.aggregate(
+            total=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0.00'))
+        )['total']
         
-        cout_achat_total = Decimal('0.00')
-        for alloc in allocations:
-            cout_achat_total += alloc.cost_price * alloc.quantity
+        ca_ht_total = factures.aggregate(
+            total=Coalesce(Sum(F('total_ht') - F('remise')), Decimal('0.00'))
+        )['total']
         
-        ca_ht = sum((f.total_ht - f.remise) for f in factures)
-        marge_brute = ca_ht - cout_achat_total
-        marge_pct = (marge_brute / ca_ht * 100) if ca_ht > 0 else Decimal('0.00')
+        # CA HT calculated in Python loop to be safe if remises not applied identically
+        # Let's replace the whole block seamlessly
+        marge_brute = ca_ht_total - cout_achat_total
+        marge_pct = (marge_brute / ca_ht_total * 100) if ca_ht_total > 0 else Decimal('0.00')
         
         return {
             'cout_achat': cout_achat_total,
@@ -120,65 +128,93 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_creances(self):
         """Calcule les créances globales à percevoir."""
-        factures_avec_reste = Facture.objects.filter(
+        from django.db.models import Sum, F, Q, DecimalField, Value
+        from django.db.models.functions import Coalesce
+        
+        # Optimize to a single query instead of N+1
+        stats = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related('paiements')
-        
-        total_creances = Decimal('0.00')
-        nb_factures_impayees = 0
-        
-        for f in factures_avec_reste:
-            paye = f.paiements.filter(statut='completee').exclude(
-                mode_paiement='en_compte'
-            ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-            reste = f.total_ttc - paye
-            if reste > 0:
-                total_creances += reste
-                nb_factures_impayees += 1
+        ).annotate(
+            paid_amount=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
+                Value(0, output_field=DecimalField())
+            ),
+            reste=F('total_ttc') - F('paid_amount')
+        ).filter(
+            reste__gt=0.5
+        ).aggregate(
+            total=Coalesce(Sum('reste'), Decimal('0.00')),
+            nb_factures=Count('id')
+        )
         
         return {
-            'total': total_creances,
-            'nb_factures': nb_factures_impayees,
-            'creances_a_percevoir': total_creances  # Backward compatibility
+            'total': stats['total'],
+            'nb_factures': stats['nb_factures'],
+            'creances_a_percevoir': stats['total']  # Backward compatibility
         }
 
     def _calculate_ca_par_tva(self, factures):
         """Calcule la répartition du CA par taux de TVA."""
-        ca_par_tva_stats = {}
+        # This is strictly accurate if remises are apportioned proportionally 
+        # to the contribution of each line's gross total per TVA rate.
         
-        for facture in factures:
-            facture_ttc_brut = Decimal('0.00')
-            lignes_stats = {}
+        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value
+        from django.db.models.functions import Coalesce
+        
+        ca_par_tva_stats = {}
+
+        # 1. Total brut TTC par facture (avant remise)
+        # Needed for proportional discount apportionment
+        # Or faster: we fetch all FactureProduit with their parent facture remise & total_brut
+        from api.models import FactureProduit
+        
+        lignes = FactureProduit.objects.filter(
+            facture__in=factures
+        ).values(
+            'tva',
+            'facture__id',
+            'facture__remise'
+        ).annotate(
+            ligne_brut_ttc=Sum(
+                F('quantity') * (F('selling_price') - Coalesce(F('discount'), Value(0, output_field=DecimalField()))), 
+                output_field=DecimalField()
+            )
+        )
+        
+        # We need the facture total brut to calculate ratio
+        from collections import defaultdict
+        
+        facture_totals = defaultdict(Decimal)
+        for ligne in lignes:
+            facture_totals[ligne['facture__id']] += ligne['ligne_brut_ttc']
             
-            for ligne in facture.produits.all():
-                taux = ligne.tva
-                # CA Brut de la ligne = (PU Brut - Remise Ligne) * Quantité
-                prix_unitaire_net = ligne.selling_price - (ligne.discount or Decimal('0.00'))
-                montant_ligne_ttc = Decimal(str(ligne.quantity)) * prix_unitaire_net
-                
-                if taux not in lignes_stats:
-                    lignes_stats[taux] = Decimal('0.00')
-                lignes_stats[taux] += montant_ligne_ttc
-                facture_ttc_brut += montant_ligne_ttc
+        for ligne in lignes:
+            taux = ligne['tva']
+            fid = ligne['facture__id']
+            ligne_brut = ligne['ligne_brut_ttc']
+            remise_facture = ligne['facture__remise']
             
-            remise_facture = facture.remise
-            for taux, montant_ttc_brut in lignes_stats.items():
-                ratio = montant_ttc_brut / facture_ttc_brut if facture_ttc_brut > 0 else Decimal('0.00')
-                part_remise = remise_facture * ratio
-                ttc_net = montant_ttc_brut - part_remise
+            total_brut_facture = facture_totals[fid]
+            
+            # Ratio
+            ratio = ligne_brut / total_brut_facture if total_brut_facture > 0 else Decimal('0.00')
+            part_remise = remise_facture * ratio
+            
+            ttc_net = ligne_brut - part_remise
+            
+            if taux > 0:
+                ht_net = (ttc_net / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
+                tva_montant = ttc_net - ht_net
+            else:
+                ht_net = ttc_net
+                tva_montant = Decimal('0.00')
                 
-                if taux > 0:
-                    ht_net = (ttc_net / (1 + taux / Decimal('100.00'))).quantize(Decimal('0.01'))
-                    tva_montant = ttc_net - ht_net
-                else:
-                    ht_net = ttc_net
-                    tva_montant = Decimal('0.00')
+            if taux not in ca_par_tva_stats:
+                ca_par_tva_stats[taux] = {'ca_ht': Decimal('0.00'), 'montant_tva': Decimal('0.00'), 'ca_ttc': Decimal('0.00')}
                 
-                if taux not in ca_par_tva_stats:
-                    ca_par_tva_stats[taux] = {'ca_ht': Decimal('0.00'), 'montant_tva': Decimal('0.00'), 'ca_ttc': Decimal('0.00')}
-                ca_par_tva_stats[taux]['ca_ht'] += ht_net
-                ca_par_tva_stats[taux]['montant_tva'] += tva_montant
-                ca_par_tva_stats[taux]['ca_ttc'] += ttc_net
+            ca_par_tva_stats[taux]['ca_ht'] += ht_net
+            ca_par_tva_stats[taux]['montant_tva'] += tva_montant
+            ca_par_tva_stats[taux]['ca_ttc'] += ttc_net
 
         return [
             {
@@ -248,36 +284,52 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_clients_pro(self, factures):
         """Calcule les statistiques des clients professionnels."""
-        factures_pro = factures.filter(client__client_type='PROFESSIONNEL')
-        ca_pro_total = sum(f.total_ttc for f in factures_pro)
+        from django.db.models import Sum, F, Q, DecimalField, Value, Count
+        from django.db.models.functions import Coalesce
         
+        # Calculate totals with aggregation directly on factures
+        # We need to compute per-client stats using values().annotate()
+        
+        ca_pro_total = Decimal('0.00')
         montant_paye_pro = Decimal('0.00')
-        clients_pro_stats = {}
+
+        clients_pro_stats_query = factures.filter(
+            client__client_type='PROFESSIONNEL'
+        ).values(
+            'client__id', 
+            'client__name'
+        ).annotate(
+            paid_amount=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
+                Value(0, output_field=DecimalField())
+            ),
+            total_billed=Sum('total_ttc', output_field=DecimalField()),
+            nb_factures=Count('id')
+        )
+
+        top_clients_pro = []
+        nb_factures_total = 0
         
-        for f in factures_pro:
-            paye = f.paiements.filter(statut='completee').exclude(
-                mode_paiement='en_compte'
-            ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
-            montant_paye_pro += paye
+        for p_stat in clients_pro_stats_query:
+            cid = p_stat['client__id']
+            cnom = p_stat['client__name']
             
-            cid = f.client.id
-            if cid not in clients_pro_stats:
-                clients_pro_stats[cid] = {
-                    'client_id': cid,
-                    'client_nom': f.client.name,
-                    'ca_total': Decimal('0.00'),
-                    'montant_paye': Decimal('0.00')
-                }
-            clients_pro_stats[cid]['ca_total'] += f.total_ttc
-            clients_pro_stats[cid]['montant_paye'] += paye
-        
+            # Sum up global totals
+            ca_pro_total += p_stat['total_billed']
+            montant_paye_pro += p_stat['paid_amount']
+            nb_factures_total += p_stat['nb_factures']
+            
+            top_clients_pro.append({
+                'client_id': cid,
+                'client_nom': cnom,
+                'ca_total': p_stat['total_billed'],
+                'montant_paye': p_stat['paid_amount'],
+                'reste_a_payer': p_stat['total_billed'] - p_stat['paid_amount']
+            })
+
         reste_a_payer_pro = ca_pro_total - montant_paye_pro
         taux_recouvrement_pro = (montant_paye_pro / ca_pro_total * 100) if ca_pro_total > 0 else Decimal('0.00')
         
-        top_clients_pro = []
-        for c in clients_pro_stats.values():
-            c['reste_a_payer'] = c['ca_total'] - c['montant_paye']
-            top_clients_pro.append(c)
         top_clients_pro.sort(key=lambda x: x['reste_a_payer'], reverse=True)
         
         return {
@@ -285,7 +337,7 @@ class RapportViewSet(viewsets.ViewSet):
             'montant_paye': montant_paye_pro,
             'reste_a_payer': reste_a_payer_pro,
             'taux_recouvrement_pct': round(taux_recouvrement_pro, 2),
-            'nb_factures': factures_pro.count(),
+            'nb_factures': nb_factures_total,
             'top_clients': top_clients_pro[:10]
         }
 

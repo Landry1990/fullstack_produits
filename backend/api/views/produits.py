@@ -337,6 +337,50 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(detail=False, methods=['post'])
+    def bulk_delete(self, request):
+        """Supprime plusieurs produits par lot."""
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=400)
+            
+        try:
+            with transaction.atomic():
+                produits = Produit.objects.filter(id__in=ids)
+                names = list(produits.values_list('name', flat=True))
+                count = produits.count()
+                produits.delete()
+                
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.DELETE,
+                    model_name='Produit',
+                    object_id=0,
+                    description=f"Suppression groupée de {count} produits: {', '.join(names)}",
+                    details={'ids': ids, 'names': names},
+                    request=request
+                )
+                
+                return Response({
+                    'status': 'success',
+                    'message': f'{count} produits supprimés avec succès.'
+                })
+        except ProtectedError as e:
+            # Group by model type for better error message
+            model_counts = {}
+            for obj in e.protected_objects:
+                model_name = obj.__class__.__name__
+                model_counts[model_name] = model_counts.get(model_name, 0) + 1
+            
+            references = ', '.join([f"{count} {model}" for model, count in model_counts.items()])
+            
+            return Response({
+                'error': 'Certains produits ne peuvent pas être supprimés',
+                'detail': f'Certains produits sont référencés dans : {references}.'
+            }, status=400)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
     @action(detail=True, methods=['get'])
     def history(self, request, pk=None):
         """
@@ -1194,7 +1238,6 @@ class FournisseurViewSet(viewsets.ModelViewSet):
         fournisseur = self.get_object()
         
         # Sous-requête pour obtenir le dernier prix d'achat par produit
-        # On prend le prix de la commande la plus récente (par date_cloture)
         latest_order_subquery = CommandeProduit.objects.filter(
             produit=OuterRef('produit'),
             commande__fournisseur=fournisseur,
@@ -1207,24 +1250,37 @@ class FournisseurViewSet(viewsets.ModelViewSet):
             commande__status='CLOT'
         ).order_by('-commande__date_cloture').values('commande__date_cloture')[:1]
         
-        # Agrégation principale
-        catalogue_data = CommandeProduit.objects.filter(
-            commande__fournisseur=fournisseur,
-            commande__status='CLOT'
-        ).values(
-            'produit'
-        ).annotate(
-            qte_totale=Sum(F('quantity') + F('unites_gratuites')),
-            dernier_prix_achat=Subquery(latest_order_subquery),
-            derniere_commande=Subquery(latest_date_subquery)
-        ).order_by('produit__name')
+        # Agrégation principale — PAS de order_by sur produit__name (évite un JOIN)
+        # On évalue immédiatement avec list() pour éviter une double évaluation du queryset
+        catalogue_data = list(
+            CommandeProduit.objects.filter(
+                commande__fournisseur=fournisseur,
+                commande__status='CLOT'
+            ).values(
+                'produit'
+            ).annotate(
+                qte_totale=Sum(F('quantity') + F('unites_gratuites')),
+                dernier_prix_achat=Subquery(latest_order_subquery),
+                derniere_commande=Subquery(latest_date_subquery)
+            )
+        )
+        
+        # Pré-charger tous les produits en une seule requête
+        product_ids = [item['produit'] for item in catalogue_data]
+        products_map = {
+            p.id: p for p in Produit.objects.filter(id__in=product_ids).only(
+                'id', 'name', 'cip1', 'cip2', 'cip3', 'selling_price', 'stock'
+            )
+        }
         
         # Construire la réponse avec les informations produit
         result = []
         for item in catalogue_data:
+            produit = products_map.get(item['produit'])
+            if not produit:
+                continue
+            
             try:
-                produit = Produit.objects.get(pk=item['produit'])
-                
                 selling_price = produit.selling_price or Decimal('0')
                 dernier_prix = item['dernier_prix_achat'] or Decimal('0')
                 
@@ -1249,10 +1305,11 @@ class FournisseurViewSet(viewsets.ModelViewSet):
                     'qte_totale': item['qte_totale'] or 0,
                     'stock_actuel': produit.stock
                 })
-            except (Produit.DoesNotExist, ValueError, TypeError):
+            except (ValueError, TypeError):
                 continue
+
         
-        # Trier par nom de produit
+        # Trier par nom de produit (en Python, pas en SQL — évite un JOIN)
         result.sort(key=lambda x: x['produit_nom'].lower())
         
         return Response({

@@ -59,16 +59,13 @@ export default function HistoriqueClotures() {
     return baseUrl ? String(baseUrl).replace(/\/$/, '') : ''
   }, [])
 
-  // Helper pour éviter le décalage UTC
-  const formatLocalISOString = (date: Date): string => {
+  // Helper pour formater la date en YYYY-MM-DD
+  const formatDateForApi = (date: Date): string => {
     const pad = (num: number) => num.toString().padStart(2, '0')
     const year = date.getFullYear()
     const month = pad(date.getMonth() + 1)
     const day = pad(date.getDate())
-    const hours = pad(date.getHours())
-    const minutes = pad(date.getMinutes())
-    const seconds = pad(date.getSeconds())
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    return `${year}-${month}-${day}`
   }
 
   const fetchClotures = async () => {
@@ -79,8 +76,8 @@ export default function HistoriqueClotures() {
         page_size: pageSize
       }
       
-      if (dateDebut) params.date_debut = formatLocalISOString(dateDebut)
-      if (dateFin) params.date_fin = formatLocalISOString(dateFin)
+      if (dateDebut) params.date_debut = formatDateForApi(dateDebut)
+      if (dateFin) params.date_fin = formatDateForApi(dateFin)
       
       const response = await axios.get(`${apiBaseUrl}/api/clotures-caisse/`, { params })
       
