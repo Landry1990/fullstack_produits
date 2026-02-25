@@ -296,7 +296,11 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     pagination_class = InventairePagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
 
-    filterset_fields = ['status']
+    filterset_fields = {
+        'status': ['exact', 'in'],
+        'created_by': ['exact'],
+        'date': ['exact', 'gte', 'lte'],
+    }
     search_fields = ['description', 'status']
     ordering_fields = ['date', 'status']
 
@@ -309,32 +313,58 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         queryset = super().get_queryset()
         
         if self.action == 'list':
-            # Price expression logic: if pmp_snapshot > 0 use it, else use product cost_price
+            from django.db.models import Subquery, OuterRef
+            
+            # Price expression: if pmp_snapshot > 0 use it, else use product cost_price
             line_price_expr = Case(
-                When(lignes__pmp_snapshot__gt=0, then=F('lignes__pmp_snapshot')),
-                default=F('lignes__produit__cost_price'),
+                When(pmp_snapshot__gt=0, then=F('pmp_snapshot')),
+                default=F('produit__cost_price'),
                 output_field=DecimalField()
             )
             
-            # Annotate Totals
+            # Sous-requête pour les totaux par inventaire (évite les JOINs multiplicatifs)
+            base_subquery = LigneInventaire.objects.filter(
+                inventaire=OuterRef('pk')
+            )
+            
             queryset = queryset.annotate(
-                total_valeur_theorique=Coalesce(Sum(
-                   F('lignes__stock_theorique') * line_price_expr,
-                   output_field=DecimalField()
-                ), Value(0, output_field=DecimalField())),
-                
-                total_valeur_physique=Coalesce(Sum(
-                   F('lignes__quantite_physique') * line_price_expr,
-                   output_field=DecimalField()
-                ), Value(0, output_field=DecimalField())),
-                
-                total_ecart_valeur=Coalesce(Sum(
-                   F('lignes__ecart') * line_price_expr,
-                   output_field=DecimalField()
-                ), Value(0, output_field=DecimalField()))
+                total_valeur_theorique=Coalesce(
+                    Subquery(
+                        base_subquery.annotate(
+                            val=F('stock_theorique') * line_price_expr
+                        ).values('inventaire').annotate(
+                            total=Sum('val')
+                        ).values('total')[:1],
+                        output_field=DecimalField()
+                    ),
+                    Value(0, output_field=DecimalField())
+                ),
+                total_valeur_physique=Coalesce(
+                    Subquery(
+                        base_subquery.annotate(
+                            val=F('quantite_physique') * line_price_expr
+                        ).values('inventaire').annotate(
+                            total=Sum('val')
+                        ).values('total')[:1],
+                        output_field=DecimalField()
+                    ),
+                    Value(0, output_field=DecimalField())
+                ),
+                total_ecart_valeur=Coalesce(
+                    Subquery(
+                        base_subquery.annotate(
+                            val=F('ecart') * line_price_expr
+                        ).values('inventaire').annotate(
+                            total=Sum('val')
+                        ).values('total')[:1],
+                        output_field=DecimalField()
+                    ),
+                    Value(0, output_field=DecimalField())
+                ),
             ).select_related('created_by')
             
         return queryset
+
 
     def get_permissions(self):
         if self.action == 'imprimer_etat':
@@ -350,6 +380,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         """
         Validation de l'inventaire avec support des lots.
         Support du mode SUDO (validated_by_id).
+        Optimisé: utilise bulk_update/bulk_create pour minimiser les requêtes SQL.
         """
         inventaire = self.get_object()
         if inventaire.status == Inventaire.Status.VALIDEE:
@@ -362,9 +393,16 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         inventaire.validated_by = validator
 
         # Préparation du traitement groupé et recalcul
-        lignes = list(inventaire.lignes.select_related('produit', 'stock_lot').all())
+        lignes = list(inventaire.lignes.select_related('produit', 'produit__fournisseur', 'stock_lot').all())
         products_to_recalculate = set()
         
+        # Collections pour les opérations batch
+        lot_qty_updates = {}           # {lot_id: quantite_physique}
+        adjustments_to_create = []     # StockAdjustment objects
+        mouvements_to_create = []      # MouvementStock objects
+        now = timezone.now()
+        
+        # Phase 1 : Préparer les données en mémoire (modifications minimales en DB)
         for ligne in lignes:
             produit = ligne.produit
             products_to_recalculate.add(produit)
@@ -382,45 +420,64 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                         'fournisseur': produit.fournisseur
                     }
                 )
-                if not created:
-                    target_lot.quantity_remaining = ligne.quantite_physique
-                    target_lot.save()
-                
                 ligne.stock_lot = target_lot
-                ligne.save(update_fields=['stock_lot'])
 
-            # Mise à jour physique (Verrouillage du lot)
-            StockLot.objects.filter(id=target_lot.id).select_for_update().update(
-                quantity_remaining=ligne.quantite_physique
-            )
+            # Collecter la mise à jour du lot pour le batch
+            lot_qty_updates[target_lot.id] = ligne.quantite_physique
             
-            # Traçabilité
-            ecart = ligne.quantite_physique - ligne.stock_theorique
+            # Calculer l'écart et le PMP en mémoire
+            ligne.ecart = ligne.quantite_physique - ligne.stock_theorique
+            if (not ligne.pmp_snapshot or ligne.pmp_snapshot == 0) and ligne.produit:
+                ligne.pmp_snapshot = ligne.produit.pmp or ligne.produit.cost_price or 0
+
+            # Préparer la traçabilité (sans écrire en DB)
+            ecart = ligne.ecart
             if ecart != 0:
-                StockAdjustment.objects.create(
+                adjustments_to_create.append(StockAdjustment(
                     produit=produit, stock_lot=target_lot, user=validator,
                     quantity_before=ligne.stock_theorique,
                     quantity_after=ligne.quantite_physique,
                     quantity_change=ecart,
                     reason_type='INVENTAIRE',
                     reason_detail=f"Inventaire #{inventaire.id}"
-                )
-
-                MouvementStock.objects.create(
+                ))
+                mouvements_to_create.append(MouvementStock(
                     produit=produit,
-                    inventaire=inventaire, # TRAÇABILITÉ
+                    inventaire=inventaire,
                     type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
                     quantite=ecart,
                     user=validator,
                     description=f"Inventaire #{inventaire.id} (Lot {target_lot.lot})",
-                    date=timezone.now()
-                )
-             
-        # Recalcul groupé (Hors boucle)
+                    date=now
+                ))
+        
+        # Phase 2 : Écrire en DB avec des opérations groupées
+        
+        # 2a. Mise à jour groupée des lignes (écart, pmp_snapshot, stock_lot)
+        if lignes:
+            LigneInventaire.objects.bulk_update(lignes, ['ecart', 'pmp_snapshot', 'stock_lot'])
+        
+        # 2b. Mise à jour groupée des lots (quantity_remaining) via Case/When
+        if lot_qty_updates:
+            whens = [When(id=lot_id, then=Value(qty)) for lot_id, qty in lot_qty_updates.items()]
+            StockLot.objects.filter(id__in=lot_qty_updates.keys()).update(
+                quantity_remaining=Case(*whens, output_field=DecimalField())
+            )
+
+        # 2c. Création groupée des ajustements et mouvements
+        if adjustments_to_create:
+            StockAdjustment.objects.bulk_create(adjustments_to_create)
+        if mouvements_to_create:
+            MouvementStock.objects.bulk_create(mouvements_to_create)
+
+        # Phase 3 : Recalcul groupé des produits (hors boucle principale)
+        prods_needing_lot_flag = [p for p in products_to_recalculate if not p.use_lot_management]
+        if prods_needing_lot_flag:
+            for p in prods_needing_lot_flag:
+                p.use_lot_management = True
+            Produit.objects.bulk_update(prods_needing_lot_flag, ['use_lot_management'])
+        
         for prod in products_to_recalculate:
-            if not prod.use_lot_management:
-                prod.use_lot_management = True
-                prod.save(update_fields=['use_lot_management'])
             prod.calculate_stock_from_lots()
             MouvementStock.objects.filter(produit=prod, inventaire=inventaire).update(stock_apres=prod.stock)
 
@@ -438,6 +495,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         
         return Response({'status': 'Inventaire validé.', 'validated_by': validator.username})
 
+
     @action(detail=True, methods=['get', 'post'], url_path='lignes')
     def lignes(self, request, pk=None):
         """
@@ -448,8 +506,21 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         inventaire = self.get_object()
         
         if request.method == 'GET':
-            lignes = inventaire.lignes.select_related('produit', 'stock_lot').all()
-            serializer = LigneInventaireSerializer(lignes, many=True)
+            lignes_objs = inventaire.lignes.select_related('produit', 'stock_lot').all()
+            # AUTO-REPAIR: Fix potentially missing ecarts or pmp_snapshots (refactoring casualty)
+            for l in lignes_objs:
+                needs_save = False
+                expected_ecart = l.quantite_physique - l.stock_theorique
+                if l.ecart != expected_ecart:
+                    l.ecart = expected_ecart
+                    needs_save = True
+                if (not l.pmp_snapshot or l.pmp_snapshot == 0) and l.produit:
+                    l.pmp_snapshot = l.produit.pmp or l.produit.cost_price or 0
+                    needs_save = True
+                if needs_save:
+                    l.save(update_fields=['ecart', 'pmp_snapshot'])
+            
+            serializer = LigneInventaireSerializer(lignes_objs, many=True)
             return Response(serializer.data)
         
         elif request.method == 'POST':
@@ -517,6 +588,33 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='lignes/bulk-delete')
+    @transaction.atomic
+    def bulk_delete_lignes(self, request, pk=None):
+        """
+        Suppression groupée de lignes d'inventaire.
+        """
+        inventaire = self.get_object()
+        ids = request.data.get('ids', [])
+        
+        if not ids:
+            return Response({'error': 'Aucun ID fourni'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # On s'assure que les lignes appartiennent bien à cet inventaire
+        lignes = LigneInventaire.objects.filter(id__in=ids, inventaire=inventaire)
+        count = lignes.count()
+        
+        if count == 0:
+            return Response({'error': 'Aucune ligne correspondante trouvée'}, status=status.HTTP_404_NOT_FOUND)
+
+        lignes.delete()
+
+        return Response({
+            'status': 'success',
+            'message': f'{count} lignes supprimées avec succès.',
+            'count': count
+        })
 
     @action(detail=True, methods=['post'], url_path='lignes/bulk')
     @transaction.atomic
@@ -590,7 +688,8 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                     stock_lot=target_lot,
                     stock_theorique=stock_theorique,
                     quantite_physique=quantite_physique,
-                    pmp_snapshot=produit.cost_price or 0
+                    ecart=quantite_physique - stock_theorique,
+                    pmp_snapshot=produit.pmp or produit.cost_price or 0
                 ))
                 imported_count += 1
 
@@ -605,6 +704,124 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             'imported': imported_count,
             'errors': errors
         }, status=status.HTTP_201_CREATED if imported_count > 0 else status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], url_path='import-csv')
+    @transaction.atomic
+    def import_csv(self, request, pk=None):
+        """
+        Importe des lignes d'inventaire depuis un fichier CSV.
+        Format attendu: cip;quantite (cip obligatoire, quantite obligatoire)
+        """
+        inventaire = self.get_object()
+        
+        if inventaire.status != Inventaire.Status.EN_COURS:
+            return Response({'error': 'L\'inventaire doit être EN_COURS pour importer des lignes.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if 'file' not in request.FILES:
+            return Response({'error': 'Aucun fichier fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        uploaded_file = request.FILES['file']
+        
+        try:
+            try:
+                decoded_file = uploaded_file.read().decode('utf-8')
+            except UnicodeDecodeError:
+                uploaded_file.seek(0)
+                decoded_file = uploaded_file.read().decode('latin-1')
+            
+            import csv, io
+            
+            # Plus de robustesse pour la détection du dialecte
+            content_sample = decoded_file[:1024]
+            try:
+                if not content_sample.strip():
+                     return Response({'error': 'Le fichier est vide.'}, status=status.HTTP_400_BAD_REQUEST)
+                dialect = csv.Sniffer().sniff(content_sample, delimiters=";,")
+            except Exception:
+                # Fallback si le sniffer échoue (souvent le cas avec très peu de lignes)
+                if ';' in content_sample:
+                    dialect = 'excel' # delimiter=';' par défaut dans certains contextes, mais on va forcer
+                else:
+                    dialect = 'excel-tab' if '\t' in content_sample else 'excel'
+
+            # On utilise DictReader avec un séparateur explicite si on a une idée, sinon le dialecte détecté
+            delimiter = ';' if ';' in content_sample else ','
+            csv_reader = csv.DictReader(io.StringIO(decoded_file), delimiter=delimiter)
+            
+            # Nettoyage des en-têtes (strip, minuscule, suppression BOM)
+            if csv_reader.fieldnames:
+                csv_reader.fieldnames = [field.strip().lower().replace('\ufeff', '') for field in csv_reader.fieldnames]
+            else:
+                return Response({'error': 'En-têtes CSV manquants.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            imported_count = 0
+            errors = []
+            lignes_a_creer = []
+
+            for row_num, row in enumerate(csv_reader, start=2):
+                try:
+                    # Recherche des colonnes flexibles
+                    cip = row.get('cip') or row.get('code') or row.get('barcode') or ''
+                    quantite_str = row.get('quantite') or row.get('qte') or row.get('qty') or ''
+                    
+                    cip = str(cip).strip()
+                    quantite_str = str(quantite_str).strip()
+
+                    if not cip:
+                        # On saute les lignes vides sans erreur bloquante
+                        if not any(row.values()): continue
+                        errors.append(f"Ligne {row_num}: Colonne 'cip' ou 'code' manquante.")
+                        continue
+                        
+                    if not quantite_str:
+                        errors.append(f"Ligne {row_num}: Quantité manquante.")
+                        continue
+
+                    try:
+                        quantite = float(quantite_str.replace(',', '.'))
+                        if quantite.is_integer():
+                            quantite = int(quantite)
+                    except ValueError:
+                        errors.append(f"Ligne {row_num}: Quantité invalide '{quantite_str}'.")
+                        continue
+
+                    produit = Produit.objects.filter(cip1=cip).first() or \
+                              Produit.objects.filter(cip2=cip).first() or \
+                              Produit.objects.filter(cip3=cip).first()
+
+                    if not produit:
+                        errors.append(f"Ligne {row_num}: Produit '{cip}' introuvable.")
+                        continue
+
+                    stock_theorique = produit.stock
+                    lignes_a_creer.append(LigneInventaire(
+                        inventaire=inventaire,
+                        produit=produit,
+                        stock_lot=None,
+                        stock_theorique=stock_theorique,
+                        quantite_physique=quantite,
+                        ecart=quantite - stock_theorique,
+                        pmp_snapshot=produit.pmp or produit.cost_price or 0
+                    ))
+                    imported_count += 1
+
+                except Exception as e:
+                    errors.append(f"Ligne {row_num}: Erreur inattendue: {str(e)}")
+
+            if lignes_a_creer:
+                LigneInventaire.objects.bulk_create(lignes_a_creer)
+
+            return Response({
+                'status': 'Import CSV terminé',
+                'imported': imported_count,
+                'errors': errors,
+                'total_rows_processed': row_num - 1 if 'row_num' in locals() else 0
+            }, status=status.HTTP_201_CREATED if imported_count > 0 else status.HTTP_400_BAD_REQUEST)
+
+        except csv.Error as e:
+             return Response({'error': f'Erreur de format CSV: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': f'Erreur lors du traitement: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -764,8 +981,28 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         for l in lignes:
             top_pertes.append({
                 'produit_nom': l.produit.name if l.produit else l.produit_nom,
-                'ecart': l.ecart,
-                'valeur': l.valeur_ecart
+                'ecart': float(l.ecart),
+                'valeur': float(l.valeur_ecart)
+            })
+
+        # 1.5. Top 10 Surplus (en valeur)
+        lignes_surplus = inventaire.lignes.annotate(
+            valeur_ecart=ExpressionWrapper(
+                F('ecart') * Case(
+                    When(pmp_snapshot__gt=0, then=F('pmp_snapshot')),
+                    default=F('produit__cost_price'),
+                    output_field=DecimalField()
+                ),
+                output_field=DecimalField()
+            )
+        ).filter(valeur_ecart__gt=0).select_related('produit').order_by('-valeur_ecart')[:10]
+
+        top_surplus = []
+        for l in lignes_surplus:
+            top_surplus.append({
+                'produit_nom': l.produit.name if l.produit else l.produit_nom,
+                'ecart': float(l.ecart),
+                'valeur': float(l.valeur_ecart)
             })
             
         # 2. Ecarts par Rayon
@@ -797,6 +1034,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             
         return Response({
             'top_pertes': top_pertes,
+            'top_surplus': top_surplus,
             'par_rayon': stats_rayon
         })
 
@@ -1485,24 +1723,24 @@ class StockAnalysisUnsoldView(APIView):
 
     def get(self, request):
         fournisseur_id = request.query_params.get('fournisseur', None)
-        days_threshold = int(request.query_params.get('days', 90))  # Default: 90 days
+        days_threshold = int(request.query_params.get('days', 30))  # Default: 30 jours après dernière entrée
         
         today = timezone.now()
         cutoff_date = (today - timedelta(days=days_threshold)).date()
         
-        # Products with stock, where last sale is NULL or older than threshold
-        produits = Produit.objects.filter(stock__gt=0).select_related('fournisseur')
+        # Invendus = produits en stock dont la dernière ENTRÉE (dernier_achat)
+        # date de plus de X jours ET aucune vente depuis cette entrée
+        produits = Produit.objects.filter(
+            stock__gt=0,
+            dernier_achat__isnull=False,
+            dernier_achat__lte=cutoff_date  # Entrée en stock depuis + de X jours
+        ).filter(
+            # Pas de vente du tout, OU dernière vente AVANT la dernière entrée en stock
+            Q(dernier_vente__isnull=True) | Q(dernier_vente__lt=F('dernier_achat'))
+        ).select_related('fournisseur')
+        
         if fournisseur_id:
             produits = produits.filter(fournisseur_id=fournisseur_id)
-        
-        # Filter: last sale is NULL or older than threshold
-        # AND product has been in stock long enough (dernier_achat or created_at before cutoff)
-        produits = produits.filter(
-            Q(dernier_vente__isnull=True) | Q(dernier_vente__lte=cutoff_date)
-        ).filter(
-            Q(dernier_achat__isnull=False, dernier_achat__lte=cutoff_date) |
-            Q(dernier_achat__isnull=True, created_at__date__lte=cutoff_date)
-        )
         
         results = []
         total_value = Decimal('0.00')
@@ -1529,7 +1767,6 @@ class StockAnalysisUnsoldView(APIView):
                 'days_since_sale': days_since_sale,
                 'derniere_vente': produit.dernier_vente,
                 'dernier_achat': produit.dernier_achat,
-                'created_at': produit.created_at.date(),
                 'fournisseur_name': produit.fournisseur.name if produit.fournisseur else 'N/A'
             })
             total_value += value

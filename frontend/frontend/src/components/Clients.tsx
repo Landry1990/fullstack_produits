@@ -71,6 +71,8 @@ export default function Clients() {
   const [loading, setLoading] = useState<boolean>(true);
   const [showInactive, setShowInactive] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   
   // View/Navigation State - REPLACED with Modals
@@ -114,6 +116,16 @@ export default function Clients() {
       client.address.toLowerCase().includes(term)
     );
   }, [clients, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredClients.length / itemsPerPage));
+  const paginatedClients = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredClients.slice(start, start + itemsPerPage);
+  }, [filteredClients, currentPage, itemsPerPage]);
+
+  // Reset page when search changes
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
   async function fetchClients() {
     setLoading(true);
@@ -457,7 +469,7 @@ export default function Clients() {
                          </div>
                       </li>
                    )}
-                   {filteredClients.map(client => (
+                   {paginatedClients.map(client => (
                       <li key={client.id} className="mb-1 border-b border-base-100 last:border-0 group">
                          <div className="flex items-center p-0">
                             <div className="px-4">
@@ -492,8 +504,42 @@ export default function Clients() {
                       </div>
                    )}
                 </ul>
-             )}
+              )}
           </div>
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="p-2 border-t border-base-200 bg-base-100 flex items-center justify-between text-xs shrink-0">
+              <span className="text-base-content/60">
+                {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''}
+              </span>
+              <div className="join">
+                <button
+                  className="join-item btn btn-xs"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage(p => p - 1)}
+                >«</button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  let page: number;
+                  if (totalPages <= 5) { page = i + 1; }
+                  else if (currentPage <= 3) { page = i + 1; }
+                  else if (currentPage >= totalPages - 2) { page = totalPages - 4 + i; }
+                  else { page = currentPage - 2 + i; }
+                  return (
+                    <button
+                      key={page}
+                      className={`join-item btn btn-xs ${currentPage === page ? 'btn-active btn-primary' : ''}`}
+                      onClick={() => setCurrentPage(page)}
+                    >{page}</button>
+                  );
+                })}
+                <button
+                  className="join-item btn btn-xs"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage(p => p + 1)}
+                >»</button>
+              </div>
+            </div>
+          )}
       </div>
 
       {/* RIGHT PANEL: SELECTED CLIENT DETAILS (2/3) */}

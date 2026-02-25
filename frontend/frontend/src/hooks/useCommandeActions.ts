@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -38,10 +38,10 @@ export function useCommandeActions({
     fetchCommandes,
     setSelectedCommande,
     setViewMode,
-    confirm,
-    user
+    // confirm and user are unused but kept in props for interface compatibility
 }: UseCommandeActionsProps) {
     const { t } = useTranslation();
+    const [executingAction, setExecutingAction] = useState(false);
 
     const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
         // Safely log error without triggering circular reference issues
@@ -116,6 +116,8 @@ export function useCommandeActions({
         selectedCommande: Commande | null,
         isAutoSave: boolean = false
     ) => {
+        if (executingAction && !isAutoSave) return;
+        if (!isAutoSave) setExecutingAction(true);
         // Validation basique
         if (!commandeData.fournisseur) {
             // Pas de toast en auto-save pour ne pas spammer, sauf erreur critique
@@ -204,17 +206,15 @@ export function useCommandeActions({
                 setViewMode('LIST');
             }
 
-        } catch (err) {
-            if (!isAutoSave) {
-                handleApiError(err, t('orders.messages.save_error'));
-            } else {
-                console.error("Erreur Auto-save:", err);
-            }
+        } finally {
+            if (!isAutoSave) setExecutingAction(false);
         }
     }
 
     // ============== SUPPRESSION ==============
     const handleDeleteCommande = async (commande: Commande, sudoCredentials?: { validated_by_id: number; sudo_password: string }) => {
+        if (executingAction) return;
+        setExecutingAction(true);
         try {
             const payload = sudoCredentials ? { ...sudoCredentials } : {};
             await axios.delete(`${commandesEndpoint}${commande.id}/`, { data: payload });
@@ -224,11 +224,15 @@ export function useCommandeActions({
             setViewMode('LIST');
         } catch (err) {
             handleApiError(err, t('orders.messages.delete_error'));
+        } finally {
+            setExecutingAction(false);
         }
     };
 
     // ============== CLÔTURE ==============
     const handleCloturerCommande = async (commande: Commande, sudoCredentials?: { validated_by_id: number; sudo_password: string }) => {
+        if (executingAction) return;
+        setExecutingAction(true);
         try {
             const payload = sudoCredentials ? { ...sudoCredentials } : {};
             const response = await axios.post(`${commandesEndpoint}${commande.id}/cloturer/`, payload);
@@ -242,11 +246,15 @@ export function useCommandeActions({
 
         } catch (err) {
             handleApiError(err, "Erreur lors de la clôture");
+        } finally {
+            setExecutingAction(false);
         }
     };
 
     // ============== METTRE EN ATTENTE ==============
     const handleMettreEnAttente = async (commande: Commande) => {
+        if (executingAction) return;
+        setExecutingAction(true);
         try {
             const newStatus = commande.status === 'ATT' ? 'PREP' : 'ATT';
             await axios.patch(`${commandesEndpoint}${commande.id}/`, { status: newStatus });
@@ -260,16 +268,20 @@ export function useCommandeActions({
             fetchCommandes();
         } catch (err) {
             handleApiError(err, "Erreur lors du changement de statut");
+        } finally {
+            setExecutingAction(false);
         }
     };
 
     // ============== ANNULER RÉCEPTION ==============
     const handleAnnulerReception = async (commande: Commande, sudoCredentials?: { validated_by_id: number; sudo_password: string }) => {
+        if (executingAction) return;
         if (commande.status !== 'CLOT') {
             toast.error(t('orders.messages.cancel_reception_error'));
             return;
         }
 
+        setExecutingAction(true);
         try {
             const payload = sudoCredentials ? { ...sudoCredentials } : {};
             const response = await axios.post(`${commandesEndpoint}${commande.id}/annuler_reception/`, payload);
@@ -280,11 +292,15 @@ export function useCommandeActions({
             setSelectedCommande(updated);
         } catch (err) {
             handleApiError(err, "Erreur lors de l'annulation de la réception");
+        } finally {
+            setExecutingAction(false);
         }
     };
 
     // ============== IMPRESSION ==============
     const handleImprimerReception = async (commande: Commande) => {
+        if (executingAction) return;
+        setExecutingAction(true);
         try {
             const imprimerEndpoint = `${commandesEndpoint}${commande.id}/imprimer_reception/`;
             const response = await axios.get(imprimerEndpoint, { responseType: 'blob' });
@@ -298,6 +314,8 @@ export function useCommandeActions({
             link.parentNode?.removeChild(link);
         } catch (err) {
             handleApiError(err, t('orders.messages.print_error'));
+        } finally {
+            setExecutingAction(false);
         }
     };
 
@@ -307,7 +325,8 @@ export function useCommandeActions({
         handleCloturerCommande,
         handleMettreEnAttente,
         handleAnnulerReception,
-        handleImprimerReception
+        handleImprimerReception,
+        executingAction
     };
 }
 

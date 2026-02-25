@@ -93,10 +93,17 @@ export default function CommandeList({
             <button 
                 className="btn btn-secondary btn-sm" 
                 onClick={onOpenSuggestionModal}
+                disabled={loading}
             >
-                ✨ {t('orders.list.suggestions_btn')}
+                {loading ? <span className="loading loading-spinner loading-xs"></span> : '✨'} {t('orders.list.suggestions_btn')}
             </button>
-            <button className="btn btn-primary btn-sm" onClick={onOpenCreateView}>+ {t('orders.list.create_btn')}</button>
+            <button 
+                className="btn btn-primary btn-sm" 
+                onClick={onOpenCreateView}
+                disabled={loading}
+            >
+                {loading ? <span className="loading loading-spinner loading-xs"></span> : '+'} {t('orders.list.create_btn')}
+            </button>
         </div>
       </div>
         

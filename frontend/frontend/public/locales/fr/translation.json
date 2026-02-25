@@ -16,10 +16,15 @@
         "confirmation": "Confirmation",
         "pay": "Payer",
         "error": "Erreur",
+        "units": "stk",
         "refresh": "Actualiser",
         "restore": "Restaurer",
+        "status": {
+            "draft": "Brouillon"
+        },
         "actions": {
-            "confirm": "Confirmer"
+            "confirm": "Confirmer",
+            "cancel": "Annuler"
         },
         "pagination": {
             "prev": "Précédent",
@@ -502,7 +507,9 @@
             "product_exists": "Ce produit est déjà dans la liste",
             "validation": {
                 "success": "Inventaire validé avec succès",
-                "error": "Erreur lors de la validation"
+                "error": "Erreur lors de la validation",
+                "title": "Validation d'Inventaire",
+                "message": "Êtes-vous sûr de vouloir valider cet inventaire ? Cette action mettra à jour le stock officiel."
             },
             "filters": {
                 "search_placeholder": "Rechercher un inventaire...",
@@ -515,7 +522,11 @@
             },
             "merge": {
                 "modal_title": "Fusionner Inventaires",
+                "modal_desc": "Fusionnez l'inventaire actuel avec un autre.",
+                "select_source": "Sélectionnez l'inventaire source",
+                "choose_placeholder": "Choisir un inventaire...",
                 "confirm_msg": "Fusionner l'inventaire sélectionné dans l'actuel ? L'inventaire source sera supprimé.",
+                "need_two": "Sélectionnez au moins 2 inventaires.",
                 "btn": "Fusionner",
                 "success": "Fusion effectuée",
                 "success_count": "{{count}} inventaire(s) fusionné(s) avec succès !",
@@ -539,12 +550,16 @@
                 "title_edit": "Inventaire #{{id}}",
                 "validated": "VALIDÉE",
                 "tab_data": "📝 Saisie / Liste",
-                "tab_analysis": "📊 Analyse",
+                "tab_entry": "Saisie",
+                "tab_analysis": "Analyse",
                 "print": "🖨️ Imprimer Etat (PDF)",
                 "saved_auto": "Enregistré auto.",
                 "merge_to": "🔗 Fusionner vers...",
                 "validate": "✓ Valider et Mettre à jour Stock",
                 "validating": "Validation...",
+                "selected": "ligne(s) sélectionnée(s)",
+                "delete_selected": "Supprimer sélection",
+                "sync_now": "Synchroniser {{count}} ligne(s)",
                 "date": "Date",
                 "description": "Description",
                 "placeholder_desc": "Ex: Inventaire Annuel 2025...",
@@ -558,7 +573,16 @@
                 "bulk_delete_title": "Suppression Multiple",
                 "bulk_delete_message": "Supprimer ces {{count}} lignes ?",
                 "bulk_delete_confirm": "Oui, Supprimer",
-                "bulk_delete_success": "{{count}} lignes supprimées"
+                "bulk_delete_success": "{{count}} lignes supprimées",
+                "empty_list_title": "Aucun produit",
+                "empty_list": "Recherchez et ajoutez des produits pour commencer l'inventaire.",
+                "col_product": "Produit",
+                "col_rayon": "Rayon",
+                "col_theo": "Théo.",
+                "col_phys": "Phys.",
+                "col_gap": "Écart",
+                "total_gap_value": "Montant Total Écarts",
+                "items_count": "Articles"
             },
             "lines": {
                 "selected": "{{count}} ligne(s) sélectionnée(s)",
@@ -590,6 +614,15 @@
                 "loss": "Perte",
                 "total_ecart": "Total Écart"
             },
+            "lot_modal": {
+                "title": "Sélectionner un Lot",
+                "subtitle": "Pour: {{name}}",
+                "btn_global": "Stock Global",
+                "desc_global": "Ajouter sans spécifier de lot",
+                "btn_new": "Nouveau Lot",
+                "desc_new": "Créer une nouvelle entrée de lot",
+                "loading": "Chargement des lots..."
+            },
             "modals": {
                 "lot_title": "Sélectionner un Lot",
                 "lot_for": "Pour: {{name}}",
@@ -599,6 +632,11 @@
                 "merge_title_list": "Fusionner {{count}} inventaires",
                 "merge_warning_list": "Tous les inventaires sélectionnés seront fusionnés dans <strong>l'inventaire Cible</strong>. Les autres seront supprimés.",
                 "merge_warning_list_plain": "Fusionner les inventaires sélectionnés dans la CIBLE ?\nLes autres seront supprimés (lignes transférées).",
+                "merge_list_desc": "Les inventaires sélectionnés seront fusionnés dans l'inventaire cible.",
+                "merge_warning": "Attention",
+                "merge_warning_desc": "Les inventaires sources seront supprimés après la fusion. Les lignes en double seront additionnées.",
+                "target_inventory": "Inventaire Cible",
+                "choose_target": "Choisir l'inventaire cible...",
                 "validate_confirm_btn": "Confirmer Valid. Définitive",
                 "cancel": "Annuler",
                 "validate_title": "Validation Administrative",
@@ -943,8 +981,10 @@
         },
         "charts": {
             "revenue_evolution": "Évolution du Chiffre d'Affaires (7 derniers jours)",
+            "amount": "Montant",
             "sales_trend": "Tendance des Ventes (7 derniers jours)",
             "hourly_traffic": "Moyenne Fréquentation Horaire (30 jours)",
+            "hourly_traffic_title": "Affluence par Heure",
             "sales_label": "Ventes"
         },
         "debts": {

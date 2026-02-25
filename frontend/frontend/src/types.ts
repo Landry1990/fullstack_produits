@@ -634,3 +634,24 @@ export interface TVA {
   is_active: boolean;
 }
 
+export interface InventoryStats {
+  top_pertes: Array<{
+    produit_nom: string;
+    ecart: number;
+    valeur: number;
+  }>;
+  top_surplus: Array<{
+    produit_nom: string;
+    ecart: number;
+    valeur: number;
+  }>;
+  par_rayon: Array<{
+    rayon: string;
+    total: number;
+  }>;
+}
+
+export interface PMPDataItem {
+  pmp: string;
+}
+

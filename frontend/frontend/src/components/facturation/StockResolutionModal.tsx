@@ -75,20 +75,11 @@ export default function StockResolutionModal({
   }, [promisSelections, setPromisSelections])
 
   const handleConfirm = useCallback(() => {
-    console.log('[DEBUG StockResolutionModal] handleConfirm appelé')
-    console.log('[DEBUG StockResolutionModal] promisSelections:', Array.from(promisSelections))
-    console.log('[DEBUG StockResolutionModal] localClientName:', localClientName)
-    console.log('[DEBUG StockResolutionModal] localPhone:', localPhone)
-    
     // Sync local states back to parent only on confirm
     setPromisClientName(localClientName)
     setPromisPhone(localPhone)
     
-    // Small delay to ensure state update before parent's logic runs
-    setTimeout(() => {
-      console.log('[DEBUG StockResolutionModal] Appel de onConfirm()')
-      onConfirm()
-    }, 0)
+    onConfirm()
   }, [localClientName, localPhone, setPromisClientName, setPromisPhone, onConfirm, promisSelections])
 
   if (!isOpen) return null

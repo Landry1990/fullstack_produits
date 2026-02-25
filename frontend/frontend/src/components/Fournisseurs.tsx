@@ -48,6 +48,8 @@ export default function Fournisseurs() {
   const [selectedFournisseur, setSelectedFournisseur] = useState<Fournisseur | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
 
   // Sudo Mode State
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -117,6 +119,16 @@ export default function Fournisseurs() {
       fournisseur.address.toLowerCase().includes(term)
     );
   }, [fournisseurs, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filteredFournisseurs.length / itemsPerPage));
+  const paginatedFournisseurs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredFournisseurs.slice(start, start + itemsPerPage);
+  }, [filteredFournisseurs, currentPage, itemsPerPage]);
+
+  // Reset page when search changes
+  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
   // Filtrer le catalogue selon le terme de recherche
   const filteredCatalogue = useMemo(() => {
@@ -535,8 +547,8 @@ export default function Fournisseurs() {
                     </tr>
                  </thead>
                  <tbody>
-                    {filteredFournisseurs.length > 0 ? (
-                      filteredFournisseurs.map((fournisseur, index) => (
+                    {paginatedFournisseurs.length > 0 ? (
+                      paginatedFournisseurs.map((fournisseur, index) => (
                          <tr 
                            key={fournisseur.id} 
                            className={`hover cursor-pointer transition-all border-b border-slate-50 ${
@@ -576,6 +588,40 @@ export default function Fournisseurs() {
                  </tbody>
                </table>
             </div>
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="p-2 border-t border-slate-200 bg-white flex items-center justify-between text-xs shrink-0">
+                <span className="text-slate-400">
+                  {filteredFournisseurs.length} fournisseur{filteredFournisseurs.length > 1 ? 's' : ''}
+                </span>
+                <div className="join">
+                  <button
+                    className="join-item btn btn-xs"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                  >«</button>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let page: number;
+                    if (totalPages <= 5) { page = i + 1; }
+                    else if (currentPage <= 3) { page = i + 1; }
+                    else if (currentPage >= totalPages - 2) { page = totalPages - 4 + i; }
+                    else { page = currentPage - 2 + i; }
+                    return (
+                      <button
+                        key={page}
+                        className={`join-item btn btn-xs ${currentPage === page ? 'btn-active btn-primary' : ''}`}
+                        onClick={() => setCurrentPage(page)}
+                      >{page}</button>
+                    );
+                  })}
+                  <button
+                    className="join-item btn btn-xs"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                  >»</button>
+                </div>
+              </div>
+            )}
          </div>
 
          {/* Right Panel: Details */}

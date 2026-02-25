@@ -752,9 +752,9 @@ export default function JournalCaisse() {
           <div className="bg-base-100 p-5 rounded-xl border-l-4 border-l-success border border-base-200 shadow-md flex flex-col justify-center">
               <div className="flex justify-between items-start">
                   <div>
-                      <h3 className="text-success text-xs font-black uppercase tracking-wider mb-1">Total à Justifier</h3>
+                      <h3 className="text-success text-xs font-black uppercase tracking-wider mb-1">Espèces à Justifier</h3>
                       <div className="text-2xl font-black text-success">{formatCurrency(serverTotals?.total_theorique ?? totauxParMode.total)}</div>
-                      <div className="text-[10px] text-success/60 font-medium mt-1 uppercase italic">Encaisse Attendue (Intervalle)</div>
+                      <div className="text-[10px] text-success/60 font-medium mt-1 uppercase italic">Ventes Espèces + Entrées - Sorties</div>
                   </div>
                   <div className="p-3 bg-success/10 rounded-lg text-success">
                      <Banknote className="w-5 h-5" />
@@ -863,7 +863,7 @@ export default function JournalCaisse() {
                      <span className="text-[8px] opacity-60 uppercase font-bold">Hors Recouvrements</span>
                   </div>
                   <div className="w-px h-6 bg-white/20 mx-1"></div>
-                  <span className="text-xl font-black">{formatCurrency(serverTotals?.total_theorique ?? totauxParMode.total)}</span>
+                  <span className="text-xl font-black">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees) - (serverTotals?.total_sorties ?? totauxParMode.sorties))}</span>
               </div>
           </div>
       </div>
@@ -1113,9 +1113,14 @@ export default function JournalCaisse() {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-3">
                         <div className="p-5 bg-primary/5 border border-primary/20 rounded-xl shadow-sm text-center">
-                            <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">Total Théorique à Justifier</div>
-                            <div className="text-3xl font-black text-primary">{Math.round(closingTotals.total_theorique).toLocaleString()} F</div>
-                            <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">Solde Opérationnel Pur</div>
+                            <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">Solde Opérationnel Net</div>
+                            <div className="text-3xl font-black text-primary">{Math.round(closingTotals.total_ventes + closingTotals.total_entrees - closingTotals.total_sorties).toLocaleString()} F</div>
+                            <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">Ventes + Entrées - Sorties</div>
+                        </div>
+                        <div className="p-4 bg-success/5 border border-success/20 rounded-xl text-center">
+                            <div className="text-[9px] font-black text-success/60 uppercase mb-1 tracking-widest">Espèces à Justifier</div>
+                            <div className="text-2xl font-black text-success">{Math.round(closingTotals.total_theorique).toLocaleString()} F</div>
+                            <div className="text-[9px] font-bold text-success/40 mt-1 uppercase">Ventes Espèces + Entrées - Sorties</div>
                         </div>
                     </div>
 
@@ -1135,7 +1140,7 @@ export default function JournalCaisse() {
                             <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-base-content/20">CFA</span>
                         </div>
                         <div className="mt-4 flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                            <span className="text-xs font-bold text-base-content/60 uppercase">Écart de caisse</span>
+                            <span className="text-xs font-bold text-base-content/60 uppercase">Écart de caisse (Espèces)</span>
                             <span className={`text-sm font-black ${
                                 !actualAmount ? 'text-base-content/20' : 
                                 (parseFloat(actualAmount) - closingTotals.total_theorique) >= 0 ? 'text-success' : 'text-error'

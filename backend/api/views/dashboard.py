@@ -21,110 +21,8 @@ class DashboardViewSet(viewsets.ViewSet):
     def stats(self, request):
         today = timezone.now().date()
         yesterday = today - timedelta(days=1)
-        start_of_month = today.replace(day=1)
         
-        # 1. Revenue (Chiffre d'Affaires) - Today and change vs yesterday
-        ca_today = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
-        
-        ca_yesterday = Facture.objects.filter(
-            date__date=yesterday,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
-        
-        revenue_change = 0
-        if ca_yesterday and ca_yesterday > 0:
-            revenue_change = round(((ca_today - ca_yesterday) / ca_yesterday) * 100, 1)
-        
-        # 2. Sales count (Number of invoices today)
-        sales_today = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).count()
-        
-        sales_yesterday = Facture.objects.filter(
-            date__date=yesterday,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).count()
-        
-        sales_change = 0
-        if sales_yesterday > 0:
-            sales_change = round(((sales_today - sales_yesterday) / sales_yesterday) * 100, 1)
-        
-        # 3. Low stock count (products with <= 15 days coverage based on monthly rotation)
-        # days_remaining = stock / (rotation_moyenne / 30)
-        # <= 15 days means: stock / (rotation / 30) <= 15 => stock * 30 / rotation <= 15 => stock <= rotation * 15 / 30 => stock <= rotation * 0.5
-        from django.db.models.functions import Cast
-        from django.db.models import FloatField
-        
-        stock_critique = Produit.objects.filter(
-            rotation_moyenne__gt=0  # Exclure produits dormants
-        ).annotate(
-            days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
-        ).filter(
-            Q(days_remaining__lte=15) | Q(stock__lte=0) | Q(stock__lte=F('stock_minimum'))
-        ).count()
-        
-        # 4. Receivables (Créances Clients) - Total unpaid amounts on validated invoices
-        # Optimization: Use DB aggregation instead of iterating all invoices
-        from django.db.models import Case, When, Value
-        
-        # Calculate sum of payments for each invoice
-        # Only validated invoices, not fully paid? 
-        # Actually we check all VALIDEE/PAYEE because partial payment is possible on PAYEE? No usually Validée.
-        
-        # Aggregation of invoices that have remaining amount > 0
-        # We assume 'reste_a_payer' is not stored on Facture, so we calculate it.
-        # Total = total_ttc
-        # Paid = Sum(paiements) where status='completee' and mode != 'en_compte'
-        
-        receivables_agg = Facture.objects.filter(
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).annotate(
-            paid_amount=Coalesce(
-                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
-                Decimal('0')
-            ),
-            remaining=F('total_ttc') - F('paid_amount')
-        ).filter(
-            remaining__gt=0.5 # Filter dust
-        ).aggregate(
-            total_debt=Coalesce(Sum('remaining'), Decimal('0')),
-            count=Count('id')
-        )
-        
-        receivables_data = {'total_debt': receivables_agg['total_debt'], 'count': receivables_agg['count']}
-        
-        # 5. Discount (Remises accordées AUJOURD'HUI)
-        discount_total = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('remise'), Decimal('0')))['total']
-        
-        # 6. Stock value (Valeur totale du stock au PMP)
-        stock_agg = Produit.objects.filter(stock__gt=0).aggregate(
-            total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0')),
-            count=Count('id')
-        )
-        stock_value = stock_agg['total']
-        stock_count = stock_agg['count']
-
-        # 7. User specific stats (My Daily Stats - for Seller motivation)
-        user_daily_invoices = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            created_by=request.user
-        )
-        
-        user_ca_today = user_daily_invoices.aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
-        user_sales_count = user_daily_invoices.count()
-        user_avg_basket = Decimal('0')
-        if user_sales_count > 0:
-            user_avg_basket = user_ca_today / user_sales_count
-        
-        # Determine Role
+        # Determine Role early to skip complex queries for cashiers
         role = 'PHARMACIEN' # Default fallback
         try:
             if hasattr(request.user, 'profile'):
@@ -132,10 +30,118 @@ class DashboardViewSet(viewsets.ViewSet):
         except Exception:
             pass
         
-        # Superusers and staff always get full access
         if request.user.is_superuser or request.user.is_staff:
             role = 'PHARMACIEN'
             
+        # Global stats (1 Query to get today/yesterday CA and Counts)
+        global_stats = {'ca_today': 0, 'ca_yesterday': 0, 'sales_today': 0, 'sales_yesterday': 0}
+        
+        if role not in ['VENDEUR', 'CAISSIER']:
+            # Combine queries into one grouped by date
+            from django.db.models import Sum, Count
+            from django.db.models.functions import TruncDate
+            
+            factures_stats = Facture.objects.filter(
+                date__date__in=[today, yesterday],
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).annotate(
+                day=TruncDate('date')
+            ).values('day').annotate(
+                total_ca=Sum('total_ttc'),
+                total_sales=Count('id'),
+                total_discount=Sum('remise')
+            )
+            
+            discount_total = Decimal('0.00')
+            
+            for stat in factures_stats:
+                day = stat['day']
+                # Sometimes TruncDate returns datetime or date depending on DB and timezone settings
+                if hasattr(day, 'date'):
+                    day = day.date()
+                    
+                if day == today:
+                    global_stats['ca_today'] = stat['total_ca'] or Decimal('0.00')
+                    global_stats['sales_today'] = stat['total_sales'] or 0
+                    discount_total = stat['total_discount'] or Decimal('0.00')
+                elif day == yesterday:
+                    global_stats['ca_yesterday'] = stat['total_ca'] or Decimal('0.00')
+                    global_stats['sales_yesterday'] = stat['total_sales'] or 0
+
+            revenue_change = 0
+            if global_stats['ca_yesterday'] > 0:
+                revenue_change = round(((global_stats['ca_today'] - global_stats['ca_yesterday']) / global_stats['ca_yesterday']) * 100, 1)
+
+            sales_change = 0
+            if global_stats['sales_yesterday'] > 0:
+                sales_change = round(((global_stats['sales_today'] - global_stats['sales_yesterday']) / global_stats['sales_yesterday']) * 100, 1)
+
+            # 3. Low stock count
+            from django.db.models.functions import Cast
+            from django.db.models import FloatField
+            
+            stock_critique = Produit.objects.filter(
+                rotation_moyenne__gt=0
+            ).annotate(
+                days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
+            ).filter(
+                Q(days_remaining__lte=15) | Q(stock__lte=0) | Q(stock__lte=F('stock_minimum'))
+            ).count()
+
+            # 4. Receivables (Créances Clients) — Deux sous-requêtes séparées pour éviter JOIN multiplication
+            from django.db.models import Subquery, OuterRef
+            
+            # Sous-requête 1: Total facturé par client (factures VAL/PAY)
+            billed_sub = Facture.objects.filter(
+                client=OuterRef('pk'),
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+            ).values('client').annotate(
+                s=Sum('total_ttc')
+            ).values('s')[:1]
+            
+            # Sous-requête 2: Total payé par client (hors en_compte)
+            paid_sub = Caisse.objects.filter(
+                facture__client=OuterRef('pk'),
+                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                statut='completee'
+            ).exclude(
+                mode_paiement='en_compte'
+            ).values('facture__client').annotate(
+                s=Sum('montant')
+            ).values('s')[:1]
+            
+            receivables_agg = Client.objects.annotate(
+                total_billed=Coalesce(Subquery(billed_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
+                total_paid=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            ).annotate(
+                debt=F('total_billed') - F('total_paid')
+            ).filter(
+                debt__gt=0.5
+            ).aggregate(
+                total_debt=Coalesce(Sum('debt'), Decimal('0')),
+                count=Count('id')
+            )
+
+            # 6. Stock value
+            stock_agg = Produit.objects.filter(stock__gt=0).aggregate(
+                total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0')),
+                count=Count('id')
+            )
+
+        # 7. User specific stats (My Daily Stats)
+        user_daily_invoices = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            created_by=request.user
+        ).aggregate(
+            total=Coalesce(Sum('total_ttc'), Decimal('0')),
+            count=Count('id')
+        )
+        
+        user_ca_today = user_daily_invoices['total']
+        user_sales_count = user_daily_invoices['count']
+        user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal('0')
+
         # Base response
         response_data = {
             'role': role,
@@ -146,17 +152,15 @@ class DashboardViewSet(viewsets.ViewSet):
             }
         }
         
-        # If Admin/Pharmacist, add full global stats
-        # If Seller/Cashier, we limit the data (privacy/focus)
         if role not in ['VENDEUR', 'CAISSIER']:
             response_data.update({
-                'revenue': {'value': float(ca_today), 'change': revenue_change},
-                'sales': {'value': sales_today, 'change': sales_change},
+                'revenue': {'value': float(global_stats['ca_today']), 'change': revenue_change},
+                'sales': {'value': global_stats['sales_today'], 'change': sales_change},
                 'clients': {'value': Client.objects.count(), 'change': 0},
                 'low_stock': {'value': stock_critique, 'change': 0},
-                'receivables': {'value': float(receivables_data['total_debt'] or 0), 'count': receivables_data['count'] or 0},
+                'receivables': {'value': float(receivables_agg['total_debt'] or 0), 'count': receivables_agg['count'] or 0},
                 'discount': {'value': float(discount_total), 'change': 0},
-                'stock_value': {'value': float(stock_value), 'count': stock_count}
+                'stock_value': {'value': float(stock_agg['total'] or 0), 'count': stock_agg['count'] or 0}
             })
             
         return Response(response_data)
