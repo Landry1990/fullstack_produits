@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { PMPDataItem, LigneInventaire } from '../../types';
+import type { LigneInventaire } from '../../types';
 
 // PDF Export capabilities extracted from Inventaire.tsx
 interface UseInventairePDFProps {
@@ -9,7 +9,7 @@ interface UseInventairePDFProps {
 
 export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
 
-    const generateEtatPDF = (activeInventaire: any, lignes: LigneInventaire[], pmpData: Record<number, PMPDataItem>) => {
+    const generateEtatPDF = (activeInventaire: any, lignes: LigneInventaire[]) => {
         if (!activeInventaire || !lignes.length) return;
 
         const doc = new jsPDF();
@@ -59,8 +59,8 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
                     pmpVal.toFixed(0),
                     l.stock_theorique.toString(),
                     l.quantite_physique.toString(),
-                    l.ecart > 0 ? `+${l.ecart}` : l.ecart.toString(),
-                    val > 0 ? `+${val.toFixed(0)}` : val.toFixed(0)
+                    l.ecart > 0 ? `+ ${l.ecart} ` : l.ecart.toString(),
+                    val > 0 ? `+ ${val.toFixed(0)} ` : val.toFixed(0)
                 ];
             });
 
@@ -69,7 +69,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
                 return acc + (l.ecart * pmpVal);
             }, 0);
 
-            tableBody.push(['', '', '', '', '', t('stock.inventaire.pdf.total_rayon'), totalRayon > 0 ? `+${totalRayon.toFixed(0)}` : totalRayon.toFixed(0)]);
+            tableBody.push(['', '', '', '', '', t('stock.inventaire.pdf.total_rayon'), totalRayon > 0 ? `+ ${totalRayon.toFixed(0)} ` : totalRayon.toFixed(0)]);
 
             autoTable(doc, {
                 startY: currentY,
@@ -119,7 +119,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
             amount: totalGlobal.toFixed(0)
         }), 14, currentY);
 
-        doc.save(`inventaire_${activeInventaire.id}_etat.pdf`);
+        doc.save(`inventaire_${activeInventaire.id} _etat.pdf`);
     };
 
     const generateEcartsPDF = (activeInventaire: any, lignes: LigneInventaire[]) => {
@@ -138,7 +138,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
 
         if (linesWithGaps.length === 0) {
             doc.text(t('stock.inventaire.pdf.no_gaps'), 14, 35);
-            doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
+            doc.save(`inventaire_${activeInventaire.id} _ecarts.pdf`);
             return;
         }
 
@@ -183,8 +183,8 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
                     pmpVal.toFixed(0),
                     l.stock_theorique.toString(),
                     l.quantite_physique.toString(),
-                    l.ecart > 0 ? `+${l.ecart}` : l.ecart.toString(),
-                    val > 0 ? `+${val.toFixed(0)}` : val.toFixed(0)
+                    l.ecart > 0 ? `+ ${l.ecart} ` : l.ecart.toString(),
+                    val > 0 ? `+ ${val.toFixed(0)} ` : val.toFixed(0)
                 ];
             });
 
@@ -194,7 +194,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
                 return acc + (l.ecart * pmpVal);
             }, 0);
 
-            tableBody.push(['', '', '', '', '', t('stock.inventaire.pdf.total_rayon'), totalRayon > 0 ? `+${totalRayon.toFixed(0)}` : totalRayon.toFixed(0)]);
+            tableBody.push(['', '', '', '', '', t('stock.inventaire.pdf.total_rayon'), totalRayon > 0 ? `+ ${totalRayon.toFixed(0)} ` : totalRayon.toFixed(0)]);
 
             autoTable(doc, {
                 startY: currentY,
@@ -249,7 +249,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
             amount: totalGlobal.toFixed(0)
         }), 14, currentY);
 
-        doc.save(`inventaire_${activeInventaire.id}_ecarts.pdf`);
+        doc.save(`inventaire_${activeInventaire.id} _ecarts.pdf`);
     };
 
     return {

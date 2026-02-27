@@ -1,0 +1,1203 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.17 [39m[90mC:/Projet Fullstack/fullstack_produits/frontend/frontend[39m
+
+ [31mÔØ»[39m src/components/facturation/__tests__/TotalsSection.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[32m 125[2mms[22m[39m
+[31m     [31m├ù[31m affiche correctement les totaux standards (sans TP, sans Coupon)[39m[32m 90[2mms[22m[39m
+[31m     [31m├ù[31m affiche le Tiers Payant correctement (Couverture 70%)[39m[32m 15[2mms[22m[39m
+[31m     [31m├ù[31m affiche le Coupon correctement (Sans Tiers Payant)[39m[32m 7[2mms[22m[39m
+[31m     [31m├ù[31m g├¿re le cas complexe : Tiers Payant + Coupon[39m[32m 10[2mms[22m[39m
+stderr | src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
+An update to SalesFilters inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SalesQuickStats inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/__tests__/Facturation.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 103[2mms[22m[39m
+[31m     [31m├ù[31m affiche les composants principaux au chargement[39m[32m 67[2mms[22m[39m
+[31m     [31m├ù[31m affiche un panier vide au d├®marrage[39m[32m 17[2mms[22m[39m
+[31m     [31m├ù[31m affiche les produits dans le panier quand useCart renvoie des donn├®es[39m[32m 17[2mms[22m[39m
+     [2m[90mÔåô[39m[22m ouvre la modal de paiement au clic sur Encaisser
+stderr | src/components/__tests__/Avoirs.test.tsx > Avoirs Component > permet de cr├®er un nouvel avoir
+An update to Avoirs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Avoirs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Avoirs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Avoirs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/__tests__/Avoirs.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[32m 138[2mms[22m[39m
+[31m     [31m├ù[31m affiche la liste des avoirs[39m[32m 103[2mms[22m[39m
+[31m     [31m├ù[31m permet de cr├®er un nouvel avoir[39m[32m 34[2mms[22m[39m
+ [31mÔØ»[39m src/components/__tests__/Ventes.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m2 failed[39m[2m | [22m[33m4 skipped[39m[2m)[22m[33m 10033[2mms[22m[39m
+     [2m[90mÔåô[39m[22m renders correctly and fetches factures
+     [2m[90mÔåô[39m[22m handles filtering
+     [2m[90mÔåô[39m[22m searches for invoices
+[31m     [31m├ù[31m opens product details modal[39m[33m 5018[2mms[22m[39m
+     [2m[90mÔåô[39m[22m opens refund modal and handles cancellation
+[31m     [31m├ù[31m displays empty state when no factures found[39m[33m 5013[2mms[22m[39m
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 11 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  src/components/__tests__/Avoirs.test.tsx > Avoirs Component > affiche la liste des avoirs
+TestingLibraryElementError: Unable to find an element with the text: PERIME. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="min-h-screen bg-base-200 p-6 space-y-6 font-sans"
+    >
+      <div
+        class="flex flex-col gap-6"
+      >
+        <div
+          class="w-full space-y-4"
+        >
+          <div
+            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col"
+          >
+            <div
+              class="p-6 border-b border-base-200"
+            >
+              <h1
+                class="text-2xl font-bold text-base-content tracking-tight"
+              >
+                Avoirs Fournisseurs (Retours)
+              </h1>
+              <p
+                class="text-base-content/60 text-sm mt-1"
+              >
+                G├®rez les retours et avoirs fournisseurs
+              </p>
+            </div>
+            <div
+              class="p-4 bg-base-100 border-b border-base-200"
+            >
+              <div
+                class="flex flex-col md:flex-row gap-4 justify-between items-center"
+              >
+                <div
+                  class="flex flex-1 gap-4 items-center w-full md:w-auto"
+                >
+                  <div
+                    class="relative flex-1 max-w-md"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="m21 21-4.34-4.34"
+                      />
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="8"
+                      />
+                    </svg>
+                    <input
+                      class="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
+                      placeholder="­ƒöì Rechercher un avoir..."
+                      type="text"
+                      value=""
+                    />
+                  </div>
+                </div>
+                <div
+                  class="flex items-center gap-2 w-full md:w-auto justify-end"
+                >
+                  <button
+                    class="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                    title="Actualiser"
+                  >
+                    <svg
+                      fill="none"
+                      height="18"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="18"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                      />
+                      <path
+                        d="M3 3v5h5"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    class="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      class="lucide lucide-plus w-4 h-4"
+                      fill="none"
+                      height="24"
+                      stroke="currentColor"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M5 12h14"
+                      />
+                      <path
+                        d="M12 5v14"
+                      />
+                    </svg>
+                    <span
+                      class="hidden sm:inline"
+                    >
+                      + Nouvel Avoir
+                    </span>
+                    <span
+                      class="sm:hidden"
+                    >
+                      common.add
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="grid grid-cols-1 md:grid-cols-3 gap-4"
+          >
+            <div
+              class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 flex items-center gap-4 transition-all hover:shadow-md hover:border-base-content/20"
+            >[...
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/__tests__/Avoirs.test.tsx:71:19
+     69|     
+     70|     expect(screen.getByText('Laborex')).toBeInTheDocument()
+     71|     expect(screen.getByText('PERIME')).toBeInTheDocument()
+       |                   ^
+     72|   })
+     73| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/11]ÔÄ»
+
+ FAIL  src/components/__tests__/Avoirs.test.tsx > Avoirs Component > permet de cr├®er un nouvel avoir
+TestingLibraryElementError: Unable to find an element with the text: Nouvel Avoir (Retour Stock). This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <form
+      class="min-h-screen bg-base-200 p-4 md:p-6 space-y-6"
+    >
+      <div
+        class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-base-100 p-4 rounded-2xl shadow-sm border border-base-300 relative z-[60]"
+      >
+        <div
+          class="flex items-center gap-3"
+        >
+          <button
+            class="btn btn-circle btn-ghost btn-sm"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-arrow-left w-5 h-5"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="m12 19-7-7 7-7"
+              />
+              <path
+                d="M19 12H5"
+              />
+            </svg>
+          </button>
+          <div>
+            <h1
+              class="text-xl font-bold"
+            >
+              Nouvel Avoir
+            </h1>
+            <p
+              class="text-sm text-base-content/60"
+            >
+              Sauvegardez l'avoir en brouillon avant de le valider.
+            </p>
+          </div>
+        </div>
+        <div
+          class="flex gap-2 w-full sm:w-auto"
+        >
+          <button
+            class="btn btn-ghost flex-1 sm:flex-none"
+            type="button"
+          >
+            Annuler
+          </button>
+          <button
+            class="btn btn-primary flex-1 sm:flex-none"
+            disabled=""
+            type="submit"
+          >
+            <svg
+              aria-hidden="true"
+              class="lucide lucide-save w-4 h-4 mr-2"
+              fill="none"
+              height="24"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"
+              />
+              <path
+                d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"
+              />
+              <path
+                d="M7 3v4a1 1 0 0 0 1 1h7"
+              />
+            </svg>
+            Enregistrement...
+          </button>
+        </div>
+      </div>
+      <div
+        class="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      >
+        <div
+          class="lg:col-span-1 space-y-6"
+        >
+          <div
+            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5 space-y-4"
+          >
+            <h2
+              class="font-bold text-lg border-b border-base-200 pb-2"
+            >
+              Informations G├®n├®rales
+            </h2>
+            <div
+              class="form-control relative"
+            >
+              <label
+                class="label font-medium text-sm text-base-content/70"
+              >
+                Fournisseur 
+                <span
+                  class="text-error"
+                >
+                  *
+                </span>
+              </label>
+              <div
+                class="relative"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21 21-4.34-4.34"
+                  />
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="8"
+                  />
+                </svg>
+                <input
+                  class="input input-bordered w-full pl-9 focus:border-primary transition-colors"
+                  placeholder="Rechercher fournisseur..."
+                  type="text"
+                  value=""
+                />
+                <span
+                  class="loading loading-spinner loading-xs absolute right-3 top-1/2 -translate-y-1/2 opacity-50"
+                />
+              </div>
+            </div>
+            <div
+              class="form-control"
+            >
+              <label
+                class="label font-medium text-sm text-base-content/70"
+              >
+                Motif / Type 
+                <span
+                  class="text-error"
+                >
+                  *
+                </span>
+              </label>
+              <select
+                class="select select-bordered focus:border-primary transition-colors w-full"
+              >
+                <option
+                  value="PERIME"
+                >
+                  P├®remption
+                </option>
+                <option
+                  value="CASSE"
+                >
+                  Casse / D├®faut
+                </option>
+                <option
+                  value="ERREUR_LIVRAISON"
+                >
+                  Erreur de livraison
+                </option>
+                <option
+                  value="AUTRE"
+                >
+                  Autre motif
+                </option>
+              </select>
+            </div>
+            <div
+              class="form-control"
+            >
+              <label
+                class="label font-medium text-sm text-base-content/70"
+              >
+                Observations (Optionnel)
+              </label>
+              <textarea
+                class="textarea textarea-bordered h-24 focus:border-primary transition-colors w-full"
+                placeholder="D├®tails suppl├®mentaires..."
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="lg:col-span-2 space-y-6"
+        >
+          <div
+            class="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col h-full"
+          >
+            <div
+              class="p-4 border-b border-base-200 sticky top-0 bg-base-100 z-10 rounded-t-2xl"
+            >
+              <div
+                class="relative"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="lucide lucide-search absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-base-content/40"
+                  fill="none"
+                  height="24"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  viewBox="0 0 24 24"
+                  width="24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="m21 21-4.34-4.34"
+                  />
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="8"
+                  />
+                </svg>
+                <input
+                  class="input input-lg w-full pl-12 bg-base-200/50 border-0 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 transition-all text-lg rounded-xl"
+                  placeholder="avoirs.search_product_placeholder"
+                  type="text"
+                  value=""
+                />
+              </div>
+            </div>
+            <div
+              class="flex-1 p-0 overflow-x-auto"
+            >
+              <div
+                class="flex flex-col items-center justify-center h-64 text-base-content/40 gap-4"
+              >
+                <div
+                  class="w-16 h-16 rounded-full bg-base-200/50 flex items-center justify-center"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="lucide lucide-circle-plus w-8 h-8"
+                    fill="none"
+                    height="24"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    viewBox="0 0 24 24"
+                    width="24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                    />
+                    <path
+                      d="M8 12h8"
+                    />
+                    <path
+                      d="M12 8v8"
+                    />
+                  </svg>
+                </div>
+                <p
+                  class="text-lg font-medium"
+                >
+                  Recherchez un produit pour commencer
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/__tests__/Avoirs.test.tsx:80:19
+     78|     fireEvent.click(newBtn)
+     79|     
+     80|     expect(screen.getByText('Nouvel Avoir (Retour Stock)')).toBeInTheDÔÇª
+       |                   ^
+     81|     expect(screen.getByPlaceholderText('Rechercher fournisseur...')).tÔÇª
+     82|   })
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/11]ÔÄ»
+
+ FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les composants principaux au chargement
+ FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche un panier vide au d├®marrage
+ FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les produits dans le panier quand useCart renvoie des donn├®es
+TypeError: Cannot read properties of undefined (reading 'client_type')
+ ÔØ» ClientCreateModal src/components/facturation/ClientCreateModal.tsx:36:31
+     34|       onClose={onClose}
+     35|       title={`Ô×ò ${t('facturation.create_client.title')}`}
+     36|       subtitle={newClientForm.client_type === 'PARTICULIER' 
+       |                               ^
+     37|         ? t('facturation.create_client.individual') 
+     38|         : t('facturation.create_client.professional')}
+ ÔØ» Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:23863:20
+ ÔØ» renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:5529:22
+ ÔØ» updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:8897:19
+ ÔØ» beginWork node_modules/react-dom/cjs/react-dom-client.development.js:10522:18
+ ÔØ» runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:1522:13
+ ÔØ» performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:15140:22
+ ÔØ» workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:14956:41
+ ÔØ» renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:14936:11
+ ÔØ» performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:14462:44
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/11]ÔÄ»
+
+ FAIL  src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ÔØ» src/components/__tests__/Ventes.test.tsx:157:5
+    155|     });
+    156| 
+    157|     it('opens product details modal', async () => {
+       |     ^
+    158|         vi.useFakeTimers();
+    159|         render(
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/11]ÔÄ»
+
+ FAIL  src/components/__tests__/Ventes.test.tsx > Ventes Component > displays empty state when no factures found
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ÔØ» src/components/__tests__/Ventes.test.tsx:239:5
+    237|     });
+    238| 
+    239|     it('displays empty state when no factures found', async () => {
+       |     ^
+    240|         vi.useFakeTimers();
+    241|         mockedAxios.get.mockResolvedValueOnce({ data: { results: [], cÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/11]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > affiche correctement les totaux standards (sans TP, sans Coupon)
+TestingLibraryElementError: Unable to find an element with the text: Total TTC. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.subtotal
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              5ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.discount
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.tva
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content/30"
+            >
+              0
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.total_ttc
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              5ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:43:19
+     41|     expect(amounts.length).toBeGreaterThanOrEqual(2)
+     42|     
+     43|     expect(screen.getByText('Total TTC')).toBeInTheDocument()
+       |                   ^
+     44|     // Pas de mention Assurance
+     45|     expect(screen.queryByText('Assurance')).not.toBeInTheDocument()
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/11]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > affiche le Tiers Payant correctement (Couverture 70%)
+TestingLibraryElementError: Unable to find an element with the text: Part Patient. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.subtotal
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.discount
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.tva
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content/30"
+            >
+              0
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 px-3 sm:px-4 border-l border-r border-base-200 bg-base-50/50 rounded py-1"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="badge badge-xs sm:badge-sm badge-info"
+              >
+                70
+                %
+              </span>
+              <span
+                class="text-[10px] uppercase font-bold text-base-content/50"
+              >
+                Assurance
+              </span>
+            </div>
+            <span
+              class="font-bold text-sm sm:text-base text-info"
+            >
+              7ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.part_patient
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              3ÔÇ»000
+               F
+            </span>
+            <span
+              class="text-[10px] text-base-content/40 mt-1"
+            >
+              facturation.totals.total_ttc
+              : 
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:67:19
+     65| 
+     66|     // V├®rifier Part Patient qui remplace le gros Total TTC
+     67|     expect(screen.getByText('Part Patient')).toBeInTheDocument()
+       |                   ^
+     68|     expect(screen.getByText((content) => content.includes('3 000') && ÔÇª
+     69| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/11]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > affiche le Coupon correctement (Sans Tiers Payant)
+TestingLibraryElementError: Unable to find an element with the text: NET ├Ç PAYER. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.subtotal
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              5ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.discount
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.tva
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content"
+            >
+              1ÔÇ»925
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.total_ttc
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              5ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:88:19
+     86|     
+     87|     // Net ├á Payer
+     88|     expect(screen.getByText('NET ├Ç PAYER')).toBeInTheDocument()
+       |                   ^
+     89|     // 5000 - 500 = 4500
+     90|     expect(screen.getByText((content) => content.includes('4 500') && ÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[8/11]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > g├¿re le cas complexe : Tiers Payant + Coupon
+TestingLibraryElementError: Unable to find an element with the text: NET ├Ç PAYER. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.subtotal
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.discount
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.tva
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content"
+            >
+              1ÔÇ»925
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 px-3 sm:px-4 border-l border-r border-base-200 bg-base-50/50 rounded py-1"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="badge badge-xs sm:badge-sm badge-info"
+              >
+                70
+                %
+              </span>
+              <span
+                class="text-[10px] uppercase font-bold text-base-content/50"
+              >
+                Assurance
+              </span>
+            </div>
+            <span
+              class="font-bold text-sm sm:text-base text-info"
+            >
+              7ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              facturation.totals.part_patient
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              3ÔÇ»000
+               F
+            </span>
+            <span
+              class="text-[10px] text-base-content/40 mt-1"
+            >
+              facturation.totals.total_ttc
+              : 
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:117:19
+    115|     
+    116|     // V├®rifions le Net ├á Payer final
+    117|     expect(screen.getByText('NET ├Ç PAYER')).toBeInTheDocument()
+       |                   ^
+    118|     expect(screen.getByText((content) => content.includes('2 500') && ÔÇª
+    119| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[9/11]ÔÄ»
+
+
+[2m Test Files [22m [1m[31m4 failed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[31m11 failed[39m[22m[2m | [22m[33m5 skipped[39m[90m (16)[39m
+[2m   Start at [22m 01:28:27
+[2m   Duration [22m 12.57s[2m (transform 1.33s, setup 766ms, import 7.91s, tests 10.40s, environment 4.11s)[22m
+

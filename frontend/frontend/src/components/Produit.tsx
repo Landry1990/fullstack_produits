@@ -39,7 +39,7 @@ export default function Produit() {
   const navigate = useNavigate()
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { tvaList, loading: loadingTVA } = useTVA();
+  const { tvaList } = useTVA();
   
   // Pagination
   const [page, setPage] = useState(1)

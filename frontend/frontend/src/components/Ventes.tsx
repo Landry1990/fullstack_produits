@@ -12,6 +12,8 @@ import { ProductDetailsModal } from './sales/modals/ProductDetailsModal';
 import TicketPreviewModal from './facturation/TicketPreviewModal';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
+import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
+
 // Styles (if any specific, otherwise rely on tailwind)
 
 const Ventes: React.FC = () => {
@@ -20,7 +22,6 @@ const Ventes: React.FC = () => {
     
     // Hooks
     const { 
-        factures, 
         setFactures,
         filteredFactures, 
         loading, 
@@ -66,6 +67,7 @@ const Ventes: React.FC = () => {
                             onRefresh={() => { refresh(); }}
                         />
                     </div>
+                     <TrancheHoraireStats />
                      {/* Quick Stats Dashboard */}
                      <SalesQuickStats />
                 </div>

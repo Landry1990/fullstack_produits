@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
-import DOMPurify from 'dompurify'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
@@ -14,6 +13,7 @@ import { CouponPanel } from './caisse/CouponPanel'
 import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
 import { TicketTemplate } from './printing/TicketTemplate'
+import { RefreshCw, Ticket, Banknote, Clock, Keyboard } from 'lucide-react'
 
 // TicketTemplate is used for preview and print
 
@@ -27,7 +27,6 @@ export default function CaisseCentralisee() {
   const [loading, setLoading] = useState(false)
   const [selectedFacture, setSelectedFacture] = useState<Facture | null>(null)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
-  const [reference, setReference] = useState('')
   const [ticketCaisse, setTicketCaisse] = useState<TicketCaisse | null>(null)
   const [showTicketPreview, setShowTicketPreview] = useState(false)
   
@@ -344,6 +343,7 @@ export default function CaisseCentralisee() {
             : Number(factureValidee.total_ttc))
 
       // 2. Enregistrer les paiements
+      let resteAEnregistrer = montantAEncaisser;
       
       // Ajouter le paiement par coupon si présent
       const couponUtilise = couponsParFacture[factureValidee.id]
@@ -356,25 +356,31 @@ export default function CaisseCentralisee() {
           statut: 'completee',
         }
         await axios.post(caisseEndpoint, couponPayload)
+        // Le coupon est déjà déduit de montantAEncaisser dans le frontend
       }
 
       for (const paiement of paiementsValides) {
+        if (resteAEnregistrer <= 0) break;
+
+        const montantReel = Math.min(paiement.montant, resteAEnregistrer);
+
         const paiementPayload: any = {
           facture: factureValidee.id,
           mode_paiement: paiement.mode,
-          montant: paiement.montant,
-          reference: reference || null,
+          montant: montantReel,
+          reference: null,
           statut: 'completee',
         }
 
         // Si tiers payant, marquer comme paiement de la part patient
         const hasTiersPayant = factureValidee.part_client !== null && Number(factureValidee.part_client) >= 0
         if (hasTiersPayant) {
-          paiementPayload.part_patient = paiement.montant
+          paiementPayload.part_patient = montantReel
           paiementPayload.part_assurance = 0
         }
 
         await axios.post(caisseEndpoint, paiementPayload)
+        resteAEnregistrer -= montantReel;
       }
 
       // 3. Mettre à jour le statut à PAYEE
@@ -387,10 +393,9 @@ export default function CaisseCentralisee() {
       // 5. Créer le ticket de caisse (calculer le rendu sur la base du montant encaissé, pas du total)
       const rendu = montantTotal - montantAEncaisser
       
-      // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
+      // Priorité: client_name_override > client_name > 'Client de passage'
       const clientNameForTicket = factureFinale.client_name_override 
           || factureFinale.client_name 
-          || (factureFinale.client?.name) 
           || 'Client de passage';
       
       setTicketCaisse({
@@ -405,7 +410,8 @@ export default function CaisseCentralisee() {
         statut: 'completee',
         date_paiement: new Date().toISOString(),
         client_name: clientNameForTicket,
-        paiements_details: (factureFinale as any).paiements || []
+        paiements_details: (factureFinale as any).paiements || [],
+        user_details: user
       } as any)
 
       // 6. Fermer la modale de paiement et afficher le ticket
@@ -524,46 +530,92 @@ export default function CaisseCentralisee() {
     }
   }
 
+  // Compute stats for the header cards
+  const totalMontantEnAttente = useMemo(() => 
+    facturesEnAttente.reduce((acc, f) => acc + Number(f.total_ttc || 0), 0), 
+    [facturesEnAttente]
+  )
+  const activeCouponsCount = useMemo(() => coupons.filter(c => c.status === 'ACTIF').length, [coupons])
+  const appliedCouponsCount = Object.keys(couponsParFacture).length
+
   return (
-    <div className="h-full flex flex-col bg-base-100">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-white shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">{t('title')}</h1>
-          <p className="text-sm text-base-content/60 mt-1">
-            {t('subtitle')}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="badge badge-lg badge-primary gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {t('auto_refresh')}
+    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+
+      {/* Header Card */}
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
+        <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('title')}</h1>
+            <p className="text-base-content/60 text-sm mt-1">{t('subtitle')}</p>
           </div>
-          <button 
-            onClick={() => setIsCouponPanelOpen(!isCouponPanelOpen)}
-            className={`btn btn-lg gap-2 ${isCouponPanelOpen ? 'btn-primary' : 'btn-outline btn-primary'}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-            </svg>
-            {t('coupons_active', { count: coupons.filter(c => c.status === 'ACTIF').length })}
-          </button>
-          {/* Indicateur: nombre de coupons appliqués aux ventes */}
-          {Object.keys(couponsParFacture).length > 0 && (
-            <div className="badge badge-lg badge-success gap-2">
-              <span>{t('coupons_applied', { count: Object.keys(couponsParFacture).length })}</span>
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-3 py-1.5 rounded-full font-medium">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '3s' }} />
+              {t('auto_refresh')}
             </div>
-          )}
-          <div className="badge badge-lg badge-error">
-            {t('pending_count', { count: facturesEnAttente.length })}
+            <button 
+              onClick={() => setIsCouponPanelOpen(!isCouponPanelOpen)}
+              className={`btn btn-sm gap-2 ${isCouponPanelOpen ? 'btn-primary' : 'btn-outline btn-primary'}`}
+            >
+              <Ticket className="w-4 h-4" />
+              {t('coupons_active', { count: activeCouponsCount })}
+            </button>
+            {appliedCouponsCount > 0 && (
+              <div className="flex items-center gap-1.5 text-xs text-success bg-success/10 px-3 py-1.5 rounded-full font-medium">
+                <span>{t('coupons_applied', { count: appliedCouponsCount })}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Panneau des Coupons (Sidebar Gauche) */}
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Pending Invoices */}
+        <div className="bg-gradient-to-br from-error/10 to-error/5 p-4 rounded-xl border border-error/20 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-error uppercase tracking-wider mb-1 flex items-center gap-1">
+              <Clock className="w-3 h-3" /> {t('stats_pending_title', { defaultValue: 'En Attente' })}
+            </div>
+            <div className="text-2xl font-bold text-base-content">{facturesEnAttente.length}</div>
+            <div className="text-xs text-base-content/60">{t('stats_pending_desc', { defaultValue: 'facture(s) à encaisser' })}</div>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center">
+            <Clock className="w-6 h-6 text-error" />
+          </div>
+        </div>
+
+        {/* Total Amount */}
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
+              <Banknote className="w-3 h-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
+            </div>
+            <div className="text-2xl font-bold text-base-content">{Math.round(totalMontantEnAttente).toLocaleString('fr-FR')} F</div>
+            <div className="text-xs text-base-content/60">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <Banknote className="w-6 h-6 text-primary" />
+          </div>
+        </div>
+
+        {/* Active Coupons */}
+        <div className="bg-gradient-to-br from-secondary/10 to-secondary/5 p-4 rounded-xl border border-secondary/20 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-secondary uppercase tracking-wider mb-1 flex items-center gap-1">
+              <Ticket className="w-3 h-3" /> {t('stats_coupons_title', { defaultValue: 'Coupons Actifs' })}
+            </div>
+            <div className="text-2xl font-bold text-base-content">{activeCouponsCount}</div>
+            <div className="text-xs text-base-content/60">{appliedCouponsCount > 0 ? t('coupons_applied', { count: appliedCouponsCount }) : t('stats_coupons_desc', { defaultValue: 'coupon(s) disponible(s)' })}</div>
+          </div>
+          <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center">
+            <Ticket className="w-6 h-6 text-secondary" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content: Sidebar + Table */}
+      <div className="flex gap-6" style={{ minHeight: 'calc(100vh - 320px)' }}>
         {/* Panneau des Coupons (Sidebar Gauche) */}
         {isCouponPanelOpen && (
           <CouponPanel
@@ -580,21 +632,39 @@ export default function CaisseCentralisee() {
           />
         )}
 
-        <div className="flex-1 overflow-auto p-6">
-          <FacturesTable
-            sortedFactures={sortedFactures}
-            loading={loading}
-            selectedRowIndex={selectedRowIndex}
-            onSelectRow={setSelectedRowIndex}
-            onEncaisser={handleEncaisser}
-            onRemoveCoupon={handleRetirerCouponDeFacture}
-            onModify={handleModifier}
-            onCancel={handleAnnuler}
-            onApplyCoupon={openCouponSelectionForFacture}
-            couponsParFacture={couponsParFacture}
-            user={user}
-          />
+        {/* Table Card */}
+        <div className="flex-1 bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-auto">
+            <FacturesTable
+              sortedFactures={sortedFactures}
+              loading={loading}
+              selectedRowIndex={selectedRowIndex}
+              onSelectRow={setSelectedRowIndex}
+              onEncaisser={handleEncaisser}
+              onRemoveCoupon={handleRetirerCouponDeFacture}
+              onModify={handleModifier}
+              onCancel={handleAnnuler}
+              onApplyCoupon={openCouponSelectionForFacture}
+              couponsParFacture={couponsParFacture}
+              user={user}
+            />
+          </div>
+          {/* Keyboard Shortcuts Footer */}
+          <div className="p-3 border-t border-base-200 flex items-center justify-between text-xs text-base-content/40">
+            <div className="flex items-center gap-1">
+              <Keyboard className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Raccourcis :</span>
+            </div>
+            <div className="flex gap-3">
+              <span><kbd className="kbd kbd-xs">↑↓</kbd> Naviguer</span>
+              <span><kbd className="kbd kbd-xs">Entrée</kbd> Encaisser</span>
+              <span><kbd className="kbd kbd-xs">C</kbd> Coupon</span>
+              <span><kbd className="kbd kbd-xs">R</kbd> Rafraîchir</span>
+              <span><kbd className="kbd kbd-xs">1-9</kbd> Sélection rapide</span>
+            </div>
+          </div>
         </div>
+      </div>
 
       {/* Modal de paiement */}
       {isPaymentModalOpen && selectedFacture && (
@@ -745,8 +815,6 @@ export default function CaisseCentralisee() {
           )}
         </div>
       </PremiumModal>
-
-      </div> {/* Fin du Flex Wrapper (Sidebar + Contenu) */}
 
       {/* Modals pour les Coupons */}
       <PremiumModal

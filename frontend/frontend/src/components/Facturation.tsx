@@ -424,7 +424,6 @@ export default function Facturation() {
       showOrdonnanceModal, setShowOrdonnanceModal,
       tempOrdonnanceData, setTempOrdonnanceData,
       pendingOrdonnanceFacture, setPendingOrdonnanceFacture,
-      devisIdToValidate, setDevisIdToValidate,
 
 
       isModificationMode, setIsModificationMode,
@@ -450,52 +449,7 @@ export default function Facturation() {
 
 
   // Keyboard Navigation Hook - NOW PLACED AFTER STATE DECLARATIONS
-  const hasItems = lignesFacture.length > 0;
-  
-  const handleValidateShortcut = useCallback(() => {
-    if (hasItems) {
-      handlePaymentClick()
-    } else {
-        toast.error(t('facturation.messages.cart_empty'))
-    }
-  }, [hasItems]) // Added dependency later
-
-  // Define handlers locally to avoid closure staleness if needed, 
-  // but hook takes them as props.
-  const handleIncrement = useCallback((index: number) => {
-    if (lignesFacture[index]) {
-       const pId = lignesFacture[index].produit.id
-       const currentQty = lignesFacture[index].quantite
-       updateQuantite(pId, currentQty + 1)
-    }
-  }, [lignesFacture, updateQuantite])
-
-  const handleDecrement = useCallback((index: number) => {
-    if (lignesFacture[index]) {
-       const pId = lignesFacture[index].produit.id
-       const currentQty = lignesFacture[index].quantite
-       if (currentQty > 1) {
-          updateQuantite(pId, currentQty - 1)
-       }
-    }
-  }, [lignesFacture, updateQuantite])
-
-  const handleDeleteLine = useCallback((index: number) => {
-    if (lignesFacture[index]) {
-       removeLigne(lignesFacture[index].produit.id)
-    }
-  }, [lignesFacture, removeLigne])
-
-  const { selectedIndex, setSelectedIndex } = useKeyboardNavigation({
-    listLength: lignesFacture.length,
-    onValidate: handleValidateShortcut,
-    onIncrement: handleIncrement,
-    onDecrement: handleDecrement,
-    onDelete: handleDeleteLine,
-    enabled: !isPaymentModalOpen && !showOrdonnanceModal && !showClientCreateModal && !lotModal.isOpen && !showStockResolution
-  })
-
-
+  // Empty placeholder so diff works, moving logic to bottom
   // Charger un devis depuis safeStorage si présent (navigation depuis Ventes)
   useEffect(() => {
     const loadDevis = async () => {
@@ -579,7 +533,6 @@ export default function Facturation() {
           toast.success(`Facture #${devis.numero_facture || devis.id} chargée en mode modification`)
         } else if (devis.id) {
           // Mode normal - devis/proforma existant à valider
-          setDevisIdToValidate(devis.id)
           toast.success(`Devis #${devis.numero_facture || devis.id} chargé`)
         } else {
           // Mode duplication - nouvelle vente basée sur copie
@@ -779,6 +732,50 @@ export default function Facturation() {
       openPaymentModal()
   }
 
+  // Keyboard Navigation Hook - NOW PLACED AFTER STATE DECLARATIONS AND DEPS
+  const handleValidateShortcut = useCallback(() => {
+    if (lignesFacture.length > 0) {
+      handlePaymentClick()
+    } else {
+        toast.error(t('facturation.messages.cart_empty'))
+    }
+  }, [lignesFacture.length, handlePaymentClick]) // Added dependency later
+
+  // Define handlers locally to avoid closure staleness if needed, 
+  // but hook takes them as props.
+  const handleIncrement = useCallback((index: number) => {
+    if (lignesFacture[index]) {
+       const pId = lignesFacture[index].produit.id
+       const currentQty = lignesFacture[index].quantite
+       updateQuantite(pId, currentQty + 1)
+    }
+  }, [lignesFacture, updateQuantite])
+
+  const handleDecrement = useCallback((index: number) => {
+    if (lignesFacture[index]) {
+       const pId = lignesFacture[index].produit.id
+       const currentQty = lignesFacture[index].quantite
+       if (currentQty > 1) {
+          updateQuantite(pId, currentQty - 1)
+       }
+    }
+  }, [lignesFacture, updateQuantite])
+
+  const handleDeleteLine = useCallback((index: number) => {
+    if (lignesFacture[index]) {
+       removeLigne(lignesFacture[index].produit.id)
+    }
+  }, [lignesFacture, removeLigne])
+
+  const { selectedIndex, setSelectedIndex } = useKeyboardNavigation({
+    listLength: lignesFacture.length,
+    onValidate: handleValidateShortcut,
+    onIncrement: handleIncrement,
+    onDecrement: handleDecrement,
+    onDelete: handleDeleteLine,
+    enabled: !isPaymentModalOpen && !showOrdonnanceModal && !showClientCreateModal && !lotModal.isOpen && !showStockResolution
+  })
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -812,10 +809,10 @@ export default function Facturation() {
         toggleZenithMode()
       }
 
-      // CTRL+ENTER: Payment
-      if (e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault()
-        handlePaymentClick()
+      // CTRL+ENTER: Let useKeyboardNavigation Handle this 
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          e.preventDefault()
+          // Managed by useKeyboardNavigation, but just in case we let it bubble
       }
       
       // Escape: Global Cancel / Close Modals
@@ -1528,6 +1525,7 @@ export default function Facturation() {
             isValid={lignesFacture.length > 0}
             isRetrocession={isRetrocession}
             setIsRetrocession={setIsRetrocession}
+            loading={loading || saleLoading}
           />
         </div>
       </div>

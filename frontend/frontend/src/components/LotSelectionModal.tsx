@@ -1,4 +1,3 @@
-import React from 'react'
 import { useStockLots } from '../hooks/useStockLots'
 import type { ProduitModel, StockLot } from '../types'
 import PremiumModal from './common/PremiumModal'

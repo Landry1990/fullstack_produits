@@ -1,13 +1,15 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import Facturation from '../Facturation'
+import axios from 'axios'
 import { useCart } from '../../hooks/useCart'
 import { useFacturationClients } from '../../hooks/useFacturationClients'
 import { useProductSearch } from '../../hooks/useProductSearch'
 import { useAuth } from '../../context/AuthContext'
 import { usePharmacySettings } from '../../hooks/usePharmacySettings'
 import { usePendingSales } from '../../hooks/usePendingSales'
+import { SidebarProvider } from '../../context/SidebarContext'
 
 // Mock des modules directs
 vi.mock('../../hooks/useCart')
@@ -16,6 +18,10 @@ vi.mock('../../hooks/useProductSearch')
 vi.mock('../../context/AuthContext')
 vi.mock('../../hooks/usePharmacySettings')
 vi.mock('../../hooks/usePendingSales')
+
+vi.mock('@tanstack/react-query', () => ({
+  useQueryClient: vi.fn()
+}))
 
 // Mock des sous-composants
 vi.mock('../LotSelectionModal', () => ({ default: () => <div data-testid="lot-modal" /> }))
@@ -67,7 +73,11 @@ vi.mock('axios', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
-    isAxiosError: vi.fn()
+    isAxiosError: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
+    }
   }
 }))
 
@@ -94,7 +104,11 @@ describe('Facturation Integration', () => {
     clientSearch: '',
     setClientSearch: vi.fn(),
     filteredClients: [],
-    ayantsDroitList: []
+    ayantsDroitList: [],
+    newClientForm: { client_type: 'PARTICULIER', name: '', phone: '' },
+    setNewClientForm: vi.fn(),
+    showNewClientModal: false,
+    setShowNewClientModal: vi.fn()
   }
 
   const defaultProductSearch = {
@@ -123,16 +137,25 @@ describe('Facturation Integration', () => {
       showPendingSales: false,
       setShowPendingSales: vi.fn()
     })
+
+    vi.mocked(axios.get).mockImplementation((url) => {
+        if (url && url.includes('/api/settings/')) {
+            return Promise.resolve({ data: { centralized_cash_register: true } })
+        }
+        return Promise.resolve({ data: [] })
+    })
   })
 
   it('affiche les composants principaux au chargement', () => {
     render(
       <MemoryRouter>
-        <Facturation />
+        <SidebarProvider>
+          <Facturation />
+        </SidebarProvider>
       </MemoryRouter>
     )
 
-    expect(screen.getByPlaceholderText(/Scanner ou chercher/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Scanner un code-barres/i)).toBeInTheDocument()
     expect(screen.getByText(/Encaisser/i)).toBeInTheDocument()
     expect(screen.getByText(/Total TTC/i)).toBeInTheDocument()
   })
@@ -140,11 +163,14 @@ describe('Facturation Integration', () => {
   it('affiche un panier vide au démarrage', () => {
     render(
       <MemoryRouter>
-        <Facturation />
+        <SidebarProvider>
+          <Facturation />
+        </SidebarProvider>
       </MemoryRouter>
     )
 
-    expect(screen.getByText(/Commencez par ajouter des produits/i)).toBeInTheDocument()
+    // The cart table structure is rendered empty by default when empty
+    expect(screen.getByText(/0\s*article\(s\)/i)).toBeInTheDocument()
   })
 
   it('affiche les produits dans le panier quand useCart renvoie des données', async () => {
@@ -164,7 +190,9 @@ describe('Facturation Integration', () => {
 
     render(
       <MemoryRouter>
-        <Facturation />
+        <SidebarProvider>
+          <Facturation />
+        </SidebarProvider>
       </MemoryRouter>
     )
 
@@ -196,7 +224,9 @@ describe('Facturation Integration', () => {
 
     render(
       <MemoryRouter>
-        <Facturation />
+        <SidebarProvider>
+          <Facturation />
+        </SidebarProvider>
       </MemoryRouter>
     )
 

@@ -61,7 +61,7 @@ export default function GestionUtilisateurs() {
   const { t } = useTranslation();
   const confirm = useConfirm();
   const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const { user: currentUser } = useAuth();

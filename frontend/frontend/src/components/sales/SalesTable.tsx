@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt, Clock } from 'lucide-react';
 import type { Facture } from '../../types';
 
 interface SalesTableProps {
@@ -30,11 +30,18 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
 
     // Helper functions
-    const formatDateFr = (dateString: string) => {
+    const formatDateOnlyFr = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return date.toLocaleString('fr-FR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
+        return date.toLocaleDateString('fr-FR', {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+    };
+
+    const formatTimeOnlyFr = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleTimeString('fr-FR', {
             hour: '2-digit', minute: '2-digit'
         });
     };
@@ -141,9 +148,15 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     <span className="font-bold text-base-content flex items-center gap-2">
                                         #{facture.numero_facture || facture.id}
                                     </span>
-                                    <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
-                                        <Calendar className="w-3 h-3" />
-                                        {formatDateFr(facture.date)}
+                                    <span className="text-xs text-base-content/60 flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                                        <span className="flex items-center gap-1.5">
+                                            <Calendar className="w-3 h-3" />
+                                            {formatDateOnlyFr(facture.date)}
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-primary/70 font-medium">
+                                            <Clock className="w-3 h-3" />
+                                            {formatTimeOnlyFr(facture.date)}
+                                        </span>
                                     </span>
                                 </div>
                             </td>

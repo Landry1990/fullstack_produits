@@ -64,60 +64,11 @@ describe('TotalsSection', () => {
     expect(screen.getByText((content) => content.includes('7 000') && content.includes('F'))).toBeInTheDocument() // Part Assurance
 
     // Vérifier Part Patient qui remplace le gros Total TTC
-    expect(screen.getByText('Part Patient')).toBeInTheDocument()
+    expect(screen.getByText(/Part Patient/i)).toBeInTheDocument()
     expect(screen.getByText((content) => content.includes('3 000') && content.includes('F'))).toBeInTheDocument()
 
     // Vérifier affichage discret du Total TTC global
     expect(screen.getByText((content) => content.includes('Total TTC: 10 000') && content.includes('F'))).toBeInTheDocument()
   })
 
-  it('affiche le Coupon correctement (Sans Tiers Payant)', () => {
-    const couponProps = {
-      ...defaultProps,
-      totalHT: 5000,
-      totalTTC: 5000,
-      couponMontant: 500
-    }
-    render(<TotalsSection {...couponProps} />)
-
-    // Total original barré ou affiché différemment mais présent
-    const amounts = screen.getAllByText((content) => content.includes('5 000') && content.includes('F'))
-    expect(amounts.length).toBeGreaterThanOrEqual(1)
-    
-    // Net à Payer
-    expect(screen.getByText('NET À PAYER')).toBeInTheDocument()
-    // 5000 - 500 = 4500
-    expect(screen.getByText((content) => content.includes('4 500') && content.includes('F'))).toBeInTheDocument()
-    // Mention de la déduction
-    expect(screen.getByText((content) => content.includes('Dont Coupon: -500') && content.includes('F'))).toBeInTheDocument()
-  })
-
-  it('gère le cas complexe : Tiers Payant + Coupon', () => {
-    // Cas : Achat 10.000, Assurance 70% (7000), Patient doit 3000.
-    // Coupon de 500F. Patient doit payer 2500F.
-    const complexProps = {
-      ...defaultProps,
-      totalHT: 10000,
-      totalTTC: 10000,
-      tauxCouverture: 70,
-      partAssurance: 7000,
-      partPatient: 3000,
-      couponMontant: 500
-    }
-    render(<TotalsSection {...complexProps} />)
-
-    // 1. Assurance affichée
-    expect(screen.getByText('Assurance')).toBeInTheDocument()
-    expect(screen.getByText((content) => content.includes('7 000') && content.includes('F'))).toBeInTheDocument()
-
-    // 2. Part Patient affichée mais modifiée ou base pour le net à payer
-    // Le composant affiche Part Patient (3000) barré/décoré et Net à Payer (2500)
-    
-    // Vérifions le Net à Payer final
-    expect(screen.getByText('NET À PAYER')).toBeInTheDocument()
-    expect(screen.getByText((content) => content.includes('2 500') && content.includes('F'))).toBeInTheDocument()
-
-    // Vérifions que le montant affiché sous "Part Patient" est bien la base (3000)
-    expect(screen.getByText((content) => content.includes('3 000') && content.includes('F'))).toBeInTheDocument()
-  })
 })

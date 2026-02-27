@@ -63,7 +63,7 @@ describe('Produit Component (Integration)', () => {
         });
 
         // Setup default mocks
-        mockedAxios.get.mockImplementation((url: string, config: any) => {
+        mockedAxios.get.mockImplementation((url: string, _config: any) => {
             if (/\/api\/produits\/?/.test(url)) {
                 return Promise.resolve({
                     data: {
@@ -138,7 +138,7 @@ describe('Produit Component (Integration)', () => {
             );
             // Verify specifically valid call roughly like this:
             const calls = mockedAxios.get.mock.calls;
-            const searchCall = calls.find((c: any) => c[1]?.params?.search === 'DOLI' || c[1]?.params?.get?.('search') === 'DOLI');
+            calls.find((c: any) => c[1]?.params?.search === 'DOLI' || c[1]?.params?.get?.('search') === 'DOLI');
             // Since params might be URLSearchParams or object depending on axios config in real app vs mock
             // In hooks/useProduits.ts: params.append('search', filters.search) -> URLSearchParams
         });

@@ -1,0 +1,612 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.17 [39m[90mC:/Projet Fullstack/fullstack_produits/frontend/frontend[39m
+
+ [31mÔØ»[39m src/components/facturation/__tests__/TotalsSection.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[32m 162[2mms[22m[39m
+     [32mÔ£ô[39m affiche correctement les totaux standards (sans TP, sans Coupon)[32m 118[2mms[22m[39m
+[31m     [31m├ù[31m affiche le Tiers Payant correctement (Couverture 70%)[39m[32m 21[2mms[22m[39m
+[31m     [31m├ù[31m affiche le Coupon correctement (Sans Tiers Payant)[39m[32m 8[2mms[22m[39m
+[31m     [31m├ù[31m g├¿re le cas complexe : Tiers Payant + Coupon[39m[32m 12[2mms[22m[39m
+stderr | src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
+An update to SalesFilters inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to SalesQuickStats inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Ventes inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/__tests__/Facturation.test.tsx [2m([22m[2m4 tests[22m[2m | [22m[31m3 failed[39m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 107[2mms[22m[39m
+[31m     [31m├ù[31m affiche les composants principaux au chargement[39m[32m 69[2mms[22m[39m
+[31m     [31m├ù[31m affiche un panier vide au d├®marrage[39m[32m 18[2mms[22m[39m
+[31m     [31m├ù[31m affiche les produits dans le panier quand useCart renvoie des donn├®es[39m[32m 17[2mms[22m[39m
+     [2m[90mÔåô[39m[22m ouvre la modal de paiement au clic sur Encaisser
+stderr | src/components/__tests__/Avoirs.test.tsx > Avoirs Component > affiche la liste des avoirs
+An update to Avoirs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Avoirs inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ [31mÔØ»[39m src/components/__tests__/Avoirs.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 5074[2mms[22m[39m
+[31m     [31m├ù[31m affiche la liste des avoirs[39m[33m 5018[2mms[22m[39m
+     [32mÔ£ô[39m permet de cr├®er un nouvel avoir[32m 54[2mms[22m[39m
+ [31mÔØ»[39m src/components/__tests__/Ventes.test.tsx [2m([22m[2m6 tests[22m[2m | [22m[31m2 failed[39m[2m | [22m[33m4 skipped[39m[2m)[22m[33m 10029[2mms[22m[39m
+     [2m[90mÔåô[39m[22m renders correctly and fetches factures
+     [2m[90mÔåô[39m[22m handles filtering
+     [2m[90mÔåô[39m[22m searches for invoices
+[31m     [31m├ù[31m opens product details modal[39m[33m 5018[2mms[22m[39m
+     [2m[90mÔåô[39m[22m opens refund modal and handles cancellation
+[31m     [31m├ù[31m displays empty state when no factures found[39m[33m 5010[2mms[22m[39m
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ» Failed Tests 9 ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»
+
+ FAIL  src/components/__tests__/Avoirs.test.tsx > Avoirs Component > affiche la liste des avoirs
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ÔØ» src/components/__tests__/Avoirs.test.tsx:61:3
+     59|   })
+     60| 
+     61|   it('affiche la liste des avoirs', async () => {
+       |   ^
+     62|     vi.useFakeTimers()
+     63|     render(<MemoryRouter><Avoirs /></MemoryRouter>)
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[1/9]ÔÄ»
+
+ FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les composants principaux au chargement
+ FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche un panier vide au d├®marrage
+ FAIL  src/components/__tests__/Facturation.test.tsx > Facturation Integration > affiche les produits dans le panier quand useCart renvoie des donn├®es
+TypeError: Cannot read properties of undefined (reading 'client_type')
+ ÔØ» ClientCreateModal src/components/facturation/ClientCreateModal.tsx:36:31
+     34|       onClose={onClose}
+     35|       title={`Ô×ò ${t('facturation.create_client.title')}`}
+     36|       subtitle={newClientForm.client_type === 'PARTICULIER' 
+       |                               ^
+     37|         ? t('facturation.create_client.individual') 
+     38|         : t('facturation.create_client.professional')}
+ ÔØ» Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:23863:20
+ ÔØ» renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:5529:22
+ ÔØ» updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:8897:19
+ ÔØ» beginWork node_modules/react-dom/cjs/react-dom-client.development.js:10522:18
+ ÔØ» runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:1522:13
+ ÔØ» performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:15140:22
+ ÔØ» workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:14956:41
+ ÔØ» renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:14936:11
+ ÔØ» performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:14462:44
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[2/9]ÔÄ»
+
+ FAIL  src/components/__tests__/Ventes.test.tsx > Ventes Component > opens product details modal
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ÔØ» src/components/__tests__/Ventes.test.tsx:157:5
+    155|     });
+    156| 
+    157|     it('opens product details modal', async () => {
+       |     ^
+    158|         vi.useFakeTimers();
+    159|         render(
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[3/9]ÔÄ»
+
+ FAIL  src/components/__tests__/Ventes.test.tsx > Ventes Component > displays empty state when no factures found
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ÔØ» src/components/__tests__/Ventes.test.tsx:239:5
+    237|     });
+    238| 
+    239|     it('displays empty state when no factures found', async () => {
+       |     ^
+    240|         vi.useFakeTimers();
+    241|         mockedAxios.get.mockResolvedValueOnce({ data: { results: [], cÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[4/9]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > affiche le Tiers Payant correctement (Couverture 70%)
+TestingLibraryElementError: Unable to find an element with the text: Part Patient. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Sous-total HT
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Remise Globale
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              TVA
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content/30"
+            >
+              0
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 px-3 sm:px-4 border-l border-r border-base-200 bg-base-50/50 rounded py-1"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="badge badge-xs sm:badge-sm badge-info"
+              >
+                70
+                %
+              </span>
+              <span
+                class="text-[10px] uppercase font-bold text-base-content/50"
+              >
+                Assurance
+              </span>
+            </div>
+            <span
+              class="font-bold text-sm sm:text-base text-info"
+            >
+              7ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Part Patient / Net ├á payer
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              3ÔÇ»000
+               F
+            </span>
+            <span
+              class="text-[10px] text-base-content/40 mt-1"
+            >
+              Total TTC
+              : 
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:67:19
+     65| 
+     66|     // V├®rifier Part Patient qui remplace le gros Total TTC
+     67|     expect(screen.getByText('Part Patient')).toBeInTheDocument()
+       |                   ^
+     68|     expect(screen.getByText((content) => content.includes('3 000') && ÔÇª
+     69| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[5/9]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > affiche le Coupon correctement (Sans Tiers Payant)
+TestingLibraryElementError: Unable to find an element with the text: NET ├Ç PAYER. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Sous-total HT
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              5ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Remise Globale
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              TVA
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content"
+            >
+              1ÔÇ»925
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Total TTC
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              5ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:88:19
+     86|     
+     87|     // Net ├á Payer
+     88|     expect(screen.getByText('NET ├Ç PAYER')).toBeInTheDocument()
+       |                   ^
+     89|     // 5000 - 500 = 4500
+     90|     expect(screen.getByText((content) => content.includes('4 500') && ÔÇª
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[6/9]ÔÄ»
+
+ FAIL  src/components/facturation/__tests__/TotalsSection.test.tsx > TotalsSection > g├¿re le cas complexe : Tiers Payant + Coupon
+TestingLibraryElementError: Unable to find an element with the text: NET ├Ç PAYER. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm"
+    >
+      <div
+        class="flex flex-col gap-4"
+      >
+        <div
+          class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-6 md:gap-8 items-end justify-end text-sm"
+        >
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Sous-total HT
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg"
+            >
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Remise Globale
+            </span>
+            <div
+              class="flex items-center gap-1.5 sm:gap-2"
+            >
+              <select
+                class="select select-xs sm:select-sm select-bordered text-[10px] sm:text-xs h-7 sm:h-8"
+              >
+                <option
+                  value="montant"
+                >
+                  F
+                </option>
+                <option
+                  value="taux"
+                >
+                  %
+                </option>
+              </select>
+              <input
+                class="input input-xs sm:input-sm input-bordered w-16 sm:w-20 text-right focus:bg-white bg-base-50 transition-colors h-7 sm:h-8"
+                placeholder="0 F"
+                type="text"
+                value="0"
+              />
+            </div>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              TVA
+            </span>
+            <span
+              class="font-medium text-base sm:text-lg text-base-content"
+            >
+              1ÔÇ»925
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 px-3 sm:px-4 border-l border-r border-base-200 bg-base-50/50 rounded py-1"
+          >
+            <div
+              class="flex items-center gap-2"
+            >
+              <span
+                class="badge badge-xs sm:badge-sm badge-info"
+              >
+                70
+                %
+              </span>
+              <span
+                class="text-[10px] uppercase font-bold text-base-content/50"
+              >
+                Assurance
+              </span>
+            </div>
+            <span
+              class="font-bold text-sm sm:text-base text-info"
+            >
+              7ÔÇ»000
+               F
+            </span>
+          </div>
+          <div
+            class="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200"
+          >
+            <span
+              class="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+            >
+              Part Patient / Net ├á payer
+            </span>
+            <span
+              class="font-bold text-2xl sm:text-3xl text-primary"
+            >
+              3ÔÇ»000
+               F
+            </span>
+            <span
+              class="text-[10px] text-base-content/40 mt-1"
+            >
+              Total TTC
+              : 
+              10ÔÇ»000
+               F
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+ ÔØ» Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ÔØ» node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ÔØ» src/components/facturation/__tests__/TotalsSection.test.tsx:117:19
+    115|     
+    116|     // V├®rifions le Net ├á Payer final
+    117|     expect(screen.getByText('NET ├Ç PAYER')).toBeInTheDocument()
+       |                   ^
+    118|     expect(screen.getByText((content) => content.includes('2 500') && ÔÇª
+    119| 
+
+ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»ÔÄ»[7/9]ÔÄ»
+
+
+[2m Test Files [22m [1m[31m4 failed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[31m9 failed[39m[22m[2m | [22m[1m[32m2 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (16)[39m
+[2m   Start at [22m 01:32:11
+[2m   Duration [22m 12.72s[2m (transform 1.28s, setup 772ms, import 7.39s, tests 15.37s, environment 4.42s)[22m
+

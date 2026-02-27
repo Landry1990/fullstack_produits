@@ -26,9 +26,13 @@ from .historique_ventes import HistoriqueVentesViewSet
 from .historique_achats import HistoriqueAchatsViewSet
 from .import_views import ProductImportView
 from .formes import FormeViewSet
+from .communication import SmsViewSet, SmsTemplateViewSet
+from .finance_stats import FinanceStatsViewSet
+from .objectifs import ObjectifViewSet
 from .paiements import PaiementFournisseurViewSet
 from .coupons import CouponMonnaieViewSet
 from .promotions import PromotionViewSet
+from .configuration_objectifs import ConfigurationObjectifsViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
 
 # Import from parent api module (not yet migrated to views package)
@@ -41,7 +45,7 @@ __all__ = [
     'CategoriesListView', 'CategoriesDetailView', 'GroupeViewSet',
     'ClientViewSet', 'AyantDroitViewSet',
     'PaiementFournisseurViewSet',
-    'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet', 
+    'CommandeViewSet', 'CommandeProduitViewSet', 'AvoirViewSet', 'LigneAvoirViewSet',
     'PromisViewSet', 'generer_suggestions_commande',
     'FactureViewSet', 'FactureProduitViewSet', 'CaisseViewSet', 'ClotureCaisseViewSet',
     'CreanceViewSet', 'MouvementCaisseViewSet',

@@ -117,7 +117,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
 
                   <button 
                     className="btn btn-primary rounded-xl px-6 gap-2 shadow-lg shadow-primary/20" 
-                    onClick={() => generateEtatPDF(activeInventaire, lignes, {})}
+                    onClick={() => generateEtatPDF(activeInventaire, lignes)}
                     disabled={!activeInventaire?.id}
                   >
                     <Download className="h-5 w-5" />

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Avoirs from '../Avoirs'
+import { MemoryRouter } from 'react-router-dom'
 
 // Mock libs externes
 vi.mock('react-hot-toast', () => ({
@@ -13,6 +14,9 @@ vi.mock('use-debounce', () => ({
 }))
 
 // Mock hooks
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 1, username: 'testuser' } })
+}))
 vi.mock('../../hooks/useProductSearch', () => ({
   useProductSearch: () => ({
     produits: [],
@@ -55,25 +59,23 @@ describe('Avoirs Component', () => {
   })
 
   it('affiche la liste des avoirs', async () => {
-    render(<Avoirs />)
+    render(<MemoryRouter><Avoirs /></MemoryRouter>)
     
     expect(screen.getByText('Avoirs Fournisseurs (Retours)')).toBeInTheDocument()
     
-    await waitFor(() => {
-        expect(screen.getByText('AV-001')).toBeInTheDocument()
-    })
+    expect(await screen.findByText('AV-001', {}, { timeout: 2000 })).toBeInTheDocument()
     
     expect(screen.getByText('Laborex')).toBeInTheDocument()
-    expect(screen.getByText('PERIME')).toBeInTheDocument()
+    expect(screen.getByText(/P.rim./i)).toBeInTheDocument()
   })
 
   it('permet de créer un nouvel avoir', async () => {
-    render(<Avoirs />)
-    
-    const newBtn = screen.getByText('+ Nouvel Avoir')
+    render(<MemoryRouter><Avoirs /></MemoryRouter>)
+
+    const newBtn = await screen.findByText('+ Nouvel Avoir', {}, { timeout: 2000 })
     fireEvent.click(newBtn)
     
-    expect(screen.getByText('Nouvel Avoir (Retour Stock)')).toBeInTheDocument()
+    expect(screen.getByText('Nouvel Avoir')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Rechercher fournisseur...')).toBeInTheDocument()
   })
 })

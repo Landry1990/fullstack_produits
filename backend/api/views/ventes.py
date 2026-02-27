@@ -1432,6 +1432,27 @@ class CaisseViewSet(viewsets.ModelViewSet):
         # On ne bloque pas si erreur ici car perform_create est déjà appelé
         user = validation_user if not error_res else self.request.user
         
+        # SÉCURITÉ : Plafonner le montant au reste à payer réel (part patient)
+        facture = serializer.validated_data.get('facture')
+        mode = serializer.validated_data.get('mode_paiement')
+        
+        if facture and mode != 'en_compte' and mode != 'recouvrement':
+            montant_saisi = serializer.validated_data.get('montant')
+            # Déjà payé physiquement
+            deja_paye = Caisse.objects.filter(
+                facture=facture, 
+                statut='completee'
+            ).exclude(
+                mode_paiement__in=['en_compte', 'recouvrement']
+            ).aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
+            
+            # Montant dû (part client si tiers payant, sinon total TTC)
+            montant_du = facture.part_client if (facture.part_client is not None and facture.part_client >= 0) else facture.total_ttc
+            reste = max(Decimal('0'), montant_du - deja_paye)
+            
+            if montant_saisi > reste:
+                serializer.validated_data['montant'] = reste
+
         serializer.save(user=user)
         
         # Mise à jour du statut de la facture si tout est payé
@@ -1440,7 +1461,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             facture = instance.facture
             total_paye = Caisse.objects.filter(facture=facture, statut='completee').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')
             
-            if total_paye >= facture.total_ttc:
+            # Utiliser une petite marge pour les arrondis
+            if total_paye >= (facture.total_ttc - Decimal('0.1')):
                  if facture.status != Facture.Status.PAYEE:
                      facture.status = Facture.Status.PAYEE
                      facture.save()

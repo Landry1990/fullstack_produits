@@ -1,9 +1,6 @@
-import React, { useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { X, Printer } from 'lucide-react';
+// Note: This component is currently unused, but keeping structure for future use if needed.
+import React from 'react';
 import type { Facture } from '../../../types';
-import { TicketTemplate } from '../../printing/TicketTemplate';
-import { usePharmacySettings } from '../../../hooks/usePharmacySettings';
 
 interface TicketPreviewModalProps {
     isOpen: boolean;
@@ -13,40 +10,12 @@ interface TicketPreviewModalProps {
 
 export const TicketPreviewModal: React.FC<TicketPreviewModalProps> = ({
     isOpen,
-    onClose,
     facture
 }) => {
-    const { t } = useTranslation();
-    const { settings } = usePharmacySettings();
-    const iframeRef = useRef<HTMLIFrameElement>(null);
+    // Component not fully implemented in current redesign
+    if (!isOpen || !facture) return null;
 
-    // Effect to render ticket into iframe
-    useEffect(() => {
-        if (isOpen && facture && iframeRef.current && settings) {
-            const iframe = iframeRef.current;
-            const doc = iframe.contentDocument;
-            
-            if (doc) {
-                // Generer le HTML
-                // Note: TicketTemplate is a React component. 
-                // We typically need to render it. But Ventes.tsx logic was:
-                // It opens a new Window actually.
-                // Wait, checking Ventes.tsx logic for handleOpenTicketPreview
-                /*
-                  const handlePrintTicket = () => {
-                        const printWindow = window.open('', '', 'width=300,height=600');
-                        ...
-                        printWindow.document.write(renderToStaticMarkup(...));
-                  }
-                */
-               // The original code used a state `showTicketPreview`? No, let me check Ventes.tsx.
-               // Ventes.tsx had `handleOpenTicketPreview` which opens a POPUP WINDOW directly.
-               // It did NOT have a modal for preview inside the page?
-               // Let me check my previous file outline.
-               // "Ventes.handleOpenTicketPreview" outline item.
-            }
-        }
-    }, [isOpen, facture, settings]);
+
 
     // If Ventes.tsx was opening a new window immediately, maybe we don't need a React Modal?
     // User requested "Refactor Ventes.tsx".

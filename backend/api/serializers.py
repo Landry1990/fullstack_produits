@@ -11,7 +11,7 @@ from .models import (
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
-    Promotion, PromotionPackItem, ObjectifCommercial, TVA
+    Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA
 )
 from .services import PromotionService
 
@@ -31,6 +31,20 @@ class PromotionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Promotion
         fields = '__all__'
+
+class ConfigurationObjectifsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConfigurationObjectifs
+        fields = '__all__'
+
+    def create(self, validated_data):
+        return ConfigurationObjectifs.objects.get_or_create(pk=1)[0]
+        
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
     def create(self, validated_data):
         pack_items_data = validated_data.pop('pack_items', [])
@@ -1146,6 +1160,7 @@ class ObjectifCommercialSerializer(serializers.ModelSerializer):
         model = ObjectifCommercial
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at', 'created_by']
+        validators = []
 
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user

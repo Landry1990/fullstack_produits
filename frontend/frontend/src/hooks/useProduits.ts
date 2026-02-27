@@ -260,7 +260,7 @@ export const useAdjustStock = () => {
             });
             return response.data;
         },
-        onSuccess: (data, variables) => {
+        onSuccess: (_, variables) => {
             // Invalidate product details and list
             queryClient.invalidateQueries({ queryKey: ['produit', variables.id] });
             queryClient.invalidateQueries({ queryKey: ['produits'] });

@@ -66,9 +66,6 @@ export default function ModuleFinancier() {
   const { data: marginAnalysis, isLoading: loadingMarginAnalysis } = useAnalyseMarges();
   const { data: supplierAnalysis, isLoading: loadingSupplierAnalysis } = useAnalyseFournisseurs();
 
-  // Loading state for global loading indicator (if needed in future)
-  const _isLoading = loadingCA || loadingMarges || loadingPredictions || loadingKPIs;
-
   // Prepare chart data for CA Evolution
   const caChartData = caEvolution?.labels.map((label, i) => ({
     name: label,

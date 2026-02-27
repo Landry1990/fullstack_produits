@@ -160,14 +160,6 @@ describe('CartTable', () => {
   })
 
   it('formate correctement la date de péremption', () => {
-    // Date saine > 90 jours
-    const futureDate = new Date()
-    futureDate.setDate(futureDate.getDate() + 100)
-    const futureDateStr = futureDate.toISOString().split('T')[0]
-    
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const ligneSafe = { ...mockLigneFacture, produit: { ...mockLigneFacture.produit, expire_date: futureDateStr } }
-    
     // On garde le test original simple
     render(<CartTable {...defaultProps} lignesFacture={[mockLigneFacture]} />)
     expect(screen.getByText('12/25')).toBeInTheDocument()
