@@ -348,14 +348,22 @@ SILK_AUTHORISATION = True
 # Sentry Configuration
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 
 SENTRY_DSN = os.getenv('SENTRY_DSN')
 
 if SENTRY_DSN:
+    # Disable Sentry's default logging to prevent Python 3.13 formatting crashes in local dev
+    sentry_logging = LoggingIntegration(
+        level=None,        # Capture info and above as breadcrumbs
+        event_level=None   # Send errors as events
+    )
+    
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[
             DjangoIntegration(),
+            sentry_logging,
         ],
         
         # Set traces_sample_rate to 1.0 to capture 100%

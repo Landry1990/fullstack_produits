@@ -1,6 +1,9 @@
-from django.db import models
+from django.db import models, IntegrityError
+from django.db.models import Sum
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from decimal import Decimal
+from .configuration_objectifs import ConfigurationObjectifs
 
 User = get_user_model()
 
@@ -89,17 +92,84 @@ class ObjectifCommercial(models.Model):
         today = timezone.now().date()
         
         if periode == cls.Periode.JOUR:
-            return cls.objects.filter(periode=periode, date_debut=today).first()
-        
+            date_debut = today
         elif periode == cls.Periode.SEMAINE:
-            # Lundi de la semaine en cours
-            monday = today - timezone.timedelta(days=today.weekday())
-            return cls.objects.filter(periode=periode, date_debut=monday).first()
-        
+            date_debut = today - timezone.timedelta(days=today.weekday())
         elif periode == cls.Periode.MOIS:
-            # Premier du mois en cours
-            first_of_month = today.replace(day=1)
-            return cls.objects.filter(periode=periode, date_debut=first_of_month).first()
+            date_debut = today.replace(day=1)
+        else:
+            return None
+
+        # Check existing first
+        objectif = cls.objects.filter(periode=periode, date_debut=date_debut).first()
+        if objectif:
+            return objectif
+
+        # Generate dynamically if missing
+        config = ConfigurationObjectifs.load()
+        if config.mode == ConfigurationObjectifs.ModeCalcul.MANUEL:
+            return None
+        
+        ca_objectif = Decimal('0.00')
+
+        if config.mode == ConfigurationObjectifs.ModeCalcul.FIXE:
+            if config.seuil_rentabilite_mensuel > 0:
+                mensuel = config.seuil_rentabilite_mensuel
+                if periode == cls.Periode.MOIS:
+                    ca_objectif = mensuel
+                elif periode == cls.Periode.SEMAINE:
+                    ca_objectif = mensuel / Decimal('4.33')
+                elif periode == cls.Periode.JOUR:
+                    jours = Decimal(str(config.jours_ouverts_semaine)) * Decimal('4.33')
+                    ca_objectif = mensuel / jours
+        
+        elif config.mode == ConfigurationObjectifs.ModeCalcul.DYNAMIQUE:
+            # Need to find previous periods' revenue
+            from .billing import Facture
+            
+            if periode == cls.Periode.JOUR:
+                # N-1 : Same day last week
+                ref_date = date_debut - timezone.timedelta(days=7)
+                ca_ref = Facture.objects.filter(
+                    date__date=ref_date,
+                    status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+                ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
+                ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
+                
+            elif periode == cls.Periode.SEMAINE:
+                # N-1 : Previous week
+                ref_start = date_debut - timezone.timedelta(days=7)
+                ref_end = date_debut - timezone.timedelta(days=1)
+                ca_ref = Facture.objects.filter(
+                    date__date__gte=ref_start,
+                    date__date__lte=ref_end,
+                    status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+                ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
+                ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
+                
+            elif periode == cls.Periode.MOIS:
+                # N-1 : Previous month
+                first_of_prev_month = (date_debut - timezone.timedelta(days=1)).replace(day=1)
+                last_of_prev_month = date_debut - timezone.timedelta(days=1)
+                ca_ref = Facture.objects.filter(
+                    date__date__gte=first_of_prev_month,
+                    date__date__lte=last_of_prev_month,
+                    status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+                ).aggregate(total=Sum('total_ttc'))['total'] or Decimal('0.00')
+                ca_objectif = ca_ref * (Decimal('1') + config.pourcentage_croissance / Decimal('100'))
+
+        # Save and return new generated objectif if valid
+        if ca_objectif > Decimal('0.00'):
+            try:
+                return cls.objects.create(
+                    periode=periode,
+                    date_debut=date_debut,
+                    ca_objectif=round(ca_objectif, 2),
+                    notes=f"Généré automatiquement (Mode {config.get_mode_display()})"
+                )
+            except IntegrityError:
+                # Another concurrent request already created it
+                return cls.objects.filter(periode=periode, date_debut=date_debut).first()
         
         return None
     

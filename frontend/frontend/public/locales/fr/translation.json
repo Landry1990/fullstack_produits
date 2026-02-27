@@ -1344,7 +1344,7 @@
         }
     },
     "sales": {
-        "title": "Ventes",
+        "title": "Historique des Ventes",
         "subtitle": "Gérez vos ventes, factures et règlements",
         "stats": {
             "session_total": "Caisse Session"
@@ -1855,6 +1855,9 @@
         "empty": "Aucune facture en attente d'encaissement"
     },
     "facturation": {
+        "totals": {
+            "net_a_payer": "NET À PAYER"
+        },
         "pending_sales": {
             "title": "Ventes en attente",
             "items_count": "{{count}} article(s)"
@@ -2050,5 +2053,11 @@
             "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil",
             "cancel_sale_confirm": "Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu."
         }
+    },
+    "avoirs": {
+        "title": "Avoirs Fournisseurs (Retours)",
+        "subtitle": "Gérez les retours et avoirs fournisseurs",
+        "create_btn": "+ Nouvel Avoir",
+        "search_placeholder": "🔍 Rechercher un avoir..."
     }
 }

@@ -18,7 +18,6 @@ interface SudoValidationModalProps {
     saving: boolean;
     title?: string;
     message?: string;
-    permission?: string;
 }
 
 export default function SudoValidationModal({ 
@@ -27,8 +26,7 @@ export default function SudoValidationModal({
     onValidate, 
     saving,
     title,
-    message,
-    permission
+    message
 }: SudoValidationModalProps) {
     const { t } = useTranslation();
     const { user: currentUser } = useAuth();

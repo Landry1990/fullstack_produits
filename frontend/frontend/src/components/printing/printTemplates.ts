@@ -4,62 +4,61 @@
  * Ces fonctions génèrent du HTML prêt à imprimer pour différents types de documents.
  */
 
-import { formatMoney, formatDateFr, printRow, printDivider, printTotal } from '../hooks/usePrint';
-import type { PharmacySettings } from '../types';
+import { formatMoney, formatDateFr, printRow, printDivider, printTotal } from '../../hooks/usePrint';
 
 // ============== TYPES ==============
 
 interface ClotureData {
-    id: number;
-    date: string;
-    montant_reel: string | number;
-    montant_theorique: string | number;
-    ecart_caisse: string | number;
-    total_ventes: string | number;
-    total_entrees: string | number;
-    total_sorties: string | number;
-    details_paiement: Record<string, number>;
-    date_debut?: string | null;
-    date_fin?: string | null;
-    user_name?: string;
-    username?: string;
-    observation?: string | null;
+  id: number;
+  date: string;
+  montant_reel: string | number;
+  montant_theorique: string | number;
+  ecart_caisse: string | number;
+  total_ventes: string | number;
+  total_entrees: string | number;
+  total_sorties: string | number;
+  details_paiement: Record<string, number>;
+  date_debut?: string | null;
+  date_fin?: string | null;
+  user_name?: string;
+  username?: string;
+  observation?: string | null;
 }
 
 interface PromisData {
-    id: number;
-    client_name?: string;
-    client_phone?: string;
-    produit_nom?: string;
-    quantite: number;
-    date_promis?: string;
-    notes?: string;
+  id: number;
+  client_name?: string;
+  client_phone?: string;
+  produit_nom?: string;
+  quantite: number;
+  date_promis?: string;
+  notes?: string;
 }
 
 interface StockRayonData {
-    rayon_name: string;
-    products: Array<{
-        name: string;
-        stock: number;
-        selling_price: number;
-        code?: string;
-    }>;
-    total_value: number;
+  rayon_name: string;
+  products: Array<{
+    name: string;
+    stock: number;
+    selling_price: number;
+    code?: string;
+  }>;
+  total_value: number;
 }
 
 // ============== HELPER FUNCTIONS ==============
 
 const getModeLabel = (mode: string): string => {
-    const labels: Record<string, string> = {
-        especes: '💵 Espèces',
-        cheque: '📝 Chèque',
-        carte: '💳 Carte',
-        virement: '🏦 Virement',
-        om: '🟧 Orange Money',
-        momo: '📱 Mobile Money',
-        en_compte: '📒 En compte'
-    };
-    return labels[mode] || mode;
+  const labels: Record<string, string> = {
+    especes: '💵 Espèces',
+    cheque: '📝 Chèque',
+    carte: '💳 Carte',
+    virement: '🏦 Virement',
+    om: '🟧 Orange Money',
+    momo: '📱 Mobile Money',
+    en_compte: '📒 En compte'
+  };
+  return labels[mode] || mode;
 };
 
 // ============== TEMPLATES ==============
@@ -68,13 +67,12 @@ const getModeLabel = (mode: string): string => {
  * Template pour une clôture de caisse
  */
 export function generateClotureTemplate(
-    cloture: ClotureData,
-    settings: PharmacySettings
+  cloture: ClotureData
 ): string {
-    const ecart = parseFloat(String(cloture.ecart_caisse));
-    const ecartStyle = ecart !== 0 ? 'color: red; font-weight: bold;' : '';
+  const ecart = parseFloat(String(cloture.ecart_caisse));
+  const ecartStyle = ecart !== 0 ? 'color: red; font-weight: bold;' : '';
 
-    return `
+  return `
     <div style="margin-bottom: 15px; font-size: 0.85em;">
       <div style="text-align: center; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">
         Clôture de Caisse #${cloture.id}
@@ -97,8 +95,8 @@ export function generateClotureTemplate(
 
     <div style="font-weight: bold; margin-bottom: 8px;">DÉTAILS PAR MODE</div>
     ${Object.entries(cloture.details_paiement || {}).map(([mode, montant]) =>
-        printRow(getModeLabel(mode), `${formatMoney(montant)} F`)
-    ).join('')}
+    printRow(getModeLabel(mode), `${formatMoney(montant)} F`)
+  ).join('')}
 
     ${printDivider()}
 
@@ -128,10 +126,9 @@ export function generateClotureTemplate(
  * Template pour un bon de promis
  */
 export function generatePromisTemplate(
-    promis: PromisData,
-    settings: PharmacySettings
+  promis: PromisData
 ): string {
-    return `
+  return `
     <div style="text-align: center; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
       BON DE PROMIS #${promis.id}
     </div>
@@ -163,10 +160,9 @@ export function generatePromisTemplate(
  * Template pour un état de stock par rayon
  */
 export function generateStockRayonTemplate(
-    data: StockRayonData,
-    settings: PharmacySettings
+  data: StockRayonData
 ): string {
-    return `
+  return `
     <div style="text-align: center; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
       ÉTAT DE STOCK<br/>
       <span style="font-size: 1.1em;">${data.rayon_name}</span>
@@ -215,22 +211,21 @@ export function generateStockRayonTemplate(
  * Template pour un inventaire
  */
 export function generateInventaireTemplate(
-    inventaire: {
-        id: number;
-        date: string;
-        status: string;
-        user_name?: string;
-        lignes: Array<{
-            produit_nom: string;
-            stock_theorique: number;
-            stock_reel: number;
-            ecart: number;
-        }>;
-        total_ecart_valeur?: number;
-    },
-    settings: PharmacySettings
+  inventaire: {
+    id: number;
+    date: string;
+    status: string;
+    user_name?: string;
+    lignes: Array<{
+      produit_nom: string;
+      stock_theorique: number;
+      stock_reel: number;
+      ecart: number;
+    }>;
+    total_ecart_valeur?: number;
+  }
 ): string {
-    return `
+  return `
     <div style="text-align: center; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
       INVENTAIRE #${inventaire.id}
     </div>
@@ -276,8 +271,8 @@ export function generateInventaireTemplate(
 }
 
 export default {
-    generateClotureTemplate,
-    generatePromisTemplate,
-    generateStockRayonTemplate,
-    generateInventaireTemplate
+  generateClotureTemplate,
+  generatePromisTemplate,
+  generateStockRayonTemplate,
+  generateInventaireTemplate
 };

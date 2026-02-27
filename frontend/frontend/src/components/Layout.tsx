@@ -3,7 +3,7 @@ import Sidebar from './Sidebar'
 import { SidebarProvider, useSidebar } from '../context/SidebarContext'
 
 function LayoutContent() {
-  const { isOpen, isCollapsed, closeSidebar, isZenithMode, isMidnightTheme } = useSidebar()
+  const { isOpen, closeSidebar, isZenithMode, isMidnightTheme } = useSidebar()
 
   return (
     <div className={`flex min-h-screen ${isZenithMode ? 'bg-base-100' : 'bg-base-200'} ${isMidnightTheme ? 'theme-midnight' : ''} transition-colors duration-300`}>

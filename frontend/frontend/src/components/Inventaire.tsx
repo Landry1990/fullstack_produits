@@ -78,7 +78,6 @@ export default function InventaireComponent() {
                 saving={false}
                 title={sudoState.title || "Validation Requiée"}
                 message={sudoState.message || "Veuillez confirmer cette action."}
-                permission={sudoState.permission}
             />}
         </div>
     );

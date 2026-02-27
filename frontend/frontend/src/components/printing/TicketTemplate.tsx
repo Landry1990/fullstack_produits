@@ -1,5 +1,5 @@
 
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import Barcode from 'react-barcode';
 import type { TicketCaisse, PharmacySettings } from '../../types';
 
@@ -59,7 +59,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   const clientName = ticket.client_name 
       || facture?.client_name_override 
       || facture?.client_name 
-      || (facture?.client && typeof facture.client === 'object' ? facture.client.name : null)
+      || (facture?.client && typeof facture.client === 'object' && 'name' in facture.client ? (facture.client as any).name : null)
       || 'Client de passage';
 
   return (

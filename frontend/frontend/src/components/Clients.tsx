@@ -72,6 +72,7 @@ export default function Clients() {
   const [showInactive, setShowInactive] = useState<boolean>(false);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 50;
 
   
@@ -83,6 +84,7 @@ export default function Clients() {
   const [editingClient, setEditingClient] = useState<ExtendedClient | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [isLoyaltyConfigOpen, setIsLoyaltyConfigOpen] = useState(false);
 
   // Purchase History State
@@ -102,41 +104,42 @@ export default function Clients() {
     : '/api/clients/';
   
 
+  // Debounce search term to prevent excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset page on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  // Filtrer les clients selon le terme de recherche
-  const filteredClients = useMemo(() => {
-    // Only filter if there is a search term
-    if (!searchTerm.trim()) return clients;
-    
-    const term = searchTerm.toLowerCase();
-    return clients.filter(client => 
-      client.name.toLowerCase().includes(term) ||
-      client.email.toLowerCase().includes(term) ||
-      client.phone.includes(term) ||
-      client.address.toLowerCase().includes(term)
-    );
-  }, [clients, searchTerm]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredClients.length / itemsPerPage));
-  const paginatedClients = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredClients.slice(start, start + itemsPerPage);
-  }, [filteredClients, currentPage, itemsPerPage]);
-
-  // Reset page when search changes
-  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+  // Pagination details
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   async function fetchClients() {
     setLoading(true);
 
     try {
       const response = await axios.get(clientsEndpoint, {
-        params: { include_inactive: showInactive }
+        params: { 
+          include_inactive: showInactive,
+          page: currentPage,
+          search: debouncedSearch
+        }
       });
-      // Handle both paginated and non-paginated responses
+      
+      // Handle paginated response structure { count, next, previous, results }
       const data: any = response.data;
-      setClients(Array.isArray(data) ? data : (data.results || []));
+      if (data && typeof data === 'object' && 'results' in data) {
+         setClients(data.results);
+         setTotalCount(data.count || 0);
+      } else if (Array.isArray(data)) {
+         setClients(data);
+         setTotalCount(data.length);
+      } else {
+         setClients([]);
+         setTotalCount(0);
+      }
     } catch (err: unknown) {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {
@@ -151,7 +154,7 @@ export default function Clients() {
 
   useEffect(() => {
     fetchClients();
-  }, [clientsEndpoint, showInactive]);
+  }, [clientsEndpoint, showInactive, currentPage, debouncedSearch]);
 
   // Si le client sélectionné disparaît de la liste (ex: suppression), désélectionner
   useEffect(() => {
@@ -385,10 +388,10 @@ export default function Clients() {
   }
 
   function toggleSelectAll() {
-    if (selectedIds.length === filteredClients.length) {
+    if (selectedIds.length === clients.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredClients.map(c => c.id!));
+      setSelectedIds(clients.map(c => c.id!));
     }
   }
 
@@ -456,20 +459,20 @@ export default function Clients() {
                <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>
              ) : (
                  <ul className="menu bg-base-100 w-full rounded-box p-0">
-                   {filteredClients.length > 0 && (
+                   {clients.length > 0 && (
                       <li className="mb-1 border-b border-base-200">
                          <div className="flex items-center gap-3 px-4 py-2 hover:bg-transparent">
                             <input 
                                type="checkbox" 
                                className="checkbox checkbox-sm checkbox-primary"
-                               checked={selectedIds.length === filteredClients.length && filteredClients.length > 0}
+                               checked={selectedIds.length === clients.length && clients.length > 0}
                                onChange={toggleSelectAll}
                             />
                             <span className="text-xs font-semibold opacity-60 uppercase">Tout sélectionner</span>
                          </div>
                       </li>
                    )}
-                   {paginatedClients.map(client => (
+                   {clients.map(client => (
                       <li key={client.id} className="mb-1 border-b border-base-100 last:border-0 group">
                          <div className="flex items-center p-0">
                             <div className="px-4">
@@ -482,8 +485,8 @@ export default function Clients() {
                                />
                             </div>
                             <a 
-                              className={`flex-1 flex flex-col items-start gap-1 py-3 ${selectedClient?.id === client.id ? 'active' : ''}`}
-                              onClick={() => selectClient(client)}
+                               className={`flex-1 flex flex-col items-start gap-1 py-3 ${selectedClient?.id === client.id ? 'active' : ''}`}
+                               onClick={() => selectClient(client)}
                             >
                                <div className="flex justify-between w-full">
                                   <span className="font-bold text-base">{client.name}</span>
@@ -498,7 +501,7 @@ export default function Clients() {
                          </div>
                       </li>
                    ))}
-                   {filteredClients.length === 0 && (
+                   {clients.length === 0 && (
                       <div className="text-center p-8 text-base-content/50 text-sm">
                          {t('clients.filters.no_results')}
                       </div>
@@ -510,7 +513,7 @@ export default function Clients() {
           {totalPages > 1 && (
             <div className="p-2 border-t border-base-200 bg-base-100 flex items-center justify-between text-xs shrink-0">
               <span className="text-base-content/60">
-                {filteredClients.length} client{filteredClients.length > 1 ? 's' : ''}
+                {totalCount} client{totalCount > 1 ? 's' : ''}
               </span>
               <div className="join">
                 <button

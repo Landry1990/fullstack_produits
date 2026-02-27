@@ -43,23 +43,36 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
 
     const clientsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/clients/` : '/api/clients/'
 
+    const [debouncedSearch, setDebouncedSearch] = useState('')
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(clientSearch)
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [clientSearch])
+
     // Load clients
     useEffect(() => {
         const fetchClients = async () => {
             setLoading(true)
             try {
-                const response = await axios.get(clientsEndpoint)
+                const response = await axios.get(clientsEndpoint, {
+                    params: debouncedSearch ? { search: debouncedSearch } : {}
+                })
                 const clientsData = Array.isArray(response.data) ? response.data : response.data.results
                 const loadedClients = clientsData || []
                 setClients(loadedClients)
 
-                // Select "CLIENTS DIVERS" by default if it exists
-                const clientsDivers = loadedClients.find((c: Client) =>
-                    c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
-                    c.name.trim().toUpperCase() === 'CLIENT DIVERS'
-                )
-                if (clientsDivers) {
-                    setSelectedClient(clientsDivers.id)
+                // Select "CLIENTS DIVERS" by default if it exists and no search
+                if (!debouncedSearch) {
+                    const clientsDivers = loadedClients.find((c: Client) =>
+                        c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
+                        c.name.trim().toUpperCase() === 'CLIENT DIVERS'
+                    )
+                    if (clientsDivers) {
+                        setSelectedClient(clientsDivers.id)
+                    }
                 }
             } catch (error) {
                 console.error('Erreur chargement clients:', error)
@@ -69,7 +82,7 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
             }
         }
         fetchClients()
-    }, [clientsEndpoint])
+    }, [clientsEndpoint, debouncedSearch])
 
     // Load Ayants Droit when client changes
     useEffect(() => {
@@ -105,14 +118,8 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
 
     // Filtered clients
     const filteredClients = useMemo(() => {
-        if (!clientSearch.trim()) return clients.slice(0, 10)
-        const term = clientSearch.toLowerCase()
-        return clients.filter(c =>
-            c.name.toLowerCase().includes(term) ||
-            c.phone?.includes(term) ||
-            c.email?.toLowerCase().includes(term)
-        ).slice(0, 10)
-    }, [clients, clientSearch])
+        return clients.slice(0, 10)
+    }, [clients])
 
     const handleCreateClient = async (e: React.FormEvent) => {
         e.preventDefault()

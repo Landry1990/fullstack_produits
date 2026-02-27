@@ -72,15 +72,28 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                             <span className="w-1 h-1 bg-gray-300 rounded-full" />
                             <span className="flex items-center gap-1.5" title="Vendeur">
                                 <User className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="text-gray-500 text-xs">Vendeur :</span>
                                 <span className="text-gray-600 font-medium">{facture.created_by_name || '-'}</span>
                             </span>
-                            {facture.validated_by_name && (
+                            {facture.paiements && facture.paiements.length > 0 && facture.paiements[0].user_details ? (
                                 <>
                                     <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                                    <span className="flex items-center gap-1.5" title="Validé par">
+                                    <span className="flex items-center gap-1.5" title="Caissier">
                                         <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
                                             <User className="w-2.5 h-2.5 text-green-600" />
                                         </div>
+                                        <span className="text-gray-500 text-xs">Caissier :</span>
+                                        <span className="text-gray-600 font-medium">{facture.paiements[0].user_details.full_name || facture.paiements[0].user_details.username}</span>
+                                    </span>
+                                </>
+                            ) : facture.validated_by_name && (
+                                <>
+                                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                                    <span className="flex items-center gap-1.5" title="Caissier">
+                                        <div className="w-3.5 h-3.5 rounded-full bg-green-100 flex items-center justify-center">
+                                            <User className="w-2.5 h-2.5 text-green-600" />
+                                        </div>
+                                        <span className="text-gray-500 text-xs">Caissier :</span>
                                         <span className="text-gray-600 font-medium">{facture.validated_by_name}</span>
                                     </span>
                                 </>

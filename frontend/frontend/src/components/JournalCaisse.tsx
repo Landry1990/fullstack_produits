@@ -25,8 +25,16 @@ export default function JournalCaisse() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<string>('all')
   const [filterType, setFilterType] = useState<'all' | 'entrees' | 'sorties'>('all')
-  const [dateDebut, setDateDebut] = useState<Date | null>(null)
-  const [dateFin, setDateFin] = useState<Date | null>(null)
+  const [dateDebut, setDateDebut] = useState<Date | null>(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return today
+  })
+  const [dateFin, setDateFin] = useState<Date | null>(() => {
+    const endToday = new Date()
+    endToday.setHours(23, 59, 59, 999)
+    return endToday
+  })
   const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
   const { settings: pharmacySettings } = usePharmacySettings()
 
@@ -418,6 +426,7 @@ export default function JournalCaisse() {
   const handleCloseCaisse = async () => {
     if (!actualAmount) return
     
+    setLoading(true)
     try {
       await axios.post(`${caisseEndpoint}cloturer/`, {
         montant_reel: parseFloat(actualAmount),
@@ -433,6 +442,8 @@ export default function JournalCaisse() {
       const errorMessage = err.response?.data?.detail || err.message || 'Erreur inconnue'
       setError(`Erreur lors de la clôture: ${errorMessage}`)
       toast.error(errorMessage)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -1170,8 +1181,12 @@ export default function JournalCaisse() {
             )}
 
             <div className="flex flex-col gap-3">
-                <button className="btn btn-primary btn-lg rounded-xl font-black shadow-lg shadow-primary/20" onClick={handleCloseCaisse}>
-                    CONFIRMER LA CLÔTURE
+                <button 
+                  className="btn btn-primary btn-lg rounded-xl font-black shadow-lg shadow-primary/20" 
+                  onClick={handleCloseCaisse}
+                  disabled={loading || !actualAmount}
+                >
+                    {loading ? <span className="loading loading-spinner"></span> : 'CONFIRMER LA CLÔTURE'}
                 </button>
                 <div className="grid grid-cols-2 gap-3">
                     <button className="btn btn-outline border-base-300 font-bold flex items-center justify-center gap-2" onClick={handleImprimerCloture}>

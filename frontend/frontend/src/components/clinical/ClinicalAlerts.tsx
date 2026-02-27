@@ -1,6 +1,4 @@
 
-import React from 'react'
-
 export interface ClinicalAlert {
   type: string
   gravity: 'PRECAUTION' | 'A_PRENDRE_EN_COMPTE' | 'DECONSEILLE' | 'CONTRE_INDIQUE'

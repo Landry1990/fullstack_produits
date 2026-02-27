@@ -623,9 +623,10 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         Retourne les produits en alerte stock.
         Critères: Stock < Rotation Moyenne OU Stock <= Stock Minimum
         """
-        produits = Produit.objects.filter(
-            Q(stock__lt=F('rotation_moyenne')) |
-            Q(stock__lte=F('stock_minimum'))
+        produits = Produit.objects.filter(is_active=True).filter(
+            Q(stock__lt=F('rotation_moyenne'), rotation_moyenne__gt=0) |
+            Q(stock__lte=F('stock_minimum'), stock_minimum__gt=0) |
+            Q(stock__lt=0)
         ).order_by('name').values('id', 'name', 'stock', 'rotation_moyenne', 'stock_minimum')
         
         # Format response with clean field names
@@ -1198,7 +1199,6 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone']
-    pagination_class = None
 
     def get_queryset(self):
         qs = super().get_queryset()

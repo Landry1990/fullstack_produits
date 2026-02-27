@@ -49,6 +49,7 @@ export default function Fournisseurs() {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const itemsPerPage = 50;
 
   // Sudo Mode State
@@ -62,6 +63,7 @@ export default function Fournisseurs() {
   const [editingFournisseur, setEditingFournisseur] = useState<Fournisseur | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
@@ -79,15 +81,14 @@ export default function Fournisseurs() {
   const [isEcheancierModalOpen, setIsEcheancierModalOpen] = useState(false);
   const [isPointageModalOpen, setIsPointageModalOpen] = useState(false);
 
-  // Auto-refresh selectedFournisseur when list changes
+  // Debounce search term to prevent excessive API calls
   useEffect(() => {
-    if (selectedFournisseur) {
-      const updated = fournisseurs.find(f => f.id === selectedFournisseur.id);
-      if (updated && updated !== selectedFournisseur) {
-        setSelectedFournisseur(updated);
-      }
-    }
-  }, [fournisseurs, selectedFournisseur]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1); // Reset page on new search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Auto-refresh selectedFournisseur when list changes
   useEffect(() => {
@@ -98,6 +99,8 @@ export default function Fournisseurs() {
       }
     }
   }, [fournisseurs, selectedFournisseur]);
+
+  // Auto-refresh selectedFournisseur when list changes (Duplicate removed)
 
   const apiBaseUrl = useMemo(
     () => (import.meta.env.VITE_API_BASE_URL ?? ''),
@@ -107,28 +110,8 @@ export default function Fournisseurs() {
     ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/fournisseurs/` 
     : '/api/fournisseurs/';
 
-  // Filtrer les fournisseurs selon le terme de recherche
-  const filteredFournisseurs = useMemo(() => {
-    if (!searchTerm.trim()) return fournisseurs;
-    
-    const term = searchTerm.toLowerCase();
-    return fournisseurs.filter(fournisseur => 
-      fournisseur.name.toLowerCase().includes(term) ||
-      fournisseur.email.toLowerCase().includes(term) ||
-      fournisseur.phone.includes(term) ||
-      fournisseur.address.toLowerCase().includes(term)
-    );
-  }, [fournisseurs, searchTerm]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredFournisseurs.length / itemsPerPage));
-  const paginatedFournisseurs = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredFournisseurs.slice(start, start + itemsPerPage);
-  }, [filteredFournisseurs, currentPage, itemsPerPage]);
-
-  // Reset page when search changes
-  useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+  // Pagination details
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   // Filtrer le catalogue selon le terme de recherche
   const filteredCatalogue = useMemo(() => {
@@ -172,11 +155,24 @@ export default function Fournisseurs() {
     setError(null);
     try {
       const response = await axios.get(fournisseursEndpoint, {
-        params: { include_inactive: showInactive }
+        params: { 
+          include_inactive: showInactive,
+          page: currentPage,
+          search: debouncedSearch
+        }
       });
-      // Handle paginated response
+      // Handle paginated response structure { count, next, previous, results }
       const data: any = response.data;
-      setFournisseurs(Array.isArray(data) ? data : (data.results || []));
+      if (data && typeof data === 'object' && 'results' in data) {
+         setFournisseurs(data.results);
+         setTotalCount(data.count || 0);
+      } else if (Array.isArray(data)) {
+         setFournisseurs(data);
+         setTotalCount(data.length);
+      } else {
+         setFournisseurs([]);
+         setTotalCount(0);
+      }
     } catch (err: unknown) {
       if (axios.isCancel(err)) return;
       if (axios.isAxiosError(err)) {
@@ -192,7 +188,7 @@ export default function Fournisseurs() {
   // Charger les fournisseurs au montage
   useEffect(() => {
     fetchFournisseurs();
-  }, [fournisseursEndpoint, showInactive]);
+  }, [fournisseursEndpoint, showInactive, currentPage, debouncedSearch]);
 
   useEffect(() => {
     if (selectedFournisseur && !fournisseurs.some(f => f.id === selectedFournisseur.id)) {
@@ -219,7 +215,7 @@ export default function Fournisseurs() {
       case 'ArrowDown':
         e.preventDefault();
         setHighlightedIndex(prev => 
-          prev < filteredFournisseurs.length - 1 ? prev + 1 : prev
+          prev < fournisseurs.length - 1 ? prev + 1 : prev
         );
         break;
       case 'ArrowUp':
@@ -228,8 +224,8 @@ export default function Fournisseurs() {
         break;
       case 'Enter':
         e.preventDefault();
-        if (highlightedIndex >= 0 && highlightedIndex < filteredFournisseurs.length) {
-          const selectedFournisseur = filteredFournisseurs[highlightedIndex];
+        if (highlightedIndex >= 0 && highlightedIndex < fournisseurs.length) {
+          const selectedFournisseur = fournisseurs[highlightedIndex];
           setSelectedFournisseur(selectedFournisseur);
           setSearchTerm('');
           setHighlightedIndex(-1);
@@ -392,10 +388,10 @@ export default function Fournisseurs() {
   }
 
   function toggleSelectAll() {
-    if (selectedIds.length === filteredFournisseurs.length) {
+    if (selectedIds.length === fournisseurs.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredFournisseurs.map(f => f.id!));
+      setSelectedIds(fournisseurs.map(f => f.id!));
     }
   }
 
@@ -538,7 +534,7 @@ export default function Fournisseurs() {
                          <input 
                             type="checkbox" 
                             className="checkbox checkbox-xs"
-                            checked={selectedIds.length === filteredFournisseurs.length && filteredFournisseurs.length > 0}
+                            checked={selectedIds.length === fournisseurs.length && fournisseurs.length > 0}
                             onChange={toggleSelectAll}
                          />
                       </th>
@@ -547,8 +543,8 @@ export default function Fournisseurs() {
                     </tr>
                  </thead>
                  <tbody>
-                    {paginatedFournisseurs.length > 0 ? (
-                      paginatedFournisseurs.map((fournisseur, index) => (
+                    {fournisseurs.length > 0 ? (
+                      fournisseurs.map((fournisseur, index) => (
                          <tr 
                            key={fournisseur.id} 
                            className={`hover cursor-pointer transition-all border-b border-slate-50 ${
@@ -592,7 +588,7 @@ export default function Fournisseurs() {
             {totalPages > 1 && (
               <div className="p-2 border-t border-slate-200 bg-white flex items-center justify-between text-xs shrink-0">
                 <span className="text-slate-400">
-                  {filteredFournisseurs.length} fournisseur{filteredFournisseurs.length > 1 ? 's' : ''}
+                  {totalCount} fournisseur{totalCount > 1 ? 's' : ''}
                 </span>
                 <div className="join">
                   <button

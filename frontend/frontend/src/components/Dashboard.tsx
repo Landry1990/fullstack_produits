@@ -24,7 +24,7 @@ import {
 } from '../hooks/useDashboard';
 
 import { useTranslation } from 'react-i18next';
-import { formatCurrency, safeFormatNumber } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 export default function Dashboard() {
   const { t } = useTranslation();

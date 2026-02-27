@@ -125,10 +125,12 @@ function validateSaleData(params: SaleCompletionParams): string | null {
         }
 
         // Si paiement partagé, vérifier le total
-        if (paiements.length > 0) {
-            // Tolérance de 1F pour les arrondis
-            if (Math.abs(totalSplit - montantAttendu) > 1 && Math.abs(totalSplit + montantSaisi - montantAttendu) > 1) {
-                return `Le total des paiements (${totalSplit + montantSaisi} F) ne correspond pas au montant à payer (${montantAttendu} F)`;
+        if (paiements.length > 0 || (montantPaye && montantSaisi > 0)) {
+            const totalSaisi = totalSplit + montantSaisi;
+            // On autorise un montant supérieur (pour le rendu de monnaie), 
+            // mais pas inférieur (tolérance de 1F pour les arrondis)
+            if (totalSaisi < montantAttendu - 1) {
+                return `Le montant total (${totalSaisi} F) est insuffisant pour régler la facture (${montantAttendu} F)`;
             }
         }
     }
@@ -289,23 +291,30 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         if (useTiersPayant) {
             // Part patient
             if (totals.partPatient > 0) {
+                let resteAPatient = totals.partPatient;
+
                 if (paiements.length > 0) {
                     paiements.forEach(p => {
+                        if (resteAPatient <= 0) return;
+                        const montantReel = Math.min(p.montant, resteAPatient);
                         paiementsList.push({
                             mode: p.mode,
-                            montant: p.montant,
-                            part_patient: p.montant,
+                            montant: montantReel,
+                            part_patient: montantReel,
                             part_assurance: null
                         });
+                        resteAPatient -= montantReel;
                     });
 
-                    if (montantPaye && Number(montantPaye) > 0) {
+                    if (resteAPatient > 0 && montantPaye && Number(montantPaye) > 0) {
+                        const montantReel = Math.min(Number(montantPaye), resteAPatient);
                         paiementsList.push({
                             mode: modePaiement,
-                            montant: Number(montantPaye),
-                            part_patient: Number(montantPaye),
+                            montant: montantReel,
+                            part_patient: montantReel,
                             part_assurance: null
                         });
+                        resteAPatient -= montantReel;
                     }
                 } else {
                     paiementsList.push({
@@ -328,20 +337,35 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             }
         } else {
             // Pas de tiers payant
+            let resteAEnregistrer = totals.totalTtc;
+
             if (paiements.length > 0) {
-                paiementsList = paiements.map(p => ({ ...p, part_patient: null, part_assurance: null }));
-                if (montantPaye && Number(montantPaye) > 0) {
+                paiements.forEach(p => {
+                    if (resteAEnregistrer <= 0) return;
+                    const montantReel = Math.min(p.montant, resteAEnregistrer);
                     paiementsList.push({
-                        mode: modePaiement,
-                        montant: Number(montantPaye),
+                        mode: p.mode,
+                        montant: montantReel,
                         part_patient: null,
                         part_assurance: null
                     });
+                    resteAEnregistrer -= montantReel;
+                });
+
+                if (resteAEnregistrer > 0 && montantPaye && Number(montantPaye) > 0) {
+                    const montantReel = Math.min(Number(montantPaye), resteAEnregistrer);
+                    paiementsList.push({
+                        mode: modePaiement,
+                        montant: montantReel,
+                        part_patient: null,
+                        part_assurance: null
+                    });
+                    resteAEnregistrer -= montantReel;
                 }
             } else {
                 paiementsList = [{
                     mode: modePaiement,
-                    montant: Number(montantPaye),
+                    montant: totals.totalTtc,
                     part_patient: null,
                     part_assurance: null
                 }];
@@ -504,7 +528,8 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     statut: 'completee',
                     client_name: clientNameForTicket,
                     paiements_details: paiementsList,
-                    date_paiement: new Date().toISOString()
+                    date_paiement: new Date().toISOString(),
+                    user_details: { id: 0, username: finalFacture.validated_by_name || finalFacture.created_by_name || '' }
                 };
 
                 toast.success(t('sales.messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
@@ -574,16 +599,25 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             let totalVerse = 0;
 
             // 1. Enregistrer les paiements
+            const montantADevoir = (facture.part_client !== null && Number(facture.part_client) >= 0)
+                ? Number(facture.part_client)
+                : Number(facture.total_ttc);
+
+            let resteAEnregistrer = montantADevoir;
+
             await Promise.all(paiementsList.map(async (p) => {
+                if (resteAEnregistrer <= 0) return;
+
+                const montantReel = Math.min(p.montant, resteAEnregistrer);
                 const payload = {
                     facture: facture.id,
                     mode_paiement: p.mode,
-                    montant: p.montant,
+                    montant: montantReel,
                     reference: reference || null,
                     statut: 'completee',
                 };
                 await axios.post(caisseEndpoint, payload);
-                totalVerse += p.montant;
+                resteAEnregistrer -= montantReel;
             }));
 
             // 2. Mettre à jour le statut de la facture

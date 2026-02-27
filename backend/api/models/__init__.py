@@ -60,6 +60,7 @@ from .signals import (
 )
 from .promotions import Promotion, PromotionPackItem
 from .objectif import ObjectifCommercial
+from .configuration_objectifs import ConfigurationObjectifs
 
 __all__ = [
     # Users
@@ -91,5 +92,5 @@ __all__ = [
     # Promotions
     'Promotion', 'PromotionPackItem',
     # Objectifs
-    'ObjectifCommercial',
+    'ObjectifCommercial', 'ConfigurationObjectifs',
 ]

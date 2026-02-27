@@ -10,6 +10,7 @@ interface ActionButtonsProps {
   isValid: boolean
   isRetrocession?: boolean
   setIsRetrocession?: (v: boolean) => void
+  loading?: boolean
 }
 
 export default function ActionButtons({
@@ -21,7 +22,8 @@ export default function ActionButtons({
   pendingCount = 0,
   isValid,
   isRetrocession = false,
-  setIsRetrocession
+  setIsRetrocession,
+  loading = false
 }: ActionButtonsProps) {
   const { t } = useTranslation()
 
@@ -55,7 +57,7 @@ export default function ActionButtons({
 
           <button
             onClick={onSuspend}
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className="btn btn-xs sm:btn-md btn-warning btn-outline gap-1 sm:gap-2"
             title={t('facturation.actions.suspend_tooltip')}
           >
@@ -77,7 +79,7 @@ export default function ActionButtons({
 
           <button
             onClick={onProforma}
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className="btn btn-xs sm:btn-md btn-info btn-outline gap-1 sm:gap-2"
             title={t('facturation.actions.proforma_tooltip')}
           >
@@ -87,11 +89,13 @@ export default function ActionButtons({
 
           <button
             onClick={onPayment}
-            disabled={!isValid}
+            disabled={!isValid || loading}
             className="btn btn-xs sm:btn-md btn-primary gap-1 sm:gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow col-span-2 sm:col-span-1"
             title={t('facturation.actions.pay_tooltip')}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+            {loading ? <span className="loading loading-spinner w-3.5 h-3.5 sm:w-5 sm:h-5"></span> : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a1 1 0 11-2 0 1 1 0 012 0z" /></svg>
+            )}
             <span className="font-bold text-xs sm:text-base">{t('facturation.actions.pay')}</span>
           </button>
         </div>

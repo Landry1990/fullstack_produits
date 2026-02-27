@@ -13,7 +13,7 @@ interface UseInvoiceActionsProps {
     setFacturesLocal?: React.Dispatch<React.SetStateAction<Facture[]>>; // For optimistic updates
 }
 
-export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvoiceActionsProps) => {
+export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -174,7 +174,7 @@ export const useInvoiceActions = ({ refreshFactures, setFacturesLocal }: UseInvo
         // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
         const clientNameForTicket = fullFacture.client_name_override 
             || fullFacture.client_name 
-            || (fullFacture.client?.name) 
+            || (typeof fullFacture.client === 'object' ? (fullFacture.client as any)?.name : undefined) 
             || 'Client de passage';
         
         const ticket: TicketCaisse = {

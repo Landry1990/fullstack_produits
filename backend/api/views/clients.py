@@ -56,6 +56,8 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     ).order_by('name')
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    search_fields = ['name', 'email', 'phone', 'address']
     
     # Serializers optimisés
     list_serializer_class = ClientListSerializer

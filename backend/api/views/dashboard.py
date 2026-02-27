@@ -192,7 +192,7 @@ class DashboardViewSet(viewsets.ViewSet):
         taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
         
         # 3. Weekly Performance
-        ca_semaine = Facture.objects.filter(
+        ca_sem = Facture.objects.filter(
             date__date__gte=start_of_week,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
@@ -336,7 +336,7 @@ class DashboardViewSet(viewsets.ViewSet):
         return Response({
             'kpis': {
                 'jour': {'actual': float(ca_jour), 'target': float(obj_jour), 'rate': taux_jour},
-                'semaine': {'actual': float(ca_semaine), 'target': float(obj_sem), 'rate': taux_sem},
+                'semaine': {'actual': float(ca_sem), 'target': float(obj_sem), 'rate': taux_sem},
                 'mois': {'actual': float(ca_mois), 'target': float(obj_mois), 'rate': taux_mois},
             },
             'alerts': alerts
@@ -663,7 +663,8 @@ class StatistiquesViewSet(viewsets.ViewSet):
         Retourne la liste des utilisateurs ayant annulé plus de X factures
         sur une période donnée.
         """
-        from ..models import AuditLog, User
+        from ..models import AuditLog
+        from django.contrib.auth.models import User
         
         threshold = int(request.query_params.get('threshold', 5))
         days = int(request.query_params.get('days', 30))

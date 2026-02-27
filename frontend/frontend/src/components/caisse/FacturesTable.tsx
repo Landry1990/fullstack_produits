@@ -43,10 +43,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
 
   if (sortedFactures.length === 0) {
     return (
-      <div className="text-center py-10 bg-base-100 rounded-lg shadow">
-        <div className="text-4xl mb-4">📭</div>
-        <h3 className="font-bold text-lg">{t('no_pending')}</h3>
-        <p className="text-base-content/60">{t('no_pending_desc')}</p>
+      <div className="text-center py-16 bg-base-100">
+        <div className="text-5xl mb-4">📭</div>
+        <h3 className="font-bold text-lg text-base-content">{t('no_pending')}</h3>
+        <p className="text-base-content/50 text-sm mt-1">{t('no_pending_desc')}</p>
       </div>
     )
   }
@@ -73,8 +73,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     <>
       <div className="overflow-x-auto">
         <table className="table table-sm w-full">
-          <thead className="bg-base-200 sticky top-0 z-10">
-            <tr>
+          <thead className="bg-base-200/50 sticky top-0 z-10">
+            <tr className="text-xs uppercase tracking-wider text-base-content/60">
               <th>{t('table.ticket')}</th>
               <th>{t('table.invoice')}</th>
               <th>{t('table.client')}</th>

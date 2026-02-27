@@ -1,5 +1,4 @@
 import { useTranslation } from 'react-i18next'
-import DOMPurify from 'dompurify'
 import { TicketTemplate } from '../printing/TicketTemplate'
 
 interface TicketPreviewModalProps {
@@ -24,7 +23,6 @@ export default function TicketPreviewModal({
     if (!ticketElement) return;
     
     // Get computed styles from the preview element
-    const computedStyles = window.getComputedStyle(ticketElement);
     const ticketWidth = settings.ticket_paper_width || 80;
     
     // Clone the element to preserve all styles

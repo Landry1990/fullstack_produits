@@ -431,7 +431,7 @@ export default function Vitrine() {
 
         return { previousProducts };
     },
-    onError: (err, newTodo, context) => { // Keeping for context if needed, or remove args
+    onError: (_err, _newTodo, context) => { // Keeping for context if needed, or remove args
         queryClient.setQueryData(['vitrine-products', debouncedSearch, showPublicOnly], context?.previousProducts);
         toast.error("Erreur lors de la mise à jour");
     },

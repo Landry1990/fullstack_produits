@@ -346,9 +346,11 @@ class HistoriqueVentesTests(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertGreaterEqual(len(response.data), 1)
+        # HistoriqueVentesViewSet.list returns a dict {count, results, totals}
+        self.assertIn('results', response.data)
+        self.assertGreaterEqual(len(response.data['results']), 1)
 
-        day_data = response.data[0]
+        day_data = response.data['results'][0]
         self.assertIn('nb_ventes', day_data)
         self.assertIn('ca_ttc', day_data)
 
@@ -557,3 +559,86 @@ class AnnulationTests(APITestCase):
 
         lot.refresh_from_db()
         self.assertEqual(lot.quantity_remaining, 80, "Lot should be fully restored")
+
+
+class CaisseCappingTests(APITestCase):
+    """Tests for the backend safeguard capping payment amounts."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_superuser()
+        self.client.force_authenticate(user=self.user)
+        self.client_obj = TestDataFactory.create_client(name='Patient Test')
+
+    def test_caisse_payment_capped_to_invoice_total(self):
+        """CaisseViewSet.perform_create caps the amount to the invoice total."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal('1000')
+        )
+        url = reverse('caisse-list')
+        payload = {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '1500', # Excessive amount
+            'statut': 'completee'
+        }
+        response = self.client.post(url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check that the amount was capped to 1000
+        payment = Caisse.objects.get(id=response.data['id'])
+        self.assertEqual(payment.montant, Decimal('1000.00'))
+
+    def test_caisse_payment_capped_to_part_patient(self):
+        """CaisseViewSet.perform_create caps the amount to the part_client for insured clients."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal('1000'),
+            part_client=Decimal('200')
+        )
+        # Record the insurance part as 'en_compte'
+        Caisse.objects.create(
+            facture=facture, mode_paiement='en_compte', montant=Decimal('800'),
+            statut='completee', user=self.user
+        )
+        
+        url = reverse('caisse-list')
+        payload = {
+            'facture': facture.id,
+            'mode_paiement': 'especes',
+            'montant': '500', # Excessive amount (more than 200)
+            'statut': 'completee'
+        }
+        response = self.client.post(url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check that the amount was capped to 200
+        payment = Caisse.objects.get(id=response.data['id'])
+        self.assertEqual(payment.montant, Decimal('200.00'))
+
+    def test_caisse_payment_partial_capped(self):
+        """Subsequent payments are also capped to the remaining balance."""
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj, status='VAL', total_ttc=Decimal('1000')
+        )
+        # First payment of 600
+        Caisse.objects.create(
+            facture=facture, mode_paiement='especes', montant=Decimal('600'),
+            statut='completee', user=self.user
+        )
+        
+        url = reverse('caisse-list')
+        payload = {
+            'facture': facture.id,
+            'mode_paiement': 'carte',
+            'montant': '700', # Excessive amount (more than 400 remaining)
+            'statut': 'completee'
+        }
+        response = self.client.post(url, payload, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        
+        # Check that the amount was capped to 400
+        payment = Caisse.objects.get(id=response.data['id'])
+        self.assertEqual(payment.montant, Decimal('400.00'))
+

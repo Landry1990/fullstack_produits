@@ -25,6 +25,7 @@ from .ordonnancier_view import OrdonnancierViewSet
 from .views.communication import SmsViewSet, SmsTemplateViewSet
 from .views.finance_stats import FinanceStatsViewSet
 from .views.objectifs import ObjectifViewSet
+from .views.configuration_objectifs import ConfigurationObjectifsViewSet
 from .views.temporal_analysis import TemporalAnalysisViewSet
 
 
@@ -74,6 +75,7 @@ router.register(r'promis', PromisViewSet, basename='promis')
 router.register(r'promotions', PromotionViewSet, basename='promotion')
 router.register(r'finance-stats', FinanceStatsViewSet, basename='finance-stats')
 router.register(r'objectifs-commerciaux', ObjectifViewSet, basename='objectif-commercial')
+router.register(r'configuration-objectifs', ConfigurationObjectifsViewSet, basename='configuration-objectifs')
 router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
 router.register(r'tva', TVAViewSet, basename='tva')
 

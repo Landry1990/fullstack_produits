@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
-import { useConfirm } from '../hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
 import type { StockLot } from '../types'
 import SudoValidationModal from './common/SudoValidationModal'
@@ -40,7 +39,6 @@ interface PerimesStats {
 
 export default function Perimes() {
   const { t } = useTranslation()
-  const confirm = useConfirm()
   const [lots, setLots] = useState<StockLot[]>([])
   const [stats, setStats] = useState<PerimesStats | null>(null)
   const [loading, setLoading] = useState(false)

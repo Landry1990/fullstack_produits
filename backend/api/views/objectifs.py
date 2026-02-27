@@ -20,6 +20,27 @@ class ObjectifViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(periode=periode)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        """
+        Surcharge la création pour faire un 'upsert' (mise à jour si l'objectif existe déjà).
+        """
+        periode = request.data.get('periode')
+        date_debut = request.data.get('date_debut')
+        
+        if periode and date_debut:
+            existing_objectif = ObjectifCommercial.objects.filter(
+                periode=periode, 
+                date_debut=date_debut
+            ).first()
+            
+            if existing_objectif:
+                serializer = self.get_serializer(existing_objectif, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+                
+        return super().create(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'])
     def courants(self, request):
         """
