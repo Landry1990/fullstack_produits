@@ -93,7 +93,8 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         total_ligne: prixUnitaire,
                         lotId: null, // Default to Auto/FEFO
                         lotText: null,
-                        lotExpiration: null
+                        lotExpiration: null,
+                        treatment_duration_days: fullProduit.is_chronic ? fullProduit.default_treatment_days : undefined
                     }
 
                     // Focus logic
@@ -212,6 +213,14 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
         ))
     }, [calculateLigneTotal])
 
+    const updateTreatmentDuration = useCallback((produitId: number, duration: number) => {
+        setLignesFacture(prevLignes => prevLignes.map(ligne =>
+            ligne.produit.id === produitId
+                ? { ...ligne, treatment_duration_days: duration }
+                : ligne
+        ))
+    }, [])
+
     const removeLigne = useCallback((produitId: number) => {
         setLignesFacture(prev => prev.filter(ligne => ligne.produit.id !== produitId))
     }, [])
@@ -280,7 +289,8 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         total_ligne: calculateLigneTotal(quantity, prixBase, remise),
                         lotId: null,
                         lotText: null,
-                        lotExpiration: null
+                        lotExpiration: null,
+                        treatment_duration_days: product.is_chronic ? product.default_treatment_days : undefined
                     })
                 }
             })
@@ -297,6 +307,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
         updatePrix,
         updateRemiseProduit,
         updateLineLot,
+        updateTreatmentDuration,
         removeLigne,
         clearCart,
         cartStats,

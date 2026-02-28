@@ -1201,10 +1201,36 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'email', 'phone']
 
     def get_queryset(self):
+        from django.db.models import Sum, OuterRef, Subquery, DecimalField, Value, F
+        from django.db.models.functions import Coalesce
+        from api.models.orders import Commande, CommandeProduit
+        from api.models.paiements import PaiementFournisseur
+        
+        commandes_total = CommandeProduit.objects.filter(
+            commande__fournisseur=OuterRef('pk'),
+            commande__status=Commande.Status.CLOTUREE
+        ).values('commande__fournisseur').annotate(
+            total=Sum(F('quantity') * F('price_cost'), output_field=DecimalField())
+        ).values('total')
+        
+        paiements_total = PaiementFournisseur.objects.filter(
+            fournisseur=OuterRef('pk')
+        ).values('fournisseur').annotate(
+            total=Sum('montant', output_field=DecimalField())
+        ).values('total')
+
         qs = super().get_queryset()
+        
         # Par défaut, ne montrer que les fournisseurs actifs
         if not self.request.query_params.get('include_inactive'):
             qs = qs.filter(is_active=True)
+            
+        qs = qs.annotate(
+            total_du_annotated=Coalesce(Subquery(commandes_total[:1]), Value(0, output_field=DecimalField())),
+            total_paye_annotated=Coalesce(Subquery(paiements_total[:1]), Value(0, output_field=DecimalField()))
+        ).annotate(
+            solde_dette_annotated=F('total_du_annotated') - F('total_paye_annotated')
+        )
         return qs
 
     @action(detail=True, methods=['post'])

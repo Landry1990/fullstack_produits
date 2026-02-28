@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Package, Hash, Clock, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { Package, Clock, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
 import type { StockAnalysisItem } from '../../hooks/useStockAnalysis';
 
 interface StockAnalysisTableProps {
@@ -153,14 +153,14 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                         />
                                     </td>
                                 )}
-                                <td className="px-6 py-4">
+                                <td className="px-4 py-2">
                                     <div className="font-bold text-base-content tracking-tight uppercase">{item.name}</div>
-                                    <div className="text-[10px] font-black text-base-content/30 uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                                        <Hash className="w-2.5 h-2.5" /> {item.id}
+                                    <div className="text-[10px] font-black text-base-content/40 uppercase tracking-widest mt-0.5" title="CIP / Code Barre">
+                                        CIP: {item.cip || item.id}
                                     </div>
                                 </td>
-                                <td className="text-center">
-                                    <div className="badge badge-lg bg-base-200 border-none font-black min-w-12 h-10 rounded-xl shadow-inner italic">
+                                <td className="text-center py-2">
+                                    <div className="badge badge-md bg-base-200 border-none font-black min-w-10 rounded-lg shadow-inner italic">
                                         {item.stock}
                                     </div>
                                 </td>

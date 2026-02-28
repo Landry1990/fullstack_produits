@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 export interface StockAnalysisItem {
     id: number;
+    cip?: string;
     name: string;
     stock: number;
     rotation?: number;
@@ -28,6 +29,9 @@ export interface StockAnalysisResponse {
     fournisseur: string;
     total_items: number;
     total_value: number;
+    current_page?: number;
+    total_pages?: number;
+    page_size?: number;
     critical_count?: number;
     warning_count?: number;
     items: StockAnalysisItem[];
@@ -54,6 +58,8 @@ export const useStockAnalysis = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
     const [unsoldDays, setUnsoldDays] = useState<number>(30);
+    const [page, setPage] = useState<number>(1);
+    const pageSize = 50; // Fixed page size for now
 
     // Fetch suppliers
     const fetchFournisseurs = useCallback(async () => {
@@ -81,7 +87,10 @@ export const useStockAnalysis = () => {
         setLoading(true);
         setError(null);
         try {
-            const params: any = {};
+            const params: any = {
+                page,
+                page_size: pageSize
+            };
             if (selectedFournisseur) params.fournisseur = selectedFournisseur;
             if (activeTab === 'unsold') params.days = unsoldDays;
 
@@ -96,11 +105,16 @@ export const useStockAnalysis = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, selectedFournisseur, unsoldDays, apiBaseUrl, t]);
+    }, [activeTab, selectedFournisseur, unsoldDays, page, apiBaseUrl, t]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    // Reset pagination when tab or filters change
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab, selectedFournisseur, unsoldDays]);
 
     // Clear selection when tab changes
     useEffect(() => {
@@ -155,6 +169,8 @@ export const useStockAnalysis = () => {
         selectedItems,
         unsoldDays,
         setUnsoldDays,
+        page,
+        setPage,
         actions: {
             fetchData,
             handleGenerateOrder,

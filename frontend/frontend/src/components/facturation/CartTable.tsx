@@ -10,6 +10,7 @@ interface CartTableProps {
   updateQuantite: (produitId: number, quantite: number) => void
   updatePrix: (produitId: number, prix: string) => void
   updateRemiseProduit: (produitId: number, remise: string) => void
+  updateTreatmentDuration?: (produitId: number, duration: number) => void
   removeLigne: (produitId: number) => void
   onOpenLotModal: (product: ProduitModel, currentLotId: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
@@ -26,6 +27,7 @@ interface CartRowProps {
   updateQuantite: (produitId: number, quantite: number) => void
   updatePrix: (produitId: number, prix: string) => void
   updateRemiseProduit: (produitId: number, remise: string) => void
+  updateTreatmentDuration?: (produitId: number, duration: number) => void
   removeLigne: (produitId: number) => void
   onOpenLotModal: (product: ProduitModel, currentLotId: string | null) => void
   quantityInputsRef: React.MutableRefObject<Map<number, HTMLInputElement>>
@@ -43,6 +45,7 @@ const CartRow = React.memo(({
   updateQuantite,
   updatePrix,
   updateRemiseProduit,
+  updateTreatmentDuration,
   removeLigne,
   onOpenLotModal,
   quantityInputsRef,
@@ -105,6 +108,24 @@ const CartRow = React.memo(({
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
           {ligne.produit.name}
           {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+          {ligne.produit.is_chronic && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="badge badge-success badge-xs gap-1 py-1.5 px-2">
+                 <span className="text-[10px]">Chronique</span>
+              </span>
+              <div className="flex items-center gap-1 border rounded px-1.5 bg-success/5 border-success/20">
+                <span className="text-[10px] opacity-60">Traitement:</span>
+                <input 
+                   type="number"
+                   className="w-8 bg-transparent text-[10px] font-bold outline-none"
+                   value={ligne.treatment_duration_days || ''}
+                   onChange={(e) => updateTreatmentDuration?.(ligne.produit.id, parseInt(e.target.value) || 0)}
+                   min={1}
+                />
+                <span className="text-[10px] opacity-60">j</span>
+              </div>
+            </div>
+          )}
         </div>
       </td>
       <td className="text-right py-1">
@@ -196,6 +217,7 @@ export default function CartTable({
   updateQuantite,
   updatePrix,
   updateRemiseProduit,
+  updateTreatmentDuration,
   removeLigne,
   onOpenLotModal,
   quantityInputsRef,
@@ -246,6 +268,7 @@ export default function CartTable({
             updateQuantite={updateQuantite}
             updatePrix={updatePrix}
             updateRemiseProduit={updateRemiseProduit}
+            updateTreatmentDuration={updateTreatmentDuration}
             removeLigne={removeLigne}
             onOpenLotModal={onOpenLotModal}
             quantityInputsRef={quantityInputsRef}

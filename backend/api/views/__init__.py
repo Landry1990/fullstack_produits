@@ -34,6 +34,7 @@ from .coupons import CouponMonnaieViewSet
 from .promotions import PromotionViewSet
 from .configuration_objectifs import ConfigurationObjectifsViewSet
 from .temporal_analysis import TemporalAnalysisViewSet
+from .purge import PurgeViewSet
 
 # Import from parent api module (not yet migrated to views package)
 from ..rapport_view import RapportViewSet
@@ -58,5 +59,6 @@ __all__ = [
     'AuditLogViewSet',
     'HistoriqueVentesViewSet', 'HistoriqueAchatsViewSet', 'ProductImportView',
     'RapportViewSet', 'OrdonnancierViewSet', 'FormeViewSet', 'CouponMonnaieViewSet',
-    'PromotionViewSet', 'TemporalAnalysisViewSet', 'TVAViewSet'
+    'PromotionViewSet', 'TemporalAnalysisViewSet', 'TVAViewSet',
+    'PurgeViewSet',
 ]

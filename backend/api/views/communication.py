@@ -1,8 +1,8 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from ..models import SmsLog, SmsTemplate, Promis, Client
-from ..serializers import SmsLogSerializer, SmsTemplateSerializer
+from ..models import SmsLog, SmsTemplate, Promis, Client, WhatsAppLog
+from ..serializers import SmsLogSerializer, SmsTemplateSerializer, WhatsAppLogSerializer
 from ..services.sms import SmsService
 
 class SmsViewSet(viewsets.ModelViewSet):
@@ -79,3 +79,26 @@ class SmsTemplateViewSet(viewsets.ModelViewSet):
     queryset = SmsTemplate.objects.filter(is_active=True)
     serializer_class = SmsTemplateSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+class WhatsAppLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Historique des messages WhatsApp.
+    """
+    queryset = WhatsAppLog.objects.all().order_by('-created_at')
+    serializer_class = WhatsAppLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        type_filter = self.request.query_params.get('type')
+        status_filter = self.request.query_params.get('status')
+        client_id = self.request.query_params.get('client')
+        
+        if type_filter:
+            qs = qs.filter(type=type_filter)
+        if status_filter:
+            qs = qs.filter(status=status_filter)
+        if client_id:
+            qs = qs.filter(client_id=client_id)
+            
+        return qs

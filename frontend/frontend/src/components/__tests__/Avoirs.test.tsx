@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Avoirs from '../Avoirs'
 import { MemoryRouter } from 'react-router-dom'

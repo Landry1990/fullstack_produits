@@ -6,13 +6,15 @@ interface TicketPreviewModalProps {
   onClose: () => void
   ticket: any
   settings: any
+  onSendWhatsApp?: () => void
 }
 
 export default function TicketPreviewModal({
   isOpen,
   onClose,
   ticket,
-  settings
+  settings,
+  onSendWhatsApp
 }: TicketPreviewModalProps) {
   const { t } = useTranslation()
 
@@ -104,48 +106,6 @@ export default function TicketPreviewModal({
       line-height: 1.4;
     }
     ${additionalStyles}
-    /* Preserve Tailwind-like classes */
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .font-bold { font-weight: bold; }
-    .font-semibold { font-weight: 600; }
-    .font-black { font-weight: 900; }
-    .uppercase { text-transform: uppercase; }
-    .border-b { border-bottom: 1px solid black; }
-    .border-t { border-top: 1px solid black; }
-    .border-y { border-top: 1px solid black; border-bottom: 1px solid black; }
-    .border-dashed { border-style: dashed; }
-    .border-dotted { border-style: dotted; }
-    .flex { display: flex; }
-    .justify-between { justify-content: space-between; }
-    .justify-center { justify-content: center; }
-    .items-start { align-items: flex-start; }
-    .space-y-1 > * + * { margin-top: 0.25rem; }
-    .space-y-0\.5 > * + * { margin-top: 0.125rem; }
-    .mb-1 { margin-bottom: 0.25rem; }
-    .mb-2 { margin-bottom: 0.5rem; }
-    .mb-3 { margin-bottom: 0.75rem; }
-    .mb-4 { margin-bottom: 1rem; }
-    .mt-1 { margin-top: 0.25rem; }
-    .mt-2 { margin-top: 0.5rem; }
-    .mt-4 { margin-top: 1rem; }
-    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-    .pb-2 { padding-bottom: 0.5rem; }
-    .pb-3 { padding-bottom: 0.75rem; }
-    .pt-1 { padding-top: 0.25rem; }
-    .pt-2 { padding-top: 0.5rem; }
-    .pr-2 { padding-right: 0.5rem; }
-    .text-xs { font-size: 0.75rem; }
-    .text-\[11px\] { font-size: 11px; }
-    .text-\[10px\] { font-size: 10px; }
-    .text-base { font-size: 1rem; }
-    .text-lg { font-size: 1.125rem; }
-    .leading-relaxed { line-height: 1.625; }
-    .whitespace-nowrap { white-space: nowrap; }
-    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .max-w-\[50\%\] { max-width: 50%; }
-    .flex-1 { flex: 1 1 0%; }
   </style>
 </head>
 <body>
@@ -179,6 +139,19 @@ export default function TicketPreviewModal({
 
         <div className="p-3 bg-base-50 border-t border-base-200 flex justify-end gap-2">
           <button className="btn btn-ghost btn-sm" onClick={onClose}>{t('common.close')} (Esc)</button>
+          
+          {settings?.whatsapp_enabled && onSendWhatsApp && (
+             <button 
+               className="btn btn-outline btn-success btn-sm gap-2"
+               onClick={onSendWhatsApp}
+             >
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="currentColor" viewBox="0 0 448 512">
+                 <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 54 81.2 54 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-5.5-2.8-23.4-8.6-44.4-27.4-16.4-14.6-27.4-32.7-30.6-38.2-3.2-5.6-.3-8.6 2.5-11.3 2.5-2.4 5.5-6.5 8.3-9.7 2.8-3.3 3.7-5.6 5.5-9.3 1.9-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 13.2 5.8 23.5 9.2 31.5 11.8 13.3 4.2 25.4 3.6 35 2.2 10.7-1.5 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+               </svg>
+               WhatsApp
+             </button>
+          )}
+
           <button
             className="btn btn-primary btn-sm"
             onClick={handlePrint}

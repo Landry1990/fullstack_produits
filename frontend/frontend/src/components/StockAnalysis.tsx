@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Toaster } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { PackageSearch, ShoppingBag, X } from 'lucide-react';
+import { PackageSearch, ShoppingBag, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useStockAnalysis } from '../hooks/useStockAnalysis';
 import { StockAnalysisStats } from './stock/StockAnalysisStats';
 import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
@@ -20,6 +21,8 @@ const StockAnalysis = () => {
         selectedItems,
         unsoldDays,
         setUnsoldDays,
+        page,
+        setPage,
         actions
     } = useStockAnalysis();
 
@@ -91,6 +94,37 @@ const StockAnalysis = () => {
                         onToggleSelect={actions.toggleSelectItem}
                         onToggleSelectAll={actions.toggleSelectAll}
                     />
+
+                    {/* Pagination Controls */}
+                    {!loading && data && data.total_pages && data.total_pages > 1 && (
+                        <div className="p-6 border-t border-base-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="text-sm font-medium text-base-content/50 uppercase tracking-wider">
+                                Page <span className="font-black text-base-content">{data.current_page}</span> sur <span className="font-black text-base-content">{data.total_pages}</span>
+                            </div>
+                            
+                            <div className="join join-horizontal shadow-sm">
+                                <button 
+                                    className="join-item btn btn-sm bg-white hover:bg-base-200 border-base-200 text-base-content"
+                                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                
+                                <button className="join-item btn btn-sm px-6 bg-white border-base-200 text-base-content font-bold pointer-events-none">
+                                    {page}
+                                </button>
+
+                                <button 
+                                    className="join-item btn btn-sm bg-white hover:bg-base-200 border-base-200 text-base-content"
+                                    onClick={() => setPage((p) => Math.min(data.total_pages || 1, p + 1))}
+                                    disabled={page === data.total_pages}
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Floating Action Bar for Selection */}
                     {activeTab === 'shortage' && selectedItems.size > 0 && (

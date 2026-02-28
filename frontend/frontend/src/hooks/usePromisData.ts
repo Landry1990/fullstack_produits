@@ -33,6 +33,7 @@ export interface UsePromisDataReturn {
     handleDelivrer: (id: number) => Promise<void>;
     handleAnnuler: (id: number) => Promise<void>; // opens Sudo Modal
     handlePrintTicket: (id: number) => Promise<void>;
+    handleWhatsAppReminder: (id: number) => Promise<void>;
 
     // Bulk Actions
     selectedIds: Set<number>;
@@ -194,6 +195,19 @@ export function usePromisData(): UsePromisDataReturn {
         }
     };
 
+    const handleWhatsAppReminder = async (id: number) => {
+        setLoading(true);
+        try {
+            const { data } = await axios.post(`${promisEndpoint}${id}/send_whatsapp_reminder/`);
+            toast.success(data.detail);
+        } catch (err: any) {
+            toast.error(err.response?.data?.detail || "Erreur lors de l'envoi du rappel WhatsApp");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // --- Bulk Actions ---
     const toggleSelection = (id: number) => {
         setSelectedIds(prev => {
@@ -293,6 +307,7 @@ export function usePromisData(): UsePromisDataReturn {
         handleDelivrer,
         handleAnnuler,
         handlePrintTicket,
+        handleWhatsAppReminder,
         selectedIds,
         toggleSelection,
         toggleSelectAll,

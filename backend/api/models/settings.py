@@ -116,6 +116,12 @@ class PharmacySettings(models.Model):
         default="fr-FR",
         help_text="Code locale pour le formatage (ex: fr-FR, en-US)"
     )
+
+    # WhatsApp Business API (Meta Cloud)
+    whatsapp_enabled = models.BooleanField(default=False)
+    whatsapp_access_token = models.TextField(blank=True, default="", help_text="Meta Access Token (Permanent)")
+    whatsapp_phone_id = models.CharField(max_length=50, blank=True, default="", help_text="Phone Number ID")
+    whatsapp_business_id = models.CharField(max_length=50, blank=True, default="", help_text="WhatsApp Business Account ID")
     
     class Meta:
         verbose_name = "Paramètres Pharmacie"

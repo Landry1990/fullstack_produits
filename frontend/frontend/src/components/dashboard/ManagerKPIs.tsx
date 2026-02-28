@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, BarChart3, TrendingUp } from 'lucide-react';
+import { Calendar, BarChart3, TrendingUp, Trophy, Zap } from 'lucide-react';
+import Confetti from 'react-confetti';
 
 interface ProgressBarProps {
     rate: number;
@@ -41,6 +42,27 @@ interface ManagerKPIsProps {
     };
 }
 
+// Helper to calculate infinite stretch goals (Paliers)
+// Each palier is +20% of the original target
+const getPalierInfo = (actual: number, target: number) => {
+    if (target === 0 || actual < target) return null;
+    
+    const factor = 0.20; // 20% steps
+    const overflow = actual - target;
+    const palierSteps = Math.floor(overflow / (target * factor));
+    
+    const currentPalier = palierSteps + 1; 
+    const nextPalierLevel = currentPalier + 1;
+    
+    const nextPalierTarget = target * (1 + (nextPalierLevel - 1) * factor);
+    
+    return {
+        level: nextPalierLevel,
+        target: nextPalierTarget,
+        rate: Math.min((actual / nextPalierTarget) * 100, 100)
+    };
+};
+
 export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
     const { t } = useTranslation();
 
@@ -68,25 +90,66 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
         }
     ];
 
+    const [showConfetti, setShowConfetti] = useState(false);
+    
+    // Trigger confetti once if today's goal is reached
+    useEffect(() => {
+        if (kpis.jour?.rate >= 100 && kpis.jour?.target > 0) {
+            // Check session storage to avoid spamming confetti on every render/navigation
+            const todayStr = new Date().toISOString().split('T')[0];
+            const confettiKey = `goal_reached_${todayStr}`;
+            
+            if (!sessionStorage.getItem(confettiKey)) {
+                setShowConfetti(true);
+                sessionStorage.setItem(confettiKey, 'true');
+                
+                // Stop confetti after 5 seconds
+                setTimeout(() => setShowConfetti(false), 5000);
+            }
+        }
+    }, [kpis.jour]);
+
     return (
+        <div className="relative">
+            {showConfetti && (
+                <div className="fixed inset-0 z-[100] pointer-events-none flex justify-center items-center">
+                    <Confetti 
+                        width={window.innerWidth} 
+                        height={window.innerHeight} 
+                        recycle={false}
+                        numberOfPieces={500}
+                        gravity={0.15}
+                    />
+                </div>
+            )}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {items.map((item) => {
                 const data = kpis[item.key as keyof typeof kpis];
+                const isSuccess = data.rate >= 100 && data.target > 0;
+                
                 return (
-                    <div key={item.key} className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
-                        <div className="p-6">
-                            <div className="flex justify-between items-center mb-4">
-                                <div className={`flex items-center gap-2 font-bold ${item.colorText} uppercase tracking-tight`}>
+                    <div key={item.key} className={`bg-base-100 rounded-2xl shadow-sm border ${isSuccess ? 'border-success/50 shadow-success/20 shadow-lg relative overflow-visible' : 'border-base-300 overflow-hidden'} transition-all duration-500`}>
+                        {isSuccess && (
+                            <div className="absolute -top-3 -right-3 bg-success text-success-content rounded-full p-2 shadow-lg animate-bounce z-10">
+                                <Trophy size={20} />
+                            </div>
+                        )}
+                        <div className="p-6 h-full flex flex-col justify-between relative overflow-hidden">
+                            {isSuccess && (
+                                <div className="absolute inset-0 bg-gradient-to-tr from-success/5 to-transparent pointer-events-none" />
+                            )}
+                            <div className="flex justify-between items-center mb-4 relative z-10">
+                                <div className={`flex items-center gap-2 font-bold ${isSuccess ? 'text-success' : item.colorText} uppercase tracking-tight transition-colors duration-500`}>
                                     {item.icon}
                                     <span>{item.label}</span>
                                 </div>
-                                <span className={`badge ${item.key === 'jour' ? 'badge-primary' : item.key === 'semaine' ? 'badge-secondary' : 'badge-accent'} font-bold`}>
+                                <span className={`badge ${isSuccess ? 'badge-success animate-pulse shadow-sm' : item.key === 'jour' ? 'badge-primary' : item.key === 'semaine' ? 'badge-secondary' : 'badge-accent'} font-bold transition-colors duration-500`}>
                                     {Math.round(data.rate)}%
                                 </span>
                             </div>
                             
-                            <div className="mb-4">
-                                <span className="text-3xl font-black text-base-content">
+                            <div className="mb-4 relative z-10">
+                                <span className={`text-3xl font-black ${isSuccess ? 'text-success drop-shadow-sm' : 'text-base-content'} transition-colors duration-500`}>
                                     {formatCurrency(data.actual)}
                                 </span>
                             </div>
@@ -98,13 +161,36 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                 </div>
                                 <ProgressBar 
                                     rate={data.rate} 
-                                    colorClass={item.color} 
+                                    colorClass={isSuccess ? 'bg-success' : item.color} 
                                 />
                             </div>
+
+                            {/* Section Palier / Stretch Goal */}
+                            {isSuccess && (
+                                <div className="space-y-2 mt-4 pt-4 border-t border-base-200/50 animate-in fade-in slide-in-from-top-2 duration-500">
+                                    {(() => {
+                                        const palier = getPalierInfo(data.actual, data.target);
+                                        if (!palier) return null;
+                                        return (
+                                            <>
+                                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter text-warning">
+                                                    <span className="flex items-center gap-1"><Zap size={12} className="fill-warning" /> Objectif Palier {palier.level}</span>
+                                                    <span>{formatCurrency(palier.target)}</span>
+                                                </div>
+                                                <ProgressBar 
+                                                    rate={palier.rate} 
+                                                    colorClass="bg-warning shadow-[0_0_8px_rgba(251,191,36,0.6)]" 
+                                                />
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
             })}
+        </div>
         </div>
     );
 };

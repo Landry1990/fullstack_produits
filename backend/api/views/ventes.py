@@ -37,6 +37,7 @@ from ..serializers_optimized import FactureListSerializer, FactureDetailSerializ
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
+from ..whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -332,7 +333,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         business_logger.info(
             f"[VENTE] Finalisation OK facture #{facture.id} ({facture.numero_facture or 'brouillon'}) | "
-            f"total={facture.total_ttc} | client={client_id or 'passager'} | user={user.username}"
+            f"total={facture.total_ttc} | client={request.data.get('client') or 'passager'} | user={request.user.username}"
         )
         serializer = self.get_serializer(facture)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -672,6 +673,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             loyalty_conf = LoyaltySetting.objects.first()
             if loyalty_conf:
                 client = facture.client
+                client._skip_audit = True
                 save_client = False
                 
                 use_pending = request.data.get('use_pending_discount', False)
@@ -717,6 +719,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             facture.created_by = validation_user
 
         facture.status = Facture.Status.VALIDEE
+        facture._skip_audit = True
         if not facture.numero_facture:
             facture.numero_facture = f"FAC-{facture.id:06d}"
         facture.save(update_fields=['status', 'numero_facture', 'created_by', 'validated_by'])
@@ -762,6 +765,24 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             f"[VENTE] Validation OK #{facture.id} ({facture.numero_facture}) | "
             f"total={facture.total_ttc} | produits={items.count()} | validee_par={validation_user.username}"
         )
+
+        # Log d'audit explicite (remplace les multiples logs automatiques supprimés par _skip_audit)
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.INVOICE_VALIDATE,
+            model_name='Facture',
+            object_id=facture.id,
+            description=f"Validation Facture {facture.numero_facture} (Montant: {facture.total_ttc:,.0f} F)",
+            details={
+                'numero_facture': facture.numero_facture,
+                'total_ttc': float(facture.total_ttc),
+                'client': str(facture.client) if facture.client else facture.client_name_override,
+                'validated_by': validation_user.username,
+                'sudo_mode': validation_user != request.user
+            },
+            request=request
+        )
+
         facture.refresh_from_db()
         serializer = self.get_serializer(facture)
         return Response(serializer.data)
@@ -1126,21 +1147,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'top_produit': produit_data
         })
 
-    @action(detail=True, methods=['get'])
-    def imprimer_facture(self, request, pk=None):
-        """
-        Génère un PDF pour la facture.
-        Utilise InvoiceSettings pour la personnalisation.
-        """
-        facture = self.get_object()
-        
-        # Récupérer les paramètres
-        settings, created = InvoiceSettings.objects.get_or_create(pk=1)
-        
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"facture_{facture.numero_facture or facture.id}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-
+    def _generate_pdf(self, facture, settings, is_proforma=False):
+        """Helper to generate PDF buffer for a invoice."""
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
         story = []
@@ -1172,8 +1180,6 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             invoice_details_text += f"<br/>Tel: {facture.client.phone}"
             
         doc_title = "FACTURE"
-        is_proforma = request.query_params.get('type') == 'proforma' or facture.status == Facture.Status.PROFORMA
-        
         if is_proforma:
             doc_title = "PROFORMA"
             if not facture.numero_facture:
@@ -1262,31 +1268,25 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         story.append(table)
         story.append(Spacer(1, 1*cm))
         
-        total_ht = facture.total_ht
-        total_tva = facture.total_tva
-        remise = facture.remise
-        total_ttc = facture.total_ttc
-        
         totals_data = [
-            ['Sous-total :', f"{total_ht:,.0f} F"],
-            ['TVA :', f"{total_tva:,.0f} F"],
-            ['Remise :', f"{remise:,.0f} F"],
-            ['TOTAL À PAYER :', f"{total_ttc:,.0f} F"]
+            ['Sous-total :', f"{facture.total_ht:,.0f} F"],
+            ['TVA :', f"{facture.total_tva:,.0f} F"],
+            ['Remise :', f"{facture.remise:,.0f} F"],
+            ['TOTAL À PAYER :', f"{facture.total_ttc:,.0f} F"]
         ]
-        
         
         totals_table = Table(totals_data, colWidths=[4*cm, 4*cm])
         totals_table.setStyle(TableStyle([
             ('ALIGN', (0,0), (-1,-1), 'RIGHT'),
             ('FONTNAME', (0,0), (-1,-1), 'Helvetica-Bold'),
-            ('LINEABOVE', (0,-1), (-1,-1), 1, colors.black),  # Line above total
+            ('LINEABOVE', (0,-1), (-1,-1), 1, colors.black),
         ]))
         story.append(totals_table)
         
         doc.build(story, onFirstPage=lambda c, d: header_footer_facture(c, d, {
             'name': settings.company_name,
             'address': company_address_fmt.replace('<br/>', '\n'),
-            'tel': 'N/A' # TODO: Add phone to settings
+            'tel': 'N/A'
         }, {
             'facture_id': facture.numero_facture or f"#{facture.id}",
             'date_facture': invoice_date,
@@ -1296,8 +1296,67 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         }, facture))
         
         buffer.seek(0)
+        return buffer
+
+    @action(detail=True, methods=['get'])
+    def imprimer_facture(self, request, pk=None):
+        """
+        Génère un PDF pour la facture.
+        """
+        facture = self.get_object()
+        settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
+        is_proforma = request.query_params.get('type') == 'proforma' or facture.status == Facture.Status.PROFORMA
+        
+        buffer = self._generate_pdf(facture, settings, is_proforma)
+        
+        response = HttpResponse(content_type='application/pdf')
+        filename = f"facture_{facture.numero_facture or facture.id}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         response.write(buffer.getvalue())
         return response
+
+    @action(detail=True, methods=['post'])
+    def send_whatsapp(self, request, pk=None):
+        """
+        Envoie la facture par WhatsApp.
+        """
+        facture = self.get_object()
+        client = facture.client
+        
+        recipient_number = request.data.get('phone') or (client.phone if client else None)
+        
+        if not recipient_number:
+            return Response({'detail': 'Aucun numéro de téléphone destinataire fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        settings, _ = InvoiceSettings.objects.get_or_create(pk=1)
+        
+        # Check if enabled
+        pharmacy_settings = PharmacySettings.objects.first()
+        if not pharmacy_settings or not pharmacy_settings.whatsapp_enabled:
+            return Response({'detail': 'L\'intégration WhatsApp n\'est pas activée dans les paramètres.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            buffer = self._generate_pdf(facture, settings)
+            success, message = WhatsAppService.send_invoice_pdf(
+                facture, recipient_number, buffer, client.name if client else "Client"
+            )
+            
+            log_audit(
+                request.user, 
+                AuditLog.Action.AUTRE, 
+                'Facture', 
+                facture.id, 
+                f"Envoi facture {facture.numero_facture} via WhatsApp à {recipient_number}",
+                request=request
+            )
+            
+            if success:
+                return Response({'detail': message})
+            return Response({'detail': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        except Exception as e:
+            logger.error(f"Erreur envoi WhatsApp: {str(e)}")
+            return Response({'detail': f"Erreur lors de l'envoi : {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])
     def print_data(self, request, pk=None):
@@ -1415,6 +1474,29 @@ class FactureProduitViewSet(viewsets.ModelViewSet):
     filterset_fields = ['produit', 'facture']
     permission_classes = [IsAuthenticated]
 
+    @action(detail=True, methods=['post'])
+    def envoi_rappel_renouvellement(self, request, pk=None):
+        """
+        Déclenche l'envoi d'un rappel de renouvellement WhatsApp.
+        """
+        line = self.get_object()
+        if not line.produit or not line.produit.is_chronic:
+            return Response({'detail': 'Ce produit n\'est pas marqué comme traitement chronique.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        success, message = WhatsAppService.send_renewal_reminder(line)
+        if success:
+            log_audit(
+                user=request.user,
+                action=AuditLog.Action.OTHER,
+                model_name='FactureProduit',
+                object_id=line.id,
+                description=f"Rappel renouvellement envoyé pour {line.produit.name}",
+                details={'facture': line.facture.id, 'client': line.facture.client_id},
+                request=request
+            )
+            return Response({'detail': message})
+        return Response({'detail': message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class CaisseViewSet(viewsets.ModelViewSet):
     """API endpoint for caisse (paiements)."""
@@ -1448,10 +1530,15 @@ class CaisseViewSet(viewsets.ModelViewSet):
             
             # Montant dû (part client si tiers payant, sinon total TTC)
             montant_du = facture.part_client if (facture.part_client is not None and facture.part_client >= 0) else facture.total_ttc
-            reste = max(Decimal('0'), montant_du - deja_paye)
             
-            if montant_saisi > reste:
-                serializer.validated_data['montant'] = reste
+            if montant_du >= 0:
+                reste = max(Decimal('0'), montant_du - deja_paye)
+                if montant_saisi > reste:
+                    serializer.validated_data['montant'] = reste
+            else:
+                reste = min(Decimal('0'), montant_du - deja_paye)
+                if montant_saisi < reste:
+                    serializer.validated_data['montant'] = reste
 
         serializer.save(user=user)
         

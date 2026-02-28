@@ -32,6 +32,7 @@ const Promis: React.FC = () => {
         handleDelivrer,
         handleAnnuler,
         handlePrintTicket,
+        handleWhatsAppReminder,
         selectedIds,
         toggleSelection,
         toggleSelectAll,
@@ -94,6 +95,7 @@ const Promis: React.FC = () => {
                     onCancel={handleAnnuler}
                     onPrint={handlePrintTicket}
                     onSms={(promis) => setSmsModalState({ isOpen: true, promis })}
+                    onWhatsApp={handleWhatsAppReminder}
                 />
             </div>
 

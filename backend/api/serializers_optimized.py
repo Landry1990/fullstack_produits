@@ -149,8 +149,14 @@ class CommandeListSerializer(serializers.ModelSerializer):
 
     def get_reste_a_payer(self, obj):
         # Use annotated values if available
-        total = getattr(obj, 'total_annotated', obj.total)
-        paye = getattr(obj, 'montant_paye_annotated', obj.montant_paye)
+        total = getattr(obj, 'total_annotated', None)
+        if total is None:
+            total = obj.total
+            
+        paye = getattr(obj, 'montant_paye_annotated', None)
+        if paye is None:
+            paye = obj.montant_paye
+            
         return max(0, total - paye)
 
     def get_statut_paiement(self, obj):
@@ -158,8 +164,14 @@ class CommandeListSerializer(serializers.ModelSerializer):
             return "NON_CONCERNE"
         
         # Use annotated values
-        total = getattr(obj, 'total_annotated', obj.total)
-        paye = getattr(obj, 'montant_paye_annotated', obj.montant_paye)
+        total = getattr(obj, 'total_annotated', None)
+        if total is None:
+            total = obj.total
+            
+        paye = getattr(obj, 'montant_paye_annotated', None)
+        if paye is None:
+            paye = obj.montant_paye
+            
         reste = max(0, total - paye)
         
         if reste <= 0:

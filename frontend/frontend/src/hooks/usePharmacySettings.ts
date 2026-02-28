@@ -22,6 +22,11 @@ export interface PharmacySettings {
     ticket_paper_width?: number
     currency_symbol?: string
     locale?: string
+    // WhatsApp Business API (Meta Cloud)
+    whatsapp_enabled?: boolean
+    whatsapp_access_token?: string
+    whatsapp_phone_id?: string
+    whatsapp_business_id?: string
 }
 
 const DEFAULT_SETTINGS: PharmacySettings = {
@@ -43,7 +48,11 @@ const DEFAULT_SETTINGS: PharmacySettings = {
     debt_alert_threshold: '100000',
     ticket_paper_width: 80,
     currency_symbol: 'FCFA',
-    locale: 'fr-FR'
+    locale: 'fr-FR',
+    whatsapp_enabled: false,
+    whatsapp_access_token: '',
+    whatsapp_phone_id: '',
+    whatsapp_business_id: ''
 }
 
 export function usePharmacySettings() {

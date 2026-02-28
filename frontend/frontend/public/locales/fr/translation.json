@@ -468,7 +468,8 @@
         "stats": {
             "total_invoices": "Total Factures",
             "total_paid": "Total Payé",
-            "remaining": "Reste à Payer"
+            "remaining": "Reste à Payer",
+            "debtors": "Clients Débiteurs"
         },
         "client_list": {
             "client": "Client",
@@ -1855,9 +1856,6 @@
         "empty": "Aucune facture en attente d'encaissement"
     },
     "facturation": {
-        "totals": {
-            "net_a_payer": "NET À PAYER"
-        },
         "pending_sales": {
             "title": "Ventes en attente",
             "items_count": "{{count}} article(s)"
@@ -2005,7 +2003,8 @@
             "tva": "TVA",
             "total_ttc": "Total TTC",
             "part_patient": "Part Patient / Net à payer",
-            "part_assurance": "Part Assurance"
+            "part_assurance": "Part Assurance",
+            "net_a_payer": "NET À PAYER"
         },
         "stock_resolution": {
             "title": "Résolution de Stock / Promis",

@@ -59,3 +59,49 @@ class SmsTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class WhatsAppLog(models.Model):
+    """Log des messages WhatsApp envoyés."""
+    class Type(models.TextChoices):
+        FACTURE = 'FACTURE', 'Envoi Facture'
+        PROMIS = 'PROMIS', 'Disponibilité Promis'
+        MANUEL = 'MANUEL', 'Envoi Manuel'
+        RAPPEL = 'RAPPEL', 'Rappel Paiement'
+        RENOUVELLEMENT = 'RENOUVELLEMENT', 'Renouvellement Traitement'
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'En attente'
+        SENT = 'SENT', 'Envoyé'
+        FAILED = 'FAILED', 'Échec'
+        DELIVERED = 'DELIVERED', 'Reçu'
+        READ = 'READ', 'Lu'
+
+    recipient_number = models.CharField(max_length=20)
+    recipient_name = models.CharField(max_length=100, blank=True)
+    message = models.TextField()
+    
+    # Attachment info
+    has_attachment = models.BooleanField(default=False)
+    attachment_path = models.CharField(max_length=255, blank=True, null=True)
+    
+    type = models.CharField(max_length=20, choices=Type.choices, default=Type.FACTURE)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    
+    provider_id = models.CharField(max_length=100, blank=True, null=True)
+    provider_response = models.TextField(blank=True, null=True)
+    
+    facture = models.ForeignKey('Facture', on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_logs')
+    client = models.ForeignKey('Client', on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_logs')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    sent_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Journal WhatsApp"
+        verbose_name_plural = "Journal WhatsApp"
+
+    def __str__(self):
+        return f"WhatsApp à {self.recipient_name or self.recipient_number} ({self.get_status_display()})"

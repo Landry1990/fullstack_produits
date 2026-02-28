@@ -100,5 +100,14 @@
         },
         "confirm": "Valider le paiement",
         "success": "Paiement enregistré"
+    },
+    "stats_pending_title": "En Attente",
+    "stats_pending_desc": "facture(s) à encaisser",
+    "stats_total_title": "Montant Total",
+    "stats_total_desc": "à encaisser",
+    "stats_coupons_title": "Coupons Actifs",
+    "stats_coupons_desc": "coupon(s) disponible(s)",
+    "common": {
+        "print": "Imprimer"
     }
 }
