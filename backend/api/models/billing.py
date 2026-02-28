@@ -188,6 +188,10 @@ class FactureProduit(models.Model):
         default=0.00,
         help_text="TVA applicable à cette ligne"
     )
+    treatment_duration_days = models.IntegerField(
+        null=True, blank=True,
+        help_text="Durée du traitement en jours pour ce produit (pour rappels chroniques)"
+    )
     lot = models.CharField(max_length=20, blank=True, null=True)
     stock_lot = models.ForeignKey(
         'StockLot', on_delete=models.SET_NULL, null=True, blank=True, 

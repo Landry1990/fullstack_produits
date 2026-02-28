@@ -30,7 +30,6 @@ const JournalAudit: React.FC = () => {
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
     const [userFilter, setUserFilter] = useState('');
-    const [modelFilter, setModelFilter] = useState('');
     
     const [expandedLog, setExpandedLog] = useState<number | null>(null);
     const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
@@ -47,7 +46,6 @@ const JournalAudit: React.FC = () => {
         page,
         action: actionFilter,
         user: userFilter,
-        model_name: modelFilter,
         date_from: dateFrom,
         date_to: dateTo
     });
@@ -55,7 +53,6 @@ const JournalAudit: React.FC = () => {
     const { data: statistics } = useAuditStats({
         action: actionFilter,
         user: userFilter,
-        model_name: modelFilter,
         date_from: dateFrom,
         date_to: dateTo
     });
@@ -65,13 +62,6 @@ const JournalAudit: React.FC = () => {
     // Derived Data
     const logs = logsData?.results || [];
     const totalPages = Math.ceil((logsData?.count || 0) / 50);
-    
-    // Derive unique models from current logs (replicating original behavior)
-    // Ideally this should come from a separate API endpoint or be cumulative, 
-    // but we stick to original logic for now (models from current page)
-    const models = useMemo(() => {
-        return [...new Set(logs.map(log => log.model_name))].filter(Boolean);
-    }, [logs]);
 
     const filteredLogs = useMemo(() => {
         if (!searchQuery.trim()) return logs;
@@ -93,7 +83,6 @@ const JournalAudit: React.FC = () => {
           const params = new URLSearchParams();
           if (actionFilter) params.append('action', actionFilter);
           if (userFilter) params.append('user', userFilter);
-          if (modelFilter) params.append('model_name', modelFilter);
           if (dateFrom) params.append('date_from', dateFrom);
           if (dateTo) params.append('date_to', dateTo);
           
@@ -121,7 +110,6 @@ const JournalAudit: React.FC = () => {
     const handleResetFilters = () => {
         setActionFilter('');
         setUserFilter('');
-        setModelFilter('');
         setDateFrom('');
         setDateTo('');
         setSearchQuery('');
@@ -132,25 +120,55 @@ const JournalAudit: React.FC = () => {
         switch (action) {
           case 'CREATE':
           case 'INV_CRE':
-            return { badge: 'badge-success', icon: '➕', bg: 'bg-green-50' };
+            return { badge: 'badge-success', icon: '➕', bg: 'bg-green-50', color: 'text-green-700' };
           case 'UPDATE':
           case 'STOCK_ADJ':
           case 'PRICE_CHG':
-            return { badge: 'badge-warning', icon: '✏️', bg: 'bg-yellow-50' };
+            return { badge: 'badge-warning', icon: '✏️', bg: 'bg-yellow-50', color: 'text-yellow-700' };
           case 'DELETE':
           case 'INV_CANCEL':
           case 'ORD_CNCL':
           case 'INV_DEL':
-            return { badge: 'badge-error', icon: '🗑️', bg: 'bg-red-50' };
+            return { badge: 'badge-error', icon: '🗑️', bg: 'bg-red-50', color: 'text-red-700' };
           case 'CLOTURE':
           case 'ORD_RECV':
-            return { badge: 'badge-info', icon: '💰', bg: 'bg-blue-50' };
+            return { badge: 'badge-info', icon: '💰', bg: 'bg-blue-50', color: 'text-blue-700' };
           case 'INV_VALID':
           case 'INV_VAL':
-            return { badge: 'badge-primary', icon: '✅', bg: 'bg-purple-50' };
+            return { badge: 'badge-primary', icon: '✅', bg: 'bg-purple-50', color: 'text-purple-700' };
           default:
-            return { badge: 'badge-ghost', icon: '📝', bg: 'bg-gray-50' };
+            return { badge: 'badge-ghost', icon: '📝', bg: 'bg-gray-50', color: 'text-gray-700' };
         }
+    };
+
+    const formatAuditDetails = (log: any) => {
+        if (!log.details || Object.keys(log.details).length === 0) return null;
+        const d = log.details;
+
+        // Custom formatting logic based on action and details structure
+        if (log.action === 'PRICE_CHG') {
+            return `Prix : ${d.old_price} F ➔ ${d.new_price} F`;
+        }
+        if (log.action === 'STOCK_ADJ') {
+            return `Stock : ${d.old_quantity} ➔ ${d.new_quantity} (${d.reason || 'Ajustement'})`;
+        }
+        if (d.sudo_validation) {
+            return `Validé par ${d.sudo_user} pour ${d.sudo_permission}`;
+        }
+        if (d.changes) {
+            return Object.entries(d.changes)
+                .map(([key, val]: [any, any]) => `${key}: ${val.old} ➔ ${val.new}`)
+                .join(', ');
+        }
+        
+        // Fallback: search for common keys
+        const highlights = [];
+        if ('amount' in d) highlights.push(`Montant: ${d.amount} F`);
+        if ('montant' in d) highlights.push(`Montant: ${d.montant} F`);
+        if ('quantity' in d) highlights.push(`Quantité: ${d.quantity}`);
+        if ('ecart' in d) highlights.push(`Écart: ${d.ecart}`);
+        
+        return highlights.length > 0 ? highlights.join(' | ') : null;
     };
 
     const toggleExpandLog = (logId: number) => {
@@ -197,269 +215,136 @@ const JournalAudit: React.FC = () => {
             </div>
           )}
     
-          {/* Filtres */}
-          <div className="bg-white rounded-lg shadow-md p-4 mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Filtres</h3>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setShowStats(!showStats)}
-                  className="btn btn-sm btn-outline"
-                >
-                  {showStats ? '📊 Masquer stats' : '📊 Afficher stats'}
-                </button>
-                <button 
-                  onClick={handleExportCSV}
-                  className="btn btn-sm btn-success"
-                >
-                  📥 Export CSV
-                </button>
-                <button 
-                  onClick={handleResetFilters}
-                  className="btn btn-sm btn-ghost"
-                >
-                  🔄 Réinitialiser
-                </button>
-              </div>
-            </div>
-    
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Type d'action</span>
-                </label>
-                <select 
-                  className="select select-bordered w-full"
-                  value={actionFilter}
-                  onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}
-                >
-                  {ACTION_TYPES.map(type => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Utilisateur</span>
-                </label>
-                <select 
-                  className="select select-bordered w-full"
-                  value={userFilter}
-                  onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}
-                >
-                  <option value="">Tous</option>
-                  {users.map(user => (
-                    <option key={user.id} value={user.id.toString()}>
-                      {user.first_name || user.last_name 
-                        ? `${user.first_name} ${user.last_name}`.trim() 
-                        : user.username}
-                    </option>
-                  ))}
-                </select>
-              </div>
-    
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Modèle</span>
-                </label>
-                <select 
-                  className="select select-bordered w-full"
-                  value={modelFilter}
-                  onChange={(e) => { setModelFilter(e.target.value); setPage(1); }}
-                >
-                  <option value="">Tous</option>
-                  {models.map(model => (
-                    <option key={model} value={model}>{model}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-    
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Date début</span>
-                </label>
-                <div className="flex gap-1">
-                  <input 
-                    type="date"
-                    className="input input-bordered w-full"
-                    value={dateFrom ? dateFrom.split('T')[0] : ''}
-                    onChange={(e) => { 
-                        const d = e.target.value;
-                        const t = dateFrom ? dateFrom.split('T')[1] : '00:00';
-                        setDateFrom(d ? `${d}T${t}` : '');
-                        setPage(1); 
-                    }}
-                    lang="fr"
-                  />
-                  <input 
-                    type="time"
-                    className="input input-bordered w-32"
-                    value={dateFrom ? dateFrom.split('T')[1] : ''}
-                    onChange={(e) => { 
-                         const t = e.target.value;
-                         const d = dateFrom ? dateFrom.split('T')[0] : new Date().toISOString().split('T')[0];
-                         setDateFrom(`${d}T${t}`);
-                         setPage(1);
-                    }}
-                    lang="fr"
-                  />
+          {/* Filtres compacts */}
+          <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden mb-6">
+            <div className="p-4 bg-base-200/50 flex flex-wrap items-center justify-between gap-4 border-b border-base-200">
+                <div className="flex items-center gap-2">
+                    <span className="p-2 bg-primary/10 rounded-lg">🔍</span>
+                    <h3 className="font-black text-sm uppercase tracking-wider opacity-70">Outil de recherche & Filtres</h3>
                 </div>
-              </div>
-    
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Date fin</span>
-                </label>
-                <div className="flex gap-1">
-                  <input 
-                    type="date"
-                    className="input input-bordered w-full"
-                    value={dateTo ? dateTo.split('T')[0] : ''}
-                    onChange={(e) => { 
-                        const d = e.target.value;
-                        const t = dateTo ? dateTo.split('T')[1] : '23:59';
-                        setDateTo(d ? `${d}T${t}` : '');
-                        setPage(1); 
-                    }}
-                    lang="fr"
-                  />
-                  <input 
-                    type="time"
-                    className="input input-bordered w-32"
-                    value={dateTo ? dateTo.split('T')[1] : ''}
-                    onChange={(e) => { 
-                         const t = e.target.value;
-                         const d = dateTo ? dateTo.split('T')[0] : new Date().toISOString().split('T')[0];
-                         setDateTo(`${d}T${t}`);
-                         setPage(1);
-                    }}
-                    lang="fr"
-                  />
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setShowStats(!showStats)} className={`btn btn-sm ${showStats ? 'btn-primary' : 'btn-ghost'} rounded-lg font-bold`}>
+                        {showStats ? 'MASQUER STATS' : 'AFFICHER STATS'}
+                    </button>
+                    <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold">EXPORTER CSV</button>
+                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg opacity-50 hover:opacity-100">RÉINITIALISER</button>
                 </div>
-              </div>
-              
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text font-semibold">Rechercher</span>
-                </label>
-                <input 
-                  type="text"
-                  placeholder="Description, utilisateur..."
-                  className="input input-bordered w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
             </div>
-    
-            <div className="flex justify-end mt-4">
-              <div className="btn-group">
-                <button 
-                  className={`btn btn-sm ${viewMode === 'cards' ? 'btn-active' : ''}`}
-                  onClick={() => setViewMode('cards')}
-                >
-                  🗂️ Cartes
-                </button>
-                <button 
-                  className={`btn btn-sm ${viewMode === 'table' ? 'btn-active' : ''}`}
-                  onClick={() => setViewMode('table')}
-                >
-                  📄 Tableau
-                </button>
-              </div>
+
+            <div className="p-5 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Action</label>
+                    <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>
+                        {ACTION_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Utilisateur</label>
+                    <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
+                        <option value="">Tous les utilisateurs</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id.toString()}>
+                                {user.first_name || user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="flex flex-col gap-1 lg:col-span-1">
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Période (Début)</label>
+                    <input type="datetime-local" className="input input-bordered input-sm w-full font-bold" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
+                </div>
+                <div className="flex flex-col gap-1 lg:col-span-1">
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Période (Fin)</label>
+                    <input type="datetime-local" className="input input-bordered input-sm w-full font-bold" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} />
+                </div>
+                <div className="flex flex-col gap-1 lg:col-span-1">
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Recherche textuelle</label>
+                    <input type="text" placeholder="Facture, motif, produit..." className="input input-bordered input-sm w-full font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                </div>
             </div>
           </div>
-    
+            {/* View Toggle */}
+          <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center gap-2">
+                  <h3 className="font-black text-xs uppercase opacity-40">Flux d'activité</h3>
+                  <div className="badge badge-ghost font-bold text-[10px]">{filteredLogs.length} items</div>
+              </div>
+              <div className="join bg-base-100 shadow-sm border border-base-200 p-0.5 rounded-xl">
+                  <button onClick={() => setViewMode('cards')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'cards' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>🗂️ CARTES</button>
+                    <button onClick={() => setViewMode('table')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'table' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>📄 TABLEAU</button>
+              </div>
+          </div>
+
           {/* Logs */}
           {loading ? (
-            <div className="flex justify-center items-center py-20">
-              <div className="loading loading-spinner loading-lg"></div>
-              <span className="ml-4 text-lg">Chargement des logs...</span>
+            <div className="flex flex-col items-center justify-center py-24 bg-base-100 rounded-3xl border-2 border-dashed border-base-200">
+              <div className="loading loading-spinner loading-lg text-primary"></div>
+              <span className="mt-4 font-black uppercase text-xs opacity-30 tracking-widest">Synchronisation du journal...</span>
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="text-xl text-gray-500">Aucun log trouvé</p>
-              <p className="text-gray-400 mt-2">Essayez de modifier vos filtres de recherche</p>
+            <div className="bg-base-100 rounded-3xl border-2 border-dashed border-base-200 p-24 text-center">
+              <div className="text-5xl mb-6 opacity-20">🍃</div>
+              <p className="font-black text-lg opacity-40 uppercase">Aucune activité trouvée</p>
+              <p className="text-sm opacity-30 mt-1">Ajustez vos filtres ou vérifiez la période sélectionnée.</p>
             </div>
           ) : viewMode === 'cards' ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredLogs.map(log => {
                 const style = getActionStyle(log.action);
                 const isExpanded = expandedLog === log.id;
+                const formattedDetails = formatAuditDetails(log);
+                const isSudo = !!log.details?.sudo_validation;
                 
                 return (
-                  <div 
-                    key={log.id} 
-                    className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden border-l-4 ${
-                      style.badge === 'badge-success' ? 'border-green-500' :
-                      style.badge === 'badge-warning' ? 'border-yellow-500' :
-                      style.badge === 'badge-error' ? 'border-red-500' :
-                      style.badge === 'badge-info' ? 'border-blue-500' :
-                      style.badge === 'badge-primary' ? 'border-purple-500' :
-                      'border-gray-300'
-                    }`}
-                  >
-                    <div className={`p-4 ${style.bg}`}>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <div className="text-3xl">{style.icon}</div>
-                          <div>
-                            <span className={`badge ${style.badge} badge-lg`}>
-                              {log.action_display || log.action}
-                            </span>
-                          </div>
+                  <div key={log.id} className="bg-base-100 rounded-2xl shadow-sm border border-base-200 overflow-hidden group hover:border-primary/30 transition-all">
+                    <div className="flex flex-col md:flex-row md:items-center">
+                        <div className={`p-4 md:w-48 flex-shrink-0 flex items-center gap-3 border-r border-base-200 ${style.bg}/30`}>
+                            <span className="text-2xl">{style.icon}</span>
+                            <div className="flex flex-col">
+                                <span className={`text-[10px] font-black uppercase ${style.color}`}>{log.action_display || log.action}</span>
+                                <span className="text-[10px] font-bold opacity-40 leading-tight">
+                                    {format(new Date(log.timestamp), "HH:mm:ss", { locale: fr })}
+                                </span>
+                            </div>
                         </div>
-    
-                        <div className="flex-1 min-w-0">
-                          <p className="text-gray-800 font-medium text-lg mb-1">
-                            {log.description || (
-                              <span className="text-gray-500 italic">
-                                {log.model_name} #{log.object_id}
-                              </span>
-                            )}
-                          </p>
-                          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              <strong>{log.user_name || 'Système'}</strong>
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {format(new Date(log.timestamp), 'dd/MM/yyyy à HH:mm:ss', { locale: fr })}
-                            </span>
-                            {log.ip_address && (
-                              <span className="flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                </svg>
-                                {log.ip_address}
-                              </span>
-                            )}
-                          </div>
+
+                        <div className="p-4 flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-bold text-sm text-base-content/80 line-clamp-1">{log.description || `${log.model_name} #${log.object_id}`}</span>
+                                    {isSudo && <span className="badge badge-error badge-sm font-black text-[9px] text-white">VALIDATION SUDO</span>}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
+                                    <span className="flex items-center gap-1 font-bold opacity-60">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-base-300"></div>
+                                        {log.user_name || 'SYSTÈME'}
+                                    </span>
+                                    <span className="opacity-30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: fr })}</span>
+                                    {formattedDetails && (
+                                        <span className="font-black text-primary/80 bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
+                                            {formattedDetails}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                {log.details && (
+                                    <button onClick={() => toggleExpandLog(log.id)} className={`btn btn-circle btn-sm ${isExpanded ? 'btn-neutral' : 'btn-ghost'}`}>
+                                        {isExpanded ? '▲' : 'JSON'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
-    
-                        {log.details && Object.keys(log.details).length > 0 && (
-                          <button
-                            onClick={() => toggleExpandLog(log.id)}
-                            className="btn btn-sm btn-ghost flex-shrink-0"
-                          >
-                            {isExpanded ? '▲ Masquer' : '▼ Détails'}
-                          </button>
-                        )}
-                      </div>
                     </div>
-    
+                    
                     {isExpanded && log.details && (
-                      <div className="bg-gray-800 text-green-400 p-4 font-mono text-sm overflow-x-auto">
-                        <pre className="whitespace-pre-wrap">
+                      <div className="bg-neutral text-neutral-content p-6 font-mono text-[11px] border-t border-neutral-focus">
+                        <div className="flex justify-between items-center mb-4 opacity-50">
+                            <span className="font-black">RAW TRANSACTION DATA</span>
+                            <span className="text-[9px]">ID: {log.id}</span>
+                        </div>
+                        <pre className="whitespace-pre-wrap leading-relaxed opacity-80">
                           {JSON.stringify(log.details, null, 2)}
                         </pre>
                       </div>
@@ -469,70 +354,60 @@ const JournalAudit: React.FC = () => {
               })}
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-              <table className="table table-zebra w-full">
+            <div className="bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+              <table className="table w-full">
                 <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Opérateur</th>
-                    <th>Type d'opération</th>
-                    <th>Facture/Produit/Numéro</th>
-                    <th className="text-right">Montant</th>
+                  <tr className="bg-base-200/50">
+                    <th className="font-black text-[10px] uppercase opacity-50 pl-6">Horodatage</th>
+                    <th className="font-black text-[10px] uppercase opacity-50">Utilisateur</th>
+                    <th className="font-black text-[10px] uppercase opacity-50">Opération</th>
+                    <th className="font-black text-[10px] uppercase opacity-50">Description & Changements</th>
+                    <th className="font-black text-[10px] uppercase opacity-50 text-right pr-6">Statut</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-base-200">
                   {filteredLogs.map(log => {
                     const style = getActionStyle(log.action);
-                    
-                    // Extraction du montant/quantité depuis les détails
-                    let montant: React.ReactNode = '-';
-                    if (log.details) {
-                      if ('quantity' in log.details) montant = log.details.quantity as string;
-                      else if ('quantite' in log.details) montant = log.details.quantite as string;
-                      else if ('ecart_total' in log.details) montant = (log.details.ecart_total as number) > 0 ? `+${log.details.ecart_total}` : log.details.ecart_total as string;
-                      else if ('amount' in log.details) montant = (log.details.amount as number).toLocaleString('fr-FR') + ' F';
-                      else if ('montant' in log.details) montant = (log.details.montant as number).toLocaleString('fr-FR') + ' F';
-                    }
-    
+                    const isSudo = !!log.details?.sudo_validation;
+                    const details = formatAuditDetails(log);
+
                     return (
-                      <tr key={log.id} className="hover">
-                        <td className="whitespace-nowrap font-medium">
-                          {format(new Date(log.timestamp), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                        </td>
-                        <td>
-                          <div className="font-medium text-gray-700">{log.user_name || 'Système'}</div>
-                        </td>
-                        <td>
-                          <span className={`badge ${style.badge} badge-sm uppercase font-bold text-xs`}>
-                            {log.action === 'STOCK_ADJ' ? 'MODIFICATION STOCK' : log.action_display}
-                          </span>
-                        </td>
-                        <td className="max-w-md">
-                          <div className="font-medium text-gray-800">
-                            {log.details && (log.details.produit_nom || log.details.name || log.details.produit_name) ? (
-                              <>
-                                <span className="font-bold text-primary">{(log.details.produit_nom || log.details.name || log.details.produit_name) as string}</span>
-                                {/* Only show description if it adds valuable info and isn't just a repeat */}
-                                {log.description && !log.description.includes(log.details.produit_nom as string) && 
-                                 !log.description.includes(log.details.name as string) && (
-                                  <div className="text-sm text-gray-600 mt-1">{log.description}</div>
-                                )}
-                              </>
-                            ) : (
-                              log.description
-                            )}
-                          </div>
-                          {log.model_name !== 'Produit' && (
-                            <div className="text-xs text-gray-500 mt-0.5">
-                               {log.model_name} #{log.object_id}
+                      <tr key={log.id} className="hover:bg-base-200/30 transition-colors">
+                        <td className="pl-6 border-none">
+                            <div className="flex flex-col">
+                                <span className="font-black text-xs">{format(new Date(log.timestamp), 'HH:mm:ss', { locale: fr })}</span>
+                                <span className="text-[9px] font-bold opacity-30">{format(new Date(log.timestamp), 'dd/MM/yy', { locale: fr })}</span>
                             </div>
-                          )}
                         </td>
-                        <td className={`text-right font-mono font-bold ${
-                          String(montant).startsWith('-') ? 'text-red-600' : 
-                          String(montant).startsWith('+') ? 'text-green-600' : 'text-gray-600'
-                        }`}>
-                          {montant}
+                        <td className="border-none">
+                            <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center font-black text-[10px] uppercase">
+                                    {(log.user_name || 'S')[0]}
+                                </div>
+                                <span className="font-bold text-xs uppercase opacity-80">{log.user_name || 'SYSTÈME'}</span>
+                            </div>
+                        </td>
+                        <td className="border-none">
+                             <div className={`badge ${style.badge} font-black text-[9px] gap-1 px-3 py-1.5`}>
+                                 <span>{style.icon}</span>
+                                 <span>{log.action_display || log.action}</span>
+                             </div>
+                        </td>
+                        <td className="max-w-md border-none">
+                             <div className="flex flex-col gap-0.5 py-1">
+                                <span className="font-bold text-xs text-base-content/80">{log.description}</span>
+                                {details && <span className="text-[10px] font-black text-primary bg-primary/5 px-2 py-1 rounded inline-block w-fit">{details}</span>}
+                                {log.model_name && <span className="text-[9px] font-bold opacity-20 uppercase tracking-tighter">{log.model_name} #{log.object_id}</span>}
+                             </div>
+                        </td>
+                        <td className="text-right pr-6 border-none">
+                            {isSudo && log.details ? (
+                                <div className="tooltip tooltip-left" data-tip={`Validé par ${log.details.sudo_user}`}>
+                                    <span className="badge badge-error text-white font-black text-[9px]">SUDO</span>
+                                </div>
+                            ) : (
+                                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
+                            )}
                         </td>
                       </tr>
                     );

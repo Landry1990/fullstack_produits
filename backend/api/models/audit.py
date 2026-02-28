@@ -43,6 +43,7 @@ class AuditLog(models.Model):
         INVENTORY_VALIDATE = 'INV_VAL', 'Validation inventaire'
         ORDER_RECEIVE = 'ORD_RECV', 'Réception commande'
         ORDER_CANCEL = 'ORD_CNCL', 'Annulation réception'
+        SUDO_VALIDATION = 'SUDO_VAL', 'Validation Sudo'
 
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)

@@ -813,7 +813,7 @@ export default function JournalCaisse() {
           {/* Part 1: Sales breakdown - using server totals details if avail */}
           {Object.entries(serverTotals?.details || totauxParMode.ventes_par_mode).map(([mode, value]) => {
               const numValue = typeof value === 'string' ? parseFloat(value) : (value as number);
-              if (numValue <= 0) return null;
+              if (numValue === 0) return null;
               
               const labels: Record<string, {label: string, color: string}> = {
                   especes: { label: 'Ventes Esp.', color: 'success' },
@@ -837,14 +837,14 @@ export default function JournalCaisse() {
           })}
 
           {/* Part 2: Movements breakdown (Flux) */}
-          {(serverTotals?.total_entrees ?? totauxParMode.entrees) > 0 && (
+          {(serverTotals?.total_entrees ?? totauxParMode.entrees) !== 0 && (
               <div className="badge badge-success badge-outline gap-2 p-3 text-[10px] font-bold text-success/80">
                   <ArrowUpRight className="w-3 h-3" />
                   <span className="opacity-60">Entrées:</span>
                   <span>{formatCurrency(serverTotals?.total_entrees ?? totauxParMode.entrees)}</span>
               </div>
           )}
-          {(serverTotals?.total_sorties ?? totauxParMode.sorties) > 0 && (
+          {(serverTotals?.total_sorties ?? totauxParMode.sorties) !== 0 && (
               <div className="badge badge-error badge-outline gap-2 p-3 text-[10px] font-bold text-error/80">
                   <ArrowDownRight className="w-3 h-3" />
                   <span className="opacity-60">Sorties:</span>
@@ -1168,7 +1168,7 @@ export default function JournalCaisse() {
                         </div>
                         <div className="collapse-content"> 
                             <div className="space-y-2 pt-2 border-t border-base-200 mt-2">
-                                {Object.entries(closingTotals.details).filter(([,v]) => v > 0).map(([mode, montant]) => (
+                                {Object.entries(closingTotals.details).filter(([,v]) => v !== 0).map(([mode, montant]) => (
                                 <div key={mode} className="flex items-center justify-between text-xs">
                                     <span className="font-medium text-base-content/60 capitalize ">{mode}</span>
                                     <span className="font-black text-base-content">{Math.round(montant).toLocaleString()} F</span>

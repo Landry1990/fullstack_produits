@@ -41,12 +41,13 @@ def log_save(sender, instance, created, **kwargs):
 
     # We don't have request user here easily. 
     # For now, it will be None (System) or we rely on a middleware if implemented.
-    AuditLog.objects.create(
-        action=action,
-        model_name=model_name,
-        object_id=str(instance.pk),
-        details=details
-    )
+    if not getattr(instance, '_skip_audit', False):
+        AuditLog.objects.create(
+            action=action,
+            model_name=model_name,
+            object_id=str(instance.pk),
+            details=details
+        )
 
 @receiver(post_delete, sender=Produit)
 @receiver(post_delete, sender=Facture)

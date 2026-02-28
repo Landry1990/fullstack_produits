@@ -198,6 +198,16 @@ class Produit(models.Model):
         help_text="Produit actif (visible dans les recherches)"
     )
 
+    # --- Paramètres Pathologies Chroniques ---
+    is_chronic = models.BooleanField(
+        default=False,
+        help_text="Indique si ce produit est destiné à un traitement chronique (diabète, hypertension, etc.)"
+    )
+    default_treatment_days = models.IntegerField(
+        default=30,
+        help_text="Durée par défaut du traitement en jours (utilisé pour les rappels)"
+    )
+
 
     def save(self, *args, **kwargs):
         # Validation Exclusivité

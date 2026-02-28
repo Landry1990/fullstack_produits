@@ -81,6 +81,8 @@ export interface ProduitModel {
   last_purchase_price?: string | null
   is_supplier_exclusive?: boolean
   is_active?: boolean
+  is_chronic?: boolean
+  default_treatment_days?: number
 }
 
 export interface ProduitForm {
@@ -104,6 +106,8 @@ export interface ProduitForm {
   surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
   is_supplier_exclusive?: boolean
   use_lot_management?: boolean
+  is_chronic?: boolean
+  default_treatment_days?: string
 }
 
 export interface AchatProduit {
@@ -217,6 +221,7 @@ export interface FactureProduit {
   tva?: string
   lot?: string
   date_expiration?: string
+  treatment_duration_days?: number
 }
 
 export interface Facture {
@@ -552,6 +557,7 @@ export interface LigneFacture {
   lotId?: string | null // Specific lot ID or null for Auto/FEFO
   lotText?: string | null // For display
   lotExpiration?: string | null // Display expiration for selected lot
+  treatment_duration_days?: number // Days of treatment for chronic reminders
 }
 
 export interface PharmacySettings {

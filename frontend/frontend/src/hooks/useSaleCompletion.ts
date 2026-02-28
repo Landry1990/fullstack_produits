@@ -341,8 +341,14 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
             if (paiements.length > 0) {
                 paiements.forEach(p => {
-                    if (resteAEnregistrer <= 0) return;
-                    const montantReel = Math.min(p.montant, resteAEnregistrer);
+                    const isRefund = totals.totalTtc < 0;
+                    if (!isRefund && resteAEnregistrer <= 0) return;
+                    if (isRefund && resteAEnregistrer >= 0) return;
+
+                    const montantReel = isRefund
+                        ? Math.max(p.montant, resteAEnregistrer)
+                        : Math.min(p.montant, resteAEnregistrer);
+
                     paiementsList.push({
                         mode: p.mode,
                         montant: montantReel,
@@ -352,8 +358,18 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     resteAEnregistrer -= montantReel;
                 });
 
-                if (resteAEnregistrer > 0 && montantPaye && Number(montantPaye) > 0) {
+                const isRefund = totals.totalTtc < 0;
+                if (!isRefund && resteAEnregistrer > 0 && montantPaye && Number(montantPaye) > 0) {
                     const montantReel = Math.min(Number(montantPaye), resteAEnregistrer);
+                    paiementsList.push({
+                        mode: modePaiement,
+                        montant: montantReel,
+                        part_patient: null,
+                        part_assurance: null
+                    });
+                    resteAEnregistrer -= montantReel;
+                } else if (isRefund && resteAEnregistrer < 0 && montantPaye && Number(montantPaye) <= 0) {
+                    const montantReel = Math.max(Number(montantPaye), resteAEnregistrer);
                     paiementsList.push({
                         mode: modePaiement,
                         montant: montantReel,
@@ -606,9 +622,13 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             let resteAEnregistrer = montantADevoir;
 
             await Promise.all(paiementsList.map(async (p) => {
-                if (resteAEnregistrer <= 0) return;
+                const isRefund = montantADevoir < 0;
+                if (!isRefund && resteAEnregistrer <= 0) return;
+                if (isRefund && resteAEnregistrer >= 0) return;
 
-                const montantReel = Math.min(p.montant, resteAEnregistrer);
+                const montantReel = isRefund
+                    ? Math.max(p.montant, resteAEnregistrer)
+                    : Math.min(p.montant, resteAEnregistrer);
                 const payload = {
                     facture: facture.id,
                     mode_paiement: p.mode,

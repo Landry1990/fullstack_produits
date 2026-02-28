@@ -22,11 +22,12 @@ from .views.auth import verify_password
 from .views.etat_inventaire import EtatInventairePDFView
 from .rapport_view import RapportViewSet
 from .ordonnancier_view import OrdonnancierViewSet
-from .views.communication import SmsViewSet, SmsTemplateViewSet
+from .views.communication import SmsViewSet, SmsTemplateViewSet, WhatsAppLogViewSet
 from .views.finance_stats import FinanceStatsViewSet
 from .views.objectifs import ObjectifViewSet
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
 from .views.temporal_analysis import TemporalAnalysisViewSet
+from .views.purge import PurgeViewSet
 
 
 # Create a router and register our viewsets with it.
@@ -69,6 +70,7 @@ router.register(r'groupes', GroupeViewSet, basename='groupe')
 router.register(r'coupons', CouponMonnaieViewSet, basename='coupon')
 router.register(r'sms', SmsViewSet, basename='sms')
 router.register(r'sms-templates', SmsTemplateViewSet, basename='smstemplate')
+router.register(r'whatsapp-logs', WhatsAppLogViewSet, basename='whatsapplog')
 router.register(r'paiements-fournisseurs', PaiementFournisseurViewSet, basename='paiementfournisseur')
 router.register(r'configuration-options', ConfigurationOptionViewSet, basename='configurationoption')
 router.register(r'promis', PromisViewSet, basename='promis')
@@ -78,6 +80,7 @@ router.register(r'objectifs-commerciaux', ObjectifViewSet, basename='objectif-co
 router.register(r'configuration-objectifs', ConfigurationObjectifsViewSet, basename='configuration-objectifs')
 router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
 router.register(r'tva', TVAViewSet, basename='tva')
+router.register(r'maintenance', PurgeViewSet, basename='maintenance')
 
 
 # The API URLs are now determined automatically by the router.

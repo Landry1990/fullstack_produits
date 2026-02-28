@@ -1108,6 +1108,32 @@ export default function Facturation() {
 
   // === PENDING SALES MANAGEMENT ===
 
+  // Envoi WhatsApp
+  const handleSendWhatsApp = async () => {
+    if (!ticketCaisse || !ticketCaisse.facture || typeof ticketCaisse.facture === 'number') return
+    
+    const facture = ticketCaisse.facture as any
+    // Déterminer le numéro (priorité au numéro du client si présent)
+    const clientPhone = (typeof facture.client === 'object' ? facture.client?.phone : '') || facture.client_phone
+    const phone = window.prompt(t('facturation.messages.enter_whatsapp_number') || 'Entrez le numéro WhatsApp (format international ex: 237...)', clientPhone || '')
+    
+    if (!phone) return
+
+    setLoading(true)
+    try {
+      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      const response = await axios.post(`${facturesEndpoint}${facture.id}/send_whatsapp/`, {
+        phone: phone
+      })
+      toast.success(response.data.detail || 'Ticket envoyé par WhatsApp !')
+    } catch (err: any) {
+      console.error('Erreur envoi WhatsApp:', err)
+      toast.error(err.response?.data?.detail || "Erreur lors de l'envoi WhatsApp")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const mettreEnAttente = () => {
     // Validate
     if (lignesFacture.length === 0) {
@@ -1570,6 +1596,7 @@ export default function Facturation() {
         onClose={() => setShowTicketPreview(false)}
         ticket={ticketCaisse}
         settings={pharmacySettings}
+        onSendWhatsApp={handleSendWhatsApp}
       />
 
       {/* Stock Resolution Modal */}

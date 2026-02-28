@@ -34,6 +34,7 @@ import CaisseCentralisee from './components/CaisseCentralisee'
 import HistoriqueClotures from './components/HistoriqueClotures'
 import HistoriqueVentes from './components/HistoriqueVentes'
 import HistoriqueAchats from './components/HistoriqueAchats'
+import WhatsAppHistory from './components/WhatsAppHistory'
 import OrdonnancierPage from './components/Ordonnancier'
 import CentreRapports from './components/CentreRapports'
 import AnalyseABC from './components/AnalyseABC'
@@ -46,6 +47,7 @@ import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
 import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
 import ConfigurationOptions from './components/settings/ConfigurationOptions'
+import Maintenance from './components/Maintenance'
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
@@ -154,6 +156,7 @@ const router = createBrowserRouter([
           { path: 'promotions', element: <PromotionList /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },
+          { path: 'whatsapp-history', element: <WhatsAppHistory /> },
           
           { path: 'historique-achats', element: <HistoriqueAchats /> },
           { path: 'historique-achats/locales', element: <HistoriqueAchats forcedType="LOC" /> },
@@ -170,6 +173,14 @@ const router = createBrowserRouter([
                 <JournalAudit />
               </AdminRoute>
             ) 
+          },
+          {
+            path: 'maintenance',
+            element: (
+              <AdminRoute>
+                <Maintenance />
+              </AdminRoute>
+            )
           },
           { path: '*', element: <Navigate to="/" replace /> },
         ],

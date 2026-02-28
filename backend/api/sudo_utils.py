@@ -50,4 +50,24 @@ def validate_sudo_mode(request, permission_attr=None, data_source=None):
                 'detail': f"L'utilisateur {validation_user.username} n'a pas la permission requise ({permission_attr})."
             }, status=status.HTTP_403_FORBIDDEN)
 
+    # Enregistrement AuditLog (Optionnel mais recommandé si validé par un tiers)
+    if validation_user != request.user:
+        action_name = "Action nécessitant privilège d'encaissement/modification"
+        if permission_attr:
+            action_name = f"Privilège: {permission_attr}"
+
+        log_audit(
+            user=validation_user, # The person giving sudo rights 
+            action='SUDO_VAL', # The newly added Action
+            model_name='SudoMode',
+            object_id=request.user.username, # The user who requested it
+            description=f"Validation Sudo accordée à {request.user.username} - {action_name} - Route: {request.path}",
+            details={
+                'requested_by': request.user.username,
+                'permission': permission_attr,
+                'path': request.path
+            },
+            request=request
+        )
+
     return validation_user, None

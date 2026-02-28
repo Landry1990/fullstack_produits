@@ -53,6 +53,8 @@ export default function ProduitFormModal({
     is_supplier_exclusive: false,
     requires_prescription: false,
     use_lot_management: true,
+    is_chronic: false,
+    default_treatment_days: '30',
     ...initialData,
   });
 
@@ -132,6 +134,8 @@ export default function ProduitFormModal({
         surveillance_category: form.surveillance_category || 'NONE',
         is_supplier_exclusive: form.is_supplier_exclusive || false,
         use_lot_management: form.use_lot_management,
+        is_chronic: form.is_chronic || false,
+        default_treatment_days: form.default_treatment_days ? parseInt(form.default_treatment_days, 10) : 30,
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
@@ -445,6 +449,40 @@ export default function ProduitFormModal({
                 </div>
               </label>
            </div>
+        </div>
+
+        {/* Pathologie Chronique */}
+        <div className={`p-4 rounded-xl border transition-all ${form.is_chronic ? 'bg-success/5 border-success/20' : 'bg-base-100'}`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <label className="label cursor-pointer justify-start gap-4">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-success"
+                checked={form.is_chronic}
+                onChange={(e) => setForm((p) => ({ ...p, is_chronic: e.target.checked }))}
+              />
+              <div>
+                <span className="label-text font-bold">Produit pour Pathologie Chronique</span>
+                <p className="text-xs text-base-content/60">Active les rappels automatique d'achat pour les patients</p>
+              </div>
+            </label>
+            
+            {form.is_chronic && (
+              <label className="form-control w-full md:w-48">
+                <div className="label"><span className="label-text text-xs font-semibold">Durée traitement (jours)</span></div>
+                <div className="join">
+                  <input
+                    type="number"
+                    className="input input-bordered input-sm join-item w-full"
+                    value={form.default_treatment_days}
+                    onChange={(e) => setForm((p) => ({ ...p, default_treatment_days: e.target.value }))}
+                    min={1}
+                  />
+                  <span className="join-item btn btn-sm btn-disabled bg-base-200">Jours</span>
+                </div>
+              </label>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-6 border-t border-base-200">

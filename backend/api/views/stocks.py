@@ -1725,6 +1725,19 @@ class StockAnalysisUnsoldView(APIView):
         fournisseur_id = request.query_params.get('fournisseur', None)
         days_threshold = int(request.query_params.get('days', 30))  # Default: 30 jours après dernière entrée
         
+        # Paramètres de pagination
+        try:
+            page = int(request.query_params.get('page', 1))
+            if page < 1: page = 1
+        except ValueError:
+            page = 1
+            
+        try:
+            page_size = int(request.query_params.get('page_size', 50))
+            if page_size < 1: page_size = 50
+        except ValueError:
+            page_size = 50
+        
         today = timezone.now()
         cutoff_date = (today - timedelta(days=days_threshold)).date()
         
@@ -1758,6 +1771,7 @@ class StockAnalysisUnsoldView(APIView):
             
             results.append({
                 'id': produit.id,
+                'cip': produit.cip1 if hasattr(produit, 'cip1') else '',
                 'name': produit.name,
                 'stock': produit.stock,
                 'stock_maximum': produit.stock_maximum,
@@ -1774,12 +1788,23 @@ class StockAnalysisUnsoldView(APIView):
         # Sort by days since sale (most stagnant first)
         results.sort(key=lambda x: x['days_since_sale'], reverse=True)
         
+        # Pagination
+        total_items = len(results)
+        total_pages = (total_items + page_size - 1) // page_size if total_items > 0 else 1
+        
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_results = results[start:end]
+        
         return Response({
             'type': 'invendus',
             'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
-            'total_items': len(results),
-            'total_value': float(total_value),
-            'items': results
+            'total_items': total_items, # Conserve global count
+            'total_value': float(total_value), # Conserve global value
+            'current_page': page,
+            'total_pages': total_pages,
+            'page_size': page_size,
+            'items': paginated_results
         })
 
 class StockAnalysisOverstockView(APIView):
@@ -1787,6 +1812,19 @@ class StockAnalysisOverstockView(APIView):
 
     def get(self, request):
         fournisseur_id = request.query_params.get('fournisseur', None)
+        
+        # Paramètres de pagination
+        try:
+            page = int(request.query_params.get('page', 1))
+            if page < 1: page = 1
+        except ValueError:
+            page = 1
+            
+        try:
+            page_size = int(request.query_params.get('page_size', 50))
+            if page_size < 1: page_size = 50
+        except ValueError:
+            page_size = 50
         
         produits = Produit.objects.filter(stock__gt=0, rotation_moyenne__gt=0).select_related('fournisseur')
         if fournisseur_id:
@@ -1805,6 +1843,7 @@ class StockAnalysisOverstockView(APIView):
                 
                 results.append({
                     'id': produit.id,
+                    'cip': produit.cip1 if hasattr(produit, 'cip1') else '',
                     'name': produit.name,
                     'stock': produit.stock,
                     'rotation': rotation,
@@ -1818,12 +1857,23 @@ class StockAnalysisOverstockView(APIView):
                 })
                 total_value += excess_value
         
+        # Pagination
+        total_items = len(results)
+        total_pages = (total_items + page_size - 1) // page_size if total_items > 0 else 1
+        
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_results = results[start:end]
+        
         return Response({
             'type': 'surstock',
             'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
-            'total_items': len(results),
-            'total_value': float(total_value),
-            'items': results
+            'total_items': total_items, # Conserve global count
+            'total_value': float(total_value), # Conserve global value
+            'current_page': page,
+            'total_pages': total_pages,
+            'page_size': page_size,
+            'items': paginated_results
         })
 
 
@@ -1847,6 +1897,20 @@ class StockAnalysisShortageView(APIView):
 
         fournisseur_id = request.query_params.get('fournisseur', None)
         horizon_jours = int(request.query_params.get('horizon', 30))
+        
+        # Paramètres de pagination
+        try:
+            page = int(request.query_params.get('page', 1))
+            if page < 1: page = 1
+        except ValueError:
+            page = 1
+            
+        try:
+            page_size = int(request.query_params.get('page_size', 50))
+            if page_size < 1: page_size = 50
+        except ValueError:
+            page_size = 50
+            
         today = timezone.now().date()
         date_30_days_ago = today - timedelta(days=30)
         date_7_days_ago = today - timedelta(days=7)
@@ -1978,6 +2042,7 @@ class StockAnalysisShortageView(APIView):
 
             results.append({
                 'id': produit.id,
+                'cip': produit.cip1 if hasattr(produit, 'cip1') else '',
                 'name': produit.name,
                 'stock': produit.stock,
                 'avg_daily_sales': round(ventes_jour, 2),
@@ -2000,19 +2065,30 @@ class StockAnalysisShortageView(APIView):
         # Trier par urgence (jours restants croissants)
         results.sort(key=lambda x: x['days_until_stockout'])
 
-        # Compteurs par urgence
+        # Compteurs par urgence globaux
         critical_count = sum(1 for r in results if r['urgency'] == 'critical')
         warning_count = sum(1 for r in results if r['urgency'] == 'warning')
         trending_up = sum(1 for r in results if r['trend'] == 'hausse')
+        
+        # Pagination
+        total_items = len(results)
+        total_pages = (total_items + page_size - 1) // page_size if total_items > 0 else 1
+        
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_results = results[start:end]
 
         return Response({
             'type': 'shortage',
             'fournisseur': Fournisseur.objects.get(id=fournisseur_id).name if fournisseur_id and Fournisseur.objects.filter(id=fournisseur_id).exists() else 'Tous',
-            'total_items': len(results),
-            'total_value': float(total_value_at_risk),
+            'total_items': total_items, # Conserve global
+            'total_value': float(total_value_at_risk), # Conserve global
             'critical_count': critical_count,
             'warning_count': warning_count,
             'trending_up_count': trending_up,
-            'items': results
+            'current_page': page,
+            'total_pages': total_pages,
+            'page_size': page_size,
+            'items': paginated_results
         })
 

@@ -11,7 +11,8 @@ from .models import (
     InvoiceSettings, AuditLog, Promis, LoyaltySetting, StockAdjustment,
     Ordonnancier, LigneOrdonnancier, PharmacySettings, CouponMonnaie,
     Groupe, SmsLog, SmsTemplate, PaiementFournisseur, ConfigurationOption,
-    Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA
+    Promotion, PromotionPackItem, ObjectifCommercial, ConfigurationObjectifs, TVA,
+    WhatsAppLog
 )
 from .services import PromotionService
 
@@ -197,11 +198,17 @@ class RayonSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class FournisseurSerializer(serializers.ModelSerializer):
-    solde_dette = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    solde_dette = serializers.SerializerMethodField()
     
     class Meta:
         model = Fournisseur
         fields = '__all__'
+
+    def get_solde_dette(self, obj):
+        solde = getattr(obj, 'solde_dette_annotated', None)
+        if solde is not None:
+            return solde
+        return obj.solde_dette
 
 from django.db import transaction
 
@@ -322,7 +329,7 @@ class ProduitSerializer(serializers.ModelSerializer):
             'stock_lots', 'requires_prescription', 'surveillance_category',
             'dernier_achat', 'dernier_vente', 'is_public',
             'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
-            'active_promotion'
+            'active_promotion', 'is_chronic', 'default_treatment_days'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
 
@@ -520,6 +527,17 @@ class FactureProduitSerializer(serializers.ModelSerializer):
         model = FactureProduit
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+
+    def create(self, validated_data):
+        """
+        Set default treatment duration from product if not provided.
+        """
+        if 'treatment_duration_days' not in validated_data or validated_data['treatment_duration_days'] is None:
+            produit = validated_data.get('produit')
+            if produit and produit.is_chronic:
+                validated_data['treatment_duration_days'] = produit.default_treatment_days
+        
+        return super().create(validated_data)
 
     def get_produit_nom(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom
@@ -1165,3 +1183,14 @@ class ObjectifCommercialSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user
         return super().create(validated_data)
+
+class WhatsAppLogSerializer(serializers.ModelSerializer):
+    sent_by_name = serializers.CharField(source='sent_by.username', read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    facture_numero = serializers.CharField(source='facture.numero_facture', read_only=True)
+    client_name_db = serializers.CharField(source='client.name', read_only=True)
+
+    class Meta:
+        model = WhatsAppLog
+        fields = '__all__'
