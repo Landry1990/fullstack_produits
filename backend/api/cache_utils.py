@@ -170,18 +170,19 @@ class SearchCache:
     @classmethod
     def invalidate_all_products(cls) -> None:
         """
-        Invalide tout le cache des produits.
-        Utilisé après des modifications massives (import, etc.)
+        Invalide tout le cache des produits (recherches, listes, détails).
         """
-        # Note: Cette méthode nécessite django-redis pour fonctionner efficacement
-        # Avec LocMemCache, on peut juste vider tout le cache
         try:
             # Essayer d'utiliser la méthode delete_pattern de django-redis
             cache.delete_pattern(f"{cls.PREFIX_PRODUCT_SEARCH}:*")
             cache.delete_pattern(f"{cls.PREFIX_PRODUCT_LIST}:*")
             cache.delete_pattern(f"{cls.PREFIX_PRODUCT_DETAIL}:*")
+            # Clear old styles if they exist
+            cache.delete_pattern("produit_search_*")
+            cache.delete('produit_list')
         except AttributeError:
             # Si delete_pattern n'existe pas (LocMemCache), vider tout le cache
+            # C'est radical mais c'est le seul moyen sûr sur LocMemCache sans lister les clés
             cache.clear()
     
     @classmethod

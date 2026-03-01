@@ -9,34 +9,21 @@ whenever stock levels change through:
 - Product modifications
 """
 
-from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import Commande, Facture, StockAdjustment, Produit
 import logging
+from .cache_utils import SearchCache
 
 logger = logging.getLogger('api.cache')
 
-
 def invalidate_produit_cache():
     """
-    Invalidate all product-related cache entries.
-    
-    The CachedSearchMixin uses cache keys with pattern 'produit_search_*'.
-    This function clears all product cache to ensure fresh data after stock changes.
+    Invalidate all product-related cache entries including search results and lists.
     """
     try:
-        # Note: cache.delete_pattern requires django-redis or similar backend
-        # For Django's default cache, we'd need to track keys manually
-        # For now, we'll use a simple approach that works with any backend
-        
-        # Clear the main product list cache key
-        cache.delete('produit_list')
-        
-        # If using django-redis, you could use:
-        # cache.delete_pattern('produit_*')
-        
-        logger.info("Product cache invalidated successfully")
+        SearchCache.invalidate_all_products()
+        logger.info("Product cache (lists and searches) invalidated successfully")
     except Exception as e:
         logger.error(f"Failed to invalidate product cache: {e}")
 

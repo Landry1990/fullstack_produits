@@ -133,7 +133,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER' ? 'xl:grid-cols-2' : 'xl:grid-cols-4'} gap-4`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER' ? 'xl:grid-cols-2' : 'xl:grid-cols-3'} gap-4`}>
         {stats && (stats.role === 'VENDEUR' || stats.role === 'CAISSIER' ? (
            // VIEW VENDEUR / CAISSIER (Restricted)
              [
