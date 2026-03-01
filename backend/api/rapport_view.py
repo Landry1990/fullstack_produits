@@ -915,8 +915,24 @@ class RapportViewSet(viewsets.ViewSet):
         
         try:
             # Gérer le format datetime complet (ISO 8601)
-            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
-            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            # Utiliser timezone.make_aware pour être cohérent avec le stockage DB
+            d_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            d_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            
+            if timezone.is_naive(d_debut):
+                date_debut = timezone.make_aware(d_debut)
+            else:
+                date_debut = d_debut
+                
+            if timezone.is_naive(d_fin):
+                date_fin = timezone.make_aware(d_fin)
+            else:
+                date_fin = d_fin
+                
+            # Si c'est une date "pure" (H=0, M=0), on s'assure d'inclure toute la journée de fin
+            if date_fin.hour == 0 and date_fin.minute == 0 and date_fin.second == 0:
+                date_fin = date_fin + timedelta(days=1)
+                
         except ValueError:
             return Response({'error': 'Format de date invalide (ISO attendu).'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1006,15 +1022,22 @@ class RapportViewSet(viewsets.ViewSet):
 
         try:
             # Handle both date only (YYYY-MM-DD) and datetime (ISO) inputs gracefully
-            if 'T' in date_debut_str:
-                date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
-            else:
-                date_debut = datetime.fromisoformat(date_debut_str)
+            d_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            d_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
             
-            if 'T' in date_fin_str:
-                date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            if timezone.is_naive(d_debut):
+                date_debut = timezone.make_aware(d_debut)
             else:
-                date_fin = datetime.fromisoformat(date_fin_str) + timedelta(days=1) - timedelta(seconds=1) # End of day if date provided
+                date_debut = d_debut
+                
+            if timezone.is_naive(d_fin):
+                date_fin = timezone.make_aware(d_fin)
+            else:
+                date_fin = d_fin
+                
+            # Inclusion totale du dernier jour si l'heure n'est pas précisée
+            if date_fin.hour == 0 and date_fin.minute == 0 and date_fin.second == 0:
+                date_fin = date_fin + timedelta(days=1)
                 
         except ValueError:
             return Response({'error': 'Format de date invalide.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1077,8 +1100,21 @@ class RapportViewSet(viewsets.ViewSet):
              return Response({'error': 'Les paramètres date_debut et date_fin sont requis.'}, status=status.HTTP_400_BAD_REQUEST)
              
         try:
-            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
-            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            d_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            d_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            
+            if timezone.is_naive(d_debut):
+                date_debut = timezone.make_aware(d_debut)
+            else:
+                date_debut = d_debut
+                
+            if timezone.is_naive(d_fin):
+                date_fin = timezone.make_aware(d_fin)
+            else:
+                date_fin = d_fin
+                
+            if date_fin.hour == 0 and date_fin.minute == 0 and date_fin.second == 0:
+                date_fin = date_fin + timedelta(days=1)
         except ValueError:
             return Response({'error': 'Format de date invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1144,8 +1180,21 @@ class RapportViewSet(viewsets.ViewSet):
             )
         
         try:
-            date_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
-            date_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            d_debut = datetime.fromisoformat(date_debut_str.replace('Z', '+00:00'))
+            d_fin = datetime.fromisoformat(date_fin_str.replace('Z', '+00:00'))
+            
+            if timezone.is_naive(d_debut):
+                date_debut = timezone.make_aware(d_debut)
+            else:
+                date_debut = d_debut
+                
+            if timezone.is_naive(d_fin):
+                date_fin = timezone.make_aware(d_fin)
+            else:
+                date_fin = d_fin
+                
+            if date_fin.hour == 0 and date_fin.minute == 0 and date_fin.second == 0:
+                date_fin = date_fin + timedelta(days=1)
         except ValueError:
             return Response({'error': 'Format de date invalide.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1228,11 +1277,12 @@ class RapportViewSet(viewsets.ViewSet):
         if mois_str:
             try:
                 year, month = map(int, mois_str.split('-'))
-                date_debut = datetime(year, month, 1)
+                # Utilisation de timezone.make_aware pour éviter les décalages UTC/Local
+                date_debut = timezone.make_aware(datetime(year, month, 1))
                 if month == 12:
-                    date_fin = datetime(year + 1, 1, 1)
+                    date_fin = timezone.make_aware(datetime(year + 1, 1, 1))
                 else:
-                    date_fin = datetime(year, month + 1, 1)
+                    date_fin = timezone.make_aware(datetime(year, month + 1, 1))
             except:
                 return Response({'error': 'Format mois invalide (YYYY-MM attendu)'}, status=400)
         else:
@@ -1256,33 +1306,47 @@ class RapportViewSet(viewsets.ViewSet):
             date_debut = date_debut.replace(month=1, day=1)
             date_fin = date_debut.replace(year=date_debut.year + 1, month=1, day=1)
         
-        # Récupérer les factures
+        # Récupérer les factures (Inclure tout, même sans créateur pour le total pharmacy)
         factures = Facture.objects.filter(
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
             date__gte=date_debut,
-            date__lt=date_fin,
-            created_by__isnull=False
+            date__lt=date_fin
         ).select_related('created_by', 'created_by__profile')
         
         # Agrégation par vendeur
         stats = {}
+        autres_stats = {
+            'vendeur_id': 0,
+            'vendeur': 'Ventes Non Attribuées',
+            'nbre_ventes': 0,
+            'chiffre_affaires': Decimal('0.00')
+        }
+        
         for f in factures:
-            vendeur_id = f.created_by.id
-            vendeur_nom = f.created_by.get_full_name() or f.created_by.username
-            
-            if vendeur_id not in stats:
-                stats[vendeur_id] = {
-                    'vendeur_id': vendeur_id,
-                    'vendeur': vendeur_nom,
-                    'nbre_ventes': 0,
-                    'chiffre_affaires': Decimal('0.00')
-                }
-            stats[vendeur_id]['nbre_ventes'] += 1
-            stats[vendeur_id]['chiffre_affaires'] += f.total_ttc
+            if f.created_by:
+                vendeur_id = f.created_by.id
+                vendeur_nom = f.created_by.get_full_name() or f.created_by.username
+                
+                if vendeur_id not in stats:
+                    stats[vendeur_id] = {
+                        'vendeur_id': vendeur_id,
+                        'vendeur': vendeur_nom,
+                        'nbre_ventes': 0,
+                        'chiffre_affaires': Decimal('0.00')
+                    }
+                stats[vendeur_id]['nbre_ventes'] += 1
+                stats[vendeur_id]['chiffre_affaires'] += f.total_ttc
+            else:
+                autres_stats['nbre_ventes'] += 1
+                autres_stats['chiffre_affaires'] += f.total_ttc
         
         # Conversion en liste et tri
         results = list(stats.values())
         results.sort(key=lambda x: x['chiffre_affaires'], reverse=True)
+        
+        # Ajouter les "Autres" si significatif
+        if autres_stats['chiffre_affaires'] > 0:
+            results.append(autres_stats)
         
         # Ajouter rang et panier moyen
         for i, r in enumerate(results, 1):

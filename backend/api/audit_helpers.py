@@ -30,12 +30,20 @@ def log_audit(user, action, model_name, object_id, description, details=None, re
         else:
             ip_address = request.META.get('REMOTE_ADDR')
     
-    return AuditLog.objects.create(
-        user=user if user and user.is_authenticated else None,
-        action=action,
-        model_name=model_name,
-        object_id=str(object_id) if object_id else None,
-        description=description,
-        details=details or {},
-        ip_address=ip_address
-    )
+    try:
+        # S'assurer que la description est une chaîne Unicode propre
+        safe_description = str(description)
+        
+        return AuditLog.objects.create(
+            user=user if user and user.is_authenticated else None,
+            action=action,
+            model_name=model_name,
+            object_id=str(object_id) if object_id else None,
+            description=safe_description,
+            details=details or {},
+            ip_address=ip_address
+        )
+    except Exception as e:
+        # Le log d'audit ne doit JAMAIS bloquer l'opération principale
+        print(f"Erreur lors de la création du log d'audit: {e}")
+        return None

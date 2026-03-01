@@ -100,6 +100,23 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         if forme_id:
             queryset = queryset.filter(forme_id=forme_id)
 
+        # Filtrage pour le réapprovisionnement
+        needs_refill = self.request.query_params.get('needs_refill')
+        if needs_refill and needs_refill.lower() == 'true':
+            queryset = queryset.filter(
+                has_reserve_storage=True,
+                stock_reserve__gt=0,
+                stock__lte=F('min_rayon')
+            )
+
+        # Nouveau filtre : Tous les produits avec réserve
+        has_reserve = self.request.query_params.get('has_reserve_storage')
+        if has_reserve is not None:
+            if has_reserve.lower() == 'true':
+                queryset = queryset.filter(has_reserve_storage=True)
+            elif has_reserve.lower() == 'false':
+                queryset = queryset.filter(has_reserve_storage=False)
+
         # Filtrage par Groupe
         groupe_id = self.request.query_params.get('groupe')
         if groupe_id:
@@ -527,20 +544,19 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         history.sort(key=lambda x: x['date'], reverse=True)
         
         # Recalculer les stocks intermédiaires en remontant le temps
-        current_stock = produit.stock
+        current_stock = produit.total_stock # Utiliser le stock global (Rayon + Réserve)
         running_stock = current_stock
         
         for item in history:
             item['stock_apres'] = running_stock
-            stock_before = running_stock - item['quantity']
+            
+            # Pour le stock global, les transferts inter-stock n'affectent pas le total
+            change_qty = item['quantity']
+            if item.get('type') == MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK:
+                change_qty = 0
+                
+            stock_before = running_stock - change_qty
             item['stock_avant'] = stock_before
-            
-            # Ajout des champs pour l'affichage cohérent
-            item.update({
-                'stock_avant': stock_before,
-                'stock_apres': running_stock
-            })
-            
             running_stock = stock_before
             
         return Response(history)
@@ -835,6 +851,17 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             stock_lot.quantity_remaining = new_lot_qty
             stock_lot.quantity_remaining = new_lot_qty
             stock_lot.save(update_fields=['quantity_remaining'])
+        
+        # Créer un mouvement de stock pour l'historique global
+        from ..models import MouvementStock
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
+            quantite=quantity_change,
+            stock_apres=produit.total_stock,
+            user=request.user,
+            description=f"Ajustement manuel: {reason_detail or reason_type}"
+        )
         
         # Log d'audit explicite
         log_audit(
@@ -1612,3 +1639,86 @@ class CategoriesDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         rayon.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def transfer_to_shelf(self, request, pk=None):
+        """
+        Transfère une quantité de la réserve vers le rayon.
+        Body: { 'quantity': 50 }
+        Si non spécifié, remplit jusqu'à capacite_rayon.
+        """
+        produit = self.get_object()
+        if not produit.has_reserve_storage:
+            return Response({'detail': "La gestion de réserve n'est pas activée pour ce produit."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        quantity = request.data.get('quantity')
+        
+        if quantity:
+            try:
+                quantity = int(quantity)
+            except ValueError:
+                return Response({'detail': "La quantité doit être un nombre entier."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Calcul automatique pour remplir le rayon
+            needed = max(0, produit.capacite_rayon - produit.stock)
+            quantity = min(needed, produit.stock_reserve)
+            
+        if quantity <= 0:
+            return Response({'detail': "Quantité de transfert nulle ou négative."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if quantity > produit.stock_reserve:
+            return Response({'detail': f"Quantité demandée ({quantity}) supérieure au stock en réserve ({produit.stock_reserve})."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # 1. Mise à jour des lots (FIFO)
+        lots = produit.stock_lots.filter(quantity_reserved__gt=0).order_by('date_reception')
+        remaining_to_transfer = quantity
+        
+        for lot in lots:
+            if remaining_to_transfer <= 0:
+                break
+            
+            transfer_qty = min(remaining_to_transfer, lot.quantity_reserved)
+            lot.quantity_reserved -= transfer_qty
+            lot.quantity_remaining += transfer_qty
+            lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
+            remaining_to_transfer -= transfer_qty
+            
+        # 2. Mise à jour du produit
+        produit.stock += quantity
+        produit.stock_reserve -= quantity
+        produit.save(update_fields=['stock', 'stock_reserve'])
+        
+        # 3. Traçabilité (Mouvement de Stock)
+        from api.models.stock import MouvementStock
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
+            quantite=quantity, 
+            stock_apres=produit.total_stock, 
+            user=request.user if request.user.is_authenticated else None,
+            description=f"Réappro Rayon: +{quantity} de la réserve"
+        )
+        
+        # 4. Log Audit
+        from api.views.base import log_audit
+        from api.models.base import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.STOCK_ADJUST,
+            model_name='Produit',
+            object_id=produit.id,
+            description=f"Transfert Réserve -> Rayon: {quantity} unités",
+            details={
+                'produit': produit.name,
+                'quantite': quantity,
+                'source': 'reserve',
+                'destination': 'rayon'
+            },
+            request=request
+        )
+        
+        return Response({
+            'detail': f"Transfert de {quantity} effectué avec succès.",
+            'stock_rayon': produit.stock,
+            'stock_reserve': produit.stock_reserve
+        }, status=status.HTTP_200_OK)

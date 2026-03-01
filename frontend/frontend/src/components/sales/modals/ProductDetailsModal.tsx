@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Calendar, User, CreditCard } from 'lucide-react';
+import { X, Calendar, User, CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
 import type { Facture } from '../../../types';
+import axios from 'axios';
+import { useAuth } from '../../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 interface ProductDetailsModalProps {
     isOpen: boolean;
@@ -17,6 +20,26 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     loading
 }) => {
     const { t } = useTranslation();
+    const { user } = useAuth();
+    const [sendingReminder, setSendingReminder] = useState<number | null>(null);
+
+    const handleSendRenewalReminder = async (lineId: number, productName: string) => {
+        if (!user?.token) return;
+        
+        setSendingReminder(lineId);
+        try {
+            const response = await axios.post(`/api/facture-produits/${lineId}/envoi_rappel_renouvellement/`, {}, {
+                headers: { Authorization: `Token ${user.token}` }
+            });
+            toast.success(response.data.detail || `Rappel envoyé pour ${productName}`);
+        } catch (error: any) {
+            console.error('Error sending renewal reminder:', error);
+            const msg = error.response?.data?.detail || "Erreur lors de l'envoi du rappel";
+            toast.error(msg);
+        } finally {
+            setSendingReminder(null);
+        }
+    };
 
     // Calculs de montants
     const totals = useMemo(() => {
@@ -147,6 +170,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                     <th className="px-6 py-4 text-center border-b border-gray-100">Qté</th>
                                     <th className="px-6 py-4 text-right border-b border-gray-100">P.U. (Net)</th>
                                     <th className="px-6 py-4 text-right border-b border-gray-100">Total</th>
+                                    <th className="px-6 py-4 text-center border-b border-gray-100">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 text-sm">
@@ -159,8 +183,16 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                     return (
                                         <tr key={prod.id} className="hover:bg-gray-50/50 transition-colors group">
                                             <td className="px-6 py-3">
-                                                <div className="font-medium text-gray-900 uppercase">
-                                                    {prod.produit_nom}
+                                                <div className="flex items-center gap-2">
+                                                    <div className="font-medium text-gray-900 uppercase">
+                                                        {prod.produit_nom}
+                                                    </div>
+                                                    {prod.is_chronic && (
+                                                        <span className="flex items-center gap-1 text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded-full border border-indigo-100 font-bold animate-pulse">
+                                                            <CheckCircle2 className="w-2.5 h-2.5" />
+                                                            CHRONIQUE
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex flex-wrap gap-2 mt-1">
                                                     {prod.lot && (
@@ -171,6 +203,11 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     {remiseUnitaire > 0 && (
                                                         <span className="text-[10px] text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
                                                             Remise: -{remiseUnitaire.toLocaleString('fr-FR')} F /unité
+                                                        </span>
+                                                    )}
+                                                    {prod.treatment_duration_days && (
+                                                        <span className="text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                            Durée: {prod.treatment_duration_days} jours
                                                         </span>
                                                     )}
                                                 </div>
@@ -185,6 +222,23 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                             </td>
                                             <td className="px-6 py-3 text-right font-medium font-mono text-gray-900 group-hover:text-blue-600 transition-colors">
                                                 {totalLigne.toLocaleString('fr-FR')} F
+                                            </td>
+                                            <td className="px-6 py-3 text-center">
+                                                {prod.is_chronic && (
+                                                    <button
+                                                        onClick={() => handleSendRenewalReminder(prod.id, prod.produit_nom || 'produit')}
+                                                        disabled={sendingReminder === prod.id}
+                                                        className={`btn btn-xs gap-1.5 normal-case ${
+                                                            sendingReminder === prod.id 
+                                                                ? 'btn-ghost loading' 
+                                                                : 'btn-outline btn-success hover:shadow-md transition-all'
+                                                        }`}
+                                                        title="Envoyer un rappel de renouvellement WhatsApp"
+                                                    >
+                                                        {sendingReminder !== prod.id && <Smartphone className="w-3 h-3" />}
+                                                        Rappel
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     );

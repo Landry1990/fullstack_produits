@@ -219,7 +219,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                     quantity_initial=total_qty,
                     quantity_paid=quantity_paid,
                     quantity_free=quantity_free,
-                    quantity_remaining=total_qty,
+                    quantity_remaining=0 if produit.has_reserve_storage else total_qty,
+                    quantity_reserved=total_qty if produit.has_reserve_storage else 0,
                     price_cost=effective_cost,
                     selling_price=produit.selling_price,
                     lot=lot_number,
@@ -244,8 +245,12 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                     new_pmp = (current_val + incoming_val) / new_total_qty
                     produit.pmp = new_pmp
                 
-                # Mettre à jour le stock
-                produit.stock = old_stock + qty_received
+                # Mettre à jour le stock (Rayon ou Réserve) avec précaution pour les valeurs nulles
+                res_stock = Decimal(produit.stock_reserve or 0)
+                if produit.has_reserve_storage:
+                    produit.stock_reserve = res_stock + qty_received
+                else:
+                    produit.stock = old_stock + qty_received
                 
                 # Ajouter au dictionnaire pour suivi local
                 produits_dict[produit.id] = produit
@@ -291,14 +296,14 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             if produits_with_lots:
                 Produit.objects.bulk_update(
                     produits_with_lots, 
-                    ['pmp', 'stock'], 
+                    ['pmp', 'stock', 'stock_reserve'], 
                     batch_size=100
                 )
             
             if produits_without_lots:
                 Produit.objects.bulk_update(
                     produits_without_lots, 
-                    ['stock', 'pmp'], 
+                    ['stock', 'stock_reserve', 'pmp'], 
                     batch_size=100
                 )
         
@@ -333,7 +338,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 produit=produit,
                 type_mouvement=MouvementStock.TypeMouvement.ENTREE,
                 quantite=total_qty,
-                stock_apres=produit.stock,
+                stock_apres=produit.total_stock,
                 user=request.user,
                 commande=commande,
                 description=f"Réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''} - Lot: {item.lot or 'N/A'} - Fournisseur: {commande.fournisseur.name if commande.fournisseur else 'N/A'}"
@@ -412,261 +417,6 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             'lines_moved': lines_moved,
             'lines_merged': lines_merged
         })
-        """
-        Clôture une commande, met à jour le stock et calcule le PMP.
-        Utilise select_for_update pour empêcher les modifications concurrentes (ventes) pendant le calcul.
-        
-        Optimisations:
-        - Prefetch des produits pour éviter les requêtes N+1
-        - Bulk create des lots de stock
-        - Bulk update des produits
-        """
-        commande = self.get_object()
-        if commande.status == Commande.Status.CLOTUREE:
-            return Response({'detail': 'Cette commande est déjà clôturée.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Enregistrer la date de clôture (maintenant, en timezone local)
-        commande.date_cloture = timezone.now()
-
-        # Prefetch tous les produits de la commande en une seule requête
-        items = commande.produits.select_related('produit', 'produit__fournisseur').all()
-        
-        if not items.exists():
-            return Response({'detail': 'Aucun produit dans cette commande.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # VERROUILLAGE: On récupère les IDs des produits pour les verrouiller
-        product_ids = [item.produit_id for item in items]
-        
-        # On verrouille les produits pour empêcher toute modification de stock (ex: vente concomitante)
-        locked_products = list(Produit.objects.select_for_update().filter(id__in=product_ids))
-        product_map = {p.id: p for p in locked_products}
-        
-        lots_to_create = []
-        produits_to_update = []
-        produits_dict = {}  # Pour éviter les doublons et suivre les mises à jour
-        
-        # Phase 1: Calculs en mémoire (pas de DB writes)
-        lots_dict = {} # Key: (produit_id, lot_number)
-        
-        for item in items:
-            # Calcul des quantités
-            quantity_paid = item.quantity
-            quantity_free = item.unites_gratuites
-            total_qty = quantity_paid + quantity_free
-            
-            # Calcul du coût effectif (le coût payé réparti sur toutes les unités)
-            if total_qty > 0:
-                effective_cost = (quantity_paid * item.price_cost) / total_qty
-            else:
-                effective_cost = item.price_cost
-            
-            # Utiliser l'instance verrouillée du produit
-            produit = product_map.get(item.produit_id)
-            if not produit:
-                continue
-            
-            # 1. Gérer le lot de stock (si gestion par lots activée)
-            if produit.use_lot_management:
-                lot_number = item.lot
-                if not lot_number or lot_number.strip() == '':
-                    lot_number = f"LOT{commande.id:03d}"
-                
-                key = (produit.id, lot_number)
-                if key in lots_dict:
-                    # Fusionner avec le lot déjà préparé en mémoire pour cette commande
-                    existing_lot = lots_dict[key]
-                    
-                    # Nouveau coût moyen pondéré pour le lot (basé sur le coût d'achat)
-                    old_total = Decimal(existing_lot.quantity_initial)
-                    new_total = old_total + Decimal(total_qty)
-                    
-                    if new_total > 0:
-                        old_cost = Decimal(existing_lot.price_cost)
-                        val_old = old_total * old_cost
-                        val_new = Decimal(quantity_paid) * Decimal(item.price_cost)
-                        existing_lot.price_cost = (val_old + val_new) / new_total
-                    
-                    existing_lot.quantity_initial += total_qty
-                    existing_lot.quantity_paid += quantity_paid
-                    existing_lot.quantity_free += quantity_free
-                    existing_lot.quantity_remaining += total_qty
-                else:
-                    # Créer une nouvelle instance en mémoire
-                    lots_dict[key] = StockLot(
-                        produit=produit,
-                        commande_produit=item,
-                        fournisseur=commande.fournisseur if commande.fournisseur else produit.fournisseur,
-                        quantity_initial=total_qty,
-                        quantity_paid=quantity_paid,
-                        quantity_free=quantity_free,
-                        quantity_remaining=total_qty,
-                        price_cost=effective_cost,
-                        selling_price=produit.selling_price,
-                        lot=lot_number,
-                        date_expiration=item.date_expiration,
-                        date_reception=commande.date_cloture
-                    )
-            
-            # 2. Calculer le nouveau PMP et stock
-            # Éviter de traiter le même produit plusieurs fois (si plusieurs lignes pour même produit)
-            if produit.id not in produits_dict:
-                old_stock = Decimal(produit.stock)
-                old_pmp = Decimal(produit.pmp)
-                qty_received = Decimal(total_qty)
-                cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
-                
-                new_total_qty = old_stock + qty_received
-                
-                if new_total_qty > 0:
-                    current_val = old_stock * old_pmp
-                    incoming_val = cout_total
-                    new_pmp = (current_val + incoming_val) / new_total_qty
-                    produit.pmp = new_pmp
-                
-                # Mettre à jour le stock
-                produit.stock = old_stock + qty_received
-
-                # Ajouter au dictionnaire pour suivi local
-                produits_dict[produit.id] = produit
-                produits_to_update.append(produit)
-            else:
-                # Produit déjà traité dans cette boucle (autre ligne de commande), accumuler
-                existing_produit = produits_dict[produit.id]
-                
-                # On part des valeurs déjà modifiées en mémoire
-                current_stock = Decimal(existing_produit.stock)
-                current_pmp = Decimal(existing_produit.pmp)
-                
-                qty_received = Decimal(total_qty)
-                cout_total = Decimal(quantity_paid) * Decimal(item.price_cost)
-                
-                new_total_qty = current_stock + qty_received
-                
-                if new_total_qty > 0:
-                    current_val = current_stock * current_pmp
-                    incoming_val = cout_total
-                    new_pmp = (current_val + incoming_val) / new_total_qty
-                    existing_produit.pmp = new_pmp
-                
-                existing_produit.stock += Decimal(total_qty)
-        
-        # Phase 2: Écritures en base de données (bulk operations)
-        
-        # 2.1 Gérer les lots (Création ou Mise à jour si collision)
-        if lots_dict:
-            lots_to_create = []
-            lots_to_update = []
-            
-            # Vérifier les collisions avec des lots existants en une seule requête si possible
-            # Mais par sécurité et simplicité pour gérer les PMP de lots, on va faire un check par lot
-            for key, lot_data in lots_dict.items():
-                existing_db_lot = StockLot.objects.filter(produit_id=key[0], lot=key[1]).first()
-                if existing_db_lot:
-                    # Collision détectée avec un lot déjà en base : On fusionne
-                    old_total = Decimal(existing_db_lot.quantity_initial)
-                    new_total = old_total + Decimal(lot_data.quantity_initial)
-                    
-                    if new_total > 0:
-                        # PMP du lot
-                        val_old = old_total * Decimal(existing_db_lot.price_cost)
-                        val_new = Decimal(lot_data.quantity_initial) * Decimal(lot_data.price_cost)
-                        existing_db_lot.price_cost = (val_old + val_new) / new_total
-                    
-                    existing_db_lot.quantity_initial += lot_data.quantity_initial
-                    existing_db_lot.quantity_paid += lot_data.quantity_paid
-                    existing_db_lot.quantity_free += lot_data.quantity_free
-                    existing_db_lot.quantity_remaining += lot_data.quantity_remaining
-                    # Garder la date d'expiration la plus éloignée ou celle du nouveau lot ?
-                    # On garde l'existante ou on met à jour si la nouvelle est fournie
-                    if lot_data.date_expiration:
-                        existing_db_lot.date_expiration = lot_data.date_expiration
-                    
-                    lots_to_update.append(existing_db_lot)
-                else:
-                    lots_to_create.append(lot_data)
-            
-            if lots_to_create:
-                StockLot.objects.bulk_create(lots_to_create, batch_size=100)
-            if lots_to_update:
-                StockLot.objects.bulk_update(
-                    lots_to_update, 
-                    ['quantity_initial', 'quantity_paid', 'quantity_free', 'quantity_remaining', 'price_cost', 'date_expiration'],
-                    batch_size=100
-                )
-        
-        # 2.2 Mettre à jour tous les produits en batch
-        if produits_to_update:
-            # Séparer les produits avec gestion de lots (update PMP only) 
-            # et sans gestion de lots (update stock + PMP)
-            produits_with_lots = [p for p in produits_to_update if p.use_lot_management]
-            produits_without_lots = [p for p in produits_to_update if not p.use_lot_management]
-            
-            if produits_with_lots:
-                Produit.objects.bulk_update(
-                    produits_with_lots, 
-                    ['pmp', 'stock'], 
-                    batch_size=100
-                )
-            
-            if produits_without_lots:
-                Produit.objects.bulk_update(
-                    produits_without_lots, 
-                    ['stock', 'pmp'], 
-                    batch_size=100
-                )
-        
-        # 2.3 Mettre à jour le statut et la date de clôture de la commande
-        commande.status = Commande.Status.CLOTUREE
-        commande.closed_by = request.user
-        
-        if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
-            if commande.fournisseur.delai_paiement_jours > 0:
-                commande.date_echeance = commande.date_cloture.date() + timedelta(days=commande.fournisseur.delai_paiement_jours)
-            else:
-                commande.date_echeance = commande.date_cloture.date()
-
-        commande.save(update_fields=['status', 'date_cloture', 'closed_by', 'date_echeance'])
-        
-        # 2.4 Créer les MouvementStock pour historique permanent
-        mouvements_to_create = []
-        for item in items:
-            total_qty = item.quantity + item.unites_gratuites
-            produit = product_map.get(item.produit_id)
-            if produit:
-                mouvements_to_create.append(MouvementStock(
-                    produit=produit,
-                    type_mouvement=MouvementStock.TypeMouvement.ENTREE,
-                    quantite=total_qty,
-                    stock_apres=produit.stock,
-                    user=request.user if request else None,
-                    description=f"Clôture commande #{commande.id} - {commande.fournisseur.name if commande.fournisseur else 'Inconnu'}"
-                ))
-        if mouvements_to_create:
-            MouvementStock.objects.bulk_create(mouvements_to_create, batch_size=100)
-        
-        # 2.5 Mettre à jour la date de dernier achat pour tous les produits
-        today = date.today()
-        # Important: utiliser l'ID du produit dans la liste product_ids
-        # Log Audit
-        total_amount = sum(item.quantity * item.price for item in items)
-        log_audit(
-            user=request.user,
-            action=AuditLog.Action.ORDER_RECEIVE,
-            model_name='Commande',
-            object_id=commande.id,
-            description=f"Réception Commande #{commande.id} - {commande.fournisseur.name if commande.fournisseur else 'Inconnu'}",
-            details={
-                'commande_id': commande.id,
-                'fournisseur': commande.fournisseur.name if commande.fournisseur else 'N/A',
-                'items_count': items.count(),
-                'total_amount': float(total_amount)
-            },
-            request=request
-        )
-
-        Produit.objects.filter(id__in=product_ids).update(dernier_achat=today)
-
-        return Response({'status': 'Commande clôturée, stock mis à jour (UG incluses) et lots créés.'})
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
@@ -747,7 +497,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 produit=produit,
                 type_mouvement=MouvementStock.TypeMouvement.AJUSTEMENT,
                 quantite=-int(qty_to_remove),  # Négatif car on retire
-                stock_apres=int(new_stock),
+                stock_apres=int(produit.total_stock),
                 user=request.user,
                 commande=commande,
                 description=f"Annulation réception commande #{commande.id}{' (' + commande.numero_facture + ')' if commande.numero_facture else ''}"

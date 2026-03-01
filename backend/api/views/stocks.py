@@ -129,7 +129,7 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             produit=produit,
             type_mouvement=MouvementStock.TypeMouvement.AVOIR, # ou AJUSTEMENT ? AVOIR semble utilisé pour "Sortie diverses" ici
             quantite=-quantity_to_remove,
-            stock_apres=produit.stock,
+            stock_apres=produit.total_stock,
             user=validation_user, # Utilise le validateur Sudo
             description=f"Sortie périmés - Lot {lot.lot}: {reason}"
         )
@@ -479,7 +479,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         
         for prod in products_to_recalculate:
             prod.calculate_stock_from_lots()
-            MouvementStock.objects.filter(produit=prod, inventaire=inventaire).update(stock_apres=prod.stock)
+            MouvementStock.objects.filter(produit=prod, inventaire=inventaire).update(stock_apres=prod.total_stock)
 
         inventaire.status = Inventaire.Status.VALIDEE
         inventaire.save()

@@ -409,6 +409,13 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
         # Récupérer les lignes de facture
         items = FactureProduit.objects.filter(facture=facture)
+
+        # 0.5 Sécurité : Vérifier les remises aberrantes (Erreur de saisie)
+        if facture.remise > facture.total_ht:
+            return Response({
+                'detail': f"La remise globale ({facture.remise} F) ne peut pas être supérieure au total des produits ({facture.total_ht} F). "
+                          f"Veuillez corriger la remise."
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Récupérer les IDs des produits concernés
         product_ids = [item.produit_id for item in items]
@@ -638,7 +645,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # Re-fetch updated products to get accurate stock levels
         updated_products = Produit.objects.filter(id__in=product_ids)
-        product_stock_map = {p.id: p.stock for p in updated_products}
+        product_stock_map = {p.id: p.total_stock for p in updated_products}
         
         for item in items:
             if item.quantity == 0:
@@ -836,7 +843,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     produit=item.produit,
                     type_mouvement=MouvementStock.TypeMouvement.RETOUR,
                     quantite=item.quantity, # Positive because product comes BACK to stock
-                    stock_apres=item.produit.stock + item.quantity, # Approximation (concurrency safe enough for history)
+                    stock_apres=item.produit.total_stock + item.quantity, # Approximation (concurrency safe enough for history)
                     description=f"Annulation Facture #{facture.numero_facture or facture.id}",
                     user=validation_user,
                     facture=facture

@@ -114,7 +114,8 @@ class StockLot(models.Model):
     quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
     quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
     quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
-    quantity_remaining = models.IntegerField(help_text="Quantité restante dans le lot")
+    quantity_remaining = models.IntegerField(help_text="Quantité restante en rayon")
+    quantity_reserved = models.IntegerField(default=0, help_text="Quantité en réserve pour ce lot")
     price_cost = models.DecimalField(
         max_digits=10, decimal_places=2, 
         help_text="Prix d'achat unitaire effectif (ajusté avec UG)"
@@ -209,6 +210,7 @@ class MouvementStock(models.Model):
         AVOIR = 'AVOIR', 'Avoir (Retour Fournisseur)'
         TRANSFORMATION_ENTREE = 'TRANSFORMATION_ENTREE', 'Transformation (Entrée)'
         TRANSFORMATION_SORTIE = 'TRANSFORMATION_SORTIE', 'Transformation (Sortie)'
+        REAPPRO_INTERSTOCK = 'REAPPRO_INTERSTOCK', 'Réappro (Réserve -> Rayon)'
 
     produit = models.ForeignKey(
         'Produit', on_delete=models.SET_NULL, null=True, blank=True, 
@@ -261,17 +263,26 @@ def auto_generate_lot_number(sender, instance, **kwargs):
 def sync_product_stock_on_lot_save(sender, instance, created, **kwargs):
     """
     Synchronise le stock du produit quand un lot est créé ou modifié.
+    Met à jour à la fois le stock Rayon et le stock Réserve.
     """
     if instance.produit and instance.produit.use_lot_management:
         from django.db.models import Sum
         from .products import Produit
         
-        total = instance.produit.stock_lots.aggregate(
-            Sum('quantity_remaining')
-        )['quantity_remaining__sum'] or 0
+        results = instance.produit.stock_lots.aggregate(
+            total_remaining=Sum('quantity_remaining'),
+            total_reserved=Sum('quantity_reserved')
+        )
         
-        if instance.produit.stock != total:
-            Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
+        total_remaining = results['total_remaining'] or 0
+        total_reserved = results['total_reserved'] or 0
+        
+        # On ne sauve que si changement pour éviter boucles ou écritures inutiles
+        if instance.produit.stock != total_remaining or instance.produit.stock_reserve != total_reserved:
+            Produit.objects.filter(pk=instance.produit.pk).update(
+                stock=total_remaining,
+                stock_reserve=total_reserved
+            )
 
 
 @receiver(post_delete, sender=StockLot)
@@ -281,8 +292,12 @@ def sync_product_stock_on_lot_delete(sender, instance, **kwargs):
         from django.db.models import Sum
         from .products import Produit
         
-        total = instance.produit.stock_lots.aggregate(
-            Sum('quantity_remaining')
-        )['quantity_remaining__sum'] or 0
+        results = instance.produit.stock_lots.aggregate(
+            total_remaining=Sum('quantity_remaining'),
+            total_reserved=Sum('quantity_reserved')
+        )
         
-        Produit.objects.filter(pk=instance.produit.pk).update(stock=total)
+        Produit.objects.filter(pk=instance.produit.pk).update(
+            stock=results['total_remaining'] or 0,
+            stock_reserve=results['total_reserved'] or 0
+        )
