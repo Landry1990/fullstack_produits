@@ -25,6 +25,7 @@ import Avoirs from './components/Avoirs'
 import RapportMensuel from './components/RapportMensuel'
 import Transformations from './components/Transformations'
 import InvoiceSettings from './components/InvoiceSettings'
+import ReapproRayon from './components/stock/ReapproRayon'
 
 import JournalAudit from './components/JournalAudit'
 import JournalAjustements from './components/JournalAjustements'
@@ -143,6 +144,7 @@ const router = createBrowserRouter([
           { path: 'avoirs', element: <Avoirs /> },
           { path: 'promis', element: <Promis /> },
           { path: 'stock-analysis', element: <StockAnalysis /> },
+          { path: 'reappro-rayon', element: <ReapproRayon /> },
           { path: 'etats-inventaire', element: <EtatsInventaire /> },
           { path: 'vitrine', element: <Vitrine /> },
           { path: 'journal-ajustements', element: <JournalAjustements /> },

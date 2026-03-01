@@ -30,24 +30,32 @@ def log_save(sender, instance, created, **kwargs):
     action = AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE
     model_name = sender.__name__
     
-    # Serialize data
-    try:
-        # Basic serialization
-        data = model_to_dict(instance)
-        # JSON dump
-        details = json.dumps(data, cls=DjangoJSONEncoder, default=str)
-    except Exception as e:
-        details = str(e)
-
-    # We don't have request user here easily. 
-    # For now, it will be None (System) or we rely on a middleware if implemented.
     if not getattr(instance, '_skip_audit', False):
-        AuditLog.objects.create(
-            action=action,
-            model_name=model_name,
-            object_id=str(instance.pk),
-            details=details
-        )
+        try:
+            # Basic serialization using model_to_dict
+            details_dict = model_to_dict(instance)
+            
+            # Re-serialize and deserialize to get a clean dict with serializable types
+            # Use ensure_ascii=True to avoid encoding issues during intermediate step
+            details_json = json.dumps(details_dict, cls=DjangoJSONEncoder, ensure_ascii=True)
+            safe_details = json.loads(details_json)
+            
+            AuditLog.objects.create(
+                action=action,
+                model_name=model_name,
+                object_id=str(instance.pk),
+                details=safe_details
+            )
+        except Exception as e:
+            try:
+                AuditLog.objects.create(
+                    action=action,
+                    model_name=model_name,
+                    object_id=str(instance.pk),
+                    details={"error": str(e), "note": "Audit serialization failed"}
+                )
+            except:
+                pass
 
 @receiver(post_delete, sender=Produit)
 @receiver(post_delete, sender=Facture)
@@ -55,10 +63,12 @@ def log_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Client)
 def log_delete(sender, instance, **kwargs):
     model_name = sender.__name__
-    
-    AuditLog.objects.create(
-        action=AuditLog.Action.DELETE,
-        model_name=model_name,
-        object_id=str(instance.pk),
-        details=json.dumps({"info": "Deleted completely"}, cls=DjangoJSONEncoder)
-    )
+    try:
+        AuditLog.objects.create(
+            action=AuditLog.Action.DELETE,
+            model_name=model_name,
+            object_id=str(instance.pk),
+            details={"info": "Deleted completely"}
+        )
+    except Exception as e:
+        print(f"Error logging delete: {e}")

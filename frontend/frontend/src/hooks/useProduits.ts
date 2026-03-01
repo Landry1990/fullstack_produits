@@ -11,7 +11,7 @@ import type {
 } from '../types';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-const produitsEndpoint = `${apiBaseUrl}/api/produits/`;
+export const produitsEndpoint = `${apiBaseUrl}/api/produits/`;
 const categoriesEndpoint = `${apiBaseUrl}/api/categories/`;
 const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
 const formesEndpoint = `${apiBaseUrl}/api/formes/`;

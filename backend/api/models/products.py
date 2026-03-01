@@ -198,6 +198,24 @@ class Produit(models.Model):
         help_text="Produit actif (visible dans les recherches)"
     )
 
+    # --- Paramètres Stock Réservé & Réapprovisionnement ---
+    has_reserve_storage = models.BooleanField(
+        default=False,
+        help_text="Active la gestion Réserve / Rayon pour ce produit"
+    )
+    capacite_rayon = models.IntegerField(
+        default=0,
+        help_text="Capacité maximale d'exposition en rayon"
+    )
+    min_rayon = models.IntegerField(
+        default=0,
+        help_text="Seuil de déclenchement du réapprovisionnement"
+    )
+    stock_reserve = models.IntegerField(
+        default=0,
+        help_text="Quantité totale en réserve (stock tampon)"
+    )
+
     # --- Paramètres Pathologies Chroniques ---
     is_chronic = models.BooleanField(
         default=False,
@@ -208,6 +226,13 @@ class Produit(models.Model):
         help_text="Durée par défaut du traitement en jours (utilisé pour les rappels)"
     )
 
+
+    @property
+    def total_stock(self):
+        """
+        Returns the total stock: Rayon (stock) + Reserve (stock_reserve).
+        """
+        return (self.stock or 0) + (self.stock_reserve or 0)
 
     def save(self, *args, **kwargs):
         # Validation Exclusivité
@@ -241,14 +266,19 @@ class Produit(models.Model):
         """
         Calcule et met à jour le stock du produit basé sur la somme
         des quantités restantes de tous ses lots.
+        Gère à la fois le stock Rayon (quantity_remaining) et le stock Réserve (quantity_reserved).
         """
         from django.db.models import Sum
-        total = self.stock_lots.aggregate(
-            total=Sum('quantity_remaining')
-        )['total'] or 0
-        self.stock = total
-        self.save(update_fields=['stock'])
-        return total
+        results = self.stock_lots.aggregate(
+            total_remaining=Sum('quantity_remaining'),
+            total_reserved=Sum('quantity_reserved')
+        )
+        
+        self.stock = results['total_remaining'] or 0
+        self.stock_reserve = results['total_reserved'] or 0
+        
+        self.save(update_fields=['stock', 'stock_reserve'])
+        return self.stock
 
     class Meta:
         indexes = [

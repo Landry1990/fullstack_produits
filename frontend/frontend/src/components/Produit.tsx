@@ -113,6 +113,36 @@ export default function Produit() {
   const deleteProduitMutation = useDeleteProduit();
   const adjustStockMutation = useAdjustStock();
   const recalculateRotationMutation = useRecalculateRotation();
+  const [transferLoading, setTransferLoading] = useState(false);
+
+  const handleTransferToRayon = async (produit: ProduitModel) => {
+    if (!produit.has_reserve_storage || (produit.stock_reserve ?? 0) <= 0) return;
+    
+    // Calcul de la quantité suggérée
+    const needed = Math.max(0, (produit.capacite_rayon ?? 0) - (produit.stock ?? 0));
+    const suggest = Math.min(needed, produit.stock_reserve ?? 0);
+    
+    const qtyStr = prompt(`Transférer de la réserve vers le rayon ?\nStock Réserve disponible: ${produit.stock_reserve}\nCapacité Rayon: ${produit.capacite_rayon}\nBesoin Rayon: ${needed}`, String(suggest));
+    
+    if (qtyStr === null) return;
+    const qty = parseInt(qtyStr, 10);
+    if (isNaN(qty) || qty <= 0) {
+      toast.error('Quantité invalide');
+      return;
+    }
+
+    setTransferLoading(true);
+    try {
+      await axios.post(`${produitsEndpoint}${produit.id}/transfer_to_shelf/`, { quantity: qty });
+      toast.success(`${qty} unités transférées au rayon`);
+      refetchProduits();
+      // On met à jour manuellement si besoin, mais refetchProduits suffit
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Erreur lors du transfert');
+    } finally {
+      setTransferLoading(false);
+    }
+  };
 
   // Handle Movement Click
   const handleMovementClick = async (item: any) => {
@@ -155,7 +185,10 @@ export default function Produit() {
     use_lot_management: true,  // Default to true
     requires_prescription: false,
     surveillance_category: 'NONE',
-    is_supplier_exclusive: false
+    is_supplier_exclusive: false,
+    has_reserve_storage: false,
+    capacite_rayon: '0',
+    min_rayon: '0'
   })
   
   // Formulaire d'ajustement de stock
@@ -308,7 +341,10 @@ export default function Produit() {
       use_lot_management: produit.use_lot_management ?? true,
       requires_prescription: produit.requires_prescription ?? false,
       surveillance_category: produit.surveillance_category || 'NONE',
-      is_supplier_exclusive: produit.is_supplier_exclusive ?? false
+      is_supplier_exclusive: produit.is_supplier_exclusive ?? false,
+      has_reserve_storage: produit.has_reserve_storage ?? false,
+      capacite_rayon: String(produit.capacite_rayon ?? '0'),
+      min_rayon: String(produit.min_rayon ?? '0')
     })
     setIsEditModalOpen(true)
   }
@@ -344,7 +380,10 @@ export default function Produit() {
         use_lot_management: editForm.use_lot_management,
         requires_prescription: editForm.requires_prescription || false,
         surveillance_category: (editForm.surveillance_category || 'NONE') as "NONE" | "STANDARD" | "RENFORCEE",
-        is_supplier_exclusive: editForm.is_supplier_exclusive
+        is_supplier_exclusive: editForm.is_supplier_exclusive,
+        has_reserve_storage: editForm.has_reserve_storage,
+        capacite_rayon: parseInt(editForm.capacite_rayon || '0', 10),
+        min_rayon: parseInt(editForm.min_rayon || '0', 10)
       }
       
       const updatedProduit = await updateProduitMutation.mutateAsync({ id: selectedProduit.id, data: payload })
@@ -966,7 +1005,12 @@ export default function Produit() {
                         (selectedProduit.stock ?? 0) <= 0 ? 'badge-error' :
                         (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :
                         'badge-success'
-                      }`}>{t('products.table.stock')}: {selectedProduit.stock ?? 0}</span>
+                      }`}>
+                        Rayon: {selectedProduit.stock ?? 0}
+                        {selectedProduit.has_reserve_storage && (
+                          <> / Réserve: {selectedProduit.stock_reserve ?? 0}</>
+                        )}
+                      </span>
                     </div>
                     <h2 className="text-2xl font-black text-slate-800 uppercase">{selectedProduit.name}</h2>
                     <p className="text-sm text-slate-500 font-mono mt-1">
@@ -981,6 +1025,15 @@ export default function Produit() {
                     >
                       📊
                     </button>
+                    {selectedProduit.has_reserve_storage && (selectedProduit.stock_reserve ?? 0) > 0 && (
+                      <button 
+                        className={`btn btn-sm btn-ghost text-primary hover:bg-primary/10 ${transferLoading ? 'loading' : ''}`}
+                        onClick={() => handleTransferToRayon(selectedProduit)}
+                        title="Réapprovisionner le rayon depuis la réserve"
+                      >
+                        📦 ⬇️
+                      </button>
+                    )}
                     <button 
                       className="btn btn-sm btn-ghost text-slate-400 hover:text-primary" 
                       onClick={() => handleOpenEditModal(selectedProduit)}
@@ -1944,6 +1997,65 @@ export default function Produit() {
                   <span className="label-text font-bold">Exclusivité Fournisseur</span>
                 </label>
               </div>
+          </div>
+
+          <div className="mt-6 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
+             <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-primary">Réserve et Réapprovisionnement</h4>
+                  <p className="text-xs opacity-60">Gérer le stock tampon et les seuils de rayon</p>
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="toggle toggle-primary"
+                  checked={editForm.has_reserve_storage}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setEditForm(prev => ({
+                      ...prev,
+                      has_reserve_storage: checked,
+                      capacite_rayon: (checked && (prev.capacite_rayon === '0' || !prev.capacite_rayon)) ? '50' : prev.capacite_rayon,
+                      min_rayon: (checked && (prev.min_rayon === '0' || !prev.min_rayon)) ? '10' : prev.min_rayon
+                    }));
+                  }}
+                />
+             </div>
+
+             {editForm.has_reserve_storage && (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                  <label className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text font-semibold">Capacité Rayon</span>
+                    </div>
+                    <input
+                      type="number"
+                      className="input input-bordered w-full"
+                      placeholder="Ex: 50"
+                      value={editForm.capacite_rayon}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, capacite_rayon: e.target.value }))}
+                    />
+                    <div className="label">
+                      <span className="label-text-alt text-xs opacity-60">Quantité max. exposée</span>
+                    </div>
+                  </label>
+
+                  <label className="form-control w-full">
+                    <div className="label">
+                      <span className="label-text font-semibold">Seuil Réappro Rayon (Min)</span>
+                    </div>
+                    <input
+                      type="number"
+                      className="input input-bordered w-full"
+                      placeholder="Ex: 10"
+                      value={editForm.min_rayon}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, min_rayon: e.target.value }))}
+                    />
+                    <div className="label">
+                      <span className="label-text-alt text-xs opacity-60">Avertir si stock rayon ≤ seuil</span>
+                    </div>
+                  </label>
+               </div>
+             )}
           </div>
 
           <div className="flex justify-end gap-3 pt-6 border-t border-base-200">

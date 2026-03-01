@@ -323,15 +323,16 @@ class ProduitSerializer(serializers.ModelSerializer):
             'id', 'rayon', 'rayon_nom', 'fournisseur', 'fournisseur_nom', 'forme', 'forme_nom',
             'groupe', 'groupe_nom', 'famille_risque', 'famille_risque_nom', 'famille_risque_niveau',
             'name', 'description', 
-            'stock', 'stock_alert', 'cip1', 'cip2', 'cip3',
+            'stock', 'total_stock', 'stock_alert', 'cip1', 'cip2', 'cip3',
             'cost_price', 'selling_price', 'expire_date', 
             'valeur_stock', 'tva', 'use_lot_management', 'next_expiring_date',
             'stock_lots', 'requires_prescription', 'surveillance_category',
             'dernier_achat', 'dernier_vente', 'is_public',
             'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
-            'active_promotion', 'is_chronic', 'default_treatment_days'
+            'active_promotion', 'is_chronic', 'default_treatment_days',
+            'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge']
+        read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge', 'total_stock']
 
     def validate(self, data):
         """

@@ -85,6 +85,7 @@ export default function Sidebar() {
         { path: '/app/inventaire', label: t('sidebar.stock.inventaire'), key: 'inventaire' },
         { path: '/app/journal-ajustements', label: t('sidebar.stock.journal'), key: 'inventaire' },
         { path: '/app/stock-analysis', label: t('sidebar.stock.analyse'), key: 'inventaire' },
+        { path: '/app/reappro-rayon', label: 'Réappro Rayon', key: 'inventaire' },
         { path: '/app/avoirs', label: t('sidebar.stock.avoirs'), key: 'avoirs' },
         { path: '/app/promis', label: t('sidebar.stock.promis'), key: 'promis' },
         { path: '/app/transformations', label: t('sidebar.stock.transformations'), key: 'inventaire' },

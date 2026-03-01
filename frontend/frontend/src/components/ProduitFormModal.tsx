@@ -55,6 +55,9 @@ export default function ProduitFormModal({
     use_lot_management: true,
     is_chronic: false,
     default_treatment_days: '30',
+    has_reserve_storage: false,
+    capacite_rayon: '0',
+    min_rayon: '0',
     ...initialData,
   });
 
@@ -136,6 +139,9 @@ export default function ProduitFormModal({
         use_lot_management: form.use_lot_management,
         is_chronic: form.is_chronic || false,
         default_treatment_days: form.default_treatment_days ? parseInt(form.default_treatment_days, 10) : 30,
+        has_reserve_storage: form.has_reserve_storage || false,
+        capacite_rayon: form.capacite_rayon ? parseInt(form.capacite_rayon, 10) : 0,
+        min_rayon: form.min_rayon ? parseInt(form.min_rayon, 10) : 0,
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
@@ -449,6 +455,67 @@ export default function ProduitFormModal({
                 </div>
               </label>
            </div>
+        </div>
+
+        {/* Section Réserve et Réapprovisionnement */}
+        <div className="mt-6 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
+           <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="text-sm font-bold uppercase tracking-wider text-primary">Réserve et Réapprovisionnement</h4>
+                <p className="text-xs opacity-60">Gérer le stock tampon et les seuils de rayon</p>
+              </div>
+              <input 
+                type="checkbox" 
+                className="toggle toggle-primary"
+                checked={form.has_reserve_storage}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setForm(p => ({ 
+                    ...p, 
+                    has_reserve_storage: checked,
+                    // Valeurs par défaut si activé et vide/0
+                    capacite_rayon: (checked && (p.capacite_rayon === '0' || !p.capacite_rayon)) ? '50' : p.capacite_rayon,
+                    min_rayon: (checked && (p.min_rayon === '0' || !p.min_rayon)) ? '10' : p.min_rayon
+                  }));
+                }}
+              />
+           </div>
+
+           {form.has_reserve_storage && (
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                <label className="form-control w-full">
+                  <div className="label">
+                    <span className="label-text font-semibold">Capacité Rayon</span>
+                  </div>
+                  <input
+                    type="number"
+                    className="input input-bordered w-full"
+                    placeholder="Ex: 50"
+                    value={form.capacite_rayon}
+                    onChange={(e) => setForm(p => ({ ...p, capacite_rayon: e.target.value }))}
+                  />
+                  <div className="label">
+                    <span className="label-text-alt text-xs opacity-60">Quantité max. exposée</span>
+                  </div>
+                </label>
+
+                <label className="form-control w-full">
+                  <div className="label">
+                    <span className="label-text font-semibold">Seuil Réappro Rayon (Min)</span>
+                  </div>
+                  <input
+                    type="number"
+                    className="input input-bordered w-full"
+                    placeholder="Ex: 10"
+                    value={form.min_rayon}
+                    onChange={(e) => setForm(p => ({ ...p, min_rayon: e.target.value }))}
+                  />
+                  <div className="label">
+                    <span className="label-text-alt text-xs opacity-60">Avertir si stock rayon ≤ seuil</span>
+                  </div>
+                </label>
+             </div>
+           )}
         </div>
 
         {/* Pathologie Chronique */}

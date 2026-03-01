@@ -83,6 +83,10 @@ export interface ProduitModel {
   is_active?: boolean
   is_chronic?: boolean
   default_treatment_days?: number
+  stock_reserve?: number
+  has_reserve_storage?: boolean
+  capacite_rayon?: number
+  min_rayon?: number
 }
 
 export interface ProduitForm {
@@ -108,6 +112,9 @@ export interface ProduitForm {
   use_lot_management?: boolean
   is_chronic?: boolean
   default_treatment_days?: string
+  has_reserve_storage?: boolean
+  capacite_rayon?: string
+  min_rayon?: string
 }
 
 export interface AchatProduit {
@@ -222,6 +229,8 @@ export interface FactureProduit {
   lot?: string
   date_expiration?: string
   treatment_duration_days?: number
+  is_chronic?: boolean
+  default_treatment_days?: number
 }
 
 export interface Facture {

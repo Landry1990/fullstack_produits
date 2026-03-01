@@ -373,22 +373,25 @@ export default function Commandes({ forcedType }: CommandesProps) {
              // 2. Avoir un fournisseur (obligatoire pour créer)
              if (commandeProduits.length > 0 && newCommandeFournisseurId) {
                  setSaving(true);
-                 
-                 const cleanCommande: Partial<Commande> = {
-                    fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
-                    numero_facture: numeroFacture,
-                    type: commandeType,
-                    taux_change: commandeType === 'DIR' ? tauxChange : undefined,
-                    frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
-                 };
-                 
-                 const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
-                 
-                 // Appel avec isAutoSave = true
-                 await handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande, true);
-                 
-                 setSaving(false);
-                 setLastSaved(new Date());
+                 try {
+                     const cleanCommande: Partial<Commande> = {
+                        fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
+                        numero_facture: numeroFacture,
+                        type: commandeType,
+                        taux_change: commandeType === 'DIR' ? tauxChange : undefined,
+                        frais_coefficient: commandeType === 'DIR' ? fraisCoefficient : undefined,
+                     };
+                     
+                     const mode = (viewMode === 'CREATE' ? 'CREATE' : 'EDIT') as 'CREATE' | 'EDIT';
+                     
+                     // Appel avec isAutoSave = true
+                     await handleSaveCommande(cleanCommande, commandeProduits, mode, selectedCommande, true);
+                     setLastSaved(new Date());
+                 } catch (err) {
+                     console.error("Auto-save error:", err);
+                 } finally {
+                     setSaving(false);
+                 }
              }
         }, 60000); // 1 minute
         return () => clearTimeout(timer);

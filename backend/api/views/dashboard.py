@@ -629,9 +629,24 @@ class StatistiquesViewSet(viewsets.ViewSet):
         ).select_related('stock_lot__fournisseur')
         
         if start_date:
-            allocations = allocations.filter(facture_produit__facture__date__gte=start_date)
+            try:
+                d_debut = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                if timezone.is_naive(d_debut): d_debut = timezone.make_aware(d_debut)
+                allocations = allocations.filter(facture_produit__facture__date__gte=d_debut)
+            except ValueError:
+                allocations = allocations.filter(facture_produit__facture__date__gte=start_date)
+
         if end_date:
-            allocations = allocations.filter(facture_produit__facture__date__lte=end_date)
+            try:
+                d_fin = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                if timezone.is_naive(d_fin): d_fin = timezone.make_aware(d_fin)
+                if d_fin.hour == 0 and d_fin.minute == 0 and d_fin.second == 0:
+                    d_fin = d_fin + timedelta(days=1)
+                    allocations = allocations.filter(facture_produit__facture__date__lt=d_fin)
+                else:
+                    allocations = allocations.filter(facture_produit__facture__date__lte=d_fin)
+            except ValueError:
+                allocations = allocations.filter(facture_produit__facture__date__lte=end_date)
             
         stats = allocations.values(
             'stock_lot__fournisseur__id',
