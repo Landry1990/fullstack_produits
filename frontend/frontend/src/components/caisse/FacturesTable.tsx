@@ -78,8 +78,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
               <th>{t('table.ticket')}</th>
               <th>{t('table.invoice')}</th>
               <th>{t('table.client')}</th>
-              <th>{t('table.date')}</th>
-              <th>{t('table.products')}</th>
+              <th className="hidden lg:table-cell">{t('table.date')}</th>
+              <th className="hidden xl:table-cell">{t('table.products')}</th>
               <th className="text-right">{t('table.amount')}</th>
               <th className="text-center">{t('table.actions')}</th>
             </tr>
@@ -129,7 +129,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                   <td>
                     <div className="font-bold">{facture.client_name || 'Client de passage'}</div>
                   </td>
-                  <td className="text-xs">
+                  <td className="text-xs hidden lg:table-cell">
                     <div>{new Date(facture.date).toLocaleDateString('fr-FR', {
                       day: '2-digit',
                       month: '2-digit',
@@ -140,10 +140,10 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                       minute: '2-digit'
                     })}</div>
                   </td>
-                  <td className="text-xs max-w-xs">
+                  <td className="text-xs max-w-xs hidden xl:table-cell">
                     <button
                       type="button"
-                      className="link link-primary text-left truncate block max-w-[200px]"
+                      className="link link-primary text-left truncate block max-w-[150px]"
                       onClick={(e) => {
                         e.stopPropagation()
                         setPreviewFacture(facture)

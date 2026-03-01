@@ -187,7 +187,7 @@ const CartRow = React.memo(({
           {ligne.produit.stock ?? 0}
         </div>
       </td>
-      <td className="text-center py-1">
+      <td className="text-center py-1 hidden md:table-cell">
         <button
           className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
           onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}

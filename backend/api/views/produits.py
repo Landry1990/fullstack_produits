@@ -32,6 +32,7 @@ from ..serializer_mixins import OptimizedSerializerMixin
 from ..cache_mixins import CachedSearchMixin
 from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
+from ..sudo_utils import validate_sudo_mode
 
 class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -1062,6 +1063,124 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             'produits': produits_classes
         })
 
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
+    def transfer_to_shelf(self, request, pk=None):
+        """
+        Transfère une quantité de la réserve vers le rayon.
+        Body: { 
+            'quantity': 50,
+            'validated_by_id': 123,  # Sudo Mode
+            'sudo_password': '...'   # Sudo Mode
+        }
+        Si non spécifié, remplit jusqu'à capacite_rayon.
+        """
+        # 0. Validation Sudo
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_adjust_stock')
+        if error_res:
+            return error_res
+
+        produit = self.get_object()
+        if not produit.has_reserve_storage:
+            return Response({'detail': "La gestion de réserve n'est pas activée pour ce produit."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        quantity = request.data.get('quantity')
+        
+        if quantity:
+            try:
+                quantity = int(quantity)
+            except ValueError:
+                return Response({'detail': "La quantité doit être un nombre entier."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # Calcul automatique pour remplir le rayon
+            needed = max(0, produit.capacite_rayon - produit.stock)
+            quantity = min(needed, produit.stock_reserve)
+            
+        if quantity <= 0:
+            return Response({'detail': "Quantité de transfert nulle ou négative."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if quantity > produit.stock_reserve:
+            return Response({'detail': f"Quantité demandée ({quantity}) supérieure au stock en réserve ({produit.stock_reserve})."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # 1. Mise à jour des lots (FIFO)
+        lots = produit.stock_lots.filter(quantity_reserved__gt=0).order_by('date_reception')
+        remaining_to_transfer = quantity
+        
+        for lot in lots:
+            if remaining_to_transfer <= 0:
+                break
+            
+            transfer_qty = min(remaining_to_transfer, lot.quantity_reserved)
+            lot.quantity_reserved -= transfer_qty
+            lot.quantity_remaining += transfer_qty
+            lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
+            remaining_to_transfer -= transfer_qty
+            
+        # 2. Mise à jour du produit (Calcul des attributs depuis le lot le plus ancien du rayon)
+        produit.stock += quantity
+        produit.stock_reserve -= quantity
+        
+        # Récupérer les infos du lot le plus ancien en RAYON (FIFO) pour mettre à jour le produit
+        oldest_shelf_lot = produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_reception').first()
+        if oldest_shelf_lot:
+            produit.selling_price = oldest_shelf_lot.selling_price
+            produit.expire_date = oldest_shelf_lot.date_expiration
+            
+        produit.save(update_fields=['stock', 'stock_reserve', 'selling_price', 'expire_date'])
+        
+        # 3. Traçabilité (Mouvement de Stock) - Deux lignes : Sortie Réserve / Entrée Rayon
+        from api.models.stock import MouvementStock
+        
+        base_desc = f" (Validé par {validation_user.username})" if validation_user != request.user else ""
+        
+        # Ligne 1: Sortie Réserve
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
+            quantite=-quantity, # Négatif car c'est une sortie de réserve
+            stock_apres=produit.total_stock,
+            user=validation_user,
+            description=f"Sortie Réserve: {quantity} unités.{base_desc}"
+        )
+        
+        # Ligne 2: Entrée Rayon
+        MouvementStock.objects.create(
+            produit=produit,
+            type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
+            quantite=quantity, # Positif car c'est une entrée en rayon
+            stock_apres=produit.total_stock,
+            user=validation_user,
+            description=f"Entrée Rayon: {quantity} unités.{base_desc}"
+        )
+        
+        # 4. Log Audit
+        from ..models import AuditLog
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.STOCK_ADJUST,
+            model_name='Produit',
+            object_id=produit.id,
+            description=f"Réappro Rayon (Split): {quantity} unités de la Réserve vers le Rayon. Opérateur: {validation_user.username}",
+            details={
+                'produit': produit.name,
+                'quantite': quantity,
+                'new_selling_price': str(produit.selling_price),
+                'new_expire_date': str(produit.expire_date),
+                'source': 'reserve',
+                'destination': 'rayon',
+                'validator': validation_user.username,
+                'is_sudo': validation_user != request.user
+            },
+            request=request
+        )
+        
+        return Response({
+            'detail': f"Transfert de {quantity} effectué avec succès par {validation_user.username}.",
+            'stock_rayon': produit.stock,
+            'stock_reserve': produit.stock_reserve
+        }, status=status.HTTP_200_OK)
+
+
 class CategorieViewSet(viewsets.ModelViewSet):
     """API endpoint for categories (rayons) - Fresh implementation."""
     queryset = Rayon.objects.all().order_by('name')
@@ -1639,86 +1758,3 @@ class CategoriesDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         rayon.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    @action(detail=True, methods=['post'])
-    @transaction.atomic
-    def transfer_to_shelf(self, request, pk=None):
-        """
-        Transfère une quantité de la réserve vers le rayon.
-        Body: { 'quantity': 50 }
-        Si non spécifié, remplit jusqu'à capacite_rayon.
-        """
-        produit = self.get_object()
-        if not produit.has_reserve_storage:
-            return Response({'detail': "La gestion de réserve n'est pas activée pour ce produit."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        quantity = request.data.get('quantity')
-        
-        if quantity:
-            try:
-                quantity = int(quantity)
-            except ValueError:
-                return Response({'detail': "La quantité doit être un nombre entier."}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            # Calcul automatique pour remplir le rayon
-            needed = max(0, produit.capacite_rayon - produit.stock)
-            quantity = min(needed, produit.stock_reserve)
-            
-        if quantity <= 0:
-            return Response({'detail': "Quantité de transfert nulle ou négative."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        if quantity > produit.stock_reserve:
-            return Response({'detail': f"Quantité demandée ({quantity}) supérieure au stock en réserve ({produit.stock_reserve})."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        # 1. Mise à jour des lots (FIFO)
-        lots = produit.stock_lots.filter(quantity_reserved__gt=0).order_by('date_reception')
-        remaining_to_transfer = quantity
-        
-        for lot in lots:
-            if remaining_to_transfer <= 0:
-                break
-            
-            transfer_qty = min(remaining_to_transfer, lot.quantity_reserved)
-            lot.quantity_reserved -= transfer_qty
-            lot.quantity_remaining += transfer_qty
-            lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])
-            remaining_to_transfer -= transfer_qty
-            
-        # 2. Mise à jour du produit
-        produit.stock += quantity
-        produit.stock_reserve -= quantity
-        produit.save(update_fields=['stock', 'stock_reserve'])
-        
-        # 3. Traçabilité (Mouvement de Stock)
-        from api.models.stock import MouvementStock
-        MouvementStock.objects.create(
-            produit=produit,
-            type_mouvement=MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK,
-            quantite=quantity, 
-            stock_apres=produit.total_stock, 
-            user=request.user if request.user.is_authenticated else None,
-            description=f"Réappro Rayon: +{quantity} de la réserve"
-        )
-        
-        # 4. Log Audit
-        from api.views.base import log_audit
-        from api.models.base import AuditLog
-        log_audit(
-            user=request.user,
-            action=AuditLog.Action.STOCK_ADJUST,
-            model_name='Produit',
-            object_id=produit.id,
-            description=f"Transfert Réserve -> Rayon: {quantity} unités",
-            details={
-                'produit': produit.name,
-                'quantite': quantity,
-                'source': 'reserve',
-                'destination': 'rayon'
-            },
-            request=request
-        )
-        
-        return Response({
-            'detail': f"Transfert de {quantity} effectué avec succès.",
-            'stock_rayon': produit.stock,
-            'stock_reserve': produit.stock_reserve
-        }, status=status.HTTP_200_OK)

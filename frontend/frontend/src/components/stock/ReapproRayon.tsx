@@ -4,12 +4,26 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type { ProduitModel } from '../../types';
 import { useRayons } from '../../hooks/useProduits';
+import PremiumModal from '../common/PremiumModal';
+import SudoValidationModal from '../common/SudoValidationModal';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ReapproRayon() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [products, setProducts] = useState<ProduitModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [transferringIds, setTransferringIds] = useState<number[]>([]);
+  const [showConfirmAll, setShowConfirmAll] = useState(false);
+  const [toProcessAll, setToProcessAll] = useState<ProduitModel[]>([]);
+  
+  // Sudo Mode States
+  const [sudoModalOpen, setSudoModalOpen] = useState(false);
+  const [sudoSaving, setSudoSaving] = useState(false);
+  const [pendingTransfer, setPendingTransfer] = useState<{ 
+    type: 'single' | 'all', 
+    produit?: ProduitModel 
+  } | null>(null);
   
   // Filtres
   const [searchQuery, setSearchQuery] = useState('');
@@ -70,16 +84,35 @@ export default function ReapproRayon() {
     const suggest = Math.min(needed, produit.stock_reserve ?? 0);
     
     if (suggest <= 0) {
-        toast.error("Remboursement non nécessaire ou réserve vide");
-        return;
+      toast.error("Réapprovisionnement non nécessaire ou réserve vide");
+      return;
     }
 
+    const hasPermission = user?.is_superuser || user?.can_adjust_stock || user?.profile?.can_adjust_stock;
+    
+    if (!hasPermission) {
+      setPendingTransfer({ type: 'single', produit });
+      setSudoModalOpen(true);
+      return;
+    }
+
+    executeTransfer(produit, suggest);
+  };
+
+  const executeTransfer = async (produit: ProduitModel, quantity: number, sudoCreds?: { validatorId: number, password: string }) => {
     setTransferringIds(prev => [...prev, produit.id]);
     try {
-      await axios.post(`/api/produits/${produit.id}/transfer_to_shelf/`, { quantity: suggest });
-      toast.success(`${suggest} unités transférées pour ${produit.name}`);
+      const payload: any = { quantity };
+      if (sudoCreds) {
+        payload.validated_by_id = sudoCreds.validatorId;
+        payload.sudo_password = sudoCreds.password;
+      }
+
+      await axios.post(`/api/produits/${produit.id}/transfer_to_shelf/`, payload);
+      toast.success(`${quantity} unités transférées pour ${produit.name}`);
       fetchNeedsRefill();
     } catch (error: any) {
+      console.error('Transfer error:', error);
       toast.error(error.response?.data?.detail || 'Erreur lors du transfert');
     } finally {
       setTransferringIds(prev => prev.filter(id => id !== produit.id));
@@ -98,22 +131,66 @@ export default function ReapproRayon() {
         return;
      }
 
-     if (!confirm(`Transférer les quantités suggérées pour les ${toProcess.length} produits détectés ?`)) return;
+     setToProcessAll(toProcess);
+     setShowConfirmAll(true);
+  };
 
+  const handleExecuteAllTransfer = async () => {
+     setShowConfirmAll(false);
+     if (toProcessAll.length === 0) return;
+
+     const hasPermission = user?.is_superuser || user?.can_adjust_stock || user?.profile?.can_adjust_stock;
+     
+     if (!hasPermission) {
+        setPendingTransfer({ type: 'all' });
+        setSudoModalOpen(true);
+        return;
+     }
+
+     executeAllTransfer();
+  };
+
+  const executeAllTransfer = async (sudoCreds?: { validatorId: number, password: string }) => {
      setLoading(true);
      let success = 0;
-     for (const p of toProcess) {
+     for (const p of toProcessAll) {
         const needed = Math.max(0, (p.capacite_rayon ?? 0) - (p.stock ?? 0));
         const suggest = Math.min(needed, p.stock_reserve ?? 0);
         try {
-            await axios.post(`/api/produits/${p.id}/transfer_to_shelf/`, { quantity: suggest });
+            const payload: any = { quantity: suggest };
+            if (sudoCreds) {
+              payload.validated_by_id = sudoCreds.validatorId;
+              payload.sudo_password = sudoCreds.password;
+            }
+            await axios.post(`/api/produits/${p.id}/transfer_to_shelf/`, payload);
             success++;
         } catch (e) {
             console.error(`Failed to transfer ${p.name}`, e);
         }
      }
-     toast.success(`${success} produits réapprovisionnés sur ${toProcess.length} traités`);
+     toast.success(`${success} produits réapprovisionnés sur ${toProcessAll.length} traités`);
      fetchNeedsRefill();
+     setToProcessAll([]);
+  };
+
+  const handleSudoValidate = async (validatorId: number, password: string) => {
+    setSudoSaving(true);
+    try {
+      if (pendingTransfer?.type === 'all') {
+        await executeAllTransfer({ validatorId, password });
+      } else if (pendingTransfer?.type === 'single' && pendingTransfer.produit) {
+        const p = pendingTransfer.produit;
+        const needed = Math.max(0, (p.capacite_rayon ?? 0) - (p.stock ?? 0));
+        const suggest = Math.min(needed, p.stock_reserve ?? 0);
+        await executeTransfer(p, suggest, { validatorId, password });
+      }
+      setSudoModalOpen(false);
+      setPendingTransfer(null);
+    } catch (err) {
+      // Toast already handled in execute functions
+    } finally {
+      setSudoSaving(false);
+    }
   };
 
   return (
@@ -234,6 +311,8 @@ export default function ReapproRayon() {
               <tr>
                 <th className="text-xs uppercase opacity-70">Produit</th>
                 <th className="text-xs uppercase opacity-70">Niveau Rayon</th>
+                <th className="text-xs uppercase opacity-70 text-center hidden xl:table-cell">Min Rayon</th>
+                <th className="text-xs uppercase opacity-70 text-center hidden xl:table-cell">Capacité Rayon</th>
                 <th className="text-xs uppercase opacity-70 text-center">En Rayon</th>
                 <th className="text-xs uppercase opacity-70 text-center">En Réserve</th>
                 <th className="text-xs uppercase opacity-70 text-center text-primary">Suggestion</th>
@@ -243,14 +322,14 @@ export default function ReapproRayon() {
             <tbody>
               {loading ? (
                 <tr>
-                   <td colSpan={6} className="py-20 text-center">
+                   <td colSpan={8} className="py-20 text-center">
                       <span className="loading loading-spinner loading-lg text-primary"></span>
                       <p className="mt-4 text-base-content/60 italic font-medium">Récupération des stocks...</p>
                    </td>
                 </tr>
               ) : paginatedProducts.length === 0 ? (
                 <tr>
-                   <td colSpan={6} className="py-20 text-center">
+                   <td colSpan={8} className="py-20 text-center">
                       <div className="text-5xl mb-4">🔍</div>
                       <h3 className="text-xl font-bold text-base-content">Aucun produit trouvé</h3>
                       <p className="text-base-content/60 mt-2">Aucun produit ne possède de gestion de réserve avec ces filtres.</p>
@@ -274,7 +353,7 @@ export default function ReapproRayon() {
                           {p.rayon_name || 'Sans Rayon'}
                         </div>
                       </td>
-                      <td className="w-64">
+                      <td className="w-40 md:w-56 xl:w-64">
                         <div className="flex flex-col gap-1">
                           <div className="flex justify-between items-center px-1">
                              <span className={`text-[10px] font-bold ${isLow ? 'text-error' : 'text-success'}`}>
@@ -290,6 +369,12 @@ export default function ReapproRayon() {
                             />
                           </div>
                         </div>
+                      </td>
+                      <td className="text-center font-mono text-sm opacity-70 hidden xl:table-cell">
+                         {p.min_rayon ?? 0}
+                      </td>
+                      <td className="text-center font-mono text-sm opacity-70 hidden xl:table-cell">
+                         {p.capacite_rayon ?? 0}
                       </td>
                       <td className="text-center font-mono text-sm font-bold">
                          {p.stock}
@@ -352,6 +437,52 @@ export default function ReapproRayon() {
             </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      <PremiumModal
+        isOpen={showConfirmAll}
+        onClose={() => setShowConfirmAll(false)}
+        title="Confirmation de Transfert Groupé"
+        maxWidth="max-w-md"
+        icon={<span className="text-2xl">🚚</span>}
+      >
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+            📦
+          </div>
+          <h3 className="text-xl font-bold text-base-content mb-2">Êtes-vous sûr ?</h3>
+          <p className="text-base-content/60 text-sm mb-6 leading-relaxed">
+            Vous allez transférer les quantités suggérées pour <span className="text-primary font-bold">{toProcessAll.length} produits</span> de la réserve vers le rayon.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <button 
+              className="btn btn-ghost px-6" 
+              onClick={() => setShowConfirmAll(false)}
+            >
+              Annuler
+            </button>
+            <button 
+              className="btn btn-primary px-8 shadow-lg shadow-primary/20" 
+              onClick={handleExecuteAllTransfer}
+            >
+              Confirmer le transfert
+            </button>
+          </div>
+        </div>
+      </PremiumModal>
+
+      {/* Sudo Mode Validation */}
+      <SudoValidationModal
+        isOpen={sudoModalOpen}
+        onClose={() => {
+          setSudoModalOpen(false);
+          setPendingTransfer(null);
+        }}
+        onValidate={handleSudoValidate}
+        saving={sudoSaving}
+        title="Validation Sudo Requise"
+        message="Veuillez confirmer vos identifiants ou demander à un administrateur de valider ce transfert de stock."
+      />
     </div>
   );
 }

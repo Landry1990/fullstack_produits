@@ -1180,15 +1180,15 @@ export default function Produit() {
 
                 {activeTab === 'achats' && (
                   <div className="overflow-x-auto">
-                    <table className="table table-sm">
-                      <thead>
+                    <table className="table table-sm w-full">
+                      <thead className="bg-base-100">
                         <tr>
-                          <th>{t('products.detail.purchases.date')}</th>
-                          <th>{t('products.detail.purchases.provider')}</th>
-                          <th className="text-right">{t('products.detail.purchases.qty')}</th>
-                          <th className="text-right">{t('products.detail.purchases.price')}</th>
-                          <th>{t('products.detail.purchases.lot')}</th>
-                          <th>{t('products.detail.purchases.exp')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.purchases.date')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.purchases.provider')}</th>
+                          <th className="text-right whitespace-nowrap">{t('products.detail.purchases.qty')}</th>
+                          <th className="text-right whitespace-nowrap">{t('products.detail.purchases.price')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.purchases.lot')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.purchases.exp')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1216,14 +1216,14 @@ export default function Produit() {
 
                 {activeTab === 'lots' && (
                   <div className="overflow-x-auto">
-                    <table className="table table-sm">
+                    <table className="table table-sm w-full">
                       <thead>
                         <tr>
-                          <th>{t('products.detail.lots.lot')}</th>
-                          <th>{t('products.detail.lots.expiration')}</th>
-                          <th className="text-right">{t('products.detail.lots.stock')}</th>
-                          <th className="text-right">{t('products.detail.lots.price')}</th>
-                          <th>{t('products.detail.lots.status')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.lots.lot')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.lots.expiration')}</th>
+                          <th className="text-right whitespace-nowrap">{t('products.detail.lots.stock')}</th>
+                          <th className="text-right whitespace-nowrap">{t('products.detail.lots.price')}</th>
+                          <th className="whitespace-nowrap">{t('products.detail.lots.status')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1278,15 +1278,15 @@ export default function Produit() {
                     {adjustments.length === 0 ? (
                       <p className="text-center text-base-content/50 py-4">{t('products.detail.adjustments.empty')}</p>
                     ) : (
-                      <table className="table table-sm">
+                      <table className="table table-sm w-full">
                         <thead>
                           <tr className="bg-base-200">
-                            <th>{t('products.detail.adjustments.date')}</th>
-                            <th>{t('products.detail.adjustments.user')}</th>
-                            <th className="text-right">{t('products.detail.adjustments.before')}</th>
-                            <th className="text-right">{t('products.detail.adjustments.after')}</th>
-                            <th className="text-center">{t('products.detail.adjustments.delta')}</th>
-                            <th>{t('products.detail.adjustments.reason')}</th>
+                            <th className="whitespace-nowrap">{t('products.detail.adjustments.date')}</th>
+                            <th className="whitespace-nowrap">{t('products.detail.adjustments.user')}</th>
+                            <th className="text-right whitespace-nowrap">{t('products.detail.adjustments.before')}</th>
+                            <th className="text-right whitespace-nowrap">{t('products.detail.adjustments.after')}</th>
+                            <th className="text-center whitespace-nowrap">{t('products.detail.adjustments.delta')}</th>
+                            <th className="whitespace-nowrap">{t('products.detail.adjustments.reason')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1320,14 +1320,14 @@ export default function Produit() {
                       <p className="text-center text-base-content/50 py-4">{t('products.detail.stats.empty')}</p>
                     ) : (
                       <>
-                        <table className="table table-sm">
+                        <table className="table table-sm w-full">
                           <thead className="bg-base-200 sticky top-0">
                             <tr>
-                              <th className="text-xs uppercase"></th>
-                              <th className="text-xs uppercase">{t('products.detail.stats.month')}</th>
-                              <th className="text-xs uppercase text-right text-primary">{t('products.detail.stats.qty_sold')}</th>
-                              <th className="text-xs uppercase text-right text-warning">{t('products.detail.stats.qty_ordered')}</th>
-                              <th className="text-xs uppercase text-right text-info">{t('products.detail.stats.nb_clients')}</th>
+                              <th className="text-xs uppercase whitespace-nowrap"></th>
+                              <th className="text-xs uppercase whitespace-nowrap">{t('products.detail.stats.month')}</th>
+                              <th className="text-xs uppercase text-right text-primary whitespace-nowrap">{t('products.detail.stats.qty_sold')}</th>
+                              <th className="text-xs uppercase text-right text-warning whitespace-nowrap">{t('products.detail.stats.qty_ordered')}</th>
+                              <th className="text-xs uppercase text-right text-info whitespace-nowrap">{t('products.detail.stats.nb_clients')}</th>
                             </tr>
                           </thead>
                           <tbody>

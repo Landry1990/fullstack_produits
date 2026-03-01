@@ -111,10 +111,10 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             ) : t('sales.table.invoice_number')}
                         </th>
                         <th className="px-6 py-4">{t('sales.table.client')}</th>
-                        <th className="px-6 py-4">{t('sales.table.operator', {defaultValue: "Vendeur"})}</th>
+                        <th className="px-6 py-4 hidden xl:table-cell">{t('sales.table.operator', {defaultValue: "Vendeur"})}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
-                        <th className="px-6 py-4 text-center">{t('sales.table.discount', {defaultValue: "Remise"})}</th>
-                        <th className="px-6 py-4 text-center">{t('sales.table.status')}</th>
+                        <th className="px-6 py-4 text-center hidden lg:table-cell">{t('sales.table.discount', {defaultValue: "Remise"})}</th>
+                        <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales.table.status')}</th>
 
                         <th className="px-6 py-4 text-right rounded-tr-2xl">
                              {selectedIds.length > 0 && onBulkDelete ? (
@@ -172,7 +172,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 hidden xl:table-cell">
                                 <div className="text-sm text-base-content/70">
                                     {facture.created_by_name || '-'}
                                 </div>
@@ -182,14 +182,14 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                     {parseFloat(facture.total_ttc).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
                                 </span>
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-6 py-4 text-center hidden lg:table-cell">
                                 {parseFloat(facture.remise) > 0 ? (
                                     <span className="text-error font-medium">-{parseFloat(facture.remise).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</span>
                                 ) : (
                                     <span className="text-base-content/30">-</span>
                                 )}
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-6 py-4 text-center hidden md:table-cell">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border
                                     ${facture.status === 'PAY' ? 'bg-success/10 text-success border-success/20' : 
                                     facture.status === 'ANN' ? 'bg-error/10 text-error border-error/20' :
