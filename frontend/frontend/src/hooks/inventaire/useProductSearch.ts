@@ -8,7 +8,8 @@ export const useProductSearch = (
     _lignesEndpoint: string,
     activeInventaireId: number | undefined,
     setLignes: React.Dispatch<React.SetStateAction<any[]>>,
-    lignes: any[]
+    lignes: any[],
+    inventoryType?: 'GLOBAL' | 'RAYON' | 'RESERVE'
 ) => {
     const { t } = useTranslation();
 
@@ -93,7 +94,8 @@ export const useProductSearch = (
         setLoadingLots(true);
         try {
             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-            const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/stock-lots/?produit=${productId}&quantity_remaining_gt=0`);
+            const filterParam = inventoryType === 'RESERVE' ? 'quantity_reserved_gt=0' : 'quantity_remaining_gt=0';
+            const res = await axios.get(`${String(apiBaseUrl).replace(/\/$/, '')}/stock-lots/?produit=${productId}&${filterParam}`);
             const lots = Array.isArray(res.data) ? res.data : res.data.results;
             setAvailableLots(lots || []);
             setSelectedLotIndex(lots?.length > 0 ? 0 : -1);
@@ -131,6 +133,9 @@ export const useProductSearch = (
             const lot = availableLots.find(l => l.id === lotId);
             if (lot) {
                 lotStock = lot.quantity_remaining;
+                if (inventoryType === 'RESERVE') lotStock = lot.quantity_reserved;
+                else if (inventoryType === 'GLOBAL') lotStock = (lot.quantity_remaining || 0) + (lot.quantity_reserved || 0);
+
                 lotNum = lot.lot;
                 lotExp = lot.date_expiration;
             }
@@ -202,6 +207,11 @@ export const useProductSearch = (
         }
 
         const fallbackId = forcedId || Date.now();
+
+        let baseStock = product.stock || 0;
+        if (inventoryType === 'RESERVE') baseStock = product.stock_reserve || 0;
+        else if (inventoryType === 'GLOBAL') baseStock = (product.stock || 0) + (product.stock_reserve || 0);
+
         const temporaryLine = {
             id: fallbackId,
             inventaire: activeInventaireId,
@@ -210,8 +220,8 @@ export const useProductSearch = (
             produit_cip: product.cip1,
             produit_rayon: product.rayon_name,
             stock_lot: stockLotId,
-            stock_theorique: initialStock ?? (product.stock || 0),
-            quantite_physique: initialStock ?? (product.stock || 0),
+            stock_theorique: initialStock ?? baseStock,
+            quantite_physique: initialStock ?? baseStock,
             ecart: 0,
             isLocalOnly: true,
             pmp_snapshot: product.cost_price || '0',

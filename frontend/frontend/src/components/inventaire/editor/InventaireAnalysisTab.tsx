@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Download, AlertTriangle, TrendingUp, PieChart } from 'lucide-react';
+import { formatPrice } from '../../../utils/formatters';
 import type { InventoryStats } from '../../../types';
 
 interface InventaireAnalysisTabProps {
@@ -51,7 +52,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                                 </div>
                                 <div className="text-right">
                                     <div className={`font-mono font-bold ${colorClass}`}>
-                                        {p.valeur > 0 ? '+' : ''}{p.valeur.toLocaleString()} F
+                                        {p.valeur > 0 ? '+' : ''}{formatPrice(p.valeur)} F
                                     </div>
                                 </div>
                             </div>

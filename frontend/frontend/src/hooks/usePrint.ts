@@ -309,7 +309,8 @@ export function usePrint(): UsePrintReturn {
  * Formate un nombre en format monétaire français
  */
 export function formatMoney(value: number | string): string {
-  return Math.round(parseFloat(String(value))).toLocaleString('fr-FR');
+  const num = Math.round(parseFloat(String(value)));
+  return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ');
 }
 
 /**

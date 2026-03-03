@@ -17,7 +17,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from django.utils import timezone
 
 from ..models import (
-    Produit, Rayon, Fournisseur, StockLot, StockAdjustment, 
+    Produit, Rayon, Forme, Groupe, Fournisseur, StockLot, StockAdjustment, 
     FactureProduit, CommandeProduit, AuditLog, Facture, Commande
 )
 from ..serializers import (
@@ -31,6 +31,7 @@ from ..serializers_optimized import (
 from ..serializer_mixins import OptimizedSerializerMixin
 from ..cache_mixins import CachedSearchMixin
 from ..search_mixins import MultiTermSearchMixin
+from ..cache_utils import SearchCache
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
 
@@ -268,11 +269,67 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
         
         updated_count = Produit.objects.filter(id__in=ids).update(is_public=is_public)
         
+        # Invalidation du cache après mise à jour massive
+        SearchCache.invalidate_all_products()
+        
         return Response({
             'status': 'success',
             'updated_count': updated_count,
             'message': f"{updated_count} produits mis à jour."
         })
+
+    @action(detail=False, methods=['post'], url_path='bulk-categorize')
+    def bulk_categorize(self, request):
+        """
+        Associe massivement une liste de produits à un rayon, une forme ou un groupe.
+        Body: { 
+            'ids': [1, 2, 3], 
+            'category_type': 'rayon' | 'forme' | 'groupe',
+            'category_id': 123 (ou null pour détacher)
+        }
+        """
+        ids = request.data.get('ids', [])
+        cat_type = request.data.get('category_type')
+        cat_id = request.data.get('category_id')
+
+        if not ids or not isinstance(ids, list):
+            return Response({'detail': 'Liste d\'IDs invalide ou vide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_types = {
+            'rayon': 'rayon_id',
+            'forme': 'forme_id',
+            'groupe': 'groupe_id'
+        }
+
+        if cat_type not in valid_types:
+            return Response({'detail': f'Type de catégorie invalide. Valeurs possibles: {", ".join(valid_types.keys())}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        field_name = valid_types[cat_type]
+        
+        try:
+            with transaction.atomic():
+                updated_count = Produit.objects.filter(id__in=ids).update(**{field_name: cat_id})
+                
+                # Invalidation du cache après mise à jour massive
+                SearchCache.invalidate_all_products()
+                
+                log_audit(
+                    user=request.user,
+                    action=AuditLog.Action.UPDATE,
+                    model_name='Produit',
+                    object_id=0,
+                    description=f"Mise à jour massive ({cat_type}) pour {updated_count} produits.",
+                    details={'ids': ids, 'category_type': cat_type, 'category_id': cat_id},
+                    request=request
+                )
+
+                return Response({
+                    'status': 'success',
+                    'updated_count': updated_count,
+                    'message': f'{updated_count} produits mis à jour avec succès.'
+                })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # Configuration des serializers optimisés
     list_serializer_class = ProduitListSerializer
@@ -378,6 +435,9 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
                     details={'ids': ids, 'names': names},
                     request=request
                 )
+                
+                # Invalidation du cache après suppression massive
+                SearchCache.invalidate_all_products()
                 
                 return Response({
                     'status': 'success',
@@ -644,12 +704,13 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             Q(stock__lt=F('rotation_moyenne'), rotation_moyenne__gt=0) |
             Q(stock__lte=F('stock_minimum'), stock_minimum__gt=0) |
             Q(stock__lt=0)
-        ).order_by('name').values('id', 'name', 'stock', 'rotation_moyenne', 'stock_minimum')
+        ).order_by('name').values('id', 'name', 'stock', 'rotation_moyenne', 'stock_minimum', 'cip1')
         
         # Format response with clean field names
         result = [
             {
                 'nom_produit': p['name'],
+                'cip': p['cip1'],
                 'stock': p['stock'],
                 'rotation': round(float(p['rotation_moyenne']), 1),
                 'stock_min': p['stock_minimum']
@@ -704,6 +765,67 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
             return Response({'message': f'Rotation recalculée. {len(produits_to_update)} produits mis à jour sur {produits.count()}.'})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """
+        Exporte les produits d'une catégorie au format CSV optimisé pour Excel.
+        QueryParams: rayon, forme, ou groupe
+        """
+        rayon_id = request.query_params.get('rayon')
+        forme_id = request.query_params.get('forme')
+        groupe_id = request.query_params.get('groupe')
+        
+        # Filtrage manuel direct pour éviter les interférences avec get_queryset() ou le cache
+        queryset = Produit.objects.all()
+        parts = ["export"]
+        
+        if rayon_id:
+            queryset = queryset.filter(rayon_id=rayon_id)
+            try:
+                rayon = Rayon.objects.get(id=rayon_id)
+                parts.append(f"rayon_{rayon.name.replace(' ', '_')}")
+            except Rayon.DoesNotExist: pass
+        if forme_id:
+            queryset = queryset.filter(forme_id=forme_id)
+            try:
+                forme = Forme.objects.get(id=forme_id)
+                parts.append(f"forme_{forme.nom.replace(' ', '_')}")
+            except Forme.DoesNotExist: pass
+        if groupe_id:
+            queryset = queryset.filter(groupe_id=groupe_id)
+            try:
+                groupe = Groupe.objects.get(id=groupe_id)
+                parts.append(f"groupe_{groupe.nom.replace(' ', '_')}")
+            except Groupe.DoesNotExist: pass
+            
+        filename = "_".join(parts) + ".csv"
+
+        import csv
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # En-tête UTF-8 BOM pour Excel (Même méthode que dans rapports)
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        writer = csv.writer(response, delimiter=';')
+        writer.writerow(['ID', 'Nom', 'CIP1', 'Stock', 'Prix Achat', 'Prix Vente', 'TVA'])
+        
+        # Forcer l'évaluation du queryset pour le debug si nécessaire
+        products = list(queryset[:5000]) # Limite raisonnable
+        
+        for p in products:
+            writer.writerow([
+                p.id,
+                p.name,
+                p.cip1 or '',
+                str(p.stock).replace('.', ','),
+                str(p.cost_price).replace('.', ','),
+                str(p.selling_price).replace('.', ','),
+                str(p.tva).replace('.', ',')
+            ])
+            
+        return response
 
     @action(detail=False, methods=['post'])
     def generate_labels(self, request):

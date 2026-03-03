@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import type { Inventaire } from '../../types';
 
 interface UseInventaireMergeProps {
-    viewMode: 'LIST' | 'CREATE' | 'EDIT';
+    viewMode: 'LIST' | 'CREATE' | 'EDIT' | 'AUDIT';
     selectedInventaireIds: Set<number>;
     inventaires: Inventaire[];
     setSelectedInventaireIds: (ids: Set<number>) => void;
@@ -37,8 +37,11 @@ export const useInventaireMerge = ({
         if (selectedInventaireIds.size < 2) return { canMerge: false, reason: t('stock.inventaire.merge.need_two', { defaultValue: 'Sélectionnez au moins 2 inventaires.' }) };
 
         const selectedDocs = inventaires.filter(i => selectedInventaireIds.has(i.id));
-        const allEnCours = selectedDocs.every(i => i.status === 'EN_COURS');
-        if (!allEnCours) return { canMerge: false, reason: t('stock.inventaire.merge.only_drafts', { defaultValue: 'Seuls les brouillons peuvent être fusionnés.' }) };
+        if (selectedDocs.length === 0) return { canMerge: false, reason: t('stock.inventaire.merge.error', { defaultValue: 'Erreur lors de la sélection.' }) };
+
+        const firstStatus = selectedDocs[0].status;
+        const allSameStatus = selectedDocs.every((i: Inventaire) => i.status === firstStatus);
+        if (!allSameStatus) return { canMerge: false, reason: t('stock.inventaire.merge.same_status_required', { defaultValue: 'Les inventaires sélectionnés doivent avoir le même état (tous en préparation ou tous clôturés).' }) };
 
         return { canMerge: true, reason: null };
     };
@@ -47,7 +50,7 @@ export const useInventaireMerge = ({
         if (!activeInventaire) return;
         setLoadingMergeCandidates(true);
         try {
-            const res = await axios.get(`${inventairesEndpoint}?status=EN_COURS`);
+            const res = await axios.get(`${inventairesEndpoint}?status=${activeInventaire.status}`);
             const candidates = (Array.isArray(res.data) ? res.data : res.data.results)
                 .filter((inv: Inventaire) => inv.id !== activeInventaire.id);
             setMergeCandidates(candidates);

@@ -35,7 +35,7 @@ class Commande(models.Model):
         'Fournisseur', on_delete=models.SET_NULL, null=True, blank=True
     )
     fournisseur_nom = models.CharField(max_length=255, null=True, blank=True) # Nom si fournisseur supprimé
-    numero_facture = models.CharField(max_length=100, null=True, blank=True)
+    numero_facture = models.CharField(max_length=100, null=True, blank=True, unique=True)
     date = models.DateTimeField(default=timezone.now)
     date_cloture = models.DateTimeField(null=True, blank=True)
     date_echeance = models.DateField(
@@ -49,7 +49,12 @@ class Commande(models.Model):
 
     def save(self, *args, **kwargs):
         if self.numero_facture:
-            self.numero_facture = self.numero_facture.upper()
+            self.numero_facture = self.numero_facture.upper().strip()
+            # Convert empty string to None to avoid uniqueness conflict in DB
+            if not self.numero_facture:
+                self.numero_facture = None
+        else:
+            self.numero_facture = None
         super().save(*args, **kwargs)
 
     def __str__(self):

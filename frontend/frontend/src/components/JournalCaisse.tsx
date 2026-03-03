@@ -308,7 +308,7 @@ export default function JournalCaisse() {
        } else {
           // Transaction
           if (item.statut === 'completee') {
-            const isRecouvrement = item.mode_paiement === 'recouvrement' || item.is_creance_settlement || item.client_type === 'PROFESSIONNEL' || (item.reference && item.reference.includes('[RECOUV]'))
+            const isRecouvrement = item.mode_paiement === 'recouvrement' || item.is_creance_settlement || (item.reference && item.reference.includes('[RECOUV]'))
             
             if (isRecouvrement) {
                 totaux.recouvrement += montant

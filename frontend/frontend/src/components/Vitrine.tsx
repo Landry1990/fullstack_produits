@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Search, Globe, DollarSign, Cloud, ShoppingCart, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { formatPrice } from '../utils/formatters';
 
 interface Product {
   id: number;
@@ -154,7 +155,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                     </div>
                                 </td>
                                 <td className="font-mono whitespace-nowrap">
-                                    {product.selling_price?.toLocaleString('fr-FR')} FCFA
+                                    {formatPrice(product.selling_price)} FCFA
                                 </td>
                                 <td>
                                     <div className="join">
@@ -351,7 +352,7 @@ function SimulateurClient() {
                                                 )}
                                                 
                                                 <span className="font-mono text-sm opacity-70">
-                                                    {(item.public_price || item.selling_price)?.toLocaleString()} FCFA
+                                                    {formatPrice(Number(item.public_price || item.selling_price))} FCFA
                                                 </span>
                                             </div>
                                         </div>

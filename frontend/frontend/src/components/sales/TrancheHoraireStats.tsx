@@ -4,22 +4,18 @@ import axios from 'axios';
 import { safeStorage } from '../../utils/storage';
 import { useTranslation } from 'react-i18next';
 
-interface TrancheStats {
-    total_ht: string;
-    total_tva: string;
-    total_ttc: string;
-    nombre_factures: number;
-    tranche: string;
+
+interface TrancheHoraireStatsProps {
+    onVerify?: () => void;
 }
 
-export const TrancheHoraireStats: React.FC = () => {
+export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVerify }) => {
     useTranslation();
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     
     const [startTime, setStartTime] = useState("08:00");
-    const [endTime, setEndTime] = useState("18:00");
-    const [stats, setStats] = useState<TrancheStats | null>(null);
+    const [endTime, setEndTime] = useState("21:00");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -34,15 +30,14 @@ export const TrancheHoraireStats: React.FC = () => {
             const dateDebut = `${dateStr}T${startTime}`;
             const dateFin = `${dateStr}T${endTime}`;
 
-            const response = await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
+            await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
                 params: { date_debut: dateDebut, date_fin: dateFin },
                 headers: { Authorization: `Token ${token}` }
             });
-            setStats(response.data);
+            onVerify?.();
         } catch (err: any) {
             console.error("Failed to fetch tranche stats", err);
             setError(err.response?.data?.detail || "Erreur lors de la récupération des données");
-            setStats(null);
         } finally {
             setLoading(false);
         }
@@ -105,39 +100,6 @@ export const TrancheHoraireStats: React.FC = () => {
                 </div>
             )}
 
-            {stats && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="bg-base-200/50 p-4 rounded-xl border border-base-300">
-                        <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">
-                            Total TTC
-                        </div>
-                        <div className="text-2xl font-black text-primary">
-                            {Number(stats.total_ttc).toLocaleString()} <span className="text-sm font-normal">F</span>
-                        </div>
-                        <div className="text-xs text-base-content/60 mt-1">
-                            {stats.nombre_factures} facture(s) validée(s)
-                        </div>
-                    </div>
-
-                    <div className="bg-base-200/50 p-4 rounded-xl border border-base-300">
-                        <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">
-                            Total HT
-                        </div>
-                        <div className="text-xl font-bold text-base-content">
-                            {Number(stats.total_ht).toLocaleString()} <span className="text-xs font-normal">F</span>
-                        </div>
-                    </div>
-
-                    <div className="bg-base-200/50 p-4 rounded-xl border border-base-300">
-                        <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">
-                            Total TVA
-                        </div>
-                        <div className="text-xl font-bold text-base-content">
-                            {Number(stats.total_tva).toLocaleString()} <span className="text-xs font-normal">F</span>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

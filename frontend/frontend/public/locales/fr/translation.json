@@ -690,6 +690,7 @@
                 "total_purchase": "Total Achat"
             },
             "no_data": "Aucun achat trouvé pour cette période",
+            "results_found": "résultats trouvés",
             "total": "TOTAL"
         },
         "list": {

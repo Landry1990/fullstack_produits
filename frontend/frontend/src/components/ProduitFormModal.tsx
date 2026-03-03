@@ -248,6 +248,21 @@ export default function ProduitFormModal({
                   onChange={(e) => setForm((p) => ({ ...p, cip1: e.target.value }))} 
                 />
               </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text text-xs font-semibold">CIP2</span></div>
+                  <input className="input input-bordered input-sm w-full font-mono" value={form.cip2}
+                    onChange={(e) => setForm((p) => ({ ...p, cip2: e.target.value }))} />
+                </label>
+                <label className="form-control w-full">
+                  <div className="label"><span className="label-text text-xs font-semibold">CIP3</span></div>
+                  <input className="input input-bordered input-sm w-full font-mono" value={form.cip3}
+                    onChange={(e) => setForm((p) => ({ ...p, cip3: e.target.value }))} />
+                </label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <label className="form-control w-full">
                 <div className="label"><span className="label-text font-semibold">Fournisseur</span></div>
                 <select 
@@ -374,7 +389,7 @@ export default function ProduitFormModal({
                 >
                   {tvaList.map((t) => (
                     <option key={t.id} value={t.taux}>
-                      {t.taux}%
+                      {t.taux}% {t.libelle ? `(${t.libelle})` : ''}
                     </option>
                   ))}
                 </select>

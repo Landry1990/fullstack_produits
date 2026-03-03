@@ -7,9 +7,17 @@ from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 import datetime
 
+from rest_framework.pagination import PageNumberPagination
+
+class HistoriqueAchatsPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
 class HistoriqueAchatsViewSet(viewsets.ViewSet):
     """API endpoint for daily purchase history."""
     permission_classes = [IsAuthenticated]
+    pagination_class = HistoriqueAchatsPagination
 
     def list(self, request):
         date_debut = request.query_params.get('date_debut')
@@ -37,11 +45,6 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
             queryset = queryset.filter(type=commande_type)
 
         # Aggregation by Day
-        # We need to sum the total of products for each order.
-        # Since Commande.total is not a stored field, we must calculate it via CommandeProduit.
-        # We perform a join with products to sum (quantity * price).
-        # Note: price in CommandeProduit is the purchase price.
-        
         daily_stats = queryset.annotate(
             jour=TruncDate('date')
         ).values('jour').annotate(
@@ -51,6 +54,20 @@ class HistoriqueAchatsViewSet(viewsets.ViewSet):
                 output_field=DecimalField()
             )
         ).order_by('-jour')
+
+        # Pagination
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(daily_stats, request)
+        
+        if page is not None:
+            results = []
+            for stat in page:
+                results.append({
+                    'date': stat['jour'],
+                    'nb_commandes': stat['nb_commandes'],
+                    'total_achat': stat['total_achat'] or 0,
+                })
+            return paginator.get_paginated_response(results)
 
         results = []
         for stat in daily_stats:

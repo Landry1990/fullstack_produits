@@ -7,6 +7,9 @@ import { useProductSearch } from '../hooks/useProductSearch';
 import { useSearchNavigation } from '../hooks/useSearchNavigation';
 import PremiumModal from './common/PremiumModal';
 import type { ProduitModel } from '../types';
+import { 
+  ChevronRight, Trash2, Plus 
+} from 'lucide-react';
 
 // Interfaces
 interface RelationTransformation {
@@ -332,112 +335,162 @@ const Transformations: React.FC = () => {
     : 0;
 
   return (
-    <div className="p-6 bg-base-100 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-          {t('transformations.title')}
-        </h1>
-        <button 
-          onClick={() => { resetRelationForm(); setIsRelationModalOpen(true); }}
-          className="btn btn-primary"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
-          {t('transformations.new_relation_btn')}
-        </button>
+    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
+      {/* Header Section (Style Ventes.tsx) */}
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
+        <div className="p-6 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+              </div>
+              {t('transformations.title')}
+            </h1>
+            <p className="text-base-content/60 text-sm mt-1">
+              Gérez vos règles de transformation de produits et suivez l'historique des opérations
+            </p>
+          </div>
+          <button 
+            onClick={() => { resetRelationForm(); setIsRelationModalOpen(true); }}
+            className="btn btn-primary rounded-xl shadow-lg shadow-primary/20 gap-2"
+          >
+            <Plus size={20} />
+            {t('transformations.new_relation_btn')}
+          </button>
+        </div>
+
+        {/* Tab Navigation (Style Ventes.tsx) */}
+        <div className="px-6 py-4 bg-base-50/50 flex gap-2">
+          <button 
+            className={`btn btn-sm rounded-xl px-6 transition-all ${activeTab === 'relations' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
+            onClick={() => setActiveTab('relations')}
+          >
+            {t('transformations.tabs.configured_relations')}
+          </button>
+          <button 
+            className={`btn btn-sm rounded-xl px-6 transition-all ${activeTab === 'historique' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
+            onClick={() => setActiveTab('historique')}
+          >
+            {t('transformations.tabs.history')}
+          </button>
+        </div>
       </div>
 
-      <div className="tabs tabs-boxed mb-6">
-        <a 
-          className={`tab ${activeTab === 'relations' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('relations')}
-        >
-          {t('transformations.tabs.configured_relations')}
-        </a>
-        <a 
-          className={`tab ${activeTab === 'historique' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('historique')}
-        >
-          {t('transformations.tabs.history')}
-        </a>
-      </div>
+      {/* Main Content Section (Style Ventes.tsx) */}
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden min-h-[400px]">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center p-20 gap-4">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
+            <p className="text-sm font-medium opacity-50">Chargement des données...</p>
+          </div>
+        ) : (
+          <div className="p-6">
+            {activeTab === 'relations' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {relations.map(relation => (
+                  <div key={relation.id} className="group relative bg-base-200/30 border border-base-200 rounded-2xl p-5 hover:bg-base-200/50 transition-all hover:shadow-md">
+                    <div className="flex items-center justify-between mb-4">
+                       <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary font-bold">
+                             {relation.produit_source_nom.charAt(0)}
+                          </div>
+                          <div className="max-w-[150px]">
+                             <div className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">Source</div>
+                             <div className="font-bold text-sm truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
+                          </div>
+                       </div>
+                       <div className="text-primary/30 group-hover:text-primary/60 transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                       </div>
+                       <div className="flex items-center gap-3 text-right">
+                          <div className="max-w-[150px]">
+                             <div className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">Dest.</div>
+                             <div className="font-bold text-sm truncate text-success" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
+                          </div>
+                       </div>
+                    </div>
 
-      {loading ? (
-        <div className="flex justify-center p-10"><span className="loading loading-spinner loading-lg"></span></div>
-      ) : (
-        <>
-          {activeTab === 'relations' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {relations.map(relation => (
-                <div key={relation.id} className="card bg-base-200 shadow-xl">
-                  <div className="card-body">
-                    <h2 className="card-title text-sm">
-                      {relation.produit_source_nom}
-                      <span className="text-gray-400 mx-2">➔</span>
-                      {relation.produit_destination_nom}
-                    </h2>
-                    <div className="badge badge-secondary badge-outline mb-2">{t('transformations.card.ratio', { ratio: relation.ratio })}</div>
-                    <div className="card-actions justify-end mt-4">
-                      <button 
-                        className="btn btn-sm btn-accent"
-                        onClick={() => openTransformerModal(relation)}
-                      >
-                        {t('transformations.card.transform_btn')}
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-ghost text-error"
-                        onClick={() => handleDeleteRelation(relation.id)}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
+                    <div className="bg-white/50 rounded-xl p-3 border border-base-200 flex justify-between items-center mb-6">
+                       <div className="text-xs font-medium opacity-60">Ratio de conversion</div>
+                       <div className="badge badge-primary font-mono font-bold">1 : {relation.ratio}</div>
+                    </div>
+
+                    <div className="flex gap-2">
+                       <button 
+                         className="btn btn-primary btn-sm flex-1 rounded-xl shadow-sm"
+                         onClick={() => openTransformerModal(relation)}
+                       >
+                         Transformer
+                       </button>
+                       <button 
+                         className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"
+                         onClick={() => handleDeleteRelation(relation.id)}
+                       >
+                         <Trash2 size={16} />
+                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
-              {relations.length === 0 && (
-                <div className="col-span-full text-center py-10 text-gray-500">
-                  Aucune relation de transformation configurée.
-                </div>
-              )}
-            </div>
-          )}
+                ))}
+                {relations.length === 0 && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-30 italic">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                    <p>Aucune relation configurée</p>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {activeTab === 'historique' && (
-            <div className="overflow-x-auto">
-              <table className="table w-full">
-                <thead>
-                  <tr>
-                    <th>{t('transformations.table_history.date')}</th>
-                    <th>{t('transformations.table_history.user')}</th>
-                    <th>{t('transformations.table_history.transformation')}</th>
-                    <th>{t('transformations.table_history.quantities')}</th>
-                    <th>{t('transformations.table_history.notes')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {historique.map(hist => (
-                    <tr key={hist.id}>
-                      <td>{new Date(hist.date_transformation).toLocaleString()}</td>
-                      <td>{hist.user_nom}</td>
-                      <td>
-                        {hist.produit_source_nom} 
-                        <span className="text-gray-400 mx-2">➔</span>
-                        {hist.produit_destination_nom}
-                      </td>
-                      <td>
-                        <span className="text-error font-bold">-{hist.quantite_source}</span>
-                        <span className="mx-2">/</span>
-                        <span className="text-success font-bold">+{hist.quantite_destination}</span>
-                      </td>
-                      <td className="italic text-gray-500">{hist.notes || '-'}</td>
+            {activeTab === 'historique' && (
+              <div className="overflow-x-auto -mx-6">
+                <table className="table table-zebra w-full whitespace-nowrap">
+                  <thead className="bg-base-200/50">
+                    <tr>
+                      <th className="bg-transparent pl-6">{t('transformations.table_history.date')}</th>
+                      <th className="bg-transparent">{t('transformations.table_history.user')}</th>
+                      <th className="bg-transparent">{t('transformations.table_history.transformation')}</th>
+                      <th className="bg-transparent">{t('transformations.table_history.quantities')}</th>
+                      <th className="bg-transparent pr-6">{t('transformations.table_history.notes')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
+                  </thead>
+                  <tbody>
+                    {historique.map(hist => (
+                      <tr key={hist.id} className="hover:bg-base-200/30 transition-colors group">
+                        <td className="pl-6 py-4">
+                           <div className="font-medium text-sm">{new Date(hist.date_transformation).toLocaleDateString()}</div>
+                           <div className="text-[10px] opacity-40 font-mono uppercase">{new Date(hist.date_transformation).toLocaleTimeString()}</div>
+                        </td>
+                        <td className="font-bold text-sm text-primary/70">{hist.user_nom}</td>
+                        <td className="max-w-xs">
+                           <div className="flex items-center gap-2 text-sm font-semibold truncate">
+                              <span className="opacity-60">{hist.produit_source_nom}</span>
+                              <ChevronRight size={14} className="opacity-30" />
+                              <span className="text-success">{hist.produit_destination_nom}</span>
+                           </div>
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-3">
+                             <div className="bg-error/10 text-error px-2 py-1 rounded text-xs font-black font-mono">-{hist.quantite_source}</div>
+                             <ChevronRight size={12} className="opacity-20" />
+                             <div className="bg-success/10 text-success px-2 py-1 rounded text-xs font-black font-mono">+{hist.quantite_destination}</div>
+                          </div>
+                        </td>
+                        <td className="pr-6 italic text-gray-400 text-xs max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
+                           {hist.notes || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                    {historique.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="text-center py-20 opacity-30 italic">Aucun historique disponible</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ===== Modal Création Relation ===== */}
       <PremiumModal

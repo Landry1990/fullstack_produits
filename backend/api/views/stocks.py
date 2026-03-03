@@ -40,8 +40,8 @@ from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
 
-from django.db.models import F, Sum, DecimalField, Case, When, Value, ExpressionWrapper
-from django.db.models.functions import Coalesce
+from django.db.models import F, Sum, DecimalField, Case, When, Value, ExpressionWrapper, Count
+from django.db.models.functions import Coalesce, Cast, Abs
 
 class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -102,15 +102,16 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         
         # Update product stock
         produit = lot.produit
-        if produit.use_lot_management:
-            # Recalculate stock from all lots
-            produit.calculate_stock_from_lots()
-        else:
-            produit.stock = F('stock') - quantity_to_remove
-            produit.save(update_fields=['stock'])
-        
-        # Refresh to get actual stock value for MouvementStock
-        produit.refresh_from_db()
+        if produit:
+            if produit.use_lot_management:
+                # Recalculate stock from all lots
+                produit.calculate_stock_from_lots()
+            else:
+                produit.stock = F('stock') - quantity_to_remove
+                produit.save(update_fields=['stock'])
+            
+            # Refresh to get actual stock value for MouvementStock
+            produit.refresh_from_db()
 
         # Create StockAdjustment for traceability in Adjustment Journal
         StockAdjustment.objects.create(
@@ -129,7 +130,7 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             produit=produit,
             type_mouvement=MouvementStock.TypeMouvement.AVOIR, # ou AJUSTEMENT ? AVOIR semble utilisé pour "Sortie diverses" ici
             quantite=-quantity_to_remove,
-            stock_apres=produit.total_stock,
+            stock_apres=produit.total_stock if produit else 0,
             user=validation_user, # Utilise le validateur Sudo
             description=f"Sortie périmés - Lot {lot.lot}: {reason}"
         )
@@ -142,17 +143,88 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             object_id=lot.id,
             description=f"Sortie périmés par {validation_user.username}: {quantity_to_remove} unités (Lot {lot.lot})",
             details={
-                'produit_id': produit.id,
-                'produit_nom': produit.name,
+                'produit_id': produit.id if produit else None,
+                'produit_nom': produit.name if produit else lot.produit_nom,
                 'quantity': -quantity_to_remove,
                 'reason': reason,
                 'lot': lot.lot,
-                'sudo_mode': bool(validated_by_id)
+                'sudo_mode': validation_user != request.user
             },
             request=request
         )
 
         return Response({'status': f'Lot mis à jour. {quantity_to_remove} unités sorties.', 'validated_by': validation_user.username})
+
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_sortir_perimes(self, request):
+        """
+        Sortie groupée de plusieurs lots périmés.
+        """
+        lot_ids = request.data.get('lot_ids', [])
+        reason = request.data.get('reason', 'Sortie groupée périmés')
+        
+        if not lot_ids:
+            return Response({'detail': 'Aucun lot sélectionné.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_manage_perimes')
+        if error_res:
+             return error_res
+             
+        lots = StockLot.objects.filter(id__in=lot_ids, quantity_remaining__gt=0).select_related('produit')
+        count = 0
+        
+        for lot in lots:
+            quantity_to_remove = lot.quantity_remaining
+            quantity_before = lot.quantity_remaining
+            
+            # Update lot
+            lot.quantity_remaining = 0
+            lot.save()
+            
+            # Update product stock
+            produit = lot.produit
+            if produit:
+                if produit.use_lot_management:
+                    produit.calculate_stock_from_lots()
+                else:
+                    produit.stock = F('stock') - quantity_to_remove
+                    produit.save(update_fields=['stock'])
+                
+                produit.refresh_from_db()
+            
+            # Traceability
+            StockAdjustment.objects.create(
+                produit=produit, stock_lot=lot, user=validation_user,
+                quantity_before=quantity_before, quantity_after=0,
+                quantity_change=-quantity_to_remove,
+                reason_type=StockAdjustment.ReasonType.PERIME,
+                reason_detail=f"Sortie groupée: {reason}"
+            )
+            
+            MouvementStock.objects.create(
+                produit=produit,
+                type_mouvement=MouvementStock.TypeMouvement.AVOIR,
+                quantite=-quantity_to_remove,
+                stock_apres=produit.total_stock if produit else 0,
+                user=validation_user,
+                description=f"Sortie groupée périmés - Lot {lot.lot}"
+            )
+            
+            count += 1
+            
+        # Global Audit
+        log_audit(
+            user=validation_user,
+            action=AuditLog.Action.STOCK_ADJUST,
+            model_name='StockLot',
+            object_id=0,
+            description=f"Sortie groupée de {count} lots périmés par {validation_user.username}",
+            details={'lot_ids': lot_ids, 'reason': reason, 'count': count},
+            request=request
+        )
+        
+        return Response({'status': f'{count} lots sortis du stock.', 'validated_by': validation_user.username})
 
     @action(detail=False, methods=['get'])
     def stats_perimes(self, request):
@@ -376,6 +448,78 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
+    def pre_populate(self, request, pk=None):
+        """
+        Pré-remplit l'inventaire avec les produits d'une catégorie (rayon, groupe, forme).
+        """
+        inventaire = self.get_object()
+        if inventaire.status == Inventaire.Status.VALIDEE:
+             return Response({'detail': 'Cet inventaire est déjà validé.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        rayon_id = request.data.get('rayon_id')
+        groupe_id = request.data.get('groupe_id')
+        forme_id = request.data.get('forme_id')
+        
+        # Filtrer les produits
+        filters = Q(is_active=True)
+        if rayon_id:
+            filters &= Q(rayon_id=rayon_id)
+        if groupe_id:
+            filters &= Q(groupe_id=groupe_id)
+        if forme_id:
+            filters &= Q(forme_id=forme_id)
+            
+        products = Produit.objects.filter(filters).prefetch_related('stock_lots')
+        
+        lignes_a_creer = []
+        for produit in products:
+            if produit.use_lot_management:
+                lots = produit.stock_lots.filter(
+                    Q(quantity_remaining__gt=0) | Q(quantity_reserved__gt=0)
+                )
+                for lot in lots:
+                    # Déterminer le stock théorique selon le type d'inventaire
+                    stock_th = lot.quantity_remaining
+                    if inventaire.inventory_type == Inventaire.TypeStock.RESERVE:
+                        stock_th = lot.quantity_reserved
+                    elif inventaire.inventory_type == Inventaire.TypeStock.GLOBAL:
+                        stock_th = lot.quantity_remaining + lot.quantity_reserved
+                        
+                    lignes_a_creer.append(LigneInventaire(
+                        inventaire=inventaire,
+                        produit=produit,
+                        stock_lot=lot,
+                        stock_theorique=stock_th,
+                        quantite_physique=stock_th, # Par défaut, on suppose que le stock est correct
+                        ecart=0,
+                        pmp_snapshot=produit.pmp or produit.cost_price or 0
+                    ))
+            else:
+                stock_th = produit.stock
+                if inventaire.inventory_type == Inventaire.TypeStock.RESERVE:
+                    stock_th = produit.stock_reserve
+                elif inventaire.inventory_type == Inventaire.TypeStock.GLOBAL:
+                    stock_th = produit.total_stock
+                    
+                lignes_a_creer.append(LigneInventaire(
+                    inventaire=inventaire,
+                    produit=produit,
+                    stock_theorique=stock_th,
+                    quantite_physique=stock_th,
+                    ecart=0,
+                    pmp_snapshot=produit.pmp or produit.cost_price or 0
+                ))
+        
+        if lignes_a_creer:
+            # On évite les doublons si déjà cliqué
+            existing_prod_ids = set(inventaire.lignes.values_list('produit_id', flat=True))
+            lignes_filtered = [l for l in lignes_a_creer if l.produit_id not in existing_prod_ids]
+            LigneInventaire.objects.bulk_create(lignes_filtered)
+            
+        return Response({'status': 'Pre-population terminee', 'count': len(lignes_a_creer)})
+
+    @action(detail=True, methods=['post'])
+    @transaction.atomic
     def validate(self, request, pk=None):
         """
         Validation de l'inventaire avec support des lots.
@@ -397,7 +541,8 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         products_to_recalculate = set()
         
         # Collections pour les opérations batch
-        lot_qty_updates = {}           # {lot_id: quantite_physique}
+        lots_to_update = {}            # {lot_id: lot_object}
+        remaining_capacities = {}      # {product_id: current_remaining_capacity}
         adjustments_to_create = []     # StockAdjustment objects
         mouvements_to_create = []      # MouvementStock objects
         now = timezone.now()
@@ -422,13 +567,31 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 )
                 ligne.stock_lot = target_lot
 
-            # Collecter la mise à jour du lot pour le batch
-            lot_qty_updates[target_lot.id] = ligne.quantite_physique
-            
             # Calculer l'écart et le PMP en mémoire
             ligne.ecart = ligne.quantite_physique - ligne.stock_theorique
             if (not ligne.pmp_snapshot or ligne.pmp_snapshot == 0) and ligne.produit:
                 ligne.pmp_snapshot = ligne.produit.pmp or ligne.produit.cost_price or 0
+
+            # Déterminer la répartition du stock sur le lot
+            if inventaire.inventory_type == Inventaire.TypeStock.GLOBAL:
+                # Logique d'overflow : on remplit le rayon jusqu'à capacité, le reste en réserve
+                if produit.id not in remaining_capacities:
+                    # On initialise la capacité restante basée sur les paramètres du produit
+                    remaining_capacities[produit.id] = produit.capacite_rayon if produit.has_reserve_storage else 999999999
+                
+                qty_rayon = min(ligne.quantite_physique, remaining_capacities[produit.id])
+                qty_reserve = ligne.quantite_physique - qty_rayon
+                remaining_capacities[produit.id] -= qty_rayon
+                
+                target_lot.quantity_remaining = qty_rayon
+                target_lot.quantity_reserved = qty_reserve
+            elif inventaire.inventory_type == Inventaire.TypeStock.RESERVE:
+                target_lot.quantity_reserved = ligne.quantite_physique
+            else:
+                # RAYON
+                target_lot.quantity_remaining = ligne.quantite_physique
+
+            lots_to_update[target_lot.id] = target_lot
 
             # Préparer la traçabilité (sans écrire en DB)
             ecart = ligne.ecart
@@ -457,12 +620,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         if lignes:
             LigneInventaire.objects.bulk_update(lignes, ['ecart', 'pmp_snapshot', 'stock_lot'])
         
-        # 2b. Mise à jour groupée des lots (quantity_remaining) via Case/When
-        if lot_qty_updates:
-            whens = [When(id=lot_id, then=Value(qty)) for lot_id, qty in lot_qty_updates.items()]
-            StockLot.objects.filter(id__in=lot_qty_updates.keys()).update(
-                quantity_remaining=Case(*whens, output_field=DecimalField())
-            )
+        # 2b. Mise à jour groupée des lots (quantity_remaining et quantity_reserved)
+        if lots_to_update:
+            StockLot.objects.bulk_update(lots_to_update.values(), ['quantity_remaining', 'quantity_reserved'])
 
         # 2c. Création groupée des ajustements et mouvements
         if adjustments_to_create:
@@ -844,8 +1004,8 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         except Inventaire.DoesNotExist:
             return Response({'error': 'Inventaire source introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
-        if target_inventaire.status != Inventaire.Status.EN_COURS or source_inventaire.status != Inventaire.Status.EN_COURS:
-             return Response({'error': 'Les deux inventaires doivent être EN_COURS'}, status=status.HTTP_400_BAD_REQUEST)
+        if target_inventaire.status != source_inventaire.status:
+             return Response({'error': 'Les deux inventaires doivent avoir le même état (Clôturé ou En préparation)'}, status=status.HTTP_400_BAD_REQUEST)
         
         # Logique de fusion
         merged_count = 0
@@ -862,8 +1022,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             ).first()
             
             if compatible_line:
-                # Fusionner : additionner la quantité saisie
+                # Fusionner : additionner la quantité saisie ET le théorique pour garder l'écart juste
                 compatible_line.quantite_physique += source_ligne.quantite_physique
+                compatible_line.stock_theorique += source_ligne.stock_theorique
                 compatible_line.save()
                 source_ligne.delete()
                 merged_count += 1
@@ -872,6 +1033,9 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
                 source_ligne.inventaire = target_inventaire
                 source_ligne.save()
                 moved_count += 1
+                
+        # Rattacher les mouvements de stock de la source vers la cible avant suppression
+        source_inventaire.mouvements_stock.update(inventaire=target_inventaire)
                 
         # Supprimer l'inventaire source vide
         source_inventaire.delete()
@@ -1036,6 +1200,80 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             'top_pertes': top_pertes,
             'top_surplus': top_surplus,
             'par_rayon': stats_rayon
+        })
+
+    @action(detail=False, methods=['get'])
+    def audit_discrepancies(self, request):
+        """
+        Audit global des écarts sur tous les inventaires validés.
+        """
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        
+        queryset = LigneInventaire.objects.filter(inventaire__status=Inventaire.Status.VALIDEE)
+        
+        if start_date:
+            queryset = queryset.filter(inventaire__date__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(inventaire__date__date__lte=end_date)
+
+        # Annotation de la valeur de l'écart (ecart * pmp)
+        queryset = queryset.annotate(
+            valeur_ecart=ExpressionWrapper(
+                Cast(F('ecart'), output_field=DecimalField(max_digits=12, decimal_places=2)) * Case(
+                    When(pmp_snapshot__gt=Decimal('0'), then=F('pmp_snapshot')),
+                    default=Coalesce(F('produit__cost_price'), Value(Decimal('0'), output_field=DecimalField(max_digits=12, decimal_places=2))),
+                    output_field=DecimalField(max_digits=12, decimal_places=2)
+                ),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
+        )
+
+        # 1. Top Produits par Pertes (somme des écarts négatifs)
+        top_pertes = queryset.filter(valeur_ecart__lt=Decimal('0')).values(
+            'produit__id', 'produit__name', 'produit__cip1'
+        ).annotate(
+            total_valeur=Sum('valeur_ecart'),
+            total_quantite=Sum('ecart'),
+            occurrence=Count('id')
+        ).order_by('total_valeur')[:20]
+
+        # 2. Top Produits par Surplus
+        top_surplus = queryset.filter(valeur_ecart__gt=Decimal('0')).values(
+            'produit__id', 'produit__name'
+        ).annotate(
+            total_valeur=Sum('valeur_ecart'),
+            total_quantite=Sum('ecart'),
+            occurrence=Count('id')
+        ).order_by('-total_valeur')[:20]
+
+        # 3. Répartition par Rayon
+        par_rayon = queryset.values('produit__rayon__name').annotate(
+            total_valeur=Coalesce(Sum('valeur_ecart'), Value(Decimal('0'), output_field=DecimalField())),
+            perte_valeur=Coalesce(Sum(Case(When(valeur_ecart__lt=Decimal('0'), then=F('valeur_ecart')), default=Value(Decimal('0'), output_field=DecimalField()))), Value(Decimal('0'), output_field=DecimalField())),
+            gain_valeur=Coalesce(Sum(Case(When(valeur_ecart__gt=Decimal('0'), then=F('valeur_ecart')), default=Value(Decimal('0'), output_field=DecimalField()))), Value(Decimal('0'), output_field=DecimalField())),
+            nombre_lignes=Count('id')
+        ).order_by('total_valeur')
+
+        # 4. Répartition par Groupe
+        par_groupe = queryset.values(produit__groupe__name=F('produit__groupe__nom')).annotate(
+            total_valeur=Coalesce(Sum('valeur_ecart'), Value(Decimal('0'), output_field=DecimalField())),
+            perte_valeur=Coalesce(Sum(Case(When(valeur_ecart__lt=Decimal('0'), then=F('valeur_ecart')), default=Value(Decimal('0'), output_field=DecimalField()))), Value(Decimal('0'), output_field=DecimalField())),
+            gain_valeur=Coalesce(Sum(Case(When(valeur_ecart__gt=Decimal('0'), then=F('valeur_ecart')), default=Value(Decimal('0'), output_field=DecimalField()))), Value(Decimal('0'), output_field=DecimalField())),
+        ).order_by('total_valeur')
+
+        return Response({
+            'top_pertes': top_pertes,
+            'top_surplus': top_surplus,
+            'par_rayon': par_rayon,
+            'par_groupe': par_groupe,
+            'stats_globales': queryset.aggregate(
+                total_perte=Coalesce(Sum(Case(When(valeur_ecart__lt=Decimal('0'), then=F('valeur_ecart')), default=Value(Decimal('0'), output_field=DecimalField()))), Value(Decimal('0'), output_field=DecimalField())),
+                total_gain=Coalesce(Sum(Case(When(valeur_ecart__gt=Decimal('0'), then=F('valeur_ecart')), default=Value(Decimal('0'), output_field=DecimalField()))), Value(Decimal('0'), output_field=DecimalField())),
+                net=Coalesce(Sum('valeur_ecart'), Value(Decimal('0'), output_field=DecimalField())),
+                nombre_inventaires=Count('inventaire', distinct=True),
+                nombre_lignes=Count('id')
+            )
         })
 
     @action(detail=True, methods=['get'])
@@ -1322,80 +1560,83 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
         """
         queryset = self.filter_queryset(self.get_queryset())
         
-        # Aggregation
-        # Positive changes (Entrées)
-        positive = queryset.filter(quantity_change__gt=0).aggregate(
-            total=Sum('quantity_change')
-        )['total'] or 0
-        
-        # Negative changes (Sorties)
-        negative = queryset.filter(quantity_change__lt=0).aggregate(
-            total=Sum('quantity_change')
-        )['total'] or 0
+        # On calcule la valorisation via annotation pour pouvoir faire un Sum
+        queryset = queryset.annotate(
+            valorisation_calcul=ExpressionWrapper(
+                Abs(F('quantity_change')) * Coalesce(F('stock_lot__price_cost'), Value(0, output_field=DecimalField())),
+                output_field=DecimalField()
+            )
+        )
+
+        stats = queryset.aggregate(
+            total_count=Count('id'),
+            total_valorisation=Sum('valorisation_calcul')
+        )
         
         return Response({
-            'total_count': queryset.count(),
-            'positive_sum': int(positive),
-            'negative_sum': int(negative)
+            'count': stats['total_count'] or 0,
+            'total_valorisation': stats['total_valorisation'] or 0
         })
 
     @action(detail=False, methods=['get'])
     def export_excel(self, request):
-        """
-        Exporte le journal des ajustements filtré au format Excel.
-        """
         queryset = self.filter_queryset(self.get_queryset())
         
+        # Même annotation pour l'export
+        queryset = queryset.annotate(
+            valorisation_calcul=ExpressionWrapper(
+                Abs(F('quantity_change')) * Coalesce(F('stock_lot__price_cost'), Value(0, output_field=DecimalField())),
+                output_field=DecimalField()
+            )
+        )
+
         wb = Workbook()
-        ws = wb.active
-        ws.title = "Journal des Ajustements"
-        
-        # En-têtes
-        headers = [
-            "Date", "Heure", "Produit", "CIP", "Lot", 
-            "Utilisateur", "Avant", "Après", "Diff", 
-            "Motif", "Détails"
+        sheet = wb.active
+        sheet.title = "Ajustements Stock"
+
+        # En-tête
+        columns = [
+            "Date", "Produit", "CIP", "Type", "Lot", "Qté Change", "Valorisation", "Utilisateur"
         ]
+        sheet.append(columns)
         
-        for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num, value=header)
+        # Style en-tête
+        for cell in sheet[1]:
             cell.font = Font(bold=True)
             cell.alignment = Alignment(horizontal='center')
-            # Ajuster largeur colonnes
-            column_letter = cell.column_letter
-            ws.column_dimensions[column_letter].width = 15
-            
-        ws.column_dimensions['C'].width = 30 # Produit
-        ws.column_dimensions['K'].width = 40 # Détails
-        
+
         # Données
-        for row_num, adj in enumerate(queryset, 2):
-            created_at = adj.created_at.astimezone(timezone.get_current_timezone())
-            
-            ws.cell(row=row_num, column=1, value=created_at.strftime('%d/%m/%Y'))
-            ws.cell(row=row_num, column=2, value=created_at.strftime('%H:%M'))
-            ws.cell(row=row_num, column=3, value=adj.produit.name if adj.produit else "N/A")
-            ws.cell(row=row_num, column=4, value=adj.produit.cip1 if adj.produit else "")
-            ws.cell(row=row_num, column=5, value=adj.stock_lot.lot if adj.stock_lot else "")
-            ws.cell(row=row_num, column=6, value=adj.user.username if adj.user else "")
-            ws.cell(row=row_num, column=7, value=adj.quantity_before)
-            ws.cell(row=row_num, column=8, value=adj.quantity_after)
-            ws.cell(row=row_num, column=9, value=adj.quantity_change)
-            ws.cell(row=row_num, column=10, value=adj.get_reason_type_display())
-            ws.cell(row=row_num, column=11, value=adj.reason_detail)
-            
-        # Préparer la réponse
-        buffer = io.BytesIO()
-        wb.save(buffer)
-        buffer.seek(0)
-        
-        filename = f"ajustements_stock_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        for adj in queryset:
+            row = [
+                adj.created_at.strftime("%d/%m/%Y %H:%M") if adj.created_at else "",
+                adj.produit_name if hasattr(adj, 'produit_name') else (adj.produit.name if adj.produit else "-"),
+                adj.produit_cip if hasattr(adj, 'produit_cip') else (adj.produit.cip1 if adj.produit else "-"),
+                adj.get_reason_type_display(),
+                adj.lot_number if hasattr(adj, 'lot_number') else (adj.stock_lot.lot if adj.stock_lot else "-"),
+                adj.quantity_change,
+                adj.valorisation_calcul,
+                adj.username if hasattr(adj, 'username') else (adj.user.username if adj.user else "Système")
+            ]
+            sheet.append(row)
+
+        # Ajuster largeur colonnes
+        dims = {}
+        for row in sheet.rows:
+            for cell in row:
+                if cell.value:
+                    dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))
+        for col, value in dims.items():
+            sheet.column_dimensions[col].width = value + 2
+
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+
         response = HttpResponse(
-            buffer.getvalue(),
+            output.read(),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
+        response['Content-Disposition'] = 'attachment; filename=journal_sorties_perimes.xlsx'
         return response
 
 class StatsUGViewSet(viewsets.GenericViewSet):

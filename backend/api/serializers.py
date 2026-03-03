@@ -330,7 +330,8 @@ class ProduitSerializer(serializers.ModelSerializer):
             'dernier_achat', 'dernier_vente', 'is_public',
             'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
             'active_promotion', 'is_chronic', 'default_treatment_days',
-            'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon'
+            'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon',
+            'stock_minimum', 'stock_maximum'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge', 'total_stock']
 
@@ -938,6 +939,7 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
     reason_type_display = serializers.CharField(source='get_reason_type_display', read_only=True)
     lot_number = serializers.CharField(source='stock_lot.lot', read_only=True, allow_null=True)
+    valorisation = serializers.SerializerMethodField()
     
     class Meta:
         model = StockAdjustment
@@ -946,10 +948,17 @@ class StockAdjustmentSerializer(serializers.ModelSerializer):
             'stock_lot', 'lot_number',
             'user', 'user_name', 'username',
             'quantity_before', 'quantity_after', 'quantity_change',
+            'valorisation',
             'reason_type', 'reason_type_display', 'reason_detail',
             'created_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'quantity_change']
+    
+    def get_valorisation(self, obj):
+        if obj.stock_lot:
+            val = abs(obj.quantity_change) * (obj.stock_lot.price_cost or 0)
+            return float(val)
+        return 0
     
     def get_produit_name(self, obj):
         return obj.produit.name if obj.produit else obj.produit_nom

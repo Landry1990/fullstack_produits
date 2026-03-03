@@ -26,13 +26,13 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/ventes', label: t('sidebar.ventes.consultation'), key: 'ventes' },
-        { path: '/app/historique-ventes', label: t('sidebar.ventes.historique'), key: 'ventes' },
-        { path: '/app/journal-caisse', label: t('sidebar.ventes.journal'), key: 'ventes' },
-        { path: '/app/historique-clotures', label: t('sidebar.ventes.clotures'), key: 'ventes' },
-        { path: '/app/ordonnancier', label: t('sidebar.ventes.ordonnancier'), key: 'ventes' },
-        { path: '/app/promotions', label: t('sidebar.ventes.promotions'), key: 'ventes' },
-        { path: '/app/caisse-centralisee', label: t('sidebar.ventes.caisse_centralisee'), key: 'caisse' }
+        { path: '/app/ventes', label: t('sidebar.ventes.consultation'), key: 'ventes_consultation' },
+        { path: '/app/historique-ventes', label: t('sidebar.ventes.historique'), key: 'ventes_historique' },
+        { path: '/app/journal-caisse', label: t('sidebar.ventes.journal'), key: 'ventes_journal' },
+        { path: '/app/historique-clotures', label: t('sidebar.ventes.clotures'), key: 'ventes_clotures' },
+        { path: '/app/ordonnancier', label: t('sidebar.ventes.ordonnancier'), key: 'ventes_ordonnancier' },
+        { path: '/app/promotions', label: t('sidebar.ventes.promotions'), key: 'ventes_promotions' },
+        { path: '/app/caisse-centralisee', label: t('sidebar.ventes.caisse_centralisee'), key: 'caisse' } // Keeping 'caisse' as it might be a specific top-level permission
       ]
     },
     { path: '/app/facturation', label: t('sidebar.facturation'), key: 'facturation', icon: (
@@ -41,7 +41,7 @@ export default function Sidebar() {
     { path: '/app/produits', label: t('sidebar.produits'), key: 'produits', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )},
-    { path: '/app/vitrine', label: t('sidebar.vitrine'), key: 'produits', icon: (
+    { path: '/app/vitrine', label: t('sidebar.vitrine'), key: 'vitrine', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
     )},
     { 
@@ -51,8 +51,8 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/locales', label: t('sidebar.commandes.new_current'), key: 'commandes' },
-        { path: '/app/historique-achats/locales', label: t('sidebar.commandes.history'), key: 'commandes' },
+        { path: '/app/commandes/locales', label: t('sidebar.commandes.new_current'), key: 'commandes_loc_current' },
+        { path: '/app/historique-achats/locales', label: t('sidebar.commandes.history'), key: 'commandes_loc_history' },
       ]
     },
     { 
@@ -62,8 +62,8 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/directes', label: t('sidebar.commandes.new_current'), key: 'commandes' },
-        { path: '/app/historique-achats/directes', label: t('sidebar.commandes.history'), key: 'commandes' },
+        { path: '/app/commandes/directes', label: t('sidebar.commandes.new_current'), key: 'commandes_dir_current' },
+        { path: '/app/historique-achats/directes', label: t('sidebar.commandes.history'), key: 'commandes_dir_history' },
       ]
     },
     { path: '/app/fournisseurs', label: t('sidebar.fournisseurs.title'), key: 'fournisseurs', icon: (
@@ -77,23 +77,21 @@ export default function Sidebar() {
     )},
     { 
       label: t('sidebar.stock.title'), 
-      key: 'stock', 
+      key: 'inventaire', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
       ),
       submenus: [
-        { path: '/app/inventaire', label: t('sidebar.stock.inventaire'), key: 'inventaire' },
-        { path: '/app/journal-ajustements', label: t('sidebar.stock.journal'), key: 'inventaire' },
-        { path: '/app/stock-analysis', label: t('sidebar.stock.analyse'), key: 'inventaire' },
-        { path: '/app/reappro-rayon', label: 'Réappro Rayon', key: 'inventaire' },
-        { path: '/app/avoirs', label: t('sidebar.stock.avoirs'), key: 'avoirs' },
-        { path: '/app/promis', label: t('sidebar.stock.promis'), key: 'promis' },
-        { path: '/app/transformations', label: t('sidebar.stock.transformations'), key: 'inventaire' },
-        { path: '/app/perimes', label: t('sidebar.stock.perimes'), key: 'inventaire' },
-        { path: '/app/formes', label: t('sidebar.stock.formes'), key: 'formes' },
-        { path: '/app/groupes', label: t('sidebar.stock.groupes'), key: 'groupes' },
-        { path: '/app/rayons', label: t('sidebar.stock.rayons'), key: 'rayons' },
-        { path: '/app/etats-inventaire', label: 'États Inventaires', key: 'inventaire' }
+        { path: '/app/inventaire', label: t('sidebar.stock.inventaire'), key: 'inventaire_saisie' },
+        { path: '/app/journal-ajustements', label: t('sidebar.stock.journal'), key: 'inventaire_journal' },
+        { path: '/app/stock-analysis', label: t('sidebar.stock.analyse'), key: 'inventaire_analyse' },
+        { path: '/app/reappro-rayon', label: 'Réappro Rayon', key: 'inventaire_reappro' },
+        { path: '/app/avoirs', label: t('sidebar.stock.avoirs'), key: 'inventaire_avoirs' },
+        { path: '/app/promis', label: t('sidebar.stock.promis'), key: 'inventaire_promis' },
+        { path: '/app/transformations', label: t('sidebar.stock.transformations'), key: 'inventaire_transformations' },
+        { path: '/app/perimes', label: t('sidebar.stock.perimes'), key: 'inventaire_perimes' },
+        { path: '/app/organisation', label: 'Organisation (Rayons, Formes...)', key: 'inventaire_organisation' },
+        { path: '/app/etats-inventaire', label: 'États Inventaires', key: 'inventaire_etats' }
       ]
     },
     { 
@@ -103,13 +101,13 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
       ),
       submenus: [
-        { path: '/app/centre-rapports', label: t('sidebar.statistiques.rapports'), key: 'statistiques' },
-        { path: '/app/analyse-abc', label: t('sidebar.statistiques.abc'), key: 'statistiques' },
-        { path: '/app/statistiques-fournisseurs', label: t('sidebar.statistiques.fournisseurs'), key: 'statistiques' },
-        { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques' },
-        { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques' },
-        { path: '/app/classement-vendeurs', label: t('sidebar.statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques' },
-        { path: '/app/analyse-temporelle', label: t('sidebar.statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques' }
+        { path: '/app/centre-rapports', label: t('sidebar.statistiques.rapports'), key: 'statistiques_rapports' },
+        { path: '/app/analyse-abc', label: t('sidebar.statistiques.abc'), key: 'statistiques_abc' },
+        { path: '/app/statistiques-fournisseurs', label: t('sidebar.statistiques.fournisseurs'), key: 'statistiques_fournisseurs' },
+        { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques_mensuels' },
+        { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques_finances' },
+        { path: '/app/classement-vendeurs', label: t('sidebar.statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques_vendeurs' },
+        { path: '/app/analyse-temporelle', label: t('sidebar.statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques_temporelle' }
       ]
     },
     {
@@ -119,23 +117,52 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/invoice-settings', label: t('sidebar.parametres.facture'), key: 'settings' },
-        { path: '/app/pharmacy-settings', label: t('sidebar.parametres.pharmacie'), key: 'settings' },
-        { path: '/app/whatsapp-history', label: 'Historique WhatsApp', key: 'settings' },
-        { path: '/app/settings/options', label: t('sidebar.parametres.etiquettes'), key: 'settings' }
+        { path: '/app/invoice-settings', label: t('sidebar.parametres.facture'), key: 'settings_facture' },
+        { path: '/app/pharmacy-settings', label: t('sidebar.parametres.pharmacie'), key: 'settings_pharmacie' },
+        { path: '/app/whatsapp-history', label: 'Historique WhatsApp', key: 'settings_whatsapp' },
+        { path: '/app/settings/options', label: t('sidebar.parametres.etiquettes'), key: 'settings_etiquettes' }
       ]
     },
   ];
 
   // Logic to calculate menuItems based on authentication
-  const menuItems = allMenuItems.filter(item => {
-    if (user?.is_superuser) return true;
+  const menuItems = allMenuItems.map(item => {
+    if (user?.is_superuser) return item;
+    
     const allowed = (user as any)?.allowed_menus || [];
+    
+    // 1. Explicit parent permission
+    const hasExplicitParent = allowed.includes(item.key);
+
+    // 2. Legacy broad categories (compatibility)
+    const hasLegacyCategory = 
+      (item.key === 'commandes_loc' && allowed.includes('commandes')) ||
+      (item.key === 'commandes_dir' && allowed.includes('commandes')) ||
+      (item.key === 'vitrine' && allowed.includes('produits'));
+
     if (item.submenus) {
-      return item.submenus.some(sub => allowed.includes(sub.key));
+      // Filter submenus: only show if explicitly allowed OR if parent is fully allowed
+      const filteredSubmenus = item.submenus.filter(sub => {
+        // Direct match for submenu
+        if (allowed.includes(sub.key)) return true;
+        
+        // Full parent access allows all children
+        if (hasExplicitParent || hasLegacyCategory) return true;
+
+        // Specific legacy mappings (one-to-one)
+        if (sub.key === 'caisse' && allowed.includes('caisse')) return true;
+        if (sub.key === 'inventaire_perimes' && allowed.includes('perimes')) return true;
+        if (sub.key === 'inventaire_avoirs' && allowed.includes('avoirs')) return true;
+        if (sub.key === 'inventaire_promis' && allowed.includes('promis')) return true;
+        
+        return false;
+      });
+      
+      return filteredSubmenus.length > 0 ? { ...item, submenus: filteredSubmenus } : null;
     }
-    return allowed.includes(item.key);
-  });
+    
+    return hasExplicitParent || hasLegacyCategory || allowed.includes(item.key) ? item : null;
+  }).filter(Boolean) as typeof allMenuItems;
 
   if (user?.is_superuser) {
     menuItems.push({

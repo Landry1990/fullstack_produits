@@ -24,10 +24,13 @@ export default function PharmacySettingsForm() {
   const handleAddTva = async () => {
     if (!newTvaRate) return;
     setAddingTva(true);
-    const success = await addTVA(newTvaRate, newTvaLabel);
-    if (success) {
+    const result = await addTVA(newTvaRate, newTvaLabel);
+    if (result.success) {
         setNewTvaRate('');
         setNewTvaLabel('');
+        import('react-hot-toast').then(({ toast }) => toast.success('Taux de TVA ajouté avec succès'));
+    } else {
+        import('react-hot-toast').then(({ toast }) => toast.error(result.message || 'Erreur lors de l\'ajout de la TVA'));
     }
     setAddingTva(false);
   }

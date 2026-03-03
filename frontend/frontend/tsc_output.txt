@@ -1,0 +1,8 @@
+src/components/printing/TicketTemplate.tsx(53,44): error TS2551: Property 'total_ht' does not exist on type 'Facture'. Did you mean 'total_ttc'?
+src/components/printing/TicketTemplate.tsx(54,45): error TS2339: Property 'total_tva' does not exist on type 'Facture'.
+src/components/products/modals/StockAdjustmentModal.tsx(23,9): error TS6133: 't' is declared but its value is never read.
+src/components/products/ProductTabsContent.tsx(22,3): error TS6133: 'achats' is declared but its value is never read.
+src/components/products/ProductTabsContent.tsx(24,3): error TS6133: 'adjustments' is declared but its value is never read.
+src/components/sales/modals/ProductDetailsModal.tsx(51,48): error TS2551: Property 'total_ht' does not exist on type 'Facture'. Did you mean 'total_ttc'?
+src/components/sales/modals/ProductDetailsModal.tsx(52,49): error TS2339: Property 'total_tva' does not exist on type 'Facture'.
+src/components/Transformations.tsx(11,17): error TS6133: 'Printer' is declared but its value is never read.

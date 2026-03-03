@@ -105,8 +105,22 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     
     def get_queryset(self):
         # Base optimization for all views: select related foreign keys
-        queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').order_by('-date')
+        queryset = Facture.objects.select_related('client', 'ayant_droit', 'created_by', 'validated_by').order_by('-date').distinct()
         
+        # Add annotations for payments for the list view
+        queryset = queryset.annotate(
+            montant_regle=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
+                Value(0),
+                output_field=DecimalField()
+            ),
+            montant_en_compte=Coalesce(
+                Sum('paiements__montant', filter=Q(paiements__statut='completee') & Q(paiements__mode_paiement='en_compte')),
+                Value(0),
+                output_field=DecimalField()
+            )
+        )
+
         # Add prefetch only for detail view where products/payments are shown
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related('produits', 'paiements')
@@ -452,41 +466,48 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # Récupérer les quantités PROMIS associées à cette facture
-        promis_map = {p.produit_id: p.quantite for p in Promis.objects.filter(facture=facture)}
+        # 0.75 Agreger les quantités PROMIS par produit
+        promis_map = {}
+        for p in Promis.objects.filter(facture=facture):
+            promis_map[p.produit_id] = promis_map.get(p.produit_id, 0) + p.quantite
 
-        # Vérifier le stock avant validation en utilisant les instances VERROUILLÉES
+        # 0.8 Agreger les quantités demandées par produit dans la facture
+        requested_map = {}
         for item in items:
-            produit = product_map.get(item.produit_id)
+            requested_map[item.produit_id] = requested_map.get(item.produit_id, 0) + item.quantity
+
+        # Vérifier le stock cumulé avant validation en utilisant les instances VERROUILLÉES
+        for produit_id, total_qty in requested_map.items():
+            produit = product_map.get(produit_id)
             if not produit:
                 continue 
             
             try:
                 # On ne vérifie que la quantité réellement livrée (Totale - Promise)
-                promis_qty = promis_map.get(item.produit_id, 0)
-                qty = Decimal(str(item.quantity - promis_qty))
+                promis_qty = promis_map.get(produit_id, 0)
+                effective_qty = Decimal(str(total_qty - promis_qty))
                 stock = Decimal(str(produit.stock))
             except (ValueError, TypeError, InvalidOperation):
                 return Response({'detail': f'Impossible de comparer les quantités pour le produit {produit.id}.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            if qty > 0:
+            if effective_qty > 0:
                 can_sell_negative = validation_user.is_superuser
                 if not can_sell_negative and hasattr(validation_user, 'profile'):
                     can_sell_negative = validation_user.profile.can_sell_negative_stock
                 
-                if stock < qty and not can_sell_negative:
+                if stock < effective_qty and not can_sell_negative:
                     return Response(
-                        {'detail': f'Stock insuffisant pour le produit {produit.name}. Stock disponible: {stock}, Quantité demandée: {qty}'},
+                        {'detail': f'Stock insuffisant pour le produit {produit.name}. Stock disponible: {stock}, Quantité totale demandée: {effective_qty}'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            elif qty < 0:
+            elif effective_qty < 0:
                 can_return = validation_user.is_superuser
                 if not can_return and hasattr(validation_user, 'profile'):
                     can_return = validation_user.profile.can_do_returns
                 
                 if not can_return:
                     return Response(
-                        {'detail': 'Vous n\'avez pas la permission d\'effectuer des retours (quantités négatives).'},
+                        {'detail': f'Vous n\'avez pas la permission d\'effectuer des retours pour le produit {produit.name}.'},
                         status=status.HTTP_403_FORBIDDEN
                     )
 
@@ -1149,9 +1170,22 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'quantity': top_produit['total_qty']
             }
 
+        # 3. Totaux globaux du jour
+        totaux = self.get_queryset().filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(
+            total_ttc=Sum('total_ttc'),
+            total_regle=Sum('montant_regle'),
+            total_en_compte=Sum('montant_en_compte')
+        )
+
         return Response({
             'top_vendeur': vendeur_data,
-            'top_produit': produit_data
+            'top_produit': produit_data,
+            'total_ttc': str((totaux['total_ttc'] or 0)),
+            'total_regle': str((totaux['total_regle'] or 0)),
+            'total_en_compte': str((totaux['total_en_compte'] or 0)),
         })
 
     def _generate_pdf(self, facture, settings, is_proforma=False):
@@ -1413,17 +1447,19 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         except ValueError as e:
             return Response({'detail': f'Erreur date: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
         
-        factures = Facture.objects.filter(
+        factures = self.get_queryset().filter(
             date__gte=start_datetime,
             date__lte=end_datetime,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).prefetch_related('produits', 'produits__produit')
+        )
         
         total_ttc = Decimal('0.00')
         total_ht = Decimal('0.00')
         total_ht_apres_remise = Decimal('0.00')
         total_tva = Decimal('0.00')
         total_remise = Decimal('0.00')
+        total_regle = Decimal('0.00')
+        total_en_compte = Decimal('0.00')
         nombre_factures = factures.count()
         
         for facture in factures:
@@ -1432,6 +1468,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 facture_remise = Decimal(str(facture.remise))
                 facture_total_tva = Decimal(str(facture.total_tva))
                 facture_total_ttc = Decimal(str(facture.total_ttc))
+                facture_regle = Decimal(str(getattr(facture, 'montant_regle', 0)))
+                facture_en_compte = Decimal(str(getattr(facture, 'montant_en_compte', 0)))
+                
+                logger.debug(f"Tranche Stats: Facture #{facture.id} - TTC: {facture_total_ttc}, Regle: {facture_regle}, EnCompte: {facture_en_compte}, Status: {facture.status}")
                 
                 facture_total_ht_apres_remise = facture_sous_total_ht - facture_remise
                 
@@ -1440,6 +1480,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 total_ht_apres_remise += facture_total_ht_apres_remise
                 total_tva += facture_total_tva
                 total_ttc += facture_total_ttc
+                total_regle += facture_regle
+                total_en_compte += facture_en_compte
                 
             except (ValueError, TypeError, AttributeError):
                 pass
@@ -1454,6 +1496,8 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'total_ht': str(total_ht_final.quantize(Decimal('0.01'))),
             'total_tva': str(total_tva.quantize(Decimal('0.01'))),
             'total_ttc': str(total_ttc.quantize(Decimal('0.01'))),
+            'total_regle': str(total_regle.quantize(Decimal('0.01'))),
+            'total_en_compte': str(total_en_compte.quantize(Decimal('0.01'))),
             'sous_total_ht': str(total_ht.quantize(Decimal('0.01'))),
             'total_remise': str(total_remise.quantize(Decimal('0.01')))
         }
@@ -1625,7 +1669,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
 
         # SEPARATION: Ventes vs Recouvrement
         # Désormais basé sur le mode_paiement spécial
-        recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
+        recouvrement_q = Q(mode_paiement='recouvrement') | Q(reference__icontains='[RECOUV]')
         
         paiements_recouvrement = transactions.filter(recouvrement_q)
         paiements_sales = transactions.exclude(recouvrement_q).exclude(mode_paiement='en_compte')

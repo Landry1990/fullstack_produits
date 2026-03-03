@@ -13,6 +13,9 @@ interface SalesStats {
         name: string;
         quantity: number;
     } | null;
+    total_ttc: string;
+    total_regle: string;
+    total_en_compte: string;
 }
 
 export const SalesQuickStats: React.FC = () => {
@@ -39,7 +42,35 @@ export const SalesQuickStats: React.FC = () => {
     if (!stats) return null;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            {/* Totals Section */}
+            <div className="bg-base-100 p-4 rounded-xl border border-base-300 shadow-sm flex flex-col justify-center">
+                <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">
+                    Chiffre d'Affaires du Jour
+                </div>
+                <div className="text-2xl font-black text-primary">
+                    {Number(stats.total_ttc).toLocaleString()} <span className="text-sm font-normal">F</span>
+                </div>
+            </div>
+
+            <div className="bg-success/5 p-4 rounded-xl border border-success/20 shadow-sm flex flex-col justify-center">
+                <div className="text-xs font-bold text-success/70 uppercase tracking-wider mb-1">
+                    Total Encaissé (Régler)
+                </div>
+                <div className="text-2xl font-black text-success">
+                    {Number(stats.total_regle).toLocaleString()} <span className="text-sm font-normal">F</span>
+                </div>
+            </div>
+
+            <div className="bg-warning/5 p-4 rounded-xl border border-warning/20 shadow-sm flex flex-col justify-center">
+                <div className="text-xs font-bold text-warning/70 uppercase tracking-wider mb-1">
+                    Total En Compte (Dettes)
+                </div>
+                <div className="text-2xl font-black text-warning">
+                    {Number(stats.total_en_compte).toLocaleString()} <span className="text-sm font-normal">F</span>
+                </div>
+            </div>
+
             {/* Top Vendeur Card */}
             <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-xl border border-primary/20 flex items-center justify-between">
                 <div>

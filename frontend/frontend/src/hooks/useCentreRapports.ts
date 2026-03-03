@@ -208,6 +208,7 @@ export const COLUMN_LABELS: Record<string, string> = {
     chiffre_affaires: 'CA TTC',
     panier_moyen: 'Panier Moy.',
     name: 'Nom',
+    nom_produit: 'Produit',
     cip: 'CIP',
     stock: 'Stock',
     rayon: 'Rayon',

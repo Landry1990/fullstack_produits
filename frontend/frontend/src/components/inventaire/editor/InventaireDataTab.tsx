@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, PackageX, ArrowUp, ArrowDown } from 'lucide-react';
+import { formatPrice } from '../../../utils/formatters';
 import type { LigneInventaire } from '../../../types';
 
 interface InventaireDataTabProps {
@@ -196,7 +197,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
                                     {/* CMP Column */}
                                     <div className="col-span-1 text-right text-xs font-medium text-base-content/80">
-                                        {parseFloat(l.pmp_snapshot || l.produit_cost_price || '0').toLocaleString()} F
+                                        {formatPrice(parseFloat(l.pmp_snapshot || l.produit_cost_price || '0'), 2)} F
                                     </div>
 
                                     {/* Stock Théorique */}
@@ -227,8 +228,23 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                     }
                                                 }}
                                                 onKeyDown={e => {
-                                                    if (e.key === 'Enter' && onQtyEnter) {
-                                                        onQtyEnter();
+                                                    if (e.key === 'Enter') {
+                                                        if (l.isLocalOnly) {
+                                                            // For manual entry: focus search
+                                                            if (onQtyEnter) onQtyEnter();
+                                                        } else {
+                                                            // For pre-populated: focus next line
+                                                            e.preventDefault();
+                                                            const currentIdx = sortedLines.indexOf(l);
+                                                            const nextLigne = sortedLines[currentIdx + 1];
+                                                            if (nextLigne) {
+                                                                const nextInput = document.getElementById(`qty-input-${nextLigne.id}`);
+                                                                if (nextInput) (nextInput as HTMLInputElement).focus();
+                                                            } else if (onQtyEnter) {
+                                                                // If last line: fallback to search
+                                                                onQtyEnter();
+                                                            }
+                                                        }
                                                     } else if (e.key === 'ArrowDown') {
                                                         e.preventDefault();
                                                         const currentIdx = sortedLines.indexOf(l);
@@ -295,7 +311,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     <div className="text-right">
                         <div className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('stock.inventaire.detail.total_gap_value', { defaultValue: 'Montant Total Écarts' })}</div>
                         <div className={`text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-success" : totalEcartValeur < 0 ? "text-error" : "text-base-content/40"}`}>
-                            {totalEcartValeur > 0 ? '+' : ''}{totalEcartValeur.toLocaleString()} F
+                            {totalEcartValeur > 0 ? '+' : ''}{formatPrice(totalEcartValeur)} F
                         </div>
                     </div>
                 </div>

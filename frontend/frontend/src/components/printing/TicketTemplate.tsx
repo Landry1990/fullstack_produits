@@ -27,6 +27,11 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
     }
   };
 
+  const formatM = (val: number | string) => {
+    const num = Math.round(Number(val));
+    return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ');
+  };
+
   const getModeLabel = (mode: string) => {
       const labels: { [key: string]: string } = {
         'especes': 'Espèces',
@@ -45,12 +50,17 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   const facture = typeof ticket.facture === 'object' ? ticket.facture : null;
   const produits = facture?.produits || [];
   
-  const totalHT = facture ? Number(facture.total_ht) : 0;
-  const totalTVA = facture ? Number(facture.total_tva) : 0;
-  const remise = facture ? Number(facture.remise) : 0;
-  
   // Use ticket amount as final authority, fallback to facture total
   const totalTTC = Number(ticket.montant || facture?.total_ttc || 0);
+  
+  // Try to calculate HT and amount of TVA (TVA is string percentage on Facture)
+  // Formula: HT = TTC / (1 + TVA_Rate)
+  // TVA = TTC - HT
+  const tvaRate = facture ? (Number(facture.tva) || 0) / 100 : 0;
+  const totalHT = tvaRate > 0 ? totalTTC / (1 + tvaRate) : totalTTC;
+  const totalTVA = tvaRate > 0 ? totalTTC - totalHT : 0;
+  
+  const remise = facture ? Number(facture.remise) : 0;
   
   // Ensure ticket is 80mm width (standard thermal printer width)
   const ticketWidth = settings.ticket_paper_width || 80;
@@ -134,7 +144,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                 {Math.abs(p.quantity) !== 1 && ` x${Math.abs(p.quantity)}`}
             </span>
             <span className="whitespace-nowrap">
-                {Math.round(Math.abs(p.quantity) * Number(p.selling_price || 0)).toLocaleString('fr-FR')}
+                {formatM(Math.abs(p.quantity) * Number(p.selling_price || 0))}
             </span>
           </div>
         ))}
@@ -148,17 +158,17 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
             <>
                 <div className="flex justify-between font-normal text-[10px]">
                     <span>Sous-total HT</span>
-                    <span>{Math.round(totalHT).toLocaleString('fr-FR')}</span>
+                    <span>{formatM(totalHT)}</span>
                 </div>
                 {remise > 0 && (
                     <div className="flex justify-between font-normal text-[10px]">
                         <span>Remise</span>
-                        <span>-{Math.round(remise).toLocaleString('fr-FR')}</span>
+                        <span>-{formatM(remise)}</span>
                     </div>
                 )}
                  <div className="flex justify-between font-normal text-[10px]">
                     <span>TVA</span>
-                    <span>{Math.round(totalTVA).toLocaleString('fr-FR')}</span>
+                    <span>{formatM(totalTVA)}</span>
                 </div>
                 <div className="my-1 border-t border-dotted border-black"></div>
             </>
@@ -166,7 +176,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
 
         <div className="flex justify-between text-base border-y-2 border-black py-1 my-1">
             <span>TOTAL TTC</span>
-            <span>{Math.round(totalTTC).toLocaleString('fr-FR')} {settings.currency_symbol || 'FCFA'}</span>
+            <span>{formatM(totalTTC)} {settings.currency_symbol || 'FCFA'}</span>
         </div>
 
         {/* PAYMENTS */}
@@ -182,7 +192,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                                 {isPartPatient && ' (Patient)'}
                                 {isPartAssurance && ' (Assur)'}
                             </span>
-                            <span>{Math.round(paiement.montant).toLocaleString('fr-FR')}</span>
+                            <span>{formatM(paiement.montant)}</span>
                         </div>
                     );
                 })}
@@ -190,7 +200,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         ) : (
             <div className="flex justify-between text-[10px] font-normal mt-1">
                  <span>Mode: {getModeLabel(ticket.mode_paiement)}</span>
-                 <span>{Math.round(totalTTC).toLocaleString('fr-FR')}</span>
+                 <span>{formatM(totalTTC)}</span>
             </div>
         )}
 
@@ -198,13 +208,13 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
         {Number(ticket.montant_verse) > 0 && (
              <div className="flex justify-between text-[10px] font-normal border-t border-dotted border-black pt-1 mt-1">
                 <span>Espèces Versées</span>
-                <span>{Math.round(Number(ticket.montant_verse)).toLocaleString('fr-FR')}</span>
+                <span>{formatM(ticket.montant_verse || 0)}</span>
             </div>
         )}
         {Number(ticket.rendu) > 0 && (
              <div className="flex justify-between text-[10px] font-normal">
                 <span>Rendu</span>
-                <span>{Math.round(Number(ticket.rendu)).toLocaleString('fr-FR')}</span>
+                <span>{formatM(ticket.rendu || 0)}</span>
             </div>
         )}
       </div>

@@ -13,16 +13,44 @@ class Inventaire(models.Model):
         EN_COURS = 'EN_COURS', 'En cours'
         VALIDEE = 'VALIDEE', 'Validée'
 
+    class TypeStock(models.TextChoices):
+        GLOBAL = 'GLOBAL', 'Stock Global'
+        RAYON = 'RAYON', 'Stock Rayon'
+        RESERVE = 'RESERVE', 'Stock Réserve'
+
     date = models.DateTimeField(default=timezone.now)
+    reference = models.CharField(max_length=50, unique=True, null=True, blank=True)
     description = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.EN_COURS)
+    inventory_type = models.CharField(
+        max_length=20, 
+        choices=TypeStock.choices, 
+        default=TypeStock.GLOBAL,
+        help_text="Type de stock inventorié"
+    )
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     validated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='validated_inventaires')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            # Generate INV-YYYYMM-XXXX
+            today = timezone.now().date()
+            prefix = f"INV-{today.strftime('%Y%m')}"
+            last = Inventaire.objects.filter(reference__startswith=prefix).order_by('-reference').first()
+            if last:
+                try:
+                    seq = int(last.reference.split('-')[-1]) + 1
+                except (ValueError, IndexError):
+                    seq = 1
+            else:
+                seq = 1
+            self.reference = f"{prefix}-{seq:04d}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Inventaire du {self.date.strftime('%d/%m/%Y')}"
+        return f"Inventaire {self.reference or self.id} ({self.date.strftime('%d/%m/%Y')})"
 
 
 class LigneInventaire(models.Model):

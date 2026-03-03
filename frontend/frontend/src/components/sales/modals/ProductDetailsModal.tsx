@@ -47,9 +47,13 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
         const totalTtc = parseFloat(String(facture.total_ttc || '0'));
         const partClient = facture.part_client ? parseFloat(String(facture.part_client)) : totalTtc;
         
+        const tvaRate = parseFloat(String(facture.tva || '0')) / 100;
+        const totalHt = tvaRate > 0 ? totalTtc / (1 + tvaRate) : totalTtc;
+        const totalTva = tvaRate > 0 ? totalTtc - totalHt : 0;
+        
         return {
-            totalHt: parseFloat(String(facture.total_ht || '0')),
-            totalTva: parseFloat(String(facture.total_tva || '0')),
+            totalHt: totalHt,
+            totalTva: totalTva,
             totalTtc: totalTtc,
             remise: parseFloat(String(facture.remise || '0')),
             partClient: partClient

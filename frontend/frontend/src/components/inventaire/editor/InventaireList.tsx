@@ -1,6 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ClipboardList, Database, Plus } from 'lucide-react';
+import { 
+    ChevronLeft, ChevronRight, ClipboardList, Database, Plus, 
+    BarChart3 
+} from 'lucide-react';
 import { InventaireFilters } from '../InventaireFilters';
 import { InventaireQuickStats } from '../InventaireQuickStats';
 import { InventaireListTable } from '../InventaireListTable';
@@ -14,6 +17,7 @@ interface InventaireListProps {
     onOpenMergeModal: () => void;
     canMerge: { canMerge: boolean; reason: string | null };
     editorLogic: ReturnType<typeof useInventaireEditor>;
+    onOpenAudit: () => void;
 }
 
 export const InventaireList: React.FC<InventaireListProps> = ({
@@ -22,7 +26,8 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     onCreate,
     onOpenMergeModal,
     canMerge,
-    editorLogic
+    editorLogic,
+    onOpenAudit
 }) => {
     const { t } = useTranslation();
     const {
@@ -65,6 +70,14 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                 >
                                     <Database className="h-4 w-4" />
                                     {t('stock.inventaire.merge_btn')}
+                                </button>
+                                <button 
+                                    type="button"
+                                    className="btn btn-info rounded-xl gap-2 shadow-lg shadow-info/20 text-white"
+                                    onClick={onOpenAudit}
+                                >
+                                    <BarChart3 className="h-4 w-4" />
+                                    {t('stock.inventaire.audit_btn', { defaultValue: 'Audit & Pertes' })}
                                 </button>
                                 <button 
                                     className="btn btn-primary rounded-xl px-6 shadow-lg shadow-primary/20 gap-2" 

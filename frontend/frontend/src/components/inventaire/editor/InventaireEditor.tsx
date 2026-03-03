@@ -16,7 +16,7 @@ import { InventaireDataTab } from './InventaireDataTab';
 
 interface InventaireEditorProps {
     viewMode: 'CREATE' | 'EDIT';
-    setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT') => void;
+    setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT' | 'AUDIT') => void;
     activeInventaire: Inventaire | null;
     editorLogic: ReturnType<typeof useInventaireEditor>;
 }
@@ -52,7 +52,8 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
         `${String(apiBaseUrl).replace(/\/$/, '')}/lignes-inventaire/`,
         activeInventaire?.id,
         setLignes,
-        lignes
+        lignes,
+        activeInventaire?.inventory_type
     );
 
     return (
@@ -72,15 +73,15 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                   <div>
                     <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-2">
                        {viewMode === 'CREATE' ? (
-                         <>
-                           <Plus className="h-6 w-6 text-primary" />
-                           {t('stock.inventaire.detail.title_new')}
-                         </>
+                          <>
+                            <Plus className="h-6 w-6 text-primary" />
+                            {t('stock.inventaire.detail.title_new')}
+                          </>
                        ) : (
-                         <>
-                           <FileText className="h-6 w-6 text-primary" />
-                           {t('stock.inventaire.detail.title_edit', { id: activeInventaire?.id })}
-                         </>
+                          <>
+                            <FileText className="h-6 w-6 text-primary" />
+                            {t('stock.inventaire.detail.title_edit', { id: activeInventaire?.id })}
+                          </>
                        )}
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
@@ -93,6 +94,12 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             <span className="badge badge-warning rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none">
                                 <History className="h-3 w-3" />
                                 {t('common.status.draft', { defaultValue: 'Brouillon' })}
+                            </span>
+                        )}
+                        {activeInventaire?.inventory_type && (
+                            <span className="badge badge-info rounded-full text-[10px] font-bold uppercase tracking-wider px-3 border-none text-white">
+                                {activeInventaire.inventory_type === 'RESERVE' ? 'STOCK RÉSERVE' : 
+                                 activeInventaire.inventory_type === 'RAYON' ? 'STOCK RAYON' : 'STOCK GLOBAL'}
                             </span>
                         )}
                     </div>

@@ -5,7 +5,7 @@ import type { Inventaire } from '../../../types';
 interface InventaireMergeModalProps {
     showMergeModal: boolean;
     setShowMergeModal: (show: boolean) => void;
-    viewMode: 'LIST' | 'CREATE' | 'EDIT';
+    viewMode: 'LIST' | 'CREATE' | 'EDIT' | 'AUDIT';
     selectedMergeSource: number | null;
     setSelectedMergeSource: (id: number | null) => void;
     mergeCandidates: Inventaire[];

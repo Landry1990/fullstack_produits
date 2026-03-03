@@ -32,18 +32,55 @@ export const useInventaireEditor = (
     const isReadOnly = activeInventaire?.status === 'VALIDEE';
 
     const handleCreate = async () => {
+        // Now handled by handleCreateWithOptions, but keep default for backward compatibility if needed
+        return handleCreateWithOptions({ action: 'ENTRY', stockType: 'GLOBAL' });
+    };
+
+    const handleCreateWithOptions = async (options: {
+        action: 'VERIFY' | 'ENTRY';
+        stockType: 'GLOBAL' | 'RAYON' | 'RESERVE';
+        rayonId?: number;
+        groupeId?: number;
+        formeId?: number;
+    }) => {
         try {
             setSaving(true);
+            // 1. Create the inventory header
             const response = await axios.post(inventairesEndpoint, {
                 date: new Date().toISOString().split('T')[0],
                 description: t('stock.inventaire.detail.placeholder_desc'),
-                status: 'EN_COURS'
+                status: 'EN_COURS',
+                inventory_type: options.stockType
             });
-            setActiveInventaire(response.data);
-            setDateInventaire(response.data.date);
-            setDescription(response.data.description || '');
-            setLignes([]);
+            const newInv = response.data;
+            setActiveInventaire(newInv);
+            setDateInventaire(newInv.date);
+            setDescription(newInv.description || '');
+
+            // 2. Switch to CREATE mode immediately so the editor is mounted
             setViewMode('CREATE');
+
+            // 3. Pre-populate if requested
+            if (options.action === 'VERIFY') {
+                await axios.post(`${inventairesEndpoint}${newInv.id}/pre_populate/`, {
+                    rayon_id: options.rayonId,
+                    groupe_id: options.groupeId,
+                    forme_id: options.formeId
+                });
+                // Reload lines and stats
+                const [linesRes, statsRes] = await Promise.all([
+                    axios.get(`${inventairesEndpoint}${newInv.id}/lignes/`),
+                    axios.get(`${inventairesEndpoint}${newInv.id}/stats/`).catch(() => ({ data: null }))
+                ]);
+
+                setLignes(linesRes.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                if (statsRes.data) setInventoryStats(statsRes.data);
+            } else {
+                setLignes([]);
+                setInventoryStats(null);
+            }
+
+            return newInv;
         } catch (error) {
             console.error(error);
             toast.error(t('stock.inventaire.detail.auto_create_error'));
@@ -434,7 +471,7 @@ export const useInventaireEditor = (
         saving, setSaving,
         isReadOnly, importing,
         selectedLines, setSelectedLines,
-        handleCreate, handleEdit,
+        handleCreate, handleEdit, handleCreateWithOptions,
         handleSaveHeader, handleManualSave, handleImportCSV,
         handleUpdateQuantity, handleDeleteLine,
         toggleSelectLine, toggleSelectAll, handleBulkDelete,

@@ -64,8 +64,8 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
                 const loadedClients = clientsData || []
                 setClients(loadedClients)
 
-                // Select "CLIENTS DIVERS" by default if it exists and no search
-                if (!debouncedSearch) {
+                // Select "CLIENTS DIVERS" by default if it exists and no client is already selected
+                if (!debouncedSearch && !selectedClient) {
                     const clientsDivers = loadedClients.find((c: Client) =>
                         c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
                         c.name.trim().toUpperCase() === 'CLIENT DIVERS'

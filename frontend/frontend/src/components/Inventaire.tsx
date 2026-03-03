@@ -11,10 +11,13 @@ import { useInventaireMerge } from '../hooks/inventaire/useInventaireMerge';
 import { InventaireList } from './inventaire/editor/InventaireList';
 import { InventaireEditor } from './inventaire/editor/InventaireEditor';
 import { InventaireMergeModal } from './inventaire/modals/InventaireMergeModal';
+import InventaireCreateModal from './inventaire/modals/InventaireCreateModal';
+import { InventaireAudit } from './inventaire/audit/InventaireAudit';
 
 export default function InventaireComponent() {
 
-    const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT'>('LIST');
+    const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT' | 'AUDIT'>('LIST');
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const { sudoState, requireSudo, closeSudo } = useSudo();
     const confirm = useConfirm();
@@ -27,8 +30,16 @@ export default function InventaireComponent() {
         listLogic.fetchInventaires();
     }, []);
 
+    const handleConfirmCreate = async (options: any) => {
+        const newInv = await editorLogic.handleCreateWithOptions(options);
+        if (newInv) {
+            setShowCreateModal(false);
+            // viewMode is already set to 'CREATE' inside handleCreateWithOptions
+        }
+    };
+
     const mergeLogic = useInventaireMerge({
-        viewMode,
+        viewMode: viewMode,
         selectedInventaireIds: listLogic.selectedInventaireIds,
         inventaires: listLogic.inventaires,
         setSelectedInventaireIds: listLogic.setSelectedInventaireIds,
@@ -44,10 +55,13 @@ export default function InventaireComponent() {
                     listLogic={listLogic}
                     editorLogic={editorLogic}
                     onEdit={editorLogic.handleEdit}
-                    onCreate={editorLogic.handleCreate}
+                    onCreate={() => setShowCreateModal(true)}
                     onOpenMergeModal={() => mergeLogic.setShowMergeModal(true)}
                     canMerge={mergeLogic.canMergeSelectedInventaires()}
+                    onOpenAudit={() => setViewMode('AUDIT')}
                 />
+            ) : viewMode === 'AUDIT' ? (
+                <InventaireAudit onBack={() => setViewMode('LIST')} />
             ) : (
                 <InventaireEditor 
                     viewMode={viewMode}
@@ -69,6 +83,13 @@ export default function InventaireComponent() {
                 handleMerge={mergeLogic.handleMerge}
                 selectedInventaireIds={listLogic.selectedInventaireIds}
                 inventaires={listLogic.inventaires}
+            />
+
+            <InventaireCreateModal 
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onConfirm={handleConfirmCreate}
+                isSaving={editorLogic.saving}
             />
 
             {sudoState.isOpen && <SudoValidationModal 
