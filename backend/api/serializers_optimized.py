@@ -77,6 +77,8 @@ class FactureListSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     total_ht = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     total_ttc = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    montant_regle = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    montant_en_compte = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
     
     class Meta:
         model = Facture
@@ -84,7 +86,8 @@ class FactureListSerializer(serializers.ModelSerializer):
             'id', 'numero_facture', 'client', 'client_name', 'created_by_name',
             'validated_by_name',
             'date', 'status', 'status_display',
-            'total_ht', 'total_ttc', 'remise', 'session_ticket_number'
+            'total_ht', 'total_ttc', 'remise', 'session_ticket_number',
+            'montant_regle', 'montant_en_compte'
         ]
 
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
@@ -229,7 +232,7 @@ class InventaireListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventaire  # Need to import Inventaire
         fields = [
-            'id', 'date', 'description', 'status', 'created_by_name',
+            'id', 'date', 'description', 'status', 'inventory_type', 'created_by_name',
             'total_valeur_theorique', 'total_valeur_physique', 'total_ecart_valeur'
         ]
 

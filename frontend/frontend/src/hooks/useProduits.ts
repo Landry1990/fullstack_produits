@@ -51,10 +51,9 @@ export const useProduits = (filters: ProduitFilters) => {
             const params = new URLSearchParams();
             if (filters.search) params.append('search', filters.search);
             if (filters.page) params.append('page', filters.page.toString());
+            if (filters.rayon) params.append('rayon', filters.rayon);
+            if (filters.fournisseur) params.append('fournisseur', filters.fournisseur);
             if (filters.include_inactive) params.append('include_inactive', 'true');
-            // Note: rayon and fournisseur filtering currently happens client-side in the original component, 
-            // but if the API supports it, we should add it here. 
-            // For migration fidelity, we fetch the paginated list based on search/page first.
 
             const response = await axios.get<ProduitsResponse | ProduitModel[]>(produitsEndpoint, { params });
 
@@ -196,13 +195,13 @@ export const useProduitStats = (produitId: number | null) => {
 
 export const useProduitHistory = (produitId: number | null, activeTab: string) => {
     return useQuery({
-        queryKey: ['produit-history', produitId],
+        queryKey: ['produit-history', produitId, activeTab],
         queryFn: async () => {
             if (!produitId) return [];
             const response = await axios.get<any[]>(`${produitsEndpoint}${produitId}/history/`);
             return response.data;
         },
-        enabled: !!produitId && activeTab === 'mouvements',
+        enabled: !!produitId && activeTab === 'mvmts',
     });
 };
 

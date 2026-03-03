@@ -6,7 +6,6 @@ import Commandes from './components/Commandes'
 import Ventes from './components/Ventes'
 import Fournisseurs from './components/Fournisseurs'
 import Clients from './components/Clients'
-import Categories from './components/Categories'
 import Facturation from './components/Facturation'
 import Dashboard from './components/Dashboard'
 import DashboardManager from './components/DashboardManager'
@@ -14,8 +13,7 @@ import GestionUtilisateurs from './components/GestionUtilisateurs'
 import Vitrine from './components/Vitrine'
 import Inventaire from './components/Inventaire'
 import EtatsInventaire from './components/EtatsInventaire'
-import Formes from './components/Formes'
-import Groupes from './components/Groupes'
+import Organisation from './components/Organisation'
 import Login from './components/Login'
 import StatistiquesFournisseur from './components/StatistiquesFournisseur'
 import JournalCaisse from './components/JournalCaisse'
@@ -130,11 +128,12 @@ const router = createBrowserRouter([
           { path: 'ventes', element: <Ventes /> },
           { path: 'fournisseurs', element: <Fournisseurs /> },
           { path: 'clients', element: <Clients /> },
-          { path: 'inventaire', element: <Inventaire /> },
-          { path: 'formes', element: <Formes /> },
-          { path: 'groupes', element: <Groupes /> },
-          { path: 'rayons', element: <Categories /> },
-          { path: 'facturation', element: <Facturation /> },
+           { path: 'inventaire', element: <Inventaire /> },
+           { path: 'organisation', element: <Organisation /> },
+           { path: 'rayons', element: <Organisation defaultTab="rayons" /> },
+           { path: 'formes', element: <Organisation defaultTab="formes" /> },
+           { path: 'groupes', element: <Organisation defaultTab="groupes" /> },
+           { path: 'facturation', element: <Facturation /> },
           { path: 'caisse-centralisee', element: <CaisseCentralisee /> },
           { path: 'statistiques-fournisseurs', element: <StatistiquesFournisseur /> },
           { path: 'journal-caisse', element: <JournalCaisse /> },

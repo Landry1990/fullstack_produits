@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import { formatPrice } from '../utils/formatters'
 import type { Fournisseur, ProduitModel, CommandeProduit } from '../types'
 import PremiumModal from './common/PremiumModal'
 import { 
@@ -361,7 +362,7 @@ export default function SuggestionCommandeModal({
                                 <DollarSign className="w-3 h-3" />
                                 Total estimé HT
                             </div>
-                            <div className="text-xl font-mono font-bold">{totalHt.toLocaleString()} <span className="text-xs">F</span></div>
+                            <div className="text-xl font-mono font-bold">{formatPrice(totalHt)} <span className="text-xs">F</span></div>
                         </div>
                     </div>
 
@@ -433,11 +434,11 @@ export default function SuggestionCommandeModal({
                                             <td className="text-right">
                                                 <div className="flex flex-col items-end">
                                                     <span className="text-lg font-bold text-primary">{item.quantite_suggeree}</span>
-                                                    <span className="text-[10px] text-gray-400">{item.prix_achat.toLocaleString()} F / u</span>
+                                                    <span className="text-[10px] text-gray-400">{formatPrice(item.prix_achat)} F / u</span>
                                                 </div>
                                             </td>
                                             <td className="text-right font-mono font-bold text-gray-700">
-                                                {(item.montant_ht || (item.prix_achat * item.quantite_suggeree)).toLocaleString()} F
+                                                {formatPrice(item.montant_ht || (item.prix_achat * item.quantite_suggeree))} F
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">

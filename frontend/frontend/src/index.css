@@ -36,10 +36,12 @@
   --color-base-200: #1e293b;
   --color-base-300: #334155;
   --color-base-content: #f8fafc;
-  --color-primary: #10b981; /* Softer green */
-  --color-secondary: #6366f1; /* Indigo */
+  --color-primary: #10b981;
+  /* Softer green */
+  --color-secondary: #6366f1;
+  /* Indigo */
   --color-neutral: #020617;
-  
+
   color-scheme: dark;
 }
 
@@ -82,7 +84,8 @@ select {
 }
 
 /* Reduce default input/select height for more compact UI */
-.input, .select, input, select {
+.input,
+.select {
   height: 2.5rem !important;
   min-height: 2.5rem !important;
   font-size: 0.875rem !important;

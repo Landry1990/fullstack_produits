@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from '../config/axios';
 import type { TVA } from '../types';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
+const API_URL = `${apiBaseUrl}/api`;
 
 export function useTVA() {
     const [tvaList, setTvaList] = useState<TVA[]>([]);
@@ -29,11 +30,24 @@ export function useTVA() {
         try {
             await axios.post(`${API_URL}/tva/`, { taux, libelle });
             await fetchTVAs();
-            return true;
+            return { success: true };
         } catch (err: any) {
             console.error('Error adding TVA:', err);
-            setError('Erreur lors de l\'ajout de la TVA');
-            return false;
+            let message = 'Erreur lors de l\'ajout de la TVA';
+
+            if (err.response?.data) {
+                const data = err.response.data;
+                if (data.taux) {
+                    message = `Ce taux de TVA existe déjà (${taux}%)`;
+                } else if (typeof data === 'string') {
+                    message = data;
+                } else if (data.detail) {
+                    message = data.detail;
+                }
+            }
+
+            setError(message);
+            return { success: false, message };
         }
     };
 

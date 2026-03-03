@@ -34,22 +34,101 @@ interface User {
   };
 }
 
-const AVAILABLE_MENUS = [
-  { key: 'dashboard', label: 'Tableau de bord' },
-  { key: 'ventes', label: 'Ventes' },
-  { key: 'facturation', label: 'Facturation' },
-  { key: 'caisse', label: 'Caisse Centralisée' }, // Ajout caisse
-  { key: 'produits', label: 'Produits' },
-  { key: 'commandes', label: 'Commandes' },
-  { key: 'fournisseurs', label: 'Fournisseurs' },
-  { key: 'clients', label: 'Clients' },
-  { key: 'rayons', label: 'Rayons' },
-  { key: 'inventaire', label: 'Inventaire' },
-  { key: 'avoirs', label: 'Avoirs Fournisseurs' },
-  { key: 'promis', label: 'Produits Promis' },
-  { key: 'perimes', label: 'Périmés / Retours' },
-  { key: 'statistiques', label: 'Statistiques' },
+const MENU_HIERARCHY = [
+  { key: 'dashboard', label: 'Tableau de bord', labelKey: 'sidebar.dashboard' },
+  { key: 'manager_sidebar', label: 'Manager Dashboard', labelKey: 'sidebar.manager_sidebar' },
+  { 
+    key: 'ventes', 
+    label: 'Ventes', 
+    labelKey: 'sidebar.ventes.title',
+    submenus: [
+      { key: 'ventes_consultation', label: 'Consultation', labelKey: 'sidebar.ventes.consultation' },
+      { key: 'ventes_historique', label: 'Historique', labelKey: 'sidebar.ventes.historique' },
+      { key: 'ventes_journal', label: 'Journal de Caisse', labelKey: 'sidebar.ventes.journal' },
+      { key: 'ventes_clotures', label: 'Clôtures', labelKey: 'sidebar.ventes.clotures' },
+      { key: 'ventes_ordonnancier', label: 'Ordonnancier', labelKey: 'sidebar.ventes.ordonnancier' },
+      { key: 'ventes_promotions', label: 'Promotions', labelKey: 'sidebar.ventes.promotions' },
+      { key: 'caisse', label: 'Caisse Centralisée', labelKey: 'sidebar.ventes.caisse_centralisee' }
+    ]
+  },
+  { key: 'facturation', label: 'Facturation', labelKey: 'sidebar.facturation' },
+  { key: 'produits', label: 'Produits', labelKey: 'sidebar.produits' },
+  { key: 'vitrine', label: 'Vitrine', labelKey: 'sidebar.vitrine' },
+  { 
+    key: 'commandes_loc', 
+    label: 'Commandes Locales',
+    labelKey: 'sidebar.commandes.local_title',
+    submenus: [
+      { key: 'commandes_loc_current', label: 'Nouvelle & En cours', labelKey: 'sidebar.commandes.new_current' },
+      { key: 'commandes_loc_history', label: 'Historique', labelKey: 'sidebar.commandes.history' }
+    ]
+  },
+  { 
+    key: 'commandes_dir', 
+    label: 'Commandes Directes',
+    labelKey: 'sidebar.commandes.direct_title',
+    submenus: [
+      { key: 'commandes_dir_current', label: 'Nouvelle & En cours', labelKey: 'sidebar.commandes.new_current' },
+      { key: 'commandes_dir_history', label: 'Historique', labelKey: 'sidebar.commandes.history' }
+    ]
+  },
+  { key: 'fournisseurs', label: 'Fournisseurs', labelKey: 'sidebar.fournisseurs.title' },
+  { key: 'clients', label: 'Clients', labelKey: 'sidebar.clients' },
+  { key: 'creances', label: 'Créances', labelKey: 'sidebar.creances' },
+  { 
+    key: 'inventaire', 
+    label: 'Stock', 
+    labelKey: 'sidebar.stock.title',
+    submenus: [
+      { key: 'inventaire_saisie', label: 'Saisie Inventaire', labelKey: 'sidebar.stock.inventaire' },
+      { key: 'inventaire_journal', label: 'Journal Ajustements', labelKey: 'sidebar.stock.journal' },
+      { key: 'inventaire_analyse', label: 'Analyse Stock', labelKey: 'sidebar.stock.analyse' },
+      { key: 'inventaire_reappro', label: 'Réappro Rayon' },
+      { key: 'inventaire_avoirs', label: 'Avoirs Fournisseurs', labelKey: 'sidebar.stock.avoirs' },
+      { key: 'inventaire_promis', label: 'Produits Promis', labelKey: 'sidebar.stock.promis' },
+      { key: 'inventaire_transformations', label: 'Transformations', labelKey: 'sidebar.stock.transformations' },
+      { key: 'inventaire_perimes', label: 'Périmés / Retours', labelKey: 'sidebar.stock.perimes' },
+      { key: 'inventaire_organisation', label: 'Organisation', labelKey: 'sidebar.stock.rayons' },
+      { key: 'inventaire_etats', label: 'États Inventaires', labelKey: 'sidebar.stock.etats' }
+    ]
+  },
+  { 
+    key: 'statistiques', 
+    label: 'Statistiques', 
+    labelKey: 'sidebar.statistiques.title',
+    submenus: [
+      { key: 'statistiques_rapports', label: 'Centre de Rapports', labelKey: 'sidebar.statistiques.rapports' },
+      { key: 'statistiques_abc', label: 'Analyse ABC', labelKey: 'sidebar.statistiques.abc' },
+      { key: 'statistiques_fournisseurs', label: 'Stats Fournisseurs', labelKey: 'sidebar.statistiques.fournisseurs' },
+      { key: 'statistiques_mensuels', label: 'Rapports Mensuels', labelKey: 'sidebar.statistiques.mensuel' },
+      { key: 'statistiques_finances', label: 'Module Financier', labelKey: 'sidebar.statistiques.finances' },
+      { key: 'statistiques_vendeurs', label: 'Classement Vendeurs', labelKey: 'sidebar.statistiques.classement_vendeurs' },
+      { key: 'statistiques_temporelle', label: 'Analyse Temporelle', labelKey: 'sidebar.statistiques.analyse_temporelle' }
+    ]
+  },
+  {
+    key: 'settings',
+    label: 'Paramètres',
+    labelKey: 'sidebar.parametres.title',
+    submenus: [
+      { key: 'settings_facture', label: 'Facture', labelKey: 'sidebar.parametres.facture' },
+      { key: 'settings_pharmacie', label: 'Pharmacie', labelKey: 'sidebar.parametres.pharmacie' },
+      { key: 'settings_whatsapp', label: 'Historique WhatsApp' },
+      { key: 'settings_etiquettes', label: 'Options d\'Étiquettes', labelKey: 'sidebar.parametres.etiquettes' }
+    ]
+  }
 ];
+
+const getAllMenuKeys = () => {
+    let keys: string[] = [];
+    MENU_HIERARCHY.forEach(menu => {
+        keys.push(menu.key);
+        if (menu.submenus) {
+            menu.submenus.forEach(sub => keys.push(sub.key));
+        }
+    });
+    return keys;
+};
 
 const ROLES = [
   { value: 'PHARMACIEN', label: 'Pharmacien (Admin Complet)' },
@@ -136,7 +215,7 @@ export default function GestionUtilisateurs() {
       updates.can_manage_avoirs = true;
       updates.can_modify_price = true;
       updates.max_discount_rate = 100;
-      updates.allowed_menus = AVAILABLE_MENUS.map(m => m.key);
+      updates.allowed_menus = getAllMenuKeys();
     } else if (role === 'CAISSIER') {
       updates.is_superuser = false;
       updates.can_cash_out = true;
@@ -148,7 +227,7 @@ export default function GestionUtilisateurs() {
       updates.can_delete_commande = false;
       updates.can_close_commande = false;
       updates.can_generate_coupon = false;
-      updates.allowed_menus = ['ventes', 'facturation', 'caisse', 'clients', 'produits'];
+      updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
       updates.can_cash_out = false; // RESTRICTION MAJEURE
@@ -167,7 +246,7 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = false;
       updates.max_discount_rate = 0;
       // Vendeur a accès à la caisse pour les rappels seulement (sera géré dans CaisseCentralisee)
-      updates.allowed_menus = ['facturation', 'caisse', 'produits', 'clients', 'rayons'];
+      updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
     }
 
     setFormData(prev => ({ ...prev, ...updates }));
@@ -211,7 +290,7 @@ export default function GestionUtilisateurs() {
         last_name: '',
         role: 'VENDEUR',
         is_superuser: false,
-        allowed_menus: ['facturation', 'produits'],
+        allowed_menus: ['facturation', 'produits', 'vitrine'],
         can_do_returns: false,
         can_sell_negative_stock: false,
         can_cash_out: false,
@@ -233,12 +312,55 @@ export default function GestionUtilisateurs() {
     setModalOpen(true);
   };
 
-  const handleMenuToggle = (menuKey: string) => {
+  const handleMenuToggle = (menuKey: string, submenus?: {key: string}[]) => {
     setFormData(prev => {
-      const menus = prev.allowed_menus.includes(menuKey)
-        ? prev.allowed_menus.filter(k => k !== menuKey)
-        : [...prev.allowed_menus, menuKey];
-      return { ...prev, allowed_menus: menus };
+      let allowed = [...prev.allowed_menus];
+      
+      const isParent = !!submenus;
+      const isCurrentlySelected = allowed.includes(menuKey);
+
+      if (isCurrentlySelected) {
+          // Deselect parent and all its submenus
+          allowed = allowed.filter(k => k !== menuKey);
+          if (isParent) {
+             const subKeys = submenus.map(s => s.key);
+             allowed = allowed.filter(k => !subKeys.includes(k));
+          }
+      } else {
+          // Select parent and all its submenus
+          allowed.push(menuKey);
+          if (isParent) {
+             submenus.forEach(sub => {
+                 if (!allowed.includes(sub.key)) {
+                     allowed.push(sub.key);
+                 }
+             });
+          }
+      }
+
+      return { ...prev, allowed_menus: allowed };
+    });
+  };
+
+  const handleSubMenuToggle = (submenuKey: string, parentKey: string, totalSubmenusCount: number) => {
+    setFormData(prev => {
+        let allowed = [...prev.allowed_menus];
+        
+        if (allowed.includes(submenuKey)) {
+            allowed = allowed.filter(k => k !== submenuKey);
+            // If we uncheck a submenu, also uncheck the parent to reflect partial state correctly
+            allowed = allowed.filter(k => k !== parentKey);
+        } else {
+            allowed.push(submenuKey);
+            // If all submenus are now checked, check the parent too
+            // Find current parent submenus in allowed list
+            const currentCount = MENU_HIERARCHY.find(m => m.key === parentKey)?.submenus?.filter(s => allowed.includes(s.key)).length || 0;
+            if (currentCount === totalSubmenusCount && !allowed.includes(parentKey)) {
+                allowed.push(parentKey);
+            }
+        }
+        
+        return { ...prev, allowed_menus: allowed };
     });
   };
 
@@ -436,304 +558,250 @@ export default function GestionUtilisateurs() {
       {/* Modal */}
       {modalOpen && (
         <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-3xl">
-            <button className="btn btn-sm btn-circle absolute right-2 top-2" onClick={() => setModalOpen(false)}>✕</button>
-            <h3 className="font-bold text-lg mb-4">
-              {editingUser ? t('users.modal.edit_title') : t('users.modal.new_title')}
-            </h3>
+          <div className="modal-box w-11/12 max-w-5xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 pb-2 border-b border-base-300 flex justify-between items-center bg-base-100 flex-none">
+              <h3 className="font-bold text-xl flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                </div>
+                {editingUser ? t('users.modal.edit_title') : t('users.modal.new_title')}
+              </h3>
+              <button className="btn btn-sm btn-circle btn-ghost" onClick={() => setModalOpen(false)}>✕</button>
+            </div>
             
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
               
-              {/* Left Column: Required Info */}
+              {/* Section 1: Basic Info */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm uppercase text-gray-500">{t('users.modal.basic_info')}</h4>
-                
-                <div className="form-control">
-                  <label className="label">{t('users.form.role')}</label>
-                  <select 
-                    className="select select-bordered w-full select-primary font-bold"
-                    value={formData.role}
-                    onChange={(e) => handleRoleChange(e.target.value)}
-                  >
-                    {ROLES.map(role => {
-                         const roleKey = role.value === 'PHARMACIEN' ? 'pharmacist' : role.value === 'CAISSIER' ? 'cashier' : 'seller';
-                         return <option key={role.value} value={role.value}>{t(`users.roles.${roleKey}`)}</option>
-                    })}
-                  </select>
-                </div>
-
-                <div className="form-control">
-                  <label className="label">{t('users.form.username')}</label>
-                  <input 
-                    type="text" 
-                    className="input input-bordered" 
-                    value={formData.username}
-                    onChange={e => setFormData({...formData, username: e.target.value})}
-                    required
-                  />
+                <div className="flex items-center gap-2 border-l-4 border-primary pl-3">
+                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.basic_info')}</h4>
                 </div>
                 
-                <div className="form-control">
-                  <label className="label">
-                    {t('users.form.password')}
-                    {editingUser && <span className="label-text-alt text-warning ml-2">{t('users.form.password_hint')}</span>}
-                  </label>
-                  <input 
-                    type="password" 
-                    className="input input-bordered" 
-                    value={formData.password}
-                    onChange={e => setFormData({...formData, password: e.target.value})}
-                    required={!editingUser}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="form-control">
-                    <label className="label text-xs">{t('users.form.firstname')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('users.form.role')}</label>
+                    <select 
+                      className="select select-bordered w-full select-primary font-bold"
+                      value={formData.role}
+                      onChange={(e) => handleRoleChange(e.target.value)}
+                    >
+                      {ROLES.map(role => {
+                           const roleKey = role.value === 'PHARMACIEN' ? 'pharmacist' : role.value === 'CAISSIER' ? 'cashier' : 'seller';
+                           return <option key={role.value} value={role.value}>{t(`users.roles.${roleKey}`)}</option>
+                      })}
+                    </select>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label text-xs font-semibold py-1">{t('users.form.username')}</label>
                     <input 
                       type="text" 
-                      className="input input-bordered input-sm" 
+                      className="input input-bordered" 
+                      value={formData.username}
+                      onChange={e => setFormData({...formData, username: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-control">
+                    <label className="label text-xs font-semibold py-1">
+                      {t('users.form.password')}
+                      {editingUser && <span className="label-text-alt text-warning ml-2">{t('users.form.password_hint')}</span>}
+                    </label>
+                    <input 
+                      type="password" 
+                      className="input input-bordered" 
+                      value={formData.password}
+                      onChange={e => setFormData({...formData, password: e.target.value})}
+                      required={!editingUser}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label text-xs font-semibold py-1">{t('users.form.firstname')}</label>
+                    <input 
+                      type="text" 
+                      className="input input-bordered" 
                       value={formData.first_name}
                       onChange={e => setFormData({...formData, first_name: e.target.value})}
                     />
                   </div>
+
                   <div className="form-control">
-                    <label className="label text-xs">{t('users.form.lastname')}</label>
+                    <label className="label text-xs font-semibold py-1">{t('users.form.lastname')}</label>
                     <input 
                       type="text" 
-                      className="input input-bordered input-sm" 
+                      className="input input-bordered" 
                       value={formData.last_name}
                       onChange={e => setFormData({...formData, last_name: e.target.value})}
                     />
                   </div>
-                </div>
-                
-                <div className="form-control">
-                  <label className="label text-xs">{t('users.form.email')}</label>
-                  <input 
-                    type="email" 
-                    className="input input-bordered input-sm" 
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                  />
+                  
+                  <div className="form-control">
+                    <label className="label text-xs font-semibold py-1">{t('users.form.email')}</label>
+                    <input 
+                      type="email" 
+                      className="input input-bordered" 
+                      value={formData.email}
+                      onChange={e => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Right Column: Permissions */}
+              {/* Section 2: Permissions UI - NOW FULL WIDTH */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm uppercase text-gray-500">{t('users.modal.access_permissions')}</h4>
-                
-                <div className="bg-base-200 p-4 rounded-lg">
-                  <label className="label font-bold">{t('users.modal.authorized_menus')}</label>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                    {AVAILABLE_MENUS.map(menu => {
-                       // Map menu keys to translation keys
-                       let label = menu.label;
-                       if (menu.key === 'dashboard') label = t('sidebar.dashboard');
-                       else if (menu.key === 'ventes') label = t('sidebar.ventes.title');
-                       else if (menu.key === 'facturation') label = t('sidebar.facturation');
-                       else if (menu.key === 'caisse') label = t('sidebar.ventes.caisse_centralisee');
-                       else if (menu.key === 'produits') label = t('sidebar.produits');
-                       else if (menu.key === 'commandes') label = t('sidebar.commandes.title');
-                       else if (menu.key === 'fournisseurs') label = t('sidebar.fournisseurs.title');
-                       else if (menu.key === 'clients') label = t('sidebar.clients');
-                       else if (menu.key === 'rayons') label = t('sidebar.stock.rayons');
-                       else if (menu.key === 'statistiques') label = t('sidebar.statistiques.title');
+                <div className="flex items-center gap-2 border-l-4 border-secondary pl-3">
+                  <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.authorized_menus')}</h4>
+                </div>
 
-                       return (
-                      <label key={menu.key} className="label cursor-pointer justify-start gap-2 py-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {MENU_HIERARCHY.map(menu => {
+                     const parentLabel = menu.labelKey ? t(menu.labelKey, menu.label) : menu.label;
+                     const isParentChecked = formData.allowed_menus.includes(menu.key);
+                     const indeterminate = !isParentChecked && menu.submenus?.some(sub => formData.allowed_menus.includes(sub.key));
+
+                     return (
+                       <div key={menu.key} className="bg-base-200/30 rounded-xl border border-base-300 overflow-hidden flex flex-col h-full">
+                          <div className="bg-base-200/80 p-3 flex-none border-b border-base-300">
+                            <label className="flex items-center cursor-pointer gap-3">
+                              <input 
+                                type="checkbox" 
+                                className={`checkbox checkbox-sm checkbox-primary shrink-0 ${indeterminate ? 'checkbox-indeterminate' : ''}`}
+                                checked={isParentChecked || indeterminate}
+                                onChange={() => handleMenuToggle(menu.key, menu.submenus)}
+                                disabled={formData.is_superuser}
+                              />
+                              <span className={`font-bold text-sm select-none ${formData.is_superuser ? 'opacity-50' : ''}`}>{parentLabel}</span>
+                            </label>
+                          </div>
+                          
+                          {menu.submenus && menu.submenus.length > 0 && (
+                              <div className="p-3 grid grid-cols-1 gap-1.5 flex-1 bg-base-100/50">
+                                 {menu.submenus.map(sub => {
+                                    const subLabel = sub.labelKey ? t(sub.labelKey, sub.label) : sub.label;
+                                    return (
+                                      <label key={sub.key} className="flex items-start cursor-pointer gap-2 py-0.5 group">
+                                        <input 
+                                          type="checkbox" 
+                                          className="checkbox checkbox-xs checkbox-secondary shrink-0 mt-0.5 group-hover:border-secondary transition-colors"
+                                          checked={formData.allowed_menus.includes(sub.key) || formData.allowed_menus.includes(menu.key)}
+                                          onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
+                                          disabled={formData.is_superuser}
+                                        />
+                                        <span className={`text-xs select-none leading-tight pt-0.5 ${formData.is_superuser ? 'opacity-50' : 'text-base-content/80 group-hover:text-base-content'} transition-colors`}>{subLabel}</span>
+                                      </label>
+                                    );
+                                 })}
+                              </div>
+                          )}
+                       </div>
+                  )})}
+                </div>
+                {formData.is_superuser && (
+                  <div className="alert alert-info py-2 shadow-sm italic text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>{t('users.modal.admin_note')}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Section 3: Specialized & Security */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* Left: General & Sales */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-l-4 border-success pl-3">
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.special_permissions')}</h4>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-3 bg-base-200/50 p-4 rounded-xl border border-base-300">
+                      <label className="label cursor-pointer justify-start gap-4 p-2 bg-base-100 rounded-lg border border-base-200 hover:border-success transition-all shadow-sm group">
                         <input 
                           type="checkbox" 
-                          className="checkbox checkbox-xs checkbox-primary"
-                          checked={formData.allowed_menus.includes(menu.key)}
-                          onChange={() => handleMenuToggle(menu.key)}
-                          disabled={formData.is_superuser} // Admin has all menus
+                          className="toggle toggle-success toggle-sm"
+                          checked={formData.can_cash_out}
+                          onChange={e => setFormData({...formData, can_cash_out: e.target.checked})}
+                          disabled={formData.is_superuser || formData.role === 'VENDEUR'}
                         />
-                        <span className={`label-text text-sm ${formData.is_superuser ? 'opacity-50' : ''}`}>{label}</span>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-xs group-hover:text-success transition-colors">{t('users.permissions.cash_out')}</span>
+                          <span className="text-[10px] opacity-60 leading-none mt-0.5">{t('users.permissions.cash_out_desc')}</span>
+                        </div>
                       </label>
-                    )})}
-                  </div>
-                  {formData.is_superuser && <div className="text-xs text-info mt-2">{t('users.modal.admin_note')}</div>}
-                </div>
 
-                <div className="bg-base-200 p-4 rounded-lg space-y-2">
-                  <label className="label font-bold py-0">{t('users.modal.special_permissions')}</label>
-                  
-                  <label className="label cursor-pointer justify-start gap-3 bg-base-100 p-2 rounded border border-base-300">
-                    <input 
-                      type="checkbox" 
-                      className="toggle toggle-success toggle-sm"
-                      checked={formData.can_cash_out}
-                      onChange={e => setFormData({...formData, can_cash_out: e.target.checked})}
-                      disabled={formData.is_superuser || formData.role === 'VENDEUR'} // Vendeur cannot cash out
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium text-sm">{t('users.permissions.cash_out')}</span>
-                      <span className="text-xs text-base-content/60">{t('users.permissions.cash_out_desc')}</span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_do_returns} onChange={e => setFormData({...formData, can_do_returns: e.target.checked})} />
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.returns')}</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                          <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_sell_negative_stock} onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})} />
+                          <span className="text-xs font-bold text-warning/80 group-hover:text-warning">{t('users.permissions.negative_stock')}</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_price} onChange={e => setFormData({...formData, can_modify_price: e.target.checked})} />
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">Peut modifier le prix</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_generate_coupon} onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})} />
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.generate_coupon')}</span>
+                        </label>
+                      </div>
+
+                      <div className="form-control px-2 mt-1">
+                        <label className="label py-1">
+                          <span className="label-text text-[10px] font-bold opacity-60">Taux de remise max (%)</span>
+                        </label>
+                        <input 
+                          type="number" 
+                          className="input input-bordered input-xs !h-8 font-bold" 
+                          value={formData.max_discount_rate}
+                          onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
+                        />
+                      </div>
                     </div>
-                  </label>
-
-                  {formData.role === 'VENDEUR' && (
-                    <div className="text-xs text-warning">
-                       {t('users.modal.seller_warning')}
-                    </div>
-                  )}
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_do_returns}
-                      onChange={e => setFormData({...formData, can_do_returns: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.returns')}</span>
-                  </label>
-                  
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_sell_negative_stock}
-                      onChange={e => setFormData({...formData, can_sell_negative_stock: e.target.checked})}
-                    />
-                    <span className="label-text text-sm font-bold text-warning">{t('users.permissions.negative_stock')}</span>
-                  </label>
-
-                  <div className="divider my-1">{t('users.modal.security')}</div>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-error"
-                      checked={formData.can_delete_product}
-                      onChange={e => setFormData({...formData, can_delete_product: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.delete_product')}</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-warning"
-                      checked={formData.can_adjust_stock}
-                      onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.adjust_stock')}</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-error"
-                      checked={formData.can_delete_fournisseur}
-                      onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.delete_provider')}</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-error"
-                      checked={formData.can_delete_commande}
-                      onChange={e => setFormData({...formData, can_delete_commande: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.delete_order')}</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-warning"
-                      checked={formData.can_close_commande}
-                      onChange={e => setFormData({...formData, can_close_commande: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.close_order')}</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs checkbox-warning"
-                      checked={formData.can_generate_coupon}
-                      onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">{t('users.permissions.generate_coupon')}</span>
-                  </label>
-
-                  <div className="divider my-1">Sudo Actions</div>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_cancel_invoice}
-                      onChange={e => setFormData({...formData, can_cancel_invoice: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">Peut annuler des factures</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_cancel_promis}
-                      onChange={e => setFormData({...formData, can_cancel_promis: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">Peut annuler des promis</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_manage_perimes}
-                      onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">Peut gérer les périmés</span>
-                  </label>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_manage_avoirs}
-                      onChange={e => setFormData({...formData, can_manage_avoirs: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">Peut gérer les avoirs</span>
-                  </label>
-
-                  <div className="divider my-1">Prix & Remises</div>
-
-                  <label className="label cursor-pointer justify-start gap-3">
-                    <input 
-                      type="checkbox" 
-                      className="checkbox checkbox-xs"
-                      checked={formData.can_modify_price}
-                      onChange={e => setFormData({...formData, can_modify_price: e.target.checked})}
-                    />
-                    <span className="label-text text-sm">Peut modifier le prix</span>
-                  </label>
-
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text text-xs">Taux de remise max (%)</span>
-                    </label>
-                    <input 
-                      type="number" 
-                      className="input input-bordered input-sm" 
-                      value={formData.max_discount_rate}
-                      onChange={e => setFormData({...formData, max_discount_rate: parseInt(e.target.value) || 0})}
-                    />
                   </div>
-                </div>
-              </div>
 
-              <div className="modal-action col-span-1 md:col-span-2">
-                <button type="button" className="btn" onClick={() => setModalOpen(false)}>{t('users.modal.cancel')}</button>
-                <button type="submit" className="btn btn-primary px-8">{t('users.modal.save')}</button>
+                  {/* Right: Security & Admin */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 border-l-4 border-error pl-3">
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">Sécurité & Sudo</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_invoice} onChange={e => setFormData({...formData, can_cancel_invoice: e.target.checked})} />
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Annuler Factures</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_promis} onChange={e => setFormData({...formData, can_cancel_promis: e.target.checked})} />
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Annuler Promis</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_product} onChange={e => setFormData({...formData, can_delete_product: e.target.checked})} />
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Supprimer Produits</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_fournisseur} onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})} />
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Supprimer Fournisseurs</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_adjust_stock} onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})} />
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">Ajuster Stock</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_manage_perimes} onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})} />
+                        <span className="text-xs font-medium opacity-80 group-hover:opacity-100">Gérer Périmés</span>
+                      </label>
+                    </div>
+                  </div>
               </div>
             </form>
+
+            <div className="p-4 bg-base-200 border-t border-base-300 flex justify-end gap-3 flex-none">
+              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)}>{t('users.modal.cancel')}</button>
+              <button type="submit" onClick={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)} className="btn btn-primary px-10 shadow-lg shadow-primary/20">{t('users.modal.save')}</button>
+            </div>
           </div>
         </div>
       )}

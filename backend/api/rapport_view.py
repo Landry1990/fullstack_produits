@@ -3,8 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, F, DecimalField, Q
-from django.db.models.functions import TruncDate
+from django.db.models import Sum, F, DecimalField, Q, Count, Value
+from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -29,9 +29,6 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_ca_stats(self, factures):
         """Calcule CA TTC, CA HT et nombre de ventes."""
-        from django.db.models import Sum
-        from django.db.models.functions import Coalesce
-        
         ca_stats = factures.aggregate(
             ca_ttc=Coalesce(Sum('total_ttc'), Decimal('0.00')),
             ca_ht=Coalesce(Sum('total_ht'), Decimal('0.00'))
@@ -48,8 +45,6 @@ class RapportViewSet(viewsets.ViewSet):
         allocations = FactureProduitAllocation.objects.filter(
             facture_produit__facture__in=factures
         )
-        from django.db.models import Sum, F, DecimalField
-        from django.db.models.functions import Coalesce
 
         cout_achat_total = allocations.aggregate(
             total=Coalesce(Sum(F('cost_price') * F('quantity'), output_field=DecimalField()), Decimal('0.00'))
@@ -72,7 +67,6 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_encaissements(self, date_debut, date_fin, factures):
         """Calcule les encaissements par mode, ventes à crédit et coupons."""
-        from django.db.models import Q
         # Détection Hybride : nouveau mode + anciens marqueurs
         recouvrement_q = Q(mode_paiement='recouvrement') | Q(facture__client__client_type='PROFESSIONNEL') | Q(reference__icontains='[RECOUV]')
 
@@ -128,8 +122,6 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_creances(self):
         """Calcule les créances globales à percevoir."""
-        from django.db.models import Sum, F, Q, DecimalField, Value
-        from django.db.models.functions import Coalesce
         
         # Optimize to a single query instead of N+1
         stats = Facture.objects.filter(
@@ -157,9 +149,6 @@ class RapportViewSet(viewsets.ViewSet):
         """Calcule la répartition du CA par taux de TVA."""
         # This is strictly accurate if remises are apportioned proportionally 
         # to the contribution of each line's gross total per TVA rate.
-        
-        from django.db.models import Sum, F, DecimalField, OuterRef, Subquery, Value
-        from django.db.models.functions import Coalesce
         
         ca_par_tva_stats = {}
 
@@ -284,8 +273,6 @@ class RapportViewSet(viewsets.ViewSet):
 
     def _calculate_clients_pro(self, factures):
         """Calcule les statistiques des clients professionnels."""
-        from django.db.models import Sum, F, Q, DecimalField, Value, Count
-        from django.db.models.functions import Coalesce
         
         # Calculate totals with aggregation directly on factures
         # We need to compute per-client stats using values().annotate()

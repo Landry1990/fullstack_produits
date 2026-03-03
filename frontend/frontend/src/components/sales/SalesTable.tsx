@@ -113,6 +113,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                         <th className="px-6 py-4">{t('sales.table.client')}</th>
                         <th className="px-6 py-4 hidden xl:table-cell">{t('sales.table.operator', {defaultValue: "Vendeur"})}</th>
                         <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
+                        <th className="px-6 py-4 text-center">Régler</th>
+                        <th className="px-6 py-4 text-center">En compte</th>
                         <th className="px-6 py-4 text-center hidden lg:table-cell">{t('sales.table.discount', {defaultValue: "Remise"})}</th>
                         <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales.table.status')}</th>
 
@@ -180,6 +182,16 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             <td className="px-6 py-4 text-center">
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-base-200 text-base-content font-mono font-bold text-sm border border-base-300 group-hover:bg-base-100 group-hover:border-primary/30 group-hover:text-primary group-hover:shadow-sm transition-all">
                                     {parseFloat(facture.total_ttc).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                                <span className="text-success font-bold font-mono text-sm">
+                                    {parseFloat(facture.montant_regle || '0').toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                                <span className={`${parseFloat(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm`}>
+                                    {parseFloat(facture.montant_en_compte || '0').toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center hidden lg:table-cell">

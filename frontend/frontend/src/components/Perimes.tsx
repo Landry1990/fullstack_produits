@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next'
 import type { StockLot } from '../types'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
+import { usePrint } from '../hooks/usePrint'
+import type { StockAdjustment } from '../types'
 
 // Types pour les statistiques
 interface PerimesStats {
@@ -46,7 +48,17 @@ export default function Perimes() {
   const [error, setError] = useState<string | null>(null)
   const [filterDays, setFilterDays] = useState<number>(30)
   const [showExpiredOnly, setShowExpiredOnly] = useState<boolean>(true)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'list'>('dashboard')
+  const [selectedLotIds, setSelectedLotIds] = useState<number[]>([])
+  const [adjustments, setAdjustments] = useState<StockAdjustment[]>([])
+  const [loadingAdjustments, setLoadingAdjustments] = useState(false)
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'list' | 'history'>('dashboard')
+  
+  const [dateDebut, setDateDebut] = useState<string>(() => {
+    const d = new Date()
+    d.setMonth(d.getMonth() - 1)
+    return d.toISOString().split('T')[0]
+  })
+  const [dateFin, setDateFin] = useState<string>(() => new Date().toISOString().split('T')[0])
 
   const { sudoState, requireSudo, closeSudo } = useSudo()
   const [processing, setProcessing] = useState(false)
@@ -61,13 +73,16 @@ export default function Perimes() {
   useEffect(() => {
     fetchStats()
     fetchLots()
+    fetchAdjustments()
   }, [])
 
   useEffect(() => {
     if (activeTab === 'list') {
       fetchLots()
+    } else if (activeTab === 'history') {
+      fetchAdjustments()
     }
-  }, [filterDays, showExpiredOnly, activeTab])
+  }, [filterDays, showExpiredOnly, activeTab, dateDebut, dateFin])
 
   const fetchStats = async () => {
     setLoadingStats(true)
@@ -81,9 +96,30 @@ export default function Perimes() {
     }
   }
 
+  const fetchAdjustments = async () => {
+    setLoadingAdjustments(true)
+    try {
+      const response = await axios.get(`${apiBaseUrl}/api/stock-adjustments/`, {
+        params: {
+          reason_type: 'PERIME',
+          created_at__date__gte: dateDebut,
+          created_at__date__lte: dateFin,
+          limit: 100
+        }
+      })
+      const data: any = response.data
+      setAdjustments(Array.isArray(data) ? data : (data.results || []))
+    } catch (err) {
+      console.error('Erreur chargement historiques:', err)
+    } finally {
+      setLoadingAdjustments(false)
+    }
+  }
+
   const fetchLots = async () => {
     setLoading(true)
     setError(null)
+    setSelectedLotIds([]) // Reset selection on refresh
     try {
       const today = new Date()
       const thresholdDate = new Date()
@@ -94,7 +130,7 @@ export default function Perimes() {
       const response = await axios.get<StockLot[]>(stockLotsEndpoint, {
         params: {
           date_expiration_lte: dateStr,
-          include_empty: 'false'
+          include_empty: 'true' // We want to see depleted lots to disable the button
         }
       })
       
@@ -133,14 +169,14 @@ export default function Perimes() {
           quantity: qty,
           reason: 'Périmé / Avarie',
           validated_by_id: validatorId,
-          password: password
+          sudo_password: password
         })
         toast.success('Sortie de stock effectuée.')
         fetchLots()
         fetchStats() 
       } catch (err: any) {
         console.error('Erreur sortie stock:', err)
-        toast.error('Erreur: ' + (err.response?.data?.error || err.message || 'Erreur inconnue'))
+        toast.error('Erreur: ' + (err.response?.data?.detail || err.response?.data?.error || err.message || 'Erreur inconnue'))
       } finally {
         setProcessing(false)
       }
@@ -148,6 +184,104 @@ export default function Perimes() {
       title: `Sortie de stock - Périmés`,
       message: `Confirmer la sortie de <strong>${qty} unités</strong> du produit <strong>${lot.produit_nom}</strong> (Lot ${lot.lot}) ?<br/><br/>Cette action est irréversible.`
     });
+  }
+
+  const handleBulkSortir = async () => {
+      if (selectedLotIds.length === 0) return
+
+      requireSudo(async (validatorId, password) => {
+          try {
+              setProcessing(true)
+              await axios.post(`${stockLotsEndpoint}bulk_sortir_perimes/`, {
+                  lot_ids: selectedLotIds,
+                  reason: 'Sortie groupée périmés',
+                  validated_by_id: validatorId,
+                  sudo_password: password
+              })
+              toast.success(`${selectedLotIds.length} lots sortis avec succès.`)
+              fetchLots()
+              fetchStats()
+          } catch (err: any) {
+              console.error('Erreur sortie groupée:', err)
+              toast.error('Erreur lors de la sortie groupée.')
+          } finally {
+              setProcessing(false)
+          }
+      }, {
+          title: 'Sortie Groupée - Périmés',
+          message: `Voulez-vous sortir <strong>${selectedLotIds.length} lots</strong> du stock ?<br/>Leur stock passera à 0.`
+      })
+  }
+
+  const toggleLotSelection = (id: number) => {
+      setSelectedLotIds(prev => 
+          prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+      )
+  }
+
+  const toggleAllSelection = () => {
+      if (selectedLotIds.length === lots.filter(l => l.quantity_remaining > 0).length) {
+          setSelectedLotIds([])
+      } else {
+          setSelectedLotIds(lots.filter(l => l.quantity_remaining > 0).map(l => l.id))
+      }
+  }
+
+  const { printWithTemplate } = usePrint()
+
+  const handlePrintHistory = () => {
+    if (adjustments.length === 0) return
+
+    const totalVal = adjustments.reduce((sum, adj) => sum + (adj.valorisation || 0), 0)
+
+    const content = `
+      <div style="font-family: Arial, sans-serif; color: #333;">
+        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">Journal des Sorties - Produits Périmés</h3>
+        <p style="text-align: center; font-size: 0.9em; margin-bottom: 20px;">
+          Période: ${new Date(dateDebut).toLocaleDateString()} au ${new Date(dateFin).toLocaleDateString()}
+        </p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85em;">
+          <thead>
+            <tr style="background-color: #f3f4f6;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Date</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produit</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Lot</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Qté</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Valorisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${adjustments.map(adj => `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px;">${new Date(adj.created_at).toLocaleDateString()}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${adj.produit_name}</td>
+                <td style="border: 1px solid #ddd; padding: 8px;">${adj.lot_number || '-'}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.abs(adj.quantity_change)}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+          <tfoot>
+            <tr style="background-color: #f9fafb; font-weight: bold;">
+              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">TOTAL VALORISATION</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        
+        <div style="text-align: right; font-size: 0.8em; margin-top: 30px;">
+          <p>Document généré le ${new Date().toLocaleString()}</p>
+        </div>
+      </div>
+    `
+
+    printWithTemplate(content, { title: 'Journal des Sorties Périmés', width: 800 })
+  }
+
+  const handleExportExcel = () => {
+    const url = `${apiBaseUrl}/api/stock-adjustments/export_excel/?reason_type=PERIME&created_at__date__gte=${dateDebut}&created_at__date__lte=${dateFin}`
+    window.open(url, '_blank')
   }
 
   const formatDate = (dateString: string) => {
@@ -166,7 +300,7 @@ export default function Perimes() {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('fr-FR', { 
       style: 'decimal', 
-      minimumFractionDigits: 0,
+      minimumFractionDigits: 0, 
       maximumFractionDigits: 0 
     }).format(value) + ' F'
   }
@@ -199,6 +333,12 @@ export default function Perimes() {
               onClick={() => setActiveTab('list')}
             >
               📋 Liste
+            </button>
+            <button 
+              className={`tab ${activeTab === 'history' ? 'tab-active' : ''}`}
+              onClick={() => setActiveTab('history')}
+            >
+              📜 Historique
             </button>
           </div>
           <button 
@@ -383,37 +523,54 @@ export default function Perimes() {
               </div>
             )}
           </div>
-        ) : (
+        ) : activeTab === 'list' ? (
           /* ========== LIST VIEW ========== */
           <>
             {/* Filters */}
-            <div className="mb-4 flex gap-4 items-center bg-base-50 p-3 rounded-lg border border-base-200">
-              <div className="form-control">
-                <label className="label cursor-pointer gap-2">
-                  <span className="label-text font-medium">Uniquement déjà périmés</span> 
-                  <input 
-                    type="checkbox" 
-                    className="toggle toggle-error" 
-                    checked={showExpiredOnly} 
-                    onChange={(e) => setShowExpiredOnly(e.target.checked)}
-                  />
-                </label>
-              </div>
-              
-              {!showExpiredOnly && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">Expire dans les</span>
-                  <select 
-                    className="select select-bordered select-sm" 
-                    value={filterDays} 
-                    onChange={(e) => setFilterDays(parseInt(e.target.value))}
-                  >
-                    <option value={30}>30 jours</option>
-                    <option value={60}>60 jours</option>
-                    <option value={90}>90 jours</option>
-                    <option value={180}>6 mois</option>
-                  </select>
+            <div className="mb-4 flex flex-wrap gap-4 items-center justify-between bg-base-50 p-3 rounded-lg border border-base-200">
+              <div className="flex gap-4 items-center">
+                <div className="form-control">
+                    <label className="label cursor-pointer gap-2">
+                    <span className="label-text font-medium text-xs">Uniquement déjà périmés</span> 
+                    <input 
+                        type="checkbox" 
+                        className="toggle toggle-error toggle-xs" 
+                        checked={showExpiredOnly} 
+                        onChange={(e) => setShowExpiredOnly(e.target.checked)}
+                    />
+                    </label>
                 </div>
+                
+                {!showExpiredOnly && (
+                    <div className="flex items-center gap-2">
+                    <span className="text-xs">Expire dans les</span>
+                    <select 
+                        className="select select-bordered select-xs" 
+                        value={filterDays} 
+                        onChange={(e) => setFilterDays(parseInt(e.target.value))}
+                    >
+                        <option value={30}>30 jours</option>
+                        <option value={60}>60 jours</option>
+                        <option value={90}>90 jours</option>
+                        <option value={180}>6 mois</option>
+                    </select>
+                    </div>
+                )}
+              </div>
+
+              {selectedLotIds.length > 0 && (
+                  <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-2">
+                      <span className="text-sm font-bold text-primary">
+                          {selectedLotIds.length} sélectionné(s)
+                      </span>
+                      <button 
+                        onClick={handleBulkSortir}
+                        className="btn btn-error btn-xs gap-2"
+                        disabled={processing}
+                      >
+                          🗑️ Sortir la sélection
+                      </button>
+                  </div>
               )}
             </div>
 
@@ -428,9 +585,17 @@ export default function Perimes() {
               </div>
             ) : (
               <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                <table className="table table-zebra w-full">
+                <table className="table table-compact table-zebra w-full">
                   <thead>
                     <tr className="bg-base-200">
+                      <th className="w-10">
+                          <input 
+                            type="checkbox" 
+                            className="checkbox checkbox-xs" 
+                            checked={selectedLotIds.length === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
+                            onChange={toggleAllSelection}
+                          />
+                      </th>
                       <th>Produit</th>
                       <th>Lot</th>
                       <th>Date Expiration</th>
@@ -442,26 +607,40 @@ export default function Perimes() {
                   </thead>
                   <tbody>
                     {lots.map((lot) => (
-                      <tr key={lot.id} className="hover">
-                        <td className="font-bold">{lot.produit_nom}</td>
-                        <td className="font-mono">{lot.lot || '-'}</td>
+                      <tr key={lot.id} className={`hover ${lot.quantity_remaining <= 0 ? 'opacity-50 grayscale' : ''}`}>
                         <td>
-                          <span className={`badge ${lot.date_expiration && isExpired(lot.date_expiration) ? 'badge-error' : 'badge-warning'}`}>
+                            <input 
+                                type="checkbox" 
+                                className="checkbox checkbox-xs checkbox-primary" 
+                                checked={selectedLotIds.includes(lot.id)}
+                                onChange={() => toggleLotSelection(lot.id)}
+                                disabled={lot.quantity_remaining <= 0}
+                            />
+                        </td>
+                        <td className="font-bold text-xs">{lot.produit_nom}</td>
+                        <td className="font-mono text-xs">{lot.lot || '-'}</td>
+                        <td>
+                          <span className={`badge badge-xs ${lot.date_expiration && isExpired(lot.date_expiration) ? 'badge-error' : 'badge-warning'}`}>
                             {formatDate(lot.date_expiration || '')}
                           </span>
                         </td>
-                        <td>{lot.fournisseur_nom}</td>
-                        <td className="text-right font-bold">{lot.quantity_remaining}</td>
-                        <td className="text-right text-error">
+                        <td className="text-xs truncate max-w-[120px]">{lot.fournisseur_nom}</td>
+                        <td className="text-right font-bold text-xs">{lot.quantity_remaining}</td>
+                        <td className="text-right text-error text-xs font-medium">
                           {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)}
                         </td>
                         <td>
-                          <button 
-                            className="btn btn-xs btn-error btn-outline"
-                            onClick={() => handleSortirStock(lot)}
-                          >
-                            🗑️ Sortir
-                          </button>
+                          {lot.quantity_remaining > 0 ? (
+                            <button 
+                                className="btn btn-[10px] h-6 min-h-6 px-2 btn-error btn-outline"
+                                onClick={() => handleSortirStock(lot)}
+                                disabled={processing}
+                            >
+                                🗑️ Sortir
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-bold text-base-content/30 uppercase italic">Sorti</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -470,6 +649,110 @@ export default function Perimes() {
               </div>
             )}
           </>
+        ) : (
+          /* ========== HISTORY VIEW ========== */
+          <div className="space-y-4">
+             {/* Filters */}
+             <div className="mb-4 flex flex-wrap gap-4 items-center justify-between bg-base-50 p-4 rounded-xl border border-base-200">
+                <div className="flex flex-wrap gap-4 items-center">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase pl-1">Du</span>
+                        <input 
+                            type="date" 
+                            className="input input-bordered input-sm rounded-lg" 
+                            value={dateDebut}
+                            onChange={(e) => setDateDebut(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-base-content/40 uppercase pl-1">Au</span>
+                        <input 
+                            type="date" 
+                            className="input input-bordered input-sm rounded-lg" 
+                            value={dateFin}
+                            onChange={(e) => setDateFin(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <button 
+                        className="btn btn-sm btn-outline gap-2 rounded-lg"
+                        onClick={handlePrintHistory}
+                        disabled={adjustments.length === 0}
+                    >
+                        🖨️ Imprimer
+                    </button>
+                    <button 
+                        className="btn btn-sm btn-success text-white gap-2 rounded-lg"
+                        onClick={handleExportExcel}
+                        disabled={adjustments.length === 0}
+                    >
+                        Excel
+                    </button>
+                </div>
+             </div>
+
+             {/* Total Valorisation Summary Card */}
+             {adjustments.length > 0 && (
+                 <div className="stats shadow-sm border border-base-200 w-full mb-4">
+                    <div className="stat">
+                        <div className="stat-title text-xs font-bold uppercase text-base-content/50">Valorisation Totale des Sorties</div>
+                        <div className="stat-value text-error text-2xl">
+                            {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))}
+                        </div>
+                        <div className="stat-desc font-medium text-base-content/40">{adjustments.length} opérations sur la période</div>
+                    </div>
+                 </div>
+             )}
+
+             {/* Adjustments Table */}
+             {loadingAdjustments ? (
+                <div className="flex items-center justify-center h-64">
+                    <span className="loading loading-spinner loading-lg text-primary"></span>
+                </div>
+             ) : adjustments.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-base-content/30 border-2 border-dashed border-base-200 rounded-2xl">
+                    <p className="text-lg font-bold">Aucune sortie trouvée sur cette période</p>
+                </div>
+             ) : (
+                <div className="bg-white rounded-2xl shadow-sm border border-base-200 overflow-hidden">
+                    <table className="table table-sm w-full">
+                        <thead>
+                            <tr className="bg-base-100">
+                                <th>Date</th>
+                                <th>Produit</th>
+                                <th>Lot</th>
+                                <th className="text-right">Qté Sortie</th>
+                                <th className="text-right">Valorisation</th>
+                                <th>Utilisateur</th>
+                                <th>Détails</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {adjustments.map((adj) => (
+                                <tr key={adj.id} className="hover:bg-base-50/50 transition-colors">
+                                    <td className="text-xs">{new Date(adj.created_at).toLocaleDateString()}</td>
+                                    <td>
+                                        <div className="font-bold text-xs">{adj.produit_name}</div>
+                                        <div className="text-[10px] opacity-40 font-mono">{adj.produit_cip}</div>
+                                    </td>
+                                    <td className="font-mono text-[11px]">{adj.lot_number || '-'}</td>
+                                    <td className="text-right font-bold text-error">
+                                        {Math.abs(adj.quantity_change)}
+                                    </td>
+                                    <td className="text-right text-error font-mono font-bold text-xs">
+                                        {formatCurrency(adj.valorisation)}
+                                    </td>
+                                    <td className="text-xs text-base-content/60">{adj.user_name || adj.username}</td>
+                                    <td className="text-[10px] italic text-base-content/50">{adj.reason_detail}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+             )}
+          </div>
         )}
       </div>
 

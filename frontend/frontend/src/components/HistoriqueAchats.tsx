@@ -26,6 +26,11 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 50;
+
   // Filters
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
@@ -48,14 +53,14 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
     fetchSuppliers();
   }, [user]);
 
-  const fetchHistory = async () => {
+  const fetchHistory = async (targetPage = page) => {
     if (!user?.token) return;
     
     setLoading(true);
     try {
       const params = new URLSearchParams();
+      params.append('page', targetPage.toString());
       if (dateDebut) params.append('date_debut', dateDebut);
-      if (dateFin) params.append('date_fin', dateFin);
       if (dateFin) params.append('date_fin', dateFin);
       if (selectedSupplier) params.append('fournisseur_id', selectedSupplier);
       if (forcedType) params.append('type', forcedType);
@@ -65,7 +70,15 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           Authorization: `Token ${user.token}`
         }
       });
-      setData(response.data);
+      
+      // Handle paginated response
+      if (response.data.results) {
+        setData(response.data.results);
+        setTotalCount(response.data.count);
+      } else {
+        setData(response.data);
+        setTotalCount(response.data.length);
+      }
     } catch (error) {
       console.error('Error fetching purchase history:', error);
     } finally {
@@ -75,13 +88,21 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
   useEffect(() => {
     if (user?.token) {
-      fetchHistory();
+      setPage(1);
+      fetchHistory(1);
     }
   }, [dateDebut, dateFin, selectedSupplier, user]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    fetchHistory(newPage);
+  };
 
   const formatMoney = (amount: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
   };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="p-6">
@@ -90,7 +111,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
       </h1>
 
-      <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end">
+      <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end shadow-sm">
         <div className="form-control">
           <label className="label">
             <span className="label-text">{t('orders.history.start_date')}</span>
@@ -131,7 +152,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         </div>
 
         <div className="form-control">
-             <button className="btn btn-primary" onClick={fetchHistory}>{t('orders.history.refresh')}</button>
+             <button className="btn btn-primary" onClick={() => fetchHistory(page)}>{t('orders.history.refresh')}</button>
         </div>
       </div>
 
@@ -140,40 +161,70 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full shadow-xl bg-base-100 rounded-box">
-            <thead>
-              <tr className="bg-base-200 text-base-content uppercase text-sm">
-                <th>{t('orders.history.columns.date')}</th>
-                <th className="text-right">{t('orders.history.columns.nb_orders')}</th>
-                <th className="text-right">{t('orders.history.columns.total_purchase')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((row) => (
-                <tr key={row.date} className="hover">
-                  <td className="font-medium whitespace-nowrap">{format(new Date(row.date), 'dd/MM/yyyy')}</td>
-                  <td className="text-right font-bold">{row.nb_commandes}</td>
-                  <td className="text-right font-bold">{formatMoney(row.total_achat)}</td>
+        <>
+          <div className="overflow-x-auto">
+            <table className="table table-zebra w-full shadow-xl bg-base-100 rounded-box">
+              <thead>
+                <tr className="bg-base-200 text-base-content uppercase text-sm">
+                  <th>{t('orders.history.columns.date')}</th>
+                  <th className="text-right">{t('orders.history.columns.nb_orders')}</th>
+                  <th className="text-right">{t('orders.history.columns.total_purchase')}</th>
                 </tr>
-              ))}
-              {data.length === 0 && (
-                <tr>
-                  <td colSpan={3} className="text-center p-8 text-base-content/50">
-                    {t('orders.history.no_data')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-            <tfoot className="bg-base-200 font-bold text-base-content">
-                <tr>
-                    <td>{t('orders.history.total')}</td>
-                    <td className="text-right">{data.reduce((acc, row) => acc + row.nb_commandes, 0)}</td>
-                    <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.total_achat, 0))}</td>
-                </tr>
-            </tfoot>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {data.map((row) => (
+                  <tr key={row.date} className="hover">
+                    <td className="font-medium whitespace-nowrap">{format(new Date(row.date), 'dd/MM/yyyy')}</td>
+                    <td className="text-right font-bold">{row.nb_commandes}</td>
+                    <td className="text-right font-bold">{formatMoney(row.total_achat)}</td>
+                  </tr>
+                ))}
+                {data.length === 0 && (
+                  <tr>
+                    <td colSpan={3} className="text-center p-8 text-base-content/50">
+                      {t('orders.history.no_data')}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot className="bg-base-200 font-bold text-base-content">
+                  <tr>
+                      <td>{t('orders.history.total')} (page)</td>
+                      <td className="text-right">{data.reduce((acc, row) => acc + row.nb_commandes, 0)}</td>
+                      <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.total_achat, 0))}</td>
+                  </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex flex-col items-center gap-4 mt-8">
+              <div className="join shadow-lg">
+                <button 
+                  className="join-item btn btn-md" 
+                  disabled={page === 1}
+                  onClick={() => handlePageChange(page - 1)}
+                >
+                  «
+                </button>
+                <button className="join-item btn btn-md no-animation">
+                  Page {page} / {totalPages}
+                </button>
+                <button 
+                  className="join-item btn btn-md" 
+                  disabled={page === totalPages}
+                  onClick={() => handlePageChange(page + 1)}
+                >
+                  »
+                </button>
+              </div>
+              <div className="text-sm text-base-content/60 italic">
+                {totalCount} {t('orders.history.results_found')}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

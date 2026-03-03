@@ -43,6 +43,8 @@ const Ventes: React.FC = () => {
         setFacturesLocal: setFactures 
     });
 
+    const [showQuickStats, setShowQuickStats] = React.useState(false);
+    
     return (
         <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
             
@@ -67,9 +69,9 @@ const Ventes: React.FC = () => {
                             onRefresh={() => { refresh(); }}
                         />
                     </div>
-                     <TrancheHoraireStats />
+                     <TrancheHoraireStats onVerify={() => setShowQuickStats(true)} />
                      {/* Quick Stats Dashboard */}
-                     <SalesQuickStats />
+                     {showQuickStats && <SalesQuickStats />}
                 </div>
             </div>
 

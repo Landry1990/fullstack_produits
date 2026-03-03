@@ -194,6 +194,7 @@ export interface Inventaire {
   date: string;
   description: string;
   status: 'EN_COURS' | 'VALIDEE';
+  inventory_type: 'GLOBAL' | 'RAYON' | 'RESERVE';
   created_by?: number;
   created_by_name?: string;
   lignes: LigneInventaire[];
@@ -248,9 +249,9 @@ export interface Facture {
   remise: string
   tva: string
   notes?: string
-  total_ht: string
-  total_tva: string
   total_ttc: string
+  montant_regle?: string
+  montant_en_compte?: string
   produits: FactureProduit[]
   created_by_name?: string // Added operator name
   is_remise_auto?: boolean
@@ -476,6 +477,7 @@ export interface StockAdjustment {
   quantity_before: number
   quantity_after: number
   quantity_change: number
+  valorisation: number
   reason_type: 'INVENTAIRE' | 'CASSE' | 'VOL' | 'CONFUSION' | 'ERR_ENTREE' | 'AVARIE' | 'USAGE_INT'
   reason_type_display: string
   reason_detail?: string

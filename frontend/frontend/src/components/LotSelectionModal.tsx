@@ -1,4 +1,5 @@
 import { useStockLots } from '../hooks/useStockLots'
+import { formatPrice } from '../utils/formatters'
 import type { ProduitModel, StockLot } from '../types'
 import PremiumModal from './common/PremiumModal'
 
@@ -91,7 +92,7 @@ export default function LotSelectionModal({ isOpen, onClose, produit, onSelectLo
                             {lot.quantity_remaining}
                           </td>
                           <td className="text-right">
-                            {Number(lot.selling_price).toLocaleString()} F
+                            {formatPrice(Number(lot.selling_price))} F
                           </td>
                           <td>
                             {isSelected && <div className="badge badge-primary badge-xs"></div>}

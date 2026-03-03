@@ -1,0 +1,59 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
+
+export interface AuditData {
+    top_pertes: any[];
+    top_surplus: any[];
+    par_rayon: any[];
+    par_groupe: any[];
+    stats_globales: {
+        total_perte: number;
+        total_gain: number;
+        net: number;
+        nombre_inventaires: number;
+        nombre_lignes: number;
+    };
+}
+
+export const useInventaireAudit = () => {
+    const { t } = useTranslation();
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+    const auditEndpoint = `${String(apiBaseUrl).replace(/\/$/, '')}/inventaires/audit_discrepancies/`;
+
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<AuditData | null>(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    const fetchAudit = async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
+            
+            const url = params.toString() ? `${auditEndpoint}?${params.toString()}` : auditEndpoint;
+            const response = await axios.get(url);
+            setData(response.data);
+        } catch (error) {
+            console.error("Erreur audit", error);
+            toast.error(t('common.messages.error_loading'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAudit();
+    }, [startDate, endDate]);
+
+    return {
+        data,
+        loading,
+        startDate, setStartDate,
+        endDate, setEndDate,
+        fetchAudit
+    };
+};

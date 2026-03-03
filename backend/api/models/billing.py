@@ -28,7 +28,7 @@ class Facture(models.Model):
         'AyantDroit', on_delete=models.SET_NULL, null=True, blank=True, 
         related_name='factures'
     )
-    numero_facture = models.CharField(max_length=100, blank=True, null=True)
+    numero_facture = models.CharField(max_length=100, blank=True, null=True, unique=True)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
         max_length=4,
