@@ -6,16 +6,16 @@ import { useTranslation } from 'react-i18next';
 
 
 interface TrancheHoraireStatsProps {
-    onVerify?: () => void;
+    onVerify?: (data: any) => void;
+    selectedDate: string;
 }
 
-export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVerify }) => {
+export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVerify, selectedDate }) => {
     useTranslation();
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
+    const dateStr = selectedDate || new Date().toISOString().split('T')[0];
     
-    const [startTime, setStartTime] = useState("08:00");
-    const [endTime, setEndTime] = useState("21:00");
+    const [startTime, setStartTime] = useState("00:00");
+    const [endTime, setEndTime] = useState("23:59");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -30,11 +30,11 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
             const dateDebut = `${dateStr}T${startTime}`;
             const dateFin = `${dateStr}T${endTime}`;
 
-            await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
+            const response = await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
                 params: { date_debut: dateDebut, date_fin: dateFin },
                 headers: { Authorization: `Token ${token}` }
             });
-            onVerify?.();
+            onVerify?.(response.data);
         } catch (err: any) {
             console.error("Failed to fetch tranche stats", err);
             setError(err.response?.data?.detail || "Erreur lors de la récupération des données");

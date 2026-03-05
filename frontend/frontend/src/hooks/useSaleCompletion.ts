@@ -424,6 +424,38 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 }
             }
 
+            // 3. VÉRIFICATION DU STOCK EN TEMPS RÉEL
+            // Pour éviter la latence de cache (staleTime 30s) sur la recherche,
+            // on vérifie le stock réel EXACTEMENT au moment de la vente.
+            const productIds = params.lignesFacture.map(l => l.produit.id);
+            if (productIds.length > 0) {
+                const bulkRefreshEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/bulk_refresh/` : '/api/produits/bulk_refresh/';
+                const { data: realTimeProducts } = await axios.post<any[]>(bulkRefreshEndpoint, { ids: productIds });
+
+                // On indexe les résultats
+                const realStockMap = new Map();
+                realTimeProducts.forEach(p => realStockMap.set(p.id, p));
+
+                for (const ligne of params.lignesFacture) {
+                    const realProd = realStockMap.get(ligne.produit.id);
+                    if (realProd) {
+                        const effectiveQty = ligne.quantite - (ligne.isPromis ? (ligne.promisQuantity || 0) : 0);
+                        // On autorise la vente si stock suffisant ou si vente retour (différent de 0, quantité négative etc. géré par le back)
+                        if (effectiveQty > 0 && realProd.stock < effectiveQty) {
+                            const errorMsg = `⚠️ STOCK INSUFFISANT EN TEMPS RÉEL !\nLe produit "${ligne.produit.name}" a été vendu sur un autre poste.\nStock actuel disponible : ${realProd.stock}\nQuantité demandée : ${effectiveQty}`;
+                            setError(errorMsg);
+                            onError?.(errorMsg);
+                            toast.error(errorMsg, {
+                                duration: 8000,
+                                style: { background: '#dc2626', color: 'white', fontWeight: 'bold' }
+                            });
+                            return { success: false, error: errorMsg };
+                        }
+                    }
+                }
+            }
+
+
             // === MODE MODIFICATION ===
             if (params.isModificationMode && params.modificationInvoiceId) {
                 const result = await handleModificationMode(params);

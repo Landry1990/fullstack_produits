@@ -114,7 +114,8 @@ class StockLot(models.Model):
     quantity_initial = models.IntegerField(help_text="Quantité totale initiale (payée + gratuites)")
     quantity_paid = models.IntegerField(default=0, help_text="Quantité payée uniquement")
     quantity_free = models.IntegerField(default=0, help_text="Unités gratuites (UG)")
-    quantity_remaining = models.IntegerField(help_text="Quantité restante en rayon")
+    quantity_free_remaining = models.IntegerField(default=0, help_text="Unités gratuites restantes en rayon")
+    quantity_remaining = models.IntegerField(help_text="Quantité totale restante en rayon")
     quantity_reserved = models.IntegerField(default=0, help_text="Quantité en réserve pour ce lot")
     price_cost = models.DecimalField(
         max_digits=10, decimal_places=2, 
@@ -148,7 +149,7 @@ class StockLot(models.Model):
         ]
 
     def __str__(self):
-        ug_info = f" dont {self.quantity_free} UG" if self.quantity_free > 0 else ""
+        ug_info = f" dont {self.quantity_free_remaining}/{self.quantity_free} UG" if self.quantity_free > 0 else ""
         produit_name = self.produit.name if self.produit else self.produit_nom or "Produit inconnu"
         return f"Lot {self.id} - {produit_name} ({self.quantity_remaining}/{self.quantity_initial}{ug_info})"
 

@@ -41,6 +41,7 @@ import PromotionList from './components/Promotions/PromotionList';
 import ModuleFinancier from './components/ModuleFinancier';
 import ClassementVendeurs from './components/ClassementVendeurs';
 import AnalyseTemporelle from './components/AnalyseTemporelle';
+import StockUGReport from './components/StockUGReport';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { Toaster } from 'react-hot-toast'
@@ -144,6 +145,7 @@ const router = createBrowserRouter([
           { path: 'promis', element: <Promis /> },
           { path: 'stock-analysis', element: <StockAnalysis /> },
           { path: 'reappro-rayon', element: <ReapproRayon /> },
+          { path: 'rapport-ug', element: <StockUGReport /> },
           { path: 'etats-inventaire', element: <EtatsInventaire /> },
           { path: 'vitrine', element: <Vitrine /> },
           { path: 'journal-ajustements', element: <JournalAjustements /> },

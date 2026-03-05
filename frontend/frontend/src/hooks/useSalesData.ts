@@ -1,9 +1,31 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import axios from 'axios';
 import type { Facture } from '../types';
 import { safeStorage } from '../utils/storage';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+
+interface SalesStats {
+    top_vendeur: {
+        name: string;
+        amount: number;
+        count: number;
+    } | null;
+    top_produit: {
+        name: string;
+        quantity: number;
+    } | null;
+    total_ttc: string;
+    total_regle: string;
+    total_en_compte: string;
+}
+
+interface SimpleUser {
+    id: number;
+    username: string;
+    first_name: string;
+    last_name: string;
+}
 
 export const useSalesData = () => {
     const { t } = useTranslation();
@@ -18,10 +40,78 @@ export const useSalesData = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const PAGE_SIZE = 50; // Or configurable
+    const PAGE_SIZE = 50;
+
+    // Stats & Users from page_init
+    const [stats, setStats] = useState<SalesStats | null>(null);
+    const [users, setUsers] = useState<SimpleUser[]>([]);
 
     const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
 
+    // Helper to build filter params
+    const buildParams = useCallback((page: number) => {
+        const params: any = {
+            date__gte: startDate,
+            date__lte: `${endDate}T23:59:59`,
+            page: page,
+            page_size: PAGE_SIZE
+        };
+        if (statusFilter !== 'ALL') params.status = statusFilter;
+        if (sellerFilter) params.created_by = sellerFilter;
+        if (searchTerm) params.search = searchTerm;
+        return params;
+    }, [startDate, endDate, statusFilter, sellerFilter, searchTerm]);
+
+    // Process paginated factures response data
+    const processFacturesData = useCallback((data: any) => {
+        if (data.results) {
+            setFactures(data.results);
+            setTotalItems(data.count || 0);
+            setTotalPages(Math.ceil((data.count || 0) / PAGE_SIZE));
+        } else if (Array.isArray(data)) {
+            setFactures(data);
+            setTotalItems(data.length);
+            setTotalPages(1);
+        }
+    }, []);
+
+    // Initial load: use page_init endpoint (factures + stats + users in 1 request)
+    const fetchPageInit = useCallback(async () => {
+        setLoading(true);
+        try {
+            const token = safeStorage.getItem('authToken');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+
+            setCurrentPage(1);
+            const params = buildParams(1);
+
+            const response = await axios.get(`${apiBaseUrl}/factures/page_init/`, {
+                headers: { Authorization: `Token ${token}` },
+                params
+            });
+
+            const { factures: facturesData, stats: statsData, users: usersData } = response.data;
+
+            // Process factures
+            processFacturesData(facturesData);
+
+            // Set stats & users
+            if (statsData) setStats(statsData);
+            if (usersData) setUsers(usersData);
+
+        } catch (error) {
+            console.error('Erreur chargement page_init:', error);
+            toast.error(t('sales.messages.load_error'));
+            setFactures([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [buildParams, processFacturesData, t, apiBaseUrl]);
+
+    // Subsequent fetches (pagination, filter changes): use regular list endpoint
     const fetchFactures = useCallback(async (page = 1) => {
         setLoading(true);
         try {
@@ -31,41 +121,15 @@ export const useSalesData = () => {
                 return;
             }
 
-            // Update page state if manually called with a page
             if (page !== currentPage) setCurrentPage(page);
-
-            const params: any = {
-                date__gte: startDate,
-                date__lte: `${endDate}T23:59:59`,
-                page: page,
-                page_size: PAGE_SIZE
-            };
-
-            if (statusFilter !== 'ALL') params.status = statusFilter;
-            if (sellerFilter) params.created_by = sellerFilter;
-            if (searchTerm) params.search = searchTerm;
+            const params = buildParams(page);
 
             const response = await axios.get(`${apiBaseUrl}/factures/`, {
                 headers: { Authorization: `Token ${token}` },
-                params: params
+                params
             });
 
-            const data = response.data;
-            if (data.results) {
-                // Paginated response
-                setFactures(data.results);
-                setTotalItems(data.count || 0);
-                // Calculate total pages assuming default page size if not provided by backend
-                // Or if count is provided.
-                // Django REST default pagination usually returns count.
-                const count = data.count || 0;
-                setTotalPages(Math.ceil(count / PAGE_SIZE));
-            } else if (Array.isArray(data)) {
-                // Non-paginated response fallback
-                setFactures(data);
-                setTotalItems(data.length);
-                setTotalPages(1);
-            }
+            processFacturesData(response.data);
         } catch (error) {
             console.error('Erreur chargement factures:', error);
             toast.error(t('sales.messages.load_error'));
@@ -73,16 +137,35 @@ export const useSalesData = () => {
         } finally {
             setLoading(false);
         }
-    }, [startDate, endDate, statusFilter, sellerFilter, searchTerm, t, apiBaseUrl]);
+    }, [buildParams, processFacturesData, t, apiBaseUrl]);
 
-    // Debounce search term effect
+    // Track mount state
+    const isInitialMount = useRef(true);
+    const hasLoadedOnce = useRef(false);
+
+    // Debounced effect for search term only
     useEffect(() => {
+        if (isInitialMount.current) return;
         const timer = setTimeout(() => {
             setCurrentPage(1);
             fetchFactures(1);
-        }, 500); // 500ms debounce
+        }, 500);
         return () => clearTimeout(timer);
-    }, [startDate, endDate, statusFilter, sellerFilter, searchTerm]);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            if (!hasLoadedOnce.current) {
+                hasLoadedOnce.current = true;
+                fetchPageInit();
+            }
+            return;
+        }
+        // Subsequent filter changes: fetch full page init to get updated stats for selected dates
+        setCurrentPage(1);
+        fetchPageInit();
+    }, [startDate, endDate, statusFilter, sellerFilter]);
 
     const handleDeleteBrouillons = async () => {
         if (!window.confirm(t('sales.confirm_delete_drafts'))) return;
@@ -129,29 +212,8 @@ export const useSalesData = () => {
         }
     };
 
-    // Handle Search filter client-side or server-side?
-    // Current logic does CLIENT-SIDE filtering. 
-    // IF pagination is server-side, client-side filtering ONLY works on the current page.
-    // This is a common bug.
-    // If the user searches "Toto", and Toto is on page 2, they won't find it if we only fetch page 1.
-    // Ideally search should be server-side.
-    // For now, if pagination is essential, I must keep server-side pagination.
-    // BUT the current filter logic `filteredFactures` runs on `factures`. 
-    // If `factures` is just one page, we lose global search.
-    // I will assume for now we keep server pagination and client filtering ON THE PAGE (imperfect), 
-    // OR I should add `search` param to API. 
-    // Let's add `search` param to API if supported, otherwise warn user.
-    // The previous code had `filteredFactures`.
-
-    // I'll stick to pagination logic first. 
-    // If I paginate, `filteredFactures` will only filter the current page logic.
-    // This is standard for simple pagination restoral.
-
-    // Server-side filtering means filteredFactures IS factures
-    const filteredFactures = useMemo(() => {
-        if (!Array.isArray(factures)) return [];
-        return factures;
-    }, [factures]);
+    // Server-side filtering: filteredFactures is simply factures
+    const filteredFactures = !Array.isArray(factures) ? [] : factures;
 
     // Handlers for pagination
     const goToPage = (page: number) => {
@@ -166,6 +228,8 @@ export const useSalesData = () => {
         setFactures,
         filteredFactures,
         loading,
+        stats,
+        users,
         filters: {
             startDate, setStartDate,
             endDate, setEndDate,

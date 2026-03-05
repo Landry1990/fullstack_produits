@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Search, Calendar, Filter, User, Trash2, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import axios from 'axios';
-import { safeStorage } from '../../utils/storage';
+import { useUsers } from '../../hooks/useUsers';
 
 interface SalesFiltersProps {
     filters: {
@@ -19,9 +18,10 @@ interface SalesFiltersProps {
     };
     onDeleteDrafts: () => void;
     onRefresh: () => void;
+    users?: { id: number; username: string; first_name: string; last_name: string }[];
 }
 
-export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDrafts, onRefresh }) => {
+export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDrafts, onRefresh, users: propUsers }) => {
     const { t } = useTranslation();
     const { 
         startDate, setStartDate, 
@@ -31,23 +31,9 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
         sellerFilter, setSellerFilter
     } = filters;
 
-    const [users, setUsers] = useState<any[]>([]);
-
-    useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const token = safeStorage.getItem('authToken');
-                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-                const response = await axios.get(`${apiBaseUrl}/users/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
-                setUsers(Array.isArray(response.data) ? response.data : response.data.results || []);
-            } catch (error) {
-                console.error("Failed to load users for filter", error);
-            }
-        };
-        fetchUsers();
-    }, []);
+    // Use prop users if provided (from page_init), fallback to useUsers hook
+    const { users: hookUsers } = useUsers();
+    const users = propUsers && propUsers.length > 0 ? propUsers : hookUsers;
 
     return (
         <div className="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 space-y-4">

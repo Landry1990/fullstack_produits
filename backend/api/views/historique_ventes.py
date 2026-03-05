@@ -57,11 +57,11 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         global_paiements = Caisse.objects.filter(
             facture__in=factures,
             statut='completee'
-        ).exclude(mode_paiement='en_compte').values('mode_paiement').annotate(
+        ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(
             total=Sum('montant')
         )
         
-        pay_modes = ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon']
+        pay_modes = ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon', 'en_compte']
         global_paiements_dict = {m: 0.0 for m in pay_modes}
         for p in global_paiements:
             if p['mode_paiement'] in global_paiements_dict:
@@ -80,16 +80,13 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         for day in daily_stats:
             jour = day['jour']
             nb_ventes = day['nb_ventes'] or 0
-            ca_ttc = float(day['ca_ttc'] or 0)
-            
-            # Calculate average basket
-            panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
+            ca_ttc_factures = float(day['ca_ttc'] or 0)
             
             # Get payment modes for this day
             paiements = Caisse.objects.filter(
                 facture__date__date=jour,
                 statut='completee'
-            ).exclude(mode_paiement='en_compte').values('mode_paiement').annotate(
+            ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(
                 total=Sum('montant')
             )
             
@@ -100,6 +97,12 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 mode = p['mode_paiement']
                 if mode in modes:
                     modes[mode] = float(p['total'] or 0)
+            
+            # CA TTC = sum of all payments (ensures visual consistency with columns)
+            ca_ttc = sum(modes.values())
+            
+            # Calculate average basket
+            panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
             
             results.append({
                 'date': jour.strftime('%Y-%m-%d'),
@@ -115,7 +118,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             'count': total_count,
             'results': results,
             'totals': {
-                'ca_ttc': float(global_totals_agg['total_ttc'] or 0),
+                'ca_ttc': sum(global_paiements_dict.values()),
                 'ca_ht': float(global_totals_agg['total_ht'] or 0),
                 'tva': float(global_totals_agg['total_tva'] or 0),
                 'nb_ventes': global_totals_agg['total_ventes'] or 0,
@@ -251,7 +254,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         
         headers = [
             "Date", "Ventes", "CA HT", "TVA", "CA TTC", 
-            "Espèces", "Carte", "Chèque", "Virement", "OM", "MOMO", "Coupon", "Panier Moyen"
+            "Espèces", "Carte", "Chèque", "Virement", "OM", "MOMO", "Coupon", "En Compte", "Panier Moyen"
         ]
         
         for col, header in enumerate(headers, 1):
@@ -272,11 +275,11 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             paiements = Caisse.objects.filter(
                 facture__date__date=jour,
                 statut='completee'
-            ).exclude(mode_paiement='en_compte').values('mode_paiement').annotate(
+            ).exclude(mode_paiement='recouvrement').values('mode_paiement').annotate(
                 total=Sum('montant')
             )
             
-            modes = {m: 0 for m in ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon']}
+            modes = {m: 0 for m in ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon', 'en_compte']}
             for p in paiements:
                 if p['mode_paiement'] in modes:
                     modes[p['mode_paiement']] = float(p['total'] or 0)
@@ -289,6 +292,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 round(ca_ttc, 0),
                 round(modes['especes'], 0), round(modes['carte'], 0), round(modes['cheque'], 0),
                 round(modes['virement'], 0), round(modes['om'], 0), round(modes['momo'], 0), round(modes['coupon'], 0),
+                round(modes['en_compte'], 0),
                 round(panier_moyen, 0)
             ]
             
