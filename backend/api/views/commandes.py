@@ -1611,8 +1611,15 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     
     # Récupérer tous les produits
     produits = Produit.objects.all()
+    fournisseur_obj = None
     if fournisseur_id:
-        produits = produits.filter(fournisseur_id=fournisseur_id)
+        from api.models import Fournisseur, StockLot
+        from django.db.models import Q
+        fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
+        lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
+        produits = produits.filter(
+            Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
+        )
     
     suggestions = []
     
@@ -1646,8 +1653,8 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
                 'produit_id': produit.id,
                 'produit_nom': produit.name,
                 'produit_ref': produit.cip1 or '',
-                'fournisseur_id': produit.fournisseur.id if produit.fournisseur else None,
-                'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
+                'fournisseur_id': fournisseur_obj.id if fournisseur_obj else (produit.fournisseur.id if produit.fournisseur else None),
+                'fournisseur_nom': fournisseur_obj.name if fournisseur_obj else (produit.fournisseur.name if produit.fournisseur else 'N/A'),
                 'stock_actuel': int(stock_actuel),
                 'ventes_periode': int(ventes),
                 'quantite_suggeree': qte_a_commander,
@@ -1717,8 +1724,15 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     from django.db.models import Sum
 
     produits = Produit.objects.all()
+    fournisseur_obj = None
     if fournisseur_id:
-        produits = produits.filter(fournisseur_id=fournisseur_id)
+        from api.models import Fournisseur, StockLot
+        from django.db.models import Q
+        fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
+        lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
+        produits = produits.filter(
+            Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
+        )
     
     suggestions = []
     
@@ -1815,8 +1829,8 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
                 'produit_id': produit.id,
                 'produit_nom': produit.name,
                 'produit_ref': produit.cip1 or '',
-                'fournisseur_id': produit.fournisseur.id if produit.fournisseur else None,
-                'fournisseur_nom': produit.fournisseur.name if produit.fournisseur else 'N/A',
+                'fournisseur_id': fournisseur_obj.id if fournisseur_obj else (produit.fournisseur.id if produit.fournisseur else None),
+                'fournisseur_nom': fournisseur_obj.name if fournisseur_obj else (produit.fournisseur.name if produit.fournisseur else 'N/A'),
                 'stock_actuel': stock_actuel,
                 'ventes_periode': int(ventes_total),
                 'quantite_suggeree': qte_finale_finale,

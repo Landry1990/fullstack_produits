@@ -353,6 +353,111 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             }
         })
 
+    @action(detail=False, methods=['get'])
+    def rapport_ug(self, request):
+        """
+        Rapport des Unités Gratuites (UG) groupées par fournisseur, avec détails par lot.
+        """
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+
+        qs = StockLot.objects.filter(quantity_free__gt=0).select_related('fournisseur', 'produit', 'commande_produit__commande')
+
+        if date_debut:
+            qs = qs.filter(date_reception__gte=date_debut)
+        if date_fin:
+            try:
+                date_fin_obj = datetime.strptime(date_fin, '%Y-%m-%d')
+                date_fin_inclusive = date_fin_obj + timedelta(days=1) - timedelta(seconds=1)
+                qs = qs.filter(date_reception__lte=date_fin_inclusive)
+            except ValueError:
+                 pass
+
+        # Since we want details, pulling all matching lots into memory is fine if the volume of UG is reasonable.
+        # Alternatively, we can group in Python.
+        lots = list(qs)
+        
+        fournisseurs_map = {}
+        global_total_ug = 0
+        global_total_ug_restantes = 0
+        global_total_valeur = Decimal('0')
+        global_total_valeur_restante = Decimal('0')
+
+        for lot in lots:
+            # Prioritize the wholesaler from the Command over the manufacturer from the Lot
+            f_id = lot.fournisseur_id or 0
+            f_name = lot.fournisseur.name if lot.fournisseur else "Fournisseur Inconnu"
+            
+            if lot.commande_produit and lot.commande_produit.commande and lot.commande_produit.commande.fournisseur:
+                f_id = lot.commande_produit.commande.fournisseur.id
+                f_name = lot.commande_produit.commande.fournisseur.name
+                
+            if f_id not in fournisseurs_map:
+                fournisseurs_map[f_id] = {
+                    'fournisseur_id': f_id,
+                    'fournisseur_nom': f_name,
+                    'total_ug': 0,
+                    'total_ug_restantes': 0,
+                    'total_valeur': Decimal('0'),
+                    'total_valeur_restante': Decimal('0'),
+                    'lots_count': 0,
+                    'details': []
+                }
+            
+            valeur_estimee = Decimal(lot.quantity_free) * lot.selling_price
+            valeur_restante = Decimal(lot.quantity_free_remaining) * lot.selling_price
+            
+            fournisseurs_map[f_id]['total_ug'] += lot.quantity_free
+            fournisseurs_map[f_id]['total_ug_restantes'] += lot.quantity_free_remaining
+            fournisseurs_map[f_id]['total_valeur'] += valeur_estimee
+            fournisseurs_map[f_id]['total_valeur_restante'] += valeur_restante
+            fournisseurs_map[f_id]['lots_count'] += 1
+            
+            global_total_ug += lot.quantity_free
+            global_total_ug_restantes += lot.quantity_free_remaining
+            global_total_valeur += valeur_estimee
+            global_total_valeur_restante += valeur_restante
+
+            # Build detailed info
+            cmd_numero = "N/A"
+            facture_numero = "N/A"
+            if lot.commande_produit and lot.commande_produit.commande:
+                cmd_numero = f"CMD-{lot.commande_produit.commande.id}"
+                if lot.commande_produit.commande.numero_facture:
+                    facture_numero = lot.commande_produit.commande.numero_facture
+
+            fournisseurs_map[f_id]['details'].append({
+                'lot_id': lot.id,
+                'lot_numero': lot.lot,
+                'produit_nom': lot.produit.name if lot.produit else (lot.produit_nom or 'Inconnu'),
+                'date_reception': lot.date_reception.isoformat() if lot.date_reception else None,
+                'commande_numero': cmd_numero,
+                'facture_numero': facture_numero,
+                'quantity_free': lot.quantity_free,
+                'quantity_free_remaining': lot.quantity_free_remaining,
+                'valeur_estimee': float(valeur_estimee),
+                'valeur_restante': float(valeur_restante),
+                'prix_vente': float(lot.selling_price)
+            })
+
+        # Convert back to list and sort by total_valeur desc
+        result = list(fournisseurs_map.values())
+        result.sort(key=lambda x: x['total_valeur'], reverse=True)
+        
+        # Convert Decimal to float for JSON serialization
+        for r in result:
+            r['total_valeur'] = float(r['total_valeur'])
+            r['total_valeur_restante'] = float(r['total_valeur_restante'])
+
+        return Response({
+            'global_total_ug': global_total_ug,
+            'global_total_ug_restantes': global_total_ug_restantes,
+            'global_total_valeur': float(global_total_valeur),
+            'global_total_valeur_restante': float(global_total_valeur_restante),
+            'fournisseurs': result
+        })
+
+
 
 from rest_framework.pagination import PageNumberPagination
 
@@ -1651,7 +1756,7 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         date_debut = request.query_params.get('date_debut')
         date_fin = request.query_params.get('date_fin')
         
-        lots_query = StockLot.objects.all()
+        lots_query = StockLot.objects.filter(quantity_free__gt=0)
         if fournisseur_id:
             lots_query = lots_query.filter(fournisseur_id=fournisseur_id)
         if date_debut:
@@ -1659,17 +1764,25 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         if date_fin:
             lots_query = lots_query.filter(date_reception__lte=date_fin)
         
-        stats = lots_query.values(
-            'fournisseur_id',
-            'fournisseur__name'
+        # Coalesce: use Command Supplier if available, else Lot Supplier
+        stats = lots_query.annotate(
+            effective_fournisseur_id=Coalesce(
+                'commande_produit__commande__fournisseur_id',
+                'fournisseur_id'
+            ),
+            effective_fournisseur_name=Coalesce(
+                'commande_produit__commande__fournisseur__name',
+                'fournisseur__name'
+            )
+        ).values(
+            'effective_fournisseur_id',
+            'effective_fournisseur_name'
         ).annotate(
             ug_recues=Sum('quantity_free'),
-            ug_restantes=Sum(F('quantity_remaining') * F('quantity_free') / F('quantity_initial'), 
-                           output_field=DecimalField()),
-            valeur_acquise=Sum(F('quantity_free') * F('price_cost'), 
+            ug_restantes=Sum('quantity_free_remaining'),
+            valeur_acquise=Sum(F('quantity_free') * F('selling_price'), 
                                 output_field=DecimalField()),
-            valeur_restante=Sum(
-                (F('quantity_remaining') * F('quantity_free') / F('quantity_initial')) * F('price_cost'),
+            valeur_restante=Sum(F('quantity_free_remaining') * F('selling_price'),
                 output_field=DecimalField()
             )
         ).order_by('-ug_recues')
@@ -1686,8 +1799,8 @@ class StatsUGViewSet(viewsets.GenericViewSet):
             valeur_vendue = valeur_acquise - valeur_restante
 
             results.append({
-                'fournisseur_id': stat['fournisseur_id'],
-                'fournisseur_nom': stat['fournisseur__name'],
+                'fournisseur_id': stat['effective_fournisseur_id'],
+                'fournisseur_nom': stat['effective_fournisseur_name'],
                 'ug_recues': ug_recues,
                 'ug_vendues': ug_vendues,
                 'ug_restantes': ug_restantes,
@@ -1723,11 +1836,8 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         ug_en_stock = 0
         
         for lot in lots:
-            if lot.quantity_remaining > 0:
-                ug_remaining_in_lot = int((lot.quantity_remaining / lot.quantity_initial) * lot.quantity_free)
-                ug_en_stock += ug_remaining_in_lot
-            else:
-                ug_remaining_in_lot = 0
+            ug_remaining_in_lot = lot.quantity_free_remaining
+            ug_en_stock += ug_remaining_in_lot
             
             historique.append({
                 'commande_id': lot.commande_produit.commande.id,
@@ -1754,16 +1864,16 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         now = timezone.now()
         debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        total_ug_stock = StockLot.objects.filter(quantity_remaining__gt=0).aggregate(
-            total=Sum(F('quantity_remaining') * F('quantity_free') / F('quantity_initial'), output_field=DecimalField())
+        total_ug_stock = StockLot.objects.filter(quantity_free_remaining__gt=0).aggregate(
+            total=Sum('quantity_free_remaining')
         )['total'] or 0
         
         ug_mois = CommandeProduit.objects.filter(
             created_at__gte=debut_mois, unites_gratuites__gt=0
         ).aggregate(total=Sum('unites_gratuites'))['total'] or 0
         
-        valeur_economisee = StockLot.objects.aggregate(
-            total=Sum(F('quantity_free') * F('price_cost'), output_field=DecimalField())
+        valeur_economisee = StockLot.objects.filter(quantity_free__gt=0).aggregate(
+            total=Sum(F('quantity_free') * F('selling_price'), output_field=DecimalField())
         )['total'] or 0
         
         return Response({

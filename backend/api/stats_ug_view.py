@@ -33,7 +33,7 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         date_fin = request.query_params.get('date_fin')
         
         # Base query
-        lots_query = StockLot.objects.all()
+        lots_query = StockLot.objects.filter(quantity_free__gt=0)
         
         # Apply filters
         if fournisseur_id:
@@ -51,9 +51,8 @@ class StatsUGViewSet(viewsets.GenericViewSet):
             'fournisseur__name'
         ).annotate(
             ug_recues=Sum('quantity_free'),
-            ug_restantes=Sum(F('quantity_remaining') * F('quantity_free') / F('quantity_initial'), 
-                           output_field=DecimalField()),
-            valeur_economisee=Sum(F('quantity_free') * F('price_cost'), 
+            ug_restantes=Sum('quantity_free_remaining'),
+            valeur_economisee=Sum(F('quantity_free') * F('selling_price'), 
                                 output_field=DecimalField())
         ).order_by('-ug_recues')
         
@@ -111,14 +110,8 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         ug_en_stock = 0
         
         for lot in lots:
-            # Calculate how many UG are still in this lot
-            if lot.quantity_remaining > 0:
-                ug_remaining_in_lot = int(
-                    (lot.quantity_remaining / lot.quantity_initial) * lot.quantity_free
-                )
-                ug_en_stock += ug_remaining_in_lot
-            else:
-                ug_remaining_in_lot = 0
+            ug_remaining_in_lot = lot.quantity_free_remaining
+            ug_en_stock += ug_remaining_in_lot
             
             historique.append({
                 'commande_id': lot.commande_produit.commande.id,
@@ -157,14 +150,11 @@ class StatsUGViewSet(viewsets.GenericViewSet):
         now = timezone.now()
         debut_mois = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Total UG en stock (approximation)
+        # Total UG en stock (exact via quantity_free_remaining)
         total_ug_stock = StockLot.objects.filter(
-            quantity_remaining__gt=0
+            quantity_free_remaining__gt=0
         ).aggregate(
-            total=Sum(
-                F('quantity_remaining') * F('quantity_free') / F('quantity_initial'),
-                output_field=DecimalField()
-            )
+            total=Sum('quantity_free_remaining')
         )['total'] or 0
         
         # UG reçues ce mois
@@ -175,10 +165,12 @@ class StatsUGViewSet(viewsets.GenericViewSet):
             total=Sum('unites_gratuites')
         )['total'] or 0
         
-        # Valeur économisée (total)
-        valeur_economisee = StockLot.objects.aggregate(
+        # Valeur économisée (total au prix de vente / valeur estimée)
+        valeur_economisee = StockLot.objects.filter(
+            quantity_free__gt=0
+        ).aggregate(
             total=Sum(
-                F('quantity_free') * F('price_cost'),
+                F('quantity_free') * F('selling_price'),
                 output_field=DecimalField()
             )
         )['total'] or 0

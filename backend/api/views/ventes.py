@@ -12,6 +12,7 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal, InvalidOperation
 import io
 import logging
+from django.core.cache import cache
 
 # ReportLab imports
 from reportlab.lib import colors
@@ -144,24 +145,43 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     detail_serializer_class = FactureDetailSerializer
 
     def list(self, request, *args, **kwargs):
-        # Fallback pour les factures créées aujourd'hui sans ticket_session (avant la MAJ)
-        # On vérifie si on est dans la vue Caisse Centrale
-        status_filter = request.query_params.get('status__in', '')
-        if 'BROU' in status_filter and 'VAL' in status_filter:
-            today = timezone.now().date()
-            # On cherche les factures d'aujourd'hui sans ticket_session
-            missing_tickets = Facture.objects.filter(
-                date__date=today,
-                ticket_session__isnull=True,
-                status__in=[Facture.Status.BROUILLON, Facture.Status.VALIDEE]
-            ).order_by('date')
-            
-            if missing_tickets.exists():
-                for f in missing_tickets:
-                    f.ticket_session = get_next_ticket_session()
-                    f.save(update_fields=['ticket_session'])
-
         return super().list(request, *args, **kwargs)
+
+    @action(detail=False, methods=['get'])
+    def page_init(self, request):
+        """
+        Unified endpoint for the Ventes page initial load.
+        Returns factures (paginated), stats_jour (cached), and users list in one request.
+        Accepts the same query params as the list endpoint (date__gte, date__lte, status, etc.)
+        """
+        from django.contrib.auth.models import User as AuthUser
+
+        # 1. Factures list (reuse existing list logic with pagination + filters)
+        # Temporarily set action to 'list' so the serializer mixin picks FactureListSerializer
+        original_action = self.action
+        self.action = 'list'
+        factures_response = super().list(request)
+        self.action = original_action
+        # 2. Stats jour (now supports date filters)
+        stats = self.stats_jour(request).data
+
+        # 3. Users (lightweight list for seller filter)
+        users_qs = AuthUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        users_data = [
+            {
+                'id': u.id,
+                'username': u.username,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+            }
+            for u in users_qs
+        ]
+
+        return Response({
+            'factures': factures_response.data,
+            'stats': stats,
+            'users': users_data,
+        })
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -302,30 +322,19 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             if ordonnance_lignes_to_create:
                 LigneOrdonnancier.objects.bulk_create(ordonnance_lignes_to_create)
 
-        # 8. Validation (Stock + Lots + Mouvements)
+        # 8. Validation (Stock + Lots + Mouvements) — TOUJOURS dès la facturation
+        # Le destockage se fait immédiatement, quel que soit le mode (centralisé ou non)
+        request.data.update({
+            'use_pending_discount': loyalty_data.get('use_pending_discount', False),
+            'points_to_use': loyalty_data.get('points_to_use', 0),
+            'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data)
+        })
+        
+        # Exécution de la validation (destockage + FIFO + mouvements de stock)
+        self.valider(request, pk=facture.id, facture=facture)
+        
+        # 9. Enregistrement des paiements (uniquement en mode non-centralisé)
         if not centralized:
-            # On réutilise la logique de validation existante
-            # Pour éviter les duplications massives, on peut extraire la logique ou appeler l'action en interne
-            # Mais invoquer une action DRF en interne est complexe avec les contextes request.
-            # Je vais copier les parties essentielles ici, car `valider` fait beaucoup de checks.
-            
-            # Note: Je simplifie ici en supposant que valider() sera appelée via un endpoint si pas centralized?
-            # Non, l'atomicité veut qu'on fasse TOUT.
-            
-            # J'appelle la méthode interne qui sera refactorisée plus tard si besoin.
-            # Pour l'instant, je vais exécuter la logique de valider()
-            
-            # Mock de request pour la fidélité
-            request.data.update({
-                'use_pending_discount': loyalty_data.get('use_pending_discount', False),
-                'points_to_use': loyalty_data.get('points_to_use', 0),
-                'paiement_immediat': sum(Decimal(str(p['montant'])) for p in paiements_data)
-            })
-            
-            # Exécution de la validation
-            self.valider(request, pk=facture.id, facture=facture)
-            
-            # 9. Enregistrement des paiements (si direct)
             for p_data in paiements_data:
                 Caisse.objects.create(
                     facture=facture,
@@ -340,10 +349,6 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             
             # Refresh for status update (Caisse signals might have updated it to PAY)
             facture.refresh_from_db()
-        else:
-            # Mode Caisse Centralisée: On laisse en BROUILLON (ou on met en BROUILLON si c'était PROFORMA)
-            # Pas de déduction de stock ici, ce sera fait à la validation en caisse.
-            pass
 
         business_logger.info(
             f"[VENTE] Finalisation OK facture #{facture.id} ({facture.numero_facture or 'brouillon'}) | "
@@ -568,6 +573,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         selling_price=item.selling_price
                     ))
                     target_lot.quantity_remaining -= qty_to_alloc
+                    if target_lot.quantity_free_remaining > 0:
+                        qty_free_deducted = min(qty_to_alloc, target_lot.quantity_free_remaining)
+                        target_lot.quantity_free_remaining -= qty_free_deducted
                     lots_to_update_set.add(target_lot)
                     
                     item.lot = target_lot.lot[:20] 
@@ -590,6 +598,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                             selling_price=item.selling_price
                         ))
                         lot.quantity_remaining -= quantity_from_lot
+                        if lot.quantity_free_remaining > 0:
+                            qty_free_deducted = min(quantity_from_lot, lot.quantity_free_remaining)
+                            lot.quantity_free_remaining -= qty_free_deducted
                         lots_to_update_set.add(lot)
                         used_lots_names.append(lot.lot)
                         qty_to_alloc -= quantity_from_lot
@@ -619,6 +630,13 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 if target_lot:
                     # Incrémenter le stock du lot pour un retour
                     target_lot.quantity_remaining -= item.quantity # item.quantity est négatif, donc on soustrait une valeur négative (ajout)
+                    
+                    restoring_qty = -item.quantity
+                    space_for_free = target_lot.quantity_free - target_lot.quantity_free_remaining
+                    if space_for_free > 0:
+                        returned_free = min(restoring_qty, space_for_free)
+                        target_lot.quantity_free_remaining += returned_free
+                        
                     lots_to_update_set.add(target_lot)
                     
                     item.lot = (target_lot.lot or "RETOUR")[:20] 
@@ -640,7 +658,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             FactureProduit.objects.bulk_update(items_to_update, ['lot'])
 
         if lots_to_update_set:
-            StockLot.objects.bulk_update(list(lots_to_update_set), ['quantity_remaining'])
+            StockLot.objects.bulk_update(list(lots_to_update_set), ['quantity_remaining', 'quantity_free_remaining'])
         
         if manual_stock_decrements:
             for pid, qty in manual_stock_decrements.items():
@@ -812,6 +830,11 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         )
 
         facture.refresh_from_db()
+        
+        # Invalidate stats_jour cache after validation
+        cache_key = f'stats_jour_{timezone.now().strftime("%Y-%m-%d")}'
+        cache.delete(cache_key)
+        
         serializer = self.get_serializer(facture)
         return Response(serializer.data)
 
@@ -904,6 +927,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             request=request
         )
 
+        # Invalidate stats_jour cache after cancellation
+        cache_key = f'stats_jour_{timezone.now().strftime("%Y-%m-%d")}'
+        cache.delete(cache_key)
+
         return Response({'status': 'Facture annulée avec succès. Stock restauré.'})
 
     @action(detail=True, methods=['post'])
@@ -990,6 +1017,10 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                         selling_price=selling_price
                     )
                     target_lot.quantity_remaining -= quantity_to_allocate
+                    if target_lot.quantity_free_remaining > 0:
+                        qty_free_deducted = min(quantity_to_allocate, target_lot.quantity_free_remaining)
+                        target_lot.quantity_free_remaining -= qty_free_deducted
+                        
                     target_lot.save()
                 else:
                     available_lots = StockLot.objects.select_for_update().filter(
@@ -1009,6 +1040,9 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                             selling_price=selling_price
                         )
                         lot.quantity_remaining -= quantity_from_lot
+                        if lot.quantity_free_remaining > 0:
+                            qty_free_deducted = min(quantity_from_lot, lot.quantity_free_remaining)
+                            lot.quantity_free_remaining -= qty_free_deducted
                         lot.save()
                         quantity_to_allocate -= quantity_from_lot
         
@@ -1130,15 +1164,43 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def stats_jour(self, request):
         """
-        Retourne les statistiques de vente du jour (Top Vendeur, Top Produit).
+        Retourne les statistiques de vente. Par défaut du jour, ou selon les dates filtrées.
         """
+        # Read date limits
+        date_gte = request.query_params.get('date__gte')
+        date_lte = request.query_params.get('date__lte')
+
+        # Fallback to today if no dates provided
         today = timezone.now().date()
         
+        # Build base queryset for filtering
+        base_qs = self.get_queryset().filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+        
+        if date_gte:
+            base_qs = base_qs.filter(date__gte=date_gte)
+        elif not date_lte:
+            base_qs = base_qs.filter(date__date=today)
+            
+        if date_lte:
+            base_qs = base_qs.filter(date__lte=date_lte)
+
+        # Base filters for related models
+        vendeur_qs = Facture.objects.filter(status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+        produit_qs = FactureProduit.objects.filter(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])
+
+        if date_gte:
+            vendeur_qs = vendeur_qs.filter(date__gte=date_gte)
+            produit_qs = produit_qs.filter(facture__date__gte=date_gte)
+        elif not date_lte:
+            vendeur_qs = vendeur_qs.filter(date__date=today)
+            produit_qs = produit_qs.filter(facture__date__date=today)
+            
+        if date_lte:
+            vendeur_qs = vendeur_qs.filter(date__lte=date_lte)
+            produit_qs = produit_qs.filter(facture__date__lte=date_lte)
+
         # 1. Top Vendeur (Chiffre d'Affaires)
-        top_vendeur = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).values('created_by__username', 'created_by__first_name', 'created_by__last_name').annotate(
+        top_vendeur = vendeur_qs.values('created_by__username', 'created_by__first_name', 'created_by__last_name').annotate(
             total_vente=Sum('total_ttc'),
             count=Count('id')
         ).order_by('-total_vente').first()
@@ -1155,11 +1217,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             }
 
         # 2. Top Produit (Quantité vendue)
-        # Note: On regarde les FactureProduit des factures valides du jour
-        top_produit = FactureProduit.objects.filter(
-            facture__date__date=today,
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).values('produit__name').annotate(
+        top_produit = produit_qs.values('produit__name').annotate(
             total_qty=Sum('quantity')
         ).order_by('-total_qty').first()
         
@@ -1170,23 +1228,22 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 'quantity': top_produit['total_qty']
             }
 
-        # 3. Totaux globaux du jour
-        totaux = self.get_queryset().filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(
+        # 3. Totaux globaux
+        totaux = base_qs.aggregate(
             total_ttc=Sum('total_ttc'),
             total_regle=Sum('montant_regle'),
             total_en_compte=Sum('montant_en_compte')
         )
 
-        return Response({
+        result = {
             'top_vendeur': vendeur_data,
             'top_produit': produit_data,
             'total_ttc': str((totaux['total_ttc'] or 0)),
             'total_regle': str((totaux['total_regle'] or 0)),
             'total_en_compte': str((totaux['total_en_compte'] or 0)),
-        })
+        }
+
+        return Response(result)
 
     def _generate_pdf(self, facture, settings, is_proforma=False):
         """Helper to generate PDF buffer for a invoice."""
@@ -1717,6 +1774,63 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'total_sorties': total_sorties,
             'total_coupons': total_coupons,
             'details': details
+        })
+
+    @action(detail=False, methods=['get'], url_path='page_init')
+    def page_init(self, request):
+        """
+        Unified endpoint for Journal de Caisse initial load.
+        Returns transactions (paginated), mouvements, totals, and operators in one request.
+        """
+        from django.contrib.auth.models import User as AuthUser
+
+        # 1. Transactions (paginated) - reuse list logic
+        transactions_response = self.list(request)
+
+        # 2. Mouvements (filtered by user + dates)
+        user_id = request.query_params.get('user')
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        mouvements_qs = MouvementCaisse.objects.select_related('user').all().order_by('-date')
+        if user_id:
+            mouvements_qs = mouvements_qs.filter(user_id=user_id)
+        if date_debut:
+            try:
+                clean = date_debut.replace('T', ' ').replace('Z', '')
+                start_dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
+                mouvements_qs = mouvements_qs.filter(date__gte=start_dt)
+            except ValueError:
+                pass
+        if date_fin:
+            try:
+                clean = date_fin.replace('T', ' ').replace('Z', '')
+                end_dt = datetime.strptime(clean, '%Y-%m-%d %H:%M:%S')
+                mouvements_qs = mouvements_qs.filter(date__lte=end_dt)
+            except ValueError:
+                pass
+        mouvements_data = MouvementCaisseSerializer(mouvements_qs, many=True).data
+
+        # 3. Totals - reuse get_totals logic
+        totals_response = self.get_totals(request)
+
+        # 4. Users (operators)
+        users_qs = AuthUser.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        users_data = [
+            {
+                'id': u.id,
+                'username': u.username,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+            }
+            for u in users_qs
+        ]
+
+        return Response({
+            'transactions': transactions_response.data,
+            'mouvements': mouvements_data,
+            'totals': totals_response.data,
+            'users': users_data,
         })
 
     @action(detail=False, methods=['post'], url_path='cloturer')

@@ -591,11 +591,17 @@ class CaisseSerializer(serializers.ModelSerializer):
         """
         Détermine si ce paiement est un règlement de créance.
         Un règlement de créance = paiement sur une facture qui a un paiement initial 'en_compte'
-        et le paiement actuel n'est pas 'en_compte' lui-même.
+        ET le paiement est fait à une date postérieure à la date de la facture.
+        Les paiements du jour même de la facturation ne sont PAS des recouvrements.
         """
         if obj.mode_paiement == 'en_compte':
             return False
-        return obj.facture.paiements.filter(mode_paiement='en_compte').exists()
+        if not obj.facture.paiements.filter(mode_paiement='en_compte').exists():
+            return False
+        # Same-day payment = not a recouvrement
+        if obj.date_paiement and obj.facture.date:
+            return obj.date_paiement.date() > obj.facture.date.date()
+        return False
 
     def get_facture_created_by_name(self, obj):
         try:

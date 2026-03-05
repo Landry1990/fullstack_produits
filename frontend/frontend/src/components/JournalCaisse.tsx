@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import type { CaisseTransaction, MouvementCaisse } from '../types'
@@ -77,28 +77,74 @@ export default function JournalCaisse() {
 
   const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/'
 
-  useEffect(() => {
-    fetchData()
-    fetchUsers()
+  // Track mount state for initial page_init vs subsequent fetches
+  const isInitialMount = useRef(true)
+  const hasLoadedOnce = useRef(false)
+
+  // Process transactions response data
+  const processTransactionsData = useCallback((data: any) => {
+    if (data.results) {
+      setTransactions(data.results)
+      setTotalCount(data.count || 0)
+      setTotalPages(Math.ceil((data.count || 0) / 50))
+    } else {
+      setTransactions(Array.isArray(data) ? data : [])
+      setTotalCount(Array.isArray(data) ? data.length : 0)
+      setTotalPages(1)
+    }
   }, [])
 
-  // Re-fetch transactions when page changes
+  // ---- INITIAL LOAD: unified page_init endpoint (4 requests → 1) ----
+  const fetchPageInit = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const params = new URLSearchParams()
+      params.append('page', '1')
+      if (selectedUser) params.append('user', selectedUser)
+      // Pass date filters so get_totals computes for the right period
+      if (dateDebut) params.append('date_debut', formatLocalISOString(dateDebut))
+      if (dateFin) params.append('date_fin', formatLocalISOString(dateFin))
+
+      const response = await axios.get(`${caisseEndpoint}page_init/`, { params })
+      const { transactions: txData, mouvements: mouvData, totals: totalsData, users: usersData } = response.data
+
+      processTransactionsData(txData)
+      setMouvements(Array.isArray(mouvData) ? mouvData : (mouvData?.results || []))
+      if (totalsData) setServerTotals(totalsData)
+      if (usersData) setUsers(usersData)
+    } catch (err) {
+      setError('Erreur lors du chargement des données')
+      console.error('Erreur page_init caisse:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [caisseEndpoint, selectedUser, dateDebut, dateFin, processTransactionsData])
+
+  // Initial load uses page_init
   useEffect(() => {
+    if (!hasLoadedOnce.current) {
+      hasLoadedOnce.current = true
+      fetchPageInit()
+    }
+  }, [])
+
+  // Re-fetch transactions when page changes (not on initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) return
     fetchTransactions()
   }, [page])
 
-  // Re-fetch totals when date filters or user change
+  // Re-fetch data when user or date filters change (not on initial mount)
   useEffect(() => {
-    if (dateDebut || dateFin || selectedUser) {
-      fetchTotals()
+    if (isInitialMount.current) {
+      isInitialMount.current = false
+      return
     }
-  }, [dateDebut, dateFin, selectedUser])
-
-  // Re-fetch transactions when filter changes (if relying on backend filtering)
-  useEffect(() => {
-      setPage(1)
-      fetchTransactions()
-  }, [selectedUser])
+    // Combined: fetch transactions + totals + mouvements on filter change
+    setPage(1)
+    fetchData()
+  }, [selectedUser, dateDebut, dateFin])
 
   const fetchData = async () => {
     setLoading(true)
@@ -116,15 +162,6 @@ export default function JournalCaisse() {
     }
   }
 
-  const fetchUsers = async () => {
-      try {
-          const response = await axios.get(`${apiBaseUrl}/api/users/operators/`)
-          setUsers(response.data)
-      } catch (err) {
-          console.error("Erreur chargement utilisateurs", err)
-      }
-  }
-
   const fetchMouvements = async () => {
       try {
           const params = new URLSearchParams()
@@ -140,24 +177,13 @@ export default function JournalCaisse() {
   }
 
   const fetchTransactions = async () => {
-    // setLoading(true) handled in fetchData
     try {
       const params = new URLSearchParams()
       params.append('page', page.toString())
       if (selectedUser) params.append('user', selectedUser)
       
       const response = await axios.get(caisseEndpoint, { params })
-      const data: any = response.data
-      
-      if (data.results) {
-        setTransactions(data.results)
-        setTotalCount(data.count || 0)
-        setTotalPages(Math.ceil((data.count || 0) / 50)) // Page size is 50
-      } else {
-        setTransactions(Array.isArray(data) ? data : [])
-        setTotalCount(Array.isArray(data) ? data.length : 0)
-        setTotalPages(1)
-      }
+      processTransactionsData(response.data)
     } catch (err) {
       console.error('Erreur:', err)
       throw err

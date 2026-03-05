@@ -91,7 +91,8 @@ export default function Sidebar() {
         { path: '/app/transformations', label: t('sidebar.stock.transformations'), key: 'inventaire_transformations' },
         { path: '/app/perimes', label: t('sidebar.stock.perimes'), key: 'inventaire_perimes' },
         { path: '/app/organisation', label: 'Organisation (Rayons, Formes...)', key: 'inventaire_organisation' },
-        { path: '/app/etats-inventaire', label: 'États Inventaires', key: 'inventaire_etats' }
+        { path: '/app/etats-inventaire', label: 'États Inventaires', key: 'inventaire_etats' },
+        { path: '/app/rapport-ug', label: 'Rapport Unités Gratuites (UG)', key: 'inventaire_rapport_ug' }
       ]
     },
     { 

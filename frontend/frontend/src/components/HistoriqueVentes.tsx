@@ -19,6 +19,7 @@ interface DailySale {
   om: number;
   momo: number;
   coupon: number;
+  en_compte: number;
 }
 
 const HistoriqueVentes = () => {
@@ -183,6 +184,7 @@ const HistoriqueVentes = () => {
                                 <th className="bg-transparent text-right">Virem.</th>
                                 <th className="bg-transparent text-right">Mobiles</th>
                                 <th className="bg-transparent text-right">Coupons</th>
+                                <th className="bg-transparent text-right">En Compte</th>
                                 <th className="bg-transparent text-center">Ventes</th>
                                 <th className="bg-transparent text-right">Panier M.</th>
                             </tr>
@@ -207,6 +209,7 @@ const HistoriqueVentes = () => {
                                     <td className="text-right font-mono text-sm py-3 opacity-70">{formatMoney(row.virement)}</td>
                                     <td className="text-right font-mono text-sm py-3">{formatMoney(row.om + row.momo)}</td>
                                     <td className="text-right font-mono text-sm py-3 text-secondary italic">{formatMoney(row.coupon || 0)}</td>
+                                    <td className="text-right font-mono text-sm py-3 text-warning">{formatMoney(row.en_compte || 0)}</td>
                                     <td className="text-center py-3">
                                         <div className="badge badge-sm badge-outline opacity-70">{row.nb_ventes}</div>
                                     </td>
@@ -215,7 +218,7 @@ const HistoriqueVentes = () => {
                             ))}
                             {data.length === 0 && (
                                 <tr>
-                                    <td colSpan={10} className="text-center py-20">
+                                    <td colSpan={11} className="text-center py-20">
                                         <div className="flex flex-col items-center gap-2 opacity-30">
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -239,6 +242,7 @@ const HistoriqueVentes = () => {
                                     <td className="text-right py-4 opacity-70">{formatMoney(globalTotals.virement)}</td>
                                     <td className="text-right py-4">{formatMoney(globalTotals.om + globalTotals.momo)}</td>
                                     <td className="text-right py-4 text-secondary">{formatMoney(globalTotals.coupon)}</td>
+                                    <td className="text-right py-4 text-warning">{formatMoney(globalTotals.en_compte || 0)}</td>
                                     <td className="text-center py-4">
                                         <div className="badge badge-primary">{globalTotals.nb_ventes}</div>
                                     </td>

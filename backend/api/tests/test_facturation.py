@@ -68,11 +68,19 @@ class FinaliserVenteTests(APITestCase):
         self.assertEqual(lines.count(), 1)
         self.assertEqual(lines.first().quantity, 3)
 
-    def test_finaliser_centralized_stays_brouillon(self):
+    def test_finaliser_centralized_validates_and_destocks(self):
         """
-        With centralized_cash_register=True, finaliser creates the facture
-        but keeps it as BROUILLON (stock is not decremented yet).
+        With centralized_cash_register=True, finaliser validates the facture
+        and decrements stock immediately (destockage at facturation).
+        No payment records are created (handled later at caisse).
         """
+        # Create a stock lot for FIFO allocation
+        TestDataFactory.create_stock_lot(
+            produit=self.produit, quantity=50, lot_name='LOT-CENT-001'
+        )
+        self.produit.stock = 50
+        self.produit.save()
+
         url = reverse('facture-finaliser')
         initial_stock = self.produit.stock
         payload = self._finaliser_payload(centralized_cash_register=True)
@@ -81,11 +89,15 @@ class FinaliserVenteTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         facture = Facture.objects.order_by('-id').first()
-        self.assertEqual(facture.status, Facture.Status.BROUILLON)
+        # Facture should be VALIDEE (stock deducted at facturation)
+        self.assertEqual(facture.status, Facture.Status.VALIDEE)
 
-        # Stock unchanged in centralized mode
+        # Stock decremented immediately
         self.produit.refresh_from_db()
-        self.assertEqual(self.produit.stock, initial_stock)
+        self.assertLess(self.produit.stock, initial_stock)
+
+        # No payment records in centralized mode
+        self.assertEqual(Caisse.objects.filter(facture=facture).count(), 0)
 
     def test_finaliser_non_centralized_validates(self):
         """

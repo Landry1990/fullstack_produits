@@ -378,9 +378,39 @@ export default function Facturation() {
             
             // Clean up
             resetUIState()
+
+            // Mise à jour optimiste du cache React Query pour les produits vendus
+            // afin d'éviter un rechargement complet de la liste des produits
+            lignesFacture.forEach(ligne => {
+                queryClient.setQueriesData({ queryKey: ['produits'] }, (oldData: any) => {
+                    if (!oldData) return oldData;
+                    if (oldData.results && Array.isArray(oldData.results)) {
+                        return {
+                            ...oldData,
+                            results: oldData.results.map((p: any) => 
+                                p.id === ligne.produit.id 
+                                ? { ...p, stock: Math.max(0, (p.stock || 0) - ligne.quantite) } 
+                                : p
+                            )
+                        };
+                    } else if (Array.isArray(oldData)) {
+                        return oldData.map((p: any) => 
+                            p.id === ligne.produit.id 
+                            ? { ...p, stock: Math.max(0, (p.stock || 0) - ligne.quantite) } 
+                            : p
+                        );
+                    }
+                    return oldData;
+                });
+                
+                queryClient.setQueriesData({ queryKey: ['produit', ligne.produit.id] }, (oldData: any) => {
+                    if (!oldData) return oldData;
+                    return { ...oldData, stock: Math.max(0, (oldData.stock || 0) - ligne.quantite) };
+                });
+            });
+
             _resetSaleDataOnly() // Clear cart
             closePaymentModal()
-            queryClient.invalidateQueries({ queryKey: ['produits'] })
         }
     },
     onError: (msg) => setError(msg)

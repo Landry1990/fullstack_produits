@@ -513,10 +513,11 @@ def handle_caisse_post_save(sender, instance, created, **kwargs):
         if paiements_reels >= facture.part_client:
             reste_a_couvrir = facture.total_ttc - paiements_reels
             if reste_a_couvrir > Decimal('1.00'):
+                # Check if ANY en_compte payment already exists (from finaliser or AUTO-CREDIT)
                 deja_traite = Caisse.objects.filter(
                     facture=facture, 
                     mode_paiement='en_compte',
-                    reference__startswith='AUTO-CREDIT'
+                    statut='completee'
                 ).exists()
                 
                 if not deja_traite:

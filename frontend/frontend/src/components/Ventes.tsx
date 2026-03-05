@@ -25,6 +25,8 @@ const Ventes: React.FC = () => {
         setFactures,
         filteredFactures, 
         loading, 
+        stats,
+        users,
         filters, 
         refresh, 
         handleDeleteBrouillons,
@@ -44,6 +46,7 @@ const Ventes: React.FC = () => {
     });
 
     const [showQuickStats, setShowQuickStats] = React.useState(false);
+    const [trancheStats, setTrancheStats] = React.useState<any>(null);
     
     return (
         <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
@@ -67,11 +70,23 @@ const Ventes: React.FC = () => {
                             filters={filters}
                             onDeleteDrafts={handleDeleteBrouillons}
                             onRefresh={() => { refresh(); }}
+                            users={users}
                         />
                     </div>
-                     <TrancheHoraireStats onVerify={() => setShowQuickStats(true)} />
+                     <TrancheHoraireStats 
+                        selectedDate={filters.startDate}
+                        onVerify={(data) => {
+                            setTrancheStats({
+                                ...stats,
+                                total_ttc: data.total_ttc,
+                                total_regle: data.total_regle,
+                                total_en_compte: data.total_en_compte,
+                            });
+                            setShowQuickStats(true);
+                        }} 
+                     />
                      {/* Quick Stats Dashboard */}
-                     {showQuickStats && <SalesQuickStats />}
+                     {showQuickStats && <SalesQuickStats stats={trancheStats || stats} />}
                 </div>
             </div>
 

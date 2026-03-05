@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { TrendingUp, UserCheck } from 'lucide-react';
-import axios from 'axios';
-import { safeStorage } from '../../utils/storage';
 
 interface SalesStats {
     top_vendeur: {
@@ -18,26 +16,11 @@ interface SalesStats {
     total_en_compte: string;
 }
 
-export const SalesQuickStats: React.FC = () => {
-    const [stats, setStats] = useState<SalesStats | null>(null);
+interface SalesQuickStatsProps {
+    stats?: SalesStats | null;
+}
 
-    const fetchStats = async () => {
-        try {
-            const token = safeStorage.getItem('authToken');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-            const response = await axios.get(`${apiBaseUrl}/factures/stats_jour/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
-            setStats(response.data);
-        } catch (error) {
-            console.error("Failed to fetch quick stats", error);
-            setStats(null);
-        }
-    };
-
-    useEffect(() => {
-        fetchStats();
-    }, []);
+export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats }) => {
 
     if (!stats) return null;
 
@@ -49,7 +32,7 @@ export const SalesQuickStats: React.FC = () => {
                     Chiffre d'Affaires du Jour
                 </div>
                 <div className="text-2xl font-black text-primary">
-                    {Number(stats.total_ttc).toLocaleString()} <span className="text-sm font-normal">F</span>
+                    {(Number(stats.total_regle) + Number(stats.total_en_compte)).toLocaleString()} <span className="text-sm font-normal">F</span>
                 </div>
             </div>
 
