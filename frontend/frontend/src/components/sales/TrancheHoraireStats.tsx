@@ -7,12 +7,14 @@ import { useTranslation } from 'react-i18next';
 
 interface TrancheHoraireStatsProps {
     onVerify?: (data: any) => void;
-    selectedDate: string;
+    startDate: string;
+    endDate: string;
 }
 
-export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVerify, selectedDate }) => {
+export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVerify, startDate, endDate }) => {
     useTranslation();
-    const dateStr = selectedDate || new Date().toISOString().split('T')[0];
+    const dateDebutStr = startDate || new Date().toISOString().split('T')[0];
+    const dateFinStr = endDate || new Date().toISOString().split('T')[0];
     
     const [startTime, setStartTime] = useState("00:00");
     const [endTime, setEndTime] = useState("23:59");
@@ -27,8 +29,8 @@ export const TrancheHoraireStats: React.FC<TrancheHoraireStatsProps> = ({ onVeri
             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
             
             // Format to YYYY-MM-DDTHH:MM
-            const dateDebut = `${dateStr}T${startTime}`;
-            const dateFin = `${dateStr}T${endTime}`;
+            const dateDebut = `${dateDebutStr}T${startTime}`;
+            const dateFin = `${dateFinStr}T${endTime}`;
 
             const response = await axios.get(`${apiBaseUrl}/factures/caisse_par_tranche_horaire/`, {
                 params: { date_debut: dateDebut, date_fin: dateFin },

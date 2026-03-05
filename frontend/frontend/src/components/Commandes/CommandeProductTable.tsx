@@ -37,6 +37,9 @@ interface CommandeProductTableProps {
     
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
     onRemoveProduct: (index: number) => void;
+    onCreateAvoir?: () => void; // Optional handler for creating credit note
+    commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
+    onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
 }
 
 export default function CommandeProductTable({
@@ -56,7 +59,9 @@ export default function CommandeProductTable({
     openTransferModal,
     updateCommandeProduitField,
     handleTableFieldKeyDown,
-    onRemoveProduct
+    onRemoveProduct,
+    commandeSortBy,
+    onSortProduits
 }: CommandeProductTableProps) {
     const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
@@ -96,6 +101,21 @@ export default function CommandeProductTable({
                         )}
                     </div>
                 )}
+                {commandeProduits.length > 0 && onSortProduits && (
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">Trier par:</span>
+                        <select 
+                            className="select select-bordered select-sm text-xs" 
+                            value={commandeSortBy || 'chrono'} 
+                            onChange={(e) => onSortProduits(e.target.value as any)}
+                        >
+                            <option value="chrono">Chronologie</option>
+                            <option value="stock">Qté en stock</option>
+                            <option value="name">Nom</option>
+                            <option value="qty">Qté saisie</option>
+                        </select>
+                    </div>
+                )}
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
                     {saving && <span className="text-sm text-warning animate-pulse">{t('orders.form.saving')}</span>}
                     {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders.product_table.saved_at', { time: lastSaved.toLocaleTimeString() })}</span>}
@@ -121,15 +141,15 @@ export default function CommandeProductTable({
                             <div className="flex gap-2 text-xs md:text-sm">
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
                                     <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_ht')}</span>
-                                    <span className="font-bold">{stats.ht.toLocaleString('fr-FR')} F</span>
+                                    <span className="font-bold">{stats.ht.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
                                 </div>
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
                                     <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_tva')}</span>
-                                    <span className="font-bold">{stats.tva.toLocaleString('fr-FR')} F</span>
+                                    <span className="font-bold">{stats.tva.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
                                 </div>
                                 <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
                                     <span className="text-[10px] text-primary/70 uppercase">{t('orders.product_table.total_ttc')}</span>
-                                    <span className="font-bold text-primary">{totalTTC.toLocaleString('fr-FR')} F</span>
+                                    <span className="font-bold text-primary">{totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
                                 </div>
                             </div>
                         );

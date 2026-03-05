@@ -356,19 +356,37 @@ export default function PharmacySettingsForm() {
                 </div>
               </div>
 
-              <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-medium">Seuil Alerte Dette Client</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.debt_alert_threshold || '100000'}
-                    onChange={(e) => handleChange('debt_alert_threshold', e.target.value)}
-                    className="input input-bordered w-full"
-                  />
-                   <label className="label">
-                    <span className="label-text-alt text-base-content/50">Montant de dette à partir duquel une alerte est levée</span>
-                  </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-medium">Seuil Alerte Dette Client</span>
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.debt_alert_threshold || '100000'}
+                        onChange={(e) => handleChange('debt_alert_threshold', e.target.value)}
+                        className="input input-bordered w-full"
+                      />
+                      <label className="label">
+                        <span className="label-text-alt text-base-content/50">Montant de dette à partir duquel une alerte est levée</span>
+                      </label>
+                  </div>
+                  
+                  <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-medium">Déconnexion Automatique (minutes)</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={formData.auto_logout_timeout !== undefined ? formData.auto_logout_timeout : 15}
+                        onChange={(e) => handleChange('auto_logout_timeout', parseInt(e.target.value) || 0)}
+                        className="input input-bordered w-full"
+                      />
+                      <label className="label">
+                        <span className="label-text-alt text-base-content/50">Temps d'inactivité avant déconnexion (Mettre 0 pour désactiver)</span>
+                      </label>
+                  </div>
               </div>
 
             </div>

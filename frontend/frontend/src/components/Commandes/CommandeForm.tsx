@@ -68,6 +68,8 @@ interface CommandeFormProps {
     handleTableFieldKeyDown: (e: React.KeyboardEvent, rowIndex: number, fieldIndex: number) => void;
     onRemoveProduct: (index: number) => void;
     onCreateAvoir?: () => void; // Optional handler for creating credit note
+    commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
+    onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
 }
 
 export default function CommandeForm({
@@ -113,12 +115,14 @@ export default function CommandeForm({
     updateCommandeProduitField,
     handleTableFieldKeyDown,
     onRemoveProduct,
-    onCreateAvoir
+    onCreateAvoir,
+    commandeSortBy,
+    onSortProduits
  
 }: CommandeFormProps) {
     const { t } = useTranslation();
     return (
-        <div className="flex flex-col h-[calc(100vh-100px)]">
+        <div className="flex flex-col h-full overflow-hidden">
           <div className="flex items-center justify-between mb-4 shrink-0">
              <div className="flex items-center gap-4">
                 <button 
@@ -353,6 +357,8 @@ export default function CommandeForm({
                 updateCommandeProduitField={updateCommandeProduitField}
                 handleTableFieldKeyDown={handleTableFieldKeyDown}
                 onRemoveProduct={onRemoveProduct}
+                commandeSortBy={commandeSortBy}
+                onSortProduits={onSortProduits}
             />
             
             <div className="mt-4 flex justify-between items-center shrink-0">

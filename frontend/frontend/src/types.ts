@@ -249,6 +249,8 @@ export interface Facture {
   remise: string
   tva: string
   notes?: string
+  total_ht?: string
+  total_tva?: string
   total_ttc: string
   montant_regle?: string
   montant_en_compte?: string

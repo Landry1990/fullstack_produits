@@ -41,7 +41,7 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
                                 {t('manager_dashboard.modal_title', 'Fixer un Objectif')}
                             </h3>
                             <p className="text-base-content/60 text-xs">
-                                {t('manager_dashboard.modal_subtitle', "Définissez vos cibles de CA")}
+                                {t('manager_dashboard.modal_subtitle', "Définissez vos cibles de Marge Brute")}
                             </p>
                         </div>
                     </div>
@@ -68,7 +68,7 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
                     <div className="form-control w-full">
                         <label className="label">
                             <span className="label-text font-bold text-xs uppercase tracking-widest text-base-content/60">
-                                {t('manager_dashboard.ca_target_label', "CA Cible (F)")}
+                                {t('manager_dashboard.ca_target_label', "Marge Brute Cible (F)")}
                             </span>
                         </label>
                         <input 

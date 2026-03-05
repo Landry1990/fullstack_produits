@@ -95,12 +95,11 @@ class Facture(models.Model):
             if ligne.tva > 0:
                 ht_ligne = (ttc_ligne / (1 + ligne.tva / 100)).quantize(Decimal('0.01'))
                 tva_ligne = (ttc_ligne - ht_ligne).quantize(Decimal('0.01'))
+                total_ht += ht_ligne
+                total_tva += tva_ligne
             else:
-                ht_ligne = ttc_ligne
-                tva_ligne = Decimal('0.00')
+                total_ht += ttc_ligne
             
-            total_ht += ht_ligne
-            total_tva += tva_ligne
             total_ttc_brut += ttc_ligne
         
         remise = Decimal(str(self.remise))

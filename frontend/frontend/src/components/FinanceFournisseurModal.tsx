@@ -48,7 +48,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
         try {
             const payload: any = {
                 fournisseur: fournisseur.id,
-                montant: parseFloat(montant).toFixed(2),
+                montant: parseFloat(montant).toFixed(0),
                 mode_paiement: modePaiement as any,
                 reference: reference,
                 notes: notes
@@ -100,7 +100,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t('providers.details.debt_balance')}</p>
                     <p className={`text-xl font-black font-mono ${ Number(fournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                        {Number(fournisseur.solde_dette || 0).toLocaleString('fr-FR')} F
+                        {Number(fournisseur.solde_dette || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                     </p>
                 </div>
             </div>
@@ -237,7 +237,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                 )}
                                             </td>
                                             <td className="text-right font-bold font-mono">
-                                                {Number(paiement.montant).toLocaleString('fr-FR')} F
+                                                {Number(paiement.montant).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                             </td>
                                             <td className="text-center">
                                                 <button 

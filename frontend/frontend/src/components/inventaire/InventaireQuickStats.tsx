@@ -44,7 +44,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
                     </div>
                     <div>
                         <div className="text-lg font-mono font-bold text-base-content">
-                            {stats.valeur_physique_totale.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                            {stats.valeur_physique_totale.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                         </div>
                         <div className="text-xs text-base-content/60">
                             {stats.validees_count + stats.en_cours_count} {t('stock.inventaire.list.title_short', { defaultValue: 'inventaires' })}
@@ -61,7 +61,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
                     </div>
                     <div>
                         <div className={`text-lg font-mono font-bold ${stats.ecart_total < 0 ? 'text-error' : stats.ecart_total > 0 ? 'text-success' : 'text-base-content'}`}>
-                            {stats.ecart_total > 0 ? '+' : ''}{stats.ecart_total.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                            {stats.ecart_total > 0 ? '+' : ''}{stats.ecart_total.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                         </div>
                         <div className="text-xs text-base-content/60">
                             Sur tous les inventaires

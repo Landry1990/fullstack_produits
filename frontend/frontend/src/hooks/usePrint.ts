@@ -172,7 +172,7 @@ export function usePrint(): UsePrintReturn {
       <div class="print-footer">
         <p>${footerText}</p>
         <p style="margin-top: 5px; font-size: 0.7em;">
-          Imprimé le ${new Date().toLocaleString('fr-FR')}
+          Imprimé le ${new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
         </p>
       </div>
     `;

@@ -947,6 +947,12 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        if facture.date.date() < timezone.now().date():
+            return Response(
+                {'detail': "Cette vente ne peut plus être modifiée car elle date d'un jour antérieur. Veuillez procéder par un avoir client."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
         old_total = facture.total_ttc
         
         new_products = request.data.get('produits', [])
@@ -1102,6 +1108,58 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
             'new_total': float(new_total),
             'difference': float(difference),
             'adjustment_created': adjustment_created
+        })
+
+    @action(detail=True, methods=['get'])
+    def generer_avoir(self, request, pk=None):
+        """
+        Retourne le contenu de la facture validée/payée, mais avec des quantités négatives
+        pour faciliter la création d'un avoir (retour client) via le frontend.
+        """
+        facture = self.get_object()
+        
+        if facture.status not in [Facture.Status.VALIDEE, Facture.Status.PAYEE]:
+            return Response(
+                {'detail': "Seules les factures validées ou payées peuvent faire l'objet d'un avoir."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        client_data = None
+        if facture.client:
+            from ..serializers import ClientSerializer
+            client_data = ClientSerializer(facture.client).data
+        
+        produits_data = []
+        for item in facture.produits.all():
+            produit_info = {
+                'id': item.produit.id,
+                'name': item.produit.name,
+                'tva': float(item.produit.tva),
+                'cip1': item.produit.cip1,
+                'use_lot_management': item.produit.use_lot_management,
+                'stock': item.produit.stock, 
+            }
+            produits_data.append({
+                'id': item.id,
+                'produit': item.produit_id,
+                'produit_details': produit_info,
+                'quantity': -abs(item.quantity), # Quantity in negative
+                'selling_price': float(item.selling_price),
+                'discount': float(item.discount),
+                'tva': float(item.tva),
+                'stock_lot': item.stock_lot_id,
+                'lot': item.lot,
+            })
+
+        return Response({
+            'original_facture_id': facture.id,
+            'original_numero_facture': facture.numero_facture,
+            'date': facture.date,
+            'client': client_data,
+            'client_name_override': facture.client_name_override,
+            'ayant_droit': facture.ayant_droit_id,
+            'remise': float(facture.remise),
+            'produits': produits_data,
         })
 
     @action(detail=False, methods=['post'])
@@ -2343,8 +2401,26 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        from django.db.models import OuterRef, Subquery, Sum, DecimalField, Value
+        from django.db.models.functions import Coalesce
+        from ..models import Caisse
+        
+        paid_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'),
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')[:1]
+
         # Récupérer les créances du client
-        queryset = self.get_queryset().filter(client_id=client_id)
+        queryset = self.get_queryset().filter(client_id=client_id).annotate(
+            montant_paye_annotated=Coalesce(
+                Subquery(paid_subquery),
+                Value(0, output_field=DecimalField())
+            )
+        )
         
         # Calculer les totaux
         total_factures = Decimal('0.00')
@@ -2353,12 +2429,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         
         creances_data = []
         for facture in queryset:
-            montant_paye = facture.paiements.filter(
-                statut='completee'
-            ).exclude(
-                mode_paiement='en_compte'
-            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
-            
+            montant_paye = getattr(facture, 'montant_paye_annotated', Decimal('0.00'))
             reste = facture.total_ttc - montant_paye
             
             total_factures += facture.total_ttc
@@ -2437,7 +2508,25 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
             
-        factures = Facture.objects.filter(id__in=facture_ids)
+        from django.db.models import OuterRef, Subquery, Sum, DecimalField, Value
+        from django.db.models.functions import Coalesce
+        from ..models import Caisse
+        
+        paid_subquery = Caisse.objects.filter(
+            facture=OuterRef('pk'),
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture').annotate(
+            total=Sum('montant')
+        ).values('total')[:1]
+
+        factures = Facture.objects.filter(id__in=facture_ids).annotate(
+            montant_paye_annotated=Coalesce(
+                Subquery(paid_subquery),
+                Value(0, output_field=DecimalField())
+            )
+        )
         
         if not factures.exists():
              return Response(
@@ -2468,12 +2557,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
         count_processed = 0
 
         for facture in factures:
-            montant_paye = facture.paiements.filter(
-                statut='completee'
-            ).exclude(
-                mode_paiement='en_compte'
-            ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
-            
+            montant_paye = getattr(facture, 'montant_paye_annotated', Decimal('0.00'))
             reste = facture.total_ttc - montant_paye
 
             if reste <= 0:

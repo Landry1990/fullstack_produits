@@ -1036,6 +1036,14 @@
             "rupture_imminent": "Rupture imminente",
             "rupture_in": "Rupture dans {{days}}j",
             "remaining_stock": "Reste: {{count}}",
+            "periods": {
+                "1m": "1 mois",
+                "2m": "2 mois",
+                "3m": "3 mois",
+                "6m": "6 mois",
+                "12m": "1 an"
+            },
+            "lot_label": "Lot: ",
             "coverage": "Couverture: {{days}}j",
             "expired": "Expiré!",
             "days_left": "{{count}}j"
@@ -2052,6 +2060,15 @@
             "price_modification_forbidden": "Modification de prix interdite",
             "discount_limit_error": "Remise limitée à {{rate}}% pour votre profil",
             "cancel_sale_confirm": "Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu."
+        },
+        "modification_mode": {
+            "title": "Mode Modification",
+            "original_total": "Total Initial",
+            "new_total": "Nouveau Total",
+            "difference": "Différence",
+            "to_collect": "à encaisser",
+            "to_refund": "à rembourser",
+            "cancelled": "Modification annulée"
         }
     },
     "avoirs": {

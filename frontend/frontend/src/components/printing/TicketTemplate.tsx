@@ -53,12 +53,10 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   // Use ticket amount as final authority, fallback to facture total
   const totalTTC = Number(ticket.montant || facture?.total_ttc || 0);
   
-  // Try to calculate HT and amount of TVA (TVA is string percentage on Facture)
-  // Formula: HT = TTC / (1 + TVA_Rate)
-  // TVA = TTC - HT
-  const tvaRate = facture ? (Number(facture.tva) || 0) / 100 : 0;
-  const totalHT = tvaRate > 0 ? totalTTC / (1 + tvaRate) : totalTTC;
-  const totalTVA = tvaRate > 0 ? totalTTC - totalHT : 0;
+  // The backend stores the total computed TVA amount in facture.total_tva
+  // (facture.tva is just the default percentage rate)
+  const totalTVA = facture ? Number(facture.total_tva || 0) : 0;
+  const totalHT = totalTTC - totalTVA;
   
   const remise = facture ? Number(facture.remise) : 0;
   
@@ -188,7 +186,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
                     return (
                         <div key={idx} className="flex justify-between">
                             <span>
-                                {getModeLabel(paiement.mode)}
+                                {getModeLabel((paiement as any).mode_paiement || paiement.mode)}
                                 {isPartPatient && ' (Patient)'}
                                 {isPartAssurance && ' (Assur)'}
                             </span>

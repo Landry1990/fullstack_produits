@@ -106,7 +106,7 @@ export default function AnalyseABC() {
     return data.produits.filter(p => p.categorie === activeTab)
   }, [data, activeTab])
 
-  const formatNumber = (n: number) => Math.round(n).toLocaleString('fr-FR')
+  const formatNumber = (n: number) => Math.round(n).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
   // Copier le tableau dans le presse-papier (format TSV pour Excel)
   const copyToClipboard = () => {
@@ -124,7 +124,7 @@ export default function AnalyseABC() {
       p.quantite_vendue,
       p.prix_vente,
       Math.round(p.chiffre_affaires),
-      p.pourcentage_ca.toFixed(2) + '%',
+      p.pourcentage_ca.toFixed(0) + '%',
       p.pourcentage_cumule.toFixed(1) + '%',
       p.categorie
     ])
@@ -331,7 +331,7 @@ export default function AnalyseABC() {
                     <td className="text-right font-semibold text-info">{formatNumber(p.quantite_vendue)}</td>
                     <td className="text-right">{formatNumber(p.prix_vente)} F</td>
                     <td className="text-right font-bold">{formatNumber(p.chiffre_affaires)} F</td>
-                    <td className="text-right">{p.pourcentage_ca.toFixed(2)}%</td>
+                    <td className="text-right">{p.pourcentage_ca.toFixed(0)}%</td>
                     <td className="text-right text-base-content/60">{p.pourcentage_cumule.toFixed(1)}%</td>
                   </tr>
                 ))

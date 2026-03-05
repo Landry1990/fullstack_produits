@@ -109,11 +109,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
               <div className="stat-title text-sm">{t('products.detail.price.cost')}</div>
-              <div className="stat-value text-blue-600 text-xl">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR')} F</div>
+              <div className="stat-value text-blue-600 text-xl">{Math.round(Number(selectedProduit.cost_price || 0)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
             </div>
             <div className="stat bg-primary text-primary-content rounded-xl p-4">
               <div className="stat-title text-primary-content/80 text-sm">{t('products.detail.price.selling')}</div>
-              <div className="stat-value text-xl">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR')} F</div>
+              <div className="stat-value text-xl">{Math.round(Number(selectedProduit.selling_price || 0)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
               <div className="stat-title text-sm">{t('products.detail.price.vat')}</div>
@@ -121,15 +121,15 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
               <div className="stat-title text-sm">{t('products.detail.price.margin_percent')}</div>
-              <div className="stat-value text-lg">{Number(selectedProduit.pourcentage_marge || 0).toFixed(2)}%</div>
+              <div className="stat-value text-lg">{Number(selectedProduit.pourcentage_marge || 0).toFixed(0)}%</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
               <div className="stat-title text-sm">{t('products.detail.price.margin_coeff')}</div>
-              <div className="stat-value text-lg">{Number(selectedProduit.taux_marge || 0).toFixed(2)}</div>
+              <div className="stat-value text-lg">{Number(selectedProduit.taux_marge || 0).toFixed(0)}</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
               <div className="stat-title text-sm">{t('products.detail.price.rotation')}</div>
-              <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(2)}<span className="text-sm"> {t('products.detail.price.per_month')}</span></div>
+              <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(0)}<span className="text-sm"> {t('products.detail.price.per_month')}</span></div>
             </div>
           </div>
         )}

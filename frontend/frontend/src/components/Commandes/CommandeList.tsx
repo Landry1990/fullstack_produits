@@ -87,7 +87,7 @@ export default function CommandeList({
 
   return (
     <div className="flex flex-col h-full p-4 space-y-4">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
         <h1 className="text-lg md:text-xl font-bold">{t('orders.list.title')}</h1>
         <div className="flex gap-2 w-full md:w-auto">
             <button 
@@ -108,7 +108,7 @@ export default function CommandeList({
       </div>
         
       {/* Tri et Filtres */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
         <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('orders.list.sort_by')}:</span>
         <button 
           className={`btn btn-xs ${sortKey === 'numero' ? 'btn-primary' : 'btn-ghost'}`}
@@ -169,7 +169,7 @@ export default function CommandeList({
 
       {/* Barre d'actions sélection multiple */}
       {selectedOrderIds.size > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
+        <div className="flex items-center gap-3 p-3 bg-primary/10 rounded-lg border border-primary/20 shrink-0">
           <span className="font-semibold text-sm">{t('orders.list.selection.selected_count', { count: selectedOrderIds.size })}</span>
           <button
             type="button"
@@ -191,10 +191,10 @@ export default function CommandeList({
         </div>
       )}
 
-      {loading && <div className="flex justify-center p-8"><span className="loading loading-spinner"></span></div>}
+      {loading && <div className="flex justify-center p-8 shrink-0"><span className="loading loading-spinner"></span></div>}
 
-      <div className="overflow-x-auto bg-white rounded-lg shadow">
-        <table className="table table-zebra w-full">
+      <div className="flex-1 min-h-0 overflow-auto bg-white rounded-lg shadow">
+        <table className="table table-zebra table-pin-rows w-full">
           <thead className="bg-base-200">
             <tr>
               <th className="w-12">
@@ -264,7 +264,7 @@ export default function CommandeList({
       </div>
 
       {/* Pagination & Footer info */}
-      <div className="p-2 bg-white border-t rounded-b-lg shadow text-xs text-center text-base-content/50 flex flex-col items-center gap-2 mt-[-8px] mb-4">
+      <div className="p-2 bg-white border-t rounded-b-lg shadow text-xs text-center text-base-content/50 flex flex-col items-center gap-2 mt-[-8px] mb-4 shrink-0">
           <div>
             {t('orders.list.pagination.showing', { count: commandes.length, total: totalCount })}
           </div>

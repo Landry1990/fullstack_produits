@@ -169,7 +169,7 @@ export function generateStockRayonTemplate(
     </div>
 
     <div style="font-size: 0.7em; margin-bottom: 5px;">
-      Imprimé le ${new Date().toLocaleString('fr-FR')}
+      Imprimé le ${new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
     </div>
 
     ${printDivider()}

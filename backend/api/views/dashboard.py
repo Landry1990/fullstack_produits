@@ -181,31 +181,33 @@ class DashboardViewSet(viewsets.ViewSet):
         start_of_week = today - timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
         
-        # 2. Daily Performance
-        ca_jour = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        # 2. Daily Performance (Marge Brute)
+        from ..models import FactureProduitAllocation
+        
+        ca_jour = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__date__date=today,
+            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
         
         obj_jour_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.JOUR)
         obj_jour = obj_jour_model.ca_objectif if obj_jour_model else Decimal('0')
         taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
         
-        # 3. Weekly Performance
-        ca_sem = Facture.objects.filter(
-            date__date__gte=start_of_week,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        # 3. Weekly Performance (Marge Brute)
+        ca_sem = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__date__date__gte=start_of_week,
+            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
         
         obj_sem_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.SEMAINE)
         obj_sem = obj_sem_model.ca_objectif if obj_sem_model else Decimal('0')
         taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
         
-        # 4. Monthly Performance
-        ca_mois = Facture.objects.filter(
-            date__date__gte=start_of_month,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        # 4. Monthly Performance (Marge Brute)
+        ca_mois = FactureProduitAllocation.objects.filter(
+            facture_produit__facture__date__date__gte=start_of_month,
+            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
         
         obj_mois_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.MOIS)
         obj_mois = obj_mois_model.ca_objectif if obj_mois_model else Decimal('0')
@@ -254,15 +256,31 @@ class DashboardViewSet(viewsets.ViewSet):
         # --- IMPORTANT DEBTORS ALERT ---
         # Find clients with significant debt defined in settings
         debt_threshold = Decimal(debt_alert_val)
+        
+        from django.db.models import Subquery, OuterRef
+        
+        # Sous-requête 1: Total facturé par client (factures VAL/PAY)
+        billed_sub = Facture.objects.filter(
+            client=OuterRef('pk'),
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).values('client').annotate(
+            s=Sum('total_ttc')
+        ).values('s')[:1]
+        
+        # Sous-requête 2: Total payé par client (hors en_compte)
+        paid_sub = Caisse.objects.filter(
+            facture__client=OuterRef('pk'),
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture__client').annotate(
+            s=Sum('montant')
+        ).values('s')[:1]
+
         clients_with_debt = Client.objects.filter(is_active=True).annotate(
-            paid_amount=Coalesce(
-                Sum('facture__paiements__montant', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], facture__paiements__statut='completee') & ~Q(facture__paiements__mode_paiement='en_compte')),
-                Value(0, output_field=DecimalField())
-            ),
-            total_billed=Coalesce(
-                Sum('facture__total_ttc', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])),
-                Value(0, output_field=DecimalField())
-            )
+            total_billed=Coalesce(Subquery(billed_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            paid_amount=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
         ).annotate(
             calculated_debt=F('total_billed') - F('paid_amount')
         ).filter(calculated_debt__gt=debt_threshold).exclude(name__icontains='DIVERS').order_by('-calculated_debt')[:5]
@@ -510,22 +528,35 @@ class DashboardViewSet(viewsets.ViewSet):
         Retourne la liste des clients professionnels ayant dépassé leur plafond de crédit.
         Utilisé pour les alertes du tableau de bord.
         """
-        from django.db.models import Sum, F, Q, Value, DecimalField
+        from django.db.models import Sum, F, Q, Value, DecimalField, Subquery, OuterRef
         from django.db.models.functions import Coalesce
 
-        # Optimisation : On génère le "current_debt_annotated" directement en SQL (Évite les requêtes N+1 de current_debt)
+        # Sous-requête 1: Total facturé par client (factures VAL/PAY)
+        billed_sub = Facture.objects.filter(
+            client=OuterRef('pk'),
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).values('client').annotate(
+            s=Sum('total_ttc')
+        ).values('s')[:1]
+        
+        # Sous-requête 2: Total payé par client (hors en_compte)
+        paid_sub = Caisse.objects.filter(
+            facture__client=OuterRef('pk'),
+            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture__client').annotate(
+            s=Sum('montant')
+        ).values('s')[:1]
+
+        # Optimisation : On génère le "current_debt_annotated" directement en SQL sans jointure cartésienne
         clients = Client.objects.filter(
             client_type='PROFESSIONNEL',
             plafond__gt=0
         ).exclude(name__icontains='DIVERS').annotate(
-            paid_amount=Coalesce(
-                Sum('facture__paiements__montant', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE], facture__paiements__statut='completee') & ~Q(facture__paiements__mode_paiement='en_compte')),
-                Value(0, output_field=DecimalField())
-            ),
-            total_billed=Coalesce(
-                Sum('facture__total_ttc', filter=Q(facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE])),
-                Value(0, output_field=DecimalField())
-            )
+            total_billed=Coalesce(Subquery(billed_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            paid_amount=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
         ).annotate(
             current_debt_annotated=F('total_billed') - F('paid_amount')
         )

@@ -171,13 +171,13 @@ export function useCommandeActions({
             const produitsPayload = commandeProduits.map(p => {
                 const parseAndFormat = (val: string | number | undefined, defaultValue: string = '0.00'): string => {
                     const parsed = parseFloat(String(val || 0));
-                    return isNaN(parsed) ? defaultValue : parsed.toFixed(2);
+                    return isNaN(parsed) ? defaultValue : parsed.toFixed(0);
                 };
 
                 const parseEuro = (val: string | number | undefined): string | null => {
                     if (!val) return null;
                     const parsed = parseFloat(String(val));
-                    return isNaN(parsed) ? null : parsed.toFixed(2);
+                    return isNaN(parsed) ? null : parsed.toFixed(0);
                 };
 
                 return {

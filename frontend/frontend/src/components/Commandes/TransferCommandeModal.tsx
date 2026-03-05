@@ -153,10 +153,10 @@ export default function TransferCommandeModal({
                     produit: produitId,
                     quantity: parseInt(String(p.quantity || 1)),
                     unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
-                    price: priceToUse.toFixed(2),
-                    price_cost: priceToUse.toFixed(2),
-                    selling_price: parseFloat(String(p.selling_price || 0)).toFixed(2),
-                    tva: parseFloat(String(p.tva || 0)).toFixed(2),
+                    price: priceToUse.toFixed(0),
+                    price_cost: priceToUse.toFixed(0),
+                    selling_price: parseFloat(String(p.selling_price || 0)).toFixed(0),
+                    tva: parseFloat(String(p.tva || 0)).toFixed(0),
                     marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
                     lot: p.lot || null,
                     date_expiration: parseMMYYToDate(p.date_expiration), 
@@ -247,16 +247,16 @@ export default function TransferCommandeModal({
                                         <span className="text-base-content/50 ml-2">(Qté: {quantity})</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-base-content/60">{currentPrice.toLocaleString('fr-FR')} F</span>
+                                        <span className="text-base-content/60">{currentPrice.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
                                         {hasPriceInfo && (
                                             <>
                                                 <span className="text-base-content/40">→</span>
                                                 <span className={newPrice < currentPrice ? 'text-success font-semibold' : newPrice > currentPrice ? 'text-error font-semibold' : ''}>
-                                                    {newPrice.toLocaleString('fr-FR')} F
+                                                    {newPrice.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                                 </span>
                                                 {priceDiff !== 0 && (
                                                     <span className={`badge badge-xs ${priceDiff > 0 ? 'badge-success' : 'badge-error'}`}>
-                                                        {priceDiff > 0 ? '+' : ''}{(priceDiff * quantity).toLocaleString('fr-FR')} F
+                                                        {priceDiff > 0 ? '+' : ''}{(priceDiff * quantity).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                                     </span>
                                                 )}
                                             </>
@@ -277,18 +277,18 @@ export default function TransferCommandeModal({
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">Coût actuel</div>
-                                <div className="font-bold">{transferCalc.totalCurrentCost.toLocaleString('fr-FR')} F</div>
+                                <div className="font-bold">{transferCalc.totalCurrentCost.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
                             </div>
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">Nouveau coût</div>
-                                <div className="font-bold">{transferCalc.totalNewCost.toLocaleString('fr-FR')} F</div>
+                                <div className="font-bold">{transferCalc.totalNewCost.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
                             </div>
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">
                                     {transferCalc.isGain ? 'Économie' : 'Surcoût'}
                                 </div>
                                 <div className={`font-bold text-lg ${transferCalc.isGain ? 'text-success' : transferCalc.difference < 0 ? 'text-error' : ''}`}>
-                                    {transferCalc.isGain ? '+' : ''}{transferCalc.difference.toLocaleString('fr-FR')} F
+                                    {transferCalc.isGain ? '+' : ''}{transferCalc.difference.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                 </div>
                             </div>
                         </div>

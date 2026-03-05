@@ -105,13 +105,13 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">
+    <div className="h-full flex flex-col p-6 overflow-hidden">
+      <h1 className="text-2xl font-bold mb-6 shrink-0">
         {t('orders.history.title')} 
         {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
       </h1>
 
-      <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end shadow-sm">
+      <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end shadow-sm shrink-0">
         <div className="form-control">
           <label className="label">
             <span className="label-text">{t('orders.history.start_date')}</span>
@@ -157,13 +157,13 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
       </div>
 
       {loading ? (
-        <div className="flex justify-center p-8">
+        <div className="flex justify-center p-8 shrink-0">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="table table-zebra w-full shadow-xl bg-base-100 rounded-box">
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="overflow-auto flex-1 bg-base-100 rounded-box shadow-xl border border-base-200">
+            <table className="table table-zebra table-pin-rows w-full">
               <thead>
                 <tr className="bg-base-200 text-base-content uppercase text-sm">
                   <th>{t('orders.history.columns.date')}</th>
@@ -199,7 +199,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex flex-col items-center gap-4 mt-8">
+            <div className="flex flex-col items-center gap-4 mt-4 shrink-0">
               <div className="join shadow-lg">
                 <button 
                   className="join-item btn btn-md" 
@@ -224,7 +224,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
