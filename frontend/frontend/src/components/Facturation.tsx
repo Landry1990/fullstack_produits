@@ -29,6 +29,7 @@ import PendingSalesDrawer from './facturation/PendingSalesDrawer'
 import TicketPreviewModal from './facturation/TicketPreviewModal'
 import SudoValidationModal from './common/SudoValidationModal'
 import PremiumModal from './common/PremiumModal'
+import { ClientNameModal } from './sales/modals/ClientNameModal'
 import { useSudo } from '../hooks/useSudo'
 import { StockResolutionHandler } from './facturation/StockResolutionHandler'
 import { useSaleCompletion } from '../hooks/useSaleCompletion'
@@ -48,6 +49,8 @@ export default function Facturation() {
   // Local loading state for non-hook operations (e.g. payment)
   const [loading, setLoading] = useState(false)
   const [isRetrocession, setIsRetrocession] = useState(false)
+  const [isFactureA4, setIsFactureA4] = useState(false)
+  const [sortBy, setSortBy] = useState<'chrono' | 'stock' | 'name' | 'qty'>('chrono')
 
   // Refs - declared early for hook usage
   const quantityInputsRef = useRef<Map<number, HTMLInputElement>>(new Map())
@@ -208,7 +211,7 @@ export default function Facturation() {
               const itemToSet = {
                   product,
                   quantity,
-                  discountPercent: ratio < 1 ? (Math.round((1 - ratio) * 10000) / 100).toFixed(2) : '0'
+                  discountPercent: ratio < 1 ? (Math.round((1 - ratio) * 10000) / 100).toFixed(0) : '0'
               }
               return itemToSet
           })
@@ -374,7 +377,32 @@ export default function Facturation() {
         if (result.success && result.facture) {
             setSuccessInfo(result.facture) // Keep only this local state for toast notifications
             setTicketCaisse(result.ticketCaisse || null)
-            if (result.ticketCaisse) setShowTicketPreview(true)
+            
+            if (isFactureA4) {
+               if (result.facture) {
+                   // Check if client name is generic
+                   const normalize = (str: string) => str?.toLowerCase().trim() || '';
+                   const clientName = normalize(result.facture.client_name || '');
+                   const isGenericClient = !result.facture.client_name_override && (
+                       !clientName || 
+                       clientName.includes('passage') || 
+                       clientName.includes('divers')
+                   );
+
+                   if (isGenericClient) {
+                       setPendingPrintFacture(result.facture);
+                       setShowClientNameModal(true);
+                   } else {
+                       const nameToUse = result.facture.client_name_override || result.facture.client_name;
+                       let url = `/app/print-invoice/${result.facture.id}`;
+                       if (nameToUse) url += `?client_name=${encodeURIComponent(nameToUse)}`;
+                       window.open(url, '_blank');
+                   }
+               }
+               setIsFactureA4(false) // Auto-reset for next sale
+            } else {
+               if (result.ticketCaisse) setShowTicketPreview(true)
+            }
             
             // Clean up
             resetUIState()
@@ -419,6 +447,8 @@ export default function Facturation() {
   // We keep only essential local UI state not covered by hook
   const [error, setError] = useState<string | null>(null)
   const [successInfo, setSuccessInfo] = useState<Facture | null>(null)
+  const [showClientNameModal, setShowClientNameModal] = useState(false)
+  const [pendingPrintFacture, setPendingPrintFacture] = useState<Facture | null>(null)
   const [pointsToUse, setPointsToUse] = useState(0)
   const [usePendingDiscount, setUsePendingDiscount] = useState(false)
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
@@ -771,34 +801,44 @@ export default function Facturation() {
     }
   }, [lignesFacture.length, handlePaymentClick]) // Added dependency later
 
+  const sortedLignes = useMemo(() => {
+    if (sortBy === 'chrono') return lignesFacture;
+    return [...lignesFacture].sort((a, b) => {
+      if (sortBy === 'name') return (a.produit.name || '').localeCompare(b.produit.name || '');
+      if (sortBy === 'stock') return (b.produit.stock || 0) - (a.produit.stock || 0);
+      if (sortBy === 'qty') return b.quantite - a.quantite;
+      return 0;
+    });
+  }, [lignesFacture, sortBy])
+
   // Define handlers locally to avoid closure staleness if needed, 
   // but hook takes them as props.
   const handleIncrement = useCallback((index: number) => {
-    if (lignesFacture[index]) {
-       const pId = lignesFacture[index].produit.id
-       const currentQty = lignesFacture[index].quantite
+    if (sortedLignes[index]) {
+       const pId = sortedLignes[index].produit.id
+       const currentQty = sortedLignes[index].quantite
        updateQuantite(pId, currentQty + 1)
     }
-  }, [lignesFacture, updateQuantite])
+  }, [sortedLignes, updateQuantite])
 
   const handleDecrement = useCallback((index: number) => {
-    if (lignesFacture[index]) {
-       const pId = lignesFacture[index].produit.id
-       const currentQty = lignesFacture[index].quantite
+    if (sortedLignes[index]) {
+       const pId = sortedLignes[index].produit.id
+       const currentQty = sortedLignes[index].quantite
        if (currentQty > 1) {
           updateQuantite(pId, currentQty - 1)
        }
     }
-  }, [lignesFacture, updateQuantite])
+  }, [sortedLignes, updateQuantite])
 
   const handleDeleteLine = useCallback((index: number) => {
-    if (lignesFacture[index]) {
-       removeLigne(lignesFacture[index].produit.id)
+    if (sortedLignes[index]) {
+       removeLigne(sortedLignes[index].produit.id)
     }
-  }, [lignesFacture, removeLigne])
+  }, [sortedLignes, removeLigne])
 
   const { selectedIndex, setSelectedIndex } = useKeyboardNavigation({
-    listLength: lignesFacture.length,
+    listLength: sortedLignes.length,
     onValidate: handleValidateShortcut,
     onIncrement: handleIncrement,
     onDecrement: handleDecrement,
@@ -1053,7 +1093,7 @@ export default function Facturation() {
           produit: ligne.produit.id,
           quantity: Number(ligne.quantite),
           selling_price: prixNet.toString(),
-          discount: (prixUnitaire - prixNet).toFixed(2),
+          discount: (prixUnitaire - prixNet).toFixed(0),
           stock_lot: ligne.lotId ? Number(ligne.lotId) : null,
           lot: null,
           date_expiration: ligne.produit.expire_date || null,
@@ -1105,7 +1145,32 @@ export default function Facturation() {
     }
   }
 
+  const handleConfirmPrintClientName = async (clientNameInput: string) => {
+      if (!pendingPrintFacture) return;
 
+      try {
+          // PATCH update
+          await axios.patch(`${apiBaseUrl ? apiBaseUrl : ''}/api/factures/${pendingPrintFacture.id}/`,
+              { client_name_override: clientNameInput }
+          );
+
+          // Lancer impression
+          let url = `/app/print-invoice/${pendingPrintFacture.id}`;
+          if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
+          window.open(url, '_blank');
+
+      } catch (error) {
+          console.error('Erreur sauvegarde nom client:', error);
+          toast.error(t('sales.messages.save_error', { defaultValue: 'Erreur lors de la sauvegarde du nom' }));
+          // Fallback print
+          let url = `/app/print-invoice/${pendingPrintFacture.id}`;
+          if (clientNameInput) url += `?client_name=${encodeURIComponent(clientNameInput)}`;
+          window.open(url, '_blank');
+      } finally {
+          setShowClientNameModal(false);
+          setPendingPrintFacture(null);
+      }
+  };
 
   const ouvrirModalPaiement = (facture?: Facture) => {
     if (facture) {
@@ -1395,11 +1460,11 @@ export default function Facturation() {
           <div className="flex-1">
             <h3 className="font-bold">{t('facturation.modification_mode.title')}</h3>
             <div className="text-xs flex flex-wrap gap-4">
-              <span>{t('facturation.modification_mode.original_total')}: <strong>{Math.round(originalTotalTtc).toLocaleString('fr-FR')} F</strong></span>
-              <span>{t('facturation.modification_mode.new_total')}: <strong>{Math.round(totals.totalTtc).toLocaleString('fr-FR')} F</strong></span>
+              <span>{t('facturation.modification_mode.original_total')}: <strong>{Math.round(originalTotalTtc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</strong></span>
+              <span>{t('facturation.modification_mode.new_total')}: <strong>{Math.round(totals.totalTtc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</strong></span>
               {totals.totalTtc !== originalTotalTtc && (
                 <span className={totals.totalTtc > originalTotalTtc ? 'text-success font-bold' : 'text-error font-bold'}>
-                  {t('facturation.modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{Math.round(totals.totalTtc - originalTotalTtc).toLocaleString('fr-FR')} F
+                  {t('facturation.modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{Math.round(totals.totalTtc - originalTotalTtc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                   {totals.totalTtc > originalTotalTtc ? ` (${t('facturation.modification_mode.to_collect')})` : ` (${t('facturation.modification_mode.to_refund')})`}
                 </span>
               )}
@@ -1533,14 +1598,30 @@ export default function Facturation() {
           {/* Clinical Alerts Banner */}
           <ClinicalAlerts alerts={clinicalAlerts} />
 
-          <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0">
-            <h2 className="font-bold text-lg text-base-content">{t('facturation.cart_title')}</h2>
-            <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation.items_count', { count: lignesFacture.length })}</div>
+          <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
+            <div className="flex items-center gap-4">
+              <h2 className="font-bold text-lg text-base-content">{t('facturation.cart_title')}</h2>
+              <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation.items_count', { count: lignesFacture.length })}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-base-content/60 font-medium">Trier par:</span>
+              <select 
+                className="select select-bordered select-sm text-xs" 
+                value={sortBy} 
+                onChange={(e) => setSortBy(e.target.value as any)}
+                disabled={lignesFacture.length === 0}
+              >
+                <option value="chrono">Chronologie</option>
+                <option value="stock">Qté en stock</option>
+                <option value="name">Nom</option>
+                <option value="qty">Qté saisie</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex-1 overflow-x-auto overflow-y-auto">
             <CartTable
-              lignesFacture={lignesFacture}
+              lignesFacture={sortedLignes}
               updateQuantite={secureUpdateQuantite}
               updatePrix={secureUpdatePrix}
               updateRemiseProduit={secureUpdateRemiseProduit}
@@ -1581,6 +1662,8 @@ export default function Facturation() {
             isValid={lignesFacture.length > 0}
             isRetrocession={isRetrocession}
             setIsRetrocession={setIsRetrocession}
+            isFactureA4={isFactureA4}
+            setIsFactureA4={setIsFactureA4}
             loading={loading || saleLoading}
           />
         </div>
@@ -1725,6 +1808,17 @@ export default function Facturation() {
               loading={loading}
           />
       )}
+
+      {/* Client Name Modal for A4 Invoice */}
+      <ClientNameModal 
+          isOpen={showClientNameModal}
+          onClose={() => {
+              setShowClientNameModal(false);
+              setPendingPrintFacture(null);
+          }}
+          onConfirm={handleConfirmPrintClientName}
+          facture={pendingPrintFacture}
+      />
 
       {/* Sudo Validation Modal */}
       <SudoValidationModal

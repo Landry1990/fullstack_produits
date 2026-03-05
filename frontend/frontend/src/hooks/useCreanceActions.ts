@@ -257,7 +257,7 @@ export const useCreanceActions = ({
             </div>
 
             <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
-              <p>Document généré le ${new Date().toLocaleString('fr-FR')}</p>
+              <p>Document généré le ${new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
             </div>
           </div>
         `;

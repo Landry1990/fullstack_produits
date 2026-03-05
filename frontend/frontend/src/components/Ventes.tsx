@@ -74,7 +74,8 @@ const Ventes: React.FC = () => {
                         />
                     </div>
                      <TrancheHoraireStats 
-                        selectedDate={filters.startDate}
+                        startDate={filters.startDate}
+                        endDate={filters.endDate}
                         onVerify={(data) => {
                             setTrancheStats({
                                 ...stats,
@@ -100,6 +101,7 @@ const Ventes: React.FC = () => {
                     onPrintTicket={actions.handlePrintTicket}
                     onRefund={actions.handleEditInvoice}
                     onDuplicate={actions.handleDuplicateInvoice}
+                    onGenerateAvoir={actions.handleGenerateAvoir}
                     onDelete={deleteFacture}
                     onBulkDelete={bulkDeleteFactures}
                 />

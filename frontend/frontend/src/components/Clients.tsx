@@ -756,7 +756,7 @@ export default function Clients() {
                                                     </td>
                                                     <td className="text-right">
                                                        <span className="font-bold text-gray-900 border-b border-gray-200 border-dashed pb-0.5">
-                                                          {Math.round(facture.total_ttc).toLocaleString('fr-FR')} F
+                                                          {Math.round(facture.total_ttc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                                        </span>
                                                     </td>
                                                  </tr>
@@ -773,7 +773,7 @@ export default function Clients() {
                                                                                 <span className="text-sm font-medium text-gray-700">{prod.nom}</span>
                                                                             </div>
                                                                             <span className="font-mono text-sm font-semibold text-gray-600">
-                                                                                {Math.round(prod.total).toLocaleString('fr-FR')} F
+                                                                                {Math.round(prod.total).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                                                             </span>
                                                                         </div>
                                                                     ))}

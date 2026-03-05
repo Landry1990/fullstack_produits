@@ -1607,29 +1607,31 @@ def calculer_reapprovisionnement_simple(periode, fournisseur_id=None, budget_max
     Si budget_max est fourni, on priorise les meilleurs vendeurs.
     """
     date_debut = timezone.now() - timedelta(days=periode)
-    from django.db.models import Sum
+    from django.db.models import Sum, Q
     
     # Récupérer tous les produits
     produits = Produit.objects.all()
     fournisseur_obj = None
     if fournisseur_id:
         from api.models import Fournisseur, StockLot
-        from django.db.models import Q
         fournisseur_obj = Fournisseur.objects.filter(id=fournisseur_id).first()
         lots_produit_ids = set(StockLot.objects.filter(fournisseur_id=fournisseur_id).values_list('produit_id', flat=True))
         produits = produits.filter(
             Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
         )
+        
+    produits = produits.annotate(
+        ventes_periode=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_debut,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ))
+    )
     
     suggestions = []
     
     for produit in produits:
-        # Calculer les ventes sur la période
-        ventes = FactureProduit.objects.filter(
-            produit=produit,
-            facture__date__gte=date_debut,
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Sum('quantity'))['total'] or 0
+        # Récupérer l'annotation calculée
+        ventes = produit.ventes_periode or 0
         
         stock_actuel = produit.stock or 0
         
@@ -1721,7 +1723,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
     periode_analyse = max(periode, 30)
     date_debut = timezone.now() - timedelta(days=periode_analyse)
     date_mi_periode = timezone.now() - timedelta(days=periode_analyse // 2)
-    from django.db.models import Sum
+    from django.db.models import Sum, Q
 
     produits = Produit.objects.all()
     fournisseur_obj = None
@@ -1733,16 +1735,23 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         produits = produits.filter(
             Q(fournisseur_id=fournisseur_id) | Q(id__in=lots_produit_ids)
         )
+        
+    produits = produits.annotate(
+        ventes_total_annotation=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_debut,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        )),
+        ventes_recentes_annotation=Sum('factureproduit__quantity', filter=Q(
+            factureproduit__facture__date__gte=date_mi_periode,
+            factureproduit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ))
+    )
     
     suggestions = []
     
     for produit in produits:
         # 1. Ventes totales sur période d'analyse
-        ventes_total = FactureProduit.objects.filter(
-            produit=produit,
-            facture__date__gte=date_debut,
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Sum('quantity'))['total'] or 0
+        ventes_total = produit.ventes_total_annotation or 0
         
         if ventes_total == 0:
             continue
@@ -1764,11 +1773,7 @@ def calculer_optimisation_intelligente(periode, fournisseur_id=None, budget_max=
         rotation = float(ventes_total) / stock_moyen
         
         # 6. Tendance (période récente vs ancienne)
-        ventes_recentes = FactureProduit.objects.filter(
-            produit=produit,
-            facture__date__gte=date_mi_periode,
-            facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Sum('quantity'))['total'] or 0
+        ventes_recentes = produit.ventes_recentes_annotation or 0
         
         ventes_anciennes = ventes_total - ventes_recentes
         if ventes_anciennes > 0:

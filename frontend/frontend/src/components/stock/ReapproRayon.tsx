@@ -279,7 +279,7 @@ export default function ReapproRayon() {
       {/* Print Only Header */}
       <div className="print-only mb-8">
         <h1 className="text-3xl font-bold border-b-2 border-primary pb-2">Rapport de Réapprovisionnement Rayon</h1>
-        <p className="mt-2 text-gray-600">Date: {new Date().toLocaleString('fr-FR')}</p>
+        <p className="mt-2 text-gray-600">Date: {new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
         <p className="text-sm italic">Ce document liste les produits nécessitant un transfert de la réserve vers les rayons.</p>
       </div>
 

@@ -251,7 +251,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 produit: ligne.produit.id,
                 quantity: Number(ligne.quantite),
                 selling_price: prixUnitaire.toString(),
-                discount: (prixUnitaire - prixNet).toFixed(2),
+                discount: (prixUnitaire - prixNet).toFixed(0),
                 tva: ligne.produit.tva || 0,
                 lot_id: ligne.lotId ? Number(ligne.lotId) : null
             };
@@ -267,9 +267,9 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
         const difference = result.difference;
         if (difference > 0) {
-            toast.success(t('sales.messages.additional_payment', { amount: Math.round(difference).toLocaleString('fr-FR') }));
+            toast.success(t('sales.messages.additional_payment', { amount: Math.round(difference).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }));
         } else if (difference < 0) {
-            toast.success(t('sales.messages.refund_amount', { amount: Math.round(Math.abs(difference)).toLocaleString('fr-FR') }));
+            toast.success(t('sales.messages.refund_amount', { amount: Math.round(Math.abs(difference)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }));
         } else {
             toast.success(t('sales.messages.same_total'));
         }
@@ -477,7 +477,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     produit: ligne.produit.id,
                     quantity: Number(ligne.quantite),
                     selling_price: prixUnitaire.toString(), // On envoie le prix BRUT
-                    discount: (prixUnitaire - prixNet).toFixed(2),
+                    discount: (prixUnitaire - prixNet).toFixed(0),
                     tva: ligne.produit.tva || 0, // On envoie le taux de TVA
                     lot_id: ligne.lotId ? Number(ligne.lotId) : null,
                     is_promis: !!ligne.isPromis,
@@ -497,7 +497,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 client: params.useManualClient ? null : params.selectedClient,
                 client_name_override: params.useManualClient ? params.manualClientName : null,
                 ayant_droit: ayantDroitId,
-                remise: (Number(params.totals.remiseMontant) || 0).toFixed(2),
+                remise: (Number(params.totals.remiseMontant) || 0).toFixed(0),
                 produits: produitsPayload,
                 paiements: paiementsList,
                 loyalty: {

@@ -122,7 +122,7 @@ export default function HistoriqueClotures() {
   }
 
   const formatMoney = (value: string | number) => {
-    return Math.round(parseFloat(String(value))).toLocaleString('fr-FR')
+    return Math.round(parseFloat(String(value))).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
   }
 
   const getModeLabel = (mode: string) => {

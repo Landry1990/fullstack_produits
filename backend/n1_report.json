@@ -1,0 +1,1092 @@
+[
+  {
+    "file": "api\\views\\clients.py",
+    "queries": [
+      {
+        "line": 101,
+        "method": "all",
+        "code": "for fp in facture.produits.all():"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\commandes.py",
+    "queries": [
+      {
+        "line": 202,
+        "method": "get",
+        "code": "produit = product_map.get(item.produit_id)"
+      },
+      {
+        "line": 333,
+        "method": "get",
+        "code": "produit = product_map.get(item.produit_id)"
+      },
+      {
+        "line": 401,
+        "method": "save",
+        "code": "target_line.save()"
+      },
+      {
+        "line": 406,
+        "method": "save",
+        "code": "source_line.save()"
+      },
+      {
+        "line": 464,
+        "method": "get",
+        "code": "produit = product_map.get(item.produit_id)"
+      },
+      {
+        "line": 601,
+        "method": "all",
+        "code": "for item in commande.produits.all():"
+      },
+      {
+        "line": 670,
+        "method": "all",
+        "code": "for item in commande.produits.all():"
+      },
+      {
+        "line": 887,
+        "method": "get",
+        "code": "if label_data['fournisseur'] or label_data.get('invoice_ref'):"
+      },
+      {
+        "line": 890,
+        "method": "get",
+        "code": "inv_text = f\"Fact:{label_data['invoice_ref'][:8]}\" if label_data.get('invoice_ref') else \"\""
+      },
+      {
+        "line": 983,
+        "method": "get",
+        "code": "produit_id = p.get('produit')"
+      },
+      {
+        "line": 984,
+        "method": "get",
+        "code": "lot = p.get('lot') or None"
+      },
+      {
+        "line": 989,
+        "method": "get",
+        "code": "'id': p.get('id'),"
+      },
+      {
+        "line": 991,
+        "method": "get",
+        "code": "'quantity': int(p.get('quantity', 0)),"
+      },
+      {
+        "line": 992,
+        "method": "get",
+        "code": "'unites_gratuites': int(p.get('unites_gratuites', 0)),"
+      },
+      {
+        "line": 993,
+        "method": "get",
+        "code": "'price': Decimal(str(p.get('price', 0))),"
+      },
+      {
+        "line": 994,
+        "method": "get",
+        "code": "'price_cost': Decimal(str(p.get('price_cost', p.get('price', 0)))),"
+      },
+      {
+        "line": 995,
+        "method": "get",
+        "code": "'selling_price': Decimal(str(p.get('selling_price', 0))) if p.get('selling_price') else Decimal('0'),"
+      },
+      {
+        "line": 996,
+        "method": "get",
+        "code": "'prix_euro': Decimal(str(p.get('prix_euro'))) if p.get('prix_euro') else None,"
+      },
+      {
+        "line": 998,
+        "method": "get",
+        "code": "'date_expiration': p.get('date_expiration') or None,"
+      },
+      {
+        "line": 1002,
+        "method": "get",
+        "code": "merged_data[key]['quantity'] += int(p.get('quantity', 0))"
+      },
+      {
+        "line": 1003,
+        "method": "get",
+        "code": "merged_data[key]['unites_gratuites'] += int(p.get('unites_gratuites', 0))"
+      },
+      {
+        "line": 1005,
+        "method": "get",
+        "code": "if not merged_data[key]['id'] and p.get('id'):"
+      },
+      {
+        "line": 1006,
+        "method": "get",
+        "code": "merged_data[key]['id'] = p.get('id')"
+      },
+      {
+        "line": 1086,
+        "method": "all",
+        "code": "for ligne in avoir.produits.all():"
+      },
+      {
+        "line": 1101,
+        "method": "save",
+        "code": "lot.save()"
+      },
+      {
+        "line": 1108,
+        "method": "save",
+        "code": "ligne.save()"
+      },
+      {
+        "line": 1117,
+        "method": "save",
+        "code": "produit.save()"
+      },
+      {
+        "line": 1312,
+        "method": "save",
+        "code": "produit.save(update_fields=['stock'])"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\dashboard.py",
+    "queries": [
+      {
+        "line": 447,
+        "method": "get",
+        "code": "data.append(revenue_map.get(current_date, 0))"
+      },
+      {
+        "line": 704,
+        "method": "get",
+        "code": "u = User.objects.get(pk=user_id)"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\etat_inventaire.py",
+    "queries": [
+      {
+        "line": 89,
+        "method": "filter",
+        "code": "lots = list(produit.stock_lots.filter(quantity_remaining__gt=0).order_by('date_expiration'))"
+      },
+      {
+        "line": 185,
+        "method": "get",
+        "code": "items.sort(key=lambda x: (x['name'].lower(), x.get('lot_numero', '')))"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\finance_stats.py",
+    "queries": [
+      {
+        "line": 85,
+        "method": "get",
+        "code": "data.append(current_map.get(key, 0))"
+      },
+      {
+        "line": 86,
+        "method": "get",
+        "code": "comparaison_n1.append(n1_map.get(key, 0))"
+      },
+      {
+        "line": 151,
+        "method": "get",
+        "code": "entry = margin_map.get(key, {'marge': 0, 'taux': 0, 'ca': 0})"
+      },
+      {
+        "line": 204,
+        "method": "get",
+        "code": "historique.append(ca_map.get(key, 0))"
+      },
+      {
+        "line": 694,
+        "method": "get",
+        "code": "'nom': category_names.get(cat_id, 'Inconnu'),"
+      },
+      {
+        "line": 840,
+        "method": "filter",
+        "code": "lots = StockLot.objects.filter("
+      },
+      {
+        "line": 845,
+        "method": "aggregate",
+        "code": "stats_volume = lots.aggregate("
+      },
+      {
+        "line": 857,
+        "method": "count",
+        "code": "problemes = StockAdjustment.objects.filter("
+      },
+      {
+        "line": 857,
+        "method": "filter",
+        "code": "problemes = StockAdjustment.objects.filter("
+      },
+      {
+        "line": 934,
+        "method": "annotate",
+        "code": "lots = StockLot.objects.filter("
+      },
+      {
+        "line": 934,
+        "method": "filter",
+        "code": "lots = StockLot.objects.filter("
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\historique_ventes.py",
+    "queries": [
+      {
+        "line": 86,
+        "method": "annotate",
+        "code": "paiements = Caisse.objects.filter("
+      },
+      {
+        "line": 86,
+        "method": "exclude",
+        "code": "paiements = Caisse.objects.filter("
+      },
+      {
+        "line": 86,
+        "method": "filter",
+        "code": "paiements = Caisse.objects.filter("
+      },
+      {
+        "line": 275,
+        "method": "annotate",
+        "code": "paiements = Caisse.objects.filter("
+      },
+      {
+        "line": 275,
+        "method": "exclude",
+        "code": "paiements = Caisse.objects.filter("
+      },
+      {
+        "line": 275,
+        "method": "filter",
+        "code": "paiements = Caisse.objects.filter("
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\import_views.py",
+    "queries": [
+      {
+        "line": 132,
+        "method": "get",
+        "code": "cost_price = float(row.get('cost_price', 0))"
+      },
+      {
+        "line": 137,
+        "method": "get",
+        "code": "if 'tvcode' in df.columns and pd.notna(row.get('tvcode')):"
+      },
+      {
+        "line": 138,
+        "method": "get",
+        "code": "tvcode = int(row.get('tvcode', 0))"
+      },
+      {
+        "line": 155,
+        "method": "get",
+        "code": "cip1 = clean_cip(row.get('cip1', ''))"
+      },
+      {
+        "line": 156,
+        "method": "get",
+        "code": "cip2 = clean_cip(row.get('cip2', ''))"
+      },
+      {
+        "line": 157,
+        "method": "get",
+        "code": "cip3 = clean_cip(row.get('cip3', ''))"
+      },
+      {
+        "line": 163,
+        "method": "get",
+        "code": "'stock': int(row.get('stock', 0)) if 'stock' in df.columns else 0,"
+      },
+      {
+        "line": 177,
+        "method": "filter",
+        "code": "product = Produit.objects.filter(cip1=cip1).first()"
+      },
+      {
+        "line": 177,
+        "method": "first",
+        "code": "product = Produit.objects.filter(cip1=cip1).first()"
+      },
+      {
+        "line": 179,
+        "method": "filter",
+        "code": "product = Produit.objects.filter(cip2=cip2).first()"
+      },
+      {
+        "line": 179,
+        "method": "first",
+        "code": "product = Produit.objects.filter(cip2=cip2).first()"
+      },
+      {
+        "line": 181,
+        "method": "filter",
+        "code": "product = Produit.objects.filter(cip3=cip3).first()"
+      },
+      {
+        "line": 181,
+        "method": "first",
+        "code": "product = Produit.objects.filter(cip3=cip3).first()"
+      },
+      {
+        "line": 183,
+        "method": "filter",
+        "code": "product = Produit.objects.filter(name__iexact=name).first()"
+      },
+      {
+        "line": 183,
+        "method": "first",
+        "code": "product = Produit.objects.filter(name__iexact=name).first()"
+      },
+      {
+        "line": 202,
+        "method": "get",
+        "code": "product.stock = int(row.get('stock', 0))"
+      },
+      {
+        "line": 204,
+        "method": "save",
+        "code": "product.save()"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\produits.py",
+    "queries": [
+      {
+        "line": 401,
+        "method": "get",
+        "code": "model_counts[model_name] = model_counts.get(model_name, 0) + 1"
+      },
+      {
+        "line": 451,
+        "method": "get",
+        "code": "model_counts[model_name] = model_counts.get(model_name, 0) + 1"
+      },
+      {
+        "line": 510,
+        "method": "get",
+        "code": "if any(h.get('facture') == v['facture__id'] for h in history):"
+      },
+      {
+        "line": 586,
+        "method": "get",
+        "code": "if item.get('commande'):"
+      },
+      {
+        "line": 595,
+        "method": "get",
+        "code": "cmd_id = item.get('commande')"
+      },
+      {
+        "line": 616,
+        "method": "get",
+        "code": "if item.get('type') == MouvementStock.TypeMouvement.REAPPRO_INTERSTOCK:"
+      },
+      {
+        "line": 750,
+        "method": "get",
+        "code": "total_sold = sold_dict.get(produit.id, 0)"
+      },
+      {
+        "line": 861,
+        "method": "get",
+        "code": "produit = Produit.objects.get(pk=item.get('id'))"
+      },
+      {
+        "line": 862,
+        "method": "get",
+        "code": "qty = item.get('quantity', 1)"
+      },
+      {
+        "line": 1238,
+        "method": "save",
+        "code": "lot.save(update_fields=['quantity_reserved', 'quantity_remaining'])"
+      },
+      {
+        "line": 1573,
+        "method": "get",
+        "code": "produit = products_map.get(item['produit'])"
+      },
+      {
+        "line": 1633,
+        "method": "aggregate",
+        "code": "total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate("
+      },
+      {
+        "line": 1633,
+        "method": "filter",
+        "code": "total_paye = PaiementFournisseur.objects.filter(fournisseur=f).aggregate("
+      },
+      {
+        "line": 1637,
+        "method": "annotate",
+        "code": "commandes = Commande.objects.filter("
+      },
+      {
+        "line": 1637,
+        "method": "filter",
+        "code": "commandes = Commande.objects.filter("
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\produit_import.py",
+    "queries": [
+      {
+        "line": 55,
+        "method": "get",
+        "code": "nom = row.get('nom', '').strip()"
+      },
+      {
+        "line": 56,
+        "method": "get",
+        "code": "prix_achat = row.get('prix_achat', '').strip()"
+      },
+      {
+        "line": 57,
+        "method": "get",
+        "code": "prix_vente = row.get('prix_vente', '').strip()"
+      },
+      {
+        "line": 58,
+        "method": "get",
+        "code": "tva = row.get('tva', '').strip()"
+      },
+      {
+        "line": 59,
+        "method": "get",
+        "code": "quantite = row.get('quantite', '').strip()"
+      },
+      {
+        "line": 88,
+        "method": "get",
+        "code": "cip1 = row.get('cip1', '').strip() or None"
+      },
+      {
+        "line": 89,
+        "method": "get",
+        "code": "cip2 = row.get('cip2', '').strip() or None"
+      },
+      {
+        "line": 90,
+        "method": "get",
+        "code": "cip3 = row.get('cip3', '').strip() or None"
+      },
+      {
+        "line": 97,
+        "method": "filter",
+        "code": "produit = Produit.objects.filter(cip1=cip1).first()"
+      },
+      {
+        "line": 97,
+        "method": "first",
+        "code": "produit = Produit.objects.filter(cip1=cip1).first()"
+      },
+      {
+        "line": 99,
+        "method": "filter",
+        "code": "produit = Produit.objects.filter(cip2=cip2).first()"
+      },
+      {
+        "line": 99,
+        "method": "first",
+        "code": "produit = Produit.objects.filter(cip2=cip2).first()"
+      },
+      {
+        "line": 101,
+        "method": "filter",
+        "code": "produit = Produit.objects.filter(cip3=cip3).first()"
+      },
+      {
+        "line": 101,
+        "method": "first",
+        "code": "produit = Produit.objects.filter(cip3=cip3).first()"
+      },
+      {
+        "line": 105,
+        "method": "filter",
+        "code": "produit = Produit.objects.filter(name__iexact=nom).first()"
+      },
+      {
+        "line": 105,
+        "method": "first",
+        "code": "produit = Produit.objects.filter(name__iexact=nom).first()"
+      },
+      {
+        "line": 126,
+        "method": "save",
+        "code": "produit.save()"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\purge.py",
+    "queries": [
+      {
+        "line": 215,
+        "method": "get",
+        "code": "info = registry.get(table_key)"
+      },
+      {
+        "line": 220,
+        "method": "filter",
+        "code": "parent_qs = info['model'].objects.filter(**date_filter)"
+      },
+      {
+        "line": 221,
+        "method": "count",
+        "code": "parent_count = parent_qs.count()"
+      },
+      {
+        "line": 234,
+        "method": "count",
+        "code": "child_count = child['model'].objects.filter(**child_filter).count()"
+      },
+      {
+        "line": 234,
+        "method": "filter",
+        "code": "child_count = child['model'].objects.filter(**child_filter).count()"
+      },
+      {
+        "line": 267,
+        "method": "get",
+        "code": "info = registry.get(table_key)"
+      },
+      {
+        "line": 272,
+        "method": "filter",
+        "code": "parent_qs = info['model'].objects.filter(**date_filter)"
+      },
+      {
+        "line": 288,
+        "method": "filter",
+        "code": "child_qs = child['model'].objects.filter(**child_filter)"
+      },
+      {
+        "line": 326,
+        "method": "get",
+        "code": "info = registry.get(table_key)"
+      },
+      {
+        "line": 331,
+        "method": "filter",
+        "code": "qs = info['model'].objects.filter(**date_filter)"
+      },
+      {
+        "line": 332,
+        "method": "count",
+        "code": "count = qs.count()"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\rapports.py",
+    "queries": [
+      {
+        "line": 137,
+        "method": "get",
+        "code": "mops = mouvements_map.get(current_day, {'ventes_ttc': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0})"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\stocks.py",
+    "queries": [
+      {
+        "line": 183,
+        "method": "save",
+        "code": "lot.save()"
+      },
+      {
+        "line": 192,
+        "method": "save",
+        "code": "produit.save(update_fields=['stock'])"
+      },
+      {
+        "line": 582,
+        "method": "filter",
+        "code": "lots = produit.stock_lots.filter("
+      },
+      {
+        "line": 747,
+        "method": "filter",
+        "code": "MouvementStock.objects.filter(produit=prod, inventaire=inventaire).update(stock_apres=prod.total_stock)"
+      },
+      {
+        "line": 786,
+        "method": "save",
+        "code": "l.save(update_fields=['ecart', 'pmp_snapshot'])"
+      },
+      {
+        "line": 907,
+        "method": "filter",
+        "code": "for l in StockLot.objects.filter(produit_id__in=produit_ids):"
+      },
+      {
+        "line": 916,
+        "method": "get",
+        "code": "p_id = data.get('produit')"
+      },
+      {
+        "line": 917,
+        "method": "get",
+        "code": "produit = produits_map.get(p_id)"
+      },
+      {
+        "line": 925,
+        "method": "get",
+        "code": "if data.get('stock_lot'):"
+      },
+      {
+        "line": 926,
+        "method": "get",
+        "code": "target_lot = lots_map.get(data['stock_lot'])"
+      },
+      {
+        "line": 929,
+        "method": "get",
+        "code": "elif data.get('lot_numero'):"
+      },
+      {
+        "line": 931,
+        "method": "get",
+        "code": "target_lot = existing_lots_by_num.get(key)"
+      },
+      {
+        "line": 937,
+        "method": "get",
+        "code": "date_expiration=data.get('lot_expiration'),"
+      },
+      {
+        "line": 948,
+        "method": "get",
+        "code": "quantite_physique = data.get('quantite_physique', data.get('quantite_comptee', stock_theorique))"
+      },
+      {
+        "line": 1029,
+        "method": "get",
+        "code": "cip = row.get('cip') or row.get('code') or row.get('barcode') or ''"
+      },
+      {
+        "line": 1030,
+        "method": "get",
+        "code": "quantite_str = row.get('quantite') or row.get('qte') or row.get('qty') or ''"
+      },
+      {
+        "line": 1053,
+        "method": "filter",
+        "code": "produit = Produit.objects.filter(cip1=cip).first() or \\"
+      },
+      {
+        "line": 1053,
+        "method": "first",
+        "code": "produit = Produit.objects.filter(cip1=cip).first() or \\"
+      },
+      {
+        "line": 1054,
+        "method": "filter",
+        "code": "Produit.objects.filter(cip2=cip).first() or \\"
+      },
+      {
+        "line": 1054,
+        "method": "first",
+        "code": "Produit.objects.filter(cip2=cip).first() or \\"
+      },
+      {
+        "line": 1055,
+        "method": "filter",
+        "code": "Produit.objects.filter(cip3=cip).first()"
+      },
+      {
+        "line": 1055,
+        "method": "first",
+        "code": "Produit.objects.filter(cip3=cip).first()"
+      },
+      {
+        "line": 1123,
+        "method": "filter",
+        "code": "compatible_line = LigneInventaire.objects.filter("
+      },
+      {
+        "line": 1123,
+        "method": "first",
+        "code": "compatible_line = LigneInventaire.objects.filter("
+      },
+      {
+        "line": 1133,
+        "method": "save",
+        "code": "compatible_line.save()"
+      },
+      {
+        "line": 1139,
+        "method": "save",
+        "code": "source_ligne.save()"
+      },
+      {
+        "line": 1199,
+        "method": "filter",
+        "code": "lines = inventaire.lignes.filter(produit_id=produit_id, stock_lot_id=stock_lot_id).order_by('id')"
+      },
+      {
+        "line": 1201,
+        "method": "exists",
+        "code": "if lines.exists():"
+      },
+      {
+        "line": 1202,
+        "method": "first",
+        "code": "primary_line = lines.first()"
+      },
+      {
+        "line": 1203,
+        "method": "exclude",
+        "code": "other_lines = lines.exclude(id=primary_line.id)"
+      },
+      {
+        "line": 1210,
+        "method": "save",
+        "code": "primary_line.save()"
+      },
+      {
+        "line": 1213,
+        "method": "count",
+        "code": "deleted_count = other_lines.count()"
+      },
+      {
+        "line": 1732,
+        "method": "get",
+        "code": "dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))"
+      },
+      {
+        "line": 1934,
+        "method": "save",
+        "code": "lot.save()"
+      },
+      {
+        "line": 2325,
+        "method": "get",
+        "code": "vendu_recent = map_recentes.get(produit.id, 0)    # 7 derniers jours"
+      },
+      {
+        "line": 2326,
+        "method": "get",
+        "code": "vendu_ancien = map_anciennes.get(produit.id, 0)    # jours 8-30"
+      },
+      {
+        "line": 2327,
+        "method": "get",
+        "code": "qte_en_commande = map_commandes.get(produit.id, 0)"
+      }
+    ]
+  },
+  {
+    "file": "api\\views\\ventes.py",
+    "queries": [
+      {
+        "line": 249,
+        "method": "get",
+        "code": "produit_id = p_item.get('produit')"
+      },
+      {
+        "line": 250,
+        "method": "get",
+        "code": "qty = int(p_item.get('quantity', 0))"
+      },
+      {
+        "line": 251,
+        "method": "get",
+        "code": "price = Decimal(str(p_item.get('selling_price', '0')))"
+      },
+      {
+        "line": 252,
+        "method": "get",
+        "code": "discount = Decimal(str(p_item.get('discount', '0')))"
+      },
+      {
+        "line": 253,
+        "method": "get",
+        "code": "tva_rate = Decimal(str(p_item.get('tva', '0')))"
+      },
+      {
+        "line": 254,
+        "method": "get",
+        "code": "lot_id = p_item.get('lot_id')"
+      },
+      {
+        "line": 291,
+        "method": "get",
+        "code": "if p_item.get('is_promis') and p_item.get('promis_quantity', 0) > 0:"
+      },
+      {
+        "line": 296,
+        "method": "get",
+        "code": "client_phone=p_item.get('promis_phone', ''),"
+      },
+      {
+        "line": 314,
+        "method": "get",
+        "code": "for l_ord in ordonnance_data.get('lignes', []):"
+      },
+      {
+        "line": 317,
+        "method": "get",
+        "code": "produit_id=l_ord.get('produit_id'),"
+      },
+      {
+        "line": 318,
+        "method": "get",
+        "code": "produit_nom=l_ord.get('produit_nom'),"
+      },
+      {
+        "line": 319,
+        "method": "get",
+        "code": "quantite=l_ord.get('quantite'),"
+      },
+      {
+        "line": 320,
+        "method": "get",
+        "code": "surveillance_category=l_ord.get('surveillance_category', 'NONE')"
+      },
+      {
+        "line": 343,
+        "method": "get",
+        "code": "reference=p_data.get('reference'),"
+      },
+      {
+        "line": 346,
+        "method": "get",
+        "code": "part_patient=p_data.get('part_patient'),"
+      },
+      {
+        "line": 347,
+        "method": "get",
+        "code": "part_assurance=p_data.get('part_assurance')"
+      },
+      {
+        "line": 476,
+        "method": "filter",
+        "code": "for p in Promis.objects.filter(facture=facture):"
+      },
+      {
+        "line": 477,
+        "method": "get",
+        "code": "promis_map[p.produit_id] = promis_map.get(p.produit_id, 0) + p.quantite"
+      },
+      {
+        "line": 482,
+        "method": "get",
+        "code": "requested_map[item.produit_id] = requested_map.get(item.produit_id, 0) + item.quantity"
+      },
+      {
+        "line": 486,
+        "method": "get",
+        "code": "produit = product_map.get(produit_id)"
+      },
+      {
+        "line": 492,
+        "method": "get",
+        "code": "promis_qty = promis_map.get(produit_id, 0)"
+      },
+      {
+        "line": 542,
+        "method": "get",
+        "code": "produit = product_map.get(item.produit_id)"
+      },
+      {
+        "line": 553,
+        "method": "get",
+        "code": "target_lot = locked_lots_dict.get(item.stock_lot_id)"
+      },
+      {
+        "line": 556,
+        "method": "get",
+        "code": "target_lot = StockLot.objects.select_for_update().get(id=item.stock_lot_id)"
+      },
+      {
+        "line": 587,
+        "method": "get",
+        "code": "available = fifo_lots_queue.get(produit.id, [])"
+      },
+      {
+        "line": 619,
+        "method": "get",
+        "code": "target_lot = locked_lots_dict.get(item.stock_lot_id)"
+      },
+      {
+        "line": 622,
+        "method": "get",
+        "code": "target_lot = StockLot.objects.select_for_update().get(id=item.stock_lot_id)"
+      },
+      {
+        "line": 628,
+        "method": "filter",
+        "code": "target_lot = StockLot.objects.filter(produit=produit).order_by('-created_at').first()"
+      },
+      {
+        "line": 628,
+        "method": "first",
+        "code": "target_lot = StockLot.objects.filter(produit=produit).order_by('-created_at').first()"
+      },
+      {
+        "line": 651,
+        "method": "get",
+        "code": "manual_stock_decrements[produit.id] = manual_stock_decrements.get(produit.id, 0) + item.quantity"
+      },
+      {
+        "line": 665,
+        "method": "filter",
+        "code": "Produit.objects.filter(id=pid).update(stock=F('stock') - qty)"
+      },
+      {
+        "line": 693,
+        "method": "get",
+        "code": "current_stock = product_stock_map.get(item.produit_id)"
+      },
+      {
+        "line": 872,
+        "method": "filter",
+        "code": "StockLot.objects.filter(pk=alloc.stock_lot.pk).update("
+      },
+      {
+        "line": 883,
+        "method": "filter",
+        "code": "Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)"
+      },
+      {
+        "line": 971,
+        "method": "filter",
+        "code": "StockLot.objects.filter(pk=alloc.stock_lot.pk).update("
+      },
+      {
+        "line": 980,
+        "method": "filter",
+        "code": "Produit.objects.filter(pk=item.produit_id).update(stock=F('stock') + item.quantity)"
+      },
+      {
+        "line": 985,
+        "method": "get",
+        "code": "produit_id = prod_data.get('produit')"
+      },
+      {
+        "line": 986,
+        "method": "get",
+        "code": "quantity = int(prod_data.get('quantity', 1))"
+      },
+      {
+        "line": 987,
+        "method": "get",
+        "code": "selling_price = prod_data.get('selling_price', '0')"
+      },
+      {
+        "line": 988,
+        "method": "get",
+        "code": "discount = Decimal(str(prod_data.get('discount', '0')))"
+      },
+      {
+        "line": 989,
+        "method": "get",
+        "code": "tva_rate = Decimal(str(prod_data.get('tva', '0')))"
+      },
+      {
+        "line": 990,
+        "method": "get",
+        "code": "lot_id = prod_data.get('lot_id')"
+      },
+      {
+        "line": 1003,
+        "method": "filter",
+        "code": "Produit.objects.filter(pk=produit_id).update(stock=F('stock') - quantity)"
+      },
+      {
+        "line": 1007,
+        "method": "get",
+        "code": "produit = Produit.objects.get(pk=produit_id)"
+      },
+      {
+        "line": 1011,
+        "method": "get",
+        "code": "target_lot = StockLot.objects.select_for_update().get(id=lot_id)"
+      },
+      {
+        "line": 1024,
+        "method": "save",
+        "code": "target_lot.save()"
+      },
+      {
+        "line": 1026,
+        "method": "filter",
+        "code": "available_lots = StockLot.objects.select_for_update().filter("
+      },
+      {
+        "line": 1046,
+        "method": "save",
+        "code": "lot.save()"
+      },
+      {
+        "line": 1346,
+        "method": "all",
+        "code": "for item in facture.produits.all():"
+      },
+      {
+        "line": 2124,
+        "method": "aggregate",
+        "code": "paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')"
+      },
+      {
+        "line": 2124,
+        "method": "exclude",
+        "code": "paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')"
+      },
+      {
+        "line": 2124,
+        "method": "filter",
+        "code": "paye = f.paiements.filter(statut='completee').exclude(mode_paiement='en_compte').aggregate(Sum('montant'))['montant__sum'] or Decimal('0')"
+      },
+      {
+        "line": 2356,
+        "method": "filter",
+        "code": "montant_paye = facture.paiements.filter("
+      },
+      {
+        "line": 2471,
+        "method": "filter",
+        "code": "montant_paye = facture.paiements.filter("
+      }
+    ]
+  },
+  {
+    "file": "api\\models\\billing.py",
+    "queries": [
+      {
+        "line": 87,
+        "method": "all",
+        "code": "for ligne in self.produits.all():"
+      },
+      {
+        "line": 133,
+        "method": "all",
+        "code": "for ligne in self.produits.all():"
+      }
+    ]
+  }
+]

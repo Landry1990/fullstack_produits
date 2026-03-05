@@ -168,19 +168,19 @@ export default function StatistiquesFournisseur() {
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
                     <p className="text-sm font-medium text-base-content/70">CA Total TTC</p>
-                    <h3 className="text-2xl font-bold text-emerald-600">{Math.round(totaux.ca_ttc).toLocaleString('fr-FR')} F</h3>
+                    <h3 className="text-2xl font-bold text-emerald-600">{Math.round(totaux.ca_ttc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
                     <p className="text-sm font-medium text-base-content/70">Coût d'Achat (Vendu)</p>
-                    <h3 className="text-2xl font-bold text-blue-600">{Math.round(totaux.cout_achat).toLocaleString('fr-FR')} F</h3>
+                    <h3 className="text-2xl font-bold text-blue-600">{Math.round(totaux.cout_achat).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</h3>
                 </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body p-4">
                     <p className="text-sm font-medium text-base-content/70">Marge Brute</p>
-                    <h3 className="text-2xl font-bold text-amber-600">{Math.round(totaux.marge_brute).toLocaleString('fr-FR')} F</h3>
+                    <h3 className="text-2xl font-bold text-amber-600">{Math.round(totaux.marge_brute).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</h3>
                     <p className="text-xs text-base-content/60">
                     {totaux.ca_ttc > 0 ? ((totaux.marge_brute / totaux.ca_ttc) * 100).toFixed(1) : 0}% du CA
                     </p>
@@ -204,7 +204,7 @@ export default function StatistiquesFournisseur() {
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="nom" />
                         <YAxis />
-                        <Tooltip formatter={(value) => `${Number(value).toLocaleString('fr-FR')} F`} />
+                        <Tooltip formatter={(value) => `${Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F`} />
                         <Legend />
                         <Bar dataKey="ca_ttc" name="Chiffre d'Affaires" fill="#10b981" />
                         <Bar dataKey="marge_brute" name="Marge Brute" fill="#f59e0b" />
@@ -241,9 +241,9 @@ export default function StatistiquesFournisseur() {
                             <tr key={stat.id}>
                             <td className="font-medium">{stat.nom}</td>
                             <td className="text-right">{stat.quantite_vendue}</td>
-                            <td className="text-right">{Math.round(Number(stat.cout_achat)).toLocaleString('fr-FR')} F</td>
-                            <td className="text-right font-bold">{Math.round(Number(stat.ca_ttc)).toLocaleString('fr-FR')} F</td>
-                            <td className="text-right text-success">{Math.round(Number(stat.marge_brute)).toLocaleString('fr-FR')} F</td>
+                            <td className="text-right">{Math.round(Number(stat.cout_achat)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</td>
+                            <td className="text-right font-bold">{Math.round(Number(stat.ca_ttc)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</td>
+                            <td className="text-right text-success">{Math.round(Number(stat.marge_brute)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</td>
                             <td className="text-right text-sm">
                                 {Number(stat.ca_ttc) > 0 
                                 ? ((Number(stat.marge_brute) / Number(stat.ca_ttc)) * 100).toFixed(1) 
@@ -298,7 +298,7 @@ export default function StatistiquesFournisseur() {
                                  <div className="grid grid-cols-3 gap-4 text-center">
                                      <div>
                                          <div className="text-xs uppercase font-bold text-base-content/50">Volume (30%)</div>
-                                         <div className="font-bold text-lg">{item.details.volume.valeur?.toLocaleString('fr-FR')} F</div>
+                                         <div className="font-bold text-lg">{item.details.volume.valeur?.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
                                          <progress className="progress progress-primary w-full" value={item.details.volume.score} max="100"></progress>
                                      </div>
                                      <div>
@@ -363,13 +363,13 @@ export default function StatistiquesFournisseur() {
                                             <div key={idx} className="flex justify-between text-xs w-64">
                                                 <span>{offre.fournisseur}:</span>
                                                 <span className={offre.prix_moyen === prod.meilleur_prix ? 'font-bold text-success' : ''}>
-                                                    {Math.round(offre.prix_moyen).toLocaleString('fr-FR')} F
+                                                    {Math.round(offre.prix_moyen).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                                 </span>
                                             </div>
                                         ))}
                                     </td>
                                     <td className="font-bold text-success text-lg">
-                                        {Math.round(prod.meilleur_prix).toLocaleString('fr-FR')} F
+                                        {Math.round(prod.meilleur_prix).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                     </td>
                                 </tr>
                             ))}
@@ -410,7 +410,7 @@ export default function StatistiquesFournisseur() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip formatter={(value) => `${Number(value).toLocaleString('fr-FR')} F`} />
+                                        <Tooltip formatter={(value) => `${Number(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F`} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </div>
@@ -433,7 +433,7 @@ export default function StatistiquesFournisseur() {
                                                 </td>
                                                 <td className="font-bold">{entry.nom}</td>
                                                 <td>{entry.pourcentage}%</td>
-                                                <td>{Math.round(entry.value).toLocaleString('fr-FR')} F</td>
+                                                <td>{Math.round(entry.value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</td>
                                             </tr>
                                         ))}
                                     </tbody>

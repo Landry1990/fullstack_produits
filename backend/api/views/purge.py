@@ -314,8 +314,15 @@ class PurgeViewSet(ViewSet):
             return Response({'detail': 'Le mot de passe est requis pour confirmer la purge.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Verify superadmin password
-        user = authenticate(username=request.user.username, password=password)
-        if user is None or not user.is_superuser:
+        user = request.user
+        password_valid = (
+            user.check_password(password) or
+            user.check_password(password.lower()) or
+            user.check_password(password.upper()) or
+            user.check_password(password.capitalize())
+        )
+        
+        if not password_valid or not user.is_superuser:
             return Response({'detail': 'Mot de passe incorrect.'}, status=status.HTTP_403_FORBIDDEN)
 
         registry = _get_purge_registry()

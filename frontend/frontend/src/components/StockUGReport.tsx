@@ -164,7 +164,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">Historique UG Reçues</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
-                  {loading ? '...' : data?.global_total_ug.toLocaleString('fr-FR')}
+                  {loading ? '...' : data?.global_total_ug.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
               </div>
             </div>
@@ -178,7 +178,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">Stock UG Actuel (Restant)</p>
                 <p className="text-2xl font-black text-emerald-600 tracking-tight">
-                  {loading ? '...' : data?.global_total_ug_restantes.toLocaleString('fr-FR')}
+                  {loading ? '...' : data?.global_total_ug_restantes.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </p>
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">Valeur Reçue Estimée</p>
                 <p className="text-2xl font-black text-slate-600 tracking-tight">
-                  {loading ? '...' : `${data?.global_total_valeur.toLocaleString('fr-FR')} FCFA`}
+                  {loading ? '...' : `${data?.global_total_valeur.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FCFA`}
                 </p>
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function StockUGReport() {
               <div>
                 <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">Trésorerie Latente UG</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
-                  {loading ? '...' : `${data?.global_total_valeur_restante.toLocaleString('fr-FR')} FCFA`}
+                  {loading ? '...' : `${data?.global_total_valeur_restante.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} FCFA`}
                 </p>
               </div>
             </div>
@@ -306,16 +306,16 @@ export default function StockUGReport() {
                       </td>
                       <td className="px-6 py-3 text-right">
                         <span className="font-medium text-slate-400">
-                          {stat.total_ug.toLocaleString('fr-FR')}
+                          {stat.total_ug.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right bg-emerald-50/30">
                         <span className="font-bold text-emerald-600 px-3 py-1 rounded-lg">
-                          {stat.total_ug_restantes.toLocaleString('fr-FR')} UG
+                          {stat.total_ug_restantes.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} UG
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right font-black text-slate-800 bg-blue-50/30">
-                        {stat.total_valeur_restante.toLocaleString('fr-FR')} 
+                        {stat.total_valeur_restante.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} 
                       </td>
                     </tr>
                     {expandedSupplierIds.has(stat.fournisseur_id) && (
@@ -346,10 +346,10 @@ export default function StockUGReport() {
                                      </td>
                                      <td className="text-slate-500 font-mono text-xs">{detail.commande_numero}</td>
                                      <td className="text-slate-500 font-mono text-xs">{detail.facture_numero}</td>
-                                     <td className="text-right text-slate-600">{detail.prix_vente.toLocaleString('fr-FR')}</td>
+                                     <td className="text-right text-slate-600">{detail.prix_vente.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
                                      <td className="text-right text-slate-400">{detail.quantity_free}</td>
                                      <td className="text-right font-bold text-emerald-600">{detail.quantity_free_remaining}</td>
-                                     <td className="text-right font-bold text-blue-600">{detail.valeur_restante.toLocaleString('fr-FR')}</td>
+                                     <td className="text-right font-bold text-blue-600">{detail.valeur_restante.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
                                    </tr>
                                  ))}
                                </tbody>

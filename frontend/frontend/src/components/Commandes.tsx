@@ -121,6 +121,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   const [commandeProduits, setCommandeProduits] = useState<CommandeProduit[]>([]);
   
+  const [commandeSortBy, setCommandeSortBy] = useState<'chrono' | 'stock' | 'name' | 'qty'>('chrono');
 
   
   // Use product search hook for optimized searching
@@ -799,7 +800,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         produit: product,
         quantity: 1,
         unites_gratuites: 0,  // NEW: Initialize UG
-        prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(2) : '0') : undefined,
+        prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(0) : '0') : undefined,
         price: product.cost_price || '0',
         tva: product.tva || '0',
         marge: product.taux_marge || '1.3',
@@ -1025,7 +1026,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                if (!isNaN(price) && !isNaN(selling) && price > 0) {
                    // Reconvertir TTC en HT puis calculer la marge
                    const sellingHT = selling / (1 + tva / 100);
-                   newItem.marge = (sellingHT / price).toFixed(2);
+                   newItem.marge = (sellingHT / price).toFixed(0);
                }
           }
             return newItem;
@@ -1202,7 +1203,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   id: Date.now() + Math.random(), // Unique temp ID
                   produit: product,
                   quantity: qty,
-                  prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(2) : '0') : undefined,
+                  prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(0) : '0') : undefined,
                   price: product.cost_price || '0',
                   tva: product.tva || '0',
                   marge: product.taux_marge || '1.3',
@@ -1394,13 +1395,43 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
   // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
-  // Ajoutez ce callback pour ajouter le produit créé à la liste et le sélectionner
   function handleProduitCreated(produit: ProduitModel) {
     // Products are managed by search hook, will appear automatically on next search
     selectProduct(produit); // Add directly to table
     setSearchProduitQuery(produit.name.substring(0, 3)); // Trigger search to show new product
     setIsCreateProduitModalOpen(false); // Fermer le modal après création
   }
+
+  const handleSortProduits = useCallback((sortBy: 'chrono' | 'stock' | 'name' | 'qty') => {
+    setCommandeSortBy(sortBy);
+    setCommandeProduits(prev => {
+      const sorted = [...prev].sort((a, b) => {
+        if (sortBy === 'chrono') return (a.id || 0) - (b.id || 0);
+
+        const prodA = typeof a.produit === 'object' ? a.produit : produitsList.find(p => p.id === a.produit);
+        const prodB = typeof b.produit === 'object' ? b.produit : produitsList.find(p => p.id === b.produit);
+
+        if (sortBy === 'name') {
+          const nameA = prodA?.name || (a as any).produit_nom || '';
+          const nameB = prodB?.name || (b as any).produit_nom || '';
+          return nameA.localeCompare(nameB);
+        }
+        if (sortBy === 'stock') {
+          const stockA = prodA?.stock ?? (a as any).produit_stock ?? 0;
+          const stockB = prodB?.stock ?? (b as any).produit_stock ?? 0;
+          return stockB - stockA;
+        }
+        if (sortBy === 'qty') {
+          return (Number(b.quantity) || 0) - (Number(a.quantity) || 0);
+        }
+        return 0;
+      });
+      return sorted;
+    });
+    // Clear selection since visual indexes change but selectedRows retains old ones implicitly.
+    // Instead of mapping selection, we just clear it.
+    setSelectedRows(new Set());
+  }, [produitsList]);
 
 
 
@@ -1445,7 +1476,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         const sell = parseFloat(p.selling_price || '0');
         
         if (!marge && cost > 0 && sell > 0) {
-            marge = (sell / cost).toFixed(2);
+            marge = (sell / cost).toFixed(0);
         }
 
         return {
@@ -1490,8 +1521,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }
 
   return (
-    <>
-      <div className="flex flex-col items-center mb-6">
+    <div className="h-full flex flex-col overflow-hidden bg-base-100">
+      <div className="flex flex-col items-center pt-4 mb-4 shrink-0">
           <h1 className="text-xl md:text-2xl font-bold text-center mb-4">
               {activeTab === 'DIR' ? t('orders.title_direct') : t('orders.title')}
           </h1>
@@ -1515,13 +1546,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
       </div>
 
       {error && (
-        <div role="alert" className="alert alert-error mb-4">
+        <div role="alert" className="alert alert-error mb-4 shrink-0 mx-4 w-auto">
           <span>{error}</span>
         </div>
       )}
 
       {/* Vue conditionnelle basée sur viewMode */}
       {viewMode === 'LIST' && (
+        <div className="flex-1 min-h-0 overflow-hidden">
         /* LISTE DES COMMANDES - REFACTOR */
         <CommandeList
           commandes={commandes}
@@ -1554,13 +1586,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
           onOpenSuggestionModal={() => setIsSuggestionModalOpen(true)}
           onViewDetails={handleViewDetails}
         />
+        </div>
       )}
 
       {viewMode === 'DETAILS' && selectedCommande && (
         /* DÉTAILS DE LA COMMANDE */
-        <div className="flex flex-col h-full p-4 space-y-4">
+        <div className="flex-1 min-h-0 flex flex-col p-4 space-y-4">
           {/* Header */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
              <button onClick={handleBackToList} className="btn btn-circle btn-sm btn-ghost">←</button>
              <h2 className="text-lg md:text-xl font-bold">Commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
              <div className="ml-auto flex flex-wrap gap-2">
@@ -1636,7 +1669,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           </div>
 
           {/* Grid Info */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm shrink-0">
             <div>
                 <div className="text-xs text-gray-500 uppercase">{t('orders.details.id')}</div>
                 <div className="font-bold">{selectedCommande.id}</div>
@@ -1703,7 +1736,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
             const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
             if (totalUG > 0) {
               return (
-                <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4">
+                <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4 shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
                        <span className="text-success font-bold">UG</span>
@@ -1724,8 +1757,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
 
           {/* Liste des produits (Read Only) */}
-          <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col max-h-[calc(100vh-350px)]">
-            <div className="p-3 border-b border-base-200 flex justify-between items-center gap-4 bg-base-50">
+          <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="p-3 border-b border-base-200 flex justify-between items-center gap-4 bg-base-50 shrink-0">
               <h3 className="font-bold text-sm text-base-content/80">{t('orders.details.products_list', 'Produits de la commande')}</h3>
               
               {selectedCommande.produits && selectedCommande.produits.length > 0 && (
@@ -1752,11 +1785,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
               )}
             </div>
             
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-auto flex-1 bg-base-100">
             {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
               <p className="text-base-content/70 text-center py-8 text-sm">{t('orders.details.empty_products')}</p>
             ) : (
-                <table className="table table-zebra table-pin-rows">
+                <table className="table table-zebra table-pin-rows w-full">
                   <thead className="bg-base-200">
                     <tr>
                       <th className="w-10">
@@ -1880,6 +1913,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {(viewMode === 'CREATE' || viewMode === 'EDIT') && (
+        <div className="flex-1 min-h-0 overflow-hidden">
         <CommandeForm
             viewMode={viewMode === 'CREATE' ? 'CREATE' : 'EDIT'}
             selectedCommande={selectedCommande}
@@ -1922,11 +1956,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
             deleteSelectedRows={deleteSelectedRows}
             openTransferModal={openTransferModal}
             updateCommandeProduitField={updateCommandeProduitField}
-            handleTableFieldKeyDown={handleTableFieldKeyDown}
-            onRemoveProduct={removeProductFromCommande}
-            onCreateAvoir={handleCreateAvoirFromCommande}
-        />
-      )}
+              handleTableFieldKeyDown={handleTableFieldKeyDown}
+              onRemoveProduct={removeProductFromCommande}
+              onCreateAvoir={handleCreateAvoirFromCommande}
+              commandeSortBy={commandeSortBy}
+              onSortProduits={handleSortProduits}
+            />
+          </div>
+        )}
 
 
 
@@ -1999,6 +2036,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
           onMergeSuccess={handleMergeSuccess}
         />
       )}
-    </>
+    </div>
   )
 }

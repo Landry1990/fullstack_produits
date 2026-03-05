@@ -90,7 +90,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                 <tbody className="text-sm">
                                     {paiements.map((p: any) => (
                                         <tr key={p.id} className="hover:bg-base-50 transition-colors border-b border-base-100 last:border-none">
-                                            <td className="font-mono text-base-content/60">{new Date(p.date_paiement || p.created_at).toLocaleString('fr-FR')}</td>
+                                            <td className="font-mono text-base-content/60">{new Date(p.date_paiement || p.created_at).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
                                             <td className="font-bold">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-lg leading-none">{getModeIcon(p.mode_paiement)}</span>

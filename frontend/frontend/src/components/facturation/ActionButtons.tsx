@@ -10,6 +10,8 @@ interface ActionButtonsProps {
   isValid: boolean
   isRetrocession?: boolean
   setIsRetrocession?: (v: boolean) => void
+  isFactureA4?: boolean
+  setIsFactureA4?: (v: boolean) => void
   loading?: boolean
 }
 
@@ -23,6 +25,8 @@ export default function ActionButtons({
   isValid,
   isRetrocession = false,
   setIsRetrocession,
+  isFactureA4 = false,
+  setIsFactureA4,
   loading = false
 }: ActionButtonsProps) {
   const { t } = useTranslation()
@@ -52,6 +56,21 @@ export default function ActionButtons({
             />
             <span className="text-[10px] sm:text-base font-bold uppercase tracking-wider whitespace-nowrap">
               {t('facturation.retrocession_mode')}
+            </span>
+          </label>
+
+          <label 
+            className={`btn btn-xs sm:btn-md gap-1.5 sm:gap-2 border-dashed ${isFactureA4 ? 'btn-info' : 'btn-outline btn-info'}`}
+            title="Imprimer directement une Facture A4 (désactive le ticket)"
+          >
+            <input
+              type="checkbox"
+              checked={isFactureA4}
+              onChange={(e) => setIsFactureA4?.(e.target.checked)}
+              className={`checkbox checkbox-xs ${isFactureA4 ? 'border-blue-900' : 'checkbox-info'}`}
+            />
+            <span className="text-[10px] sm:text-base font-bold uppercase tracking-wider whitespace-nowrap">
+              Facture A4
             </span>
           </label>
 

@@ -100,6 +100,11 @@ class PharmacySettings(models.Model):
         help_text="Seuil d'alerte pour la dette client (FCFA)"
     )
     
+    auto_logout_timeout = models.IntegerField(
+        default=15,
+        help_text="Délai d'inactivité avant déconnexion automatique (en minutes, 0 pour désactiver)"
+    )
+    
     # --- Paramètres Impression & Affichage ---
     ticket_paper_width = models.IntegerField(
         default=80,

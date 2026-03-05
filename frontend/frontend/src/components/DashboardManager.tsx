@@ -57,7 +57,7 @@ export default function DashboardManager() {
                                 <span className="text-primary ml-2 uppercase text-xl font-black">{t('manager_dashboard.manager', 'Manager')}</span>
                             </h1>
                             <p className="text-base-content/60 text-sm mt-1">
-                                {t('manager_dashboard.subtitle', 'Suivi des performances et objectifs commerciaux')}
+                                {t('manager_dashboard.subtitle', 'Suivi de la Marge Brute et couverture des charges')}
                             </p>
                         </div>
                         

@@ -171,7 +171,7 @@ export default function MergeCommandesModal({
                                 <div>
                                     <div className="text-xs text-base-content/50 uppercase">Montant total</div>
                                     <div className="font-bold text-lg text-primary">
-                                        {mergeOrdersDetails.reduce((sum, c) => sum + parseFloat(c.total || '0'), 0).toLocaleString('fr-FR')} F
+                                        {mergeOrdersDetails.reduce((sum, c) => sum + parseFloat(c.total || '0'), 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                     </div>
                                 </div>
                             </div>

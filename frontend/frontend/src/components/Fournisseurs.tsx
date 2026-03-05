@@ -718,7 +718,7 @@ export default function Fournisseurs() {
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('providers.details.debt_balance')}</div>
                               <div className={`text-2xl font-black font-mono ${Number(selectedFournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                                 {Number(selectedFournisseur.solde_dette || 0).toLocaleString('fr-FR')} F
+                                 {Number(selectedFournisseur.solde_dette || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                               </div>
                            </div>
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs italic">
@@ -826,7 +826,7 @@ export default function Fournisseurs() {
                                         </td>
                                         <td className="py-2 text-right">
                                           <span className="text-xs font-semibold text-slate-700">
-                                            {item.dernier_prix_achat.toLocaleString('fr-FR')} F
+                                            {item.dernier_prix_achat.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                           </span>
                                         </td>
                                         <td className="py-2 text-center">
@@ -839,7 +839,7 @@ export default function Fournisseurs() {
                                         </td>
                                         <td className="py-2 text-right">
                                           <span className={`text-xs font-semibold ${item.marge >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {item.marge.toLocaleString('fr-FR')} F
+                                            {item.marge.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                           </span>
                                           <span className="text-[9px] text-slate-400 ml-1">
                                             ({item.marge_pourcent}%)

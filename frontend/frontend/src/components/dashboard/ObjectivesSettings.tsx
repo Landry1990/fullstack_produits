@@ -138,7 +138,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                     >
                                         <Target className={`w-6 h-6 mb-3 ${config.mode === 'FIXE' ? 'text-secondary' : 'text-base-content/50'}`} />
                                         <h3 className={`font-bold ${config.mode === 'FIXE' ? 'text-secondary text-base-content' : ''}`}>Objectif Fixe</h3>
-                                        <p className="text-xs mt-1 leading-relaxed opacity-80">Idéal pour les nouvelles pharmacies. Basé sur le seuil de rentabilité.</p>
+                                        <p className="text-xs mt-1 leading-relaxed opacity-80">Cible une Marge Brute mensuelle pour couvrir vos charges fixes.</p>
                                     </button>
 
                                     <button
@@ -163,7 +163,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                     <div className="grid sm:grid-cols-2 gap-6 animate-in slide-in-from-top-2 fade-in">
                                         <div className="form-control">
                                             <label className="label">
-                                                <span className="label-text font-bold">Seuil de rentabilité mensuel</span>
+                                                <span className="label-text font-bold">Charges fixes mensuelles à couvrir</span>
                                             </label>
                                             <div className="join">
                                                 <input 
@@ -175,7 +175,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                 <span className="btn join-item pointer-events-none bg-base-200 border-base-200">FCFA</span>
                                             </div>
                                             <label className="label">
-                                                <span className="label-text-alt text-base-content/60">Servira à déduire l'objectif quotidien.</span>
+                                                <span className="label-text-alt text-base-content/60">Servira à déduire l'objectif de Marge Brute quotidien.</span>
                                             </label>
                                         </div>
 

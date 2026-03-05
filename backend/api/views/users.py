@@ -20,10 +20,22 @@ class CustomAuthToken(ObtainAuthToken):
     Custom auth token view that returns user details along with the token.
     """
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data,
-                                           context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
+        username = request.data.get('username')
+        password = request.data.get('password')
+        
+        user = None
+        if username and password:
+            user_obj = User.objects.filter(username__iexact=username).first()
+            if user_obj:
+                if user_obj.check_password(password) or \
+                   user_obj.check_password(password.lower()) or \
+                   user_obj.check_password(password.upper()) or \
+                   user_obj.check_password(password.capitalize()):
+                    user = user_obj
+                    
+        if not user or not user.is_active:
+            return Response({'non_field_errors': ['Impossible de se connecter avec les identifiants fournis.']}, status=status.HTTP_400_BAD_REQUEST)
+
         token, created = Token.objects.get_or_create(user=user)
         
         # Determine user role and profile data
@@ -153,7 +165,10 @@ class UserViewSet(viewsets.ModelViewSet):
         except User.DoesNotExist:
             return Response({'valid': False, 'detail': 'Utilisateur introuvable.'}, status=status.HTTP_404_NOT_FOUND)
         
-        if target_user.check_password(password):
+        if target_user.check_password(password) or \
+           target_user.check_password(password.lower()) or \
+           target_user.check_password(password.upper()) or \
+           target_user.check_password(password.capitalize()):
             return Response({'valid': True})
         else:
             return Response({'valid': False, 'detail': 'Mot de passe incorrect.'})

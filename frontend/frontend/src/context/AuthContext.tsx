@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback, type ReactNode } from 'react';
 import axios from 'axios';
 import type { User } from '../types';
 import { safeStorage } from '../utils/storage';
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Fonction de connexion appelée après un succès login (ex: depuis Login.tsx)
-  const login = (userData: User) => {
+  const login = useCallback((userData: User) => {
     // 1. On sauvegarde tout dans le stockage sécurisé
     safeStorage.setItem('authToken', userData.token || '');
     safeStorage.setItem('username', userData.username);
@@ -91,10 +91,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // 3. On configure le header Authorization pour les requêtes API
     axios.defaults.headers.common['Authorization'] = `Token ${userData.token || ''}`;
-  };
+  }, []);
 
   // Fonction de déconnexion
-  const logout = () => {
+  const logout = useCallback(() => {
     // 1. On nettoie le stockage
     safeStorage.clear('session');
     
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // 3. On retire le header Authorization d'axios
     delete axios.defaults.headers.common['Authorization'];
-  };
+  }, []);
 
   return (
     // On rend le contexte disponible pour tous les enfants

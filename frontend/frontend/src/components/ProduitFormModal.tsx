@@ -397,7 +397,7 @@ export default function ProduitFormModal({
               <div className="form-control w-full">
                  <div className="label"><span className="label-text text-xs">Coef.</span></div>
                  <div className={`input input-bordered input-sm w-full flex items-center justify-center font-bold ${tauxMarge < 1 ? 'text-error' : 'text-success'}`}>
-                   {tauxMarge.toFixed(2)}
+                   {tauxMarge.toFixed(0)}
                  </div>
               </div>
               <div className="form-control w-full">

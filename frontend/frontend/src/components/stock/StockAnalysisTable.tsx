@@ -188,7 +188,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 ) : activeTab === 'overstock' ? (
                                     <>
                                         <td className="text-center font-mono">
-                                            <span className="font-bold">{Number(item.rotation || 0).toFixed(2)}</span>
+                                            <span className="font-bold">{Number(item.rotation || 0).toFixed(0)}</span>
                                             <span className="text-[10px] text-base-content/30 ml-1">/mois</span>
                                         </td>
                                         <td className="text-center font-bold text-base-content/40">{item.threshold}</td>

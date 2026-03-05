@@ -44,13 +44,18 @@ import AnalyseTemporelle from './components/AnalyseTemporelle';
 import StockUGReport from './components/StockUGReport';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
+import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
 import { Toaster } from 'react-hot-toast'
 import PharmacySettingsForm from './components/settings/PharmacySettingsForm'
 import ConfigurationOptions from './components/settings/ConfigurationOptions'
 import Maintenance from './components/Maintenance'
+import { useAutoLogout } from './hooks/useAutoLogout';
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
+  
+  // Initialize inactivity auto-logout tracking
+  useAutoLogout();
 
   if (loading) {
     return <div className="h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg"></span></div>;
@@ -200,12 +205,14 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <ConfirmProvider>
-          <Toaster position="top-right" />
-          <Suspense fallback={<div className="h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>}>
-            <RouterProvider router={router} />
-          </Suspense>
-        </ConfirmProvider>
+        <PharmacySettingsProvider>
+          <ConfirmProvider>
+            <Toaster position="top-right" />
+            <Suspense fallback={<div className="h-screen flex items-center justify-center"><span className="loading loading-spinner loading-lg text-primary"></span></div>}>
+              <RouterProvider router={router} />
+            </Suspense>
+          </ConfirmProvider>
+        </PharmacySettingsProvider>
       </AuthProvider>
     </ErrorBoundary>
   )

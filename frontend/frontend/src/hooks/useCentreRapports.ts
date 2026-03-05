@@ -233,7 +233,7 @@ export const formatValue = (key: string, value: any): string => {
         if (key.includes('pourcent') || key.includes('percent')) {
             return value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
         }
-        return Math.round(value).toLocaleString('fr-FR') + (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') || key.includes('cout') || key.includes('marge') ? ' F' : '');
+        return Math.round(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') || key.includes('cout') || key.includes('marge') ? ' F' : '');
     }
     if (typeof value === 'object') {
         if (value.name) return value.name;

@@ -146,7 +146,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                     </td>
                     <td className="py-3 text-right">
                       <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-slate-700'}`}>
-                        {e.montant_du.toLocaleString('fr-FR')} F
+                        {e.montant_du.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                       </div>
                     </td>
                     <td className="py-3 text-center">

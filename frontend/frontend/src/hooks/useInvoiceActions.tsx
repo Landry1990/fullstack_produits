@@ -280,6 +280,43 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         navigate('/app/facturation');
     };
 
+    // --- GENERER AVOIR ---
+    const handleGenerateAvoir = async (facture: Facture) => {
+        const toastId = toast.loading(t('sales.messages.loading_details', { defaultValue: 'Génération de l\'avoir...' }));
+        try {
+            const token = safeStorage.getItem('authToken');
+            const response = await axios.get(`${apiBaseUrl}/factures/${facture.id}/generer_avoir/`, {
+                headers: { Authorization: `Token ${token}` }
+            });
+            const avoirData = response.data;
+            toast.dismiss(toastId);
+
+            // Create a pseudo-Facture to load in Facturation
+            const newDraftAvoir: Partial<Facture> = {
+                ...avoirData,
+                id: undefined, // ensure it's loaded as new
+                numero_facture: undefined,
+                status: 'BROU',
+                paiements: [], // Pas de paiements liés
+                session_ticket_number: undefined,
+                date: new Date().toISOString()
+            };
+
+            // Sauvegarder la facture "avoir" pour le chargement dans Facturation
+            safeStorage.setItem('devis_to_load', JSON.stringify(newDraftAvoir), 'local');
+            toast.success(t('sales.messages.avoir_to_cart', { defaultValue: 'Produits en négatif ajoutés à la facturation' }));
+            
+            // Rediriger vers la facturation
+            navigate('/app/facturation');
+
+        } catch (error: any) {
+            console.error("Erreur génération avoir", error);
+            const detail = error.response?.data?.detail;
+            toast.error(detail || "Impossible de générer un avoir pour cette vente.");
+            toast.dismiss(toastId);
+        }
+    };
+
     return {
         // State
         modals: {
@@ -298,7 +335,8 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             handleConfirmPrintClientName,
             handlePrintTicket, // New action
             handleEditInvoice,
-            handleDuplicateInvoice
+            handleDuplicateInvoice,
+            handleGenerateAvoir
         }
     };
 };

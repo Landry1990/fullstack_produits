@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt, Clock } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt, Clock, MoreVertical, Copy, FileDigit } from 'lucide-react';
 import type { Facture } from '../../types';
 
 interface SalesTableProps {
@@ -10,6 +10,7 @@ interface SalesTableProps {
     onPrintTicket: (facture: Facture) => void;
     onRefund: (facture: Facture) => void;
     onDuplicate: (facture: Facture) => void;
+    onGenerateAvoir: (facture: Facture) => void;
     onDelete: (id: number) => void;
     onBulkDelete?: (ids: number[]) => void;
     loading: boolean;
@@ -22,6 +23,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     onPrintTicket,
     onRefund,
     onDuplicate,
+    onGenerateAvoir,
     onDelete,
     onBulkDelete,
     loading
@@ -181,22 +183,22 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-base-200 text-base-content font-mono font-bold text-sm border border-base-300 group-hover:bg-base-100 group-hover:border-primary/30 group-hover:text-primary group-hover:shadow-sm transition-all">
-                                    {parseFloat(facture.total_ttc).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                                    {parseFloat(facture.total_ttc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className="text-success font-bold font-mono text-sm">
-                                    {parseFloat(facture.montant_regle || '0').toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                                    {parseFloat(facture.montant_regle || '0').toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className={`${parseFloat(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm`}>
-                                    {parseFloat(facture.montant_en_compte || '0').toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F
+                                    {parseFloat(facture.montant_en_compte || '0').toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center hidden lg:table-cell">
                                 {parseFloat(facture.remise) > 0 ? (
-                                    <span className="text-error font-medium">-{parseFloat(facture.remise).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</span>
+                                    <span className="text-error font-medium">-{parseFloat(facture.remise).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
                                 ) : (
                                     <span className="text-base-content/30">-</span>
                                 )}
@@ -213,62 +215,67 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
 
                             <td className="px-6 py-4 text-right">
-                                <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => onView(facture)}
-                                        className="p-2 text-base-content/60 hover:text-secondary hover:bg-secondary/10 rounded-lg transition-all"
-                                        title={t('common.details')}
-                                    >
-                                        <Eye className="w-4 h-4" />
-                                    </button>
-                                    
-                            {/* Dropdown d'impression */}
-                                    <div className="dropdown dropdown-end dropdown-hover">
-                                        <div tabIndex={0} role="button" className="p-2 text-base-content/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title={t('common.print')}>
-                                            <Printer className="w-4 h-4" />
+                                <div className="flex justify-end opacity-60 group-hover:opacity-100 transition-opacity">
+                                    <div className="dropdown dropdown-end">
+                                        <div tabIndex={0} role="button" className="p-2 text-base-content/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="Actions">
+                                            <MoreVertical className="w-5 h-5" />
                                         </div>
-                                        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-40 border border-base-200">
+                                        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-56 border border-base-200">
                                             <li>
-                                                <a onClick={() => onPrint(facture)} className="flex items-center gap-2">
+                                                <a onClick={() => onView(facture)} className="gap-3 hover:bg-secondary/10 hover:text-secondary font-medium">
+                                                    <Eye className="w-4 h-4" />
+                                                    {t('common.details')}
+                                                </a>
+                                            </li>
+                                            <div className="divider my-1"></div>
+                                            <li>
+                                                <a onClick={() => onPrint(facture)} className="gap-3 hover:bg-primary/10 hover:text-primary font-medium">
                                                     <Printer className="w-4 h-4" />
                                                     Format A4
                                                 </a>
                                             </li>
                                             <li>
-                                                <a onClick={() => onPrintTicket(facture)} className="flex items-center gap-2">
+                                                <a onClick={() => onPrintTicket(facture)} className="gap-3 hover:bg-primary/10 hover:text-primary font-medium">
                                                     <Receipt className="w-4 h-4" />
                                                     Ticket Caisse
                                                 </a>
                                             </li>
+                                            <div className="divider my-1"></div>
+                                            <li>
+                                                <a onClick={() => onDuplicate(facture)} className="gap-3 hover:bg-info/10 hover:text-info font-medium">
+                                                    <Copy className="w-4 h-4" />
+                                                    {t('common.duplicate', { defaultValue: 'Dupliquer' })}
+                                                </a>
+                                            </li>
+                                            
+                                            {(facture.status === 'VALIDEE' || facture.status === 'PAY' || facture.status === 'VAL' || facture.status === 'PAYEE') && (
+                                                <li>
+                                                    <a onClick={() => onGenerateAvoir(facture)} className="gap-3 hover:bg-primary/10 hover:text-primary font-medium">
+                                                        <FileDigit className="w-4 h-4" />
+                                                        Générer un avoir
+                                                    </a>
+                                                </li>
+                                            )}
+
+                                            {facture.status !== 'ANN' && facture.status !== 'BROU' && (
+                                                <li>
+                                                    <a onClick={() => onRefund(facture)} className="gap-3 hover:bg-warning/10 hover:text-warning font-medium">
+                                                        <RotateCcw className="w-4 h-4" />
+                                                        {t('common.refund', { defaultValue: "Modifier/Retour" })}
+                                                    </a>
+                                                </li>
+                                            )}
+                                            
+                                            <div className="divider my-1"></div>
+                                            
+                                            <li>
+                                                <a onClick={() => onDelete(facture.id)} className="gap-3 text-error hover:text-error hover:bg-error/10 font-medium">
+                                                    <Trash2 className="w-4 h-4" />
+                                                    {t('common.delete')}
+                                                </a>
+                                            </li>
                                         </ul>
                                     </div>
-
-                                    {/* Dupliquer / Copier */}
-                                    <button
-                                        onClick={() => onDuplicate(facture)}
-                                        className="p-2 text-base-content/60 hover:text-info hover:bg-info/10 rounded-lg transition-all"
-                                        title={t('common.duplicate', { defaultValue: 'Dupliquer' })}
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                                    </button>
-
-                                    {facture.status !== 'ANN' && facture.status !== 'BROU' && (
-                                        <button
-                                            onClick={() => onRefund(facture)}
-                                            className="p-2 text-base-content/60 hover:text-warning hover:bg-warning/10 rounded-lg transition-all"
-                                            title={t('common.refund')}
-                                        >
-                                            <RotateCcw className="w-4 h-4" />
-                                        </button>
-                                    )}
-
-                                    <button
-                                        onClick={() => onDelete(facture.id)}
-                                        className="p-2 text-base-content/60 hover:text-error hover:bg-error/10 rounded-lg transition-all"
-                                        title={t('common.delete')}
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
                                 </div>
                             </td>
                         </tr>
