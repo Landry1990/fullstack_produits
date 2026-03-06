@@ -42,6 +42,7 @@ import ModuleFinancier from './components/ModuleFinancier';
 import ClassementVendeurs from './components/ClassementVendeurs';
 import AnalyseTemporelle from './components/AnalyseTemporelle';
 import StockUGReport from './components/StockUGReport';
+import UserSessions from './components/UserSessions';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
@@ -170,6 +171,7 @@ const router = createBrowserRouter([
           { path: 'historique-achats/locales', element: <HistoriqueAchats forcedType="LOC" /> },
           { path: 'historique-achats/directes', element: <HistoriqueAchats forcedType="DIR" /> },
           { path: 'utilisateurs', element: <GestionUtilisateurs /> },
+          { path: 'user-sessions', element: <UserSessions /> },
           { path: 'invoice-settings', element: <InvoiceSettings /> },
 
           { path: 'pharmacy-settings', element: <PharmacySettingsForm /> },

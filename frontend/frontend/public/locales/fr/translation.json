@@ -123,6 +123,7 @@
             "imprimantes": "Configuration Imprimantes"
         },
         "utilisateurs": "Utilisateurs",
+        "user_sessions": "Suivi de présence",
         "audit": "Journal d'Audit",
         "logout": "Déconnexion",
         "app_subtitle": "Gestion Professionnelle",
@@ -344,6 +345,22 @@
             "load_error": "Erreur lors du chargement des utilisateurs",
             "access_denied": "Accès refusé. Réservé aux administrateurs."
         }
+    },
+    "user_sessions": {
+        "title": "Suivi de présence",
+        "subtitle": "Consultez les heures de connexion et déconnexion des opérateurs.",
+        "date": "Date",
+        "operator": "Opérateur",
+        "all_operators": "Tous les opérateurs",
+        "filter": "Filtrer",
+        "first_login": "1ère Connexion",
+        "last_logout": "Dernière Déconnexion",
+        "duration": "Durée Présence",
+        "status": "Statut",
+        "closed": "Clôturé",
+        "ongoing": "En cours",
+        "loading": "Chargement des sessions...",
+        "no_result": "Aucune session trouvée pour ces critères."
     },
     "providers": {
         "title": "Fournisseurs",

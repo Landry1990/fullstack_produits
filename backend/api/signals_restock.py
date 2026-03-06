@@ -64,6 +64,10 @@ def _process_valid_facture(facture):
         produit = ligne_facture.produit
         qte_vendue = ligne_facture.quantity
         
+        # Ignorer les retours (quantité négative ou nulle) pour ne pas créer de lignes de commande négatives
+        if qte_vendue <= 0:
+            continue
+        
         # 3. Mettre à jour ou créer la ligne de commande
         # On utilise une boucle simple pour gérer la création concurrente si nécessaire
         try:

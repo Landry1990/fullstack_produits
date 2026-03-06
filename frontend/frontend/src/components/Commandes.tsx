@@ -1476,7 +1476,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         const sell = parseFloat(p.selling_price || '0');
         
         if (!marge && cost > 0 && sell > 0) {
-            marge = (sell / cost).toFixed(0);
+            marge = (sell / cost).toFixed(2);
         }
 
         return {
@@ -1961,6 +1961,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
               onCreateAvoir={handleCreateAvoirFromCommande}
               commandeSortBy={commandeSortBy}
               onSortProduits={handleSortProduits}
+              onCloture={viewMode === 'EDIT' ? onCloture : undefined}
+              onMettreEnAttente={viewMode === 'EDIT' ? onMettreEnAttente : undefined}
+              executingAction={executingAction}
             />
           </div>
         )}
