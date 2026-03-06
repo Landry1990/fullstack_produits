@@ -65,6 +65,11 @@ export default function CommandeProductTable({
 }: CommandeProductTableProps) {
     const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
+    const [expandedRow, setExpandedRow] = useState<number | null>(null);
+    
+    // Deletion Modal State
+    const [productToDelete, setProductToDelete] = useState<number | null>(null);
+    const [isDeletingMultiple, setIsDeletingMultiple] = useState(false);
     
     // Auto-select content when input receives focus
     const handleSelectAll = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -162,7 +167,7 @@ export default function CommandeProductTable({
                 <button
                     type="button"
                     className="btn btn-error btn-xs"
-                    onClick={deleteSelectedRows}
+                    onClick={() => setIsDeletingMultiple(true)}
                 >
                     {t('orders.product_table.delete_btn')}
                 </button>
@@ -260,8 +265,8 @@ export default function CommandeProductTable({
                         }
 
                         return (
+                        <React.Fragment key={p.id || `row-${index}`}>
                         <tr 
-                            key={p.id || `row-${index}`} 
                             className={`hover:bg-base-50/50 group border-b border-base-100 last:border-0 ${selectedRows.has(index) ? 'bg-primary/5' : ''}`}
                         >
                             <td>
@@ -491,25 +496,136 @@ export default function CommandeProductTable({
                             tabIndex={!fieldsConfig[7].editable ? -1 : 0}
                         />
                         </td>
-                        {/* Delete Button */}
-                        <td className="w-10 text-center">
-                        <button 
-                            type="button"
-                            className="btn btn-ghost btn-xs text-error opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => onRemoveProduct(index)}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                        </button>
+                        <td className="w-16 text-center">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost btn-xs text-info"
+                                    title="Infos d'aide à la décision"
+                                    onClick={() => setExpandedRow(expandedRow === index ? null : index)}
+                                >
+                                    ℹ️
+                                </button>
+                                <button 
+                                    type="button"
+                                    className="btn btn-ghost btn-xs text-error"
+                                    onClick={() => setProductToDelete(index)}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
+                    
+                    {/* Collapsible Info Row */}
+                    {expandedRow === index && (
+                        <tr className="bg-blue-50/30 border-b border-base-200">
+                            <td colSpan={14} className="p-0">
+                                {(() => {
+                                    // Extract stats either from full product object or from flattened serializer fields
+                                    const pObj = typeof p.produit === 'object' ? p.produit : null;
+                                    const pAny = p as any;
+                                    
+                                    // Merge available data
+                                    const stats = {
+                                        dernier_achat: pObj?.dernier_achat || pAny.produit_dernier_achat,
+                                        dernier_vente: pObj?.dernier_vente || pAny.produit_dernier_vente,
+                                        rotation_moyenne: pObj?.rotation_moyenne || pAny.produit_rotation_moyenne,
+                                        stock_minimum: pObj?.stock_minimum || pAny.produit_stock_minimum || 0,
+                                        stock_maximum: pObj?.stock_maximum || pAny.produit_stock_maximum || 0,
+                                        stock_alert: pObj?.stock_alert || pAny.produit_stock_alert || 0,
+                                        cost_price: pObj?.cost_price || pAny.produit_cost_price || p.price,
+                                        stock: pObj?.stock ?? pAny.produit_stock ?? 0,
+                                    };
+                                    
+                                    const formatAchat = stats.dernier_achat ? new Date(stats.dernier_achat).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnu';
+                                    const formatVente = stats.dernier_vente ? new Date(stats.dernier_vente).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais';
+                                    
+                                    return (
+                                        <div className="p-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-sm">
+                                            <div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Historique d'Achat</div>
+                                                <div className="font-medium text-base-content">{formatAchat}</div>
+                                                <div className="text-xs text-base-content/60 mt-0.5">Dernier prix d'achat: {stats.cost_price ? Number(stats.cost_price).toLocaleString() + ' F' : '-'}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Historique de Vente</div>
+                                                <div className="font-medium text-base-content">{formatVente}</div>
+                                                {stats.rotation_moyenne && (
+                                                    <div className="text-xs text-info mt-0.5 font-medium">Rotation: {Number(stats.rotation_moyenne).toFixed(2)} / jour</div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Alertes Stock</div>
+                                                <div className="font-medium">
+                                                    Min: <span className="text-warning">{stats.stock_minimum}</span> / Max: <span className="text-success">{stats.stock_maximum}</span>
+                                                </div>
+                                                {stats.stock_alert > 0 && (
+                                                    <div className="text-xs text-error mt-0.5">Seuil d'alerte: {stats.stock_alert}</div>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Indicateurs</div>
+                                                <div className="flex flex-col gap-1">
+                                                    {stats.stock <= 0 ? (
+                                                        <div className="text-xs text-error font-medium">⚠️ Stock en rupture</div>
+                                                    ) : stats.rotation_moyenne && Number(stats.rotation_moyenne) > 0 ? (
+                                                        <div className="text-xs">
+                                                            Durée de vie stock actuel: <span className="font-bold">~{Math.round(stats.stock / Number(stats.rotation_moyenne))} j</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-xs text-base-content/50">Rotation inconnue</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+                            </td>
+                        </tr>
+                    )}
+                    </React.Fragment>
                     );
                     })}
                 </tbody>
                 </table>
             )}
             </div>
+
+            {/* Deletion Modals */}
+            {productToDelete !== null && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg text-error">Confirmer la suppression</h3>
+                        <p className="py-4">Êtes-vous sûr de vouloir retirer ce produit de la commande ?</p>
+                        <div className="modal-action">
+                            <button className="btn btn-ghost" onClick={() => setProductToDelete(null)}>Annuler</button>
+                            <button className="btn btn-error text-white" onClick={() => {
+                                onRemoveProduct(productToDelete);
+                                setProductToDelete(null);
+                            }}>Confirmer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isDeletingMultiple && (
+                <div className="modal modal-open">
+                    <div className="modal-box">
+                        <h3 className="font-bold text-lg text-error">Confirmer la suppression multiple</h3>
+                        <p className="py-4">Êtes-vous sûr de vouloir supprimer les {selectedRows.size} produits sélectionnés ?</p>
+                        <div className="modal-action">
+                            <button className="btn btn-ghost" onClick={() => setIsDeletingMultiple(false)}>Annuler</button>
+                            <button className="btn btn-error text-white" onClick={() => {
+                                deleteSelectedRows();
+                                setIsDeletingMultiple(false);
+                            }}>Confirmer</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

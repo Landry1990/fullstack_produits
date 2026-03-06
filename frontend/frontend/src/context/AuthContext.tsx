@@ -94,14 +94,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Fonction de déconnexion
-  const logout = useCallback(() => {
-    // 1. On nettoie le stockage
+  const logout = useCallback(async () => {
+    // 1. On tente d'informer le serveur de la déconnexion pour le suivi
+    try {
+      await axios.post('/api/auth/logout/');
+    } catch (err) {
+      console.warn('Erreur lors de l\'enregistrement de la déconnexion au serveur:', err);
+    }
+
+    // 2. On nettoie le stockage
     safeStorage.clear('session');
     
-    // 2. On remet l'utilisateur à null
+    // 3. On remet l'utilisateur à null
     setUser(null);
     
-    // 3. On retire le header Authorization d'axios
+    // 4. On retire le header Authorization d'axios
     delete axios.defaults.headers.common['Authorization'];
   }, []);
 

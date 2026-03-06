@@ -70,6 +70,10 @@ interface CommandeFormProps {
     onCreateAvoir?: () => void; // Optional handler for creating credit note
     commandeSortBy?: 'chrono' | 'stock' | 'name' | 'qty';
     onSortProduits?: (sortBy: 'chrono' | 'stock' | 'name' | 'qty') => void;
+    // Actions rapides depuis le formulaire
+    onCloture?: () => void;
+    onMettreEnAttente?: () => void;
+    executingAction?: boolean;
 }
 
 export default function CommandeForm({
@@ -117,7 +121,10 @@ export default function CommandeForm({
     onRemoveProduct,
     onCreateAvoir,
     commandeSortBy,
-    onSortProduits
+    onSortProduits,
+    onCloture,
+    onMettreEnAttente,
+    executingAction
  
 }: CommandeFormProps) {
     const { t } = useTranslation();
@@ -365,14 +372,38 @@ export default function CommandeForm({
                 <div className="text-sm text-base-content/50">
                     {t('orders.form.nav_help')}
                 </div>
-              <button 
-                type="submit" 
-                className={`btn btn-primary gap-2 ${saving ? 'loading' : ''}`}
-                disabled={saving || !newCommandeFournisseurId}
-              >
-                {!saving && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>}
-                {saving ? t('orders.form.saving') : t('orders.form.save_btn')}
-              </button>
+              <div className="flex gap-2">
+                {/* Mettre en attente - visible uniquement en mode EDIT */}
+                {viewMode === 'EDIT' && onMettreEnAttente && selectedCommande?.status !== 'CLOT' && (
+                  <button 
+                    type="button"
+                    className={`btn btn-sm gap-1 ${selectedCommande?.status === 'ATT' ? 'btn-info' : 'btn-warning'} ${executingAction ? 'loading' : ''}`}
+                    onClick={onMettreEnAttente}
+                    disabled={saving || executingAction}
+                  >
+                    {selectedCommande?.status === 'ATT' ? '▶️' : '⏸️'} {selectedCommande?.status === 'ATT' ? t('orders.details.resume') : t('orders.details.suspend')}
+                  </button>
+                )}
+                {/* Clôturer - visible uniquement en mode EDIT */}
+                {viewMode === 'EDIT' && onCloture && selectedCommande?.status !== 'CLOT' && (
+                  <button 
+                    type="button"
+                    className={`btn btn-success btn-sm text-white gap-1 ${executingAction ? 'loading' : ''}`}
+                    onClick={onCloture}
+                    disabled={saving || executingAction}
+                  >
+                    ✅ {t('orders.details.close')}
+                  </button>
+                )}
+                <button 
+                  type="submit" 
+                  className={`btn btn-primary btn-sm gap-2 ${saving ? 'loading' : ''}`}
+                  disabled={saving || !newCommandeFournisseurId}
+                >
+                  {!saving && <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>}
+                  {saving ? t('orders.form.saving') : t('orders.form.save_btn')}
+                </button>
+              </div>
             </div>
           </form> 
         </div>

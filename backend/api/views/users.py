@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
-from ..models import Profile as UserProfile, Client, AuditLog
+from ..models import Profile as UserProfile, Client, AuditLog, UserDailySession
 from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer
 from ..audit_helpers import log_audit
 
@@ -36,7 +36,9 @@ class CustomAuthToken(ObtainAuthToken):
         if not user or not user.is_active:
             return Response({'non_field_errors': ['Impossible de se connecter avec les identifiants fournis.']}, status=status.HTTP_400_BAD_REQUEST)
 
-        token, created = Token.objects.get_or_create(user=user)
+        # Method A: Delete existing tokens to ensure single session
+        Token.objects.filter(user=user).delete()
+        token = Token.objects.create(user=user)
         
         # Determine user role and profile data
         role = 'vendeur'
@@ -63,6 +65,20 @@ class CustomAuthToken(ObtainAuthToken):
             can_do_returns = user.profile.can_do_returns
             can_sell_negative_stock = user.profile.can_sell_negative_stock
             can_cash_out = user.profile.can_cash_out
+            
+        # Record daily session (login)
+        from django.utils import timezone
+        today = timezone.now().date()
+        # get_or_create handles the "first login of the day" logic naturally
+        # since it will create on first login and return existing on subsequent ones
+        # Reset last_logout if user reconnects the same day
+        session, created = UserDailySession.objects.get_or_create(
+            user=user, 
+            date=today
+        )
+        if not created and session.last_logout:
+            session.last_logout = None
+            session.save()
             
         return Response({
             'token': token.key,
@@ -216,3 +232,42 @@ class UserViewSet(viewsets.ModelViewSet):
         profile.save()
         
         return Response({'status': 'Photo mise à jour', 'photo_url': profile.photo.url})
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def logout(self, request):
+        """
+        Record logout time for the current user.
+        """
+        from django.utils import timezone
+        today = timezone.now().date()
+        
+        try:
+            session = UserDailySession.objects.get(user=request.user, date=today)
+            session.last_logout = timezone.now()
+            session.save()
+            return Response({'status': 'Déconnexion enregistrée'})
+        except UserDailySession.DoesNotExist:
+            # If session doesn't exist (e.g. login wasn't tracked), create it with first_login=now
+            UserDailySession.objects.create(user=request.user, date=today, last_logout=timezone.now())
+            return Response({'status': 'Déconnexion enregistrée (nouvelle session)'})
+
+class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for viewing user daily sessions.
+    """
+    queryset = UserDailySession.objects.all().order_by('-date', '-first_login')
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['user', 'date']
+    ordering_fields = ['first_login', 'last_logout', 'date']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser:
+            return UserDailySession.objects.all().order_by('-date', '-first_login')
+        return UserDailySession.objects.filter(user=user).order_by('-date', '-first_login')
+
+    def get_serializer_class(self):
+        from ..serializers_sessions import UserDailySessionSerializer
+        return UserDailySessionSerializer

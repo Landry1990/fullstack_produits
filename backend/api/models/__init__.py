@@ -8,6 +8,7 @@ Usage: from api.models import Produit, Facture, etc.
 
 # Users
 from .users import Profile, create_user_profile, save_user_profile
+from .user_sessions import UserDailySession
 
 # Settings
 from .settings import (
@@ -93,4 +94,6 @@ __all__ = [
     'Promotion', 'PromotionPackItem',
     # Objectifs
     'ObjectifCommercial', 'ConfigurationObjectifs',
+    # Sessions
+    'UserDailySession',
 ]

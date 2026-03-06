@@ -12,7 +12,7 @@ from .views import (
     PharmacySettingsView, ProductImportView, ConfigurationOptionViewSet,
     AuditLogViewSet, LoyaltySettingViewSet, UserViewSet, CustomAuthToken,
     CategoriesListView, CategoriesDetailView, PromisViewSet,
-    PromotionViewSet, TVAViewSet
+    PromotionViewSet, TVAViewSet, UserDailySessionViewSet
 )
 from .views.formes import FormeViewSet
 from .views.paiements import PaiementFournisseurViewSet
@@ -81,11 +81,13 @@ router.register(r'configuration-objectifs', ConfigurationObjectifsViewSet, basen
 router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
 router.register(r'tva', TVAViewSet, basename='tva')
 router.register(r'maintenance', PurgeViewSet, basename='maintenance')
+router.register(r'user-sessions', UserDailySessionViewSet, basename='user-session')
 
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
     path('auth/token/', CustomAuthToken.as_view(), name='token-auth'),
+    path('auth/logout/', UserViewSet.as_view({'post': 'logout'}), name='auth-logout'),
     path('verify-password/', verify_password, name='verify-password'),
     path('categories/', CategoriesListView.as_view(), name='categories-list'),
     path('categories/<int:pk>/', CategoriesDetailView.as_view(), name='categories-detail'),

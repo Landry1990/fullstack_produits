@@ -450,6 +450,15 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_stock = serializers.IntegerField(source='produit.stock', read_only=True)
     produit_rotation_moyenne = serializers.CharField(source='produit.rotation_moyenne', read_only=True)
     produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    
+    # Nouveaux champs pour l'aide à la décision
+    produit_dernier_achat = serializers.DateField(source='produit.dernier_achat', read_only=True, allow_null=True, default=None)
+    produit_dernier_vente = serializers.DateField(source='produit.dernier_vente', read_only=True, allow_null=True, default=None)
+    produit_stock_minimum = serializers.IntegerField(source='produit.stock_minimum', read_only=True, allow_null=True, default=0)
+    produit_stock_maximum = serializers.IntegerField(source='produit.stock_maximum', read_only=True, allow_null=True, default=0)
+    produit_stock_alert = serializers.IntegerField(source='produit.stock_alert', read_only=True, allow_null=True, default=0)
+    produit_cost_price = serializers.DecimalField(source='produit.cost_price', max_digits=10, decimal_places=2, read_only=True, allow_null=True, default=None)
+    
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
     fournisseur_name = serializers.SerializerMethodField()
     total_quantity = serializers.IntegerField(read_only=True)
@@ -477,7 +486,8 @@ class CommandeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Commande
         fields = '__all__'
-        read_only_fields = ['date', 'status', 'closed_by']
+        # Supprimé 'status' des champs en lecture seule pour permettre les transitions PREP <-> ATT
+        read_only_fields = ['date', 'closed_by']
         extra_kwargs = {
             'fournisseur': {
                 'required': True,
@@ -488,6 +498,19 @@ class CommandeSerializer(serializers.ModelSerializer):
                 }
             }
         }
+
+    def validate_status(self, value):
+        """
+        Empêche de passer manuellement au statut CLOT (Clôturée) via le serializer.
+        Le statut CLOT doit être géré par l'action dédiée /cloturer/.
+        """
+        # On autorise les transitions vers PREP ou ATT
+        if value == Commande.Status.CLOTUREE:
+            raise serializers.ValidationError(
+                "Le statut 'Clôturée' ne peut pas être défini manuellement. "
+                "Utilisez l'action de clôture dédiée."
+            )
+        return value
 
     def get_fournisseur_nom(self, obj):
         return obj.fournisseur.name if obj.fournisseur else obj.fournisseur_nom
