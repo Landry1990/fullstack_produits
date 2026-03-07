@@ -12,33 +12,28 @@ class Command(BaseCommand):
     help = 'Creates a backup of the PostgreSQL database'
 
     def find_pg_dump(self):
-        """Try to find pg_dump executable on Windows"""
-        # Try common PostgreSQL installation paths on Windows
-        common_paths = [
-            r'C:\Program Files\PostgreSQL\16\bin\pg_dump.exe',
-            r'C:\Program Files\PostgreSQL\15\bin\pg_dump.exe',
-            r'C:\Program Files\PostgreSQL\14\bin\pg_dump.exe',
-            r'C:\Program Files\PostgreSQL\13\bin\pg_dump.exe',
-            r'C:\Program Files (x86)\PostgreSQL\16\bin\pg_dump.exe',
-            r'C:\Program Files (x86)\PostgreSQL\15\bin\pg_dump.exe',
-            r'C:\Program Files (x86)\PostgreSQL\14\bin\pg_dump.exe',
-        ]
-        
-        # Check if pg_dump is in PATH
+        """Try to find pg_dump executable on Windows or Linux"""
+        # 1. Check if pg_dump is in PATH (universal)
         try:
             result = subprocess.run(['pg_dump', '--version'], capture_output=True)
             if result.returncode == 0:
                 return 'pg_dump'
         except FileNotFoundError:
             pass
-        
-        # Try common paths
-        for path in common_paths:
-            if os.path.exists(path):
-                return path
-        
-        # Scan Program Files directories
+
+        # 2. Windows specific common paths
         if sys.platform == 'win32':
+            common_paths = [
+                r'C:\Program Files\PostgreSQL\16\bin\pg_dump.exe',
+                r'C:\Program Files\PostgreSQL\15\bin\pg_dump.exe',
+                r'C:\Program Files\PostgreSQL\14\bin\pg_dump.exe',
+                r'C:\Program Files\PostgreSQL\13\bin\pg_dump.exe',
+                r'C:\Program Files (x86)\PostgreSQL\16\bin\pg_dump.exe',
+            ]
+            for path in common_paths:
+                if os.path.exists(path):
+                    return path
+            
             for program_files in [r'C:\Program Files', r'C:\Program Files (x86)']:
                 if os.path.exists(program_files):
                     postgres_dir = os.path.join(program_files, 'PostgreSQL')
@@ -48,7 +43,19 @@ class Command(BaseCommand):
                             if os.path.exists(pg_dump_path):
                                 return pg_dump_path
         
+        # 3. Linux specific common paths (if not in PATH)
+        if sys.platform != 'win32':
+            linux_paths = [
+                '/usr/bin/pg_dump',
+                '/usr/local/bin/pg_dump',
+                '/usr/pgsql/bin/pg_dump'
+            ]
+            for path in linux_paths:
+                if os.path.exists(path):
+                    return path
+        
         return None
+
 
     def handle(self, *args, **options):
         # Find pg_dump

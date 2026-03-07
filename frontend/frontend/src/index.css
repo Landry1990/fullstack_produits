@@ -180,3 +180,74 @@ select {
   border-radius: 9999px;
   font-weight: 600;
 }
+
+/* Global Sticky Tables & Headers */
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.table thead th {
+  background-color: hsl(var(--b1)) !important;
+  background-clip: padding-box;
+  border-bottom: 2px solid hsl(var(--b2)) !important;
+}
+
+.table tfoot {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+}
+
+.table tfoot td {
+  background-color: hsl(var(--b1)) !important;
+  background-clip: padding-box;
+  border-top: 2px solid hsl(var(--b2)) !important;
+}
+
+/* Ensure background is opaque for sticky headers */
+.table thead tr {
+  background-color: hsl(var(--b1));
+}
+
+.sticky-header {
+  position: sticky;
+  top: -24px;
+  /* Offset for page padding (p-6) */
+  z-index: 30;
+  background-color: hsl(var(--b1));
+  margin-top: -24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border-bottom: 1px solid hsl(var(--b2));
+}
+
+/* Specific adjustment for layouts with p-4, p-6 or p-8 */
+.p-4 .sticky-header {
+  top: -16px;
+  margin-top: -16px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.p-6 .sticky-header {
+  top: -24px;
+  margin-top: -24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.p-8 .sticky-header {
+  top: -32px;
+  margin-top: -32px;
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+/* In dark mode or specific themes, ensure background remains solid */
+[data-theme] .sticky-header,
+[data-theme] .table thead th {
+  background-color: hsl(var(--b1));
+}

@@ -5,37 +5,48 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=fullstack_db
-      - POSTGRES_USER=fullstack_user
-      - POSTGRES_PASSWORD=fullstack_password
+      - POSTGRES_DB=${DB_NAME:-fullstack_db}
+      - POSTGRES_USER=${DB_USER:-fullstack_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-fullstack_password}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-fullstack_user} -d ${DB_NAME:-fullstack_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   # Backend Django
   backend:
     build: ./backend
     volumes:
-      - ./backend:/app  # Montage pour le développement (hot-reload possible)
+      - ./backend:/app # Montage pour le développement (hot-reload possible)
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     environment:
-      - DEBUG=False
-      - DJANGO_SECRET_KEY=votre_cle_secrete_production_a_changer
-      - ALLOWED_HOSTS=localhost,127.0.0.1,backend
+      - DEBUG=${DJANGO_DEBUG:-False}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
       - DB_ENGINE=django.db.backends.postgresql
-      - DB_NAME=fullstack_db
-      - DB_USER=fullstack_user
-      - DB_PASSWORD=fullstack_password
+      - DB_NAME=${DB_NAME:-fullstack_db}
+      - DB_USER=${DB_USER:-fullstack_user}
+      - DB_PASSWORD=${DB_PASSWORD:-fullstack_password}
       - DB_HOST=db
       - DB_PORT=5432
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     restart: always
 
   # Frontend (React servi par Nginx)
   frontend:
     build: ./frontend/frontend
     ports:
-      - "80:80"  # Expose le frontend sur le port 80 de la machine hôte
+      - "80:80" # Expose le frontend sur le port 80 de la machine hôte
     depends_on:
       - backend
     restart: always

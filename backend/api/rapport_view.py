@@ -51,11 +51,9 @@ class RapportViewSet(viewsets.ViewSet):
         )['total']
         
         ca_ht_total = factures.aggregate(
-            total=Coalesce(Sum(F('total_ht') - F('remise')), Decimal('0.00'))
+            total=Coalesce(Sum('total_ht'), Decimal('0.00'))
         )['total']
         
-        # CA HT calculated in Python loop to be safe if remises not applied identically
-        # Let's replace the whole block seamlessly
         marge_brute = ca_ht_total - cout_achat_total
         marge_pct = (marge_brute / ca_ht_total * 100) if ca_ht_total > 0 else Decimal('0.00')
         
@@ -272,46 +270,54 @@ class RapportViewSet(viewsets.ViewSet):
         return sorted(achats_stats.values(), key=lambda x: x['montant_total'], reverse=True)
 
     def _calculate_clients_pro(self, factures):
-        """Calcule les statistiques des clients professionnels."""
+        """Calcule les statistiques des clients professionnels sans inflation d'agrégation."""
+        pro_factures = factures.filter(client__client_type='PROFESSIONNEL')
         
-        # Calculate totals with aggregation directly on factures
-        # We need to compute per-client stats using values().annotate()
-        
-        ca_pro_total = Decimal('0.00')
-        montant_paye_pro = Decimal('0.00')
-
-        clients_pro_stats_query = factures.filter(
-            client__client_type='PROFESSIONNEL'
-        ).values(
+        # 1. Billing stats (No joins here, so total_ttc is safe)
+        billing_stats = pro_factures.values(
             'client__id', 
             'client__name'
         ).annotate(
-            paid_amount=Coalesce(
-                Sum('paiements__montant', filter=Q(paiements__statut='completee') & ~Q(paiements__mode_paiement='en_compte')),
-                Value(0, output_field=DecimalField())
-            ),
             total_billed=Sum('total_ttc', output_field=DecimalField()),
             nb_factures=Count('id')
         )
 
-        top_clients_pro = []
-        nb_factures_total = 0
+        # 2. Payment stats (Separate query to avoid multiplying total_ttc by pay count)
+        payment_stats_query = Caisse.objects.filter(
+            facture__in=pro_factures,
+            statut='completee'
+        ).exclude(
+            mode_paiement='en_compte'
+        ).values('facture__client__id').annotate(
+            total_paid=Sum('montant')
+        )
         
-        for p_stat in clients_pro_stats_query:
-            cid = p_stat['client__id']
-            cnom = p_stat['client__name']
+        payments_map = {p['facture__client__id']: p['total_paid'] for p in payment_stats_query}
+
+        # 3. Merge and summarize
+        ca_pro_total = Decimal('0.00')
+        montant_paye_pro = Decimal('0.00')
+        nb_factures_total = 0
+        top_clients_pro = []
+
+        for b_stat in billing_stats:
+            cid = b_stat['client__id']
+            cnom = b_stat['client__name']
             
-            # Sum up global totals
-            ca_pro_total += p_stat['total_billed']
-            montant_paye_pro += p_stat['paid_amount']
-            nb_factures_total += p_stat['nb_factures']
+            total_billed = b_stat['total_billed'] or Decimal('0.00')
+            paid_amount = payments_map.get(cid, Decimal('0.00'))
+            nb_factures = b_stat['nb_factures']
+            
+            ca_pro_total += total_billed
+            montant_paye_pro += paid_amount
+            nb_factures_total += nb_factures
             
             top_clients_pro.append({
                 'client_id': cid,
                 'client_nom': cnom,
-                'ca_total': p_stat['total_billed'],
-                'montant_paye': p_stat['paid_amount'],
-                'reste_a_payer': p_stat['total_billed'] - p_stat['paid_amount']
+                'ca_total': total_billed,
+                'montant_paye': paid_amount,
+                'reste_a_payer': total_billed - paid_amount
             })
 
         reste_a_payer_pro = ca_pro_total - montant_paye_pro
@@ -475,29 +481,35 @@ class RapportViewSet(viewsets.ViewSet):
             return Response({'error': 'Format de date invalide (ISO attendu).'}, status=status.HTTP_400_BAD_REQUEST)
 
         # 1. État Initial (Aujourd'hui / Maintenant)
-        produits = Produit.objects.all().only('stock', 'pmp', 'selling_price')
-        
-        current_stock_cost = Decimal('0')
-        current_stock_ttc = Decimal('0')
-        
-        for p in produits:
-            cost = p.pmp or Decimal('0')
-            price = p.selling_price or Decimal('0')
-            stock = p.stock or 0
-            
-            current_stock_cost += (Decimal(str(stock)) * cost)
-            current_stock_ttc += (Decimal(str(stock)) * price)
+        # Optimisation : Utilisation d'agrégation SQL au lieu d'une boucle Python
+        stock_totals = Produit.objects.filter(stock__gt=0).aggregate(
+            total_cost=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            total_ttc=Coalesce(Sum(F('stock') * F('selling_price'), output_field=DecimalField()), Value(0, output_field=DecimalField())),
+        )
+        current_stock_cost = stock_totals['total_cost']
+        current_stock_ttc = stock_totals['total_ttc']
 
         today = timezone.now().date()
         
-        # Mouvements : Ventes (FactureProduit)
-        ventes = FactureProduit.objects.filter(
+        # Mouvements : Ventes (FactureProduit pour le coût, Facture pour le CA Net)
+        # On utilise Facture pour le CA TTC Net afin d'inclure remises et remises lignes correctement
+        ventes_ca = Facture.objects.filter(
+            date__date__gte=date_debut,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).annotate(
+            jour=TruncDate('date')
+        ).values('jour').annotate(
+            ca_net=Sum('total_ttc')
+        ).order_by('-jour')
+
+        # Pour le back-casting du stock TTC virtuel et le coût des ventes
+        ventes_details = FactureProduit.objects.filter(
             facture__date__date__gte=date_debut,
             facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).annotate(
             jour=TruncDate('facture__date')
         ).values('jour').annotate(
-            ventes_ttc=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
+            ventes_ttc_brut=Sum(F('quantity') * F('selling_price'), output_field=DecimalField()),
             cout_ventes=Sum(F('quantity') * F('produit__pmp'), output_field=DecimalField())
         ).order_by('-jour')
         
@@ -515,15 +527,20 @@ class RapportViewSet(viewsets.ViewSet):
         # Indexer par date
         mouvements_map = {}
         
-        for v in ventes:
+        for v in ventes_ca:
             d = v['jour']
-            if d not in mouvements_map: mouvements_map[d] = {'ventes_ttc': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0}
-            mouvements_map[d]['ventes_ttc'] = v['ventes_ttc'] or 0
+            if d not in mouvements_map: mouvements_map[d] = {'ventes_ttc_net': 0, 'ventes_ttc_brut': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0}
+            mouvements_map[d]['ventes_ttc_net'] = v['ca_net'] or 0
+            
+        for v in ventes_details:
+            d = v['jour']
+            if d not in mouvements_map: mouvements_map[d] = {'ventes_ttc_net': 0, 'ventes_ttc_brut': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0}
+            mouvements_map[d]['ventes_ttc_brut'] = v['ventes_ttc_brut'] or 0
             mouvements_map[d]['cout_ventes'] = v['cout_ventes'] or 0
             
         for a in achats:
             d = a['jour']
-            if d not in mouvements_map: mouvements_map[d] = {'ventes_ttc': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0}
+            if d not in mouvements_map: mouvements_map[d] = {'ventes_ttc_net': 0, 'ventes_ttc_brut': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0}
             mouvements_map[d]['achats_cout'] = a['achats_cout'] or 0
             mouvements_map[d]['achats_ttc'] = a['achats_ttc_virtuel'] or 0
             
@@ -536,9 +553,10 @@ class RapportViewSet(viewsets.ViewSet):
         for i in range(delta + 1):
             current_day = today - timedelta(days=i)
             
-            mops = mouvements_map.get(current_day, {'ventes_ttc': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0})
+            mops = mouvements_map.get(current_day, {'ventes_ttc_net': 0, 'ventes_ttc_brut': 0, 'cout_ventes': 0, 'achats_cout': 0, 'achats_ttc': 0})
             
-            ventes_ttc = float(mops['ventes_ttc'] or 0)
+            ventes_ttc_net = float(mops['ventes_ttc_net'] or 0)
+            ventes_ttc_brut = float(mops['ventes_ttc_brut'] or 0)
             cout_ventes = float(mops['cout_ventes'] or 0)
             achats_cout = float(mops['achats_cout'] or 0)
             achats_ttc = float(mops['achats_ttc'] or 0)
@@ -546,21 +564,23 @@ class RapportViewSet(viewsets.ViewSet):
             end_day_cost = running_cost
             end_day_ttc = running_ttc
             
+            # Back-casting : Stock Début = Stock Fin - Achats + Sorties(Ventes)
+            # IMPORTANT : Pour le stock TTC virtuel, on utilise le prix de vente BRUT (valeur théorique du stock)
             start_day_cost = end_day_cost - achats_cout + cout_ventes
-            start_day_ttc = end_day_ttc - achats_ttc + ventes_ttc
+            start_day_ttc = end_day_ttc - achats_ttc + ventes_ttc_brut
             
             if date_debut <= current_day <= date_fin:
-                marge = ventes_ttc - cout_ventes
+                marge = ventes_ttc_net - cout_ventes
                 marge_pourcent = 0
-                if ventes_ttc > 0:
-                    marge_pourcent = (marge / ventes_ttc) * 100
+                if ventes_ttc_net > 0:
+                    marge_pourcent = (marge / ventes_ttc_net) * 100
                 
                 resultats.append({
                     'date': current_day.strftime('%Y-%m-%d'),
                     'valeur_stock_cout': round(end_day_cost, 0),
                     'valeur_stock_ttc': round(end_day_ttc, 0),
                     'achats_jour': round(achats_cout, 0),
-                    'ventes_jour': round(ventes_ttc, 0),
+                    'ventes_jour': round(ventes_ttc_net, 0), # CA Net pour comparaison avec rapports CA
                     'cout_ventes': round(cout_ventes, 0),
                     'marge': round(marge, 0),
                     'marge_pourcent': round(marge_pourcent, 1)

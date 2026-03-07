@@ -12,6 +12,7 @@ import {
   Search, RefreshCw, Plus, Lock, Wallet, 
   ArrowUpRight, ArrowDownRight, Banknote, Printer, CreditCard 
 } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 
 // Register French locale
 registerLocale('fr', fr)
@@ -25,18 +26,20 @@ export default function JournalCaisse() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMode, setFilterMode] = useState<string>('all')
   const [filterType, setFilterType] = useState<'all' | 'entrees' | 'sorties'>('all')
+  const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
+  const { settings: pharmacySettings } = usePharmacySettings()
+  const { getServerDate } = useAuth()
+
   const [dateDebut, setDateDebut] = useState<Date | null>(() => {
-    const today = new Date()
+    const today = getServerDate()
     today.setHours(0, 0, 0, 0)
     return today
   })
   const [dateFin, setDateFin] = useState<Date | null>(() => {
-    const endToday = new Date()
+    const endToday = getServerDate()
     endToday.setHours(23, 59, 59, 999)
     return endToday
   })
-  const [expandedReleves, setExpandedReleves] = useState<Set<number>>(new Set())
-  const { settings: pharmacySettings } = usePharmacySettings()
 
   // User/Cashier filtering
   const [users, setUsers] = useState<any[]>([])
@@ -600,7 +603,7 @@ export default function JournalCaisse() {
     <div className="h-full flex flex-col bg-base-200/50">
       
       {/* Header and Filters Card */}
-      <div className="bg-base-100 border-b border-base-200 shrink-0 p-6">
+      <div className="bg-base-100 border-b border-base-200 shrink-0 p-6 sticky-header">
         <div className="flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-end">
           <div>
             <h1 className="text-2xl font-bold text-base-content flex items-center gap-3">
@@ -685,9 +688,9 @@ export default function JournalCaisse() {
                  />
                  <button
                     onClick={() => {
-                        const today = new Date()
+                        const today = getServerDate()
                         today.setHours(0, 0, 0, 0)
-                        const endToday = new Date()
+                        const endToday = getServerDate()
                         endToday.setHours(23, 59, 59, 999)
                         setDateDebut(today)
                         setDateFin(endToday)

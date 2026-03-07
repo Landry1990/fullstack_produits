@@ -128,6 +128,22 @@ class PharmacySettings(models.Model):
     whatsapp_phone_id = models.CharField(max_length=50, blank=True, default="", help_text="Phone Number ID")
     whatsapp_business_id = models.CharField(max_length=50, blank=True, default="", help_text="WhatsApp Business Account ID")
     
+    # --- Paramètres de Sauvegarde ---
+    backup_enabled = models.BooleanField(
+        default=True, 
+        help_text="Activer la sauvegarde automatique quotidienne"
+    )
+    backup_time = models.TimeField(
+        default="02:00:00", 
+        help_text="Heure de la sauvegarde automatique (ex: 02:00)"
+    )
+    secondary_backup_path = models.CharField(
+        max_length=500, 
+        blank=True, 
+        default="", 
+        help_text="Chemin secondaire (ex: E:\\Backups_Pharmacie) pour double sauvegarde"
+    )
+    
     class Meta:
         verbose_name = "Paramètres Pharmacie"
         verbose_name_plural = "Paramètres Pharmacie"

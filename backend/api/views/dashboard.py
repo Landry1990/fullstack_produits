@@ -88,33 +88,25 @@ class DashboardViewSet(viewsets.ViewSet):
                 Q(days_remaining__lte=15) | Q(stock__lte=0) | Q(stock__lte=F('stock_minimum'))
             ).count()
 
-            # 4. Receivables (Créances Clients) — Deux sous-requêtes séparées pour éviter JOIN multiplication
+            # 4. Receivables (Créances) — Calculé par facture pour cohérence avec le reste du système
             from django.db.models import Subquery, OuterRef
             
-            # Sous-requête 1: Total facturé par client (factures VAL/PAY)
-            billed_sub = Facture.objects.filter(
-                client=OuterRef('pk'),
-                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).values('client').annotate(
-                s=Sum('total_ttc')
-            ).values('s')[:1]
-            
-            # Sous-requête 2: Total payé par client (hors en_compte)
+            # Sous-requête pour le total payé par facture (hors mode en_compte)
             paid_sub = Caisse.objects.filter(
-                facture__client=OuterRef('pk'),
-                facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
+                facture=OuterRef('pk'),
                 statut='completee'
             ).exclude(
                 mode_paiement='en_compte'
-            ).values('facture__client').annotate(
+            ).values('facture').annotate(
                 s=Sum('montant')
             ).values('s')[:1]
             
-            receivables_agg = Client.objects.annotate(
-                total_billed=Coalesce(Subquery(billed_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
-                total_paid=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Value(0, output_field=DecimalField())),
+            receivables_agg = Facture.objects.filter(
+                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
             ).annotate(
-                debt=F('total_billed') - F('total_paid')
+                total_paid=Coalesce(Subquery(paid_sub, output_field=DecimalField()), Decimal('0.00')),
+            ).annotate(
+                debt=F('total_ttc') - F('total_paid')
             ).filter(
                 debt__gt=0.5
             ).aggregate(
@@ -181,10 +173,18 @@ class DashboardViewSet(viewsets.ViewSet):
         start_of_week = today - timedelta(days=today.weekday())
         start_of_month = today.replace(day=1)
         
-        # 2. Daily Performance (Marge Brute)
-        from ..models import FactureProduitAllocation
+        # 2. Performance Metrics (Hybrid: Turnover for Targets, Margin for Info)
+        # Primary KPI is Turnover (CA) to align with Goals and Caisse
+        # Secondary KPI is Margin for profitability tracking
         
-        ca_jour = FactureProduitAllocation.objects.filter(
+        # --- DAILY ---
+        ca_jour = Facture.objects.filter(
+            date__date=today,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+
+        from ..models import FactureProduitAllocation
+        margin_jour = FactureProduitAllocation.objects.filter(
             facture_produit__facture__date__date=today,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
@@ -193,8 +193,13 @@ class DashboardViewSet(viewsets.ViewSet):
         obj_jour = obj_jour_model.ca_objectif if obj_jour_model else Decimal('0')
         taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
         
-        # 3. Weekly Performance (Marge Brute)
-        ca_sem = FactureProduitAllocation.objects.filter(
+        # --- WEEKLY ---
+        ca_sem = Facture.objects.filter(
+            date__date__gte=start_of_week,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+
+        margin_sem = FactureProduitAllocation.objects.filter(
             facture_produit__facture__date__date__gte=start_of_week,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
@@ -203,8 +208,13 @@ class DashboardViewSet(viewsets.ViewSet):
         obj_sem = obj_sem_model.ca_objectif if obj_sem_model else Decimal('0')
         taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
         
-        # 4. Monthly Performance (Marge Brute)
-        ca_mois = FactureProduitAllocation.objects.filter(
+        # --- MONTHLY ---
+        ca_mois = Facture.objects.filter(
+            date__date__gte=start_of_month,
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+
+        margin_mois = FactureProduitAllocation.objects.filter(
             facture_produit__facture__date__date__gte=start_of_month,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
         ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
@@ -353,9 +363,9 @@ class DashboardViewSet(viewsets.ViewSet):
 
         return Response({
             'kpis': {
-                'jour': {'actual': float(ca_jour), 'target': float(obj_jour), 'rate': taux_jour},
-                'semaine': {'actual': float(ca_sem), 'target': float(obj_sem), 'rate': taux_sem},
-                'mois': {'actual': float(ca_mois), 'target': float(obj_mois), 'rate': taux_mois},
+                'jour': {'actual': float(ca_jour), 'margin': float(margin_jour), 'target': float(obj_jour), 'rate': taux_jour},
+                'semaine': {'actual': float(ca_sem), 'margin': float(margin_sem), 'target': float(obj_sem), 'rate': taux_sem},
+                'mois': {'actual': float(ca_mois), 'margin': float(margin_mois), 'target': float(obj_mois), 'rate': taux_mois},
             },
             'alerts': alerts
         })

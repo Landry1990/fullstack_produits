@@ -212,6 +212,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       handleMettreEnAttente,
       handleAnnulerReception,
       handleImprimerReception,
+      handleBulkDelete,
       executingAction,
   } = useCommandeActions({
       apiBaseUrl,
@@ -331,6 +332,22 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const onImprimer = () => {
      if (selectedCommande) handleImprimerReception(selectedCommande);
   }
+
+  const onBulkDelete = async () => {
+    if (selectedOrderIds.size === 0) return;
+
+    const confirmed = await confirm({
+        title: t('orders.bulk_delete_title'),
+        message: t('orders.bulk_delete_confirm', { count: selectedOrderIds.size }),
+        variant: 'danger',
+        confirmText: t('orders.bulk_delete_btn')
+    });
+
+    if (confirmed) {
+        await handleBulkDelete(Array.from(selectedOrderIds));
+        setSelectedOrderIds(new Set());
+    }
+  };
 
   const handleCreateAvoirFromCommande = () => {
     if (!selectedCommande) return;
@@ -1585,6 +1602,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           onOpenCreateView={() => openCreateView(activeTab)}
           onOpenSuggestionModal={() => setIsSuggestionModalOpen(true)}
           onViewDetails={handleViewDetails}
+          onBulkDelete={onBulkDelete}
         />
         </div>
       )}

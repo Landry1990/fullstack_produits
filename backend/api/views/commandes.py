@@ -135,6 +135,59 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
         return qs
 
+    @action(detail=False, methods=['post'])
+    @transaction.atomic
+    def bulk_delete(self, request):
+        """
+        Supprime plusieurs commandes en une seule requête.
+        Seules les commandes EN_PREPARATION ou EN_ATTENTE peuvent être supprimées.
+        """
+        ids = request.data.get('ids', [])
+        if not ids:
+            return Response({'detail': 'Aucun ID fourni.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validation Sudo (Optionnelle, selon la politique)
+        # validation_user, error_res = validate_sudo_mode(request, permission_attr='can_delete_commande')
+        # if error_res:
+        #      return error_res
+        
+        commandes = Commande.objects.filter(id__in=ids)
+        total_found = commandes.count()
+        deletable = commandes.exclude(status=Commande.Status.CLOTUREE)
+        total_deletable = deletable.count()
+        
+        if total_deletable == 0:
+            return Response({'detail': 'Aucune commande supprimable trouvée (elles sont peut-être clôturées).'}, status=status.HTTP_400_BAD_REQUEST)
+
+        deleted_ids = list(deletable.values_list('id', flat=True))
+        
+        try:
+            # On laisse le cascade delete ou ProtectedError faire son travail
+            deletable.delete()
+        except ProtectedError:
+            return Response({
+                'detail': 'Certaines commandes ne peuvent pas être supprimées car elles contiennent des lots déjà utilisés ou vendus.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+             return Response({'detail': f'Erreur lors de la suppression : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.ORDER_CANCEL, # Or a new bulk cancel action
+            model_name='Commande',
+            object_id=str(deleted_ids),
+            description=f"Suppression groupée de {len(deleted_ids)} commandes : {deleted_ids}",
+            details={'ids': deleted_ids},
+            request=request
+        )
+
+        return Response({
+            'status': 'success',
+            'message': f'{len(deleted_ids)} commandes supprimées avec succès.',
+            'deleted_ids': deleted_ids,
+            'skipped_count': total_found - total_deletable
+        })
+
     def perform_destroy(self, instance):
         try:
             super().perform_destroy(instance)
@@ -308,10 +361,13 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 )
         
         # 2.3 Mettre à jour le statut et la date de clôture de la commande
-        # IMPORTANT: Mettre aussi la date de la commande à aujourd'hui (date de clôture)
         commande.status = Commande.Status.CLOTUREE
         commande.date = commande.date_cloture  # La commande est datée au jour de clôture
         
+        # Renommer si c'est le réassort auto pour libérer le code
+        if commande.numero_facture == 'REASSORT_AUTO':
+            commande.numero_facture = f"REASSORT_{commande.date_cloture.strftime('%Y%m%d_%H%M')}_{commande.id}"
+
         # Calcul de l'échéance si mode FACTURE
         if commande.fournisseur and commande.fournisseur.type_reglement == 'FACTURE':
             if commande.fournisseur.delai_paiement_jours > 0:
@@ -319,7 +375,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             else:
                 commande.date_echeance = commande.date_cloture.date()
 
-        commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance'])
+        commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance', 'numero_facture'])
         
         # 2.4 Mettre à jour la date de dernier achat pour tous les produits
         today = date.today()

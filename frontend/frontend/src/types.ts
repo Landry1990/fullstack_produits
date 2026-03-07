@@ -528,6 +528,7 @@ export interface User {
   is_superuser: boolean;
   token?: string;
   allowed_menus?: string[];
+  server_time?: string;
 
   // Profile nested object (backend structure)
   profile?: {

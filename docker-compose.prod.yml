@@ -1,0 +1,66 @@
+services:
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - ${STACK_NAME}_postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME:-fullstack_db}
+      - POSTGRES_USER=${DB_USER:-fullstack_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-fullstack_password}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-fullstack_user} -d ${DB_NAME:-fullstack_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - app-network
+
+  # Backend Django
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ${STACK_NAME}_static_volume:/app/staticfiles
+      - ${STACK_NAME}_media_volume:/app/media
+    environment:
+      - DEBUG=False
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      - DB_ENGINE=django.db.backends.postgresql
+      - DB_NAME=${DB_NAME:-fullstack_db}
+      - DB_USER=${DB_USER:-fullstack_user}
+      - DB_PASSWORD=${DB_PASSWORD:-fullstack_password}
+      - DB_HOST=db
+      - DB_PORT=5432
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - app-network
+
+  # Frontend (React servi par Nginx)
+  frontend:
+    build:
+      context: ./frontend/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  # Note: Volumes are prefixed with stack name automatically by docker compose -p
+  postgres_data:
+  static_volume:
+  media_volume:

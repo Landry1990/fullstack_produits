@@ -259,3 +259,70 @@ class DashboardSupplierDebtsTestCase(APITestCase):
 
         names = [s['name'] for s in response.data['suppliers']]
         self.assertNotIn('Fournisseur Payé', names)
+
+class DashboardManagerStatsTestCase(APITestCase):
+    """Test suite pour l'endpoint /api/dashboard/manager_stats/."""
+
+    def setUp(self):
+        self.user = TestDataFactory.create_user(username='manager')
+        # Ensure profile exists and has correct role
+        from ..models import Profile
+        profile, _ = Profile.objects.get_or_create(user=self.user)
+        profile.role = 'PHARMACIEN'
+        profile.save()
+        
+        # Refresh from DB to ensure profile is attached correctly
+        from django.contrib.auth import get_user_model
+        self.user = get_user_model().objects.get(pk=self.user.pk)
+        
+        self.client.force_authenticate(user=self.user)
+        self.url = '/api/dashboard/manager_stats/'
+
+    def test_manager_stats_returns_ca_and_margin(self):
+        """Vérifie que l'endpoint retourne à la fois le CA (actual) et la Marge (margin)."""
+        # 1. Setup Data
+        produit = TestDataFactory.create_produit(
+            name="Produit Rentable",
+            cost_price=Decimal('70.00'),
+            selling_price=Decimal('100.00')
+        )
+        
+        lot = TestDataFactory.create_stock_lot(
+            produit=produit,
+            quantity=100,
+            price_cost=Decimal('70.00')
+        )
+
+        # On utilise 'VAL' explicitement pour éviter tout souci de mapping
+        f1 = TestDataFactory.create_facture(
+            status='VAL',
+            total_ttc=Decimal('1000.00')
+        )
+        fp1 = TestDataFactory.create_facture_produit(
+            facture=f1,
+            produit=produit,
+            quantity=10,
+            selling_price=Decimal('100.00')
+        )
+        
+        from ..models import FactureProduitAllocation
+        FactureProduitAllocation.objects.create(
+            facture_produit=fp1,
+            stock_lot=lot,
+            quantity=10,
+            cost_price=Decimal('70.00'),
+            selling_price=Decimal('100.00')
+        )
+
+        # 2. Call endpoint
+        response = self.client.get(self.url)
+        # On vérifie le code d'erreur si ce n'est pas 200 pour aider au débug
+        if response.status_code != 200:
+            print(f"DEBUG: Response data: {response.data}")
+            
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # 3. Assertions
+        kpis = response.data['kpis']
+        self.assertEqual(float(kpis['jour']['actual']), 1000.0)
+        self.assertEqual(float(kpis['jour']['margin']), 300.0)

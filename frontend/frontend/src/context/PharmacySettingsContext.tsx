@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import axios from '../config/axios';
 import { toast } from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 export interface PharmacySettings {
   id: number;
@@ -71,6 +72,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   const [settings, setSettings] = useState<PharmacySettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { syncTime } = useAuth();
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
   const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/pharmacy-settings/` : '/api/pharmacy-settings/';
@@ -78,7 +80,8 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get<PharmacySettings>(endpoint);
+      const { data } = await axios.get<PharmacySettings & { server_time: string }>(endpoint);
+      if (data.server_time) syncTime(data.server_time);
       setSettings(data);
       setError(null);
     } catch (err) {

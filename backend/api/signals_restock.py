@@ -45,17 +45,35 @@ def _process_valid_facture(facture):
     from django.db import transaction
     try:
         with transaction.atomic():
-            commande, _ = Commande.objects.get_or_create(
+            # Chercher d'abord si une commande active existe
+            commande = Commande.objects.filter(
                 status=Commande.Status.EN_PREPARATION,
-                numero_facture='REASSORT_AUTO',
-                defaults={'fournisseur': None}
-            )
+                numero_facture='REASSORT_AUTO'
+            ).first()
+            
+            if not commande:
+                # Si pas de commande active, vérifier si une commande close occupe le numéro
+                existing_old = Commande.objects.filter(numero_facture='REASSORT_AUTO').first()
+                if existing_old:
+                    # Libérer le numéro pour la nouvelle commande
+                    existing_old.numero_facture = f"REASSORT_OLD_{existing_old.id}"
+                    existing_old.save(update_fields=['numero_facture'])
+                
+                # Créer la nouvelle commande
+                commande = Commande.objects.create(
+                    status=Commande.Status.EN_PREPARATION,
+                    numero_facture='REASSORT_AUTO',
+                    fournisseur=None
+                )
     except IntegrityError:
-        # En cas de collision, la sous-transaction est annulée, on peut faire un get()
-        commande = Commande.objects.get(
+        # En cas de collision résiduelle bizarre
+        commande = Commande.objects.filter(
             status=Commande.Status.EN_PREPARATION,
             numero_facture='REASSORT_AUTO'
-        )
+        ).first()
+        if not commande:
+             # Should practically not happen if logic above is correct
+             raise Exception("Incapacité à obtenir une commande de réassort auto")
 
     # 2. Itérer sur les produits de la facture
     from django.db.models import F

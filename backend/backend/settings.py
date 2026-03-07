@@ -22,7 +22,7 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.192'] # Adresses locales autorisées
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,192.168.1.192').split(',')
 
 # Password hashing: Argon2 (fast + secure) instead of PBKDF2 (1M iterations = ~12s on this CPU)
 PASSWORD_HASHERS = [
@@ -203,14 +203,9 @@ STORAGES = {
 }
 
 # CORS / CSRF configuration
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5173',
-    'http://192.168.1.192:3000', # Accès mobile local
-]
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://192.168.1.192:3000').split(',')
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.1.192:3000']
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.192:3000').split(',')
 
 # Security cookies in production
 if not DEBUG:
@@ -253,6 +248,19 @@ else:
 # ──────────────────────────────────────────────
 # Logging Configuration
 # ──────────────────────────────────────────────
+# Custom Logging Handler for Windows (Fixes PermissionError during rotation)
+from logging.handlers import RotatingFileHandler
+
+class SafeRotatingFileHandler(RotatingFileHandler):
+    def doRollover(self):
+        try:
+            super().doRollover()
+        except (PermissionError, OSError):
+            # On Windows, if the file is locked by another process (like the dev server),
+            # we catch the PermissionError to prevent the app from crashing.
+            import sys
+            sys.stderr.write("Logging rollover failed (file locked by another process). Continuing with current file.\n")
+
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -281,9 +289,9 @@ LOGGING = {
         },
         # Fichier applicatif (tout le flux INFO+)
         'file_app': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'backend.settings.SafeRotatingFileHandler',
             'filename': str(LOG_DIR / 'app.log'),
-            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 5,
             'formatter': 'verbose',
             'level': 'INFO',
@@ -291,9 +299,9 @@ LOGGING = {
         },
         # Fichier erreurs uniquement (ERROR+)
         'file_error': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'backend.settings.SafeRotatingFileHandler',
             'filename': str(LOG_DIR / 'error.log'),
-            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 10,
             'formatter': 'verbose',
             'level': 'ERROR',
@@ -301,9 +309,9 @@ LOGGING = {
         },
         # Fichier operations metier critiques
         'file_business': {
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'backend.settings.SafeRotatingFileHandler',
             'filename': str(LOG_DIR / 'business.log'),
-            'maxBytes': 5 * 1024 * 1024,  # 5 MB
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 10,
             'formatter': 'verbose',
             'level': 'INFO',
