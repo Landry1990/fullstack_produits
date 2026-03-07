@@ -30,6 +30,7 @@ const formatCurrency = (amount: number) => {
 
 interface KPIData {
     actual: number;
+    margin?: number;
     target: number;
     rate: number;
 }
@@ -152,6 +153,12 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                 <span className={`text-3xl font-black ${isSuccess ? 'text-success drop-shadow-sm' : 'text-base-content'} transition-colors duration-500`}>
                                     {formatCurrency(data.actual)}
                                 </span>
+                                {data.margin !== undefined && (
+                                    <div className="text-xs font-bold opacity-70 mt-1 flex items-center gap-1">
+                                        <TrendingUp size={12} className="text-success" />
+                                        <span>Marge : {formatCurrency(data.margin)}</span>
+                                    </div>
+                                )}
                             </div>
                             
                             <div className="space-y-2">

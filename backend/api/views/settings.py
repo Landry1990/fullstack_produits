@@ -143,15 +143,19 @@ class PharmacySettingsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from django.utils import timezone
         settings, created = PharmacySettings.objects.get_or_create(pk=1)
         serializer = PharmacySettingsSerializer(settings)
-        return Response(serializer.data)
+        data = serializer.data
+        data['server_time'] = timezone.now().isoformat()
+        return Response(data)
 
     def put(self, request):
         settings, created = PharmacySettings.objects.get_or_create(pk=1)
         serializer = PharmacySettingsSerializer(settings, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            from django.utils import timezone
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.UPDATE,
@@ -161,7 +165,9 @@ class PharmacySettingsView(APIView):
                 details=serializer.data,
                 request=request
             )
-            return Response(serializer.data)
+            data = serializer.data
+            data['server_time'] = timezone.now().isoformat()
+            return Response(data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

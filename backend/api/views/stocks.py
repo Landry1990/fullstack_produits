@@ -1956,51 +1956,89 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             source.save()
                 
             # --- 2. CRÉATION DESTINATION ---
-            quantite_dest = int(quantite * relation.ratio)
+            ratio = Decimal(str(relation.ratio))
             
             if destination.use_lot_management:
-                # Déterminer date expiration : min(lots sources consommés)
-                ref_expiry = None
                 if consumed_lots_info:
-                    valid_expiries = [l['lot'].date_expiration for l in consumed_lots_info if l['lot'].date_expiration]
-                    if valid_expiries:
-                        ref_expiry = min(valid_expiries)
-                
-                # Si pas d'expiration héritée (source sans date), on laisse NULL ou on pourrait appliquer une logique produit
-                
-                # Créer nouveau lot
-                # Format numéro lot : TRANS-{ID_REL}-{TIMESTAMP}
-                import time
-                lot_number = f"TR{relation.id}-{int(time.time())}"
-                
-                new_lot_dest = StockLot.objects.create(
-                    produit=destination,
-                    lot=lot_number,
-                    quantity_initial=quantite_dest,
-                    quantity_remaining=quantite_dest,
-                    quantity_paid=quantite_dest,     # Considéré comme "payé" car issu de stock payé
-                    quantity_free=0,
-                    price_cost=destination.cost_price or 0,
-                    selling_price=destination.selling_price or 0,
-                    date_expiration=ref_expiry,
-                    date_reception=timezone.now(),
-                    fournisseur=source.fournisseur # Héritage du fournisseur source
-                )
-                
-                # Traceability Lot Dest
-                StockAdjustment.objects.create(
-                     produit=destination,
-                     stock_lot=new_lot_dest,
-                     user=request.user,
-                     quantity_before=0,
-                     quantity_after=quantite_dest,
-                     quantity_change=quantite_dest,
-                     reason_type=StockAdjustment.ReasonType.USAGE_INTERNE,
-                     reason_detail=f"Transformation depuis {source.name}"
-                )
+                    for item in consumed_lots_info:
+                        source_lot = item['lot']
+                        taken_qty = item['qty']
+                        quantite_dest_lot = int(Decimal(str(taken_qty)) * ratio)
+                        
+                        if quantite_dest_lot <= 0:
+                            continue
 
-            # Incrémentation Stock Global Destination
-            destination.stock += quantite_dest
+                        # Find or create a lot in destination with same lot number
+                        # We try to find by lot number, product, and optionally expiration/supplier
+                        dest_lot, created = StockLot.objects.get_or_create(
+                            produit=destination,
+                            lot=source_lot.lot,
+                            defaults={
+                                'quantity_initial': quantite_dest_lot,
+                                'quantity_remaining': quantite_dest_lot,
+                                'quantity_paid': quantite_dest_lot,
+                                'quantity_free': 0,
+                                'price_cost': destination.cost_price or 0,
+                                'selling_price': destination.selling_price or 0,
+                                'date_expiration': source_lot.date_expiration,
+                                'date_reception': timezone.now(),
+                                'fournisseur': source_lot.fournisseur or source.fournisseur
+                            }
+                        )
+
+                        if not created:
+                            # Update existing lot
+                            dest_lot.quantity_initial += quantite_dest_lot
+                            dest_lot.quantity_remaining += quantite_dest_lot
+                            dest_lot.quantity_paid += quantite_dest_lot
+                            # Optionally update expiry if it was null
+                            if not dest_lot.date_expiration and source_lot.date_expiration:
+                                dest_lot.date_expiration = source_lot.date_expiration
+                            dest_lot.save()
+
+                        # Traceability Lot Dest
+                        StockAdjustment.objects.create(
+                             produit=destination,
+                             stock_lot=dest_lot,
+                             user=request.user,
+                             quantity_before=dest_lot.quantity_remaining - quantite_dest_lot,
+                             quantity_after=dest_lot.quantity_remaining,
+                             quantity_change=quantite_dest_lot,
+                             reason_type=StockAdjustment.ReasonType.USAGE_INTERNE,
+                             reason_detail=f"Transformation depuis {source.name} (Lot {source_lot.lot})"
+                        )
+                else:
+                    # Fallback if source was NOT managed by lot but destination IS
+                    quantite_dest = int(Decimal(str(quantite)) * ratio)
+                    if quantite_dest > 0:
+                        lot_number = f"TR{relation.id}-{int(time.time())}"
+                        new_lot_dest = StockLot.objects.create(
+                            produit=destination,
+                            lot=lot_number,
+                            quantity_initial=quantite_dest,
+                            quantity_remaining=quantite_dest,
+                            quantity_paid=quantite_dest,
+                            quantity_free=0,
+                            price_cost=destination.cost_price or 0,
+                            selling_price=destination.selling_price or 0,
+                            date_expiration=None,
+                            date_reception=timezone.now(),
+                            fournisseur=source.fournisseur
+                        )
+                        StockAdjustment.objects.create(
+                             produit=destination,
+                             stock_lot=new_lot_dest,
+                             user=request.user,
+                             quantity_before=0,
+                             quantity_after=quantite_dest,
+                             quantity_change=quantite_dest,
+                             reason_type=StockAdjustment.ReasonType.USAGE_INTERNE,
+                             reason_detail=f"Transformation depuis {source.name} (Sans lot source)"
+                        )
+            
+            # Recalculate total quantities to ensure consistency
+            quantite_dest_total = int(Decimal(str(quantite)) * ratio)
+            destination.stock += quantite_dest_total
             destination.save()
             
             # --- 3. HISTORIQUE & MOUVEMENTS GLOBAUX ---
@@ -2019,7 +2057,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             MouvementStock.objects.create(
                 produit=destination,
                 type_mouvement=MouvementStock.TypeMouvement.TRANSFORMATION_ENTREE,
-                quantite=quantite_dest,
+                quantite=quantite_dest_total,
                 stock_apres=destination.stock,
                 user=request.user,
                 description=f"Transformation depuis {source.name}"
@@ -2031,7 +2069,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 produit_source=source,
                 produit_destination=destination,
                 quantite_source=quantite,
-                quantite_destination=quantite_dest,
+                quantite_destination=quantite_dest_total,
                 user=request.user,
                 notes=request.data.get('notes', '')
             )
@@ -2042,12 +2080,12 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
                 action=AuditLog.Action.STOCK_ADJUST,
                 model_name='Transformation',
                 object_id=relation.id,
-                description=f"Transformation: {quantite} {source.name} -> {quantite_dest} {destination.name}",
+                description=f"Transformation: {quantite} {source.name} -> {quantite_dest_total} {destination.name}",
                 details={
                     'source_id': source.id,
                     'destination_id': destination.id,
                     'qty_src': -quantite,
-                    'qty_dest': quantite_dest,
+                    'qty_dest': quantite_dest_total,
                     'source_lots_used': [l['lot'].lot for l in consumed_lots_info]
                 },
                 request=request
@@ -2057,7 +2095,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
             'success': True,
             'stock_source': source.stock,
             'stock_destination': destination.stock,
-            'message': f"Transformation réussie : {quantite} {source.name} -> {quantite_dest} {destination.name}"
+            'message': f"Transformation réussie : {quantite} {source.name} -> {quantite_dest_total} {destination.name}"
         })
 
 class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):

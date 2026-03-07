@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db import transaction
 from django.db.models import F, Sum, Q, Value, DecimalField, Avg, Count
-from django.db.models.functions import Coalesce, TruncMonth, TruncDay
+from django.db.models.functions import Coalesce, TruncMonth, TruncDay, Abs
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from django.http import HttpResponse
@@ -1983,6 +1983,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_entrees = entrees_mouvements
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
+        total_ventes_especes = transactions.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:
              return Response({
                  'detail': 'Impossible de clôturer : aucun mouvement (vente, entrée ou sortie) détecté depuis la dernière clôture.'
@@ -1993,6 +1995,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
         
         details['__meta__'] = {
             'total_ventes': float(total_ventes),
+            'total_ventes_especes': float(total_ventes_especes),
             'total_entrees': float(total_entrees),
             'total_sorties': float(total_sorties)
         }
@@ -2094,6 +2097,76 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
             'results': serializer.data,
             'totals': global_totals
         })
+
+    @action(detail=False, methods=['get'])
+    def performances_caissiers(self, request):
+        """
+        Calcule les performances des caissiers sur une période donnée (mois/année).
+        Basé sur l'historique des clôtures (ClotureCaisse).
+        """
+        month = request.query_params.get('month')
+        year = request.query_params.get('year')
+        
+        # Par défaut, mois et année actuels
+        now = timezone.now()
+        if not month:
+            month = now.month
+        if not year:
+            year = now.year
+            
+        try:
+            month = int(month)
+            year = int(year)
+        except (ValueError, TypeError):
+            return Response({'detail': 'Paramètres mois ou année invalides.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # On regroupe par utilisateur et on calcule la moyenne des écarts absolus pour une comparaison équitable
+        performances = ClotureCaisse.objects.filter(
+            date__month=month,
+            date__year=year
+        ).values(
+            'user__id', 'user__username', 'user__first_name', 'user__last_name'
+        ).annotate(
+            total_ecart_absolu=Sum(Abs('ecart_caisse')),
+            total_ecart_algebrique=Sum('ecart_caisse'),
+            nombre_clotures=Count('id'),
+            total_theorique=Sum('montant_theorique'),
+            total_reel=Sum('montant_reel'),
+            total_ventes=Sum('total_ventes')
+        ).filter(user__isnull=False)
+        
+        results = []
+        for p in performances:
+            # Construction du nom complet
+            first_name = p['user__first_name'] or ""
+            last_name = p['user__last_name'] or ""
+            full_name = f"{first_name} {last_name}".strip() or p['user__username']
+            
+            total_abs = float(p['total_ecart_absolu'] or 0)
+            total_alg = float(p['total_ecart_algebrique'] or 0)
+            nombre = p['nombre_clotures']
+            
+            moyenne_abs = total_abs / nombre if nombre > 0 else 0
+            moyenne_alg = total_alg / nombre if nombre > 0 else 0
+            
+            results.append({
+                'user_id': p['user__id'],
+                'username': p['user__username'],
+                'full_name': full_name,
+                'moyenne_ecart_absolu': round(moyenne_abs, 2),
+                'moyenne_ecart_algebrique': round(moyenne_alg, 2),
+                'total_ecart_absolu': total_abs,
+                'total_ecart_algebrique': total_alg,
+                'nombre_clotures': nombre,
+                'total_theorique': float(p['total_theorique'] or 0),
+                'total_reel': float(p['total_reel'] or 0),
+                'total_ventes': float(p['total_ventes'] or 0),
+            })
+            
+        # Tri par moyenne d'écart absolue (la plus petite gagne)
+        results.sort(key=lambda x: x['moyenne_ecart_absolu'])
+            
+        return Response(results)
 
 
 class CreanceViewSet(viewsets.ReadOnlyModelViewSet):

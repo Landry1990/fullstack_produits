@@ -11,6 +11,8 @@ interface AuthContextType {
   logout: () => void;         // Fonction pour déconnecter
   isAuthenticated: boolean;   // Booléen pratique pour savoir si on est connecté
   loading: boolean;           // État de chargement (utile au démarrage pour vérifier si une session existe)
+  getServerDate: () => Date;
+  syncTime: (serverTime: string) => void;
 }
 
 // Création du contexte React
@@ -22,6 +24,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   // État de chargement, initialisé à true le temps de vérifier le localStorage
   const [loading, setLoading] = useState(true);
+  const [timeOffset, setTimeOffset] = useState<number>(0);
+
+  // Fonction pour obtenir la date synchronisée avec le serveur
+  const getServerDate = useCallback(() => {
+    return new Date(Date.now() + timeOffset);
+  }, [timeOffset]);
 
   // Effet qui s'exécute une seule fois au chargement de l'application (mount)
   useEffect(() => {
@@ -39,6 +47,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const can_delete_commande = safeStorage.getItem('can_delete_commande') === 'true';
     const can_close_commande = safeStorage.getItem('can_close_commande') === 'true';
     const can_generate_coupon = safeStorage.getItem('can_generate_coupon') === 'true';
+
+    const storedOffset = safeStorage.getItem('timeOffset');
+    if (storedOffset) {
+      setTimeOffset(parseInt(storedOffset, 10));
+    }
 
     // Si un token et un username existent, on restaure la session
     if (token && username) {
@@ -69,8 +82,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
+  // Fonction pour synchroniser le décalage temporel
+  const syncTime = useCallback((serverTimeStr: string) => {
+    const serverTime = new Date(serverTimeStr).getTime();
+    const localTime = Date.now();
+    const offset = serverTime - localTime;
+    setTimeOffset(offset);
+    safeStorage.setItem('timeOffset', String(offset));
+  }, []);
+
   // Fonction de connexion appelée après un succès login (ex: depuis Login.tsx)
   const login = useCallback((userData: User) => {
+    // Calculer le décalage temporel si l'heure serveur est fournie
+    if (userData.server_time) {
+      syncTime(userData.server_time);
+    }
+
     // 1. On sauvegarde tout dans le stockage sécurisé
     safeStorage.setItem('authToken', userData.token || '');
     safeStorage.setItem('username', userData.username);
@@ -115,7 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     // On rend le contexte disponible pour tous les enfants
     // isAuthenticated est calculé dynamiquement : vrai si 'user' n'est pas null
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user, loading, getServerDate, syncTime }}>
       {children}
     </AuthContext.Provider>
   );

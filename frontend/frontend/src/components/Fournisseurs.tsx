@@ -454,7 +454,7 @@ export default function Fournisseurs() {
          {/* Left Panel: List */}
          <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden h-full">
             {/* Header with Search and Actions */}
-            <div className="p-4 border-b flex flex-wrap gap-4 justify-between items-center shrink-0 bg-white">
+            <div className="p-4 border-b flex flex-wrap gap-4 justify-between items-center shrink-0 bg-white sticky-header">
                <div className="flex items-center gap-3">
                   <h2 className="text-xl font-bold text-slate-800">Fournisseurs</h2>
                   {loading ? (
@@ -624,7 +624,7 @@ export default function Fournisseurs() {
          <div className="md:col-span-2 bg-white rounded-lg shadow flex flex-col h-full overflow-hidden">
              {selectedFournisseur ? (
                 <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-4 duration-300">
-                  <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-white shrink-0 flex justify-between items-start">
+                  <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-white shrink-0 flex justify-between items-start sticky-header">
                      <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">Fournisseur</span>

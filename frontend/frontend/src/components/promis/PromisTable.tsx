@@ -67,11 +67,11 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     const allSelected = attPromisCount > 0 && selectedIds.size === attPromisCount;
 
     return (
-        <div className="overflow-x-auto w-full">
+        <div className="overflow-auto w-full h-full relative">
             <table className="table table-zebra table-pin-rows w-full text-sm">
                 <thead>
-                    <tr className="bg-base-200/50 text-base-content/70">
-                        <th className="w-12 text-center rounded-tl-xl">
+                    <tr className="bg-base-200 text-base-content/70 border-b border-base-300">
+                        <th className="w-12 text-center rounded-tl-xl sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
                             <label className="cursor-pointer label p-0 justify-center">
                                 <input 
                                     type="checkbox" 
@@ -82,13 +82,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 />
                             </label>
                         </th>
-                        <th>{t('promis.table.date', 'Date')}</th>
-                        <th>{t('promis.table.client', 'Client')}</th>
-                        <th>{t('promis.table.phone', 'Téléphone')}</th>
-                        <th>{t('promis.table.product', 'Produit')}</th>
-                        <th className="text-center">{t('promis.table.qty', 'Qté')}</th>
-                        <th className="text-center">{t('promis.table.status', 'Statut')}</th>
-                        <th className="text-right rounded-tr-xl">{t('promis.table.actions', 'Actions')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.date', 'Date')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.client', 'Client')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.phone', 'Téléphone')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.product', 'Produit')}</th>
+                        <th className="text-center sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.qty', 'Qté')}</th>
+                        <th className="text-center sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.status', 'Statut')}</th>
+                        <th className="text-right rounded-tr-xl sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.actions', 'Actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="text-base-content font-medium">

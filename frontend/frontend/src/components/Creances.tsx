@@ -53,7 +53,7 @@ export default function Creances() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-auto flex flex-col gap-8 pb-12">
+            <div className="flex-1 overflow-hidden flex flex-col gap-8 pb-12">
                 {/* Stats Section */}
                 <div className="px-8 mt-8">
                     <CreancesQuickStats 
@@ -107,7 +107,7 @@ export default function Creances() {
                 </div>
 
                 {/* Main Content Table */}
-                <div className="mx-8 bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden flex-1 min-h-[400px]">
+                <div className="mx-8 bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden flex-1 relative min-h-[400px]">
                     <CreancesTable 
                         mode={data.filters.selectedClient ? 'invoices' : 'clients'}
                         groupedClients={data.groupedClients}

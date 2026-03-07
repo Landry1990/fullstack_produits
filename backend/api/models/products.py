@@ -122,7 +122,7 @@ class Produit(models.Model):
     )
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    stock = models.IntegerField()
+    stock = models.IntegerField(default=0)
     use_lot_management = models.BooleanField(
         default=True,
         help_text="Activer la gestion par lots FIFO pour ce produit (recommandé pour traçabilité)"
@@ -130,8 +130,8 @@ class Produit(models.Model):
     cip1 = models.CharField(max_length=20, unique=True, blank=True, null=True)
     cip2 = models.CharField(max_length=20, unique=True, blank=True, null=True)
     cip3 = models.CharField(max_length=20, unique=True, blank=True, null=True)
-    cost_price = models.DecimalField(max_digits=10, decimal_places=2)
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     expire_date = models.DateField(blank=True, null=True)
     stock_alert = models.IntegerField(default=0)
     stock_minimum = models.IntegerField(default=0)

@@ -64,8 +64,9 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
         pay_modes = ['especes', 'carte', 'cheque', 'virement', 'om', 'momo', 'coupon', 'en_compte']
         global_paiements_dict = {m: 0.0 for m in pay_modes}
         for p in global_paiements:
-            if p['mode_paiement'] in global_paiements_dict:
-                global_paiements_dict[p['mode_paiement']] = float(p['total'] or 0)
+            mode = p['mode_paiement'].lower()
+            if mode in global_paiements_dict:
+                global_paiements_dict[mode] = float(p['total'] or 0)
 
         # Total count for pagination
         total_count = daily_stats_query.count()
@@ -94,7 +95,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             modes = {m: 0 for m in pay_modes}
             
             for p in paiements:
-                mode = p['mode_paiement']
+                mode = (p['mode_paiement'] or '').lower()
                 if mode in modes:
                     modes[mode] = float(p['total'] or 0)
             

@@ -406,7 +406,7 @@ export default function Clients() {
       {/* LEFT PANEL: CLIENT LIST (1/3) */}
       <div className="w-1/3 border-r border-base-200 bg-base-100 flex flex-col">
           {/* Header & Search */}
-           <div className="p-4 border-b border-base-200 flex flex-col gap-3 bg-base-100 relative z-10 shrink-0">
+           <div className="p-4 border-b border-base-200 flex flex-col gap-3 bg-base-100 relative z-10 shrink-0 sticky-header">
              <div className="flex justify-between items-center">
                 <h2 className="font-bold text-xl">{t('clients.title')}</h2>
                 <div className="flex gap-1 items-center">
@@ -550,7 +550,7 @@ export default function Clients() {
          {selectedClient ? (
             <>
                {/* Details Header */}
-               <div className="p-6 border-b border-base-200 bg-white/50 flex justify-between items-start">
+               <div className="p-6 border-b border-base-200 bg-white/50 flex justify-between items-start sticky-header">
                   <div>
                       <div className="flex items-center gap-2 mb-1">
                           <h2 className="text-2xl font-bold">{selectedClient.name}</h2>

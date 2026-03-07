@@ -24,8 +24,11 @@ COPY . .
 # Collecter les fichiers statiques
 RUN python manage.py collectstatic --noinput
 
-# Exposer le port que Gunicorn utilisera (interne au réseau Docker)
+# Copier le script d'entrée et le rendre exécutable
+RUN chmod +x entrypoint.sh
+
+# Exposer le port que Gunicorn utilisera
 EXPOSE 8000
 
-# Commande de démarrage par défaut (sera surchargée par docker-compose si besoin)
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "backend.wsgi:application"]
+# Utiliser le script d'entrée pour démarrer
+ENTRYPOINT ["./entrypoint.sh"]

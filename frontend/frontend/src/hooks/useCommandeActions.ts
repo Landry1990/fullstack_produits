@@ -319,9 +319,26 @@ export function useCommandeActions({
         }
     };
 
+    const handleBulkDelete = async (ids: number[]) => {
+        if (executingAction || ids.length === 0) return;
+        setExecutingAction(true);
+        try {
+            await axios.post(`${commandesEndpoint}bulk_delete/`, { ids });
+            toast.success(t('orders.bulk_delete_success', { count: ids.length }));
+            fetchCommandes();
+            setSelectedCommande(null);
+            setViewMode('LIST');
+        } catch (err) {
+            handleApiError(err, t('orders.messages.bulk_delete_error'));
+        } finally {
+            setExecutingAction(false);
+        }
+    };
+
     return {
         handleSaveCommande,
         handleDeleteCommande,
+        handleBulkDelete,
         handleCloturerCommande,
         handleMettreEnAttente,
         handleAnnulerReception,

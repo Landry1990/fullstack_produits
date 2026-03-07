@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   Trash2, Download, Eye, ShieldAlert, AlertTriangle,
   CheckSquare, Square, Calendar, Loader2,
-  Wrench, ChevronDown, ChevronUp
+  Wrench, ChevronDown, ChevronUp, Database, Clock, Save
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -73,12 +73,19 @@ export default function Maintenance() {
   const [password, setPassword] = useState('');
   const [purging, setPurging] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(Object.keys(TABLE_CATEGORIES)));
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [pharmacySettings, setPharmacySettings] = useState<any>(null);
+  const [savingSettings, setSavingSettings] = useState(false);
 
-  // Fetch available tables
+  // Fetch available tables and pharmacy settings
   useEffect(() => {
     axios.get('/api/maintenance/tables/')
       .then(res => setTables(res.data))
       .catch(() => toast.error('Erreur chargement des tables'));
+
+    axios.get('/api/pharmacy-settings/')
+      .then(res => setPharmacySettings(res.data))
+      .catch(() => console.error('Erreur chargement paramètres pharmacie'));
   }, []);
 
   const toggleTable = (key: string) => {
@@ -200,6 +207,35 @@ export default function Maintenance() {
       toast.error(msg);
     } finally {
       setPurging(false);
+    }
+  };
+
+  const handleManualBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const res = await axios.post('/api/maintenance/backup/');
+      toast.success(res.data.message || 'Sauvegarde terminée !');
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Erreur lors de la sauvegarde');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const saveBackupSettings = async () => {
+    if (!pharmacySettings) return;
+    setSavingSettings(true);
+    try {
+      await axios.put('/api/pharmacy-settings/', {
+        backup_enabled: pharmacySettings.backup_enabled,
+        backup_time: pharmacySettings.backup_time,
+        secondary_backup_path: pharmacySettings.secondary_backup_path,
+      });
+      toast.success('Paramètres de sauvegarde enregistrés !');
+    } catch {
+      toast.error('Erreur lors de l\'enregistrement');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -386,6 +422,88 @@ export default function Maintenance() {
               </button>
             </div>
           </div>
+
+          {/* Backup Section */}
+          <div className="card bg-base-100 shadow-xl border border-primary/20">
+            <div className="card-body gap-4">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Database className="w-5 h-5 text-primary" />
+                Sauvegarde
+              </h2>
+
+              <div className="space-y-4">
+                {/* Manual Backup */}
+                <div>
+                  <p className="text-xs text-base-content/60 mb-2">Lancer une sauvegarde complète de la base de données (SQL compressé).</p>
+                  <button
+                    className="btn btn-primary btn-sm w-full gap-2"
+                    onClick={handleManualBackup}
+                    disabled={backupLoading}
+                  >
+                    {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    Sauvegarder maintenant
+                  </button>
+                </div>
+
+                <div className="divider my-0"></div>
+
+                {/* Scheduled Backup */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/50 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Automatique
+                  </h3>
+                  
+                  <div className="form-control">
+                    <label className="label cursor-pointer justify-start gap-3 p-0">
+                      <input 
+                        type="checkbox" 
+                        className="toggle toggle-primary toggle-sm" 
+                        checked={pharmacySettings?.backup_enabled || false}
+                        onChange={e => setPharmacySettings({...pharmacySettings, backup_enabled: e.target.checked})}
+                      />
+                      <span className="label-text">Activer la sauvegarde auto</span>
+                    </label>
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label p-0 py-1">
+                      <span className="label-text text-xs">Heure programmée</span>
+                    </label>
+                    <input 
+                      type="time" 
+                      className="input input-bordered input-sm w-full" 
+                      value={pharmacySettings?.backup_time?.substring(0, 5) || "02:00"}
+                      onChange={e => setPharmacySettings({...pharmacySettings, backup_time: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label p-0 py-1">
+                      <span className="label-text text-xs">Clé USB / Chemin externe</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      className="input input-bordered input-sm w-full" 
+                      placeholder="Ex: E:\Backups_Pharma"
+                      value={pharmacySettings?.secondary_backup_path || ""}
+                      onChange={e => setPharmacySettings({...pharmacySettings, secondary_backup_path: e.target.value})}
+                    />
+                  </div>
+
+                  <button
+                    className="btn btn-outline btn-primary btn-xs w-full gap-2 mt-2"
+                    onClick={saveBackupSettings}
+                    disabled={savingSettings || !pharmacySettings}
+                  >
+                    {savingSettings ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                    Enregistrer les paramètres
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
 
           {/* Selection Summary */}
           <div className="card bg-base-200/50">

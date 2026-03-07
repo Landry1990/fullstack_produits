@@ -110,7 +110,7 @@ const HistoriqueVentes = () => {
     <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
       
       {/* Header Section */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col p-6">
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col p-6 sticky-header">
         <div className="flex justify-between items-start mb-6">
             <div>
                 <h1 className="text-2xl font-bold text-base-content tracking-tight">
@@ -164,7 +164,7 @@ const HistoriqueVentes = () => {
       </div>
 
       {/* Main Content: Table */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col h-[calc(100vh-28rem)] min-h-[450px]">
         {loading ? (
             <div className="flex flex-col items-center justify-center p-20 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -172,21 +172,21 @@ const HistoriqueVentes = () => {
             </div>
         ) : (
             <>
-                <div className="overflow-x-auto">
-                    <table className="table w-full">
+                <div className="overflow-auto flex-1 relative">
+                    <table className="table table-pin-rows table-zebra w-full shadow-inner">
                         <thead>
-                            <tr className="bg-base-200/50 text-base-content/70 border-b border-base-200 text-[10px] uppercase tracking-widest font-bold">
-                                <th className="bg-transparent">{t('salesHistory.columns.date')}</th>
-                                <th className="bg-transparent text-right">{t('salesHistory.columns.ca_ttc')}</th>
-                                <th className="bg-transparent text-right">Espèces</th>
-                                <th className="bg-transparent text-right">Cartes</th>
-                                <th className="bg-transparent text-right">Chèques</th>
-                                <th className="bg-transparent text-right">Virem.</th>
-                                <th className="bg-transparent text-right">Mobiles</th>
-                                <th className="bg-transparent text-right">Coupons</th>
-                                <th className="bg-transparent text-right">En Compte</th>
-                                <th className="bg-transparent text-center">Ventes</th>
-                                <th className="bg-transparent text-right">Panier M.</th>
+                            <tr className="bg-base-200 text-base-content/70 border-b border-base-300 text-[10px] uppercase tracking-widest font-bold">
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300">{t('salesHistory.columns.date')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.ca_ttc')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Espèces</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Cartes</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Chèques</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Virem.</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Mobiles</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">Coupons</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">En Compte</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-center">Ventes</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.panier_moyen') || "Panier M."}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-base-200">

@@ -1,0 +1,56 @@
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 59958 change
+INFO     api.business         | [VENTE] Finalisation demandee par test_admin | client=passager | produits=1 | centralisee=True
+INFO     api.business         | [VENTE] Validation demandee facture #394 par test_admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 394 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 394 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 394 validation/payment
+INFO     api.business         | [VENTE] Validation OK #394 (FAC-000394) | total=75.00 | produits=1 | validee_par=test_admin
+INFO     api.business         | [VENTE] Finalisation OK facture #394 (FAC-000394) | total=75.00 | client=passager | user=test_admin
+INFO     api.business         | [COMMANDE] Cloture demandee #148 par test_admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 148 closure
+INFO     api.business         | [COMMANDE] Cloture OK #148 | fournisseur=N/A | produits=1 | lots=1 | user=test_admin
+INFO     api.business         | [VENTE] Finalisation demandee par test_admin | client=passager | produits=1 | centralisee=True
+INFO     api.business         | [VENTE] Validation demandee facture #395 par test_admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 395 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 395 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 395 validation/payment
+INFO     api.business         | [VENTE] Validation OK #395 (FAC-000395) | total=75.00 | produits=1 | validee_par=test_admin
+INFO     api.business         | [VENTE] Finalisation OK facture #395 (FAC-000395) | total=75.00 | client=passager | user=test_admin
+=== STARTING AUTO-RESTOCK COLLISION TEST ===
+
+[Step 1] Performing first sale...
+ - Created restock order ID: 148
+
+[Step 2] Closing the restock order...
+ - Order renamed to: REASSORT_20260307_2330_148
+
+[Step 3] Performing second sale...
+ - NEW restock order ID: 149
+
+=== TEST PASSED SUCCESSFULLY ===
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\scripts\verify_restock_collision.py", line 103, in <module>
+    run_test()
+    ~~~~~~~~^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\scripts\verify_restock_collision.py", line 99, in run_test
+    restock_order.delete()
+    ~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1280, in delete
+    collector.collect([self], keep_parents=keep_parents)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\deletion.py", line 350, in collect
+    raise ProtectedError(
+    ...<7 lines>...
+    )
+django.db.models.deletion.ProtectedError: ("Cannot delete some instances of model 'Commande' because they are referenced through protected foreign keys: 'CommandeProduit.commande'.", {<FactureProduitAllocation: Allocation 410 - 5 unitÚs du lot 1269>})
+Sentry is attempting to send 2 pending events
+Waiting up to 2 seconds
+Press Ctrl-Break to quit

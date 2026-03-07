@@ -1,6 +1,6 @@
 Creating test database for alias 'default'...
 
-INFO     api.cache            | Product cache invalidated successfully
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
 --- Logging error ---
 Traceback (most recent call last):
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
@@ -46,12 +46,500 @@ Call stack:
     super().__call__(result)
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
     return self.run(*args, **kwds)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 647, in run
-    self._callSetUp()
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 603, in _callSetUp
-    self.setUp()
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_stock_history_global.py", line 18, in setUp
-    self.produit = TestDataFactory.create_produit(
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 191, in test_low_stock_includes_days_remaining
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 1 change
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py:133: UserWarning: No directory at: C:\Projet Fullstack\fullstack_produits\backend\staticfiles\
+  self._inner = middleware(get_response, *args, **kwargs)
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 162, in test_low_stock_returns_critical_products
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 2 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 168, in test_low_stock_returns_critical_products
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 3 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 174, in test_low_stock_returns_critical_products
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 4 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 97, in test_stats_returns_receivables
+    f1 = TestDataFactory.create_facture(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 97, in create_facture
+    return Facture.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 51, in invalidate_cache_on_facture_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after invoice 1 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 105, in test_stats_returns_receivables
+    f2 = TestDataFactory.create_facture(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 97, in create_facture
+    return Facture.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 51, in invalidate_cache_on_facture_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after invoice 2 validation/payment
+FINFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 36, in test_stats_returns_revenue
+    produit = TestDataFactory.create_produit(stock=100)
   File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 63, in create_produit
     return Produit.objects.create(
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
@@ -68,10 +556,10 @@ Call stack:
     response = receiver(signal=self, sender=sender, **named)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
     return receiver(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 87, in invalidate_cache_on_produit_change
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
     invalidate_produit_cache()
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_produit_cache
-    logger.info("Product cache invalidated successfully")
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
     self._log(INFO, msg, args, **kwargs)
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
@@ -80,13 +568,10 @@ Call stack:
     self.callHandlers(record)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
     return old_callhandlers(self, record)
-Message: 'Product cache invalidated successfully'
+Message: 'Product cache (lists and searches) invalidated successfully'
 Arguments: ()
-DEBUG    api.cache            | Cache invalidated after product 1 change
-C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py:133: UserWarning: No directory at: C:\Projet Fullstack\fullstack_produits\backend\staticfiles\
-  self._inner = middleware(get_response, *args, **kwargs)
-INFO     api.business         | [COMMANDE] Cloture demandee #1 par admin
-INFO     api.cache            | Product cache invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 5 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
 --- Logging error ---
 Traceback (most recent call last):
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
@@ -136,457 +621,10 @@ Call stack:
     self._callTestMethod(testMethod)
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
     if method() is not None:
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_stock_history_global.py", line 40, in test_global_stock_history_flow
-    self.client.post(reverse('commande-cloturer', kwargs={'pk': commande.pk}))
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 299, in post
-    response = super().post(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 213, in post
-    return self.generic('POST', path, data, content_type, **extra)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 237, in generic
-    return super().generic(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 671, in generic
-    return self.request(**r)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 289, in request
-    return super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 241, in request
-    request = super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 1082, in request
-    response = self.handler(environ)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 186, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 261, in get_response
-    return super().get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\__init__.py", line 479, in sentry_patched_get_response
-    rv = old_get_response(self, request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 140, in get_response
-    response = self._middleware_chain(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\whitenoise\middleware.py", line 123, in __call__
-    return self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\middleware.py", line 95, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\corsheaders\middleware.py", line 56, in __call__
-    result = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\views.py", line 87, in sentry_wrapped_callback
-    return callback(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 85, in inner
-    return func(*args, **kwds)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\views\commandes.py", line 322, in cloturer
-    commande.save(update_fields=['status', 'date_cloture', 'date', 'date_echeance'])
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\orders.py", line 53, in save
-    super().save(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
-    self.save_base(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
-    post_save.send(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
-    response = receiver(signal=self, sender=sender, **named)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
-    return receiver(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 52, in invalidate_cache_on_commande_save
-    invalidate_produit_cache()
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_produit_cache
-    logger.info("Product cache invalidated successfully")
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
-    self._log(INFO, msg, args, **kwargs)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
-    self.handle(record)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
-    self.callHandlers(record)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
-    return old_callhandlers(self, record)
-Message: 'Product cache invalidated successfully'
-Arguments: ()
-DEBUG    api.cache            | Cache invalidated after order 1 closure
-INFO     api.business         | [COMMANDE] Cloture OK #1 | fournisseur=Fournisseur Test | produits=1 | lots=1 | user=admin
-INFO     api.cache            | Product cache invalidated successfully
---- Logging error ---
-Traceback (most recent call last):
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
-    self.doRollover()
-    ~~~~~~~~~~~~~~~^^
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
-    self.rotate(self.baseFilename, dfn)
-    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
-    os.rename(source, dest)
-    ~~~~~~~~~^^^^^^^^^^^^^^
-PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
-Call stack:
-  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
-    main()
-  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
-    execute_from_command_line(sys.argv)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
-    utility.execute()
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
-    self.fetch_command(subcommand).run_from_argv(self.argv)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
-    super().run_from_argv(argv)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
-    self.execute(*args, **cmd_options)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
-    output = self.handle(*args, **options)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
-    failures = test_runner.run_tests(test_labels)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
-    result = self.run_suite(suite)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
-    return runner.run(suite)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
-    test(result)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
-    return self.run(*args, **kwds)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
-    test(result)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
-    self._setup_and_call(result)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
-    super().__call__(result)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
-    return self.run(*args, **kwds)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
-    self._callTestMethod(testMethod)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
-    if method() is not None:
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_stock_history_global.py", line 48, in test_global_stock_history_flow
-    response = self.client.post(reverse('produit-transfer-to-shelf', kwargs={'pk': self.produit.pk}), {
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 299, in post
-    response = super().post(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 213, in post
-    return self.generic('POST', path, data, content_type, **extra)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 237, in generic
-    return super().generic(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 671, in generic
-    return self.request(**r)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 289, in request
-    return super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 241, in request
-    request = super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 1082, in request
-    response = self.handler(environ)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 186, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 261, in get_response
-    return super().get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\__init__.py", line 479, in sentry_patched_get_response
-    rv = old_get_response(self, request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 140, in get_response
-    response = self._middleware_chain(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\whitenoise\middleware.py", line 123, in __call__
-    return self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\middleware.py", line 95, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\corsheaders\middleware.py", line 56, in __call__
-    result = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\views.py", line 87, in sentry_wrapped_callback
-    return callback(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 85, in inner
-    return func(*args, **kwds)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\views\produits.py", line 1122, in transfer_to_shelf
-    produit.save(update_fields=['stock', 'stock_reserve'])
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
-    super().save(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
-    self.save_base(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
-    post_save.send(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
-    response = receiver(signal=self, sender=sender, **named)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
-    return receiver(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 87, in invalidate_cache_on_produit_change
-    invalidate_produit_cache()
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_produit_cache
-    logger.info("Product cache invalidated successfully")
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
-    self._log(INFO, msg, args, **kwargs)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
-    self.handle(record)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
-    self.callHandlers(record)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
-    return old_callhandlers(self, record)
-Message: 'Product cache invalidated successfully'
-Arguments: ()
-DEBUG    api.cache            | Cache invalidated after product 1 change
-INFO     api.cache            | Product cache invalidated successfully
---- Logging error ---
-Traceback (most recent call last):
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
-    self.doRollover()
-    ~~~~~~~~~~~~~~~^^
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
-    self.rotate(self.baseFilename, dfn)
-    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
-    os.rename(source, dest)
-    ~~~~~~~~~^^^^^^^^^^^^^^
-PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
-Call stack:
-  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
-    main()
-  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
-    execute_from_command_line(sys.argv)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
-    utility.execute()
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
-    self.fetch_command(subcommand).run_from_argv(self.argv)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
-    super().run_from_argv(argv)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
-    self.execute(*args, **cmd_options)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
-    output = self.handle(*args, **options)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
-    failures = test_runner.run_tests(test_labels)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
-    result = self.run_suite(suite)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
-    return runner.run(suite)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
-    test(result)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
-    return self.run(*args, **kwds)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
-    test(result)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
-    self._setup_and_call(result)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
-    super().__call__(result)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
-    return self.run(*args, **kwds)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
-    self._callTestMethod(testMethod)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
-    if method() is not None:
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_stock_history_global.py", line 63, in test_global_stock_history_flow
-    self.client.post(reverse('produit-adjust-stock', kwargs={'pk': self.produit.pk}), {
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 299, in post
-    response = super().post(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 213, in post
-    return self.generic('POST', path, data, content_type, **extra)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 237, in generic
-    return super().generic(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 671, in generic
-    return self.request(**r)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 289, in request
-    return super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 241, in request
-    request = super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 1082, in request
-    response = self.handler(environ)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 186, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 261, in get_response
-    return super().get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\__init__.py", line 479, in sentry_patched_get_response
-    rv = old_get_response(self, request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 140, in get_response
-    response = self._middleware_chain(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\whitenoise\middleware.py", line 123, in __call__
-    return self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\middleware.py", line 95, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\corsheaders\middleware.py", line 56, in __call__
-    result = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\views.py", line 87, in sentry_wrapped_callback
-    return callback(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 85, in inner
-    return func(*args, **kwds)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\views\produits.py", line 832, in adjust_stock
-    adjustment = StockAdjustment.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 40, in test_stats_returns_revenue
+    f1 = TestDataFactory.create_facture(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 97, in create_facture
+    return Facture.objects.create(
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
     return getattr(self.get_queryset(), name)(*args, **kwargs)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
@@ -599,10 +637,10 @@ Call stack:
     response = receiver(signal=self, sender=sender, **named)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
     return receiver(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 75, in invalidate_cache_on_adjustment
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 51, in invalidate_cache_on_facture_save
     invalidate_produit_cache()
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_produit_cache
-    logger.info("Product cache invalidated successfully")
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
     self._log(INFO, msg, args, **kwargs)
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
@@ -611,10 +649,10 @@ Call stack:
     self.callHandlers(record)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
     return old_callhandlers(self, record)
-Message: 'Product cache invalidated successfully'
+Message: 'Product cache (lists and searches) invalidated successfully'
 Arguments: ()
-DEBUG    api.cache            | Cache invalidated after stock adjustment for product 1
-INFO     api.cache            | Product cache invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 3 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
 --- Logging error ---
 Traceback (most recent call last):
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
@@ -664,106 +702,93 @@ Call stack:
     self._callTestMethod(testMethod)
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
     if method() is not None:
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_stock_history_global.py", line 63, in test_global_stock_history_flow
-    self.client.post(reverse('produit-adjust-stock', kwargs={'pk': self.produit.pk}), {
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 299, in post
-    response = super().post(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 213, in post
-    return self.generic('POST', path, data, content_type, **extra)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 237, in generic
-    return super().generic(
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 671, in generic
-    return self.request(**r)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 289, in request
-    return super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 241, in request
-    request = super().request(**kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 1082, in request
-    response = self.handler(environ)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 186, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 261, in get_response
-    return super().get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\__init__.py", line 479, in sentry_patched_get_response
-    rv = old_get_response(self, request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 140, in get_response
-    response = self._middleware_chain(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\whitenoise\middleware.py", line 123, in __call__
-    return self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\middleware.py", line 95, in __call__
-    response = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\corsheaders\middleware.py", line 56, in __call__
-    result = self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
-    return f(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
-    response = response or self.get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
-    response = get_response(request)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
-    response = wrapped_callback(request, *callback_args, **callback_kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\views.py", line 87, in sentry_wrapped_callback
-    return callback(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
-    return view_func(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
-    return self.dispatch(request, *args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
-    response = handler(request, *args, **kwargs)
-  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\contextlib.py", line 85, in inner
-    return func(*args, **kwds)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\views\produits.py", line 845, in adjust_stock
-    produit.save(update_fields=['stock'])
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 44, in test_stats_returns_revenue
+    f2 = TestDataFactory.create_facture(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 97, in create_facture
+    return Facture.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 51, in invalidate_cache_on_facture_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after invoice 4 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 66, in test_stats_returns_stock_value_with_count
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
   File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
     super().save(*args, **kwargs)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
@@ -774,10 +799,10 @@ Call stack:
     response = receiver(signal=self, sender=sender, **named)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
     return receiver(*args, **kwargs)
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 87, in invalidate_cache_on_produit_change
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
     invalidate_produit_cache()
-  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_produit_cache
-    logger.info("Product cache invalidated successfully")
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
     self._log(INFO, msg, args, **kwargs)
   File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
@@ -786,15 +811,762 @@ Call stack:
     self.callHandlers(record)
   File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
     return old_callhandlers(self, record)
-Message: 'Product cache invalidated successfully'
+Message: 'Product cache (lists and searches) invalidated successfully'
 Arguments: ()
-DEBUG    api.cache            | Cache invalidated after product 1 change
+DEBUG    api.cache            | Cache invalidated after product 6 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 70, in test_stats_returns_stock_value_with_count
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 7 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 74, in test_stats_returns_stock_value_with_count
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 8 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 78, in test_stats_returns_stock_value_with_count
+    Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 9 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 121, in test_stats_returns_user_stats
+    TestDataFactory.create_facture(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 97, in create_facture
+    return Facture.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 51, in invalidate_cache_on_facture_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after invoice 6 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 125, in test_stats_returns_user_stats
+    TestDataFactory.create_facture(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 97, in create_facture
+    return Facture.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 51, in invalidate_cache_on_facture_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after invoice 7 validation/payment
+...INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 216, in test_supplier_debts_returns_debts
+    produit = TestDataFactory.create_produit(fournisseur=fournisseur)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 63, in create_produit
+    return Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 10 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 219, in test_supplier_debts_returns_debts
+    commande = TestDataFactory.create_commande(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 149, in create_commande
+    return Commande.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\orders.py", line 58, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_cache_on_commande_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after order 4 closure
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 239, in test_supplier_no_debt_when_fully_paid
+    produit = TestDataFactory.create_produit(fournisseur=fournisseur)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 63, in create_produit
+    return Produit.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\products.py", line 260, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 74, in invalidate_cache_on_produit_change
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after product 11 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+--- Logging error ---
+Traceback (most recent call last):
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 80, in emit
+    self.doRollover()
+    ~~~~~~~~~~~~~~~^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 185, in doRollover
+    self.rotate(self.baseFilename, dfn)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\handlers.py", line 121, in rotate
+    os.rename(source, dest)
+    ~~~~~~~~~^^^^^^^^^^^^^^
+PermissionError: [WinError 32] Le processus ne peut pas accÚder au fichier car ce fichier est utilisÚ par un autre processus: 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log' -> 'C:\\Projet Fullstack\\fullstack_produits\\backend\\logs\\app.log.1'
+Call stack:
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 241, in test_supplier_no_debt_when_fully_paid
+    commande = TestDataFactory.create_commande(
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\factories.py", line 149, in create_commande
+    return Commande.objects.create(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\models\orders.py", line 58, in save
+    super().save(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 902, in save
+    self.save_base(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\base.py", line 1023, in save_base
+    post_save.send(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\dispatch\dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\signals_handlers.py", line 72, in wrapper
+    return receiver(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 39, in invalidate_cache_on_commande_save
+    invalidate_produit_cache()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\cache_invalidation.py", line 26, in invalidate_produit_cache
+    logger.info("Product cache (lists and searches) invalidated successfully")
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1520, in info
+    self._log(INFO, msg, args, **kwargs)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1665, in _log
+    self.handle(record)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\logging\__init__.py", line 1681, in handle
+    self.callHandlers(record)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\logging.py", line 123, in sentry_patched_callhandlers
+    return old_callhandlers(self, record)
+Message: 'Product cache (lists and searches) invalidated successfully'
+Arguments: ()
+DEBUG    api.cache            | Cache invalidated after order 5 closure
 .
+======================================================================
+FAIL: test_stats_returns_receivables (api.tests.test_dashboard.DashboardStatsTestCase.test_stats_returns_receivables)
+VÚrifie le calcul des crÚances (factures non entiÞrement payÚes).
 ----------------------------------------------------------------------
-Ran 1 test in 0.858s
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard.py", line 114, in test_stats_returns_receivables
+    self.assertEqual(recv['count'], 2)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 2
 
-OK
+----------------------------------------------------------------------
+Ran 10 tests in 1.842s
+
+FAILED (failures=1)
 Destroying test database for alias 'default'...
 
-Found 1 test(s).
+Found 10 test(s).
 System check identified no issues (0 silenced).

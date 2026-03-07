@@ -68,7 +68,24 @@ class CustomAuthToken(ObtainAuthToken):
             
         # Record daily session (login)
         from django.utils import timezone
+        import datetime
         today = timezone.now().date()
+        
+        # 1. Auto-close old unclosed sessions from previous days
+        unclosed_old_sessions = UserDailySession.objects.filter(
+            user=user, 
+            date__lt=today, 
+            last_logout__isnull=True
+        )
+        for old_session in unclosed_old_sessions:
+            # Set logout to 23:59:59 of that day
+            end_of_day = timezone.make_aware(
+                datetime.datetime.combine(old_session.date, datetime.time.max)
+            )
+            old_session.last_logout = end_of_day
+            old_session.save()
+
+        # 2. Get or create today's session
         # get_or_create handles the "first login of the day" logic naturally
         # since it will create on first login and return existing on subsequent ones
         # Reset last_logout if user reconnects the same day
@@ -91,6 +108,7 @@ class CustomAuthToken(ObtainAuthToken):
             'can_do_returns': can_do_returns,
             'can_sell_negative_stock': can_sell_negative_stock,
             'can_cash_out': can_cash_out,
+            'server_time': timezone.now().isoformat(),
             'permissions': {
                 'can_delete_invoice': user.is_superuser,
                 'can_view_stats': user.is_superuser or (hasattr(user, 'profile') and user.profile.role == 'manager'),
@@ -271,3 +289,66 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
     def get_serializer_class(self):
         from ..serializers_sessions import UserDailySessionSerializer
         return UserDailySessionSerializer
+    @action(detail=False, methods=['get'])
+    def recap_mensuel(self, request):
+        """
+        Returns a summary of hours worked per user for a specific month/year.
+        Params: month (1-12), year (e.g. 2024)
+        """
+        from django.db.models import Sum, F, ExpressionWrapper, fields, Count
+        import datetime
+        
+        month = request.query_params.get('month')
+        year = request.query_params.get('year')
+        
+        if not month or not year:
+            today = datetime.date.today()
+            month = today.month
+            year = today.year
+            
+        sessions = self.get_queryset().filter(
+            date__month=month,
+            date__year=year,
+            last_logout__isnull=False
+        ).annotate(
+            session_duration=ExpressionWrapper(
+                F('last_logout') - F('first_login'),
+                output_field=fields.DurationField()
+            )
+        )
+        
+        # Aggregate by user
+        from django.contrib.auth.models import User
+        users_stats = []
+        
+        # Get all users (or only those with sessions)
+        relevant_users = User.objects.filter(is_active=True)
+        if not request.user.is_superuser:
+            relevant_users = relevant_users.filter(id=request.user.id)
+            
+        for user in relevant_users:
+            user_sessions = sessions.filter(user=user)
+            total_duration = user_sessions.aggregate(total=Sum('session_duration'))['total']
+            days_count = user_sessions.count()
+            
+            if days_count > 0 and total_duration:
+                total_seconds = int(total_duration.total_seconds())
+                hours = total_seconds // 3600
+                minutes = (total_seconds % 3600) // 60
+                
+                avg_seconds = total_seconds / days_count
+                avg_hours = int(avg_seconds // 3600)
+                avg_minutes = int((avg_seconds % 3600) // 60)
+                
+                users_stats.append({
+                    'user_id': user.id,
+                    'username': user.username,
+                    'full_name': f"{user.first_name} {user.last_name}".strip() or user.username,
+                    'days_count': days_count,
+                    'total_hours': hours,
+                    'total_minutes': minutes,
+                    'total_duration_display': f"{hours}h {minutes}min",
+                    'avg_duration_display': f"{avg_hours}h {avg_minutes}min" if days_count > 0 else "0min"
+                })
+        
+        return Response(users_stats)

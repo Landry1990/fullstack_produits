@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from django.contrib.auth import authenticate
+from django.core.management import call_command
 
 
 # ── Registry of purgeable tables ──────────────────────────────────────────
@@ -362,3 +363,43 @@ class PurgeViewSet(ViewSet):
             'message': 'Purge effectuée avec succès.',
             'results': results,
         })
+
+    @action(detail=False, methods=['post'])
+    def backup(self, request):
+        """
+        Trigger a manual database backup.
+        """
+        try:
+            # We use call_command to run the existing management command
+            from io import StringIO
+            out = StringIO()
+            call_command('backup_database', stdout=out)
+            output = out.getvalue()
+            
+            # Check if double backup is needed (copying to secondary path)
+            from api.models.settings import PharmacySettings
+            import shutil
+            import os
+            
+            settings, _ = PharmacySettings.objects.get_or_create(pk=1)
+            secondary_msg = ""
+            
+            if settings.secondary_backup_path:
+                if os.path.exists(settings.secondary_backup_path):
+                    # Find the latest backup file
+                    backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+                    backups = [f for f in os.listdir(backup_dir) if f.endswith('.sql.gz')]
+                    if backups:
+                        latest_backup = max([os.path.join(backup_dir, f) for f in backups], key=os.path.getmtime)
+                        dest_path = os.path.join(settings.secondary_backup_path, os.path.basename(latest_backup))
+                        shutil.copy2(latest_backup, dest_path)
+                        secondary_msg = f" + Copie secondaire effectuée vers {settings.secondary_backup_path}"
+                else:
+                    secondary_msg = f" (Note: Chemin secondaire {settings.secondary_backup_path} inaccessible)"
+
+            return Response({
+                'message': f'Sauvegarde terminée avec succès.{secondary_msg}',
+                'details': output
+            })
+        except Exception as e:
+            return Response({'detail': f'Erreur lors de la sauvegarde: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

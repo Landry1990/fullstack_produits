@@ -5,6 +5,8 @@ import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import BestCashierMetric from './BestCashierMetric'
+import { format } from 'date-fns'
 
 registerLocale('fr', fr)
 
@@ -53,6 +55,11 @@ export default function HistoriqueClotures() {
   // Sélection
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
   const { settings: pharmacySettings } = usePharmacySettings()
+
+  // Metric month/year (default to now)
+  const [metricMonth, setMetricMonth] = useState<string>(format(new Date(), 'MM'))
+  const [metricYear, setMetricYear] = useState<string>(format(new Date(), 'yyyy'))
+  const [showMetric, setShowMetric] = useState(true)
 
   const apiBaseUrl = useMemo(() => {
     const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -307,6 +314,58 @@ export default function HistoriqueClotures() {
               </button> */}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Best Cashier Ranking Section */}
+      <div className="px-6 pt-6">
+        <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+          <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-100/50">
+            <h2 className="font-black text-sm uppercase tracking-widest text-base-content/60 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+              Performance & Rigueur des Caissiers
+            </h2>
+            <div className="flex gap-2 items-center">
+              <select 
+                className="select select-bordered select-xs h-8 font-bold"
+                value={metricMonth}
+                onChange={(e) => setMetricMonth(e.target.value)}
+              >
+                <option value="01">Janvier</option>
+                <option value="02">Février</option>
+                <option value="03">Mars</option>
+                <option value="04">Avril</option>
+                <option value="05">Mai</option>
+                <option value="06">Juin</option>
+                <option value="07">Juillet</option>
+                <option value="08">Août</option>
+                <option value="09">Septembre</option>
+                <option value="10">Octobre</option>
+                <option value="11">Novembre</option>
+                <option value="12">Décembre</option>
+              </select>
+              <select 
+                className="select select-bordered select-xs h-8 font-bold"
+                value={metricYear}
+                onChange={(e) => setMetricYear(e.target.value)}
+              >
+                {[2024, 2025, 2026, 2027].map(y => (
+                    <option key={y} value={y.toString()}>{y}</option>
+                ))}
+              </select>
+              <button 
+                onClick={() => setShowMetric(!showMetric)}
+                className="btn btn-ghost btn-xs h-8 px-3 font-bold"
+              >
+                {showMetric ? 'Masquer' : 'Afficher'}
+              </button>
+            </div>
+          </div>
+          {showMetric && (
+            <div className="p-6 bg-base-200/30">
+              <BestCashierMetric month={metricMonth} year={metricYear} />
+            </div>
+          )}
         </div>
       </div>
 

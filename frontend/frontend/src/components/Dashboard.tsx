@@ -25,9 +25,11 @@ import {
 
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '../utils/formatters';
+import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { getServerDate } = useAuth();
   const [expirationMonths, setExpirationMonths] = useState(1); // Délai par défaut: 1 mois
   const navigate = useNavigate();
 
@@ -72,7 +74,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (expiringLots.length === 0) return;
     
-    const today = new Date();
+    const today = getServerDate();
     const criticalLots = expiringLots.filter(lot => {
       if (!lot.date_expiration) return false;
       const daysUntil = Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
@@ -128,7 +130,7 @@ export default function Dashboard() {
           <p className="text-xs sm:text-sm text-base-content/80">{t('dashboard.subtitle')}</p>
         </div>
         <div className="text-xs sm:text-sm font-medium text-base-content/80 bg-base-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-sm border border-base-200">
-          {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+          {getServerDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       </div>
 
@@ -662,8 +664,9 @@ export default function Dashboard() {
                   <div className="text-sm text-base-content/60 text-center py-2">{t('dashboard.alerts.no_expiry_alerts')}</div>
                 ) : (
                   expiringLots.map((lot) => {
+                    const today = getServerDate();
                     const daysUntilExpiry = lot.date_expiration 
-                      ? Math.floor((new Date(lot.date_expiration).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                      ? Math.floor((new Date(lot.date_expiration).getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
                       : 0;
                     
                     // Color-coded urgency

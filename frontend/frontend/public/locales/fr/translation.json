@@ -24,7 +24,8 @@
         },
         "actions": {
             "confirm": "Confirmer",
-            "cancel": "Annuler"
+            "cancel": "Annuler",
+            "delete": "Supprimer"
         },
         "pagination": {
             "prev": "Précédent",
@@ -359,8 +360,21 @@
         "status": "Statut",
         "closed": "Clôturé",
         "ongoing": "En cours",
+        "not_closed": "Non clôturé",
         "loading": "Chargement des sessions...",
-        "no_result": "Aucune session trouvée pour ces critères."
+        "no_result": "Aucune session trouvée pour ces critères.",
+        "tabs": {
+            "daily": "Journal de présence",
+            "monthly": "Récapitulatif Mensuel"
+        },
+        "recap": {
+            "title": "Résumé du mois",
+            "month": "Mois",
+            "year": "Année",
+            "days_present": "Jours Présents",
+            "total_hours": "Total Heures",
+            "avg_hours": "Moyenne/Jour"
+        }
     },
     "providers": {
         "title": "Fournisseurs",
@@ -691,6 +705,11 @@
             "local": "Commandes Grossistes (Locales)",
             "direct": "Commandes Directes (Etranger)"
         },
+        "bulk_delete_btn": "Supprimer Sélection",
+        "bulk_delete_title": "Suppression Groupée",
+        "bulk_delete_confirm": "Voulez-vous vraiment supprimer les {{count}} commandes sélectionnées ?\n\nSeules les commandes non clôturées seront impactées.",
+        "bulk_delete_success": "{{count}} commande(s) supprimée(s) avec succès.",
+        "bulk_delete_error": "Erreur lors de la suppression groupée.",
         "history": {
             "title": "Historique des Achats",
             "subtitle_local": " Locaux",

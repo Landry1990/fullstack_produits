@@ -39,6 +39,7 @@ interface CommandeListProps {
   onOpenCreateView: () => void;
   onOpenSuggestionModal: () => void;
   onViewDetails: (commande: Commande) => void;
+  onBulkDelete: () => void;
 }
 
 export default function CommandeList({
@@ -63,7 +64,8 @@ export default function CommandeList({
   onOpenMergeModal,
   onOpenCreateView,
   onOpenSuggestionModal,
-  onViewDetails
+  onViewDetails,
+  onBulkDelete
 }: CommandeListProps) {
   const { t } = useTranslation();
 
@@ -187,6 +189,14 @@ export default function CommandeList({
             title={mergeReason || ''}
           >
             🔀 {t('orders.list.selection.merge')}
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-sm btn-error gap-1"
+            onClick={onBulkDelete}
+          >
+            🗑️ {t('orders.bulk_delete_btn')}
           </button>
         </div>
       )}

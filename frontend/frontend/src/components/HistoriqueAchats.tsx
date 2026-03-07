@@ -106,53 +106,55 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
 
   return (
     <div className="h-full flex flex-col p-6 overflow-hidden">
-      <h1 className="text-2xl font-bold mb-6 shrink-0">
-        {t('orders.history.title')} 
-        {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
-      </h1>
+      <div className="sticky-header">
+        <h1 className="text-2xl font-bold mb-6 shrink-0">
+          {t('orders.history.title')} 
+          {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
+        </h1>
 
-      <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end shadow-sm shrink-0">
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">{t('orders.history.start_date')}</span>
-          </label>
-          <input 
-            type="date" 
-            className="input input-bordered" 
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-          />
-        </div>
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text">{t('orders.history.end_date')}</span>
-          </label>
-          <input 
-            type="date" 
-            className="input input-bordered" 
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-          />
-        </div>
-        
-        <div className="form-control min-w-[200px]">
-          <label className="label">
-            <span className="label-text">{t('orders.history.provider_filter')}</span>
-          </label>
-          <select 
-            className="select select-bordered"
-            value={selectedSupplier}
-            onChange={(e) => setSelectedSupplier(e.target.value)}
-          >
-            <option value="">{t('orders.history.all_providers')}</option>
-            {suppliers.map(s => (
-                <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
-        </div>
+        <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end shadow-sm shrink-0">
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">{t('orders.history.start_date')}</span>
+            </label>
+            <input 
+              type="date" 
+              className="input input-bordered" 
+              value={dateDebut}
+              onChange={(e) => setDateDebut(e.target.value)}
+            />
+          </div>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">{t('orders.history.end_date')}</span>
+            </label>
+            <input 
+              type="date" 
+              className="input input-bordered" 
+              value={dateFin}
+              onChange={(e) => setDateFin(e.target.value)}
+            />
+          </div>
+          
+          <div className="form-control min-w-[200px]">
+            <label className="label">
+              <span className="label-text">{t('orders.history.provider_filter')}</span>
+            </label>
+            <select 
+              className="select select-bordered"
+              value={selectedSupplier}
+              onChange={(e) => setSelectedSupplier(e.target.value)}
+            >
+              <option value="">{t('orders.history.all_providers')}</option>
+              {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="form-control">
-             <button className="btn btn-primary" onClick={() => fetchHistory(page)}>{t('orders.history.refresh')}</button>
+          <div className="form-control">
+               <button className="btn btn-primary" onClick={() => fetchHistory(page)}>{t('orders.history.refresh')}</button>
+          </div>
         </div>
       </div>
 
