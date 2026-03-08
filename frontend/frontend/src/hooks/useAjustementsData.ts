@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import type { StockAdjustment } from '../types';
+import type { StockAdjustment, PaginatedResponse, StockAdjustmentStats } from '../types';
 
 export const useAjustementsData = () => {
     const [adjustments, setAdjustments] = useState<StockAdjustment[]>([]);
@@ -34,7 +34,7 @@ export const useAjustementsData = () => {
     const fetchAdjustments = useCallback(async (page = 1) => {
         setLoading(true);
         try {
-            const params: any = {
+            const params: Record<string, string | number> = {
                 page: page,
                 page_size: 20
             };
@@ -45,15 +45,16 @@ export const useAjustementsData = () => {
             if (dateEnd) params.created_at__lte = dateEnd + 'T23:59:59';
 
             // 1. Fetch List
-            const response = await axios.get(adjustmentsEndpoint, { params });
+            const response = await axios.get<PaginatedResponse<StockAdjustment> | StockAdjustment[]>(adjustmentsEndpoint, { params });
 
-            if (response.data && Array.isArray(response.data.results)) {
+            if (response.data && 'results' in response.data && Array.isArray(response.data.results)) {
                 setAdjustments(response.data.results);
                 setTotalCount(response.data.count);
                 setTotalPages(Math.ceil(response.data.count / 20));
             } else {
-                setAdjustments(Array.isArray(response.data) ? response.data : []);
-                setTotalCount(Array.isArray(response.data) ? response.data.length : 0);
+                const data = response.data as StockAdjustment[];
+                setAdjustments(Array.isArray(data) ? data : []);
+                setTotalCount(Array.isArray(data) ? data.length : 0);
                 setTotalPages(1);
             }
             setCurrentPage(page);
@@ -63,7 +64,7 @@ export const useAjustementsData = () => {
             delete statsParams.page;
             delete statsParams.page_size;
 
-            const statsResponse = await axios.get(`${adjustmentsEndpoint}stats/`, { params: statsParams });
+            const statsResponse = await axios.get<StockAdjustmentStats>(`${adjustmentsEndpoint}stats//`, { params: statsParams });
             if (statsResponse.data) {
                 setStats(statsResponse.data);
             }
@@ -85,7 +86,7 @@ export const useAjustementsData = () => {
 
     const handleExportExcel = useCallback(async () => {
         try {
-            const params: any = {};
+            const params: Record<string, string> = {};
             if (searchQuery) params.search = searchQuery;
             if (filterReasonType) params.reason_type = filterReasonType;
             if (dateStart) params.created_at__gte = dateStart;

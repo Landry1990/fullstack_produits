@@ -87,6 +87,7 @@ export interface ProduitModel {
   has_reserve_storage?: boolean
   capacite_rayon?: number
   min_rayon?: number
+  next_expiring_date?: string | null
 }
 
 export interface ProduitForm {
@@ -333,6 +334,8 @@ export interface StockLot {
   fournisseur_nom: string
   quantity_initial: number
   quantity_remaining: number
+  quantity_reserved?: number
+  quantity_total?: number
   price_cost: string
   selling_price?: string // Added
   lot: string | null
@@ -675,3 +678,84 @@ export interface PMPDataItem {
   pmp: string;
 }
 
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface StockAdjustmentStats {
+  total_count: number;
+  positive_sum: number;
+  negative_sum: number;
+}
+
+export interface SudoOptions {
+  title?: string;
+  message?: string;
+  permission?: string;
+}
+
+export interface SudoState {
+  isOpen: boolean;
+  onValidate: (validatorId: number, password: string) => Promise<void>;
+  title?: string;
+  message?: string;
+  permission?: string;
+}
+export interface SaleCompletionParams {
+  // Client
+  selectedClient: number | null;
+  useManualClient: boolean;
+  manualClientName: string;
+  clients: Client[];
+
+  // Ayant droit
+  selectedAyantDroit: number | null;
+  ayantDroitNom: string;
+  ayantDroitMatricule: string;
+  ayantDroitSociete: string;
+  ayantsDroitList: AyantDroit[];
+  showNewAyantDroit: boolean;
+
+  // Cart
+  lignesFacture: LigneFacture[];
+  totals: TotalsData;
+
+  // Payment
+  modePaiement: string;
+  montantPaye: string;
+  paiements: PaymentDetails[];
+  reference: string;
+  couponNumero: string;
+
+  // Loyalty / Discounts
+  usePendingDiscount: boolean;
+  pointsToUse: number;
+
+  // Modes
+  isRetrocession: boolean;
+  centralizedCashRegister: boolean;
+
+  // Modification mode
+  isModificationMode: boolean;
+  modificationInvoiceId: number | null;
+
+  // Devis
+  devisIdToValidate: number | null;
+
+  // Ordonnance
+  tempOrdonnanceData: OrdonnanceData | null;
+  // Sudo Mode
+  validated_by_id?: number | null;
+  sudo_password?: string;
+}
+
+export interface SaleCompletionResult {
+  success: boolean;
+  facture?: Facture;
+  ticketCaisse?: TicketCaisse;
+  error?: string;
+  rendu?: number;
+}

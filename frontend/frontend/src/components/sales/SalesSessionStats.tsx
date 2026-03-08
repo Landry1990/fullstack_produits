@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingUp, Clock } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import type { CaisseParTranche } from '../../types';
 
 interface SalesSessionStatsProps {
@@ -26,7 +27,7 @@ export const SalesSessionStats: React.FC<SalesSessionStatsProps> = ({ session })
 
                 <div className="flex items-baseline gap-1 mb-2">
                     <span className="text-3xl font-bold tracking-tight text-white">
-                        {parseFloat(session.total_ttc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        {formatCurrency(parseFloat(session.total_ttc))}
                     </span>
                     <span className="text-xl font-medium text-primary-content/70">F</span>
                 </div>

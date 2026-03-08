@@ -10,6 +10,7 @@ import type { ProduitModel } from '../types';
 import { 
   ChevronRight, Trash2, Plus 
 } from 'lucide-react';
+import { normalizeNumberInput, formatNumber } from '../utils/formatters';
 
 // Interfaces
 interface RelationTransformation {
@@ -92,7 +93,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
             <div className="font-bold text-gray-800 truncate">{selected.name}</div>
             <div className="text-[11px] text-gray-500 flex gap-3">
               <span>CIP: {selected.cip1 || 'N/A'}</span>
-              <span>Stock: <b className={selected.stock <= 0 ? 'text-error' : 'text-success'}>{selected.stock}</b></span>
+              <span>Stock: <b className={selected.stock <= 0 ? 'text-error' : 'text-success'}>{formatNumber(selected.stock)}</b></span>
             </div>
           </div>
           <button
@@ -170,7 +171,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
                     <div className="font-semibold text-sm truncate">{p.name}</div>
                     <div className="text-[10px] flex gap-3" style={itemProps.style.color ? { color: 'rgba(255,255,255,0.7)' } : { color: '#9ca3af' }}>
                       <span>CIP: {p.cip1 || 'N/A'}</span>
-                      <span>Stock: <b>{p.stock}</b></span>
+                      <span>Stock: <b>{formatNumber(p.stock)}</b></span>
                     </div>
                   </div>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 opacity-30 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -249,7 +250,7 @@ const Transformations: React.FC = () => {
       await axios.post(`${apiBaseUrl}/relations-transformation/`, {
         produit_source: selectedSource.id,
         produit_destination: selectedDestination.id,
-        ratio: parseFloat(ratioValue)
+        ratio: normalizeNumberInput(ratioValue)
       });
       toast.success(t('transformations.messages.create_success'));
       setIsRelationModalOpen(false);
@@ -412,7 +413,7 @@ const Transformations: React.FC = () => {
 
                     <div className="bg-white/50 rounded-xl p-3 border border-base-200 flex justify-between items-center mb-6">
                        <div className="text-xs font-medium opacity-60">Ratio de conversion</div>
-                       <div className="badge badge-primary font-mono font-bold">1 : {relation.ratio}</div>
+                       <div className="badge badge-primary font-mono font-bold">1 : {formatNumber(relation.ratio)}</div>
                     </div>
 
                     <div className="flex gap-2">
@@ -468,11 +469,13 @@ const Transformations: React.FC = () => {
                            </div>
                         </td>
                         <td>
+<td className="pr-6 italic text-gray-400 text-xs max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
                           <div className="flex items-center gap-3">
-                             <div className="bg-error/10 text-error px-2 py-1 rounded text-xs font-black font-mono">-{hist.quantite_source}</div>
+                             <div className="bg-error/10 text-error px-2 py-1 rounded text-xs font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
                              <ChevronRight size={12} className="opacity-20" />
-                             <div className="bg-success/10 text-success px-2 py-1 rounded text-xs font-black font-mono">+{hist.quantite_destination}</div>
+                             <div className="bg-success/10 text-success px-2 py-1 rounded text-xs font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
                           </div>
+                        </td>
                         </td>
                         <td className="pr-6 italic text-gray-400 text-xs max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
                            {hist.notes || '-'}
@@ -584,7 +587,7 @@ const Transformations: React.FC = () => {
                 </div>
                 <div className="text-center flex-1">
                   <div className="font-bold text-success truncate">{selectedDestination.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">×{Math.floor(parseFloat(ratioValue) || 0)}</div>
+                  <div className="text-xs text-gray-400 mt-0.5">×{Math.floor(normalizeNumberInput(ratioValue))}</div>
                 </div>
               </div>
             </div>
@@ -644,7 +647,7 @@ const Transformations: React.FC = () => {
                   className="input input-bordered w-full text-center text-2xl font-black h-14 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   min="1"
                   value={transformationData.quantite}
-                  onChange={e => setTransformationData({...transformationData, quantite: parseInt(e.target.value) || 0})}
+                  onChange={e => setTransformationData({...transformationData, quantite: normalizeNumberInput(e.target.value)})}
                   required
                   autoFocus
                 />
@@ -671,7 +674,7 @@ const Transformations: React.FC = () => {
                 </div>
                 <div className="font-bold text-gray-800 text-sm mb-3 truncate">{transformationData.relation.produit_destination_nom}</div>
                 <div className="w-full h-14 rounded-xl bg-success/10 border-2 border-success/20 flex items-center justify-center font-black text-2xl text-success">
-                  {quantiteDestinationCalculee}
+                  {formatNumber(quantiteDestinationCalculee)}
                 </div>
                 <div className="text-[10px] text-gray-400 mt-2">{t('transformations.modal_transform.qty_obtained')}</div>
               </div>

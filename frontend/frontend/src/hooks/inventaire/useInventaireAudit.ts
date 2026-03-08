@@ -4,10 +4,10 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export interface AuditData {
-    top_pertes: any[];
-    top_surplus: any[];
-    par_rayon: any[];
-    par_groupe: any[];
+    top_pertes: Array<{ produit_nom: string; ecart: number; valeur: number }>;
+    top_surplus: Array<{ produit_nom: string; ecart: number; valeur: number }>;
+    par_rayon: Array<{ rayon: string; total: number }>;
+    par_groupe: Array<{ groupe: string; total: number }>;
     stats_globales: {
         total_perte: number;
         total_gain: number;
@@ -33,7 +33,7 @@ export const useInventaireAudit = () => {
             const params = new URLSearchParams();
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
-            
+
             const url = params.toString() ? `${auditEndpoint}?${params.toString()}` : auditEndpoint;
             const response = await axios.get(url);
             setData(response.data);

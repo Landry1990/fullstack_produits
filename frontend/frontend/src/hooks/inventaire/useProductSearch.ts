@@ -2,13 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import type { ProduitModel } from '../../types';
+import type { ProduitModel, LigneInventaire, StockLot } from '../../types';
 
 export const useProductSearch = (
     _lignesEndpoint: string,
     activeInventaireId: number | undefined,
-    setLignes: React.Dispatch<React.SetStateAction<any[]>>,
-    lignes: any[],
+    setLignes: React.Dispatch<React.SetStateAction<LigneInventaire[]>>,
+    lignes: LigneInventaire[],
     inventoryType?: 'GLOBAL' | 'RAYON' | 'RESERVE'
 ) => {
     const { t } = useTranslation();
@@ -22,7 +22,7 @@ export const useProductSearch = (
     // Lot selection modal state
     const [showLotModal, setShowLotModal] = useState(false);
     const [selectedProductForLot, setSelectedProductForLot] = useState<ProduitModel | null>(null);
-    const [availableLots, setAvailableLots] = useState<any[]>([]);
+    const [availableLots, setAvailableLots] = useState<StockLot[]>([]);
     const [loadingLots, setLoadingLots] = useState(false);
     const [selectedLotIndex, setSelectedLotIndex] = useState(-1);
 
@@ -133,11 +133,11 @@ export const useProductSearch = (
             const lot = availableLots.find(l => l.id === lotId);
             if (lot) {
                 lotStock = lot.quantity_remaining;
-                if (inventoryType === 'RESERVE') lotStock = lot.quantity_reserved;
+                if (inventoryType === 'RESERVE') lotStock = lot.quantity_reserved || 0;
                 else if (inventoryType === 'GLOBAL') lotStock = (lot.quantity_remaining || 0) + (lot.quantity_reserved || 0);
 
-                lotNum = lot.lot;
-                lotExp = lot.date_expiration;
+                lotNum = lot.lot || undefined;
+                lotExp = lot.date_expiration || undefined;
             }
         } else if (lotId === 'NEW') {
             lotStock = 0;
@@ -150,8 +150,8 @@ export const useProductSearch = (
             lotId === 'NEW' || lotId === 'GLOBAL' ? undefined : lotId,
             tempId,
             lotStock,
-            lotNum,
-            lotExp
+            lotNum as string | undefined,
+            lotExp as string | undefined
         );
         setShowLotModal(false);
         setSelectedProductForLot(null);
@@ -193,7 +193,7 @@ export const useProductSearch = (
 
         // Optimistic UI checks: verify if line already exists
         const existsLocally = lignes.some(l =>
-            l.produit === product.id &&
+            (typeof l.produit === 'object' ? l.produit.id === product.id : l.produit === product.id) &&
             (stockLotId ? l.stock_lot === stockLotId : !l.stock_lot)
         );
 
@@ -212,12 +212,12 @@ export const useProductSearch = (
         if (inventoryType === 'RESERVE') baseStock = product.stock_reserve || 0;
         else if (inventoryType === 'GLOBAL') baseStock = (product.stock || 0) + (product.stock_reserve || 0);
 
-        const temporaryLine = {
+        const temporaryLine: LigneInventaire = {
             id: fallbackId,
             inventaire: activeInventaireId,
-            produit: product.id,
+            produit: product,
             produit_nom: product.name,
-            produit_cip: product.cip1,
+            produit_cip: product.cip1 || undefined,
             produit_rayon: product.rayon_name,
             stock_lot: stockLotId,
             stock_theorique: initialStock ?? baseStock,

@@ -27,10 +27,17 @@ export const formatPrice = (price: number, decimals: number = 0) => {
     return new Intl.NumberFormat('fr-FR', {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
-    }).format(price).replace(/\u00a0/g, ' ');
+    }).format(price).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
 }
 
 export const formatCurrency = formatPrice;
+
+export const formatNumber = (value: number, decimals: number = 0) => {
+    return new Intl.NumberFormat('fr-FR', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    }).format(value).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
+}
 
 export const safeFormatNumber = (value: any) => {
     if (value === undefined || value === null) return formatCurrency(0);

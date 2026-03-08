@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import type { CommandeProduit, ProduitModel, Commande } from '../../types';
 import { useTranslation } from 'react-i18next';
+import type { CommandeProduit, ProduitModel, Commande } from '../../types';
+import { formatCurrency, formatNumber } from '../../utils/formatters';
 
 interface FieldConfig {
     name: string;
@@ -146,15 +147,15 @@ export default function CommandeProductTable({
                             <div className="flex gap-2 text-xs md:text-sm">
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
                                     <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_ht')}</span>
-                                    <span className="font-bold">{stats.ht.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                    <span className="font-bold">{formatCurrency(stats.ht)} F</span>
                                 </div>
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
                                     <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_tva')}</span>
-                                    <span className="font-bold">{stats.tva.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                    <span className="font-bold">{formatCurrency(stats.tva)} F</span>
                                 </div>
                                 <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
                                     <span className="text-[10px] text-primary/70 uppercase">{t('orders.product_table.total_ttc')}</span>
-                                    <span className="font-bold text-primary">{totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                    <span className="font-bold text-primary">{formatCurrency(totalTTC)} F</span>
                                 </div>
                             </div>
                         );
@@ -548,7 +549,7 @@ export default function CommandeProductTable({
                                             <div>
                                                 <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Historique d'Achat</div>
                                                 <div className="font-medium text-base-content">{formatAchat}</div>
-                                                <div className="text-xs text-base-content/60 mt-0.5">Dernier prix d'achat: {stats.cost_price ? Number(stats.cost_price).toLocaleString() + ' F' : '-'}</div>
+                                                <div className="text-xs text-base-content/60 mt-0.5">Dernier prix d'achat: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) + ' F' : '-'}</div>
                                             </div>
                                             <div>
                                                 <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Historique de Vente</div>

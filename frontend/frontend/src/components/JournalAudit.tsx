@@ -3,6 +3,7 @@ import axios from '../config/axios';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
+import { formatNumber } from '../utils/formatters';
 
 const ACTION_TYPES = [
   { value: '', label: 'Tous' },
@@ -198,7 +199,7 @@ const JournalAudit: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className="stat bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg">
                 <div className="stat-title text-blue-100">Total Logs</div>
-                <div className="stat-value">{statistics.total_logs.toLocaleString()}</div>
+                <div className="stat-value">{formatNumber(statistics.total_logs)}</div>
               </div>
               <div className="stat bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg">
                 <div className="stat-title text-green-100">Dernières 24h</div>

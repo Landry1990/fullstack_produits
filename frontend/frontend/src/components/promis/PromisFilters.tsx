@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Filter, Plus, PackageX, CheckCircle2 } from 'lucide-react';
+import { Search, Filter, Plus } from 'lucide-react';
 import type { UsePromisDataReturn } from '../../hooks/usePromisData';
 
 interface PromisFiltersProps {
@@ -10,13 +10,6 @@ interface PromisFiltersProps {
     setSearchQuery: (query: string) => void;
     onRefresh: () => void;
     onNew: () => void;
-
-    // Bulk actions
-    selectedCount: number;
-    onBulkDeliver: () => void;
-    onBulkCancel: () => void;
-    onClearSelection: () => void;
-    bulkLoading: boolean;
 }
 
 export const PromisFilters: React.FC<PromisFiltersProps> = ({
@@ -25,96 +18,58 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
     searchQuery,
     setSearchQuery,
     onRefresh,
-    onNew,
-    selectedCount,
-    onBulkDeliver,
-    onBulkCancel,
-    onClearSelection,
-    bulkLoading
+    onNew
 }) => {
     const { t } = useTranslation();
 
     return (
         <div className="p-4 bg-base-100 border-b border-base-200">
-            {selectedCount > 0 ? (
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-3 bg-info/10 rounded-xl border border-info/20">
-                    <span className="font-semibold text-info flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5" />
-                        {selectedCount} promis sélectionné(s)
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                        <button 
-                            className="btn btn-success btn-sm gap-2 text-white shadow-sm"
-                            onClick={onBulkDeliver}
-                            disabled={bulkLoading}
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div className="flex flex-1 gap-4 items-center w-full md:w-auto">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
+                        <input
+                            type="text"
+                            placeholder={t('common.search', 'Rechercher...')}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
+                        />
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-base-content/40" />
+                        <select
+                            className="select select-bordered bg-base-200/50 focus:bg-base-100 min-w-[140px]"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value as any)}
                         >
-                            {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <CheckCircle2 className="w-4 h-4" />}
-                            {t('promis.modals.bulk_delivery_confirm', 'Livrer tous')}
-                        </button>
-                        <button 
-                            className="btn btn-error btn-sm gap-2 text-white shadow-sm"
-                            onClick={onBulkCancel}
-                            disabled={bulkLoading}
-                        >
-                            {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <PackageX className="w-4 h-4" />}
-                            {t('promis.modals.bulk_cancel_confirm', 'Annuler tous')}
-                        </button>
-                        <button 
-                            className="btn btn-ghost btn-sm text-base-content/60 hover:text-base-content"
-                            onClick={onClearSelection}
-                        >
-                            Désélectionner
-                        </button>
+                            <option value="ALL">{t('promis.status_all', 'Tous')}</option>
+                            <option value="ATT">{t('promis.status_att', 'En Attente')}</option>
+                            <option value="DEL">{t('promis.status_del', 'Délivrés')}</option>
+                            <option value="ANN">{t('promis.status_ann', 'Annulés')}</option>
+                        </select>
                     </div>
                 </div>
-            ) : (
-                <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-                    <div className="flex flex-1 gap-4 items-center w-full md:w-auto">
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
-                            <input
-                                type="text"
-                                placeholder={t('common.search', 'Rechercher...')}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
-                            />
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                            <Filter className="w-4 h-4 text-base-content/40" />
-                            <select
-                                className="select select-bordered bg-base-200/50 focus:bg-base-100 min-w-[140px]"
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value as any)}
-                            >
-                                <option value="ALL">{t('promis.status_all', 'Tous')}</option>
-                                <option value="ATT">{t('promis.status_att', 'En Attente')}</option>
-                                <option value="DEL">{t('promis.status_del', 'Délivrés')}</option>
-                                <option value="ANN">{t('promis.status_ann', 'Annulés')}</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                        <button 
-                            className="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
-                            onClick={onRefresh}
-                            title={t('common.refresh', 'Actualiser')}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-                        </button>
-                        <button 
-                            className="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
-                            onClick={onNew}
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('promis.new_btn', 'Nouveau Promis')}</span>
-                            <span className="sm:hidden">{t('common.add', 'Ajouter')}</span>
-                        </button>
-                    </div>
+                <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <button 
+                        className="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
+                        onClick={onRefresh}
+                        title={t('common.refresh', 'Actualiser')}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
+                    <button 
+                        className="btn btn-primary gap-2 text-white shadow-sm hover:shadow-md transition-all"
+                        onClick={onNew}
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span className="hidden sm:inline">{t('promis.new_btn', 'Nouveau Promis')}</span>
+                        <span className="sm:hidden">{t('common.add', 'Ajouter')}</span>
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

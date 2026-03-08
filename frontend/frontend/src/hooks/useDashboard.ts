@@ -53,7 +53,7 @@ interface PromisItem {
 }
 
 export const useDashboardStats = () => {
-    return useQuery({
+    return useQuery<DashboardStats>({
         queryKey: ['dashboard', 'stats'],
         queryFn: async () => {
             const response = await axios.get<DashboardStats>(`${dashboardEndpoint}stats/`);
@@ -64,7 +64,7 @@ export const useDashboardStats = () => {
 };
 
 export const useRevenueChart = () => {
-    return useQuery({
+    return useQuery<RevenueChartData>({
         queryKey: ['dashboard', 'revenueChart'],
         queryFn: async () => {
             const response = await axios.get<RevenueChartData>(`${dashboardEndpoint}revenue_chart/`);
@@ -75,7 +75,7 @@ export const useRevenueChart = () => {
 };
 
 export const useLowStock = () => {
-    return useQuery({
+    return useQuery<LowStockItem[]>({
         queryKey: ['dashboard', 'lowStock'],
         queryFn: async () => {
             const response = await axios.get<LowStockItem[]>(`${dashboardEndpoint}low_stock/`);
@@ -118,7 +118,7 @@ export const usePromisDisponibles = () => {
 };
 
 export const useExpiringLots = (months: number) => {
-    return useQuery({
+    return useQuery<StockLot[]>({
         queryKey: ['dashboard', 'expiringLots', months],
         queryFn: async () => {
             const today = new Date();

@@ -1,6 +1,6 @@
-import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package, TrendingUp, AlertTriangle, Info } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 
 interface StockAnalysisStatsProps {
     totalItems: number;
@@ -50,7 +50,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
         },
         {
             label: getValueLabel(),
-            value: `${Math.round(totalValue).toLocaleString()} F`,
+            value: `${formatCurrency(Math.round(totalValue))} F`,
             icon: <TrendingUp className="w-6 h-6" />,
             color: 'error',
             bg: 'bg-error/10',

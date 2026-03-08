@@ -2,6 +2,7 @@
 import { forwardRef } from 'react';
 import Barcode from 'react-barcode';
 import type { TicketCaisse, PharmacySettings } from '../../types';
+import { formatNumber } from '../../utils/formatters';
 
 interface TicketTemplateProps {
   ticket: TicketCaisse;
@@ -28,8 +29,7 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
   };
 
   const formatM = (val: number | string) => {
-    const num = Math.round(Number(val));
-    return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ');
+    return formatNumber(Math.round(Number(val)));
   };
 
   const getModeLabel = (mode: string) => {

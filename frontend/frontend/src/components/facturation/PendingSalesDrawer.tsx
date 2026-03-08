@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
 
 interface PendingSalesDrawerProps {
   isOpen: boolean
@@ -34,10 +35,10 @@ export default function PendingSalesDrawer({
         ) : (
           <div className="space-y-3">
             {ventesEnAttente.map((vente, idx) => {
-              const total = vente.lignes.reduce((sum: number, ligne: any) => sum + (ligne.total_ligne || 0), 0)
+              const total = vente.lignes.reduce((sum: number, ligne: any) => sum + (normalizeNumberInput(ligne.total_ligne) || 0), 0)
               const remiseMontant = vente.remiseMode === 'montant'
-                ? parseFloat(vente.remise)
-                : total * (parseFloat(vente.remise) / 100)
+                ? normalizeNumberInput(vente.remise)
+                : total * (normalizeNumberInput(vente.remise) / 100)
               const totalNet = total - remiseMontant
 
               return (
@@ -53,7 +54,7 @@ export default function PendingSalesDrawer({
                         </div>
                         <div className="text-sm text-base-content/60 space-y-1">
                           <div>{t('facturation.pending_sales.items_count', { count: vente.lignes.length })}</div>
-                          <div className="font-medium text-primary">{Math.round(totalNet)} FCFA</div>
+                          <div className="font-medium text-primary">{formatCurrency(totalNet)} FCFA</div>
                           <div className="text-xs opacity-50">
                             {new Date(vente.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </div>

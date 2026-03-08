@@ -1,12 +1,12 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import type { Creance } from '../types';
 import { useSudo } from './useSudo';
 import { usePharmacySettings } from './usePharmacySettings';
+import { formatCurrency } from '../utils/formatters';
+import creanceService from '../services/creanceService';
 
 interface UseCreanceActionsProps {
-    creancesEndpoint: string;
     refresh: () => void;
     selectedIds: number[];
     setSelectedIds: (ids: number[]) => void;
@@ -14,7 +14,6 @@ interface UseCreanceActionsProps {
 }
 
 export const useCreanceActions = ({
-    creancesEndpoint,
     refresh,
     selectedIds,
     setSelectedIds
@@ -56,10 +55,7 @@ export const useCreanceActions = ({
 
     const handlePrintDirectReceipt = useCallback(async (creanceId: number, paiementId?: number) => {
         try {
-            const url = `${creancesEndpoint}${creanceId}/imprimer_recu/${paiementId ? `?paiement_id=${paiementId}` : ''}`;
-            const response = await axios.get(url, { responseType: 'blob' });
-
-            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const blob = await creanceService.imprimerRecu(creanceId, paiementId);
             const blobUrl = window.URL.createObjectURL(blob);
             const printWindow = window.open(blobUrl, '_blank');
 
@@ -73,22 +69,18 @@ export const useCreanceActions = ({
             }
 
             setTimeout(() => window.URL.revokeObjectURL(blobUrl), 100);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Erreur lors de l\'impression du reçu:', err);
-            toast.error(err.response?.data?.detail || 'Erreur lors de l\'impression du reçu');
+            const error = err as { response?: { data?: { detail?: string } } };
+            toast.error(error.response?.data?.detail || 'Erreur lors de l\'impression du reçu');
         }
-    }, [creancesEndpoint]);
+    }, []);
 
     const handlePrintBulkReceipt = useCallback(async (releveId: number) => {
         if (!releveId) return;
 
         try {
-            const response = await axios.get(`${creancesEndpoint}imprimer_releve_paiement/`, {
-                params: { releve_id: releveId },
-                responseType: 'blob'
-            });
-
-            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const blob = await creanceService.imprimerRelevePaiement(releveId);
             const url = window.URL.createObjectURL(blob);
             const printWindow = window.open(url, '_blank');
 
@@ -102,17 +94,18 @@ export const useCreanceActions = ({
             }
 
             setTimeout(() => window.URL.revokeObjectURL(url), 100);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Erreur lors de l\'impression du relevé:', err);
-            toast.error(err.response?.data?.detail || 'Erreur lors de l\'impression du relevé');
+            const error = err as { response?: { data?: { detail?: string } } };
+            toast.error(error.response?.data?.detail || 'Erreur lors de l\'impression du relevé');
         }
-    }, [creancesEndpoint]);
+    }, []);
 
     const performAjouterPaiement = useCallback(async (validatorId: number, password: string) => {
         if (!selectedCreance || !montantPaiement) return;
 
         try {
-            const response = await axios.post(`${creancesEndpoint}${selectedCreance.id}/ajouter_paiement/`, {
+            const data = await creanceService.ajouterPaiement(selectedCreance.id, {
                 mode_paiement: modePaiement,
                 montant: parseFloat(montantPaiement),
                 reference: referencePaiement || undefined,
@@ -120,7 +113,7 @@ export const useCreanceActions = ({
                 sudo_password: password
             });
 
-            const paiementId = response.data.paiement_id;
+            const paiementId = data.paiement_id;
 
             setIsPaiementModalOpen(false);
             refresh();
@@ -129,11 +122,12 @@ export const useCreanceActions = ({
             if (window.confirm('Voulez-vous imprimer un reçu pour ce paiement ?')) {
                 await handlePrintDirectReceipt(selectedCreance.id, paiementId);
             }
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || 'Erreur lors de l\'enregistrement du paiement');
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { detail?: string } } };
+            toast.error(error.response?.data?.detail || 'Erreur lors de l\'enregistrement du paiement');
             console.error('Erreur:', err);
         }
-    }, [selectedCreance, montantPaiement, creancesEndpoint, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt]);
+    }, [selectedCreance, montantPaiement, modePaiement, referencePaiement, refresh, handlePrintDirectReceipt]);
 
     const handleAjouterPaiement = () => {
         requireSudo(performAjouterPaiement);
@@ -141,7 +135,7 @@ export const useCreanceActions = ({
 
     const performBulkPayment = useCallback(async (validatorId: number, password: string) => {
         try {
-            const response = await axios.post(`${creancesEndpoint}bulk_paiement/`, {
+            const data = await creanceService.bulkPaiement({
                 facture_ids: selectedIds,
                 mode_paiement: modePaiement,
                 reference: referencePaiement,
@@ -149,7 +143,7 @@ export const useCreanceActions = ({
                 sudo_password: password
             });
 
-            const releveId = response.data.releve_id;
+            const releveId = data.releve_id;
 
             setIsBulkModalOpen(false);
             setSelectedIds([]);
@@ -159,11 +153,12 @@ export const useCreanceActions = ({
             if (releveId && window.confirm('Voulez-vous imprimer le reçu récapitulatif pour ce règlement ?')) {
                 await handlePrintBulkReceipt(releveId);
             }
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || 'Erreur lors du règlement groupé');
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { detail?: string } } };
+            toast.error(error.response?.data?.detail || 'Erreur lors du règlement groupé');
             console.error('Erreur:', err);
         }
-    }, [creancesEndpoint, selectedIds, modePaiement, referencePaiement, setSelectedIds, refresh, handlePrintBulkReceipt]);
+    }, [selectedIds, modePaiement, referencePaiement, setSelectedIds, refresh, handlePrintBulkReceipt]);
 
     const confirmBulkPayment = () => {
         requireSudo(performBulkPayment);
@@ -176,12 +171,11 @@ export const useCreanceActions = ({
         }
 
         try {
-            const params: any = { client_id: selectedClient };
-            if (dateDebut) params.date_debut = dateDebut;
-            if (dateFin) params.date_fin = dateFin;
-
-            const response = await axios.get(`${creancesEndpoint}releve/`, { params });
-            const data = response.data;
+            const data = await creanceService.getReleve({
+                client_id: selectedClient,
+                date_debut: dateDebut || undefined,
+                date_fin: dateFin || undefined
+            });
 
             // Simple HTML printing fallback as used in original code
             const win = window.open('', '', 'height=800,width=600');
@@ -224,23 +218,23 @@ export const useCreanceActions = ({
                 </tr>
               </thead>
               <tbody>
-                ${data.creances.map((c: any) => `
+                ${data.creances.map((c: Creance) => `
                   <tr>
                     <td style="border: 1px solid #ddd; padding: 4px;">${new Date(c.date).toLocaleDateString('fr-FR')}</td>
                     <td style="border: 1px solid #ddd; padding: 4px;">${c.numero_facture || '-'}</td>
                     <td style="border: 1px solid #ddd; padding: 4px;">${c.ayant_droit || '-'}</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(c.montant_total))} F</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(c.montant_paye))} F</td>
-                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(c.reste_a_payer))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.total_ttc))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.montant_paye))} F</td>
+                    <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(c.reste_a_payer))} F</td>
                   </tr>
                 `).join('')}
               </tbody>
               <tfoot>
                 <tr style="background-color: #f0f0f0; font-weight: bold;">
                   <td colspan="3" style="border: 1px solid #ddd; padding: 4px; text-align: right;">TOTAUX:</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(data.totaux.total_factures))} F</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(data.totaux.total_paye))} F</td>
-                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${Math.round(parseFloat(data.totaux.total_reste))} F</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_factures))} F</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_paye))} F</td>
+                  <td style="border: 1px solid #ddd; padding: 4px; text-align: right;">${formatCurrency(parseFloat(data.totaux.total_reste))} F</td>
                 </tr>
               </tfoot>
             </table>
@@ -257,7 +251,7 @@ export const useCreanceActions = ({
             </div>
 
             <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666;">
-              <p>Document généré le ${new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
+              <p>Document généré le ${new Date().toLocaleString('fr-FR')}</p>
             </div>
           </div>
         `;
@@ -274,7 +268,7 @@ export const useCreanceActions = ({
             console.error('Erreur impression relevé:', err);
             toast.error('Erreur lors de la génération du relevé');
         }
-    }, [creancesEndpoint, pharmacySettings]);
+    }, [pharmacySettings]);
 
     return {
         selectedCreance,

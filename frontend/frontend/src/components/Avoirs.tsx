@@ -87,13 +87,20 @@ export default function Avoirs() {
                 <AvoirsTable 
                     avoirs={avoirsData.avoirs}
                     loading={avoirsData.loading}
+                    selectedIds={avoirsData.selectedIds}
+                    onToggleSelection={avoirsData.onToggleSelection}
+                    onToggleSelectAll={avoirsData.onToggleSelectAll}
                     onView={(avoir) => {
                         avoirsData.setSelectedAvoir(avoir);
                         avoirsData.setViewMode('DETAILS');
                     }}
                     onEdit={avoirsData.handleEdit}
-                    onValidate={avoirsData.handleValidate}
-                    onDelete={avoirsData.handleDelete}
+                    onValidate={(avoir) => avoirsData.handleValidate(avoir)}
+                    onDelete={(avoir) => avoirsData.handleDelete(avoir)}
+                    onBulkValidate={avoirsData.handleBulkValidate}
+                    onBulkDelete={avoirsData.handleBulkDelete}
+                    onClearSelection={avoirsData.onClearSelection}
+                    bulkLoading={avoirsData.bulkLoading}
                 />
             </div>
 

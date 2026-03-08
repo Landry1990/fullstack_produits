@@ -5,6 +5,7 @@ import type { Facture } from '../../../types';
 import axios from 'axios';
 import { useAuth } from '../../../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { formatCurrency } from '../../../utils/formatters';
 
 interface ProductDetailsModalProps {
     isOpen: boolean;
@@ -143,7 +144,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 <div className="flex gap-2">
                                     {facture.paiements.map((p, idx) => (
                                         <span key={idx} className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 border border-gray-200">
-                                            {p.mode_paiement_display} ({parseFloat(p.montant).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F)
+                                            {p.mode_paiement_display} ({formatCurrency(parseFloat(p.montant))} F)
                                         </span>
                                     ))}
                                 </div>
@@ -205,7 +206,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     )}
                                                     {remiseUnitaire > 0 && (
                                                         <span className="text-[10px] text-orange-600 font-medium bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
-                                                            Remise: -{remiseUnitaire.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F /unité
+                                                            Remise: -{formatCurrency(remiseUnitaire)} F /unité
                                                         </span>
                                                     )}
                                                     {prod.treatment_duration_days && (
@@ -220,11 +221,11 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                                     {prod.quantity}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-3 text-right text-gray-600 font-mono">
-                                                {puNet.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                             <td className="px-6 py-3 text-right text-gray-600 font-mono">
+                                                {formatCurrency(puNet)} F
                                             </td>
                                             <td className="px-6 py-3 text-right font-medium font-mono text-gray-900 group-hover:text-blue-600 transition-colors">
-                                                {totalLigne.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                                {formatCurrency(totalLigne)} F
                                             </td>
                                             <td className="px-6 py-3 text-center">
                                                 {prod.is_chronic && (
@@ -255,30 +256,30 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 <div className="bg-gray-50 border-t border-gray-200 p-6">
                     <div className="flex justify-end">
                         <div className="w-72 space-y-2">
-                            <div className="flex justify-between text-sm text-gray-600">
+                             <div className="flex justify-between text-sm text-gray-600">
                                 <span>Total Brut HT</span>
-                                <span className="font-mono">{totals.totalHt.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                <span className="font-mono">{formatCurrency(totals.totalHt)} F</span>
                             </div>
-                            <div className="flex justify-between text-sm text-gray-600">
+                             <div className="flex justify-between text-sm text-gray-600">
                                 <span>Total TVA</span>
-                                <span className="font-mono">{totals.totalTva.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                <span className="font-mono">{formatCurrency(totals.totalTva)} F</span>
                             </div>
                             {totals.remise > 0 && (
-                                <div className="flex justify-between text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded border border-orange-100">
+                                 <div className="flex justify-between text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded border border-orange-100">
                                     <span>Remise Facture</span>
-                                    <span className="font-mono">-{totals.remise.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                    <span className="font-mono">-{formatCurrency(totals.remise)} F</span>
                                 </div>
                             )}
-                            <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2">
+                             <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2">
                                 <span>Total TTC</span>
-                                <span className="font-mono text-blue-600">{totals.totalTtc.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                <span className="font-mono text-blue-600">{formatCurrency(totals.totalTtc)} F</span>
                             </div>
                             
                             {/* Part Client (Tiers Payant) */}
-                            {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
+                             {Math.abs(totals.partClient - totals.totalTtc) > 1 && (
                                 <div className="flex justify-between text-xl font-black text-white bg-blue-600 p-3 rounded-lg shadow-md mt-4 animate-pulse">
                                     <span className="uppercase text-sm">À payer client</span>
-                                    <span className="font-mono">{totals.partClient.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                                    <span className="font-mono">{formatCurrency(totals.partClient)} F</span>
                                 </div>
                             )}
                         </div>

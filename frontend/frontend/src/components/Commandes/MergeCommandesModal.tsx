@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import type { Commande, Fournisseur } from '../../types';
+import { formatCurrency } from '../../utils/formatters';
 
 interface MergeCommandesModalProps {
     isOpen: boolean;
@@ -121,7 +122,7 @@ export default function MergeCommandesModal({
                                 {mergeOrdersDetails.map(order => (
                                     <option key={order.id} value={order.id}>
                                         #{order.id} - {fournisseurs.find(f => f.id === order.fournisseur)?.name} 
-                                        ({order.produits?.length || 0} produits, {order.total} F)
+                                        ({order.produits?.length || 0} produits, {formatCurrency(Number(order.total))} F)
                                     </option>
                                 ))}
                             </select>
@@ -153,7 +154,7 @@ export default function MergeCommandesModal({
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className="badge badge-ghost">{order.produits?.length || 0} produits</span>
-                                                <span className="font-bold">{order.total} F</span>
+                                                <span className="font-bold">{formatCurrency(Number(order.total))} F</span>
                                             </div>
                                         </div>
                                     );
@@ -171,7 +172,7 @@ export default function MergeCommandesModal({
                                 <div>
                                     <div className="text-xs text-base-content/50 uppercase">Montant total</div>
                                     <div className="font-bold text-lg text-primary">
-                                        {mergeOrdersDetails.reduce((sum, c) => sum + parseFloat(c.total || '0'), 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                        {formatCurrency(mergeOrdersDetails.reduce((sum, c) => sum + parseFloat(c.total || '0'), 0))} F
                                     </div>
                                 </div>
                             </div>

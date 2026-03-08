@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import PremiumModal from './common/PremiumModal';
+import { formatCurrency } from '../utils/formatters';
 
 interface FactureReleve {
   id: number;
@@ -245,7 +246,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-right">
                  <div className="text-[10px] font-bold uppercase text-slate-400">Total Période</div>
                  <div className="text-lg font-black text-purple-600 font-mono">
-                   {data.montant_total_periode.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                   {formatCurrency(data.montant_total_periode)} F
                  </div>
                </div>
             )}
@@ -290,7 +291,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                    </button>
                 </div>
                 <div className="text-sm font-bold text-slate-700">
-                  Somme Pointée : <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{pointageSum.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
+                  Somme Pointée : <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)} F</span>
                 </div>
               </div>
 
@@ -334,7 +335,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td className="text-right">
                             <div className={`font-black font-mono ${isPointed ? 'text-emerald-700' : 'text-slate-700'}`}>
-                              {f.montant.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                              {formatCurrency(f.montant)} F
                             </div>
                           </td>
                         </tr>
@@ -356,7 +357,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Régler la sélection ({pointageSum.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F)
+                  Régler la sélection ({formatCurrency(pointageSum)} F)
                 </button>
               </div>
             </div>

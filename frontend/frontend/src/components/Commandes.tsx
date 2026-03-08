@@ -23,6 +23,7 @@ import { usePharmacySettings } from '../hooks/usePharmacySettings';
 import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
 import { useFormes } from '../hooks/useProduits';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 
 
 
@@ -250,7 +251,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           return;
       }
       const cleanCommande: Partial<Commande> = {
-           fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
+           fournisseur: newCommandeFournisseurId ? normalizeNumberInput(newCommandeFournisseurId) : undefined,
            numero_facture: numeroFacture,
            type: commandeType,
            taux_change: commandeType === 'DIR' ? tauxChange : undefined,
@@ -393,7 +394,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                  setSaving(true);
                  try {
                      const cleanCommande: Partial<Commande> = {
-                        fournisseur: newCommandeFournisseurId ? parseInt(newCommandeFournisseurId, 10) : undefined,
+                        fournisseur: newCommandeFournisseurId ? normalizeNumberInput(newCommandeFournisseurId) : undefined,
                         numero_facture: numeroFacture,
                         type: commandeType,
                         taux_change: commandeType === 'DIR' ? tauxChange : undefined,
@@ -433,8 +434,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
   // Auto-recalculate prices when Global Rate/Coeff changes (with debounce to prevent infinite loops)
   useEffect(() => {
       if (commandeType === 'DIR' && viewMode === 'CREATE') {
-          const rate = parseFloat(tauxChange || '0');
-          const coeff = parseFloat(fraisCoefficient || '0');
+          const rate = normalizeNumberInput(tauxChange || '0');
+          const coeff = normalizeNumberInput(fraisCoefficient || '0');
           
           if (!rate || !coeff) return;
           
@@ -462,7 +463,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   const updated = prev.map(item => {
                       // Only update if item has Euro price
                       if (item.prix_euro) {
-                          const pEuro = parseFloat(String(item.prix_euro));
+                          const pEuro = normalizeNumberInput(String(item.prix_euro));
                           if (!isNaN(pEuro)) {
                               // 1. Prix Achat FCFA = Euro * Taux
                               const priceFCFA = pEuro * rate;
@@ -473,7 +474,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                               const newPrice = Math.round(costPrice).toString();
                               
                               // 4. Update Selling Price
-                              const currentMargin = parseFloat(String(item.marge || 1.3));
+                              const currentMargin = normalizeNumberInput(String(item.marge || 1.3));
                               const newSelling = Math.round(costPrice * currentMargin).toString();
 
                               // Only mark as changed if values are actually different
@@ -765,7 +766,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         let currentSupplierId: number | null = null;
         
         if (viewMode === 'CREATE' && newCommandeFournisseurId) {
-            currentSupplierId = parseInt(newCommandeFournisseurId, 10);
+            currentSupplierId = normalizeNumberInput(newCommandeFournisseurId);
         } else if ((viewMode === 'EDIT' || viewMode === 'DETAILS') && selectedCommande?.fournisseur) {
             currentSupplierId = selectedCommande.fournisseur;
         }
@@ -797,7 +798,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       setFocusedField({ row: newRowIndex, field: 0 });
       
       // Update quantity (+1)
-      const currentQty = parseInt(String(commandeProduits[existingIndex].quantity || 0));
+      const currentQty = normalizeNumberInput(String(commandeProduits[existingIndex].quantity || 0));
       updateCommandeProduitField(existingIndex, 'quantity', currentQty + 1);
 
       // Indicateur visuel (scroll)
@@ -817,7 +818,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         produit: product,
         quantity: 1,
         unites_gratuites: 0,  // NEW: Initialize UG
-        prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(0) : '0') : undefined,
+        prix_euro: commandeType === 'DIR' ? (product.cost_price ? (normalizeNumberInput(product.cost_price) / normalizeNumberInput(tauxChange)).toFixed(0) : '0') : undefined,
         price: product.cost_price || '0',
         tva: product.tva || '0',
         marge: product.taux_marge || '1.3',
@@ -1007,9 +1008,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
             
             // AUTO-CALCUL: Euro -> FCFA (avec arrondi à l'entier)
           if (commandeType === 'DIR' && field === 'prix_euro') {
-               const pEuro = parseFloat(String(newItem.prix_euro || 0));
-               const rate = parseFloat(tauxChange || '655.957'); 
-               const coeff = parseFloat(fraisCoefficient || '1.0');
+               const pEuro = normalizeNumberInput(String(newItem.prix_euro || 0));
+               const rate = normalizeNumberInput(tauxChange || '655.957'); 
+               const coeff = normalizeNumberInput(fraisCoefficient || '1.0');
 
                if (!isNaN(pEuro) && !isNaN(rate)) {
                    let priceFCFA = pEuro * rate;
@@ -1023,9 +1024,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
           // Recalculer selling_price si price, marge ou tva change (avec arrondi)
           if (field === 'price' || field === 'marge' || field === 'tva') {
-               const price = parseFloat(String(newItem.price || 0));
-               const marge = parseFloat(String(newItem.marge || 1));
-               const tva = parseFloat(String(newItem.tva || 0));
+               const price = normalizeNumberInput(String(newItem.price || 0));
+               const marge = normalizeNumberInput(String(newItem.marge || 1));
+               const tva = normalizeNumberInput(String(newItem.tva || 0));
                if (!isNaN(price) && !isNaN(marge) && price > 0) {
                    // Prix de vente HT = prix d'achat * marge
                    const sellingHT = price * marge;
@@ -1037,9 +1038,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
           }
           // Recalculer marge si selling_price change (avec arrondi de la marge à 2 décimales)
           if (field === 'selling_price') {
-               const price = parseFloat(String(newItem.price || 0));
-               const selling = parseFloat(String(newItem.selling_price || 0));
-               const tva = parseFloat(String(newItem.tva || 0));
+               const price = normalizeNumberInput(String(newItem.price || 0));
+               const selling = normalizeNumberInput(String(newItem.selling_price || 0));
+               const tva = normalizeNumberInput(String(newItem.tva || 0));
                if (!isNaN(price) && !isNaN(selling) && price > 0) {
                    // Reconvertir TTC en HT puis calculer la marge
                    const sellingHT = selling / (1 + tva / 100);
@@ -1172,7 +1173,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         const [cip, qtyStr] = line.split(';');
         if (!cip) return;
 
-        const qty = parseInt(qtyStr) || 1;
+        const qty = normalizeNumberInput(qtyStr) || 1;
         const cleanCip = cip.trim();
         const normalizedSearchCip = normalizeCip(cleanCip);
 
@@ -1209,7 +1210,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
             if (existingIndex !== -1) {
                 // Update existing quantity
-                const currentQty = parseInt(String(currentList[existingIndex].quantity || 0));
+                const currentQty = normalizeNumberInput(String(currentList[existingIndex].quantity || 0));
                 currentList[existingIndex] = {
                     ...currentList[existingIndex],
                     quantity: currentQty + qty
@@ -1220,7 +1221,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   id: Date.now() + Math.random(), // Unique temp ID
                   produit: product,
                   quantity: qty,
-                  prix_euro: commandeType === 'DIR' ? (product.cost_price ? (parseFloat(product.cost_price) / parseFloat(tauxChange)).toFixed(0) : '0') : undefined,
+                  prix_euro: commandeType === 'DIR' ? (product.cost_price ? (normalizeNumberInput(product.cost_price) / normalizeNumberInput(tauxChange)).toFixed(0) : '0') : undefined,
                   price: product.cost_price || '0',
                   tva: product.tva || '0',
                   marge: product.taux_marge || '1.3',
@@ -1489,8 +1490,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
         const fullProduct = produitsList.find(prod => prod.id === produitId);
 
         let marge = p.marge;
-        const cost = parseFloat(p.price);
-        const sell = parseFloat(p.selling_price || '0');
+        const cost = normalizeNumberInput(p.price);
+        const sell = normalizeNumberInput(p.selling_price || '0');
         
         if (!marge && cost > 0 && sell > 0) {
             marge = (sell / cost).toFixed(2);
@@ -1718,9 +1719,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
                  <div className="text-xs text-gray-500 uppercase mb-1">{t('orders.details.financial_summary')}</div>
                  {(() => {
                     const stats = (selectedCommande.produits || []).reduce((acc, p) => {
-                        const qty = Number(p.quantity || 0);
-                        const price = Number(p.price || 0);
-                        const tvaRate = Number(p.tva || 0);
+                        const qty = normalizeNumberInput(p.quantity || 0);
+                        const price = normalizeNumberInput(p.price || 0);
+                        const tvaRate = normalizeNumberInput(p.tva || 0);
                         
                         const lineHT = qty * price;
                         const lineTVA = lineHT * (tvaRate / 100);
@@ -1733,15 +1734,15 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         <div className="flex flex-col gap-0.5 text-xs">
                            <div className="flex justify-between">
                                 <span className="text-base-content/60">HT:</span> 
-                                <span className="font-semibold">{stats.ht.toLocaleString()} F</span>
+                                 <span className="font-semibold">{formatCurrency(stats.ht)} F</span>
                            </div>
                            <div className="flex justify-between">
                                 <span className="text-base-content/60">TVA:</span> 
-                                <span className="font-semibold">{stats.tva.toLocaleString()} F</span>
+                                <span className="font-semibold">{formatCurrency(stats.tva)} F</span>
                            </div>
                            <div className="flex justify-between border-t border-base-200 pt-0.5 mt-0.5">
                                 <span className="font-bold text-primary">TTC:</span> 
-                                <span className="font-bold text-primary text-sm">{totalTTC.toLocaleString()} F</span>
+                                <span className="font-bold text-primary text-sm">{formatCurrency(totalTTC)} F</span>
                            </div>
                         </div>
                     );
@@ -1751,7 +1752,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
           {/* Récapitulatif UG */}
           {(() => {
-            const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + (p.unites_gratuites || 0), 0);
+            const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + normalizeNumberInput(p.unites_gratuites || 0), 0);
             if (totalUG > 0) {
               return (
                 <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4 shrink-0">
@@ -1865,9 +1866,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         if (detailSortKey === 'name') {
                           comparison = a.produitName.localeCompare(b.produitName);
                         } else if (detailSortKey === 'quantity') {
-                          comparison = Number(a.quantity) - Number(b.quantity);
+                          comparison = normalizeNumberInput(a.quantity) - normalizeNumberInput(b.quantity);
                         } else if (detailSortKey === 'price') {
-                          comparison = Number(a.price) - Number(b.price);
+                          comparison = normalizeNumberInput(a.price) - normalizeNumberInput(b.price);
                         }
                         return detailSortOrder === 'asc' ? comparison : -comparison;
                       })
@@ -1883,7 +1884,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                         const stock = produitData?.stock ?? ((p as any).produit_stock ?? '-');
                         const stockNum = typeof stock === 'number' ? stock : 0;
                         const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
-                        const rotationDisplay = rotation ? parseFloat(String(rotation)).toFixed(1) : '-';
+                        const rotationDisplay = rotation ? normalizeNumberInput(String(rotation)).toFixed(1) : '-';
                         
                         const isDeleted = p.produit === null;
 
@@ -1915,10 +1916,10 @@ export default function Commandes({ forcedType }: CommandesProps) {
                               {p.unites_gratuites || 0}
                             </span>
                           </td>
-                          <td className="text-right font-mono">{Number(p.price).toLocaleString()} F</td>
-                          <td className="text-xs font-mono">{p.lot || '-'}</td>
-                          <td className="text-xs text-gray-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
-                          <td className="text-right font-bold text-primary">{(Number(p.quantity) * Number(p.price)).toLocaleString()} F</td>
+                           <td className="text-right font-mono">{formatCurrency(normalizeNumberInput(p.price))} F</td>
+                           <td className="text-xs font-mono">{p.lot || '-'}</td>
+                           <td className="text-xs text-gray-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
+                           <td className="text-right font-bold text-primary">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))} F</td>
                         </tr>
                        );
                      })}

@@ -8,7 +8,7 @@ export const useInventaireEditor = (
     fetchInventaires: () => void,
     setViewMode: (mode: 'LIST' | 'CREATE' | 'EDIT') => void,
     requireSudo: (action: (validatorId: number, password?: string) => Promise<void>, options?: { title?: string; message?: string; permission?: string }) => void,
-    confirm: (options: any) => Promise<boolean>
+    confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>
 ) => {
     const { t } = useTranslation();
 
@@ -73,7 +73,7 @@ export const useInventaireEditor = (
                     axios.get(`${inventairesEndpoint}${newInv.id}/stats/`).catch(() => ({ data: null }))
                 ]);
 
-                setLignes(linesRes.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                setLignes(linesRes.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
                 if (statsRes.data) setInventoryStats(statsRes.data);
             } else {
                 setLignes([]);
@@ -96,7 +96,7 @@ export const useInventaireEditor = (
         setViewMode('EDIT');
         try {
             const res = await axios.get(`${inventairesEndpoint}${inv.id}/lignes/`);
-            const fetchedLignes = res.data.map((l: any) => ({
+            const fetchedLignes = res.data.map((l: LigneInventaire) => ({
                 ...l,
                 isLocalOnly: false
             }));
@@ -242,8 +242,9 @@ export const useInventaireEditor = (
             toast.success(t('stock.inventaire.validation.success'));
             setViewMode('LIST');
             fetchInventaires();
-        } catch (err: any) {
-            toast.error(t('stock.inventaire.validation.error'));
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { detail?: string } } };
+            toast.error(error.response?.data?.detail || t('stock.inventaire.validation.error'));
             console.error(err);
         } finally {
             setSaving(false);
@@ -269,7 +270,7 @@ export const useInventaireEditor = (
                 };
                 await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
                 const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
-                setLignes(res.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
             } catch (err) {
                 console.error("Auto-save before validate failed", err);
                 toast.error(t('stock.inventaire.detail.save_error'));
@@ -316,7 +317,7 @@ export const useInventaireEditor = (
                 };
                 await axios.post(`${inventairesEndpoint}${activeInventaire.id}/lignes/bulk/`, payload);
                 const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
-                setLignes(res.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
                 await fetchInventoryStats(activeInventaire.id);
             }
 
@@ -445,11 +446,12 @@ export const useInventaireEditor = (
 
                 // Recharger les lignes et stats
                 const res = await axios.get(`${inventairesEndpoint}${activeInventaire.id}/lignes/`);
-                setLignes(res.data.map((l: any) => ({ ...l, isLocalOnly: false })));
+                setLignes(res.data.map((l: LigneInventaire) => ({ ...l, isLocalOnly: false })));
                 await fetchInventoryStats(activeInventaire.id);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Erreur lors de l'envoi bulk", error);
-                toast.error("Erreur lors de l'enregistrement des lignes importées.");
+                const err = error as { response?: { data?: { detail?: string } } };
+                toast.error(err.response?.data?.detail || "Erreur lors de l'enregistrement des lignes importées.");
             } finally {
                 setImporting(false);
             }

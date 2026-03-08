@@ -7,7 +7,7 @@ import DatePicker, { registerLocale } from 'react-datepicker'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
-import { formatCurrency } from '../utils/formatters'
+import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 import { 
   Search, RefreshCw, Plus, Lock, Wallet, 
   ArrowUpRight, ArrowDownRight, Banknote, Printer, CreditCard 
@@ -281,7 +281,7 @@ export default function JournalCaisse() {
                      // Find all transactions for this Relevé in the current filtered list (excluding movements)
                      const releveItems = filteredItems.filter((rt: any) => rt._kind === 'transaction' && rt.releve_id === t.releve_id) as CaisseTransaction[]
                      
-                     const totalAmount = releveItems.reduce((sum, item) => sum + parseFloat(item.montant), 0)
+                     const totalAmount = releveItems.reduce((sum, item) => sum + normalizeNumberInput(item.montant), 0)
                      
                      result.push({
                          ...t, 
@@ -325,7 +325,7 @@ export default function JournalCaisse() {
     }
 
     filteredItems.forEach((item: any) => {
-       const montant = parseFloat(item.montant)
+       const montant = normalizeNumberInput(item.montant)
        if (item._kind === 'mouvement') {
            if (item.type === 'ENTREE') {
                totaux.entrees += montant
@@ -458,7 +458,7 @@ export default function JournalCaisse() {
     setLoading(true)
     try {
       await axios.post(`${caisseEndpoint}cloturer/`, {
-        montant_reel: parseFloat(actualAmount),
+        montant_reel: normalizeNumberInput(actualAmount),
         date_debut: dateDebut ? formatLocalISOString(dateDebut) : undefined,
         date_fin: dateFin ? formatLocalISOString(dateFin) : undefined,
         user_id: selectedUser || undefined
@@ -553,11 +553,11 @@ export default function JournalCaisse() {
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px;">
                     <span>Montant Réel (Compté)</span>
-                    <span>${actualAmount ? formatCurrency(parseFloat(actualAmount)) : '_________'}</span>
+                    <span>${actualAmount ? formatCurrency(normalizeNumberInput(actualAmount)) : '_________'}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid black; margin-top: 3px; padding-top: 3px;">
                     <span>ÉCART DE CAISSE</span>
-                    <span>${actualAmount ? formatCurrency(parseFloat(actualAmount) - closingTotals.total_theorique) : '_________'}</span>
+                    <span>${actualAmount ? formatCurrency(normalizeNumberInput(actualAmount) - closingTotals.total_theorique) : '_________'}</span>
                 </div>
             </div>
 
@@ -841,7 +841,7 @@ export default function JournalCaisse() {
           
           {/* Part 1: Sales breakdown - using server totals details if avail */}
           {Object.entries(serverTotals?.details || totauxParMode.ventes_par_mode).map(([mode, value]) => {
-              const numValue = typeof value === 'string' ? parseFloat(value) : (value as number);
+              const numValue = normalizeNumberInput(value);
               if (numValue === 0) return null;
               
               const labels: Record<string, {label: string, color: string}> = {
@@ -969,7 +969,7 @@ export default function JournalCaisse() {
                                         </td>
                                         <td className="font-mono text-[10px] py-4 opacity-50">MOUV-{mouv.id}</td>
                                         <td className={`text-right font-black text-base py-4 ${mouv.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
-                                            {mouv.type === 'ENTREE' ? '+' : '-'}{formatCurrency(parseFloat(mouv.montant as string))}
+                                            {mouv.type === 'ENTREE' ? '+' : '-'}{formatCurrency(normalizeNumberInput(mouv.montant))}
                                         </td>
                                         <td className="py-4">
                                             <div className={`badge badge-sm font-bold gap-1 py-1 px-2 border-none ${mouv.type === 'ENTREE' ? 'bg-success text-white' : 'bg-error text-white'}`}>
@@ -1052,7 +1052,7 @@ export default function JournalCaisse() {
                                             )}
                                         </td>
                                         <td className="text-right font-black text-base py-4 text-base-content">
-                                            {Math.round(parseFloat(transaction.montant)).toLocaleString()} F
+                                            {formatCurrency(normalizeNumberInput(transaction.montant))}
                                         </td>
                                          <td className="py-4">
                                             {(() => {
@@ -1093,7 +1093,7 @@ export default function JournalCaisse() {
                                             <td className="py-3 opacity-40 text-[11px]">-</td>
                                             <td className="font-mono text-[11px] py-3 font-bold text-primary/70">{subItem.facture_numero}</td>
                                             <td className="text-right text-[11px] py-3 pr-4 font-bold text-base-content/80">
-                                                {formatCurrency(parseFloat(subItem.montant as string))}
+                                                {formatCurrency(normalizeNumberInput(subItem.montant))}
                                             </td>
                                             <td className="py-3 pr-4">
                                                 <span className="text-[10px] opacity-60 italic">{subItem.reference || '-'}</span>
@@ -1154,12 +1154,12 @@ export default function JournalCaisse() {
                     <div className="grid grid-cols-1 gap-3">
                         <div className="p-5 bg-primary/5 border border-primary/20 rounded-xl shadow-sm text-center">
                             <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">Solde Opérationnel Net</div>
-                            <div className="text-3xl font-black text-primary">{Math.round(closingTotals.total_ventes + closingTotals.total_entrees - closingTotals.total_sorties).toLocaleString()} F</div>
+                            <div className="text-3xl font-black text-primary">{formatCurrency(Math.round(closingTotals.total_ventes + closingTotals.total_entrees - closingTotals.total_sorties))} F</div>
                             <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">Ventes + Entrées - Sorties</div>
                         </div>
                         <div className="p-4 bg-success/5 border border-success/20 rounded-xl text-center">
                             <div className="text-[9px] font-black text-success/60 uppercase mb-1 tracking-widest">Espèces à Justifier</div>
-                            <div className="text-2xl font-black text-success">{Math.round(closingTotals.total_theorique).toLocaleString()} F</div>
+                            <div className="text-2xl font-black text-success">{formatCurrency(Math.round(closingTotals.total_theorique))} F</div>
                             <div className="text-[9px] font-bold text-success/40 mt-1 uppercase">Ventes Espèces + Entrées - Sorties</div>
                         </div>
                     </div>
@@ -1183,9 +1183,9 @@ export default function JournalCaisse() {
                             <span className="text-xs font-bold text-base-content/60 uppercase">Écart de caisse (Espèces)</span>
                             <span className={`text-sm font-black ${
                                 !actualAmount ? 'text-base-content/20' : 
-                                (parseFloat(actualAmount) - closingTotals.total_theorique) >= 0 ? 'text-success' : 'text-error'
+                                (normalizeNumberInput(actualAmount) - closingTotals.total_theorique) >= 0 ? 'text-success' : 'text-error'
                             }`}>
-                                {actualAmount ? Math.round(parseFloat(actualAmount) - closingTotals.total_theorique).toLocaleString() + ' F' : '---'}
+                                {actualAmount ? formatCurrency(normalizeNumberInput(actualAmount) - closingTotals.total_theorique) : '---'}
                             </span>
                         </div>
                     </div>
@@ -1200,7 +1200,7 @@ export default function JournalCaisse() {
                                 {Object.entries(closingTotals.details).filter(([,v]) => v !== 0).map(([mode, montant]) => (
                                 <div key={mode} className="flex items-center justify-between text-xs">
                                     <span className="font-medium text-base-content/60 capitalize ">{mode}</span>
-                                    <span className="font-black text-base-content">{Math.round(montant).toLocaleString()} F</span>
+                                    <span className="font-black text-base-content">{formatCurrency(Math.round(montant))} F</span>
                                 </div>
                                 ))}
                             </div>

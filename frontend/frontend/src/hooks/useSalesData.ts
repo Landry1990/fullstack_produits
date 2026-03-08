@@ -1,31 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import axios from 'axios';
-import type { Facture } from '../types';
-import { safeStorage } from '../utils/storage';
+import venteService, { type SalesFilters, type SalesStats, type SimpleUser } from '../services/venteService';
+import type { Facture, PaginatedResponse } from '../types';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-
-interface SalesStats {
-    top_vendeur: {
-        name: string;
-        amount: number;
-        count: number;
-    } | null;
-    top_produit: {
-        name: string;
-        quantity: number;
-    } | null;
-    total_ttc: string;
-    total_regle: string;
-    total_en_compte: string;
-}
-
-interface SimpleUser {
-    id: number;
-    username: string;
-    first_name: string;
-    last_name: string;
-}
 
 export const useSalesData = () => {
     const { t } = useTranslation();
@@ -46,11 +23,9 @@ export const useSalesData = () => {
     const [stats, setStats] = useState<SalesStats | null>(null);
     const [users, setUsers] = useState<SimpleUser[]>([]);
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-
     // Helper to build filter params
-    const buildParams = useCallback((page: number) => {
-        const params: any = {
+    const buildParams = useCallback((page: number): SalesFilters => {
+        const params: SalesFilters = {
             date__gte: startDate,
             date__lte: `${endDate}T23:59:59`,
             page: page,
@@ -63,8 +38,8 @@ export const useSalesData = () => {
     }, [startDate, endDate, statusFilter, sellerFilter, searchTerm]);
 
     // Process paginated factures response data
-    const processFacturesData = useCallback((data: any) => {
-        if (data.results) {
+    const processFacturesData = useCallback((data: PaginatedResponse<Facture> | Facture[]) => {
+        if ('results' in data && Array.isArray(data.results)) {
             setFactures(data.results);
             setTotalItems(data.count || 0);
             setTotalPages(Math.ceil((data.count || 0) / PAGE_SIZE));
@@ -75,32 +50,20 @@ export const useSalesData = () => {
         }
     }, []);
 
-    // Initial load: use page_init endpoint (factures + stats + users in 1 request)
+    // Initial load: use page_init service (factures + stats + users in 1 request)
     const fetchPageInit = useCallback(async () => {
         setLoading(true);
         try {
-            const token = safeStorage.getItem('authToken');
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-
             setCurrentPage(1);
             const params = buildParams(1);
-
-            const response = await axios.get(`${apiBaseUrl}/factures/page_init/`, {
-                headers: { Authorization: `Token ${token}` },
-                params
-            });
-
-            const { factures: facturesData, stats: statsData, users: usersData } = response.data;
+            const data = await venteService.getPageInit(params);
 
             // Process factures
-            processFacturesData(facturesData);
+            processFacturesData(data.factures);
 
             // Set stats & users
-            if (statsData) setStats(statsData);
-            if (usersData) setUsers(usersData);
+            if (data.stats) setStats(data.stats);
+            if (data.users) setUsers(data.users);
 
         } catch (error) {
             console.error('Erreur chargement page_init:', error);
@@ -109,27 +72,16 @@ export const useSalesData = () => {
         } finally {
             setLoading(false);
         }
-    }, [buildParams, processFacturesData, t, apiBaseUrl]);
+    }, [buildParams, processFacturesData, t]);
 
     // Subsequent fetches (pagination, filter changes): use regular list endpoint
     const fetchFactures = useCallback(async (page = 1) => {
         setLoading(true);
         try {
-            const token = safeStorage.getItem('authToken');
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-
             if (page !== currentPage) setCurrentPage(page);
             const params = buildParams(page);
-
-            const response = await axios.get(`${apiBaseUrl}/factures/`, {
-                headers: { Authorization: `Token ${token}` },
-                params
-            });
-
-            processFacturesData(response.data);
+            const data = await venteService.getFactures(params);
+            processFacturesData(data);
         } catch (error) {
             console.error('Erreur chargement factures:', error);
             toast.error(t('sales.messages.load_error'));
@@ -137,7 +89,7 @@ export const useSalesData = () => {
         } finally {
             setLoading(false);
         }
-    }, [buildParams, processFacturesData, t, apiBaseUrl]);
+    }, [buildParams, processFacturesData, t, currentPage]);
 
     // Track mount state
     const isInitialMount = useRef(true);
@@ -151,7 +103,7 @@ export const useSalesData = () => {
             fetchFactures(1);
         }, 500);
         return () => clearTimeout(timer);
-    }, [searchTerm]);
+    }, [searchTerm, fetchFactures]);
 
     useEffect(() => {
         if (isInitialMount.current) {
@@ -165,15 +117,12 @@ export const useSalesData = () => {
         // Subsequent filter changes: fetch full page init to get updated stats for selected dates
         setCurrentPage(1);
         fetchPageInit();
-    }, [startDate, endDate, statusFilter, sellerFilter]);
+    }, [startDate, endDate, statusFilter, sellerFilter, fetchPageInit]);
 
     const handleDeleteBrouillons = async () => {
         if (!window.confirm(t('sales.confirm_delete_drafts'))) return;
         try {
-            const token = safeStorage.getItem('authToken');
-            await axios.delete(`${apiBaseUrl}/factures/delete_brouillons/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
+            await venteService.deleteBrouillons();
             toast.success(t('sales.messages.delete_drafts_success'));
             fetchFactures(currentPage);
         } catch (error) {
@@ -185,10 +134,7 @@ export const useSalesData = () => {
     const deleteFacture = async (id: number) => {
         if (!window.confirm(t('sales.confirm_delete'))) return;
         try {
-            const token = safeStorage.getItem('authToken');
-            await axios.delete(`${apiBaseUrl}/factures/${id}/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
+            await venteService.deleteFacture(id);
             toast.success(t('sales.messages.delete_success'));
             fetchFactures(currentPage);
         } catch (error) {
@@ -200,10 +146,7 @@ export const useSalesData = () => {
     const bulkDeleteFactures = async (ids: number[]) => {
         if (!window.confirm(t('sales.confirm_bulk_delete', { count: ids.length }))) return;
         try {
-            const token = safeStorage.getItem('authToken');
-            await axios.post(`${apiBaseUrl}/factures/bulk_delete/`, { ids }, {
-                headers: { Authorization: `Token ${token}` }
-            });
+            await venteService.bulkDelete(ids);
             toast.success(t('sales.messages.bulk_delete_success'));
             fetchFactures(currentPage);
         } catch (error) {

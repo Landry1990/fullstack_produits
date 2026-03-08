@@ -1,6 +1,19 @@
 import { useEffect, useState, useMemo, type FormEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { formatCurrency } from '../utils/formatters';
+import { 
+  Truck, 
+  UserPlus, 
+  Trash2, 
+  Eye, 
+  EyeOff, 
+  Search, 
+  MoreVertical, 
+  X,
+  Calendar,
+  CheckSquare
+} from 'lucide-react';
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
@@ -454,41 +467,78 @@ export default function Fournisseurs() {
          {/* Left Panel: List */}
          <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden h-full">
             {/* Header with Search and Actions */}
-            <div className="p-4 border-b flex flex-wrap gap-4 justify-between items-center shrink-0 bg-white sticky-header">
-               <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-slate-800">Fournisseurs</h2>
-                  {loading ? (
-                      <span className="loading loading-spinner loading-xs text-primary"></span>
-                  ) : (
-                      <div className="flex items-center gap-2">
-                         <span className="bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-bold">{fournisseurs.length}</span>
-                         {selectedIds.length > 0 && (
-                            <button 
-                               className="btn btn-xs btn-error gap-1 animate-in zoom-in duration-200"
-                               onClick={handleBulkDelete}
-                            >
-                               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                               </svg>
-                               {selectedIds.length}
-                            </button>
-                         )}
-                      </div>
-                  )}
-               </div>
-               
-               <div className="flex items-center gap-2 flex-1 max-w-md">
-                 <div className="relative w-full">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
+            {/* Header with Search and Actions */}
+            <div className="p-0 border-b border-base-200 bg-base-100 relative z-20 shrink-0 sticky top-0 overflow-visible">
+               <div className="p-4 flex flex-col gap-3">
+                  <div className="flex justify-between items-center h-10">
+                     {selectedIds.length > 0 ? (
+                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                          <div className="dropdown dropdown-bottom">
+                            <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
+                              <MoreVertical className="w-4 h-4" />
+                              {t('common.actions_title', { defaultValue: 'Actions' })}
+                              <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedIds.length}</span>
+                            </div>
+                            <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 rounded-box w-56 border border-base-200 mt-2">
+                              <li className="menu-title px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-base-content/40">
+                                {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                              </li>
+                              <li>
+                                <a onClick={handleBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                                  <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
+                                </a>
+                              </li>
+                            </ul>
+                          </div>
+                          <button 
+                            onClick={() => setSelectedIds([])}
+                            className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
+                          >
+                            <X className="w-4 h-4" />
+                            {t('common.actions.cancel', { defaultValue: 'Annuler' })}
+                          </button>
+                        </div>
+                     ) : (
+                        <>
+                           <div className="flex items-center gap-2 animate-in fade-in duration-300">
+                              <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                                <Truck className="w-5 h-5" />
+                              </div>
+                              <h2 className="font-bold text-lg tracking-tight">Fournisseurs</h2>
+                              <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{fournisseurs.length}</span>
+                           </div>
+                           <div className="flex gap-1 items-center">
+                              <button 
+                                 className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'bg-base-200 text-base-content' : 'text-base-content/40'}`} 
+                                 onClick={() => setShowInactive(!showInactive)}
+                                 title={showInactive ? "Masquer les inactifs" : "Afficher les inactifs"}
+                              >
+                                 {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              </button>
+                              <button className="btn btn-sm btn-ghost btn-square text-secondary/60 hover:text-secondary hover:bg-secondary/10" onClick={() => setIsEcheancierModalOpen(true)} title="Échéancier">
+                                <Calendar className="w-4 h-4" />
+                              </button>
+                              <button className="btn btn-sm btn-ghost btn-square text-neutral/60 hover:text-neutral hover:bg-neutral/10" onClick={() => setIsPointageModalOpen(true)} title="Pointer">
+                                <CheckSquare className="w-4 h-4" />
+                              </button>
+                              <button className="btn btn-sm btn-primary gap-2 h-9 px-4 shadow-sm" onClick={openAddModal}>
+                                <UserPlus className="w-4 h-4" />
+                                <span className="hidden xl:inline">{t('providers.new_provider')}</span>
+                              </button>
+                           </div>
+                        </>
+                     )}
+                  </div>
+                  
+                  <div className="relative group">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors">
+                      <Search className="w-4 h-4" />
+                    </span>
                     <input 
                        ref={searchInputRef}
                        type="text" 
                        placeholder={t('providers.search_placeholder')}
-                       className="input input-sm input-bordered w-full pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-all h-9" 
+                       className="input input-sm input-bordered w-full pl-10 h-10 bg-base-200/50 border-transparent focus:border-primary focus:bg-base-100 transition-all rounded-xl shadow-none" 
                        value={searchTerm}
                        onChange={(e) => {
                          setSearchTerm(e.target.value);
@@ -496,32 +546,7 @@ export default function Fournisseurs() {
                        }}
                        onKeyDown={handleKeyDown}
                      />
-                 </div>
-                 <button 
-                    className={`btn btn-sm btn-square ${showInactive ? 'btn-neutral' : 'btn-ghost'}`} 
-                    onClick={() => setShowInactive(!showInactive)}
-                    title={showInactive ? "Masquer les inactifs" : "Afficher les inactifs"}
-                 >
-                    {showInactive ? '👁️' : '🙈'}
-                 </button>
-                 <button className="btn btn-secondary btn-sm gap-2 h-9" onClick={() => setIsEcheancierModalOpen(true)}>
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                   </svg>
-                   Échéancier
-                 </button>
-                 <button className="btn btn-neutral btn-sm gap-2 h-9 text-white" onClick={() => setIsPointageModalOpen(true)}>
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                   </svg>
-                   Pointer
-                 </button>
-                 <button className="btn btn-primary btn-sm gap-2 h-9" onClick={openAddModal}>
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                   </svg>
-                   {t('providers.new_provider')}
-                 </button>
+                  </div>
                </div>
             </div>
 
@@ -718,7 +743,7 @@ export default function Fournisseurs() {
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('providers.details.debt_balance')}</div>
                               <div className={`text-2xl font-black font-mono ${Number(selectedFournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                                 {Number(selectedFournisseur.solde_dette || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                 {formatCurrency(Number(selectedFournisseur.solde_dette || 0))} F
                               </div>
                            </div>
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs italic">
@@ -826,7 +851,7 @@ export default function Fournisseurs() {
                                         </td>
                                         <td className="py-2 text-right">
                                           <span className="text-xs font-semibold text-slate-700">
-                                            {item.dernier_prix_achat.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                            {formatCurrency(item.dernier_prix_achat)} F
                                           </span>
                                         </td>
                                         <td className="py-2 text-center">
@@ -839,7 +864,7 @@ export default function Fournisseurs() {
                                         </td>
                                         <td className="py-2 text-right">
                                           <span className={`text-xs font-semibold ${item.marge >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                                            {item.marge.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                            {formatCurrency(item.marge)} F
                                           </span>
                                           <span className="text-[9px] text-slate-400 ml-1">
                                             ({item.marge_pourcent}%)

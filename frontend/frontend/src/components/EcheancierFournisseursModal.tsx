@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import PremiumModal from './common/PremiumModal';
+import { formatCurrency } from '../utils/formatters';
 
 interface Echeance {
   fournisseur_id: number;
@@ -146,7 +147,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                     </td>
                     <td className="py-3 text-right">
                       <div className={`font-black tracking-tight ${e.status === 'EN RETARD' ? 'text-red-600' : 'text-slate-700'}`}>
-                        {e.montant_du.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                        {formatCurrency(e.montant_du)} F
                       </div>
                     </td>
                     <td className="py-3 text-center">

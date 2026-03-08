@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import type { ClinicalAlert } from '../components/clinical/ClinicalAlerts'
+import type { LigneFacture } from '../types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
 
-export function useClinicalCheck(lignesFacture: any[]) {
+export function useClinicalCheck(lignesFacture: LigneFacture[]) {
     const [alerts, setAlerts] = useState<ClinicalAlert[]>([])
     const [loading, setLoading] = useState(false)
 

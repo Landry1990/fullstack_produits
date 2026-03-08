@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from '../../config/axios';
+import { normalizeNumberInput } from '../../utils/formatters';
 import { X, Save, TrendingUp, Target, Hand } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -48,9 +49,9 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
         if (data) {
             setConfig({
                 mode: data.mode,
-                seuil_rentabilite_mensuel: Number(data.seuil_rentabilite_mensuel),
-                pourcentage_croissance: Number(data.pourcentage_croissance),
-                jours_ouverts_semaine: Number(data.jours_ouverts_semaine)
+                seuil_rentabilite_mensuel: normalizeNumberInput(data.seuil_rentabilite_mensuel),
+                pourcentage_croissance: normalizeNumberInput(data.pourcentage_croissance),
+                jours_ouverts_semaine: normalizeNumberInput(data.jours_ouverts_semaine)
             });
         }
     }, [data, isOpen]);
@@ -170,7 +171,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                     type="number" 
                                                     className="input input-bordered join-item w-full bg-base-100" 
                                                     value={config.seuil_rentabilite_mensuel}
-                                                    onChange={e => setConfig({...config, seuil_rentabilite_mensuel: Number(e.target.value)})}
+                                                    onChange={e => setConfig({...config, seuil_rentabilite_mensuel: normalizeNumberInput(e.target.value)})}
                                                 />
                                                 <span className="btn join-item pointer-events-none bg-base-200 border-base-200">FCFA</span>
                                             </div>
@@ -186,7 +187,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             <select 
                                                 className="select select-bordered w-full bg-base-100"
                                                 value={config.jours_ouverts_semaine}
-                                                onChange={e => setConfig({...config, jours_ouverts_semaine: Number(e.target.value)})}
+                                                onChange={e => setConfig({...config, jours_ouverts_semaine: normalizeNumberInput(e.target.value)})}
                                             >
                                                 {[1,2,3,4,5,6,7].map(d => (
                                                     <option key={d} value={d}>{d} jour(s)</option>
@@ -207,7 +208,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                 step="0.1"
                                                 className="input input-bordered join-item w-full bg-base-100" 
                                                 value={config.pourcentage_croissance}
-                                                onChange={e => setConfig({...config, pourcentage_croissance: Number(e.target.value)})}
+                                                onChange={e => setConfig({...config, pourcentage_croissance: normalizeNumberInput(e.target.value)})}
                                             />
                                             <span className="btn join-item pointer-events-none bg-base-200 border-base-200">%</span>
                                         </div>

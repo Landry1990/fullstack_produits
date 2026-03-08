@@ -11,7 +11,7 @@ interface UseCommandeActionsProps {
     fetchCommandes: () => Promise<void>;
     setSelectedCommande: (commande: Commande | null) => void;
     setViewMode: (mode: 'LIST' | 'CREATE' | 'DETAILS' | 'EDIT') => void;
-    confirm: (options: any) => Promise<boolean>;
+    confirm: (options: { title?: string; message: string; variant?: 'success' | 'warning' | 'danger' | 'info'; confirmText?: string }) => Promise<boolean>;
     user: User | null;
 }
 
@@ -72,24 +72,25 @@ export function useCommandeActions({
     // ============== SAUVEGARDE ==============
 
     // Helper function to safely clean payload (avoid circular references) 
-    const cleanPayload = (data: any): any => {
+    const cleanPayload = (data: Partial<Commande>): Partial<Commande> => {
         // Extract only serializable fields, avoiding React proxies and circular refs
-        const extractValue = (val: any, depth: number = 0): any => {
+        const extractValue = (val: unknown, depth: number = 0): unknown => {
             if (depth > 10) return undefined; // Prevent infinite recursion
             if (val === null || val === undefined) return val;
             if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return val;
             if (Array.isArray(val)) {
                 return val.map(item => extractValue(item, depth + 1)).filter(v => v !== undefined);
             }
-            if (typeof val === 'object') {
+            if (typeof val === 'object' && val !== null) {
+                const obj = val as Record<string, unknown>;
                 // Skip React elements, DOM nodes, functions, etc.
-                if (val.$$typeof || val.nodeType || typeof val === 'function') return undefined;
+                if ((obj as { $$typeof?: unknown }).$$typeof || (obj as { nodeType?: unknown }).nodeType || typeof obj === 'function') return undefined;
 
-                const clean: any = {};
-                for (const key of Object.keys(val)) {
+                const clean: Record<string, unknown> = {};
+                for (const key of Object.keys(obj)) {
                     // Skip internal/private keys
                     if (key.startsWith('_') || key.startsWith('$')) continue;
-                    const extracted = extractValue(val[key], depth + 1);
+                    const extracted = extractValue(obj[key], depth + 1);
                     if (extracted !== undefined) {
                         clean[key] = extracted;
                     }
@@ -105,7 +106,7 @@ export function useCommandeActions({
         } catch (e) {
             // Fallback to manual extraction
             console.warn('cleanPayload using manual extraction');
-            return extractValue(data);
+            return extractValue(data) as Partial<Commande>;
         }
     };
 

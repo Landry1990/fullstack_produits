@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layers, CreditCard, Hash, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
 import PremiumModal from '../../common/PremiumModal';
+import { formatCurrency } from '../../../utils/formatters';
 
 interface BulkPaiementModalProps {
     isOpen: boolean;
@@ -43,7 +44,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                             {count} Factures sélectionnées
                         </div>
                         <div className="text-3xl font-black text-base-content italic tracking-tight">
-                            {Math.round(totalAmount).toLocaleString()} F
+                            {formatCurrency(Math.round(totalAmount))} F
                         </div>
                     </div>
                 </div>

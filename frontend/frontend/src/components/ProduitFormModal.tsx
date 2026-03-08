@@ -4,6 +4,7 @@ import axios from 'axios';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
 import { useTVA } from '../hooks/useTVA';
 import PremiumModal from './common/PremiumModal';
+import { normalizeNumberInput } from '../utils/formatters';
 
 interface ProduitFormModalProps {
   open: boolean;
@@ -75,8 +76,8 @@ export default function ProduitFormModal({
   const [error, setError] = useState<string | null>(null);
 
   // Calcul des marges en temps réel
-  const costPrice = parseFloat(form.cost_price) || 0;
-  const sellingPrice = parseFloat(form.selling_price) || 0;
+  const costPrice = normalizeNumberInput(form.cost_price);
+  const sellingPrice = normalizeNumberInput(form.selling_price);
   
   let tauxMarge = 0;
   let pourcMarge = 0;
@@ -138,10 +139,10 @@ export default function ProduitFormModal({
         is_supplier_exclusive: form.is_supplier_exclusive || false,
         use_lot_management: form.use_lot_management,
         is_chronic: form.is_chronic || false,
-        default_treatment_days: form.default_treatment_days ? parseInt(form.default_treatment_days, 10) : 30,
+        default_treatment_days: normalizeNumberInput(form.default_treatment_days || '', { min: 1 }),
         has_reserve_storage: form.has_reserve_storage || false,
-        capacite_rayon: form.capacite_rayon ? parseInt(form.capacite_rayon, 10) : 0,
-        min_rayon: form.min_rayon ? parseInt(form.min_rayon, 10) : 0,
+        capacite_rayon: normalizeNumberInput(form.capacite_rayon || '', { min: 0 }),
+        min_rayon: normalizeNumberInput(form.min_rayon || '', { min: 0 }),
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {

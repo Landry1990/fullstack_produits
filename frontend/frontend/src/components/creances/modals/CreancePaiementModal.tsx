@@ -1,5 +1,6 @@
 import React from 'react';
 import { DollarSign, CreditCard, Hash, Info, UserCheck } from 'lucide-react';
+import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import type { Creance } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
 
@@ -27,7 +28,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
 }) => {
     if (!creance) return null;
 
-    const remainingAmount = parseFloat(creance.reste_a_payer);
+    const remainingAmount = normalizeNumberInput(creance.reste_a_payer);
 
     return (
         <PremiumModal
@@ -47,7 +48,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                         <div className="text-blue-700/70 font-medium">Par {creance.client_name}</div>
                         <div className="mt-2 flex items-center gap-2">
                             <span className="text-[10px] font-black uppercase text-blue-400">Solde restant:</span>
-                            <span className="text-blue-900 font-black">{(Math.round(remainingAmount)).toLocaleString()} F</span>
+                            <span className="text-blue-900 font-black">{formatCurrency(remainingAmount)} F</span>
                         </div>
                     </div>
                 </div>
@@ -120,7 +121,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                     <button 
                         onClick={onConfirm} 
                         className="btn btn-primary flex-1 font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-2"
-                        disabled={!form.montantPaiement || parseFloat(form.montantPaiement) <= 0}
+                        disabled={!form.montantPaiement || normalizeNumberInput(form.montantPaiement) <= 0}
                     >
                         <UserCheck className="w-4 h-4" />
                         Valider & Payer

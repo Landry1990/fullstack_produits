@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Trash2, PackageX, ArrowUp, ArrowDown } from 'lucide-react';
-import { formatPrice } from '../../../utils/formatters';
+import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import type { LigneInventaire } from '../../../types';
 
 interface InventaireDataTabProps {
@@ -56,8 +56,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     break;
                 }
                 case 'prix': {
-                    const pmpA = parseFloat(a.pmp_snapshot || a.produit_cost_price || '0');
-                    const pmpB = parseFloat(b.pmp_snapshot || b.produit_cost_price || '0');
+                    const pmpA = normalizeNumberInput(a.pmp_snapshot || a.produit_cost_price || '0');
+                    const pmpB = normalizeNumberInput(b.pmp_snapshot || b.produit_cost_price || '0');
                     comparison = pmpA - pmpB;
                     break;
                 }
@@ -68,7 +68,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
 
     const totalEcartValeur = useMemo(() => {
         return lignes.reduce((acc, l) => {
-            const pmp = parseFloat(l.pmp_snapshot || l.produit_cost_price || '0');
+            const pmp = normalizeNumberInput(l.pmp_snapshot || l.produit_cost_price || '0');
             const ecart = (l.quantite_physique || 0) - (l.stock_theorique || 0);
             return acc + (ecart * pmp);
         }, 0);
@@ -195,9 +195,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         {rayonName}
                                     </div>
 
-                                    {/* CMP Column */}
                                     <div className="col-span-1 text-right text-xs font-medium text-base-content/80">
-                                        {formatPrice(parseFloat(l.pmp_snapshot || l.produit_cost_price || '0'), 2)} F
+                                        {formatCurrency(normalizeNumberInput(l.pmp_snapshot || l.produit_cost_price || '0'), 2)} F
                                     </div>
 
                                     {/* Stock Théorique */}
@@ -224,7 +223,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                     if (val === '') {
                                                         handleUpdateQuantity(l.id, 0);
                                                     } else {
-                                                        handleUpdateQuantity(l.id, Number(val));
+                                                        handleUpdateQuantity(l.id, normalizeNumberInput(val));
                                                     }
                                                 }}
                                                 onKeyDown={e => {
@@ -311,7 +310,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     <div className="text-right">
                         <div className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('stock.inventaire.detail.total_gap_value', { defaultValue: 'Montant Total Écarts' })}</div>
                         <div className={`text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-success" : totalEcartValeur < 0 ? "text-error" : "text-base-content/40"}`}>
-                            {totalEcartValeur > 0 ? '+' : ''}{formatPrice(totalEcartValeur)} F
+                            {totalEcartValeur > 0 ? '+' : ''}{formatCurrency(totalEcartValeur)} F
                         </div>
                     </div>
                 </div>

@@ -34,6 +34,7 @@ import { useSudo } from '../hooks/useSudo'
 import { StockResolutionHandler } from './facturation/StockResolutionHandler'
 import { useSaleCompletion } from '../hooks/useSaleCompletion'
 import { useFacturationUI } from '../hooks/useFacturationUI'
+import { formatCurrency } from '../utils/formatters'
 
 
 // FactureProduitPayload removed as it's now handled by useSaleCompletion
@@ -1460,11 +1461,11 @@ export default function Facturation() {
           <div className="flex-1">
             <h3 className="font-bold">{t('facturation.modification_mode.title')}</h3>
             <div className="text-xs flex flex-wrap gap-4">
-              <span>{t('facturation.modification_mode.original_total')}: <strong>{Math.round(originalTotalTtc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</strong></span>
-              <span>{t('facturation.modification_mode.new_total')}: <strong>{Math.round(totals.totalTtc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</strong></span>
+              <span>{t('facturation.modification_mode.original_total')}: <strong>{formatCurrency(Math.round(originalTotalTtc))} F</strong></span>
+              <span>{t('facturation.modification_mode.new_total')}: <strong>{formatCurrency(Math.round(totals.totalTtc))} F</strong></span>
               {totals.totalTtc !== originalTotalTtc && (
                 <span className={totals.totalTtc > originalTotalTtc ? 'text-success font-bold' : 'text-error font-bold'}>
-                  {t('facturation.modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{Math.round(totals.totalTtc - originalTotalTtc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                  {t('facturation.modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(totals.totalTtc - originalTotalTtc))} F
                   {totals.totalTtc > originalTotalTtc ? ` (${t('facturation.modification_mode.to_collect')})` : ` (${t('facturation.modification_mode.to_refund')})`}
                 </span>
               )}

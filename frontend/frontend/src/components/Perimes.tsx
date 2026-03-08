@@ -2,7 +2,21 @@ import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import { 
+  BarChart2, 
+  List, 
+  History, 
+  RefreshCw, 
+  AlertTriangle, 
+  Trash2, 
+  Calendar, 
+  MoreVertical, 
+  X,
+  PieChart,
+  Check
+} from 'lucide-react'
 import type { StockLot } from '../types'
+import { formatCurrency } from '../utils/formatters'
 import SudoValidationModal from './common/SudoValidationModal'
 import { useSudo } from '../hooks/useSudo'
 import { usePrint } from '../hooks/usePrint'
@@ -258,14 +272,14 @@ export default function Perimes() {
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.produit_name}</td>
                 <td style="border: 1px solid #ddd; padding: 8px;">${adj.lot_number || '-'}</td>
                 <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${Math.abs(adj.quantity_change)}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">${formatCurrency(adj.valorisation)} F</td>
               </tr>
             `).join('')}
           </tbody>
           <tfoot>
             <tr style="background-color: #f9fafb; font-weight: bold;">
               <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">TOTAL VALORISATION</td>
-              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)}</td>
+              <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)} F</td>
             </tr>
           </tfoot>
         </table>
@@ -297,13 +311,7 @@ export default function Perimes() {
     return new Date(dateString) < new Date()
   }
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('fr-FR', { 
-      style: 'decimal', 
-      minimumFractionDigits: 0, 
-      maximumFractionDigits: 0 
-    }).format(value) + ' F'
-  }
+
 
   // Calcul urgence pour couleur de la carte de prévision
   const getUrgencyClass = (valeur: number) => {
@@ -315,39 +323,47 @@ export default function Perimes() {
   return (
     <div className="h-full flex flex-col bg-base-100 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-white shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold text-base-content">{t('perimes.title', 'Gestion des Périmés')}</h1>
-          <p className="text-sm text-base-content/60 mt-1">{t('perimes.subtitle', 'Analyse des pertes et prévisions d\'expiration')}</p>
+      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md sticky top-0 z-30 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="p-2.5 bg-error/10 text-error rounded-xl shadow-inner">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight text-base-content">{t('perimes.title', 'Gestion des Périmés')}</h1>
+            <p className="text-[11px] font-medium text-base-content/40 uppercase tracking-widest">{t('perimes.subtitle', 'Analyse des pertes et prévisions')}</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="tabs tabs-boxed">
+        <div className="flex items-center gap-3">
+          <div className="tabs tabs-boxed bg-base-200/50 p-1 border border-base-300/50 rounded-xl">
             <button 
-              className={`tab ${activeTab === 'dashboard' ? 'tab-active' : ''}`}
+              className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'dashboard' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('dashboard')}
             >
-              📊 Dashboard
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span className="font-semibold">Dashboard</span>
             </button>
             <button 
-              className={`tab ${activeTab === 'list' ? 'tab-active' : ''}`}
+              className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'list' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('list')}
             >
-              📋 Liste
+              <List className="w-3.5 h-3.5" />
+              <span className="font-semibold">Liste</span>
             </button>
             <button 
-              className={`tab ${activeTab === 'history' ? 'tab-active' : ''}`}
+              className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'history' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('history')}
             >
-              📜 Historique
+              <History className="w-3.5 h-3.5" />
+              <span className="font-semibold">Historique</span>
             </button>
           </div>
           <button 
             onClick={() => { fetchLots(); fetchStats() }} 
-            className="btn btn-sm btn-ghost gap-2" 
+            className="btn btn-sm btn-ghost gap-2 h-9 px-3 rounded-lg hover:bg-base-300" 
             disabled={loading || loadingStats}
           >
-            {(loading || loadingStats) ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}
-            {t('common.refresh', 'Actualiser')}
+            {(loading || loadingStats) ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            <span className="font-semibold">{t('common.refresh', 'Actualiser')}</span>
           </button>
         </div>
       </div>
@@ -386,7 +402,7 @@ export default function Perimes() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.valeur_perimes', 'Pertes (Coût)')}</p>
-                          <p className="text-2xl font-bold text-error">{formatCurrency(stats.perimes.valeur_cout)}</p>
+                          <p className="text-2xl font-bold text-error">{formatCurrency(stats.perimes.valeur_cout)} F</p>
                           <p className="text-xs text-base-content/50">{stats.perimes.count_lots} lots périmés</p>
                         </div>
                       </div>
@@ -402,7 +418,7 @@ export default function Perimes() {
                         </div>
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.manque_gagner', 'Manque à Gagner')}</p>
-                          <p className="text-2xl font-bold text-warning">{formatCurrency(stats.perimes.valeur_vente_perdue)}</p>
+                          <p className="text-2xl font-bold text-warning">{formatCurrency(stats.perimes.valeur_vente_perdue)} F</p>
                           <p className="text-xs text-base-content/50">Au prix de vente</p>
                         </div>
                       </div>
@@ -419,7 +435,7 @@ export default function Perimes() {
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.taux_perte', 'Taux de Perte')}</p>
                           <p className="text-2xl font-bold text-info">{stats.indicateurs.taux_perte_pct}%</p>
-                          <p className="text-xs text-base-content/50">vs CA ({formatCurrency(stats.indicateurs.ca_periode)})</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.vs_ca', 'vs CA')} ({formatCurrency(stats.indicateurs.ca_periode)} F)</p>
                         </div>
                       </div>
                     </div>
@@ -439,7 +455,7 @@ export default function Perimes() {
                           <span className="font-bold text-base-content">30 jours</span>
                           <span className="badge badge-sm">{stats.previsions['30j'].count_lots} lots</span>
                         </div>
-                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)}</p>
+                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)} F</p>
                         <p className="text-xs text-base-content/60 mt-1">Valeur vente potentielle à risque</p>
                       </div>
 
@@ -449,7 +465,7 @@ export default function Perimes() {
                           <span className="font-bold text-base-content">60 jours</span>
                           <span className="badge badge-sm">{stats.previsions['60j'].count_lots} lots</span>
                         </div>
-                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)}</p>
+                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)} F</p>
                         <p className="text-xs text-base-content/60 mt-1">Valeur vente potentielle à risque</p>
                       </div>
 
@@ -459,7 +475,7 @@ export default function Perimes() {
                           <span className="font-bold text-base-content">90 jours</span>
                           <span className="badge badge-sm">{stats.previsions['90j'].count_lots} lots</span>
                         </div>
-                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)}</p>
+                        <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)} F</p>
                         <p className="text-xs text-base-content/60 mt-1">Valeur vente potentielle à risque</p>
                       </div>
                     </div>
@@ -496,8 +512,8 @@ export default function Perimes() {
                                   </span>
                                 </td>
                                 <td className="text-right font-bold">{item.quantity}</td>
-                                <td className="text-right text-error">{formatCurrency(item.valeur_cout)}</td>
-                                <td className="text-right text-warning">{formatCurrency(item.valeur_vente)}</td>
+                                <td className="text-right text-error">{formatCurrency(item.valeur_cout)} F</td>
+                                <td className="text-right text-warning">{formatCurrency(item.valeur_vente)} F</td>
                               </tr>
                             ))}
                           </tbody>
@@ -525,130 +541,173 @@ export default function Perimes() {
           </div>
         ) : activeTab === 'list' ? (
           /* ========== LIST VIEW ========== */
-          <>
-            {/* Filters */}
-            <div className="mb-4 flex flex-wrap gap-4 items-center justify-between bg-base-50 p-3 rounded-lg border border-base-200">
-              <div className="flex gap-4 items-center">
-                <div className="form-control">
-                    <label className="label cursor-pointer gap-2">
-                    <span className="label-text font-medium text-xs">Uniquement déjà périmés</span> 
-                    <input 
-                        type="checkbox" 
-                        className="toggle toggle-error toggle-xs" 
-                        checked={showExpiredOnly} 
-                        onChange={(e) => setShowExpiredOnly(e.target.checked)}
-                    />
-                    </label>
-                </div>
-                
-                {!showExpiredOnly && (
-                    <div className="flex items-center gap-2">
-                    <span className="text-xs">Expire dans les</span>
-                    <select 
-                        className="select select-bordered select-xs" 
-                        value={filterDays} 
-                        onChange={(e) => setFilterDays(parseInt(e.target.value))}
-                    >
-                        <option value={30}>30 jours</option>
-                        <option value={60}>60 jours</option>
-                        <option value={90}>90 jours</option>
-                        <option value={180}>6 mois</option>
-                    </select>
-                    </div>
-                )}
-              </div>
-
-              {selectedLotIds.length > 0 && (
-                  <div className="flex items-center gap-3 animate-in fade-in slide-in-from-right-2">
-                      <span className="text-sm font-bold text-primary">
-                          {selectedLotIds.length} sélectionné(s)
-                      </span>
-                      <button 
-                        onClick={handleBulkSortir}
-                        className="btn btn-error btn-xs gap-2"
-                        disabled={processing}
-                      >
-                          🗑️ Sortir la sélection
-                      </button>
+          <div className="flex flex-col h-full bg-base-100 rounded-2xl border border-base-200 shadow-sm overflow-hidden">
+            {/* Professional Dynamic Header */}
+            <div className="p-0 border-b border-base-200 bg-base-100 relative z-20 shrink-0 sticky top-0 overflow-visible">
+               <div className="p-4 flex flex-col gap-3">
+                  <div className="flex justify-between items-center h-10">
+                     {selectedLotIds.length > 0 ? (
+                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                          <div className="dropdown dropdown-bottom">
+                            <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
+                              <MoreVertical className="w-4 h-4" />
+                              {t('common.actions_title', { defaultValue: 'Actions' })}
+                              <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedLotIds.length}</span>
+                            </div>
+                            <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 rounded-box w-56 border border-base-200 mt-2">
+                              <li className="menu-title px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-base-content/40">
+                                {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                              </li>
+                              <li>
+                                <a onClick={handleBulkSortir} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                                  <Trash2 className="w-4 h-4" /> {t('common.delete', 'Sortir du stock')}
+                                </a>
+                              </li>
+                            </ul>
+                          </div>
+                          <button 
+                            onClick={() => setSelectedLotIds([])}
+                            className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
+                          >
+                            <X className="w-4 h-4" />
+                            {t('common.actions.cancel', { defaultValue: 'Annuler' })}
+                          </button>
+                        </div>
+                     ) : (
+                        <>
+                           <div className="flex items-center gap-2 animate-in fade-in duration-300">
+                              <div className="p-2 bg-error/10 text-error rounded-lg">
+                                <AlertTriangle className="w-5 h-5" />
+                              </div>
+                              <h2 className="font-bold text-lg tracking-tight">Lots à Risque</h2>
+                              <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{lots.length}</span>
+                           </div>
+                           <div className="flex gap-3 items-center">
+                              <div className="flex items-center gap-2 bg-base-200/50 p-1 px-3 rounded-xl border border-base-300/50">
+                                <span className="text-[10px] font-bold text-base-content/40 uppercase">{t('common.filters', 'Filtres')}</span>
+                                <div className="h-4 w-[1px] bg-base-300 mx-1"></div>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                  <input 
+                                      type="checkbox" 
+                                      className="checkbox checkbox-xs checkbox-error rounded-md" 
+                                      checked={showExpiredOnly} 
+                                      onChange={(e) => setShowExpiredOnly(e.target.checked)}
+                                  />
+                                  <span className="text-[11px] font-semibold text-base-content/60 group-hover:text-base-content transition-colors">Déjà périmés</span> 
+                                </label>
+                                
+                                {!showExpiredOnly && (
+                                    <select 
+                                        className="select select-ghost select-xs font-bold text-[11px] h-7 focus:bg-transparent" 
+                                        value={filterDays} 
+                                        onChange={(e) => setFilterDays(parseInt(e.target.value))}
+                                    >
+                                        <option value={30}>30 jours</option>
+                                        <option value={60}>60 jours</option>
+                                        <option value={90}>90 jours</option>
+                                        <option value={180}>180 jours</option>
+                                    </select>
+                                )}
+                              </div>
+                           </div>
+                        </>
+                     )}
                   </div>
-              )}
+               </div>
             </div>
 
             {/* Lots Table */}
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <span className="loading loading-spinner loading-lg"></span>
-              </div>
-            ) : lots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-base-content/40">
-                <p className="text-lg">Aucun lot trouvé</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-xl shadow-sm border border-base-200 overflow-hidden">
-                <table className="table table-compact table-zebra w-full">
-                  <thead>
-                    <tr className="bg-base-200">
-                      <th className="w-10">
+            <div className="flex-1 overflow-auto">
+              {loading ? (
+                <div className="flex items-center justify-center h-64">
+                  <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
+                </div>
+              ) : lots.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-base-content/20 gap-4">
+                  <PieChart className="w-16 h-16 opacity-10" />
+                  <p className="text-sm font-bold uppercase tracking-widest">{t('perimes.no_result', 'Aucun lot à risque trouvé')}</p>
+                </div>
+              ) : (
+                <table className="table table-xs table-pin-rows w-full border-separate border-spacing-0">
+                  <thead className="bg-base-200/80 backdrop-blur-sm">
+                    <tr className="text-base-content/50 uppercase text-[10px] tracking-widest font-black">
+                      <th className="py-3 px-4 w-12 bg-transparent text-center">
                           <input 
                             type="checkbox" 
-                            className="checkbox checkbox-xs" 
+                            className="checkbox checkbox-xs rounded-md" 
                             checked={selectedLotIds.length === lots.filter(l => l.quantity_remaining > 0).length && lots.filter(l => l.quantity_remaining > 0).length > 0}
                             onChange={toggleAllSelection}
                           />
                       </th>
-                      <th>Produit</th>
-                      <th>Lot</th>
-                      <th>Date Expiration</th>
-                      <th>Fournisseur</th>
-                      <th className="text-right">Stock</th>
-                      <th className="text-right">Valeur</th>
-                      <th>Actions</th>
+                      <th className="py-3 px-4 bg-transparent">{t('perimes.table.product', 'Produit')}</th>
+                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.lot', 'Lot')}</th>
+                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.expiration', 'Expiration')}</th>
+                      <th className="py-3 px-4 bg-transparent">{t('perimes.table.provider', 'Fournisseur')}</th>
+                      <th className="py-3 px-4 bg-transparent text-right">{t('perimes.table.stock', 'Stock')}</th>
+                      <th className="py-3 px-4 bg-transparent text-right">{t('perimes.table.value', 'Valeur')}</th>
+                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.actions', 'Actions')}</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-base-200">
                     {lots.map((lot) => (
-                      <tr key={lot.id} className={`hover ${lot.quantity_remaining <= 0 ? 'opacity-50 grayscale' : ''}`}>
-                        <td>
+                      <tr key={lot.id} className={`hover:bg-base-200/30 transition-colors group ${lot.quantity_remaining <= 0 ? 'bg-base-100/50' : ''} ${selectedLotIds.includes(lot.id) ? 'bg-primary/5' : ''}`}>
+                        <td className="py-2.5 px-4 text-center">
                             <input 
                                 type="checkbox" 
-                                className="checkbox checkbox-xs checkbox-primary" 
+                                className="checkbox checkbox-xs checkbox-primary rounded-md" 
                                 checked={selectedLotIds.includes(lot.id)}
                                 onChange={() => toggleLotSelection(lot.id)}
                                 disabled={lot.quantity_remaining <= 0}
                             />
                         </td>
-                        <td className="font-bold text-xs">{lot.produit_nom}</td>
-                        <td className="font-mono text-xs">{lot.lot || '-'}</td>
-                        <td>
-                          <span className={`badge badge-xs ${lot.date_expiration && isExpired(lot.date_expiration) ? 'badge-error' : 'badge-warning'}`}>
+                        <td className="py-2.5 px-4">
+                            <div className="font-bold text-sm text-base-content group-hover:text-primary transition-colors">{lot.produit_nom}</div>
+                            <div className="text-[10px] font-mono text-base-content/40">#{lot.produit}</div>
+                        </td>
+                        <td className="py-2.5 px-4 text-center font-mono text-[11px] font-bold text-base-content/60">
+                            {lot.lot || '-'}
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
+                          <div className={`badge badge-sm font-black px-2 py-2 gap-1.5 ${lot.date_expiration && isExpired(lot.date_expiration) ? 'bg-error/10 text-error border-none' : 'bg-warning/10 text-warning border-none'}`}>
+                            <Calendar className="w-3 h-3" />
                             {formatDate(lot.date_expiration || '')}
-                          </span>
+                          </div>
                         </td>
-                        <td className="text-xs truncate max-w-[120px]">{lot.fournisseur_nom}</td>
-                        <td className="text-right font-bold text-xs">{lot.quantity_remaining}</td>
-                        <td className="text-right text-error text-xs font-medium">
-                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)}
+                        <td className="py-2.5 px-4 text-xs font-semibold text-base-content/50 truncate max-w-[140px]" title={lot.fournisseur_nom}>
+                            {lot.fournisseur_nom}
                         </td>
-                        <td>
+                        <td className="py-2.5 px-4 text-right">
+                            <div className={`font-black text-sm ${lot.quantity_remaining > 0 ? 'text-base-content' : 'text-base-content/20'}`}>
+                                {lot.quantity_remaining}
+                            </div>
+                        </td>
+                        <td className="py-2.5 px-4 text-right text-error font-mono font-black text-xs">
+                          {formatCurrency(Number(lot.price_cost || 0) * lot.quantity_remaining)} F
+                        </td>
+                        <td className="py-2.5 px-4 text-center">
                           {lot.quantity_remaining > 0 ? (
                             <button 
-                                className="btn btn-[10px] h-6 min-h-6 px-2 btn-error btn-outline"
+                                className="btn btn-xs btn-error btn-outline h-7 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-all transform hover:scale-105"
                                 onClick={() => handleSortirStock(lot)}
                                 disabled={processing}
                             >
-                                🗑️ Sortir
+                                <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                {t('common.exit', 'Sortir')}
                             </button>
                           ) : (
-                            <span className="text-[10px] font-bold text-base-content/30 uppercase italic">Sorti</span>
+                            <span className="text-[10px] font-black text-base-content/20 uppercase tracking-widest flex items-center justify-center gap-1">
+                                <Check className="w-3 h-3" />
+                                Sorti
+                            </span>
                           )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-            )}
-          </>
+              )}
+            </div>
+          </div>
         ) : (
           /* ========== HISTORY VIEW ========== */
           <div className="space-y-4">
@@ -699,7 +758,7 @@ export default function Perimes() {
                     <div className="stat">
                         <div className="stat-title text-xs font-bold uppercase text-base-content/50">Valorisation Totale des Sorties</div>
                         <div className="stat-value text-error text-2xl">
-                            {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))}
+                            {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))} F
                         </div>
                         <div className="stat-desc font-medium text-base-content/40">{adjustments.length} opérations sur la période</div>
                     </div>

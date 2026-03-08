@@ -8,6 +8,7 @@ import {
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '../../utils/storage';
 import { useConfirm } from '../../hooks/useConfirm';
+import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import PremiumModal from './PremiumModal';
 import SmartOrganizerModal from './SmartOrganizerModal';
 
@@ -534,7 +535,7 @@ export default function CategoryManager({
                               </div>
                               <div className="flex items-center gap-3">
                                  <div className="text-right hidden sm:block">
-                                    <div className="font-bold text-sm">{parseFloat(p.selling_price).toLocaleString()} F</div>
+                                    <div className="font-bold text-sm">{formatCurrency(normalizeNumberInput(p.selling_price))} F</div>
                                  </div>
                                  <button 
                                    onClick={() => handleRemoveProduct(p)}

@@ -1,8 +1,9 @@
 import { useState, useCallback, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
-import type { ProduitModel, LigneFacture } from '../types'
+import type { ProduitModel, LigneFacture, StockLot } from '../types'
 import { normalizeNumberInput } from '../utils/formatters'
+import { calculateLineTotal, calculateCartStats } from '../utils/finance'
 import { useAuth } from '../context/AuthContext'
 import { differenceInDays, parseISO } from 'date-fns'
 import { showExpirationToast } from '../utils/toastUtils'
@@ -17,17 +18,6 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
     const { user } = useAuth()
     const [lignesFacture, setLignesFacture] = useState<LigneFacture[]>([])
     const [loading, setLoading] = useState(false)
-
-    // Calculate line total helper
-    const calculateLigneTotal = useCallback((quantite: number, prixUnitaire: string, remiseProduit: string): number => {
-        const qty = quantite
-        const prix = normalizeNumberInput(prixUnitaire, { min: 0 })
-        const remise = normalizeNumberInput(remiseProduit, { min: 0, max: 100 })
-        const sousTotal = qty * prix
-        const montantRemise = Math.abs(sousTotal) * (remise / 100)
-        // If quantity is negative (return), discount must also be subtracted for net credit
-        return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise)
-    }, [])
 
     const addProduit = useCallback(async (produit: ProduitModel, options?: { isRetrocession?: boolean; preventFocus?: boolean }) => {
         setLoading(true)
@@ -69,7 +59,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                                 ...ligne,
                                 produit: fullProduit, // Update product with fresh data (stock, prices, etc.)
                                 quantite: nouvelleQuantite,
-                                total_ligne: calculateLigneTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
+                                total_ligne: calculateLineTotal(nouvelleQuantite, ligne.prix_unitaire, ligne.remise_produit),
                             }
                             : ligne
                     )
@@ -125,7 +115,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
 
             // PEREMPTION CHECK
             // Use calculated property from serializer (next_expiring_date) if available, fallback to expire_date
-            const expirationToCheck = (fullProduit as any).next_expiring_date || fullProduit.expire_date;
+            const expirationToCheck = fullProduit.next_expiring_date || fullProduit.expire_date;
 
 
 
@@ -135,14 +125,13 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                 const daysUntilExpiration = differenceInDays(parseISO(expirationToCheck), new Date())
                 showExpirationToast(daysUntilExpiration)
             }
-
         } catch (err) {
             console.error('Erreur lors du chargement des détails du produit:', err)
             toast.error('Impossible de charger les détails complets du produit')
         } finally {
             setLoading(false)
         }
-    }, [apiBaseUrl, calculateLigneTotal, onRequirePrescription, quantityInputsRef])
+    }, [apiBaseUrl, onRequirePrescription, quantityInputsRef])
 
     const updateQuantite = useCallback((produitId: number, quantite: number, callback?: (err: string) => void) => {
         // Permettre les quantités négatives (retours) et positives (ventes)
@@ -162,7 +151,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                 ? {
                     ...ligne,
                     quantite: finalQuantite,
-                    total_ligne: calculateLigneTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit),
+                    total_ligne: calculateLineTotal(finalQuantite, ligne.prix_unitaire, ligne.remise_produit),
                     // Clear promis if stock is sufficient (logic simplified here, mostly clearing old promis state)
                     isPromis: undefined,
                     promisQuantity: undefined,
@@ -170,25 +159,25 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                 }
                 : ligne
         ))
-    }, [calculateLigneTotal, user?.can_do_returns])
+    }, [user?.can_do_returns])
 
     const updatePrix = useCallback((produitId: number, prix: string) => {
         setLignesFacture(prevLignes => prevLignes.map(ligne =>
             ligne.produit.id === produitId
-                ? { ...ligne, prix_unitaire: prix, total_ligne: calculateLigneTotal(ligne.quantite, prix, ligne.remise_produit) }
+                ? { ...ligne, prix_unitaire: prix, total_ligne: calculateLineTotal(ligne.quantite, prix, ligne.remise_produit) }
                 : ligne
         ))
-    }, [calculateLigneTotal])
+    }, [])
 
     const updateRemiseProduit = useCallback((produitId: number, remise: string) => {
         setLignesFacture(prevLignes => prevLignes.map(ligne =>
             ligne.produit.id === produitId
-                ? { ...ligne, remise_produit: remise, total_ligne: calculateLigneTotal(ligne.quantite, ligne.prix_unitaire, remise) }
+                ? { ...ligne, remise_produit: remise, total_ligne: calculateLineTotal(ligne.quantite, ligne.prix_unitaire, remise) }
                 : ligne
         ))
-    }, [calculateLigneTotal])
+    }, [calculateLineTotal])
 
-    const updateLineLot = useCallback((produitId: number, lot: any | null) => {
+    const updateLineLot = useCallback((produitId: number, lot: StockLot | null) => {
         setLignesFacture(prevLignes => prevLignes.map(ligne =>
             ligne.produit.id === produitId
                 ? {
@@ -201,7 +190,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         ? String(lot.selling_price)
                         : ligne.prix_unitaire,
                     // Recalculate total with new price
-                    total_ligne: calculateLigneTotal(
+                    total_ligne: calculateLineTotal(
                         ligne.quantite,
                         (lot && lot.selling_price !== null && lot.selling_price !== undefined)
                             ? String(lot.selling_price)
@@ -211,7 +200,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                 }
                 : ligne
         ))
-    }, [calculateLigneTotal])
+    }, [])
 
     const updateTreatmentDuration = useCallback((produitId: number, duration: number) => {
         setLignesFacture(prevLignes => prevLignes.map(ligne =>
@@ -229,34 +218,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
         setLignesFacture([])
     }, [])
 
-    const cartStats = useMemo(() => {
-        const totalLines = lignesFacture.length
-        const totalQty = lignesFacture.reduce((acc, l) => acc + l.quantite, 0)
-
-        let totalTTC = 0  // Sum of line totals (TTC because selling_price includes TVA)
-        let totalTva = 0  // Extracted TVA amount
-        let totalHT = 0   // HT = TTC - TVA
-
-        lignesFacture.forEach(ligne => {
-            const valeurLigneTTC = typeof ligne.total_ligne === 'number' ? ligne.total_ligne : Number(ligne.total_ligne)
-            const ligneTTC = Number.isFinite(valeurLigneTTC) ? valeurLigneTTC : 0
-            totalTTC += ligneTTC
-
-            // Per-line TVA extraction from TTC (selling prices include TVA)
-            const tauxTva = normalizeNumberInput(ligne.produit.tva ?? 0, { min: 0, max: 100 })
-            if (tauxTva > 0) {
-                // TTC = HT * (1 + taux/100), so HT = TTC / (1 + taux/100)
-                const ligneHT = ligneTTC / (1 + tauxTva / 100)
-                const ligneTvaAmount = ligneTTC - ligneHT
-                totalTva += ligneTvaAmount
-                totalHT += ligneHT
-            } else {
-                totalHT += ligneTTC // No TVA, HT = TTC
-            }
-        })
-
-        return { totalLines, totalQty, sousTotal: totalHT, totalTva, totalTTC }
-    }, [lignesFacture])
+    const cartStats = useMemo(() => calculateCartStats(lignesFacture), [lignesFacture])
 
     const bulkAddProduits = useCallback((items: { product: ProduitModel, quantity: number, discountPercent?: string }[]) => {
         setLignesFacture(prevLignes => {
@@ -278,7 +240,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         produit: product,
                         quantite: newQty,
                         remise_produit: finalRemise,
-                        total_ligne: calculateLigneTotal(newQty, existing.prix_unitaire, finalRemise)
+                        total_ligne: calculateLineTotal(newQty, existing.prix_unitaire, finalRemise)
                     }
                 } else {
                     newLignes.push({
@@ -286,7 +248,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         quantite: quantity,
                         prix_unitaire: prixBase,
                         remise_produit: remise,
-                        total_ligne: calculateLigneTotal(quantity, prixBase, remise),
+                        total_ligne: calculateLineTotal(quantity, prixBase, remise),
                         lotId: null,
                         lotText: null,
                         lotExpiration: null,
@@ -296,7 +258,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
             })
             return newLignes
         })
-    }, [calculateLigneTotal])
+    }, [])
 
     return {
         lignesFacture,

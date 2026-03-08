@@ -90,7 +90,7 @@ export const useManagerDashboard = () => {
             link.click();
             link.remove();
             toast.success(t('common.export_success', 'Export réussi'));
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Export error:', error);
             toast.error(t('common.export_error', 'Erreur lors de l\'export'));
         } finally {
@@ -110,12 +110,13 @@ export const useManagerDashboard = () => {
             setIsModalOpen(false);
             queryClient.invalidateQueries({ queryKey: ['objectifs'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard', 'managerStats'] });
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || t('manager_dashboard.messages.save_error'));
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            toast.error(err.response?.data?.error || t('manager_dashboard.messages.save_error'));
         }
     };
 
-    const openObjectiveModal = (periode?: string, objective?: any) => {
+    const openObjectiveModal = (periode?: string, objective?: EditingObjectif) => {
         if (periode) {
             setEditingObjectif({
                 periode: periode,

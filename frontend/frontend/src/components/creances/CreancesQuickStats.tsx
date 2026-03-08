@@ -1,6 +1,7 @@
 import React from 'react';
 import { CreditCard, CheckCircle, Clock, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../../utils/formatters';
 
 interface CreancesQuickStatsProps {
     totalDue: number;
@@ -20,21 +21,21 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
     const stats = [
         {
             label: t('creances.stats.total_invoices'),
-            value: `${Math.round(totalDue).toLocaleString()} F`,
+            value: `${formatCurrency(Math.round(totalDue))} F`,
             icon: <CreditCard className="w-5 h-5 text-blue-500" />,
             bgColor: 'bg-blue-50',
             borderColor: 'border-blue-100'
         },
         {
             label: t('creances.stats.total_paid'),
-            value: `${Math.round(totalPaid).toLocaleString()} F`,
+            value: `${formatCurrency(Math.round(totalPaid))} F`,
             icon: <CheckCircle className="w-5 h-5 text-success" />,
             bgColor: 'bg-success/10',
             borderColor: 'border-success/20'
         },
         {
             label: t('creances.stats.remaining'),
-            value: `${Math.round(totalRemaining).toLocaleString()} F`,
+            value: `${formatCurrency(Math.round(totalRemaining))} F`,
             icon: <Clock className="w-5 h-5 text-warning" />,
             bgColor: 'bg-warning/10',
             borderColor: 'border-warning/20'
