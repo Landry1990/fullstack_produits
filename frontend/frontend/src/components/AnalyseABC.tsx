@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import { formatNumber as utilsFormatNumber } from '../utils/formatters'
 
 interface ProduitABC {
   id: number
@@ -106,7 +107,7 @@ export default function AnalyseABC() {
     return data.produits.filter(p => p.categorie === activeTab)
   }, [data, activeTab])
 
-  const formatNumber = (n: number) => Math.round(n).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const formatNumber = (n: number) => utilsFormatNumber(Math.round(n))
 
   // Copier le tableau dans le presse-papier (format TSV pour Excel)
   const copyToClipboard = () => {

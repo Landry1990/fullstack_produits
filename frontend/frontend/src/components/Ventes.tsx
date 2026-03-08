@@ -13,6 +13,7 @@ import TicketPreviewModal from './facturation/TicketPreviewModal';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
 
 import { TrancheHoraireStats } from './sales/TrancheHoraireStats';
+import Pagination from './ui/Pagination';
 
 // Styles (if any specific, otherwise rely on tailwind)
 
@@ -87,7 +88,12 @@ const Ventes: React.FC = () => {
                         }} 
                      />
                      {/* Quick Stats Dashboard */}
-                     {showQuickStats && <SalesQuickStats stats={trancheStats || stats} />}
+                     {showQuickStats && (
+                        <SalesQuickStats 
+                            stats={trancheStats || stats} 
+                            onClose={() => setShowQuickStats(false)} 
+                        />
+                     )}
                 </div>
             </div>
 
@@ -106,28 +112,15 @@ const Ventes: React.FC = () => {
                     onBulkDelete={bulkDeleteFactures}
                 />
                 
-                {/* Pagination Controls */}
-                <div className="p-4 border-t border-base-200 flex items-center justify-between">
-                    <div className="text-sm text-base-content/60">
-                        Page {pagination?.currentPage} sur {pagination?.totalPages} ({pagination?.totalItems} ventes)
-                    </div>
-                    <div className="flex gap-2">
-                        <button 
-                            className="btn btn-sm btn-outline"
-                            onClick={pagination?.prevPage}
-                            disabled={!pagination?.prevPage || loading}
-                        >
-                            Précédent
-                        </button>
-                        <button 
-                            className="btn btn-sm btn-outline"
-                            onClick={pagination?.nextPage}
-                            disabled={!pagination?.hasNext || loading}
-                        >
-                            Suivant
-                        </button>
-                    </div>
-                </div>
+                    <Pagination 
+                        currentPage={pagination?.currentPage || 1}
+                        totalPages={pagination?.totalPages || 1}
+                        totalItems={pagination?.totalItems || 0}
+                        onPrev={() => pagination?.prevPage && pagination.prevPage()}
+                        onNext={() => pagination?.nextPage && pagination.nextPage()}
+                        hasNext={pagination?.hasNext}
+                        isLoading={loading}
+                    />
             </div>
 
             {/* Modals */}

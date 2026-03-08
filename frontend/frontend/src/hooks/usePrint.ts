@@ -172,7 +172,7 @@ export function usePrint(): UsePrintReturn {
       <div class="print-footer">
         <p>${footerText}</p>
         <p style="margin-top: 5px; font-size: 0.7em;">
-          Imprimé le ${new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          Imprimé le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' } as Intl.DateTimeFormatOptions)}
         </p>
       </div>
     `;
@@ -310,7 +310,7 @@ export function usePrint(): UsePrintReturn {
  */
 export function formatMoney(value: number | string): string {
   const num = Math.round(parseFloat(String(value)));
-  return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ');
+  return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
 }
 
 /**

@@ -70,11 +70,6 @@ const Promis: React.FC = () => {
                             setSearchQuery={setSearchQuery}
                             onRefresh={refresh}
                             onNew={() => setShowForm(true)}
-                            selectedCount={selectedIds.size}
-                            onBulkDeliver={handleBulkDelivrer}
-                            onBulkCancel={handleBulkAnnuler}
-                            onClearSelection={clearSelection}
-                            bulkLoading={bulkLoading}
                         />
                     </div>
                     
@@ -96,6 +91,10 @@ const Promis: React.FC = () => {
                     onPrint={handlePrintTicket}
                     onSms={(promis) => setSmsModalState({ isOpen: true, promis })}
                     onWhatsApp={handleWhatsAppReminder}
+                    onBulkDeliver={handleBulkDelivrer}
+                    onBulkCancel={handleBulkAnnuler}
+                    onClearSelection={clearSelection}
+                    bulkLoading={bulkLoading}
                 />
             </div>
 

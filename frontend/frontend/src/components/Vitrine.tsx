@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Search, Globe, DollarSign, Cloud, ShoppingCart, CheckCircle, XCircle, Trash2 } from 'lucide-react';
-import { formatPrice } from '../utils/formatters';
+import { formatCurrency, normalizeNumberInput, formatNumber } from '../utils/formatters';
 
 interface Product {
   id: number;
@@ -151,11 +151,11 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                 </td>
                                 <td>
                                     <div className={`font-mono font-medium ${product.stock <= 0 ? 'text-red-500' : 'text-green-600'}`}>
-                                        {product.stock}
+                                        {formatNumber(product.stock)}
                                     </div>
                                 </td>
                                 <td className="font-mono whitespace-nowrap">
-                                    {formatPrice(product.selling_price)} FCFA
+                                    {formatCurrency(product.selling_price)} FCFA
                                 </td>
                                 <td>
                                     <div className="join">
@@ -168,7 +168,7 @@ function GestionVitrine({ products, isLoading, searchTerm, setSearchTerm, showPu
                                             placeholder={product.selling_price?.toString()} 
                                             defaultValue={product.public_price || ''}
                                             onBlur={(e) => {
-                                                const val = e.target.value ? parseFloat(e.target.value) : null;
+                                                const val = e.target.value ? normalizeNumberInput(e.target.value) : null;
                                                 if (val !== product.public_price) {
                                                     updatePrice.mutate({ id: product.id, price: val });
                                                 }
@@ -352,7 +352,7 @@ function SimulateurClient() {
                                                 )}
                                                 
                                                 <span className="font-mono text-sm opacity-70">
-                                                    {formatPrice(Number(item.public_price || item.selling_price))} FCFA
+                                                    {formatCurrency(normalizeNumberInput(item.public_price || item.selling_price))} FCFA
                                                 </span>
                                             </div>
                                         </div>
@@ -487,7 +487,7 @@ export default function Vitrine() {
                 <div>
                   <div className="text-xs text-gray-500 font-medium uppercase tracking-wider">Produits en ligne</div>
                   <div className="text-xl font-bold leading-none">
-                      {publicCount}
+                      {formatNumber(publicCount)}
                   </div>
                 </div>
              </div>

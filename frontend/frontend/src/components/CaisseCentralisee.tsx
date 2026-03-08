@@ -5,6 +5,7 @@ import axios from 'axios'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { formatCurrency } from '../utils/formatters'
 import type { Facture, TicketCaisse, CouponMonnaie } from '../types'
 import PasswordConfirmModal from './PasswordConfirmModal'
 import { PaymentModal } from './caisse/PaymentModal'
@@ -616,7 +617,7 @@ export default function CaisseCentralisee() {
             <div className="text-xs font-bold text-primary uppercase tracking-wider mb-1 flex items-center gap-1">
               <Banknote className="w-3 h-3" /> {t('stats_total_title', { defaultValue: 'Montant Total' })}
             </div>
-            <div className="text-2xl font-bold text-base-content">{Math.round(totalMontantEnAttente).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
+            <div className="text-2xl font-bold text-base-content">{formatCurrency(Math.round(totalMontantEnAttente))} F</div>
             <div className="text-xs text-base-content/60">{t('stats_total_desc', { defaultValue: 'à encaisser' })}</div>
           </div>
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -1056,7 +1057,7 @@ export default function CaisseCentralisee() {
   <div class="coupon-box">
     <div class="coupon-label">Coupon de Monnaie</div>
     <div class="coupon-number">#${couponTrouve.numero}</div>
-    <div class="coupon-amount">${Math.round(Number(couponTrouve.montant)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</div>
+    <div class="coupon-amount">${formatCurrency(Math.round(Number(couponTrouve.montant)))} F</div>
   </div>
   
   <div class="info-section">
@@ -1148,7 +1149,7 @@ export default function CaisseCentralisee() {
                   </div>
                   <div className="flex justify-between">
                     <span>Date:</span>
-                    <span>{new Date(couponTrouve.date_creation).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                    <span className="font-medium">{new Date(couponTrouve.date_creation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                   </div>
                 </div>
 
@@ -1162,7 +1163,7 @@ export default function CaisseCentralisee() {
                     {couponTrouve.date_utilisation && (
                       <div className="flex justify-between">
                         <span>Date:</span>
-                        <span>{new Date(couponTrouve.date_utilisation).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</span>
+                        <span>{new Date(couponTrouve.date_utilisation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                       </div>
                     )}
                   </div>

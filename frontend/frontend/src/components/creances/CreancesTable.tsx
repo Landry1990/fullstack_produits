@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import { Eye, DollarSign, ArrowUpRight, ChevronRight, Hash, Calendar, Users } from 'lucide-react';
 import type { Creance, Client } from '../../types';
 
@@ -68,39 +69,48 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
             <div className="overflow-auto h-full w-full relative">
                 <table className="table table-pin-rows table-zebra w-full">
                     <thead>
-                        <tr className="bg-base-200 border-b border-base-300">
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('creances.client_list.client')}</th>
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('creances.client_list.nb_invoices')}</th>
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('creances.client_list.total_amount')}</th>
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('creances.client_list.already_paid')}</th>
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('creances.client_list.remaining_due')}</th>
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('creances.client_list.actions')}</th>
+                        <tr>
+                            <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 py-4">{t('creances.client_list.client')}</th>
+                            <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.nb_invoices')}</th>
+                            <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.total_amount')}</th>
+                            <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.already_paid')}</th>
+                            <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.remaining_due')}</th>
+                            <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center py-4">{t('creances.client_list.actions')}</th>
                         </tr>
                     </thead>
-                    <tbody className="text-sm">
+                    <tbody className="divide-y divide-base-200/50">
                         {groupedClients.map((groupe) => (
                             <tr 
                                 key={groupe.client.id} 
-                                className="hover:bg-base-200/50 transition-colors cursor-pointer group"
+                                className="hover:bg-base-200/30 transition-all cursor-pointer group"
                                 onClick={() => onViewClient(groupe.client.id.toString())}
                             >
-                                <td className="font-bold text-base py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-xs uppercase shadow-sm">
+                                <td className="py-4 px-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-xs uppercase shadow-sm border border-primary/20 group-hover:scale-110 transition-transform">
                                             {groupe.client.name.substring(0, 2)}
                                         </div>
-                                        {groupe.client.name}
+                                        <div className="flex flex-col">
+                                            <span className="font-black text-sm text-base-content group-hover:text-primary transition-colors">{groupe.client.name}</span>
+                                            <span className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Client</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td className="text-right font-mono text-base-content/60">{groupe.count}</td>
-                                <td className="text-right font-semibold">{(Math.round(groupe.total)).toLocaleString()} F</td>
-                                <td className="text-right text-success font-semibold">{(Math.round(groupe.paye)).toLocaleString()} F</td>
-                                <td className="text-right">
-                                    <span className="bg-warning/10 text-warning px-3 py-1 rounded-lg font-black text-base shadow-sm border border-warning/20">
-                                        {(Math.round(groupe.reste)).toLocaleString()} F
+                                <td className="text-right py-4 px-6">
+                                    <span className="px-2 py-1 bg-base-200 rounded-lg font-mono text-xs font-black text-base-content/60">{groupe.count}</span>
+                                </td>
+                                <td className="text-right py-4 px-6">
+                                    <span className="font-black text-sm text-base-content">{formatCurrency(groupe.total)} F</span>
+                                </td>
+                                <td className="text-right py-4 px-6 font-bold text-success text-sm">
+                                    {formatCurrency(groupe.paye)} F
+                                </td>
+                                <td className="text-right py-4 px-6">
+                                    <span className="bg-warning/10 text-warning px-4 py-2 rounded-xl font-black text-sm shadow-sm border border-warning/20">
+                                        {formatCurrency(groupe.reste)} F
                                     </span>
                                 </td>
-                                <td className="text-center">
+                                <td className="text-center py-4 px-6">
                                     <button 
                                         className="btn btn-sm btn-circle btn-ghost opacity-0 group-hover:opacity-100 transition-all hover:bg-primary/10 hover:text-primary"
                                         onClick={(e) => {
@@ -108,7 +118,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                             onViewClient(groupe.client.id.toString());
                                         }}
                                     >
-                                        <ChevronRight className="w-4 h-4" />
+                                        <ChevronRight className="w-5 h-5" />
                                     </button>
                                 </td>
                             </tr>
@@ -122,104 +132,115 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     // mode === 'invoices'
     if (filteredCreances.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 bg-base-100 rounded-2xl border border-dashed border-base-300">
-                <div className="p-4 bg-base-200 rounded-full mb-4">
-                    <Hash className="w-8 h-8 text-base-content/20" />
+            <div className="flex flex-col items-center justify-center py-24 bg-base-100 rounded-3xl border-2 border-dashed border-base-200 m-8">
+                <div className="p-5 bg-base-100 shadow-xl shadow-base-200/50 rounded-2xl mb-6">
+                    <Hash className="w-10 h-10 text-base-content/10" />
                 </div>
-                <p className="text-base-content/50 font-medium">{t('creances.invoice_list.empty')}</p>
+                <p className="text-base-content/30 font-black uppercase tracking-widest text-xs">{t('creances.invoice_list.empty')}</p>
             </div>
         );
     }
 
     return (
         <div className="overflow-auto h-full w-full relative">
-            <table className="table table-pin-rows table-zebra w-full">
+            <table className="table table-pin-rows table-zebra w-full border-separate border-spacing-0">
                 <thead>
-                    <tr className="bg-base-200 border-b border-base-300">
+                    <tr className="bg-base-200/50 border-b border-base-300">
                         {!showHistory && (
-                            <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 w-12 text-center">
+                            <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 w-12 text-center p-4">
                                 <input 
                                     type="checkbox" 
-                                    className="checkbox checkbox-xs checkbox-primary" 
+                                    className="checkbox checkbox-sm checkbox-primary rounded-lg" 
                                     onChange={onSelectAll}
-                                    checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => parseFloat(c.reste_a_payer) > 0).length}
+                                    checked={filteredCreances.length > 0 && selectedIds.length === filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).length}
                                 />
                             </th>
                         )}
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('date')}>
-                            <div className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {t('creances.invoice_list.date')} <SortIcon column="date" /></div>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('date')}>
+                            <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> {t('creances.invoice_list.date')} <SortIcon column="date" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('numero_facture')}>
-                            <div className="flex items-center gap-1.5"><Hash className="w-3 h-3" /> {t('creances.invoice_list.invoice_number')} <SortIcon column="numero_facture" /></div>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('numero_facture')}>
+                            <div className="flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> {t('creances.invoice_list.invoice_number')} <SortIcon column="numero_facture" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('ayant_droit')}>
-                            <div className="flex items-center gap-1.5"><Users className="w-3 h-3" /> {t('creances.invoice_list.beneficiary')} <SortIcon column="ayant_droit" /></div>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('ayant_droit')}>
+                            <div className="flex items-center gap-2"><Users className="w-3.5 h-3.5" /> {t('creances.invoice_list.beneficiary')} <SortIcon column="ayant_droit" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('total_ttc')}>
-                            <div className="flex items-center justify-end gap-1.5">{t('creances.invoice_list.total')} <SortIcon column="total_ttc" /></div>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('total_ttc')}>
+                            <div className="flex items-center justify-end gap-2">{t('creances.invoice_list.total')} <SortIcon column="total_ttc" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('montant_paye')}>
-                            <div className="flex items-center justify-end gap-1.5">{t('creances.invoice_list.paid')} <SortIcon column="montant_paye" /></div>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('montant_paye')}>
+                            <div className="flex items-center justify-end gap-2">{t('creances.invoice_list.paid')} <SortIcon column="montant_paye" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('reste_a_payer')}>
-                            <div className="flex items-center justify-end gap-1.5">{t('creances.invoice_list.remaining')} <SortIcon column="reste_a_payer" /></div>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('reste_a_payer')}>
+                            <div className="flex items-center justify-end gap-2">{t('creances.invoice_list.remaining')} <SortIcon column="reste_a_payer" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('creances.invoice_list.status')}</th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('creances.invoice_list.actions')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances.invoice_list.status')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200/50 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances.invoice_list.actions')}</th>
                     </tr>
                 </thead>
-                <tbody className="text-sm">
+                <tbody className="divide-y divide-base-200/50">
                     {filteredCreances.map((creance) => {
                         const isSelected = selectedIds.includes(creance.id);
-                        const remaining = parseFloat(creance.reste_a_payer);
+                        const remaining = normalizeNumberInput(creance.reste_a_payer);
                         const isPaid = remaining <= 0;
 
                         return (
-                            <tr key={creance.id} className={`hover:bg-base-200/50 transition-colors group ${isSelected ? 'bg-primary/5' : ''}`}>
+                            <tr key={creance.id} className={`hover:bg-base-200/50 transition-all group ${isSelected ? 'bg-primary/5' : ''}`}>
                                 {!showHistory && (
-                                    <td className="text-center">
+                                    <td className="text-center p-4">
                                         <input 
                                             type="checkbox" 
-                                            className="checkbox checkbox-xs checkbox-primary" 
+                                            className="checkbox checkbox-sm checkbox-primary rounded-lg" 
                                             checked={isSelected}
                                             onChange={() => onSelectOne(creance.id)}
                                             disabled={isPaid}
                                         />
                                     </td>
                                 )}
-                                <td className="font-mono text-base-content/60">{new Date(creance.date).toLocaleDateString('fr-FR')}</td>
-                                <td className="font-bold text-primary tracking-tight">{creance.numero_facture || '-'}</td>
-                                <td className="font-medium">{creance.ayant_droit_details?.nom || '-'}</td>
-                                <td className="text-right font-semibold">{(Math.round(parseFloat(creance.total_ttc))).toLocaleString()} F</td>
-                                <td className="text-right text-success font-semibold">{(Math.round(parseFloat(creance.montant_paye))).toLocaleString()} F</td>
-                                <td className="text-right">
-                                    <span className={`${isPaid ? 'opacity-30' : 'text-warning'} font-black`}>
-                                        {(Math.round(remaining)).toLocaleString()} F
-                                    </span>
-                                </td>
-                                <td className="text-center">
-                                    <div className={`badge badge-sm font-bold border-none uppercase tracking-tighter ${
-                                        isPaid ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'
-                                    }`}>
-                                        {isPaid ? 'Payée' : 'En attente'}
+                                <td className="p-4">
+                                    <div className="flex flex-col">
+                                        <span className="font-mono text-xs font-black text-base-content/60">
+                                            {new Date(creance.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-base-content/20 uppercase tracking-widest">
+                                            {new Date(creance.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
                                     </div>
                                 </td>
-                                <td>
-                                    <div className="flex gap-1 justify-center">
+                                <td className="p-4">
+                                    <span className="font-black text-sm text-primary tracking-tight">{creance.numero_facture || '-'}</span>
+                                </td>
+                                <td className="p-4 font-bold text-sm text-base-content/70">{creance.ayant_droit_details?.nom || '-'}</td>
+                                <td className="p-4 text-right font-black text-sm text-base-content">{formatCurrency(normalizeNumberInput(creance.total_ttc))} F</td>
+                                <td className="p-4 text-right text-success font-black text-sm">{formatCurrency(normalizeNumberInput(creance.montant_paye))} F</td>
+                                <td className="p-4 text-right">
+                                    <span className={`${isPaid ? 'opacity-30' : 'text-warning'} font-black text-sm bg-base-200/50 px-3 py-1.5 rounded-lg border border-base-300/30 shadow-inner`}>
+                                        {formatCurrency(remaining)} F
+                                    </span>
+                                </td>
+                                <td className="p-4 text-center">
+                                    <div className={`badge badge-sm h-6 px-3 font-black border-none transition-all ${
+                                        isPaid ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning animate-pulse'
+                                    }`}>
+                                        {isPaid ? 'PAYÉE' : 'EN ATTENTE'}
+                                    </div>
+                                </td>
+                                <td className="p-4">
+                                    <div className="flex gap-2 justify-center">
                                         <button
                                             onClick={() => onViewDetails(creance)}
-                                            className="btn btn-xs btn-circle btn-ghost hover:bg-primary/10 hover:text-primary transition-all shadow-sm group/btn"
+                                            className="btn btn-sm btn-circle btn-ghost hover:bg-primary/10 hover:text-primary transition-all shadow-sm group/btn"
                                             title="Voir les paiements"
                                         >
-                                            <Eye className="w-3.5 h-3.5" />
+                                            <Eye className="w-4 h-4" />
                                         </button>
                                         {!isPaid && (
                                             <button
                                                 onClick={() => onPay(creance)}
-                                                className="btn btn-xs btn-circle btn-primary shadow-sm hover:scale-110 active:scale-95 transition-all"
+                                                className="btn btn-sm btn-circle btn-primary shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
                                                 title="Ajouter un paiement"
                                             >
-                                                <DollarSign className="w-3.5 h-3.5" />
+                                                <DollarSign className="w-4 h-4" />
                                             </button>
                                         )}
                                     </div>

@@ -109,9 +109,10 @@ export const useInventaireMerge = ({
 
             setShowMergeModal(false);
             setSelectedMergeSource(null);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Erreur fusion", err);
-            toast.error(err.response?.data?.error || t('stock.inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' }));
+            const error = err as { response?: { data?: { error?: string } } };
+            toast.error(error.response?.data?.error || t('stock.inventaire.merge.error', { defaultValue: 'Erreur lors de la fusion' }));
         } finally {
             setMerging(false);
         }

@@ -1,13 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
-import { safeStorage } from '../utils/storage';
-
-interface SimpleUser {
-    id: number;
-    username: string;
-    first_name: string;
-    last_name: string;
-}
+import userService, { type SimpleUser } from '../services/userService';
 
 // Module-level cache: shared across all component instances
 // Persists as long as the app is running (until full page reload)
@@ -26,7 +18,7 @@ export const useUsers = () => {
 
     useEffect(() => {
         mountedRef.current = true;
-        
+
         const loadUsers = async () => {
             // If already cached, use it immediately
             if (cachedUsers) {
@@ -52,12 +44,7 @@ export const useUsers = () => {
             // Start a new fetch
             setLoading(true);
             fetchPromise = (async () => {
-                const token = safeStorage.getItem('authToken');
-                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-                const response = await axios.get(`${apiBaseUrl}/users/`, {
-                    headers: { Authorization: `Token ${token}` }
-                });
-                const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+                const data = await userService.getAll();
                 cachedUsers = data;
                 return data;
             })();
@@ -88,12 +75,7 @@ export const useUsers = () => {
         fetchPromise = null;
         setLoading(true);
         try {
-            const token = safeStorage.getItem('authToken');
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
-            const response = await axios.get(`${apiBaseUrl}/users/`, {
-                headers: { Authorization: `Token ${token}` }
-            });
-            const data = Array.isArray(response.data) ? response.data : response.data.results || [];
+            const data = await userService.getAll();
             cachedUsers = data;
             if (mountedRef.current) {
                 setUsers(data);

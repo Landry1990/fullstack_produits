@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useDebounce } from 'use-debounce';
 import { useLocation } from 'react-router-dom';
-import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot } from '../types';
+import type { Fournisseur, ProduitModel, Avoir, LigneAvoir, StockLot, SudoState, SudoOptions, PaginatedResponse } from '../types';
 import { useSudo } from './useSudo';
+import avoirService from '../services/avoirService';
+import fournisseurService from '../services/fournisseurService';
+import produitService from '../services/produitService';
 
 export type ViewMode = 'LIST' | 'CREATE' | 'EDIT' | 'DETAILS';
 
@@ -24,8 +26,8 @@ export interface UseAvoirsDataReturn {
     setListSearchQuery: React.Dispatch<React.SetStateAction<string>>;
 
     // Sudo State
-    sudoState: any; // We use any or import SudoState if exported from useSudo.
-    requireSudo: (onSuccess: (validatorId: number, password: string) => void | Promise<void>, options?: any) => void;
+    sudoState: SudoState;
+    requireSudo: (onSuccess: (validatorId: number, password: string) => void | Promise<void>, options?: SudoOptions) => void;
     closeSudo: () => void;
     savingValidation: boolean;
 
@@ -62,7 +64,7 @@ export interface UseAvoirsDataReturn {
 
     // Products & Lots Management (Form View)
     selectProduct: (product: ProduitModel) => void;
-    updateLine: (index: number, field: keyof LigneAvoir, value: any) => void;
+    updateLine: (index: number, field: keyof LigneAvoir, value: string | number | boolean | ProduitModel | undefined) => void;
     removeLine: (index: number) => void;
 
     // Lot Modal Specific
@@ -72,6 +74,15 @@ export interface UseAvoirsDataReturn {
     loadingLots: boolean;
     handleOpenLotModal: (lineIndex: number) => Promise<void>;
     handleSelectLot: (lot: StockLot) => void;
+
+    // Selection & Bulk Actions
+    selectedIds: Set<number>;
+    onToggleSelection: (id: number) => void;
+    onToggleSelectAll: () => void;
+    onClearSelection: () => void;
+    handleBulkDelete: () => Promise<void>;
+    handleBulkValidate: () => Promise<void>;
+    bulkLoading: boolean;
 }
 
 export function useAvoirsData(): UseAvoirsDataReturn {
@@ -111,32 +122,22 @@ export function useAvoirsData(): UseAvoirsDataReturn {
     const { sudoState, requireSudo, closeSudo } = useSudo();
     const [savingValidation, setSavingValidation] = useState(false);
 
-    // Endpoints
-    const apiBaseUrl = useMemo(() => import.meta.env.VITE_API_BASE_URL ?? '', []);
-    const endpoints = useMemo(() => ({
-        avoirs: `${apiBaseUrl.replace(/\/$/, '')}/api/avoirs/`,
-        fournisseurs: `${apiBaseUrl.replace(/\/$/, '')}/api/fournisseurs/`,
-        ligneAvoirs: `${apiBaseUrl.replace(/\/$/, '')}/api/ligne-avoirs/`,
-        stockLots: `${apiBaseUrl.replace(/\/$/, '')}/api/stock-lots/`
-    }), [apiBaseUrl]);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [bulkLoading, setBulkLoading] = useState(false);
 
     // --- Fetch Avoirs ---
     const fetchAvoirs = useCallback(async (search = '') => {
         setLoading(true);
         try {
-            const url = search
-                ? `${endpoints.avoirs}?search=${encodeURIComponent(search)}`
-                : endpoints.avoirs;
-
-            const res = await axios.get(url);
-            const avoirsData = res.data;
-            setAvoirs(Array.isArray(avoirsData) ? avoirsData : (avoirsData.results || []));
+            const results = await avoirService.getAll(search);
+            setAvoirs(results);
+            setSelectedIds(new Set());
         } catch (err: unknown) {
             console.error('Error fetching avoirs:', err);
         } finally {
             setLoading(false);
         }
-    }, [endpoints.avoirs]);
+    }, []);
 
     useEffect(() => {
         fetchAvoirs(debouncedListSearch);
@@ -149,10 +150,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         const searchFournisseurs = async () => {
             setIsSearchingFournisseur(true);
             try {
-                const url = `${endpoints.fournisseurs}?search=${encodeURIComponent(debouncedFournisseurSearch)}`;
-                const res = await axios.get(url);
-                const data = res.data;
-                setFilteredFournisseurs(Array.isArray(data) ? data : (data.results || []));
+                const data = await fournisseurService.getAll({ search: debouncedFournisseurSearch });
+                setFilteredFournisseurs(Array.isArray(data) ? data : (data as PaginatedResponse<Fournisseur>).results || []);
             } catch (error) {
                 console.error("Erreur recherche fournisseur", error);
             } finally {
@@ -161,7 +160,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         };
 
         searchFournisseurs();
-    }, [debouncedFournisseurSearch, endpoints.fournisseurs, viewMode]);
+    }, [debouncedFournisseurSearch, viewMode]);
 
     const selectFournisseur = (f: Fournisseur) => {
         setSelectedFournisseurId(f.id.toString());
@@ -169,10 +168,39 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setShowFournisseurList(false);
     };
 
+    // --- Handlers ---
+    const handleCreateNew = () => {
+        setViewMode('CREATE');
+        setSelectedAvoir(null);
+        setEditingAvoirId(null);
+        setSelectedFournisseurId('');
+        setFournisseurSearch('');
+        setTypeAvoir('PERIME');
+        setObservations('');
+        setLignes([]);
+    };
+
     // --- Direct Navigation Setup (From Commandes) ---
     useEffect(() => {
-        if (location.state && (location.state as any).createFromCommande) {
-            const data = (location.state as any).createFromCommande;
+        interface CommandeSource {
+            createFromCommande?: {
+                fournisseur?: number;
+                fournisseur_nom?: string;
+                source_commande?: number;
+                produits?: Array<{
+                    id: number;
+                    name: string;
+                    cip: string;
+                    quantity: number;
+                    purchase_price: string;
+                    lot: string;
+                    expiration: string;
+                }>;
+            };
+        }
+        const state = location.state as CommandeSource;
+        if (state && state.createFromCommande) {
+            const data = state.createFromCommande;
 
             setViewMode('CREATE');
             setSelectedAvoir(null);
@@ -188,10 +216,10 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             setObservations(`Retour suite à commande #${data.source_commande}`);
 
             if (Array.isArray(data.produits)) {
-                const newLignes: LigneAvoir[] = data.produits.map((p: any, idx: number) => ({
+                const newLignes: LigneAvoir[] = data.produits.map((p, idx: number) => ({
                     id: Date.now() + idx,
                     avoir: 0,
-                    produit: { id: p.id, name: p.name, cip1: p.cip, stock: 0 } as any,
+                    produit: { id: p.id, name: p.name, cip1: p.cip, stock: 0 } as ProduitModel,
                     quantity: p.quantity || 0,
                     price: p.purchase_price || '0',
                     lot: p.lot || '',
@@ -204,18 +232,6 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
-
-    // --- Handlers ---
-    const handleCreateNew = () => {
-        setViewMode('CREATE');
-        setSelectedAvoir(null);
-        setEditingAvoirId(null);
-        setSelectedFournisseurId('');
-        setFournisseurSearch('');
-        setTypeAvoir('PERIME');
-        setObservations('');
-        setLignes([]);
-    };
 
     const handleEdit = (avoir: Avoir) => {
         setEditingAvoirId(avoir.id);
@@ -276,27 +292,27 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             setLoading(true);
             const avoirPayload = {
                 fournisseur: parseInt(selectedFournisseurId),
-                type_avoir: typeAvoir,
+                type_avoir: typeAvoir as Avoir['type_avoir'],
                 observations
             };
 
             let avoirId: number;
 
             if (editingAvoirId) {
-                await axios.patch(`${endpoints.avoirs}${editingAvoirId}/`, avoirPayload);
+                await avoirService.update(editingAvoirId, avoirPayload);
                 avoirId = editingAvoirId;
                 const existingLignes = selectedAvoir?.produits || [];
                 await Promise.all(
-                    existingLignes.map(l => axios.delete(`${endpoints.ligneAvoirs}${l.id}/`).catch(() => { }))
+                    existingLignes.map(l => avoirService.deleteLigne(l.id).catch(() => { }))
                 );
             } else {
-                const { data: newAvoir } = await axios.post(endpoints.avoirs, avoirPayload);
+                const newAvoir = await avoirService.create(avoirPayload);
                 avoirId = newAvoir.id;
             }
 
             const linePromises = lignes.map(ligne => {
                 const produitId = typeof ligne.produit === 'object' ? ligne.produit.id : ligne.produit;
-                return axios.post(endpoints.ligneAvoirs, {
+                return avoirService.createLigne({
                     avoir: avoirId,
                     produit: produitId,
                     stock_lot: ligne.stock_lot || null,
@@ -312,8 +328,9 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             setEditingAvoirId(null);
             setViewMode('LIST');
             fetchAvoirs();
-        } catch (err: any) {
-            toast.error('Erreur lors de la sauvegarde: ' + (err.response?.data?.message || err.message));
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { message?: string } }; message?: string };
+            toast.error('Erreur lors de la sauvegarde: ' + (error.response?.data?.message || error.message));
         } finally {
             setLoading(false);
         }
@@ -323,12 +340,13 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         if (!confirm(`Voulez-vous vraiment supprimer l'avoir brouillon ${avoir.numero} ?`)) return;
         try {
             setLoading(true);
-            await axios.delete(`${endpoints.avoirs}${avoir.id}/`);
+            await avoirService.delete(avoir.id);
             toast.success('Avoir supprimé avec succès');
             fetchAvoirs();
             if (viewMode === 'DETAILS') setViewMode('LIST');
-        } catch (err: any) {
-            toast.error('Erreur: ' + (err.response?.data?.error || err.message));
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { error?: string } }; message?: string };
+            toast.error('Erreur: ' + (error.response?.data?.error || error.message));
         } finally {
             setLoading(false);
         }
@@ -338,15 +356,16 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         requireSudo(async (validatorId, password) => {
             try {
                 setSavingValidation(true);
-                await axios.post(`${endpoints.avoirs}${avoir.id}/valider/`, {
+                await avoirService.valider(avoir.id, {
                     validated_by_id: validatorId,
                     password: password
                 });
                 toast.success('Avoir validé et stock mis à jour');
                 fetchAvoirs();
                 if (viewMode === 'DETAILS') setViewMode('LIST');
-            } catch (err: any) {
-                toast.error('Erreur: ' + (err.response?.data?.error || err.message || 'Erreur inconnue'));
+            } catch (err: unknown) {
+                const error = err as { response?: { data?: { error?: string } }; message?: string };
+                toast.error('Erreur: ' + (error.response?.data?.error || error.message || 'Erreur inconnue'));
             } finally {
                 setSavingValidation(false);
             }
@@ -379,7 +398,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
 
         updateState(newStatus);
         try {
-            await axios.patch(`${endpoints.ligneAvoirs}${ligneId}/`, { est_cloture: newStatus });
+            await avoirService.updateLigne(ligneId, { est_cloture: newStatus });
             toast.success(newStatus ? 'Ligne clôturée' : 'Ligne réouverte');
         } catch (err) {
             toast.error("Erreur lors de la mise à jour");
@@ -418,7 +437,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         try {
             const promises = selectedAvoir.produits
                 .filter(p => !!p.id)
-                .map(p => axios.patch(`${endpoints.ligneAvoirs}${p.id}/`, { est_cloture: targetStatus }));
+                .map(p => avoirService.updateLigne(p.id, { est_cloture: targetStatus }));
             await Promise.all(promises);
             toast.success(targetStatus ? 'Toutes les lignes clôturées' : 'Toutes les lignes réouvertes');
         } catch (err) {
@@ -448,7 +467,7 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setLignes(prev => [newLine, ...prev]);
     };
 
-    const updateLine = (index: number, field: keyof LigneAvoir, value: any) => {
+    const updateLine = (index: number, field: keyof LigneAvoir, value: string | number | boolean | ProduitModel | undefined) => {
         setLignes(prev => {
             const newLignes = [...prev];
             const line = { ...newLignes[index] };
@@ -478,10 +497,8 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         setLoadingLots(true);
 
         try {
-            const params = new URLSearchParams({ produit: produitId.toString(), ordering: 'date_expiration' });
-            const response = await axios.get(`${endpoints.stockLots}?${params}`);
-            const lots: StockLot[] = Array.isArray(response.data) ? response.data : (response.data.results || []);
-            setAvailableLots(lots.filter(l => l.quantity_remaining > 0));
+            const lots = await produitService.getLots(produitId);
+            setAvailableLots(lots.filter((l: StockLot) => l.quantity_remaining > 0));
         } catch (err) {
             toast.error('Erreur lors du chargement des lots');
         } finally {
@@ -505,6 +522,72 @@ export function useAvoirsData(): UseAvoirsDataReturn {
             return newLignes;
         });
         setLotModal({ open: false, lineIndex: null, produitId: null });
+    };
+
+    // --- Bulk Handlers ---
+    const onToggleSelection = (id: number) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
+
+    const onToggleSelectAll = () => {
+        const draftIds = avoirs.filter(a => a.status === 'BROUILLON').map(a => a.id);
+        if (selectedIds.size === draftIds.length && draftIds.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(draftIds));
+        }
+    };
+
+    const onClearSelection = () => setSelectedIds(new Set());
+
+    const handleBulkDelete = async () => {
+        const count = selectedIds.size;
+        if (count === 0) return;
+        if (!confirm(`Supprimer ces ${count} avoirs brouillons ?`)) return;
+
+        setBulkLoading(true);
+        try {
+            await Promise.all(Array.from(selectedIds).map(id => avoirService.delete(id)));
+            toast.success(`${count} avoirs supprimés`);
+            setSelectedIds(new Set());
+            fetchAvoirs();
+        } catch (err) {
+            toast.error("Erreur lors de la suppression groupée");
+        } finally {
+            setBulkLoading(false);
+        }
+    };
+
+    const handleBulkValidate = async () => {
+        const count = selectedIds.size;
+        if (count === 0) return;
+
+        requireSudo(async (validatorId, password) => {
+            setBulkLoading(true);
+            try {
+                await Promise.all(Array.from(selectedIds).map(id =>
+                    avoirService.valider(id, {
+                        validated_by_id: validatorId,
+                        password: password
+                    })
+                ));
+                toast.success(`${count} avoirs validés`);
+                setSelectedIds(new Set());
+                fetchAvoirs();
+            } catch (err) {
+                toast.error("Erreur lors de la validation groupée");
+            } finally {
+                setBulkLoading(false);
+            }
+        }, {
+            title: `Validation groupée - ${count} avoirs`,
+            message: `Confirmer la validation de <strong>${count} avoirs</strong> fournisseurs ?<br/>Le stock sera réintégré pour tous.`
+        });
     };
 
     return {
@@ -553,6 +636,13 @@ export function useAvoirsData(): UseAvoirsDataReturn {
         availableLots,
         loadingLots,
         handleOpenLotModal,
-        handleSelectLot
+        handleSelectLot,
+        selectedIds,
+        onToggleSelection,
+        onToggleSelectAll,
+        onClearSelection,
+        handleBulkDelete,
+        handleBulkValidate,
+        bulkLoading
     };
 }

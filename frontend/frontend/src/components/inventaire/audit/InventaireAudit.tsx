@@ -1,12 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatPrice } from '../../../utils/formatters';
-import { 
-    TrendingDown, TrendingUp, Package, LayoutDashboard, 
+import { formatPrice, formatCurrency } from '../../../utils/formatters';
+import {
+    TrendingDown, TrendingUp, Package, LayoutDashboard,
     Calendar, ArrowLeft, AlertTriangle, ChevronUp, ChevronDown
 } from 'lucide-react';
-import { 
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+import {
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
     ResponsiveContainer, Cell
 } from 'recharts';
 import { useInventaireAudit } from '../../../hooks/inventaire/useInventaireAudit';
@@ -21,10 +21,10 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
         key: 'total_valeur',
         direction: 'asc' // Car les pertes sont négatives, on veut les plus petites d'abord
     });
-    const { 
-        data, loading, 
-        startDate, setStartDate, 
-        endDate, setEndDate 
+    const {
+        data, loading,
+        startDate, setStartDate,
+        endDate, setEndDate
     } = useInventaireAudit();
     const [groupBy, setGroupBy] = React.useState<'RAYON' | 'GROUPE'>('RAYON');
     const [metric, setMetric] = React.useState<'VALEUR' | 'OCCURRENCE'>('VALEUR');
@@ -32,13 +32,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
     // Logic for dynamic sorting
     const sortedProducts = React.useMemo(() => {
         if (!data?.top_pertes) return [];
-        
+
         const products = [...data.top_pertes];
         return products.sort((a, b) => {
             const key = sortConfig.key;
             const aValue = Number(a[key] || 0);
             const bValue = Number(b[key] || 0);
-            
+
             if (aValue < bValue) {
                 return sortConfig.direction === 'asc' ? -1 : 1;
             }
@@ -99,7 +99,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         className="btn btn-ghost btn-circle rounded-xl"
                         onClick={onBack}
                     >
@@ -113,13 +113,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="bg-base-100 p-1 rounded-2xl shadow-sm border border-base-300 flex">
-                        <button 
+                        <button
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${groupBy === 'RAYON' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setGroupBy('RAYON')}
                         >
                             PAR RAYON
                         </button>
-                        <button 
+                        <button
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${groupBy === 'GROUPE' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setGroupBy('GROUPE')}
                         >
@@ -128,13 +128,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                     </div>
 
                     <div className="bg-base-100 p-1 rounded-2xl shadow-sm border border-base-300 flex">
-                        <button 
+                        <button
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${metric === 'VALEUR' ? 'bg-info text-white shadow-lg shadow-info/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setMetric('VALEUR')}
                         >
                             VALEUR
                         </button>
-                        <button 
+                        <button
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${metric === 'OCCURRENCE' ? 'bg-info text-white shadow-lg shadow-info/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setMetric('OCCURRENCE')}
                         >
@@ -145,16 +145,16 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                     <div className="flex items-center gap-2 bg-base-100 p-2 rounded-2xl shadow-sm border border-base-300">
                         <div className="flex items-center gap-2 px-2">
                             <Calendar className="h-4 w-4 text-base-content/40" />
-                            <input 
-                                type="date" 
-                                className="input input-ghost input-sm focus:bg-transparent" 
+                            <input
+                                type="date"
+                                className="input input-ghost input-sm focus:bg-transparent"
                                 value={startDate}
                                 onChange={e => setStartDate(e.target.value)}
                             />
                             <span className="text-base-content/20">→</span>
-                            <input 
-                                type="date" 
-                                className="input input-ghost input-sm focus:bg-transparent" 
+                            <input
+                                type="date"
+                                className="input input-ghost input-sm focus:bg-transparent"
                                 value={endDate}
                                 onChange={e => setEndDate(e.target.value)}
                             />
@@ -171,7 +171,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                         <TrendingDown className="h-4 w-4 text-error" />
                     </div>
                     <div className="text-2xl font-black text-error font-mono">
-                        {Math.abs(stats?.total_perte || 0).toLocaleString()} F
+                        {formatCurrency(Math.abs(stats?.total_perte || 0))} F
                     </div>
                 </div>
 
@@ -181,7 +181,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                         <TrendingUp className="h-4 w-4 text-success" />
                     </div>
                     <div className="text-2xl font-black text-success font-mono">
-                        {Math.abs(stats?.total_gain || 0).toLocaleString()} F
+                        {formatCurrency(Math.abs(stats?.total_gain || 0))} F
                     </div>
                 </div>
 

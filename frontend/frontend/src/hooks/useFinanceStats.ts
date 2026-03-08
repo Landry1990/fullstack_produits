@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from '../config/axios';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-
-const financeEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/finance-stats/`
-    : '/api/finance-stats/';
+import financeService from '../services/financeService';
 
 // Types
 export interface CAEvolutionData {
@@ -84,71 +78,49 @@ export interface RepartitionData {
 
 // Hooks
 export const useCAEvolution = () => {
-    return useQuery({
+    return useQuery<CAEvolutionData>({
         queryKey: ['finance', 'ca-evolution'],
-        queryFn: async () => {
-            const response = await axios.get<CAEvolutionData>(`${financeEndpoint}ca_evolution/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getCAEvolution(),
         staleTime: 1000 * 60 * 30, // 30 minutes
     });
 };
 
 export const useMargesEvolution = () => {
-    return useQuery({
+    return useQuery<MargesEvolutionData>({
         queryKey: ['finance', 'marges-evolution'],
-        queryFn: async () => {
-            const response = await axios.get<MargesEvolutionData>(`${financeEndpoint}marges_evolution/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getMargesEvolution(),
         staleTime: 1000 * 60 * 30,
     });
 };
 
 export const usePredictions = () => {
-    return useQuery({
+    return useQuery<PredictionsData>({
         queryKey: ['finance', 'predictions'],
-        queryFn: async () => {
-            const response = await axios.get<PredictionsData>(`${financeEndpoint}predictions/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getPredictions(),
         staleTime: 1000 * 60 * 30,
     });
 };
 
 export const useKPIs = () => {
-    return useQuery({
+    return useQuery<KPIsData>({
         queryKey: ['finance', 'kpis'],
-        queryFn: async () => {
-            const response = await axios.get<KPIsData>(`${financeEndpoint}kpis/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getKPIs(),
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
 };
 
 export const useTopProducts = (periode: string = 'mois', critere: string = 'ca') => {
-    return useQuery({
+    return useQuery<TopProductsData>({
         queryKey: ['finance', 'top-products', periode, critere],
-        queryFn: async () => {
-            const response = await axios.get<TopProductsData>(
-                `${financeEndpoint}top_products/?periode=${periode}&critere=${critere}`
-            );
-            return response.data;
-        },
+        queryFn: () => financeService.getTopProducts(periode, critere),
         staleTime: 1000 * 60 * 15,
     });
 };
 
 export const useRepartitionCA = (by: string = 'categorie', periode: string = 'mois') => {
-    return useQuery({
+    return useQuery<RepartitionData>({
         queryKey: ['finance', 'repartition', by, periode],
-        queryFn: async () => {
-            const response = await axios.get<RepartitionData>(
-                `${financeEndpoint}repartition_ca/?by=${by}&periode=${periode}`
-            );
-            return response.data;
-        },
+        queryFn: () => financeService.getRepartitionCA(by, periode),
         staleTime: 1000 * 60 * 15,
     });
 };
@@ -187,27 +159,17 @@ export interface CategoryEvolutionData {
 
 // Category Analysis Hooks
 export const useAnalyseCategories = (type: 'rayon' | 'groupe' | 'forme' = 'rayon', periode: string = 'mois') => {
-    return useQuery({
+    return useQuery<CategoryAnalysisData>({
         queryKey: ['finance', 'analyse-categories', type, periode],
-        queryFn: async () => {
-            const response = await axios.get<CategoryAnalysisData>(
-                `${financeEndpoint}analyse_categories/?type=${type}&periode=${periode}`
-            );
-            return response.data;
-        },
+        queryFn: () => financeService.getAnalyseCategories(type, periode),
         staleTime: 1000 * 60 * 15,
     });
 };
 
 export const useEvolutionCategories = (type: 'rayon' | 'groupe' | 'forme' = 'rayon', top: number = 5) => {
-    return useQuery({
+    return useQuery<CategoryEvolutionData>({
         queryKey: ['finance', 'evolution-categories', type, top],
-        queryFn: async () => {
-            const response = await axios.get<CategoryEvolutionData>(
-                `${financeEndpoint}evolution_categories/?type=${type}&top=${top}`
-            );
-            return response.data;
-        },
+        queryFn: () => financeService.getEvolutionCategories(type, top),
         staleTime: 1000 * 60 * 15,
     });
 };
@@ -246,12 +208,9 @@ export interface MarginAnalysisData {
 
 // Margin Analysis Hook
 export const useAnalyseMarges = () => {
-    return useQuery({
+    return useQuery<MarginAnalysisData>({
         queryKey: ['finance', 'analyse-marges'],
-        queryFn: async () => {
-            const response = await axios.get<MarginAnalysisData>(`${financeEndpoint}analyse_marges/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getAnalyseMarges(),
         staleTime: 1000 * 60 * 60, // 1 hour (heavy calculation)
     });
 };
@@ -277,12 +236,9 @@ export interface SupplierAnalysisItem {
 
 // Supplier Analysis Hook
 export const useAnalyseFournisseurs = () => {
-    return useQuery({
+    return useQuery<SupplierAnalysisItem[]>({
         queryKey: ['finance', 'analyse-fournisseurs'],
-        queryFn: async () => {
-            const response = await axios.get<SupplierAnalysisItem[]>(`${financeEndpoint}analyse_fournisseurs/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getAnalyseFournisseurs(),
         staleTime: 1000 * 60 * 60,
     });
 };
@@ -307,7 +263,7 @@ export interface RepartitionAchatsItem {
     nom: string;
     value: number;
     pourcentage: number;
-    [key: string]: any;
+    [key: string]: string | number | boolean | null | undefined;
 }
 
 export interface RepartitionAchatsData {
@@ -317,24 +273,17 @@ export interface RepartitionAchatsData {
 
 // Advanced Analysis Hooks
 export const useComparaisonPrix = () => {
-    return useQuery({
+    return useQuery<ProduitComparaison[]>({
         queryKey: ['finance', 'comparaison-prix'],
-        queryFn: async () => {
-            const response = await axios.get<ProduitComparaison[]>(`${financeEndpoint}comparaison_prix_achat/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getComparaisonPrix(),
         staleTime: 1000 * 60 * 60 * 4, // 4 hours
     });
 };
 
 export const useRepartitionAchats = () => {
-    return useQuery({
+    return useQuery<RepartitionAchatsData>({
         queryKey: ['finance', 'repartition-achats'],
-        queryFn: async () => {
-            const response = await axios.get<RepartitionAchatsData>(`${financeEndpoint}repartition_achats/`);
-            return response.data;
-        },
+        queryFn: () => financeService.getRepartitionAchats(),
         staleTime: 1000 * 60 * 60 * 4, // 4 hours
     });
 };
-

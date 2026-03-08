@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
 import type { Creance, Client } from '../types';
+import creanceService from '../services/creanceService';
+import clientService from '../services/clientService';
 
 export interface UseCreancesDataReturn {
     creances: Creance[];
@@ -56,46 +57,35 @@ export const useCreancesData = (): UseCreancesDataReturn => {
         direction: 'desc'
     });
 
-    const apiBaseUrl = useMemo(() => {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
-        return baseUrl ? String(baseUrl).replace(/\/$/, '') : '';
-    }, []);
-
-    const creancesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/creances/` : '/api/creances/';
-    const clientsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/clients/` : '/api/clients/';
-
     const fetchClients = useCallback(async () => {
         try {
-            const response = await axios.get(clientsEndpoint);
-            const data: any = response.data;
-            const allClients = Array.isArray(data) ? data : (data.results || []);
-            const professionnels = allClients.filter((c: any) => c.client_type === 'PROFESSIONNEL');
+            const results = await clientService.getAll({ page_size: 1000 });
+            const allClients = Array.isArray(results) ? results : (results as { results: Client[] }).results || [];
+            const professionnels = allClients.filter((c: Client) => c.client_type === 'PROFESSIONNEL');
             setClients(professionnels);
         } catch (err) {
             console.error('Erreur chargement clients:', err);
         }
-    }, [clientsEndpoint]);
+    }, []);
 
     const fetchCreances = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const params: any = {};
-            if (selectedClient) params.client_id = selectedClient;
-            if (dateDebut) params.date_debut = dateDebut;
-            if (dateFin) params.date_fin = dateFin;
-            params.history = showHistory;
-
-            const response = await axios.get(creancesEndpoint, { params });
-            const data: any = response.data;
-            setCreances(Array.isArray(data) ? data : (data.results || []));
+            const results = await creanceService.getAll({
+                client_id: selectedClient || undefined,
+                date_debut: dateDebut || undefined,
+                date_fin: dateFin || undefined,
+                history: showHistory
+            });
+            setCreances(results);
         } catch (err) {
             setError('Erreur lors du chargement des créances');
             console.error('Erreur:', err);
         } finally {
             setLoading(false);
         }
-    }, [creancesEndpoint, selectedClient, dateDebut, dateFin, showHistory]);
+    }, [selectedClient, dateDebut, dateFin, showHistory]);
 
     useEffect(() => {
         fetchClients();
@@ -163,8 +153,8 @@ export const useCreancesData = (): UseCreancesDataReturn => {
 
         if (sortConfig.key) {
             result.sort((a, b) => {
-                let aValue: any = a[sortConfig.key as keyof Creance];
-                let bValue: any = b[sortConfig.key as keyof Creance];
+                let aValue: string | number = (a[sortConfig.key as keyof Creance] as string | number) || '';
+                let bValue: string | number = (b[sortConfig.key as keyof Creance] as string | number) || '';
 
                 if (sortConfig.key === 'client_name') {
                     aValue = a.client_name || '';

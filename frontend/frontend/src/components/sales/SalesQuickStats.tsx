@@ -1,5 +1,5 @@
-import React from 'react';
 import { TrendingUp, UserCheck } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 
 interface SalesStats {
     top_vendeur: {
@@ -18,21 +18,32 @@ interface SalesStats {
 
 interface SalesQuickStatsProps {
     stats?: SalesStats | null;
+    onClose?: () => void;
 }
 
-export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats }) => {
+export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats, onClose }) => {
 
     if (!stats) return null;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className="relative group">
+            {onClose && (
+                <button 
+                    onClick={onClose}
+                    className="absolute -top-2 -right-2 btn btn-circle btn-xs btn-ghost hover:bg-error hover:text-white transition-colors z-10 shadow-lg border border-base-300 bg-base-100"
+                    title="Masquer le résultat"
+                >
+                    ✕
+                </button>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
             {/* Totals Section */}
             <div className="bg-base-100 p-4 rounded-xl border border-base-300 shadow-sm flex flex-col justify-center">
                 <div className="text-xs font-bold text-base-content/50 uppercase tracking-wider mb-1">
                     Chiffre d'Affaires du Jour
                 </div>
                 <div className="text-2xl font-black text-primary">
-                    {(Number(stats.total_regle) + Number(stats.total_en_compte)).toLocaleString()} <span className="text-sm font-normal">F</span>
+                    {formatCurrency(Number(stats.total_regle) + Number(stats.total_en_compte))} <span className="text-sm font-normal">F</span>
                 </div>
             </div>
 
@@ -41,7 +52,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats }) => {
                     Total Encaissé (Régler)
                 </div>
                 <div className="text-2xl font-black text-success">
-                    {Number(stats.total_regle).toLocaleString()} <span className="text-sm font-normal">F</span>
+                    {formatCurrency(Number(stats.total_regle))} <span className="text-sm font-normal">F</span>
                 </div>
             </div>
 
@@ -50,7 +61,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats }) => {
                     Total En Compte (Dettes)
                 </div>
                 <div className="text-2xl font-black text-warning">
-                    {Number(stats.total_en_compte).toLocaleString()} <span className="text-sm font-normal">F</span>
+                    {formatCurrency(Number(stats.total_en_compte))} <span className="text-sm font-normal">F</span>
                 </div>
             </div>
 
@@ -64,7 +75,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats }) => {
                         <div>
                             <div className="text-lg font-bold text-base-content">{stats.top_vendeur.name}</div>
                             <div className="text-xs text-base-content/60">
-                                {stats.top_vendeur.count} vente(s) • {(stats.top_vendeur.amount || 0).toLocaleString()} F
+                                {stats.top_vendeur.count} vente(s) • {formatCurrency(stats.top_vendeur.amount || 0)} F
                             </div>
                         </div>
                     ) : (
@@ -90,6 +101,7 @@ export const SalesQuickStats: React.FC<SalesQuickStatsProps> = ({ stats }) => {
                         <div className="text-sm text-base-content/50 italic">Aucun produit vendu</div>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );

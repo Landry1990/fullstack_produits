@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { useDebounce } from 'use-debounce'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
-import type { ProduitModel } from '../types'
+import type { ProduitModel, PaginatedResponse } from '../types'
 
 interface UseProductSearchOptions {
     minSearchLength?: number
@@ -102,7 +102,7 @@ export function useProductSearch(options: UseProductSearchOptions = {}): UseProd
         }
 
         const response = await axios.get(endpoint)
-        const produitsData = response.data as any // Temporary cast to handle varied response structure safely
+        const produitsData = response.data as ProduitModel[] | PaginatedResponse<ProduitModel>
         const results = Array.isArray(produitsData)
             ? produitsData
             : (produitsData.results || [])

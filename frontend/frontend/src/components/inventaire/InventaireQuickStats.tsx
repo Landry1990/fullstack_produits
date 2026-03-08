@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { PackageSearch, TrendingDown, ClipboardList } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Inventaire } from '../../types';
+import { formatCurrency } from '../../utils/formatters';
 
 interface InventaireQuickStatsProps {
     inventaires: Inventaire[];
@@ -44,7 +45,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
                     </div>
                     <div>
                         <div className="text-lg font-mono font-bold text-base-content">
-                            {stats.valeur_physique_totale.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                            {formatCurrency(stats.valeur_physique_totale)} F
                         </div>
                         <div className="text-xs text-base-content/60">
                             {stats.validees_count + stats.en_cours_count} {t('stock.inventaire.list.title_short', { defaultValue: 'inventaires' })}
@@ -61,7 +62,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
                     </div>
                     <div>
                         <div className={`text-lg font-mono font-bold ${stats.ecart_total < 0 ? 'text-error' : stats.ecart_total > 0 ? 'text-success' : 'text-base-content'}`}>
-                            {stats.ecart_total > 0 ? '+' : ''}{stats.ecart_total.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                            {stats.ecart_total > 0 ? '+' : ''}{formatCurrency(stats.ecart_total)} F
                         </div>
                         <div className="text-xs text-base-content/60">
                             Sur tous les inventaires

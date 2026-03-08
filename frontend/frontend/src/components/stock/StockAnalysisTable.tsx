@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Package, Clock, AlertTriangle, CheckCircle2, TrendingUp } from 'lucide-react';
+import { formatCurrency } from '../../utils/formatters';
 import type { StockAnalysisItem } from '../../hooks/useStockAnalysis';
 
 interface StockAnalysisTableProps {
@@ -179,10 +180,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             </div>
                                         </td>
                                         <td className="text-right font-mono font-bold text-base-content/40">
-                                            {Math.round(item.cost_price).toLocaleString()} F
+                                            {formatCurrency(Math.round(item.cost_price))} F
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {Math.round(item.value).toLocaleString()} F
+                                            {formatCurrency(Math.round(item.value))} F
                                         </td>
                                     </>
                                 ) : activeTab === 'overstock' ? (
@@ -196,7 +197,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             <span className="text-error font-black italic">+{item.excess_qty}</span>
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {Math.round(item.value).toLocaleString()} F
+                                            {formatCurrency(Math.round(item.value))} F
                                         </td>
                                     </>
                                 ) : (
@@ -217,7 +218,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             {getUrgencyBadge(item.urgency || '')}
                                         </td>
                                         <td className="text-right font-black text-error px-6">
-                                            {Math.round(item.value).toLocaleString()} F
+                                            {formatCurrency(Math.round(item.value))} F
                                         </td>
                                     </>
                                 )}

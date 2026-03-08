@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import type { Facture, TicketCaisse } from '../types';
+import type { Facture, TicketCaisse, Client, FactureProduit } from '../types';
 import { safeStorage } from '../utils/storage';
 // import { renderToStaticMarkup } from 'react-dom/server';
 // import { TicketTemplate } from '../components/printing/TicketTemplate';
@@ -174,7 +174,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         // Priorité: client_name_override > client_name > nom du client > 'Client de passage'
         const clientNameForTicket = fullFacture.client_name_override 
             || fullFacture.client_name 
-            || (typeof fullFacture.client === 'object' ? (fullFacture.client as any)?.name : undefined) 
+            || (typeof fullFacture.client === 'object' ? (fullFacture.client as Client).name : undefined) 
             || 'Client de passage';
         
         const ticket: TicketCaisse = {
@@ -256,18 +256,18 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
         // On supprime aussi spécifiquement les lots car ils peuvent ne plus exister
         const duplicatedProduits = fullFacture.produits?.map(p => ({
             ...p,
-            lot: null,
-            stock_lot: null,
-            date_expiration: null
+            lot: undefined,
+            stock_lot: undefined,
+            date_expiration: undefined
         })) || [];
 
         const duplicatedFacture: Partial<Facture> = {
             ...fullFacture,
-            produits: duplicatedProduits as any, // Cast pour outrepasser les Partial strict
-            id: undefined as any, // On supprime l'ID pour que Facturation la traite comme nouvelle (ou devis à valider)
-            numero_facture: undefined as any,
-            status: 'BROU', // On la force en brouillon ou devis
-            paiements: [], // Pas de paiements liés
+            produits: duplicatedProduits as FactureProduit[],
+            id: undefined, 
+            numero_facture: undefined,
+            status: 'BROU', 
+            paiements: [], 
             session_ticket_number: undefined,
             date: new Date().toISOString()
         };
@@ -309,9 +309,10 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             // Rediriger vers la facturation
             navigate('/app/facturation');
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erreur génération avoir", error);
-            const detail = error.response?.data?.detail;
+            const err = error as { response?: { data?: { detail?: string } } };
+            const detail = err.response?.data?.detail;
             toast.error(detail || "Impossible de générer un avoir pour cette vente.");
             toast.dismiss(toastId);
         }

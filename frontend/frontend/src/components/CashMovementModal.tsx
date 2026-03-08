@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import axios from 'axios'
+import { normalizeNumberInput } from '../utils/formatters'
 import PremiumModal from './common/PremiumModal'
 
 interface CashMovementModalProps {
@@ -27,7 +28,8 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
     setError(null)
 
     try {
-      if (!montant || isNaN(Number(montant)) || Number(montant) <= 0) {
+      const val = normalizeNumberInput(montant)
+      if (!montant || isNaN(val) || val <= 0) {
         throw new Error("Montant invalide")
       }
       if (!motif.trim()) {
@@ -36,7 +38,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
 
       await axios.post(`${apiBaseUrl}/api/mouvements-caisse/`, {
         type,
-        montant: parseFloat(montant),
+        montant: normalizeNumberInput(montant),
         motif,
         description
       })

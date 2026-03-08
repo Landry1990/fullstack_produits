@@ -1,15 +1,15 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { LigneInventaire } from '../../types';
+import type { Inventaire, LigneInventaire, ProduitModel } from '../../types';
 
 // PDF Export capabilities extracted from Inventaire.tsx
 interface UseInventairePDFProps {
-    t: (key: string, options?: any) => string;
+    t: (key: string, options?: Record<string, string | number | boolean>) => string;
 }
 
 export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
 
-    const generateEtatPDF = (activeInventaire: any, lignes: LigneInventaire[]) => {
+    const generateEtatPDF = (activeInventaire: Inventaire, lignes: LigneInventaire[]) => {
         if (!activeInventaire || !lignes.length) return;
 
         const doc = new jsPDF();
@@ -24,7 +24,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
         // Group lines by Rayon
         const grouped: Record<string, LigneInventaire[]> = {};
         lignes.forEach(l => {
-            const rayon = (l.produit as any).rayon_name || l.produit_rayon || "AUTRES";
+            const rayon = (l.produit as ProduitModel).rayon_name || l.produit_rayon || "AUTRES";
             if (!grouped[rayon]) grouped[rayon] = [];
             grouped[rayon].push(l);
         });
@@ -122,7 +122,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
         doc.save(`inventaire_${activeInventaire.id} _etat.pdf`);
     };
 
-    const generateEcartsPDF = (activeInventaire: any, lignes: LigneInventaire[]) => {
+    const generateEcartsPDF = (activeInventaire: Inventaire, lignes: LigneInventaire[]) => {
         if (!activeInventaire || !lignes.length) return;
 
         const doc = new jsPDF();
@@ -145,7 +145,7 @@ export const useInventairePDF = ({ t }: UseInventairePDFProps) => {
         // Group by Rayon
         const grouped: Record<string, LigneInventaire[]> = {};
         linesWithGaps.forEach(l => {
-            const rayon = (l.produit as any).rayon_name || l.produit_rayon || "AUTRES";
+            const rayon = (l.produit as ProduitModel).rayon_name || l.produit_rayon || "AUTRES";
             if (!grouped[rayon]) grouped[rayon] = [];
             grouped[rayon].push(l);
         });

@@ -1,6 +1,6 @@
-// Unused imports related to date formatting removed
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatCurrency, normalizeNumberInput } from '../../utils/formatters'
 import type { LigneFacture, ProduitModel } from '../../types'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-hot-toast'
@@ -71,8 +71,8 @@ const CartRow = React.memo(({
     setLocalQty(filteredValue)
 
     // Only update parent if it's a valid number and not just a "-" sign
-    const numValue = parseInt(filteredValue)
-    if (!isNaN(numValue) && filteredValue !== '-') {
+    const numValue = normalizeNumberInput(filteredValue)
+    if (!isNaN(numValue) && (filteredValue !== '-' || numValue !== 0)) {
       updateQuantite(ligne.produit.id, numValue)
     }
   }
@@ -84,17 +84,17 @@ const CartRow = React.memo(({
   }
 
   const handleRemiseSubmit = () => {
-    const numValue = parseFloat(localRemise)
+    const numValue = normalizeNumberInput(localRemise)
     if (!isNaN(numValue) && numValue > maxDiscount) {
       toast.error(t('facturation.messages.discount_limit_error', { rate: maxDiscount }))
       setLocalRemise(String(maxDiscount))
       updateRemiseProduit(ligne.produit.id, String(maxDiscount))
     } else if (localRemise !== ligne.remise_produit) {
-      updateRemiseProduit(ligne.produit.id, localRemise)
+      updateRemiseProduit(ligne.produit.id, localRemise || '0')
     }
   }
 
-  const isReturn = Number(ligne.quantite) < 0
+  const isReturn = normalizeNumberInput(ligne.quantite) < 0
 
   return (
     <tr
@@ -118,9 +118,9 @@ const CartRow = React.memo(({
                 <input 
                    type="number"
                    className="w-8 bg-transparent text-[10px] font-bold outline-none"
-                   value={ligne.treatment_duration_days || ''}
-                   onChange={(e) => updateTreatmentDuration?.(ligne.produit.id, parseInt(e.target.value) || 0)}
-                   min={1}
+                    value={ligne.treatment_duration_days || ''}
+                    onChange={(e) => updateTreatmentDuration?.(ligne.produit.id, normalizeNumberInput(e.target.value) || 0)}
+                    min={1}
                 />
                 <span className="text-[10px] opacity-60">j</span>
               </div>
@@ -197,7 +197,7 @@ const CartRow = React.memo(({
         </button>
       </td>
       <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
-        {Math.round(ligne.total_ligne)}
+        {formatCurrency(normalizeNumberInput(ligne.total_ligne))}
       </td>
       <td className="text-center py-1">
         <button
@@ -230,7 +230,7 @@ export default function CartTable({
 
   // Permission Checks
   const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
-  const maxDiscount = user?.is_superuser ? 100 : (Number(user?.profile?.max_discount_rate) || 0)
+  const maxDiscount = user?.is_superuser ? 100 : (normalizeNumberInput(user?.profile?.max_discount_rate || 0))
 
   if (lignesFacture.length === 0) {
     return (

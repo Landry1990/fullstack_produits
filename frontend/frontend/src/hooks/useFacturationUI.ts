@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
-import type { ProduitModel, Facture, TicketCaisse, OrdonnanceData } from '../types'
+import type { ProduitModel, Facture, TicketCaisse, OrdonnanceData, Client, TotalsData } from '../types'
+import { calculateFactureTotals } from '../utils/finance'
 
 export interface FacturationUIState {
     // Modals Visibility
@@ -149,41 +150,11 @@ export function useFacturationUI() {
     }, [])
 
     // --- TOTALS CALCULATION ---
-    const calculateTotals = useCallback((cartStats: { sousTotal: number, totalTva: number, totalTTC: number }, selectedClient: any) => {
-        let finalTTC = cartStats.totalTTC
-        let remiseMontant = 0
-
-        // 1. Remise Globale
-        const remiseVal = parseFloat(remiseGlobale) || 0
-        if (remiseVal > 0) {
-            if (remiseMode === 'taux') {
-                remiseMontant = finalTTC * (remiseVal / 100)
-            } else {
-                remiseMontant = remiseVal
-            }
-            finalTTC = Math.max(0, finalTTC - remiseMontant)
-        }
-
-        // 2. Tiers Payant
-        let tauxCouverture = 0
-        let partAssurance = 0
-        let partPatient = finalTTC
-
-        if (selectedClient && selectedClient.taux_couverture > 0) {
-            tauxCouverture = selectedClient.taux_couverture
-            partAssurance = finalTTC * (tauxCouverture / 100)
-            partPatient = finalTTC - partAssurance
-        }
-
-        return {
-            sousTotal: cartStats.sousTotal,
-            totalTva: cartStats.totalTva,
-            totalTtc: finalTTC,
-            remiseMontant,
-            tauxCouverture,
-            partAssurance,
-            partPatient
-        }
+    const calculateTotals = useCallback((
+        cartStats: { sousTotal: number, totalTva: number, totalTTC: number },
+        selectedClient: Client | null | undefined
+    ): TotalsData => {
+        return calculateFactureTotals(cartStats, selectedClient, remiseGlobale, remiseMode);
     }, [remiseGlobale, remiseMode])
 
     return {

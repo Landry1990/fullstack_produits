@@ -1,13 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
-import axios from 'axios'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import clientService from '../services/clientService'
 import { toast } from 'react-hot-toast'
 import type { Client, AyantDroit } from '../types'
+import axios from 'axios'
 
-interface UseFacturationClientsOptions {
-    apiBaseUrl?: string
-}
-
-export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClientsOptions = {}) {
+export function useFacturationClients() {
     const [clients, setClients] = useState<Client[]>([])
     const [loading, setLoading] = useState(false)
     const [selectedClient, setSelectedClient] = useState<number | null>(null)
@@ -41,8 +38,6 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
     const [ayantDroitSociete, setAyantDroitSociete] = useState('')
     const [showNewAyantDroit, setShowNewAyantDroit] = useState(false)
 
-    const clientsEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/clients/` : '/api/clients/'
-
     const [debouncedSearch, setDebouncedSearch] = useState('')
 
     useEffect(() => {
@@ -53,36 +48,35 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
     }, [clientSearch])
 
     // Load clients
-    useEffect(() => {
-        const fetchClients = async () => {
-            setLoading(true)
-            try {
-                const response = await axios.get(clientsEndpoint, {
-                    params: debouncedSearch ? { search: debouncedSearch } : {}
-                })
-                const clientsData = Array.isArray(response.data) ? response.data : response.data.results
-                const loadedClients = clientsData || []
-                setClients(loadedClients)
+    const fetchClients = useCallback(async () => {
+        setLoading(true)
+        try {
+            const data = await clientService.getAll(debouncedSearch ? { search: debouncedSearch } : {})
+            const clientsData = Array.isArray(data) ? data : data.results
+            const loadedClients = clientsData || []
+            setClients(loadedClients)
 
-                // Select "CLIENTS DIVERS" by default if it exists and no client is already selected
-                if (!debouncedSearch && !selectedClient) {
-                    const clientsDivers = loadedClients.find((c: Client) =>
-                        c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
-                        c.name.trim().toUpperCase() === 'CLIENT DIVERS'
-                    )
-                    if (clientsDivers) {
-                        setSelectedClient(clientsDivers.id)
-                    }
+            // Select "CLIENTS DIVERS" by default if it exists and no client is already selected
+            if (!debouncedSearch && !selectedClient) {
+                const clientsDivers = loadedClients.find((c: Client) =>
+                    c.name.trim().toUpperCase() === 'CLIENTS DIVERS' ||
+                    c.name.trim().toUpperCase() === 'CLIENT DIVERS'
+                )
+                if (clientsDivers) {
+                    setSelectedClient(clientsDivers.id)
                 }
-            } catch (error) {
-                console.error('Erreur chargement clients:', error)
-                toast.error('Impossible de charger la liste des clients')
-            } finally {
-                setLoading(false)
             }
+        } catch (error) {
+            console.error('Erreur chargement clients:', error)
+            toast.error('Impossible de charger la liste des clients')
+        } finally {
+            setLoading(false)
         }
+    }, [debouncedSearch, selectedClient])
+
+    useEffect(() => {
         fetchClients()
-    }, [clientsEndpoint, debouncedSearch])
+    }, [fetchClients])
 
     // Load Ayants Droit when client changes
     useEffect(() => {
@@ -97,12 +91,8 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
             const client = clients.find(c => c.id === selectedClient)
             if (client?.client_type === 'PROFESSIONNEL') {
                 try {
-                    const ayantsDroitEndpoint = apiBaseUrl
-                        ? `${apiBaseUrl}/api/ayants-droit/?client=${selectedClient}`
-                        : `/api/ayants-droit/?client=${selectedClient}`
-                    const response = await axios.get(ayantsDroitEndpoint)
-                    const ayantsDroitData: any = response.data
-                    setAyantsDroitList(Array.isArray(ayantsDroitData) ? ayantsDroitData : (ayantsDroitData.results || []))
+                    const data = await clientService.getAyantsDroit(selectedClient)
+                    setAyantsDroitList(data)
                 } catch (err) {
                     console.error('Erreur lors du chargement des ayants droit:', err)
                     setAyantsDroitList([])
@@ -114,7 +104,7 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
             }
         }
         fetchAyantsDroit()
-    }, [selectedClient, clients, apiBaseUrl, useManualClient])
+    }, [selectedClient, clients, useManualClient])
 
     // Filtered clients
     const filteredClients = useMemo(() => {
@@ -125,7 +115,7 @@ export function useFacturationClients({ apiBaseUrl = '' }: UseFacturationClients
         e.preventDefault()
         setIsCreatingClient(true)
         try {
-            const { data: createdClient } = await axios.post<Client>(clientsEndpoint, newClientForm)
+            const createdClient = await clientService.create(newClientForm as Partial<Client>)
 
             setClients(prev => [...prev, createdClient].sort((a, b) => a.name.localeCompare(b.name)))
             setSelectedClient(createdClient.id)

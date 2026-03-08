@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from './useConfirm';
-import type { Promis, ProduitModel, Client } from '../types';
+import promisService from '../services/promisService';
+import clientService from '../services/clientService';
+import produitService from '../services/produitService';
+import type { Promis, ProduitModel, Client, PaginatedResponse } from '../types';
 
 export interface UsePromisDataReturn {
     // Data
@@ -77,17 +79,12 @@ export function usePromisData(): UsePromisDataReturn {
         targetId: number | null;
     }>({ isOpen: false, action: null, targetId: null });
 
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-    const promisEndpoint = `${apiBaseUrl}/api/promis/`;
-
     // --- Data Fetching ---
     const fetchPromis = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await axios.get(promisEndpoint);
-            // Depending on pagination
-            const results = Array.isArray(data) ? data : (data.results || []);
-            setPromisList(results);
+            const results = await promisService.getAll();
+            setPromisList(Array.isArray(results) ? results : (results as PaginatedResponse<Promis>).results || []);
             setError(null);
         } catch (err) {
             setError('Erreur lors du chargement des promis');
@@ -95,20 +92,20 @@ export function usePromisData(): UsePromisDataReturn {
         } finally {
             setLoading(false);
         }
-    }, [promisEndpoint]);
+    }, []);
 
     const fetchFormData = useCallback(async () => {
         try {
             const [clientsRes, produitsRes] = await Promise.all([
-                axios.get(`${apiBaseUrl}/api/clients/`),
-                axios.get(`${apiBaseUrl}/api/produits/`)
+                clientService.getAll({ page_size: 1000 }),
+                produitService.getAll({ page_size: 1000 })
             ]);
-            setClients(Array.isArray(clientsRes.data) ? clientsRes.data : (clientsRes.data.results || []));
-            setProduits(Array.isArray(produitsRes.data) ? produitsRes.data : (produitsRes.data.results || []));
+            setClients(Array.isArray(clientsRes) ? clientsRes : (clientsRes as PaginatedResponse<Client>).results || []);
+            setProduits(Array.isArray(produitsRes) ? produitsRes : (produitsRes as PaginatedResponse<ProduitModel>).results || []);
         } catch (err) {
             console.error('Erreur chargement clients/produits (Promis)', err);
         }
-    }, [apiBaseUrl]);
+    }, []);
 
     useEffect(() => {
         fetchPromis();
@@ -150,7 +147,7 @@ export function usePromisData(): UsePromisDataReturn {
         });
         if (!confirmed) return;
         try {
-            await axios.post(`${promisEndpoint}${id}/delivrer/`);
+            await promisService.delivrer(id);
             fetchPromis();
         } catch (err) {
             toast.error('Erreur lors de la livraison');
@@ -171,7 +168,7 @@ export function usePromisData(): UsePromisDataReturn {
 
     const verifySudoAndCancel = async (id: number) => {
         try {
-            const { data } = await axios.post(`${promisEndpoint}${id}/annuler_et_reintegrer/`);
+            const data = await promisService.annulerEtReintegrer(id);
             toast.success(data.detail);
             fetchPromis();
         } catch (err) {
@@ -182,10 +179,7 @@ export function usePromisData(): UsePromisDataReturn {
 
     const handlePrintTicket = async (id: number) => {
         try {
-            const response = await axios.get(`${promisEndpoint}${id}/imprimer_ticket/`, {
-                responseType: 'blob'
-            });
-            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const blob = await promisService.imprimerTicket(id);
             const url = window.URL.createObjectURL(blob);
             window.open(url, '_blank');
             setTimeout(() => window.URL.revokeObjectURL(url), 10000);
@@ -198,10 +192,11 @@ export function usePromisData(): UsePromisDataReturn {
     const handleWhatsAppReminder = async (id: number) => {
         setLoading(true);
         try {
-            const { data } = await axios.post(`${promisEndpoint}${id}/send_whatsapp_reminder/`);
+            const data = await promisService.sendWhatsAppReminder(id);
             toast.success(data.detail);
-        } catch (err: any) {
-            toast.error(err.response?.data?.detail || "Erreur lors de l'envoi du rappel WhatsApp");
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { detail?: string } } };
+            toast.error(error.response?.data?.detail || "Erreur lors de l'envoi du rappel WhatsApp");
             console.error(err);
         } finally {
             setLoading(false);
@@ -239,9 +234,7 @@ export function usePromisData(): UsePromisDataReturn {
 
         setBulkLoading(true);
         try {
-            const { data } = await axios.post(`${promisEndpoint}bulk_delivrer/`, {
-                ids: Array.from(selectedIds)
-            });
+            const data = await promisService.bulkDelivrer(Array.from(selectedIds));
             toast.success(data.detail);
             setSelectedIds(new Set());
             fetchPromis();
@@ -268,9 +261,7 @@ export function usePromisData(): UsePromisDataReturn {
     const verifySudoAndBulkCancel = async () => {
         setBulkLoading(true);
         try {
-            const { data } = await axios.post(`${promisEndpoint}bulk_annuler/`, {
-                ids: Array.from(selectedIds)
-            });
+            const data = await promisService.bulkAnnuler(Array.from(selectedIds));
             toast.success(data.detail);
             setSelectedIds(new Set());
             fetchPromis();

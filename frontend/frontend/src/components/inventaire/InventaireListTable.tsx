@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, History, CheckCircle2, AlertCircle, ChevronRight, Trash2, Package } from 'lucide-react';
 import type { Inventaire } from '../../types';
+import { formatCurrency } from '../../utils/formatters';
 
 interface InventaireListTableProps {
     inventaires: Inventaire[];
@@ -108,10 +109,10 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-base-content">
-                                {(inv.total_valeur_theorique || 0).toLocaleString()} F
+                                {formatCurrency(inv.total_valeur_theorique || 0)}
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-base-content">
-                                {(inv.total_valeur_physique || 0).toLocaleString()} F
+                                {formatCurrency(inv.total_valeur_physique || 0)}
                             </td>
                             <td className="px-6 py-4 text-right">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-lg font-mono font-bold text-sm border shadow-xs transition-all
@@ -119,7 +120,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                       (inv.total_ecart_valeur || 0) > 0 ? 'bg-success/10 text-success border-success/20' : 
                                       'bg-base-200 text-base-content/40 border-base-300'}`}
                                 >
-                                    {(inv.total_ecart_valeur || 0) > 0 ? '+' : ''}{(inv.total_ecart_valeur || 0).toLocaleString()} F
+                                    {(inv.total_ecart_valeur || 0) > 0 ? '+' : ''}{formatCurrency(inv.total_ecart_valeur || 0)}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">

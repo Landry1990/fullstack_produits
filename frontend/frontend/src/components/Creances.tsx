@@ -12,6 +12,9 @@ import { CreanceDetailsModal } from './creances/modals/CreanceDetailsModal';
 import { BulkPaiementModal } from './creances/modals/BulkPaiementModal';
 import SudoValidationModal from './common/SudoValidationModal';
 
+import { Wallet, DollarSign } from 'lucide-react';
+import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
+
 export default function Creances() {
     const { t } = useTranslation();
     const data = useCreancesData();
@@ -33,39 +36,57 @@ export default function Creances() {
     const bulkTotalAmount = useMemo(() => {
         return data.selectedIds.reduce((sum, id) => {
             const f = data.creances.find(c => c.id === id);
-            return sum + (f ? parseFloat(f.reste_a_payer) : 0);
+            return sum + (f ? normalizeNumberInput(f.reste_a_payer) : 0);
         }, 0);
     }, [data.selectedIds, data.creances]);
 
     return (
-        <div className="h-full flex flex-col bg-base-100 overflow-hidden">
+        <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans overflow-auto">
             <Toaster position="top-center" />
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-base-200 bg-white shrink-0">
-                <div>
-                    <h1 className="text-3xl font-black text-base-content tracking-tighter">
-                        💳 {t('creances.title')}
-                    </h1>
-                    <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mt-1">
-                        {t('creances.subtitle')}
-                    </p>
-                </div>
-            </div>
+            {/* Header Area */}
+            <div className="flex flex-col gap-6">
+                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
+                    <div className="p-6 border-b border-base-200 flex justify-between items-center bg-white/50">
+                        <div>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-primary/10 text-primary rounded-xl">
+                                    <Wallet className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h1 className="text-2xl font-black text-base-content tracking-tight">
+                                        {t('creances.title')}
+                                    </h1>
+                                    <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mt-0.5">
+                                        {t('creances.subtitle')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
-            <div className="flex-1 overflow-hidden flex flex-col gap-8 pb-12">
-                {/* Stats Section */}
-                <div className="px-8 mt-8">
-                    <CreancesQuickStats 
-                        totalDue={data.totals.total}
-                        totalPaid={data.totals.paye}
-                        totalRemaining={data.totals.reste}
-                        debtorsCount={data.groupedClients.length}
-                    />
-                </div>
+                        {/* Selection Bar inside Header if active */}
+                        {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
+                            <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-300">
+                                <div className="flex flex-col items-end">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Sélection</span>
+                                    <span className="text-sm font-black text-primary">{data.selectedIds.length} factures</span>
+                                </div>
+                                <div className="h-8 w-px bg-base-200"></div>
+                                <div className="flex flex-col items-end mr-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Total dû</span>
+                                    <span className="text-sm font-black text-base-content">{formatCurrency(Math.round(bulkTotalAmount))} F</span>
+                                </div>
+                                <button 
+                                    onClick={actions.actions.handleBulkPayment} 
+                                    className="btn btn-primary btn-sm px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
+                                >
+                                    <DollarSign className="w-4 h-4 mr-2" />
+                                    Payer la sélection
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
-                {/* Filters Section */}
-                <div className="mx-8 bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden">
                     <CreancesFilters 
                         clients={data.clients}
                         selectedClient={data.filters.selectedClient}
@@ -84,62 +105,49 @@ export default function Creances() {
                         )}
                         loading={data.loading}
                     />
-
-                    {/* Bulk Action Bar */}
-                    {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
-                        <div className="px-6 py-4 bg-primary/5 border-t border-primary/10 flex items-center justify-between animate-in slide-in-from-top duration-300">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-xl shadow-sm">
-                                    <span className="text-xs font-black text-primary uppercase">{data.selectedIds.length}</span>
-                                </div>
-                                <div className="text-xs font-bold text-primary uppercase tracking-widest">
-                                    Factures sélectionnées pour règlement groupé
-                                </div>
-                            </div>
-                            <button 
-                                onClick={actions.actions.handleBulkPayment} 
-                                className="btn btn-sm btn-primary px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
-                            >
-                                💰 Payer la sélection ({(Math.round(bulkTotalAmount)).toLocaleString()} F)
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* Main Content Table */}
-                <div className="mx-8 bg-white rounded-3xl border border-base-200 shadow-sm overflow-hidden flex-1 relative min-h-[400px]">
-                    <CreancesTable 
-                        mode={data.filters.selectedClient ? 'invoices' : 'clients'}
-                        groupedClients={data.groupedClients}
-                        filteredCreances={data.filteredCreances}
-                        loading={data.loading}
-                        showHistory={data.filters.showHistory}
-                        selectedIds={data.selectedIds}
-                        onSelectAll={(e) => {
-                            if (e.target.checked) {
-                                const ids = data.filteredCreances.filter(c => parseFloat(c.reste_a_payer) > 0).map(c => c.id);
-                                data.setSelectedIds(ids);
-                            } else {
-                                data.setSelectedIds([]);
-                            }
-                        }}
-                        onSelectOne={(id) => {
-                            data.setSelectedIds(prev => 
-                                prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-                            );
-                        }}
-                        onViewClient={data.setFilters.setSelectedClient}
-                        onViewDetails={actions.actions.handleOpenDetailsModal}
-                        onPay={actions.actions.handleOpenPaiementModal}
-                        sortConfig={{
-                            key: data.filters.sortConfig.key,
-                            direction: data.filters.sortConfig.direction
-                        }}
-                        onSort={data.setFilters.handleSort}
-                    />
                 </div>
             </div>
 
+            {/* Stats Dashboard */}
+            <CreancesQuickStats 
+                totalDue={data.totals.total}
+                totalPaid={data.totals.paye}
+                totalRemaining={data.totals.reste}
+                debtorsCount={data.groupedClients.length}
+            />
+
+            {/* Main Content Table Card */}
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex-1 relative min-h-[500px]">
+                <CreancesTable 
+                    mode={data.filters.selectedClient ? 'invoices' : 'clients'}
+                    groupedClients={data.groupedClients}
+                    filteredCreances={data.filteredCreances}
+                    loading={data.loading}
+                    showHistory={data.filters.showHistory}
+                    selectedIds={data.selectedIds}
+                    onSelectAll={(e) => {
+                        if (e.target.checked) {
+                            const ids = data.filteredCreances.filter(c => normalizeNumberInput(c.reste_a_payer) > 0).map(c => c.id);
+                            data.setSelectedIds(ids);
+                        } else {
+                            data.setSelectedIds([]);
+                        }
+                    }}
+                    onSelectOne={(id) => {
+                        data.setSelectedIds(prev => 
+                            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+                        );
+                    }}
+                    onViewClient={data.setFilters.setSelectedClient}
+                    onViewDetails={actions.actions.handleOpenDetailsModal}
+                    onPay={actions.actions.handleOpenPaiementModal}
+                    sortConfig={{
+                        key: data.filters.sortConfig.key,
+                        direction: data.filters.sortConfig.direction
+                    }}
+                    onSort={data.setFilters.handleSort}
+                />
+            </div>
             {/* Error handling */}
             {data.error && (
                 <div className="toast toast-bottom toast-center">

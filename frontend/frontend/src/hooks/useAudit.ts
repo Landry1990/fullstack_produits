@@ -67,12 +67,14 @@ const fetchStatistics = async (filters: Omit<AuditFilters, 'page'>): Promise<Sta
 // Fetch Users Function
 const fetchUsers = async (): Promise<User[]> => {
     const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/users/` : `/api/users/`;
-    const response = await axios.get(endpoint);
-    return response.data.results || response.data || [];
+    const response = await axios.get<AuditLogResponse | User[]>(endpoint);
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    return ((data as unknown) as { results: User[] }).results || [];
 };
 
 export const useAuditLogs = (filters: AuditFilters) => {
-    return useQuery({
+    return useQuery<AuditLogResponse>({
         queryKey: ['audit-logs', filters],
         queryFn: () => fetchLogs(filters),
         placeholderData: (previousData) => previousData, // Keep previous data while fetching new page
@@ -80,14 +82,14 @@ export const useAuditLogs = (filters: AuditFilters) => {
 };
 
 export const useAuditStats = (filters: Omit<AuditFilters, 'page'>) => {
-    return useQuery({
+    return useQuery<Statistics>({
         queryKey: ['audit-stats', filters],
         queryFn: () => fetchStatistics(filters),
     });
 };
 
 export const useUsers = () => {
-    return useQuery({
+    return useQuery<User[]>({
         queryKey: ['users'],
         queryFn: fetchUsers,
         staleTime: 1000 * 60 * 60, // Cache users for 1 hour

@@ -87,19 +87,19 @@ export const useStockAnalysis = () => {
         setLoading(true);
         setError(null);
         try {
-            const params: any = {
+            const params: Record<string, string | number> = {
                 page,
                 page_size: pageSize
             };
             if (selectedFournisseur) params.fournisseur = selectedFournisseur;
             if (activeTab === 'unsold') params.days = unsoldDays;
 
-            const response = await axios.get(
+            const response = await axios.get<StockAnalysisResponse>(
                 `${apiBaseUrl}/api/stock-analysis/${activeTab}/`,
                 { params }
             );
             setData(response.data);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
             setError(t('stockAnalysis.error'));
         } finally {

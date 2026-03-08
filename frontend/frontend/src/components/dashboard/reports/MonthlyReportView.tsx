@@ -11,13 +11,14 @@ import {
     DollarSign,
     Calculator
 } from 'lucide-react';
+import { formatCurrency } from '../../../utils/formatters';
 
 interface MonthlyReportViewProps {
     data: any;
 }
 
 export const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({ data }) => {
-    const formatMoney = (v: number) => Math.round(v || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' F';
+    const formatMoney = (v: number) => formatCurrency(Math.round(v || 0)) + ' F';
     
     return (
         <div className="space-y-8 animate-in fade-in duration-500">

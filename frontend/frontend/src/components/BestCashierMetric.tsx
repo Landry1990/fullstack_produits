@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency } from '../utils/formatters';
 
 interface CashierPerformance {
     user_id: number;
@@ -102,12 +103,12 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                     <div className="space-y-4 pt-5 border-t border-white/20">
                         <div className="flex justify-between items-end">
                             <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('dashboard.rigor_score', 'Score de Rigueur (Abs)')}</span>
-                            <span className="text-2xl font-black text-yellow-300 drop-shadow-md">{winner.moyenne_ecart_absolu.toLocaleString()} F</span>
+                            <span className="text-2xl font-black text-yellow-300 drop-shadow-md">{formatCurrency(winner.moyenne_ecart_absolu)} F</span>
                         </div>
                         <div className="flex justify-between items-center bg-white/10 p-2 px-3 rounded-lg border border-white/5">
                             <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{t('dashboard.avg_trend', 'Tendance Moyenne')}</span>
                             <span className="font-black text-xs">
-                                {winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{winner.moyenne_ecart_algebrique.toLocaleString()} F
+                                {winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(winner.moyenne_ecart_algebrique)} F
                             </span>
                         </div>
                         <div className="flex justify-between items-center bg-white/10 p-3 rounded-xl border border-white/5">
@@ -169,7 +170,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="font-black text-primary text-sm tracking-tight bg-primary/5 rounded-lg py-1 px-3 inline-block">
-                                            {perf.moyenne_ecart_absolu.toLocaleString()} F
+                                            {formatCurrency(perf.moyenne_ecart_absolu)} F
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
@@ -185,7 +186,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                                             ) : perf.moyenne_ecart_algebrique < 0 ? (
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
                                             ) : null}
-                                            {perf.moyenne_ecart_algebrique > 0 ? '+' : ''}{perf.moyenne_ecart_algebrique.toLocaleString()} F
+                                            {perf.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(perf.moyenne_ecart_algebrique)} F
                                         </div>
                                     </td>
                                 </tr>

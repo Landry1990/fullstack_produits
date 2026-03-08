@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { formatCurrency } from '../../utils/formatters'
 
 interface TotalsSectionProps {
   totalHT: number
@@ -41,7 +42,7 @@ export default function TotalsSection({
           {/* Total HT */}
           <div className="flex flex-col items-end gap-0.5 sm:gap-1">
             <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation.totals.subtotal')}</span>
-            <span className="font-medium text-base sm:text-lg">{Math.round(totalHT).toLocaleString()} F</span>
+            <span className="font-medium text-base sm:text-lg">{formatCurrency(Math.round(totalHT))} F</span>
           </div>
 
           {/* Remise Globale */}
@@ -64,7 +65,7 @@ export default function TotalsSection({
                 placeholder={remiseMode === 'taux' ? '0%' : '0 F'}
               />
               {remiseMontant > 0 && (
-                <span className="text-error font-medium whitespace-nowrap text-xs sm:text-sm">-{Math.round(remiseMontant).toLocaleString()} F</span>
+                <span className="text-error font-medium whitespace-nowrap text-xs sm:text-sm">-{formatCurrency(Math.round(remiseMontant))} F</span>
               )}
             </div>
           </div>
@@ -73,7 +74,7 @@ export default function TotalsSection({
           <div className="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex">
             <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation.totals.tva')}</span>
             <span className={`font-medium text-base sm:text-lg ${tvaAmount > 0 ? 'text-base-content' : 'text-base-content/30'}`}>
-              {Math.round(tvaAmount).toLocaleString()} F
+              {formatCurrency(Math.round(tvaAmount))} F
             </span>
           </div>
 
@@ -84,7 +85,7 @@ export default function TotalsSection({
                     <span className="badge badge-xs sm:badge-sm badge-info">{tauxCouverture}%</span>
                     <span className="text-[10px] uppercase font-bold text-base-content/50">Assurance</span>
                 </div>
-                <span className="font-bold text-sm sm:text-base text-info">{Math.round(partAssurance).toLocaleString()} F</span>
+                <span className="font-bold text-sm sm:text-base text-info">{formatCurrency(Math.round(partAssurance))} F</span>
              </div>
           )}
 
@@ -94,12 +95,12 @@ export default function TotalsSection({
                 {tauxCouverture > 0 ? t('facturation.totals.part_patient') : t('facturation.totals.total_ttc')}
             </span>
             <span className="font-bold text-2xl sm:text-3xl text-primary">
-                {Math.round(tauxCouverture > 0 ? partPatient : totalTTC).toLocaleString()} F
+                {formatCurrency(Math.round(tauxCouverture > 0 ? partPatient : totalTTC))} F
             </span>
             
             {tauxCouverture > 0 && (
                 <span className="text-[10px] text-base-content/40 mt-1">
-                    {t('facturation.totals.total_ttc')}: {Math.round(totalTTC).toLocaleString()} F
+                    {t('facturation.totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))} F
                 </span>
             )}
           </div>

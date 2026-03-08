@@ -1,6 +1,5 @@
 import { extractErrorMessage } from '../utils/errorHandling';
 import { useState, useCallback } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -10,75 +9,26 @@ import type {
     AyantDroit,
     LigneFacture,
     PaymentDetails,
-    TotalsData,
-    OrdonnanceData
+    OrdonnanceData,
+    ProduitModel,
+    SaleCompletionParams,
+    SaleCompletionResult
 } from '../types';
-import { normalizeNumberInput } from '../utils/formatters';
-import { generatePromisTicket, type PromisItem } from '../utils/promisPdf';
+import { normalizeNumberInput, formatNumber } from '../utils/formatters';
+import { generatePromisTicket, type PromisItem } from '../utils/print/promisPdf';
+import { buildPaymentsList } from '../utils/finance';
+import { validateSaleData, validateProfessionalClient } from '../utils/validation';
 import { usePharmacySettings } from './usePharmacySettings';
+import clientService from '../services/clientService';
+import produitService from '../services/produitService';
+import venteService from '../services/venteService';
+import caisseService from '../services/caisseService';
+import promisService from '../services/promisService';
+import ordonnancierService from '../services/ordonnancierService';
 
-// ============== TYPES ==============
-
-
-
-export interface SaleCompletionParams {
-    // Client
-    selectedClient: number | null;
-    useManualClient: boolean;
-    manualClientName: string;
-    clients: Client[];
-
-    // Ayant droit
-    selectedAyantDroit: number | null;
-    ayantDroitNom: string;
-    ayantDroitMatricule: string;
-    ayantDroitSociete: string;
-    ayantsDroitList: AyantDroit[];
-    showNewAyantDroit: boolean;
-
-    // Cart
-    lignesFacture: LigneFacture[];
-    totals: TotalsData;
-
-    // Payment
-    modePaiement: string;
-    montantPaye: string;
-    paiements: PaymentDetails[];
-    reference: string;
-    couponNumero: string;
-
-    // Loyalty / Discounts
-    usePendingDiscount: boolean;
-    pointsToUse: number;
-
-    // Modes
-    isRetrocession: boolean;
-    centralizedCashRegister: boolean;
-
-    // Modification mode
-    isModificationMode: boolean;
-    modificationInvoiceId: number | null;
-
-    // Devis
-    devisIdToValidate: number | null;
-
-    // Ordonnance
-    tempOrdonnanceData: OrdonnanceData | null;
-    // Sudo Mode
-    validated_by_id?: number | null;
-    sudo_password?: string;
-}
-
-export interface SaleCompletionResult {
-    success: boolean;
-    facture?: Facture;
-    ticketCaisse?: TicketCaisse;
-    error?: string;
-    rendu?: number;
-}
+// Local types and helpers removed (moved to types.ts / utils)
 
 export interface UseSaleCompletionOptions {
-    apiBaseUrl?: string;
     onSuccess?: (result: SaleCompletionResult) => void;
     onError?: (error: string) => void;
     onReset?: () => void;
@@ -89,97 +39,7 @@ export interface UseSaleCompletionReturn {
     loading: boolean;
     error: string | null;
     lastResult: SaleCompletionResult | null;
-}
-
-// ============== HELPER FUNCTIONS ==============
-
-/**
- * Valide les données avant soumission
- */
-function validateSaleData(params: SaleCompletionParams): string | null {
-    const { selectedClient, lignesFacture, totals, montantPaye, paiements, validated_by_id, sudo_password } = params;
-
-    if (!selectedClient && !params.useManualClient) {
-        return 'Veuillez sélectionner un client';
-    }
-
-    if (lignesFacture.length === 0) {
-        return 'Veuillez ajouter au moins un produit';
-    }
-
-    // Validation Sudo
-    if (validated_by_id && !sudo_password) {
-        return 'Mot de passe requis pour la validation par un tiers';
-    }
-
-    // Validation du montant
-    const isTiersPayant = totals.tauxCouverture > 0 && totals.partAssurance > 0;
-    const montantAttendu = isTiersPayant ? totals.partPatient : totals.totalTtc;
-
-    if (montantAttendu > 0) {
-        const montantSaisi = Number(montantPaye);
-        const totalSplit = paiements.reduce((acc, p) => acc + p.montant, 0);
-
-        if (paiements.length === 0 && (!montantPaye || montantSaisi === 0)) {
-            return 'Veuillez entrer un montant valide';
-        }
-
-        // Si paiement partagé, vérifier le total
-        if (paiements.length > 0 || (montantPaye && montantSaisi > 0)) {
-            const totalSaisi = totalSplit + montantSaisi;
-            // On autorise un montant supérieur (pour le rendu de monnaie), 
-            // mais pas inférieur (tolérance de 1F pour les arrondis)
-            if (totalSaisi < montantAttendu - 1) {
-                return `Le montant total (${totalSaisi} F) est insuffisant pour régler la facture (${montantAttendu} F)`;
-            }
-        }
-    }
-
-    return null;
-}
-
-/**
- * Valide les données client professionnel
- */
-function validateProfessionalClient(params: SaleCompletionParams, client: Client): string | null {
-    const {
-        useManualClient, showNewAyantDroit, ayantsDroitList,
-        ayantDroitNom, ayantDroitMatricule, selectedAyantDroit, totals
-    } = params;
-
-    if (client?.client_type !== 'PROFESSIONNEL') return null;
-
-    // Validation ayant droit
-    if (!useManualClient) {
-        if (showNewAyantDroit || ayantsDroitList.length === 0) {
-            if (!ayantDroitNom || !ayantDroitMatricule) {
-                return "Pour un client professionnel, veuillez renseigner le nom et le matricule de l'ayant droit";
-            }
-        }
-    } else {
-        if (!selectedAyantDroit) {
-            return 'Pour un client professionnel, veuillez sélectionner un ayant droit ou en créer un nouveau';
-        }
-    }
-
-    // Validation du PLAFOND DE CRÉDIT
-    const plafond = Number(client.plafond || 0);
-    if (plafond > 0) {
-        const currentDebt = Number(client.current_debt || 0);
-
-        // Calculer le paiement immédiat total
-        const immediatePayment = Number(params.montantPaye || 0) +
-            params.paiements.reduce((acc, p) => acc + (p.montant || 0), 0);
-
-        const debtIncrement = Math.max(0, totals.totalTtc - immediatePayment);
-        const newTotal = currentDebt + debtIncrement;
-
-        if (newTotal > plafond) {
-            return `⚠️ PLAFOND DÉPASSÉ !\nDette actuelle: ${Math.round(currentDebt).toLocaleString()} F\nIncrément dette (TTC - Payé): ${Math.round(debtIncrement).toLocaleString()} F\nTotal: ${Math.round(newTotal).toLocaleString()} F\nPlafond: ${Math.round(plafond).toLocaleString()} F`;
-        }
-    }
-
-    return null;
+    completeExistingInvoicePayment: (params: any) => Promise<SaleCompletionResult>;
 }
 
 // ============== MAIN HOOK ==============
@@ -188,16 +48,13 @@ function validateProfessionalClient(params: SaleCompletionParams, client: Client
  * Hook pour gérer la finalisation d'une vente
  */
 export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSaleCompletionReturn {
-    const { apiBaseUrl = '', onSuccess, onError, onReset } = options;
+    const { onSuccess, onError, onReset } = options;
     const { settings: pharmacySettings } = usePharmacySettings();
     const { t } = useTranslation();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [lastResult, setLastResult] = useState<SaleCompletionResult | null>(null);
-
-    // Endpoints
-    const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/';
 
     /**
      * Créer ou récupérer l'ayant droit
@@ -220,21 +77,20 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 if (existingLocal) {
                     ayantDroitId = existingLocal.id || null;
                 } else {
-                    const ayantsDroitEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ayants-droit/` : '/api/ayants-droit/';
                     const payload = {
                         client: params.selectedClient,
                         nom: params.ayantDroitNom,
                         matricule: params.ayantDroitMatricule,
                         societe: params.ayantDroitSociete || null
                     };
-                    const { data: created } = await axios.post<AyantDroit>(ayantsDroitEndpoint, payload);
+                    const created = await clientService.createAyantDroit(payload as unknown as Partial<AyantDroit>);
                     ayantDroitId = created.id || null;
                 }
             }
         }
 
         return ayantDroitId;
-    }, [apiBaseUrl]);
+    }, []);
 
     /**
      * Gérer le mode modification (facture existante)
@@ -257,8 +113,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             };
         });
 
-        const modifierEndpoint = `${facturesEndpoint}${params.modificationInvoiceId}/modifier/`;
-        const { data: result } = await axios.post(modifierEndpoint, {
+        const result = await venteService.modifier(params.modificationInvoiceId!, {
             produits: produitsPayload,
             remise: params.totals.remiseMontant.toString(),
             client: params.useManualClient ? null : params.selectedClient,
@@ -267,129 +122,16 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
         const difference = result.difference;
         if (difference > 0) {
-            toast.success(t('sales.messages.additional_payment', { amount: Math.round(difference).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }));
+            toast.success(t('sales.messages.additional_payment', { amount: formatNumber(Math.round(difference)) }));
         } else if (difference < 0) {
-            toast.success(t('sales.messages.refund_amount', { amount: Math.round(Math.abs(difference)).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) }));
-        } else {
+            toast.success(t('sales.messages.refund_amount', { amount: formatNumber(Math.round(Math.abs(difference))) }));
+        }
+        else {
             toast.success(t('sales.messages.same_total'));
         }
 
         return { success: true, facture: result.facture };
-    }, [facturesEndpoint, t]);
-
-    /**
-     * Construire la liste des paiements
-     */
-    const buildPaymentsList = useCallback((
-        params: SaleCompletionParams
-    ): PaymentDetails[] => {
-        const { totals, paiements, montantPaye, modePaiement } = params;
-        const useTiersPayant = totals.tauxCouverture > 0 && totals.partAssurance > 0;
-
-        let paiementsList: PaymentDetails[] = [];
-
-        if (useTiersPayant) {
-            // Part patient
-            if (totals.partPatient > 0) {
-                let resteAPatient = totals.partPatient;
-
-                if (paiements.length > 0) {
-                    paiements.forEach(p => {
-                        if (resteAPatient <= 0) return;
-                        const montantReel = Math.min(p.montant, resteAPatient);
-                        paiementsList.push({
-                            mode: p.mode,
-                            montant: montantReel,
-                            part_patient: montantReel,
-                            part_assurance: null
-                        });
-                        resteAPatient -= montantReel;
-                    });
-
-                    if (resteAPatient > 0 && montantPaye && Number(montantPaye) > 0) {
-                        const montantReel = Math.min(Number(montantPaye), resteAPatient);
-                        paiementsList.push({
-                            mode: modePaiement,
-                            montant: montantReel,
-                            part_patient: montantReel,
-                            part_assurance: null
-                        });
-                        resteAPatient -= montantReel;
-                    }
-                } else {
-                    paiementsList.push({
-                        mode: modePaiement,
-                        montant: totals.partPatient,
-                        part_patient: totals.partPatient,
-                        part_assurance: null
-                    });
-                }
-            }
-
-            // Part assurance (toujours en compte)
-            if (totals.partAssurance > 0) {
-                paiementsList.push({
-                    mode: 'en_compte',
-                    montant: totals.partAssurance,
-                    part_patient: null,
-                    part_assurance: totals.partAssurance
-                });
-            }
-        } else {
-            // Pas de tiers payant
-            let resteAEnregistrer = totals.totalTtc;
-
-            if (paiements.length > 0) {
-                paiements.forEach(p => {
-                    const isRefund = totals.totalTtc < 0;
-                    if (!isRefund && resteAEnregistrer <= 0) return;
-                    if (isRefund && resteAEnregistrer >= 0) return;
-
-                    const montantReel = isRefund
-                        ? Math.max(p.montant, resteAEnregistrer)
-                        : Math.min(p.montant, resteAEnregistrer);
-
-                    paiementsList.push({
-                        mode: p.mode,
-                        montant: montantReel,
-                        part_patient: null,
-                        part_assurance: null
-                    });
-                    resteAEnregistrer -= montantReel;
-                });
-
-                const isRefund = totals.totalTtc < 0;
-                if (!isRefund && resteAEnregistrer > 0 && montantPaye && Number(montantPaye) > 0) {
-                    const montantReel = Math.min(Number(montantPaye), resteAEnregistrer);
-                    paiementsList.push({
-                        mode: modePaiement,
-                        montant: montantReel,
-                        part_patient: null,
-                        part_assurance: null
-                    });
-                    resteAEnregistrer -= montantReel;
-                } else if (isRefund && resteAEnregistrer < 0 && montantPaye && Number(montantPaye) <= 0) {
-                    const montantReel = Math.max(Number(montantPaye), resteAEnregistrer);
-                    paiementsList.push({
-                        mode: modePaiement,
-                        montant: montantReel,
-                        part_patient: null,
-                        part_assurance: null
-                    });
-                    resteAEnregistrer -= montantReel;
-                }
-            } else {
-                paiementsList = [{
-                    mode: modePaiement,
-                    montant: totals.totalTtc,
-                    part_patient: null,
-                    part_assurance: null
-                }];
-            }
-        }
-
-        return paiementsList;
-    }, []);
+    }, [t]);
 
     /**
      * Fonction principale de finalisation de vente
@@ -425,22 +167,19 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             }
 
             // 3. VÉRIFICATION DU STOCK EN TEMPS RÉEL
-            // Pour éviter la latence de cache (staleTime 30s) sur la recherche,
-            // on vérifie le stock réel EXACTEMENT au moment de la vente.
             const productIds = params.lignesFacture.map(l => l.produit.id);
             if (productIds.length > 0) {
-                const bulkRefreshEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/produits/bulk_refresh/` : '/api/produits/bulk_refresh/';
-                const { data: realTimeProducts } = await axios.post<any[]>(bulkRefreshEndpoint, { ids: productIds });
+                const realTimeProducts = await produitService.bulkRefresh(productIds);
 
                 // On indexe les résultats
-                const realStockMap = new Map();
+                const realStockMap = new Map<number, ProduitModel>();
                 realTimeProducts.forEach(p => realStockMap.set(p.id, p));
 
                 for (const ligne of params.lignesFacture) {
                     const realProd = realStockMap.get(ligne.produit.id);
                     if (realProd) {
                         const effectiveQty = ligne.quantite - (ligne.isPromis ? (ligne.promisQuantity || 0) : 0);
-                        // On autorise la vente si stock suffisant ou si vente retour (différent de 0, quantité négative etc. géré par le back)
+                        // On autorise la vente si stock suffisant
                         if (effectiveQty > 0 && realProd.stock < effectiveQty) {
                             const errorMsg = `⚠️ STOCK INSUFFISANT EN TEMPS RÉEL !\nLe produit "${ligne.produit.name}" a été vendu sur un autre poste.\nStock actuel disponible : ${realProd.stock}\nQuantité demandée : ${effectiveQty}`;
                             setError(errorMsg);
@@ -490,7 +229,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             const ayantDroitId = await resolveAyantDroit(params, client);
 
             // Préparer les paiements
-            const paiementsList = buildPaymentsList(params);
+            const paiementsList = buildPaymentsList(params.totals, params.paiements, params.montantPaye, params.modePaiement);
 
             // Payload atomique final
             const finalPayload = {
@@ -523,8 +262,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 coupon_numero: params.couponNumero
             };
 
-            const finaliserEndpoint = `${facturesEndpoint}finaliser/`;
-            const { data: finalFacture } = await axios.post<Facture>(finaliserEndpoint, finalPayload);
+            const finalFacture = await venteService.finaliser(finalPayload);
 
             // Gestion des impressions post-vente
 
@@ -556,7 +294,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             if (!params.centralizedCashRegister) {
                 window.open(`/app/print-invoice/${finalFacture.id}`, '_blank');
 
-                const totalVerse = paiementsList.reduce((acc, p) => acc + p.montant, 0);
+                const totalVerse = paiementsList.reduce((acc: number, p) => acc + p.montant, 0);
                 const rendu = totalVerse - Number(finalFacture.total_ttc);
 
                 // Construire le ticket pour l'UI si besoin
@@ -569,7 +307,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 const ticketCaisse: TicketCaisse = {
                     id: 0,
                     facture: finalFacture,
-                    mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode as any || 'N/A'), // mode is string, cast specific type if needed or adjust interface
+                    mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode as TicketCaisse['mode_paiement'] || 'N/A'),
                     montant: finalFacture.total_ttc,
                     montant_verse: totalVerse.toString(),
                     rendu: rendu.toString(),
@@ -596,9 +334,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 return result;
             }
 
-
-
-
         } catch (err: unknown) {
             console.error('Sale Finalization Error:', err);
             const errorMessage = extractErrorMessage(err);
@@ -613,8 +348,8 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             setLoading(false);
         }
     }, [
-        resolveAyantDroit, handleModificationMode, buildPaymentsList,
-        facturesEndpoint, pharmacySettings, t, onSuccess, onError, onReset
+        resolveAyantDroit, handleModificationMode,
+        pharmacySettings, t, onSuccess, onError, onReset
     ]);
 
     /**
@@ -638,7 +373,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
 
         try {
             const { facture, paiements, montantPaye, modePaiement, reference } = params;
-            const caisseEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/caisse/` : '/api/caisse/';
 
             const paiementsList = (paiements && paiements.length > 0)
                 ? paiements
@@ -668,16 +402,16 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     reference: reference || null,
                     statut: 'completee',
                 };
-                await axios.post(caisseEndpoint, payload);
+                await caisseService.createPaiement(payload);
                 resteAEnregistrer -= montantReel;
+                totalVerse += montantReel;
             }));
 
             // 2. Mettre à jour le statut de la facture
-            const updateUrl = `${facturesEndpoint}${facture.id}/`;
-            await axios.patch(updateUrl, { status: 'PAY' });
+            await venteService.update(facture.id, { status: 'PAY' });
 
             // 3. Rafraîchir les données
-            const { data: updatedFacture } = await axios.get<Facture>(updateUrl);
+            const updatedFacture = await venteService.getById(facture.id);
 
             const rendu = totalVerse - Number(updatedFacture.total_ttc);
 
@@ -686,9 +420,8 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             if (promisLines.length > 0) {
                 try {
                     // Créer les Promis en base de données via l'API
-                    const promisEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/promis/` : '/api/promis/';
                     await Promise.all(promisLines.map(l =>
-                        axios.post(promisEndpoint, {
+                        promisService.create({
                             facture: facture.id,
                             produit: l.produit.id,
                             quantite: l.promisQuantity,
@@ -723,8 +456,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             // 5. GESTION ORDONNANCIER (Unifiée)
             if (params.tempOrdonnanceData) {
                 try {
-                    const ordonnancierEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/ordonnancier/` : '/api/ordonnancier/';
-                    await axios.post(ordonnancierEndpoint, {
+                    await ordonnancierService.create({
                         ...params.tempOrdonnanceData,
                         facture: updatedFacture.id,
                         lignes: params.tempOrdonnanceData.lignes.map(l => ({
@@ -752,14 +484,15 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
             const ticketCaisse: TicketCaisse = {
                 id: 0,
                 facture: updatedFacture,
-                mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0].mode as any), // Cast string to union type if needed
+                mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0].mode as TicketCaisse['mode_paiement']),
                 montant: updatedFacture.total_ttc,
                 montant_verse: totalVerse.toString(),
                 rendu: rendu.toString(),
                 statut: 'completee',
                 client_name: clientNameForTicket,
                 date_paiement: new Date().toISOString(),
-                paiements_details: paiementsList
+                paiements_details: paiementsList,
+                user_details: { id: 0, username: updatedFacture.validated_by_name || updatedFacture.created_by_name || '' }
             };
 
             const result: SaleCompletionResult = { success: true, facture: updatedFacture, ticketCaisse, rendu };
@@ -777,7 +510,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         } finally {
             setLoading(false);
         }
-    }, [apiBaseUrl, facturesEndpoint, pharmacySettings, t, onSuccess, onError, onReset]);
+    }, [pharmacySettings, t, onSuccess, onError, onReset]);
 
     return {
         completeSale,
@@ -786,26 +519,6 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
         error,
         lastResult
     };
-}
-
-export interface UseSaleCompletionReturn {
-    completeSale: (params: SaleCompletionParams) => Promise<SaleCompletionResult>;
-    completeExistingInvoicePayment: (params: {
-        facture: Facture;
-        paiements?: PaymentDetails[];
-        montantPaye: string;
-        modePaiement: string;
-        reference?: string;
-        lignesFacture: LigneFacture[];
-        tempOrdonnanceData: OrdonnanceData | null;
-        promisPhone?: string;
-        promisClientName?: string;
-        useManualClient?: boolean;
-        manualClientName?: string;
-    }) => Promise<SaleCompletionResult>;
-    loading: boolean;
-    error: string | null;
-    lastResult: SaleCompletionResult | null;
 }
 
 export default useSaleCompletion;

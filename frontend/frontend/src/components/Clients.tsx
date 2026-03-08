@@ -2,10 +2,33 @@ import React, { useEffect, useState, useMemo, type FormEvent } from 'react';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
-
+import { 
+  UserPlus, 
+  Users, 
+  Settings, 
+  Trash2, 
+  Eye, 
+  EyeOff, 
+  Search, 
+  MoreVertical, 
+  X,
+  CreditCard,
+  Phone,
+  MapPin,
+  Mail,
+  User,
+  ShoppingBag,
+  History as HistoryIcon,
+  ShieldCheck,
+  TrendingUp,
+  ChevronRight,
+  Edit,
+  Activity
+} from 'lucide-react';
 import type { Client } from '../types';
 import LoyaltyConfigModal from './LoyaltyConfigModal';
 import PremiumModal from './common/PremiumModal';
+import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 
 interface AyantDroit {
   id?: number;
@@ -38,6 +61,8 @@ interface PurchaseHistoryData {
   total_factures: number;
   factures: PurchaseHistoryItem[];
 }
+
+
 
 interface ExtendedClient extends Client {
   client_type: 'PARTICULIER' | 'PROFESSIONNEL';
@@ -406,50 +431,82 @@ export default function Clients() {
       {/* LEFT PANEL: CLIENT LIST (1/3) */}
       <div className="w-1/3 border-r border-base-200 bg-base-100 flex flex-col">
           {/* Header & Search */}
-           <div className="p-4 border-b border-base-200 flex flex-col gap-3 bg-base-100 relative z-10 shrink-0 sticky-header">
-             <div className="flex justify-between items-center">
-                <h2 className="font-bold text-xl">{t('clients.title')}</h2>
-                <div className="flex gap-1 items-center">
-                   {selectedIds.length > 0 && (
+           <div className="p-0 border-b border-base-200 bg-base-100 relative z-20 shrink-0 sticky top-0 overflow-visible">
+             <div className="p-4 flex flex-col gap-3">
+               <div className="flex justify-between items-center h-10">
+                  {selectedIds.length > 0 ? (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-200">
+                      <div className="dropdown dropdown-bottom">
+                        <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
+                          <MoreVertical className="w-4 h-4" />
+                          {t('common.actions_title', { defaultValue: 'Actions' })}
+                          <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedIds.length}</span>
+                        </div>
+                        <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 rounded-box w-56 border border-base-200 mt-2">
+                          <li className="menu-title px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-base-content/40">
+                            {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                          </li>
+                          <li>
+                            <a onClick={handleBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                              <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
                       <button 
-                         className="btn btn-sm btn-error mr-2" 
-                         onClick={handleBulkDelete}
-                         title="Supprimer la sélection"
+                        onClick={() => setSelectedIds([])}
+                        className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
                       >
-                         🗑️ ({selectedIds.length})
+                        <X className="w-4 h-4" />
+                        {t('common.actions.cancel', { defaultValue: 'Annuler' })}
                       </button>
-                   )}
-                   <button 
-                      className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'btn-active btn-neutral' : 'text-slate-400'}`} 
-                      onClick={() => setShowInactive(!showInactive)}
-                      title={showInactive ? "Masquer les clients inactifs" : "Afficher les clients inactifs"}
-                   >
-                      {showInactive ? '👁️' : '🙈'}
-                   </button>
-                   <button 
-                      className="btn btn-sm btn-ghost btn-square text-secondary" 
-                      onClick={() => setIsLoyaltyConfigOpen(true)}
-                      title={t('clients.actions.fidelity_config')}
-                   >
-                      💎
-                   </button>
-                   <button 
-                      className="btn btn-sm btn-primary" 
-                      onClick={handleOpenCreateModal}
-                   >
-                      + {t('clients.actions.create')}
-                   </button>
-                </div>
-             </div>
-             <div className="relative">
-                <input 
-                   type="text" 
-                   className="input input-bordered w-full pl-9" 
-                   placeholder={t('clients.filters.search_placeholder')} 
-                   value={searchTerm}
-                   onChange={e => setSearchTerm(e.target.value)}
-                />
-                <span className="absolute left-3 top-3 opacity-50">🔍</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 animate-in fade-in duration-300">
+                        <div className="p-2 bg-primary/10 text-primary rounded-lg">
+                          <Users className="w-5 h-5" />
+                        </div>
+                        <h2 className="font-bold text-lg tracking-tight">{t('clients.title')}</h2>
+                      </div>
+                      <div className="flex gap-1 items-center">
+                         <button 
+                            className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'bg-base-200 text-base-content' : 'text-base-content/40'}`} 
+                            onClick={() => setShowInactive(!showInactive)}
+                            title={showInactive ? "Masquer les clients inactifs" : "Afficher les clients inactifs"}
+                         >
+                            {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                         </button>
+                         <button 
+                            className="btn btn-sm btn-ghost btn-square text-secondary/60 hover:text-secondary hover:bg-secondary/10" 
+                            onClick={() => setIsLoyaltyConfigOpen(true)}
+                            title={t('clients.actions.fidelity_config')}
+                         >
+                            <Settings className="w-4 h-4" />
+                         </button>
+                         <button 
+                            className="btn btn-sm btn-primary gap-2 h-9 px-4 shadow-sm" 
+                            onClick={handleOpenCreateModal}
+                         >
+                            <UserPlus className="w-4 h-4" />
+                            <span className="hidden sm:inline">{t('clients.actions.create')}</span>
+                         </button>
+                      </div>
+                    </>
+                  )}
+               </div>
+               <div className="relative group">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40 group-focus-within:text-primary transition-colors">
+                    <Search className="w-4 h-4" />
+                  </span>
+                  <input 
+                     type="text" 
+                     className="input input-sm input-bordered w-full pl-10 h-10 bg-base-200/50 border-transparent focus:border-primary focus:bg-base-100 transition-all rounded-xl" 
+                     placeholder={t('clients.filters.search_placeholder')} 
+                     value={searchTerm}
+                     onChange={e => setSearchTerm(e.target.value)}
+                  />
+               </div>
              </div>
           </div>
           
@@ -473,29 +530,32 @@ export default function Clients() {
                       </li>
                    )}
                    {clients.map(client => (
-                      <li key={client.id} className="mb-1 border-b border-base-100 last:border-0 group">
-                         <div className="flex items-center p-0">
-                            <div className="px-4">
+                      <li key={client.id} className="mb-0.5 last:mb-0 group">
+                         <div className="flex items-center p-0 rounded-xl hover:bg-base-200/50 transition-all duration-200">
+                            <div className="pl-4 pr-1">
                                <input 
                                   type="checkbox" 
-                                  className="checkbox checkbox-sm"
+                                  className="checkbox checkbox-xs rounded-md"
                                   checked={selectedIds.includes(client.id!)}
                                   onChange={() => toggleSelect(client.id!)}
                                   onClick={(e) => e.stopPropagation()}
                                />
                             </div>
                             <a 
-                               className={`flex-1 flex flex-col items-start gap-1 py-3 ${selectedClient?.id === client.id ? 'active' : ''}`}
+                               className={`flex-1 flex flex-col items-start gap-0.5 py-2.5 px-3 rounded-xl transition-all ${selectedClient?.id === client.id ? 'bg-primary/10 !text-primary shadow-sm' : ''}`}
                                onClick={() => selectClient(client)}
                             >
-                               <div className="flex justify-between w-full">
-                                  <span className="font-bold text-base">{client.name}</span>
-                                  <span className={`badge badge-sm ${client.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-ghost'}`}>
+                               <div className="flex justify-between items-center w-full">
+                                  <span className={`text-sm font-black tracking-tight transition-colors ${selectedClient?.id === client.id ? 'text-primary' : 'text-base-content'}`}>
+                                    {client.name}
+                                  </span>
+                                  <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${client.client_type === 'PROFESSIONNEL' ? 'bg-secondary/10 text-secondary' : 'bg-base-200 text-base-content/40'}`}>
                                      {client.client_type === 'PROFESSIONNEL' ? t('clients.types.professional') : t('clients.types.individual')}
                                   </span>
                                </div>
-                               <div className="flex justify-between w-full text-sm opacity-70">
-                                  <span className="font-mono">{client.phone}</span>
+                               <div className="flex items-center gap-1.5 text-[11px] font-medium opacity-40">
+                                  <Phone className="w-3 h-3" />
+                                  <span className="font-mono">{client.phone || '-- -- -- --'}</span>
                                </div>
                             </a>
                          </div>
@@ -549,39 +609,52 @@ export default function Clients() {
       <div className="w-2/3 bg-base-50 flex flex-col">
          {selectedClient ? (
             <>
-               {/* Details Header */}
-               <div className="p-6 border-b border-base-200 bg-white/50 flex justify-between items-start sticky-header">
-                  <div>
-                      <div className="flex items-center gap-2 mb-1">
-                          <h2 className="text-2xl font-bold">{selectedClient.name}</h2>
-                          <span className={`badge ${selectedClient.client_type === 'PROFESSIONNEL' ? 'badge-secondary' : 'badge-neutral'}`}>
-                             {selectedClient.client_type}
-                          </span>
+               <div className="p-6 border-b border-base-200 bg-base-100/50 backdrop-blur-md flex justify-between items-center sticky top-0 z-10 shrink-0">
+                  <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center text-2xl shadow-inner italic font-black">
+                        {selectedClient.name.charAt(0)}
                       </div>
-                      <div className="text-sm opacity-60 flex gap-4">
-                          <span>📧 {selectedClient.email || '-'}</span>
-                          <span>📞 {selectedClient.phone || '-'}</span>
+                      <div>
+                          <div className="flex items-center gap-2 mb-0.5">
+                              <h2 className="text-xl font-black tracking-tight text-base-content">{selectedClient.name}</h2>
+                              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest ${selectedClient.client_type === 'PROFESSIONNEL' ? 'bg-secondary/10 text-secondary' : 'bg-base-200 text-base-content/40'}`}>
+                                 {selectedClient.client_type}
+                              </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs font-semibold text-base-content/40">
+                             <div className="flex items-center gap-1.5">
+                                <Phone className="w-3.5 h-3.5" />
+                                <span className="font-mono">{selectedClient.phone || '-'}</span>
+                             </div>
+                             <div className="w-1 h-1 bg-base-300 rounded-full"></div>
+                             <div className="flex items-center gap-1.5">
+                                <Mail className="w-3.5 h-3.5" />
+                                <span>{selectedClient.email || '-'}</span>
+                             </div>
+                          </div>
                       </div>
                   </div>
                   <div className="flex gap-2">
-                      <button 
-                        className="btn btn-ghost btn-sm text-secondary"
+                     <button 
+                        className="btn btn-sm btn-ghost gap-2 h-9 px-4 rounded-xl hover:bg-base-200 text-secondary font-bold" 
                         onClick={() => handleOpenEditModal(selectedClient)}
-                      >
-                         ✏️ {t('clients.actions.edit')}
-                      </button>
-                      <button 
-                        className="btn btn-ghost btn-sm text-error"
+                     >
+                        <Edit className="w-4 h-4" />
+                        {t('clients.actions.edit')}
+                     </button>
+                     <button 
+                        className="btn btn-sm btn-ghost gap-2 h-9 px-4 rounded-xl text-error font-bold" 
                         onClick={handleDeleteClient}
-                      >
-                         🗑️ {t('clients.actions.delete')}
-                      </button>
-                      <button 
-                        className={`btn btn-ghost btn-sm ${selectedClient.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
+                     >
+                        <Trash2 className="w-4 h-4" />
+                        {t('clients.actions.delete')}
+                     </button>
+                     <button 
+                        className={`btn btn-sm btn-ghost btn-square h-9 rounded-xl ${selectedClient.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
                         onClick={handleToggleActive}
                         title={selectedClient.is_active === false ? 'Réactiver' : 'Masquer'}
                       >
-                         {selectedClient.is_active === false ? '👁️' : '🙈'}
+                         {selectedClient.is_active === false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                       </button>
                   </div>
                </div>
@@ -592,49 +665,62 @@ export default function Clients() {
                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                        
                        {/* Section 1: Coordonnées & Adresse */}
-                       <div className="card bg-white shadow-sm border border-base-200">
-                          <div className="card-body p-4">
-                             <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">{t('clients.sections.contact')}</h3>
-                             <div className="space-y-3 text-sm">
-                                <div className="flex flex-col">
-                                   <span className="font-bold text-xs opacity-60">{t('clients.fields.address')}</span>
-                                   <span className="whitespace-pre-wrap">{selectedClient.address || '-'}</span>
+                       <div className="card bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+                          <div className="p-5 border-b border-base-200 flex items-center gap-2">
+                             <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                               <User className="w-4 h-4" />
+                             </div>
+                             <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                                {t('clients.sections.contact')}
+                             </h3>
+                          </div>
+                          <div className="p-5 space-y-4">
+                             <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('clients.fields.address')}</span>
+                                <div className="flex items-start gap-2 text-sm text-base-content font-bold mt-1">
+                                   <MapPin className="w-4 h-4 mt-0.5 text-base-content/20" />
+                                   <span className="whitespace-pre-wrap">{selectedClient.address || t('common.no_address')}</span>
                                 </div>
-                                <div className="flex flex-col">
-                                   <span className="font-bold text-xs opacity-60">{t('clients.fields.internal_id')}</span>
-                                   <span className="font-mono">#{selectedClient.id}</span>
-                                </div>
+                             </div>
+                             <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('clients.fields.internal_id')}</span>
+                                <span className="font-mono text-sm font-black text-secondary mt-1">#{selectedClient.id}</span>
                              </div>
                           </div>
                        </div>
 
                        {/* Section 2: Fidélité & Statut (Particulier) */}
                        {selectedClient.client_type === 'PARTICULIER' && (
-                          <div className="card bg-white shadow-sm border border-base-200">
-                             <div className="card-body p-4">
-                                <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">{t('clients.sections.programs')}</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                   <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-xl">💎</div>
-                                      <div>
-                                         <div className="text-xs opacity-60">{t('clients.fidelity.points')}</div>
-                                         <div className="font-bold text-accent text-lg">{selectedClient.points_fidelite || 0}</div>
-                                      </div>
+                          <div className="card bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+                             <div className="p-5 border-b border-base-200 flex items-center gap-2">
+                                <div className="p-1.5 bg-secondary/10 text-secondary rounded-lg">
+                                  <ShieldCheck className="w-4 h-4" />
+                                </div>
+                                <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                                   {t('clients.sections.programs')}
+                                </h3>
+                             </div>
+                             <div className="p-5 grid grid-cols-2 gap-4">
+                                <div className="flex items-center gap-3 p-3 bg-secondary/5 rounded-2xl border border-secondary/10">
+                                   <div className="w-10 h-10 rounded-xl bg-secondary/20 flex items-center justify-center text-xl">💎</div>
+                                   <div>
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-secondary/40">{t('clients.fidelity.points')}</div>
+                                      <div className="font-black text-secondary text-lg leading-tight">{selectedClient.points_fidelite || 0}</div>
                                    </div>
-                                   {Number(selectedClient.pending_discount) > 0 && (
-                                       <div className="flex items-center gap-3">
-                                          <div className="w-10 h-10 rounded-full bg-warning/10 flex items-center justify-center text-xl">🎁</div>
-                                          <div>
-                                             <div className="text-xs opacity-60">{t('clients.fidelity.discount')}</div>
-                                             <div className="font-bold text-warning text-lg">-{Number(selectedClient.pending_discount)}%</div>
-                                          </div>
+                                </div>
+                                {Number(selectedClient.pending_discount) > 0 && (
+                                    <div className="flex items-center gap-3 p-3 bg-warning/5 rounded-2xl border border-warning/10">
+                                       <div className="w-10 h-10 rounded-xl bg-warning/20 flex items-center justify-center text-xl">🎁</div>
+                                       <div>
+                                          <div className="text-[10px] font-black uppercase tracking-widest text-warning/40">{t('clients.fidelity.discount')}</div>
+                                          <div className="font-black text-warning text-lg leading-tight">-{Number(selectedClient.pending_discount)}%</div>
                                        </div>
-                                   )}
-                                   <div className="col-span-2">
-                                      <div className="flex justify-between items-center bg-base-50 p-2 rounded">
-                                         <span className="text-xs font-semibold">{t('clients.fidelity.auto_discount')}</span>
-                                         <span className="badge badge-sm">{selectedClient.remise_automatique || 0}%</span>
-                                      </div>
+                                    </div>
+                                )}
+                                <div className="col-span-2">
+                                   <div className="flex justify-between items-center bg-base-200/50 p-3 rounded-2xl border border-base-300/30">
+                                      <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients.fidelity.auto_discount')}</span>
+                                      <span className="badge badge-sm font-black bg-primary text-primary-content h-6 px-3">{selectedClient.remise_automatique || 0}%</span>
                                    </div>
                                 </div>
                              </div>
@@ -645,50 +731,67 @@ export default function Clients() {
                        {selectedClient.client_type === 'PROFESSIONNEL' && (
                           <div className="lg:col-span-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
                              {/* Finance */}
-                             <div className="card bg-white shadow-sm border border-base-200">
-                                <div className="card-body p-4">
-                                   <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">{t('clients.finance.title')}</h3>
-                                    <div className="grid grid-cols-3 gap-2 text-center">
-                                      <div className="bg-base-50 p-2 rounded">
-                                         <div className="text-xs opacity-60">{t('clients.finance.credit_limit')}</div>
-                                         <div className="font-bold">{Number(selectedClient.plafond || 0).toLocaleString()} F</div>
-                                      </div>
-                                      <div className="bg-base-50 p-2 rounded">
-                                         <div className="text-xs opacity-60">{t('clients.finance.debt')}</div>
-                                         <div className={`font-bold ${Number(selectedClient.current_debt) > Number(selectedClient.plafond) ? 'text-error' : 'text-success'}`}>
-                                            {Number(selectedClient.current_debt || 0).toLocaleString()} F
-                                         </div>
-                                      </div>
-                                      <div className="bg-base-50 p-2 rounded">
-                                         <div className="text-xs opacity-60">{t('clients.finance.coverage')}</div>
-                                         <div className="font-bold text-info">{Number(selectedClient.taux_couverture || 0)}%</div>
-                                      </div>
+                             <div className="card bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-base-200 flex items-center gap-2">
+                                   <Activity className="w-4 h-4 text-warning" />
+                                   <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                                      {t('clients.finance.title')}
+                                   </h3>
+                                </div>
+                                <div className="p-5 grid grid-cols-3 gap-4">
+                                   <div className="bg-base-200/50 p-3 rounded-2xl border border-base-300/30 flex flex-col gap-1">
+                                      <div className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('clients.finance.credit_limit')}</div>
+                                       <div className="font-black text-sm text-base-content">{formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}</div>
+                                    </div>
+                                    <div className="bg-base-200/50 p-3 rounded-2xl border border-base-300/30 flex flex-col gap-1">
+                                       <div className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('clients.finance.debt')}</div>
+                                       <div className={`font-black text-sm ${normalizeNumberInput(selectedClient.current_debt || '0') > normalizeNumberInput(selectedClient.plafond || '0') ? 'text-error animate-pulse' : 'text-success'}`}>
+                                          {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))}
+                                       </div>
+                                   </div>
+                                   <div className="bg-base-200/50 p-3 rounded-2xl border border-base-300/30 flex flex-col gap-1">
+                                      <div className="text-[9px] font-black uppercase tracking-widest text-base-content/30">{t('clients.finance.coverage')}</div>
+                                      <div className="font-black text-sm text-info">{Number(selectedClient.taux_couverture || 0)}%</div>
                                    </div>
                                 </div>
                              </div>
 
                              {/* Ayants Droit */}
-                             <div className="card bg-white shadow-sm border border-base-200">
-                                <div className="card-body p-4">
-                                   <h3 className="card-title text-sm uppercase opacity-50 mb-2 border-b pb-2">
-                                      {t('clients.beneficiaries.title')} ({selectedClient.ayants_droit?.length || 0})
+                             <div className="card bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden">
+                                <div className="p-5 border-b border-base-200 flex items-center gap-2">
+                                   <Users className="w-4 h-4 text-secondary" />
+                                   <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                                      {t('clients.beneficiaries.title')}
                                    </h3>
-                                   <div className="overflow-y-auto max-h-40">
-                                      <table className="table table-xs">
-                                         <tbody>
-                                            {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
-                                                selectedClient.ayants_droit.map(ad => (
-                                                   <tr key={ad.id}>
-                                                      <td className="font-bold">{ad.nom}</td>
-                                                      <td className="text-right font-mono bg-base-50 px-2 rounded">{ad.matricule}</td>
-                                                   </tr>
-                                                ))
-                                            ) : (
-                                                <tr><td className="text-center text-base-content/50 py-4">{t('clients.beneficiaries.empty')}</td></tr>
-                                            )}
-                                         </tbody>
-                                      </table>
-                                   </div>
+                                   <span className="badge badge-sm font-black border-none bg-secondary/10 text-secondary ml-auto">{selectedClient.ayants_droit?.length || 0}</span>
+                                </div>
+                                <div className="overflow-y-auto max-h-[160px]">
+                                   <table className="table table-xs w-full">
+                                      <thead className="bg-base-200/50 sticky top-0 z-10">
+                                         <tr>
+                                            <th className="text-[9px] uppercase tracking-widest py-3 text-base-content/40 text-center w-10 px-0">#</th>
+                                            <th className="text-[9px] uppercase tracking-widest py-3 text-base-content/40">{t('common.name')}</th>
+                                            <th className="text-[9px] uppercase tracking-widest py-3 text-base-content/40 text-right pr-6">Matricule</th>
+                                         </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-base-200/50">
+                                         {selectedClient.ayants_droit && selectedClient.ayants_droit.length > 0 ? (
+                                             selectedClient.ayants_droit.map((ad, idx) => (
+                                                <tr key={ad.id} className="hover:bg-base-200/20 transition-colors">
+                                                   <td className="text-[10px] font-black text-base-content/20 text-center py-3 px-0">{idx + 1}</td>
+                                                   <td className="font-black text-sm text-base-content py-3">{ad.nom}</td>
+                                                   <td className="text-right font-mono text-[10px] font-black tracking-widest text-secondary py-3 pr-6">
+                                                      <span className="bg-secondary/5 px-2 py-1 rounded">
+                                                        {ad.matricule}
+                                                      </span>
+                                                   </td>
+                                                </tr>
+                                             ))
+                                         ) : (
+                                             <tr><td colSpan={3} className="text-center text-base-content/20 py-8 italic text-[11px] font-bold uppercase tracking-widest">{t('clients.beneficiaries.empty')}</td></tr>
+                                         )}
+                                      </tbody>
+                                   </table>
                                 </div>
                              </div>
                           </div>
@@ -696,103 +799,113 @@ export default function Clients() {
 
                         {/* Section 4: Historique des Achats */}
                         {selectedClient && !selectedClient.name.toLowerCase().includes('divers') && (
-                        <div className="lg:col-span-2 card bg-white shadow-sm border border-base-200 overflow-hidden">
-                           <div className="card-body p-0">
-                              <div className="flex justify-between items-center p-5 border-b border-base-100 bg-gray-50/30">
-                                 <h3 className="font-bold text-gray-700 flex items-center gap-2">
-                                    <span className="p-1.5 bg-primary/10 text-primary rounded-lg">🛒</span>
-                                    {t('clients.purchase_history.title', 'Historique des Achats')}
+                        <div className="lg:col-span-2 bg-base-100 rounded-3xl border border-base-200 shadow-sm overflow-hidden flex flex-col">
+                           <div className="p-5 border-b border-base-200 flex justify-between items-center bg-base-100">
+                              <div className="flex items-center gap-2">
+                                 <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
+                                    <ShoppingBag className="w-4 h-4" />
+                                 </div>
+                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                                    {t('clients.purchase_history.title')}
                                  </h3>
-                                 {purchaseHistory && (
-                                    <span className="badge badge-primary badge-outline font-medium">
-                                       {purchaseHistory.total_factures} {t('clients.purchase_history.invoices', 'facture(s)')}
-                                    </span>
-                                 )}
                               </div>
-                              
+                              {purchaseHistory && (
+                                 <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-primary/10 text-primary rounded-full">
+                                    {purchaseHistory.total_factures} {t('clients.purchase_history.invoices')}
+                                 </span>
+                              )}
+                           </div>
+                           
+                           <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[500px]">
                               {loadingHistory ? (
-                                 <div className="flex justify-center items-center py-12">
-                                    <span className="loading loading-spinner text-primary"></span>
+                                 <div className="flex justify-center items-center py-16">
+                                    <span className="loading loading-spinner text-primary/20"></span>
                                  </div>
                               ) : purchaseHistory && purchaseHistory.factures.length > 0 ? (
-                                 <div className="overflow-x-auto">
-                                    <table className="table w-full relative">
-                                       <thead className="bg-gray-50 text-gray-500 font-medium">
-                                          <tr>
-                                             <th className="w-12 text-center rounded-none font-medium">#</th>
-                                             <th className="font-medium">{t('clients.purchase_history.date', 'Date')}</th>
-                                             <th className="font-medium">{t('clients.purchase_history.invoice_number', 'N° Facture')}</th>
-                                             <th className="text-right font-medium rounded-none">{t('clients.purchase_history.total', 'Total TTC')}</th>
-                                          </tr>
-                                       </thead>
-                                       <tbody className="divide-y divide-gray-100">
-                                          {purchaseHistory.factures.map(facture => {
-                                              const isExpanded = expandedInvoice === facture.id;
-                                              const dateObj = new Date(facture.date);
-                                              const formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-                                              const formattedTime = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                                              
-                                              return (
-                                              <React.Fragment key={facture.id}>
-                                                 <tr 
-                                                    className={`hover:bg-primary/5 cursor-pointer transition-colors duration-200 ${isExpanded ? 'bg-primary/5' : ''}`}
-                                                    onClick={() => setExpandedInvoice(isExpanded ? null : facture.id)}
-                                                 >
-                                                    <td className="text-center text-gray-400">
-                                                       <div className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
-                                                          ▶
-                                                       </div>
-                                                    </td>
-                                                    <td>
-                                                        <div className="flex flex-col">
-                                                            <span className="font-semibold text-gray-700">{formattedDate}</span>
-                                                            <span className="text-xs text-gray-400">{formattedTime}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-mono font-medium border border-gray-200">
-                                                            🧾 {facture.numero_facture}
-                                                        </span>
-                                                    </td>
-                                                    <td className="text-right">
-                                                       <span className="font-bold text-gray-900 border-b border-gray-200 border-dashed pb-0.5">
-                                                          {Math.round(facture.total_ttc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
-                                                       </span>
+                                 <table className="table table-xs w-full">
+                                    <thead className="bg-base-200/50 text-base-content/40 font-black uppercase text-[9px] tracking-widest sticky top-0 z-10">
+                                       <tr>
+                                          <th className="w-10 text-center py-4"></th>
+                                          <th className="py-4">{t('clients.purchase_history.date')}</th>
+                                          <th className="py-4">{t('clients.purchase_history.invoice_number')}</th>
+                                          <th className="text-right py-4 pr-6">{t('clients.purchase_history.total')}</th>
+                                       </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-base-200/50">
+                                       {purchaseHistory.factures.map(facture => {
+                                           const isExpanded = expandedInvoice === facture.id;
+                                           const dateObj = new Date(facture.date);
+                                           const formattedDate = dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                                           const formattedTime = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                           
+                                           return (
+                                           <React.Fragment key={facture.id}>
+                                              <tr 
+                                                 className={`hover:bg-primary/5 cursor-pointer transition-colors duration-200 ${isExpanded ? 'bg-primary/5' : ''}`}
+                                                 onClick={() => setExpandedInvoice(isExpanded ? null : facture.id)}
+                                              >
+                                                 <td className="text-center text-base-content/20">
+                                                    <ChevronRight className={`w-3.5 h-3.5 transform transition-transform duration-200 ${isExpanded ? 'rotate-90 text-primary' : ''}`} />
+                                                 </td>
+                                                 <td className="py-4">
+                                                     <div className="flex flex-col">
+                                                         <span className="font-black text-sm text-base-content">{formattedDate}</span>
+                                                         <span className="text-[10px] font-bold opacity-30">{formattedTime}</span>
+                                                     </div>
+                                                 </td>
+                                                 <td className="py-4">
+                                                     <span className="text-[10px] font-black font-mono tracking-widest px-2 py-0.5 bg-base-200 text-base-content/60 rounded-md">
+                                                         {facture.numero_facture}
+                                                     </span>
+                                                 </td>
+                                                 <td className="text-right py-4 pr-6">
+                                                    <span className="font-black text-sm text-base-content">
+                                                       {formatCurrency(facture.total_ttc)}
+                                                    </span>
+                                                 </td>
+                                              </tr>
+                                              {isExpanded && (
+                                                 <tr className="bg-base-200/20">
+                                                    <td colSpan={4} className="p-0">
+                                                         <div className="p-6 pl-14 space-y-4 animate-in fade-in slide-in-from-top-1">
+                                                             <div className="flex items-center gap-2">
+                                                                <div className="h-px bg-base-300 flex-1"></div>
+                                                                <h4 className="text-[9px] font-black text-base-content/30 uppercase tracking-widest">{t('common.details', 'Détails')}</h4>
+                                                                <div className="h-px bg-base-300 flex-1"></div>
+                                                             </div>
+                                                             <div className="bg-base-100 rounded-3xl border border-base-200 overflow-hidden shadow-sm">
+                                                                <table className="table table-xs w-full">
+                                                                  <tbody className="divide-y divide-base-200/50">
+                                                                      {facture.produits.map((prod, idx) => (
+                                                                          <tr key={idx} className="hover:bg-base-200/10 transition-colors">
+                                                                              <td className="w-8 pl-5 py-3">
+                                                                                 <span className="w-6 h-6 rounded-lg bg-base-200 border border-base-300 flex items-center justify-center text-[10px] font-black text-base-content/60 shadow-inner">{prod.quantite}</span>
+                                                                              </td>
+                                                                              <td className="max-w-[200px] truncate">
+                                                                                 <div className="text-xs font-black text-base-content">{prod.nom}</div>
+                                                                                 <div className="text-[9px] opacity-30 font-bold uppercase tracking-tighter">Article de vente</div>
+                                                                              </td>
+                                                                              <td className="text-right pr-6 font-mono text-xs font-black text-primary py-3">
+                                                                                  {formatCurrency(prod.total)}
+                                                                              </td>
+                                                                          </tr>
+                                                                      ))}
+                                                                  </tbody>
+                                                                </table>
+                                                             </div>
+                                                         </div>
                                                     </td>
                                                  </tr>
-                                                 {isExpanded && (
-                                                    <tr className="bg-gray-50/50">
-                                                       <td colSpan={4} className="p-0 border-b-2 border-primary/10">
-                                                            <div className="p-4 pl-12">
-                                                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Détails des articles</h4>
-                                                                <div className="space-y-2">
-                                                                    {facture.produits.map((prod, idx) => (
-                                                                        <div key={idx} className="flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0 hover:bg-white rounded px-2 transition-colors">
-                                                                            <div className="flex items-center gap-3">
-                                                                                <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shadow-sm">{prod.quantite}</span>
-                                                                                <span className="text-sm font-medium text-gray-700">{prod.nom}</span>
-                                                                            </div>
-                                                                            <span className="font-mono text-sm font-semibold text-gray-600">
-                                                                                {Math.round(prod.total).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
-                                                                            </span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                       </td>
-                                                    </tr>
-                                                 )}
-                                              </React.Fragment>
-                                              );
-                                          })}
-                                       </tbody>
-                                    </table>
-                                 </div>
+                                              )}
+                                           </React.Fragment>
+                                           );
+                                       })}
+                                    </tbody>
+                                 </table>
                               ) : (
-                                 <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-full border border-gray-100 flex items-center justify-center text-2xl mb-4 shadow-sm">🛒</div>
-                                    <h4 className="text-lg font-bold text-gray-700 mb-1">{t('clients.purchase_history.empty', 'Aucun achat enregistré')}</h4>
-                                    <p className="text-sm text-gray-400 max-w-sm">Ce client n'a pas encore effectué d'achats ou l'historique est vide.</p>
+                                 <div className="flex flex-col items-center justify-center py-20 text-center opacity-10 grayscale">
+                                    <ShoppingBag className="w-16 h-16 mb-4" />
+                                    <h4 className="text-xs font-black uppercase tracking-widest">{t('clients.purchase_history.empty')}</h4>
                                  </div>
                               )}
                            </div>

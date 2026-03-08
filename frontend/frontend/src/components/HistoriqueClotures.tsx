@@ -7,6 +7,7 @@ import DatePicker, { registerLocale } from 'react-datepicker'
 import { usePharmacySettings } from '../hooks/usePharmacySettings'
 import BestCashierMetric from './BestCashierMetric'
 import { format } from 'date-fns'
+import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
 
 registerLocale('fr', fr)
 
@@ -129,7 +130,7 @@ export default function HistoriqueClotures() {
   }
 
   const formatMoney = (value: string | number) => {
-    return Math.round(parseFloat(String(value))).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    return formatCurrency(normalizeNumberInput(value))
   }
 
   const getModeLabel = (mode: string) => {
@@ -213,7 +214,7 @@ export default function HistoriqueClotures() {
               <span>RÉEL:</span>
               <span>${formatMoney(cloture.montant_reel)} F</span>
             </div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-top: 5px; ${parseFloat(cloture.ecart_caisse) !== 0 ? 'color: red;' : ''}">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-top: 5px; ${normalizeNumberInput(cloture.ecart_caisse) !== 0 ? 'color: red;' : ''}">
               <span>ÉCART:</span>
               <span>${formatMoney(cloture.ecart_caisse)} F</span>
             </div>
@@ -400,11 +401,11 @@ export default function HistoriqueClotures() {
              <div className="flex justify-between items-start">
                <div>
                   <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">Écart Global</h3>
-                  <p className={`text-2xl font-bold mt-1 ${globalTotals.ecart_caisse < 0 ? 'text-error' : globalTotals.ecart_caisse > 0 ? 'text-success' : 'text-base-content/50'}`}>
-                    {globalTotals.ecart_caisse > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)} <span className="text-base font-normal opacity-50">F</span>
+                  <p className={`text-2xl font-bold mt-1 ${normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'text-error' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'text-success' : 'text-base-content/50'}`}>
+                    {normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)} <span className="text-base font-normal opacity-50">F</span>
                   </p>
                </div>
-               <div className={`p-3 rounded-lg ${globalTotals.ecart_caisse < 0 ? 'bg-error/10 text-error' : globalTotals.ecart_caisse > 0 ? 'bg-success/10 text-success' : 'bg-base-200/50 text-base-content'}`}>
+                <div className={`p-3 rounded-lg ${normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'bg-error/10 text-error' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-base-200/50 text-base-content'}`}>
                  <XCircle className="w-6 h-6" />
                </div>
              </div>
@@ -463,8 +464,8 @@ export default function HistoriqueClotures() {
                         {formatMoney(cloture.montant_reel)}
                       </td>
                       <td className="text-right py-3">
-                        <div className={`badge badge-sm ${parseFloat(cloture.ecart_caisse) < 0 ? 'badge-error' : parseFloat(cloture.ecart_caisse) > 0 ? 'badge-success' : 'badge-ghost'} font-bold px-3 py-3`}>
-                          {parseFloat(cloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(cloture.ecart_caisse)} F
+                        <div className={`badge badge-sm ${normalizeNumberInput(cloture.ecart_caisse) < 0 ? 'badge-error' : normalizeNumberInput(cloture.ecart_caisse) > 0 ? 'badge-success' : 'badge-ghost'} font-bold px-3 py-3`}>
+                          {normalizeNumberInput(cloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(cloture.ecart_caisse)} F
                         </div>
                       </td>
                       <td className="text-center py-3">
@@ -499,8 +500,8 @@ export default function HistoriqueClotures() {
                     </td>
                     <td className="text-right py-4 text-base-content/80 text-lg">{formatMoney(globalTotals.montant_theorique)}</td>
                     <td className="text-right py-4 text-primary text-lg">{formatMoney(globalTotals.montant_reel)}</td>
-                    <td className={`text-right py-4 text-lg ${globalTotals.ecart_caisse < 0 ? 'text-error' : globalTotals.ecart_caisse > 0 ? 'text-success' : ''}`}>
-                      {globalTotals.ecart_caisse > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)}
+                    <td className={`text-right py-4 text-lg ${normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'text-error' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'text-success' : ''}`}>
+                      {normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)}
                     </td>
                     <td></td>
                   </tr>
@@ -578,10 +579,10 @@ export default function HistoriqueClotures() {
               </div>
 
               {/* Écart */}
-              <div className={`p-4 rounded-xl flex items-center justify-between ${parseFloat(selectedCloture.ecart_caisse) === 0 ? 'bg-success/10 text-success' : parseFloat(selectedCloture.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
+              <div className={`p-4 rounded-xl flex items-center justify-between ${normalizeNumberInput(selectedCloture.ecart_caisse) === 0 ? 'bg-success/10 text-success' : normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
                 <div className="font-bold uppercase tracking-wider text-sm">Écart constaté</div>
                 <div className="font-bold text-xl">
-                  {parseFloat(selectedCloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(selectedCloture.ecart_caisse)} F
+                  {normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(selectedCloture.ecart_caisse)} F
                 </div>
               </div>
 

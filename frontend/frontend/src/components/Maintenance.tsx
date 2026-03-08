@@ -6,6 +6,7 @@ import {
   Wrench, ChevronDown, ChevronUp, Database, Clock, Save
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatNumber } from '../utils/formatters';
 
 interface PurgeTable {
   key: string;
@@ -524,7 +525,7 @@ export default function Maintenance() {
           <div className="card-body">
             <h2 className="card-title text-lg mb-4">
               <Eye className="w-5 h-5 text-info" />
-              Prévisualisation — <span className="text-error">{totalPreviewCount.toLocaleString()}</span> lignes à supprimer
+              Prévisualisation — <span className="text-error">{formatNumber(totalPreviewCount)}</span> lignes à supprimer
             </h2>
             <div className="overflow-x-auto">
               <table className="table table-sm table-zebra">
@@ -541,7 +542,7 @@ export default function Maintenance() {
                       <td className="font-medium">{p.label}</td>
                       <td className="text-right">
                         <span className={`badge ${p.count > 0 ? 'badge-error' : 'badge-ghost'} badge-sm`}>
-                          {p.count.toLocaleString()}
+                          {formatNumber(p.count)}
                         </span>
                       </td>
                       <td>
@@ -549,7 +550,7 @@ export default function Maintenance() {
                           <div className="flex gap-2 flex-wrap">
                             {p.children.map((c, i) => (
                               <span key={i} className="badge badge-sm badge-outline">
-                                {c.label}: {c.count.toLocaleString()}
+                                {c.label}: {formatNumber(c.count)}
                               </span>
                             ))}
                           </div>
@@ -586,7 +587,7 @@ export default function Maintenance() {
                   {purgeResults.map(r => (
                     <tr key={r.key}>
                       <td>{r.label}</td>
-                      <td className="text-right font-bold text-success">{r.deleted.toLocaleString()}</td>
+                      <td className="text-right font-bold text-success">{formatNumber(r.deleted)}</td>
                     </tr>
                   ))}
                 </tbody>

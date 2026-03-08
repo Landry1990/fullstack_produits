@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 import type { Fournisseur } from '../types';
 import { useFinanceFournisseurs } from '../hooks/useFinanceFournisseurs';
 import PremiumModal from './common/PremiumModal';
@@ -42,13 +43,13 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!montant || isNaN(Number(montant))) return;
+        if (!montant || isNaN(normalizeNumberInput(montant))) return;
 
         setIsSubmitting(true);
         try {
             const payload: any = {
                 fournisseur: fournisseur.id,
-                montant: parseFloat(montant).toFixed(0),
+                montant: normalizeNumberInput(montant).toFixed(0),
                 mode_paiement: modePaiement as any,
                 reference: reference,
                 notes: notes
@@ -99,8 +100,8 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
             <div className="px-6 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-end">
                 <div className="text-right">
                     <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t('providers.details.debt_balance')}</p>
-                    <p className={`text-xl font-black font-mono ${ Number(fournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
-                        {Number(fournisseur.solde_dette || 0).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                    <p className={`text-xl font-black font-mono ${ normalizeNumberInput(fournisseur.solde_dette || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                        {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))} F
                     </p>
                 </div>
             </div>
@@ -237,7 +238,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                 )}
                                             </td>
                                             <td className="text-right font-bold font-mono">
-                                                {Number(paiement.montant).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                                {formatCurrency(normalizeNumberInput(paiement.montant))} F
                                             </td>
                                             <td className="text-center">
                                                 <button 

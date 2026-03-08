@@ -5,6 +5,7 @@ import {
   BarChart, Bar, LineChart, Line, Legend
 } from 'recharts';
 import { usePeakHours, useDailyComparison, useSeasonality } from '../hooks/useTemporalAnalysis';
+import { formatCurrency, formatNumber } from '../utils/formatters';
 
 export default function AnalyseTemporelle() {
   const { t } = useTranslation();
@@ -76,7 +77,7 @@ export default function AnalyseTemporelle() {
                        peakHoursData?.peak_hour ? 
                        t('temporal_analysis.peak_hour_summary', { 
                           hour: peakHoursData.peak_hour, 
-                          revenue: Math.round(peakHoursData.peak_revenue).toLocaleString() 
+                          revenue: formatCurrency(Math.round(peakHoursData.peak_revenue)) 
                        }) : 
                        'Pas assez de données'}
                     </p>
@@ -114,7 +115,7 @@ export default function AnalyseTemporelle() {
                       <Tooltip 
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                         formatter={(value: number, name: string) => [
-                          name === 'revenue' || name === 'avg_basket' ? `${Math.round(value).toLocaleString()} F` : value,
+                          name === 'revenue' || name === 'avg_basket' ? `${formatCurrency(Math.round(value))} F` : formatNumber(value),
                           name === 'revenue' ? 'Chiffre d\'Affaires' : name === 'sales_count' ? 'Nombre de ventes' : 'Panier Moyen'
                         ]}
                       />
@@ -159,7 +160,7 @@ export default function AnalyseTemporelle() {
                        dailyData?.best_day ? 
                        t('temporal_analysis.best_day_summary', {
                           day: dailyData.best_day,
-                          revenue: Math.round(dailyData.best_revenue).toLocaleString()
+                          revenue: formatCurrency(Math.round(dailyData.best_revenue))
                        }) : 
                        'Pas assez de données'}
                     </p>
@@ -191,7 +192,7 @@ export default function AnalyseTemporelle() {
                         <Tooltip 
                           cursor={{fill: 'transparent'}}
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                          formatter={(value: number) => [`${Math.round(value).toLocaleString()} F`, 'Chiffre d\'Affaires']}
+                        formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, 'Chiffre d\'Affaires']}
                         />
                         <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -217,8 +218,8 @@ export default function AnalyseTemporelle() {
                               {day.is_best && <span className="badge badge-sm badge-success text-white">Top</span>}
                             </td>
                             <td className="text-right">{day.sales_count}</td>
-                            <td className="text-right">{Math.round(day.avg_basket).toLocaleString()} F</td>
-                            <td className="text-right font-bold">{Math.round(day.revenue).toLocaleString()} F</td>
+                            <td className="text-right">{formatCurrency(Math.round(day.avg_basket))} F</td>
+                            <td className="text-right font-bold">{formatCurrency(Math.round(day.revenue))} F</td>
                           </tr>
                         ))}
                       </tbody>
@@ -274,7 +275,7 @@ export default function AnalyseTemporelle() {
                         <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `${val/1000000}M`} />
                         <Tooltip 
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                          formatter={(value: number) => [`${Math.round(value).toLocaleString()} F`, 'Chiffre d\'Affaires']}
+                          formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, 'Chiffre d\'Affaires']}
                         />
                         <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
                       </LineChart>

@@ -1,98 +1,35 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from '../config/axios';
+import produitService, { type ProduitFilters, type ProduitsResponse } from '../services/produitService';
 import type {
     ProduitModel,
-    Rayon,
-    Fournisseur,
-    AchatProduit,
-    StockLot,
-    StockAdjustment,
-    Forme
+    Rayon
 } from '../types';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-export const produitsEndpoint = `${apiBaseUrl}/api/produits/`;
-const categoriesEndpoint = `${apiBaseUrl}/api/categories/`;
-const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
-const formesEndpoint = `${apiBaseUrl}/api/formes/`;
-
-// Types
-interface ProduitFilters {
-    search?: string;
-    page?: number;
-    rayon?: string;
-    fournisseur?: string;
-    include_inactive?: boolean;
-}
-
-interface ProduitsResponse {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: ProduitModel[];
-}
-
-interface MonthlyStat {
-    year: number;
-    month: number;
-    month_name: string;
-    qte_v: number;
-    qte_c: number;
-    nb_c: number;
-}
 
 // Queries
 
 export const useProduits = (filters: ProduitFilters) => {
-    return useQuery({
+    return useQuery<ProduitsResponse>({
         queryKey: ['produits', filters],
-        queryFn: async () => {
-            // Return empty result if no search term (User requirement: empty by default)
-            const params = new URLSearchParams();
-            if (filters.search) params.append('search', filters.search);
-            if (filters.page) params.append('page', filters.page.toString());
-            if (filters.rayon) params.append('rayon', filters.rayon);
-            if (filters.fournisseur) params.append('fournisseur', filters.fournisseur);
-            if (filters.include_inactive) params.append('include_inactive', 'true');
-
-            const response = await axios.get<ProduitsResponse | ProduitModel[]>(produitsEndpoint, { params });
-
-            // Normalize response
-            if (Array.isArray(response.data)) {
-                return {
-                    count: response.data.length,
-                    next: null,
-                    previous: null,
-                    results: response.data
-                };
-            }
-            return response.data;
-        },
-        placeholderData: (previousData) => previousData,
-        // enabled: true // Fetch by default
+        queryFn: () => produitService.getAll(filters),
+        placeholderData: (previousData: ProduitsResponse | undefined) => previousData,
     });
 };
 
 export const useProduit = (id: number | null) => {
-    return useQuery({
+    return useQuery<ProduitModel | null>({
         queryKey: ['produit', id],
         queryFn: async () => {
             if (!id) return null;
-            const response = await axios.get<ProduitModel>(`${produitsEndpoint}${id}/`);
-            return response.data;
+            return produitService.getById(id);
         },
         enabled: !!id,
     });
 };
 
 export const useRayons = () => {
-    return useQuery({
+    return useQuery<Rayon[]>({
         queryKey: ['rayons', 'all'],
-        queryFn: async () => {
-            const response = await axios.get<Rayon[] | { results: Rayon[] }>(categoriesEndpoint, { params: { page_size: 1000 } });
-            if (Array.isArray(response.data)) return response.data;
-            return response.data.results;
-        },
+        queryFn: () => produitService.getRayons(),
         staleTime: 1000 * 60 * 30, // 30 mins
     });
 };
@@ -100,11 +37,7 @@ export const useRayons = () => {
 export const useFournisseurs = () => {
     return useQuery({
         queryKey: ['fournisseurs', 'all'],
-        queryFn: async () => {
-            const response = await axios.get<Fournisseur[] | { results: Fournisseur[] }>(fournisseursEndpoint, { params: { page_size: 1000 } });
-            if (Array.isArray(response.data)) return response.data;
-            return response.data.results;
-        },
+        queryFn: () => produitService.getFournisseurs(),
         staleTime: 1000 * 60 * 30, // 30 mins
     });
 };
@@ -112,24 +45,15 @@ export const useFournisseurs = () => {
 export const useFormes = () => {
     return useQuery({
         queryKey: ['formes', 'all'],
-        queryFn: async () => {
-            const response = await axios.get<Forme[] | { results: Forme[] }>(formesEndpoint, { params: { page_size: 1000 } });
-            if (Array.isArray(response.data)) return response.data;
-            return response.data.results;
-        },
+        queryFn: () => produitService.getFormes(),
         staleTime: 1000 * 60 * 30, // 30 mins
     });
 };
 
-// Hooks pour les Groupes
 export function useGroupes() {
-    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
     return useQuery({
         queryKey: ['groupes', 'all'],
-        queryFn: async () => {
-            const response = await axios.get(`${apiBaseUrl}/api/groupes/`, { params: { page_size: 1000 } })
-            return response.data.results || response.data
-        },
+        queryFn: () => produitService.getGroupes(),
         staleTime: 5 * 60 * 1000,
     })
 }
@@ -139,14 +63,7 @@ export function useGroupes() {
 export const useProduitAchats = (produitId: number | null) => {
     return useQuery({
         queryKey: ['produit-achats', produitId],
-        queryFn: async () => {
-            if (!produitId) return [];
-            const response = await axios.get<AchatProduit[] | { results: AchatProduit[] }>(
-                `${apiBaseUrl}/api/commande-produits/`,
-                { params: { produit: produitId } }
-            );
-            return Array.isArray(response.data) ? response.data : (response.data.results || []);
-        },
+        queryFn: () => produitId ? produitService.getAchats(produitId) : Promise.resolve([]),
         enabled: !!produitId,
     });
 };
@@ -154,14 +71,7 @@ export const useProduitAchats = (produitId: number | null) => {
 export const useProduitLots = (produitId: number | null) => {
     return useQuery({
         queryKey: ['produit-lots', produitId],
-        queryFn: async () => {
-            if (!produitId) return [];
-            const response = await axios.get<StockLot[] | { results: StockLot[] }>(
-                `${apiBaseUrl}/api/stock-lots/`,
-                { params: { produit: produitId, ordering: 'date_expiration' } }
-            );
-            return Array.isArray(response.data) ? response.data : (response.data.results || []);
-        },
+        queryFn: () => produitId ? produitService.getLots(produitId) : Promise.resolve([]),
         enabled: !!produitId,
     });
 };
@@ -169,14 +79,7 @@ export const useProduitLots = (produitId: number | null) => {
 export const useProduitAdjustments = (produitId: number | null) => {
     return useQuery({
         queryKey: ['produit-adjustments', produitId],
-        queryFn: async () => {
-            if (!produitId) return [];
-            const response = await axios.get<StockAdjustment[] | { results: StockAdjustment[] }>(
-                `${apiBaseUrl}/api/stock-adjustments/`,
-                { params: { produit: produitId, ordering: '-created_at' } }
-            );
-            return Array.isArray(response.data) ? response.data : (response.data.results || []);
-        },
+        queryFn: () => produitId ? produitService.getAdjustments(produitId) : Promise.resolve([]),
         enabled: !!produitId,
     });
 };
@@ -184,11 +87,7 @@ export const useProduitAdjustments = (produitId: number | null) => {
 export const useProduitStats = (produitId: number | null) => {
     return useQuery({
         queryKey: ['produit-stats', produitId],
-        queryFn: async () => {
-            if (!produitId) return [];
-            const response = await axios.get<MonthlyStat[]>(`${produitsEndpoint}${produitId}/monthly_stats/`);
-            return response.data;
-        },
+        queryFn: () => produitId ? produitService.getStats(produitId) : Promise.resolve([]),
         enabled: !!produitId,
     });
 };
@@ -196,11 +95,7 @@ export const useProduitStats = (produitId: number | null) => {
 export const useProduitHistory = (produitId: number | null, activeTab: string) => {
     return useQuery({
         queryKey: ['produit-history', produitId, activeTab],
-        queryFn: async () => {
-            if (!produitId) return [];
-            const response = await axios.get<any[]>(`${produitsEndpoint}${produitId}/history/`);
-            return response.data;
-        },
+        queryFn: () => produitId ? produitService.getHistory(produitId) : Promise.resolve([]),
         enabled: !!produitId && activeTab === 'mvmts',
     });
 };
@@ -210,14 +105,10 @@ export const useProduitHistory = (produitId: number | null, activeTab: string) =
 export const useUpdateProduit = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, data }: { id: number; data: Partial<ProduitModel> }) => {
-            const response = await axios.patch<ProduitModel>(`${produitsEndpoint}${id}/`, data);
-            return response.data;
-        },
+        mutationFn: ({ id, data }: { id: number; data: Partial<ProduitModel> }) =>
+            produitService.update(id, data),
         onSuccess: (updatedProduit) => {
-            // Update specific product cache
             queryClient.setQueryData(['produit', updatedProduit.id], updatedProduit);
-            // Invalidate list to refresh data
             queryClient.invalidateQueries({ queryKey: ['produits'] });
         },
     });
@@ -226,10 +117,7 @@ export const useUpdateProduit = () => {
 export const useCreateProduit = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (data: Partial<ProduitModel>) => {
-            const response = await axios.post<ProduitModel>(produitsEndpoint, data);
-            return response.data;
-        },
+        mutationFn: (data: Partial<ProduitModel>) => produitService.create(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['produits'] });
         },
@@ -239,10 +127,7 @@ export const useCreateProduit = () => {
 export const useDeleteProduit = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (id: number) => {
-            await axios.delete(`${produitsEndpoint}${id}/`);
-            return id;
-        },
+        mutationFn: (id: number) => produitService.delete(id).then(() => id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['produits'] });
         },
@@ -252,15 +137,9 @@ export const useDeleteProduit = () => {
 export const useAdjustStock = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ id, quantity, reason }: { id: number; quantity: number; reason: string }) => {
-            const response = await axios.post(`${produitsEndpoint}${id}/adjust_stock/`, {
-                new_quantity: quantity,
-                reason_type: reason
-            });
-            return response.data;
-        },
+        mutationFn: ({ id, quantity, reason }: { id: number; quantity: number; reason: string }) =>
+            produitService.adjustStock(id, quantity, reason),
         onSuccess: (_, variables) => {
-            // Invalidate product details and list
             queryClient.invalidateQueries({ queryKey: ['produit', variables.id] });
             queryClient.invalidateQueries({ queryKey: ['produits'] });
             queryClient.invalidateQueries({ queryKey: ['produit-adjustments', variables.id] });
@@ -270,25 +149,14 @@ export const useAdjustStock = () => {
 
 export const useRecalculateRotation = () => {
     return useMutation({
-        mutationFn: async () => {
-            const response = await axios.post<{ message: string }>(`${produitsEndpoint}recalculate_rotation/`);
-            return response.data;
-        },
+        mutationFn: () => produitService.recalculateRotation(),
     });
 };
 
 export const useImportCsv = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (file: File) => {
-            const formData = new FormData();
-            formData.append('file', file);
-            const importEndpoint = `${apiBaseUrl}/api/produits-import/import_csv/`;
-            const response = await axios.post(importEndpoint, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            return response.data;
-        },
+        mutationFn: (file: File) => produitService.importCsv(file),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['produits'] });
         }
@@ -297,15 +165,8 @@ export const useImportCsv = () => {
 
 export const useBulkDelete = () => {
     const queryClient = useQueryClient();
-    // This is a bit complex as it iterates. 
-    // We might want to keep the iteration logic in the component or move it here.
-    // For now, let's keep the iteration logic in the component but expose a single delete mutation helper if needed.
-    // Actually, `useDeleteProduit` is sufficient if called in loop, or we can make a bulk mutation.
     return useMutation({
-        mutationFn: async (ids: number[]) => {
-            const response = await axios.post(`${produitsEndpoint}bulk_delete/`, { ids });
-            return response.data;
-        },
+        mutationFn: (ids: number[]) => produitService.bulkDelete(ids),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['produits'] });
         }

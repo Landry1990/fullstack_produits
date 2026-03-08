@@ -27,6 +27,9 @@
             "cancel": "Annuler",
             "delete": "Supprimer"
         },
+        "actions_title": "Actions",
+        "single_selection": "Sélection",
+        "duplicate": "Dupliquer",
         "pagination": {
             "prev": "Précédent",
             "next": "Suivant"
@@ -1440,6 +1443,7 @@
             "amount": "Montant",
             "payment_mode": "Mode Paiement",
             "date": "Date",
+            "operator": "Vendeur",
             "status": "Statut",
             "cancellation_reason": "Motif Annulation",
             "discount": "Remise",

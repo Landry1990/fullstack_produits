@@ -4,6 +4,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Check, X, Printer, MessageCircle, MoreVertical } from 'lucide-react';
 import type { Promis } from '../../types';
+import ActionIcon from '../ui/ActionIcon';
+import SelectionHeader from '../ui/SelectionHeader';
 
 interface PromisTableProps {
     promisList: Promis[];
@@ -16,6 +18,10 @@ interface PromisTableProps {
     onPrint: (id: number) => void;
     onSms: (promis: Promis) => void;
     onWhatsApp: (id: number) => void;
+    onBulkDeliver: () => void;
+    onBulkCancel: () => void;
+    onClearSelection: () => void;
+    bulkLoading: boolean;
 }
 
 export const PromisTable: React.FC<PromisTableProps> = ({
@@ -28,7 +34,11 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     onCancel,
     onPrint,
     onSms,
-    onWhatsApp
+    onWhatsApp,
+    onBulkDeliver,
+    onBulkCancel,
+    onClearSelection,
+    bulkLoading
 }) => {
     const { t } = useTranslation();
 
@@ -66,6 +76,73 @@ export const PromisTable: React.FC<PromisTableProps> = ({
     const attPromisCount = promisList.filter(p => p.status === 'ATT').length;
     const allSelected = attPromisCount > 0 && selectedIds.size === attPromisCount;
 
+    const renderBulkActions = () => {
+        if (selectedIds.size === 1) {
+            const id = Array.from(selectedIds)[0];
+            const p = promisList.find(x => x.id === id);
+            if (!p) return null;
+            return (
+                <>
+                    <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                        {t('common.single_selection', { defaultValue: 'Sélection' })}
+                    </li>
+                    {p.status === 'ATT' && (
+                        <>
+                            <li>
+                                <a onClick={() => onDeliver(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
+                                    <Check className="w-4 h-4" /> {t('promis.actions.deliver', 'Délivrer')}
+                                </a>
+                            </li>
+                            <li>
+                                <a onClick={() => onCancel(id)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                                    <X className="w-4 h-4" /> {t('promis.actions.cancel', 'Annuler')}
+                                </a>
+                            </li>
+                        </>
+                    )}
+                    <li>
+                        <a onClick={() => onPrint(id)} className="flex items-center gap-3 py-3 hover:bg-base-200">
+                            <Printer className="w-4 h-4" /> {t('promis.actions.print', 'Imprimer Ticket')}
+                        </a>
+                    </li>
+                    {p.client_phone_display && (
+                        <>
+                            <li>
+                                <a onClick={() => onSms(p)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info">
+                                    <MessageCircle className="w-4 h-4" /> Envoyer SMS
+                                </a>
+                            </li>
+                            <li>
+                                <a onClick={() => onWhatsApp(id)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success">
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> Rappel WhatsApp
+                            </a>
+                        </li>
+                    </>
+                    )}
+                </>
+            );
+        }
+        return (
+            <>
+                <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                    {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                </li>
+                <li>
+                    <a onClick={onBulkDeliver} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="w-4 h-4" />}
+                        {t('promis.modals.bulk_delivery_confirm', 'Livrer tous')}
+                    </a>
+                </li>
+                <li>
+                    <a onClick={onBulkCancel} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
+                        {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <X className="w-4 h-4" />}
+                        {t('promis.modals.bulk_cancel_confirm', 'Annuler tous')}
+                    </a>
+                </li>
+            </>
+        );
+    };
+
     return (
         <div className="overflow-auto w-full h-full relative">
             <table className="table table-zebra table-pin-rows w-full text-sm">
@@ -82,13 +159,22 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 />
                             </label>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.date', 'Date')}</th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.client', 'Client')}</th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.phone', 'Téléphone')}</th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.product', 'Produit')}</th>
-                        <th className="text-center sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.qty', 'Qté')}</th>
-                        <th className="text-center sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.status', 'Statut')}</th>
-                        <th className="text-right rounded-tr-xl sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">{t('promis.table.actions', 'Actions')}</th>
+                        <SelectionHeader
+                            selectedCount={selectedIds.size}
+                            onClear={onClearSelection}
+                            colSpan={7}
+                            actions={renderBulkActions()}
+                        >
+                            <div className="grid grid-cols-7 w-full h-full items-center text-[10px] font-black uppercase tracking-widest text-base-content/40">
+                                <div className="col-span-1">{t('promis.table.date', { defaultValue: 'Date' })}</div>
+                                <div className="col-span-1">{t('promis.table.client', { defaultValue: 'Client' })}</div>
+                                <div className="col-span-1">{t('promis.table.phone', { defaultValue: 'Téléphone' })}</div>
+                                <div className="col-span-1">{t('promis.table.product', { defaultValue: 'Produit' })}</div>
+                                <div className="col-span-1 text-center">{t('promis.table.qty', { defaultValue: 'Qté' })}</div>
+                                <div className="col-span-1 text-center">{t('promis.table.status', { defaultValue: 'Statut' })}</div>
+                                <div className="col-span-1 text-right pr-4">{t('promis.table.actions', { defaultValue: 'Actions' })}</div>
+                            </div>
+                        </SelectionHeader>
                     </tr>
                 </thead>
                 <tbody className="text-base-content font-medium">
@@ -140,22 +226,24 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 )}
                             </td>
                             <td className="text-right">
-                                {p.status === 'ATT' ? (
+                                {selectedIds.size === 0 && (
                                     <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                                        <button 
-                                            className="p-1.5 text-success hover:bg-success/10 rounded-lg transition-colors"
-                                            onClick={() => onDeliver(p.id)}
-                                            title={t('promis.actions.deliver', 'Délivrer')}
-                                        >
-                                            <Check className="w-[18px] h-[18px]" />
-                                        </button>
-                                        <button 
-                                            className="p-1.5 text-error hover:bg-error/10 rounded-lg transition-colors"
-                                            onClick={() => onCancel(p.id)}
-                                            title={t('promis.actions.cancel', 'Annuler')}
-                                        >
-                                            <X className="w-[18px] h-[18px]" />
-                                        </button>
+                                        {p.status === 'ATT' && (
+                                            <>
+                                                <ActionIcon 
+                                                    icon={Check}
+                                                    onClick={() => onDeliver(p.id)}
+                                                    title={t('promis.actions.deliver', 'Délivrer')}
+                                                    variant="success"
+                                                />
+                                                <ActionIcon 
+                                                    icon={X}
+                                                    onClick={() => onCancel(p.id)}
+                                                    title={t('promis.actions.cancel', 'Annuler')}
+                                                    variant="error"
+                                                />
+                                            </>
+                                        )}
                                         
                                         <div className="dropdown dropdown-end dropdown-hover">
                                             <div tabIndex={0} role="button" className="p-1.5 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors">
@@ -178,26 +266,13 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                                         </li>
                                                         <li>
                                                             <a onClick={() => onWhatsApp(p.id)} className="flex items-center gap-2 hover:bg-success/10 hover:text-success font-bold">
-                                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/>
-                                                                </svg>
-                                                                Rappel WhatsApp
+                                                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .018 5.396.015 12.03c0 2.12.541 4.191 1.57 6.017L0 24l6.135-1.61a11.75 11.75 0 005.917 1.595h.004c6.637 0 12.032-5.396 12.035-12.032.002-3.218-1.248-6.242-3.517-8.511z"/></svg> Rappel WhatsApp
                                                             </a>
                                                         </li>
                                                     </>
                                                 )}
                                             </ul>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-end">
-                                        <button 
-                                            className="p-1.5 text-base-content/40 hover:text-base-content/80 hover:bg-base-200 rounded-lg transition-colors"
-                                            onClick={() => onPrint(p.id)}
-                                            title={t('promis.actions.print', 'Imprimer')}
-                                        >
-                                            <Printer className="w-[18px] h-[18px]" />
-                                        </button>
                                     </div>
                                 )}
                             </td>

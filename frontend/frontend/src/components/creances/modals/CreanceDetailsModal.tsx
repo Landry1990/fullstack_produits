@@ -1,6 +1,7 @@
 import { Printer, History } from 'lucide-react';
 import type { Creance } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
+import { formatCurrency } from '../../../utils/formatters';
 
 interface CreanceDetailsModalProps {
     isOpen: boolean;
@@ -56,11 +57,11 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                         <div className="text-[10px] font-black uppercase text-base-content/40 tracking-widest">Résumé Financier</div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold">Total:</span>
-                            <span className="font-black">{(Math.round(parseFloat(creance.total_ttc))).toLocaleString()} F</span>
+                            <span className="font-black">{formatCurrency(Math.round(parseFloat(creance.total_ttc)))} F</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-warning">Reste:</span>
-                            <span className="font-black text-warning">{(Math.round(parseFloat(creance.reste_a_payer))).toLocaleString()} F</span>
+                            <span className="font-black text-warning">{formatCurrency(Math.round(parseFloat(creance.reste_a_payer)))} F</span>
                         </div>
                     </div>
                 </div>
@@ -90,7 +91,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                 <tbody className="text-sm">
                                     {paiements.map((p: any) => (
                                         <tr key={p.id} className="hover:bg-base-50 transition-colors border-b border-base-100 last:border-none">
-                                            <td className="font-mono text-base-content/60">{new Date(p.date_paiement || p.created_at).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                                            <td className="font-mono text-base-content/60">{new Date(p.date_paiement || p.created_at).toLocaleString('fr-FR')}</td>
                                             <td className="font-bold">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-lg leading-none">{getModeIcon(p.mode_paiement)}</span>
@@ -98,7 +99,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                                                 </div>
                                             </td>
                                             <td className="font-mono text-xs text-base-content/50">{p.reference || '-'}</td>
-                                            <td className="text-right font-black italic">{(Math.round(parseFloat(p.montant))).toLocaleString()} F</td>
+                                            <td className="text-right font-black italic">{formatCurrency(Math.round(parseFloat(p.montant)))} F</td>
                                             <td className="text-center">
                                                 <button 
                                                     onClick={() => onPrintReceipt(creance.id, p.id)}
@@ -119,7 +120,7 @@ export const CreanceDetailsModal: React.FC<CreanceDetailsModalProps> = ({
                 <div className="flex justify-between items-center bg-primary/5 p-4 rounded-2xl border border-primary/10">
                     <div className="text-xs font-bold text-primary/60 uppercase tracking-widest">Total encaissé sur cette facture</div>
                     <div className="text-2xl font-black text-primary italic tracking-tighter">
-                        {(Math.round(parseFloat(creance.montant_paye))).toLocaleString()} F
+                        {formatCurrency(Math.round(parseFloat(creance.montant_paye)))} F
                     </div>
                 </div>
 

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import axios from '../config/axios';
 import { toast } from 'react-hot-toast';
 import * as XLSX from 'xlsx';
+import { formatCurrency, formatNumber } from '../utils/formatters';
 
 // Types
 export type ParamType = 'month' | 'date' | 'datetime' | 'select' | 'number' | 'text' | 'client_id';
@@ -227,17 +228,21 @@ export const formatColumnHeader = (col: string): string => {
     return COLUMN_LABELS[col] || col.replace(/_/g, ' ');
 };
 
-export const formatValue = (key: string, value: any): string => {
+export const formatValue = (key: string, value: unknown): string => {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'number') {
-        if (key.includes('pourcent') || key.includes('percent')) {
-            return value.toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %';
+        if (key.includes('taux') || key.includes('percent')) {
+            return formatNumber(value, 1) + ' %';
         }
-        return Math.round(value).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') || key.includes('cout') || key.includes('marge') ? ' F' : '');
+        if (key.includes('montant') || key.includes('total') || key.includes('ca') || key.includes('price') || key.includes('cout') || key.includes('marge')) {
+            return formatCurrency(value);
+        }
+        return formatNumber(value);
     }
-    if (typeof value === 'object') {
-        if (value.name) return value.name;
-        if (value.numero_facture) return value.numero_facture;
+    if (typeof value === 'object' && value !== null) {
+        const obj = value as Record<string, unknown>;
+        if (obj.name) return String(obj.name);
+        if (obj.numero_facture) return String(obj.numero_facture);
         return JSON.stringify(value);
     }
     return String(value);
@@ -249,8 +254,8 @@ export function useCentreRapports() {
     const [searchParams] = useSearchParams();
 
     const [selectedQuery, setSelectedQuery] = useState<QueryDefinition | null>(null);
-    const [params, setParams] = useState<Record<string, any>>({});
-    const [results, setResults] = useState<any>(null);
+    const [params, setParams] = useState<Record<string, string | number | boolean>>({});
+    const [results, setResults] = useState<unknown>(null);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -279,8 +284,8 @@ export function useCentreRapports() {
         return new Date().toISOString().slice(0, 10);
     }, []);
 
-    const safeDate = useCallback((dateStr: any): Date | null => {
-        if (!dateStr) return null;
+    const safeDate = useCallback((dateStr: unknown): Date | null => {
+        if (!dateStr || typeof dateStr !== 'string') return null;
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? null : d;
     }, []);
@@ -333,7 +338,7 @@ export function useCentreRapports() {
         setClientSearch('');
         setSelectedClientName('');
 
-        const defaultParams: Record<string, any> = {};
+        const defaultParams: Record<string, string | number | boolean> = {};
         query.params.forEach(p => {
             if (p.default !== undefined) {
                 defaultParams[p.key] = p.default;
@@ -402,35 +407,36 @@ export function useCentreRapports() {
             return;
         }
 
-        let data: Record<string, any>[] = [];
+        let data: Record<string, string | number | boolean>[] = [];
 
         if (Array.isArray(results) && results.length > 0) {
             const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id').slice(0, 8);
-            data = results.map(row => {
-                const obj: Record<string, any> = {};
+            data = (results as Record<string, unknown>[]).map(row => {
+                const obj: Record<string, string | number | boolean> = {};
                 columns.forEach(col => {
                     const header = formatColumnHeader(col);
                     const val = row[col];
                     if (val === null || val === undefined) {
                         obj[header] = '';
-                    } else if (typeof val === 'object') {
-                        obj[header] = val.name || JSON.stringify(val);
+                    } else if (typeof val === 'object' && val !== null) {
+                        obj[header] = (val as { name?: string }).name || JSON.stringify(val);
                     } else {
-                        obj[header] = val;
+                        obj[header] = val as string | number | boolean;
                     }
                 });
                 return obj;
             });
-        } else if (typeof results === 'object' && !Array.isArray(results)) {
+        } else if (typeof results === 'object' && results !== null && !Array.isArray(results)) {
             Object.entries(results).forEach(([key, value]) => {
                 const formattedKey = formatColumnHeader(key);
                 let formattedValue = '';
                 if (typeof value === 'object' && value !== null) {
-                    formattedValue = Object.entries(value as object).map(([k, v]) => `${k}: ${v}`).join(', ');
+                    formattedValue = Object.entries(value).map(([k, v]) => `${k}: ${v}`).join(', ');
                 } else {
                     formattedValue = String(value ?? '');
                 }
-                data.push({ 'Indicateur': formattedKey, 'Valeur': formattedValue });
+                const row: Record<string, string | number | boolean> = { 'Indicateur': formattedKey, 'Valeur': formattedValue };
+                data.push(row);
             });
         } else {
             toast.error(t('reports.results.export_unsupported'));

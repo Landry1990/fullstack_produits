@@ -1,7 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt, Clock, MoreVertical, Copy, FileDigit } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt, Clock, Copy, FileDigit } from 'lucide-react';
 import type { Facture } from '../../types';
+import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
+import ActionIcon from '../ui/ActionIcon';
+import SelectionHeader from '../ui/SelectionHeader';
 
 interface SalesTableProps {
     factures: Facture[];
@@ -50,8 +53,6 @@ export const SalesTable: React.FC<SalesTableProps> = ({
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            // Select only drafts or cancellable? Or all?
-            // Usually select all visible.
             setSelectedIds(factures.map(f => f.id));
         } else {
             setSelectedIds([]);
@@ -92,6 +93,76 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         );
     }
 
+    const renderBulkActions = () => {
+        if (selectedIds.length === 1) {
+            const selectedFacture = factures.find(f => f.id === selectedIds[0]);
+            if (!selectedFacture) return null;
+            return (
+                <>
+                    <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common.single_selection', { defaultValue: 'Sélection' })}</li>
+                    <li>
+                        <a onClick={() => onView(selectedFacture)} className="gap-3 py-3">
+                            <Eye className="w-4 h-4 text-secondary" />
+                            {t('common.details')}
+                        </a>
+                    </li>
+                    <li>
+                        <a onClick={() => onPrint(selectedFacture)} className="gap-3 py-3">
+                            <Printer className="w-4 h-4 text-primary" />
+                            Format A4
+                        </a>
+                    </li>
+                    <li>
+                        <a onClick={() => onPrintTicket(selectedFacture)} className="gap-3 py-3">
+                            <Receipt className="w-4 h-4 text-primary" />
+                            Ticket Caisse
+                        </a>
+                    </li>
+                    <li>
+                        <a onClick={() => onDuplicate(selectedFacture)} className="gap-3 py-3">
+                            <Copy className="w-4 h-4 text-info" />
+                            {t('common.duplicate', { defaultValue: 'Dupliquer' })}
+                        </a>
+                    </li>
+                    {(selectedFacture.status === 'VALIDEE' || selectedFacture.status === 'PAY' || selectedFacture.status === 'VAL' || selectedFacture.status === 'PAYEE') && (
+                        <li>
+                            <a onClick={() => onGenerateAvoir(selectedFacture)} className="gap-3 py-3">
+                                <FileDigit className="w-4 h-4 text-primary" />
+                                Générer un avoir
+                            </a>
+                        </li>
+                    )}
+                    {selectedFacture.status !== 'ANN' && selectedFacture.status !== 'BROU' && (
+                        <li>
+                            <a onClick={() => onRefund(selectedFacture)} className="gap-3 py-3">
+                                <RotateCcw className="w-4 h-4 text-warning" />
+                                {t('common.refund', { defaultValue: "Modifier/Retour" })}
+                            </a>
+                        </li>
+                    )}
+                    <div className="divider my-0"></div>
+                    <li>
+                        <a onClick={() => onDelete(selectedFacture.id)} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
+                            <Trash2 className="w-4 h-4" />
+                            {t('common.delete')}
+                        </a>
+                    </li>
+                </>
+            );
+        }
+        return (
+            <>
+                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}</li>
+                <li>
+                    <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
+                        <Trash2 className="w-4 h-4" />
+                        Supprimer les {selectedIds.length} factures
+                    </a>
+                </li>
+            </>
+        );
+    };
+
     return (
         <div className="overflow-x-auto">
             <table className="w-full">
@@ -105,32 +176,22 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 checked={factures.length > 0 && selectedIds.length === factures.length}
                             />
                         </th>
-                        <th className="px-6 py-4 rounded-tl-2xl">
-                            {selectedIds.length > 0 ? (
-                                <span className="text-primary font-bold normal-case text-sm">
-                                    {selectedIds.length} sélectionné(s)
-                                </span>
-                            ) : t('sales.table.invoice_number')}
-                        </th>
-                        <th className="px-6 py-4">{t('sales.table.client')}</th>
-                        <th className="px-6 py-4 hidden xl:table-cell">{t('sales.table.operator', {defaultValue: "Vendeur"})}</th>
-                        <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
-                        <th className="px-6 py-4 text-center">Régler</th>
-                        <th className="px-6 py-4 text-center">En compte</th>
-                        <th className="px-6 py-4 text-center hidden lg:table-cell">{t('sales.table.discount', {defaultValue: "Remise"})}</th>
-                        <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales.table.status')}</th>
-
-                        <th className="px-6 py-4 text-right rounded-tr-2xl">
-                             {selectedIds.length > 0 && onBulkDelete ? (
-                                <button 
-                                    onClick={handleBulkDelete}
-                                    className="btn btn-xs btn-error text-white gap-1 animate-in fade-in zoom-in"
-                                >
-                                    <Trash2 className="w-3 h-3" />
-                                    Supprimer ({selectedIds.length})
-                                </button>
-                            ) : t('sales.table.actions')}
-                        </th>
+                        <SelectionHeader
+                            selectedCount={selectedIds.length}
+                            onClear={() => setSelectedIds([])}
+                            colSpan={8}
+                            actions={renderBulkActions()}
+                        >
+                            <div className="grid grid-cols-7 w-full h-full items-center text-xs font-semibold text-base-content/60 uppercase tracking-wider">
+                                <div className="col-span-1">{t('sales.table.invoice_number')}</div>
+                                <div className="col-span-1">{t('sales.table.client')}</div>
+                                <div className="col-span-1 hidden xl:block">{t('sales.table.operator', {defaultValue: "Vendeur"})}</div>
+                                <div className="col-span-1 text-center">{t('sales.table.amount')}</div>
+                                <div className="col-span-1 text-center">Régler</div>
+                                <div className="col-span-1 text-center">En compte</div>
+                                <div className="col-span-1 text-right pr-4">{t('sales.table.actions')}</div>
+                            </div>
+                        </SelectionHeader>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200">
@@ -183,25 +244,18 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-base-200 text-base-content font-mono font-bold text-sm border border-base-300 group-hover:bg-base-100 group-hover:border-primary/30 group-hover:text-primary group-hover:shadow-sm transition-all">
-                                    {parseFloat(facture.total_ttc).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                    {formatCurrency(normalizeNumberInput(facture.total_ttc))}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className="text-success font-bold font-mono text-sm">
-                                    {parseFloat(facture.montant_regle || '0').toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                    {formatCurrency(normalizeNumberInput(facture.montant_regle || '0'))}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center">
-                                <span className={`${parseFloat(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm`}>
-                                    {parseFloat(facture.montant_en_compte || '0').toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F
+                                <span className={`${normalizeNumberInput(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm`}>
+                                    {formatCurrency(normalizeNumberInput(facture.montant_en_compte || '0'))}
                                 </span>
-                            </td>
-                            <td className="px-6 py-4 text-center hidden lg:table-cell">
-                                {parseFloat(facture.remise) > 0 ? (
-                                    <span className="text-error font-medium">-{parseFloat(facture.remise).toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} F</span>
-                                ) : (
-                                    <span className="text-base-content/30">-</span>
-                                )}
                             </td>
                             <td className="px-6 py-4 text-center hidden md:table-cell">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border
@@ -215,68 +269,28 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </td>
 
                             <td className="px-6 py-4 text-right">
-                                <div className="flex justify-end opacity-60 group-hover:opacity-100 transition-opacity">
-                                    <div className="dropdown dropdown-end">
-                                        <div tabIndex={0} role="button" className="p-2 text-base-content/60 hover:text-primary hover:bg-primary/10 rounded-lg transition-all" title="Actions">
-                                            <MoreVertical className="w-5 h-5" />
-                                        </div>
-                                        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-56 border border-base-200">
-                                            <li>
-                                                <a onClick={() => onView(facture)} className="gap-3 hover:bg-secondary/10 hover:text-secondary font-medium">
-                                                    <Eye className="w-4 h-4" />
-                                                    {t('common.details')}
-                                                </a>
-                                            </li>
-                                            <div className="divider my-1"></div>
-                                            <li>
-                                                <a onClick={() => onPrint(facture)} className="gap-3 hover:bg-primary/10 hover:text-primary font-medium">
-                                                    <Printer className="w-4 h-4" />
-                                                    Format A4
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a onClick={() => onPrintTicket(facture)} className="gap-3 hover:bg-primary/10 hover:text-primary font-medium">
-                                                    <Receipt className="w-4 h-4" />
-                                                    Ticket Caisse
-                                                </a>
-                                            </li>
-                                            <div className="divider my-1"></div>
-                                            <li>
-                                                <a onClick={() => onDuplicate(facture)} className="gap-3 hover:bg-info/10 hover:text-info font-medium">
-                                                    <Copy className="w-4 h-4" />
-                                                    {t('common.duplicate', { defaultValue: 'Dupliquer' })}
-                                                </a>
-                                            </li>
-                                            
-                                            {(facture.status === 'VALIDEE' || facture.status === 'PAY' || facture.status === 'VAL' || facture.status === 'PAYEE') && (
-                                                <li>
-                                                    <a onClick={() => onGenerateAvoir(facture)} className="gap-3 hover:bg-primary/10 hover:text-primary font-medium">
-                                                        <FileDigit className="w-4 h-4" />
-                                                        Générer un avoir
-                                                    </a>
-                                                </li>
-                                            )}
-
-                                            {facture.status !== 'ANN' && facture.status !== 'BROU' && (
-                                                <li>
-                                                    <a onClick={() => onRefund(facture)} className="gap-3 hover:bg-warning/10 hover:text-warning font-medium">
-                                                        <RotateCcw className="w-4 h-4" />
-                                                        {t('common.refund', { defaultValue: "Modifier/Retour" })}
-                                                    </a>
-                                                </li>
-                                            )}
-                                            
-                                            <div className="divider my-1"></div>
-                                            
-                                            <li>
-                                                <a onClick={() => onDelete(facture.id)} className="gap-3 text-error hover:text-error hover:bg-error/10 font-medium">
-                                                    <Trash2 className="w-4 h-4" />
-                                                    {t('common.delete')}
-                                                </a>
-                                            </li>
-                                        </ul>
+                                {selectedIds.length === 0 && (
+                                    <div className="flex justify-end gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
+                                        <ActionIcon 
+                                            icon={Eye}
+                                            onClick={() => onView(facture)}
+                                            title={t('common.details')}
+                                            variant="secondary"
+                                        />
+                                        <ActionIcon 
+                                            icon={Printer}
+                                            onClick={() => onPrint(facture)}
+                                            title="Format A4"
+                                            variant="primary"
+                                        />
+                                        <ActionIcon 
+                                            icon={Receipt}
+                                            onClick={() => onPrintTicket(facture)}
+                                            title="Ticket Caisse"
+                                            variant="primary"
+                                        />
                                     </div>
-                                </div>
+                                )}
                             </td>
                         </tr>
                     ))}
