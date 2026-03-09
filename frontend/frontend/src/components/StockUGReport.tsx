@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackageOpen, Calendar, Download, RefreshCw, IndianRupee } from 'lucide-react';
+import { PackageOpen, Calendar, Download, RefreshCw, IndianRupee, Printer } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import toast, { Toaster } from 'react-hot-toast';
@@ -112,6 +112,98 @@ export default function StockUGReport() {
     document.body.removeChild(link);
   };
 
+  const handlePrint = () => {
+     if (!data) return;
+     const win = window.open('', '', 'height=600,width=800');
+     if (win) {
+        win.document.write(`
+          <html>
+            <head>
+              <title>Rapport Unités Gratuites - ${format(new Date(), 'dd/MM/yyyy')}</title>
+              <style>
+                body { font-family: sans-serif; padding: 20px; color: #334155; }
+                h1 { text-align: center; font-size: 24px; color: #1e293b; margin-bottom: 5px; }
+                .subtitle { text-align: center; font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 30px; letter-spacing: 1px; }
+                .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px; }
+                .kpi-card { border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; }
+                .kpi-label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+                .kpi-value { font-size: 18px; font-weight: 900; color: #0f172a; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 11px; }
+                th { background: #f8fafc; text-align: left; padding: 12px 8px; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; font-size: 9px; font-weight: 800; color: #64748b; }
+                td { padding: 10px 8px; border-bottom: 1px solid #f1f5f9; }
+                .supplier-row { background: #f1f5f9; font-weight: bold; }
+                @media print {
+                  .no-print { display: none; }
+                  body { padding: 0; }
+                }
+              </style>
+            </head>
+            <body>
+              <h1>Rapport des Unités Gratuites</h1>
+              <div class="subtitle">Situation du stock promotionnel au ${format(new Date(), 'dd/MM/yyyy')}</div>
+              
+              <div class="kpi-grid">
+                <div class="kpi-card">
+                  <div class="kpi-label">Histo. UG Reçues</div>
+                  <div class="kpi-value">${formatNumber(data.global_total_ug)}</div>
+                </div>
+                <div class="kpi-card" style="border-left: 4px solid #10b981;">
+                  <div class="kpi-label" style="color: #10b981;">Stock UG Actuel</div>
+                  <div class="kpi-value">${formatNumber(data.global_total_ug_restantes)}</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Valeur Reçue</div>
+                  <div class="kpi-value">${formatCurrency(data.global_total_valeur)} F</div>
+                </div>
+                <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
+                  <div class="kpi-label" style="color: #3b82f6;">Trésorerie Latente</div>
+                  <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante)} F</div>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fournisseur / Produit</th>
+                    <th>N° Lot / Facture</th>
+                    <th style="text-align: right;">Qté Reçue</th>
+                    <th style="text-align: right;">Reliquat UG</th>
+                    <th style="text-align: right;">Valeur Rest.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.fournisseurs.map(f => `
+                    <tr class="supplier-row">
+                      <td colspan="2">${f.fournisseur_nom} (${f.lots_count} lots)</td>
+                      <td style="text-align: right;">${formatNumber(f.total_ug)}</td>
+                      <td style="text-align: right;">${formatNumber(f.total_ug_restantes)}</td>
+                      <td style="text-align: right;">${formatCurrency(f.total_valeur_restante)} F</td>
+                    </tr>
+                    ${f.details.map(d => `
+                      <tr>
+                        <td style="padding-left: 25px;">${d.produit_nom}</td>
+                        <td style="color: #64748b; font-size: 9px;">Lot: ${d.lot_numero}<br/>Fact: ${d.facture_numero}</td>
+                        <td style="text-align: right;">${formatNumber(d.quantity_free)}</td>
+                        <td style="text-align: right; font-weight: bold; color: #10b981;">${formatNumber(d.quantity_free_remaining)}</td>
+                        <td style="text-align: right; font-weight: bold; color: #1e293b;">${formatCurrency(d.valeur_restante)} F</td>
+                      </tr>
+                    `).join('')}
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              <div style="text-align: center; margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: bold; text-transform: uppercase;">
+                --- Fin du rapport de stock promotionnel ---
+              </div>
+            </body>
+          </html>
+        `);
+        win.document.close();
+        win.onload = () => win.print();
+        setTimeout(() => { if(win) win.print(); }, 500);
+     }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 lg:p-8">
       <Toaster position="top-right" />
@@ -137,12 +229,20 @@ export default function StockUGReport() {
           
           <div className="flex gap-2">
             <button 
+              onClick={handlePrint}
+              className="btn bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm"
+              disabled={loading || !data?.fournisseurs.length}
+            >
+              <Printer className="w-4 h-4" />
+              Imprimer
+            </button>
+            <button 
               onClick={exportCSV}
               className="btn bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-sm"
               disabled={loading || !data?.fournisseurs.length}
             >
               <Download className="w-4 h-4" />
-              Exporter CSV
+              CSV
             </button>
             <button 
               onClick={fetchData}
@@ -261,13 +361,13 @@ export default function StockUGReport() {
           {/* Table */}
           <div className="overflow-x-auto w-full">
             <table className="table table-zebra w-full whitespace-nowrap">
-              <thead className="bg-slate-50/80 sticky top-0 backdrop-blur-sm z-10 text-slate-500 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
+              <thead className="bg-slate-50 sticky top-0 opacity-100 z-10 text-slate-500 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="px-6 py-4">Fournisseur</th>
                   <th className="px-6 py-4 text-right">Nb Réceptions (Lots)</th>
                   <th className="px-6 py-4 text-right">UG Reçues (Histo.)</th>
-                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50/50">Stock UG Restant</th>
-                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50/50">Valeur Restante (FCFA)</th>
+                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50">Stock UG Restant</th>
+                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50">Valeur Restante (FCFA)</th>
                 </tr>
               </thead>
               <tbody className="text-sm font-medium text-slate-600">

@@ -42,6 +42,20 @@ const clientService = {
     createAyantDroit: async (data: Partial<AyantDroit>): Promise<AyantDroit> => {
         const response = await api.post<AyantDroit>('ayants-droit/', data);
         return response.data;
+    },
+
+    getPurchaseHistory: async (id: number): Promise<any> => {
+        const response = await api.get(`clients/${id}/purchase_history/`);
+        return response.data;
+    },
+
+    toggleActive: async (id: number): Promise<{ is_active: boolean }> => {
+        const response = await api.post<{ is_active: boolean }>(`clients/${id}/toggle_active/`);
+        return response.data;
+    },
+
+    bulkDelete: async (ids: number[]): Promise<void> => {
+        await api.post('clients/bulk_delete/', { ids });
     }
 };
 

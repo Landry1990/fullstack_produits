@@ -4,7 +4,7 @@
  * Ces fonctions génèrent du HTML prêt à imprimer pour différents types de documents.
  */
 
-import { formatMoney, formatDateFr, printRow, printDivider, printTotal } from '../../hooks/usePrint';
+import { formatMoney, formatDateFr, getModeLabel } from './printHelpers';
 
 // ============== TYPES ==============
 
@@ -46,79 +46,97 @@ interface StockRayonData {
   total_value: number;
 }
 
-// ============== HELPER FUNCTIONS ==============
-
-const getModeLabel = (mode: string): string => {
-  const labels: Record<string, string> = {
-    especes: '💵 Espèces',
-    cheque: '📝 Chèque',
-    carte: '💳 Carte',
-    virement: '🏦 Virement',
-    om: '🟧 Orange Money',
-    momo: '📱 Mobile Money',
-    en_compte: '📒 En compte'
-  };
-  return labels[mode] || mode;
-};
-
 // ============== TEMPLATES ==============
 
 /**
- * Template pour une clôture de caisse
+ * Template pour une clôture de caisse (Thermal 80mm style)
  */
 export function generateClotureTemplate(
   cloture: ClotureData
 ): string {
   const ecart = parseFloat(String(cloture.ecart_caisse));
-  const ecartStyle = ecart !== 0 ? 'color: red; font-weight: bold;' : '';
 
   return `
-    <div style="margin-bottom: 15px; font-size: 0.85em;">
-      <div style="text-align: center; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;">
-        Clôture de Caisse #${cloture.id}
+    <div style="font-family: sans-serif; font-size: 11px; color: #000; line-height: 1.3;">
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 15px;">
+        <div style="font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Rapport de Clôture</div>
+        <div style="margin-top: 5px; font-weight: 700; opacity: 0.7;">ID: #${cloture.id}</div>
       </div>
       
-      ${printRow('Date clôture:', formatDateFr(cloture.date))}
-      ${printRow('Caissier:', cloture.user_name || cloture.username || 'N/A')}
-    </div>
+      <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 3px;">
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 700;">DATE:</span>
+           <span>${formatDateFr(cloture.date)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 700;">CAISSIER:</span>
+           <span style="text-transform: uppercase;">${cloture.user_name || cloture.username || 'N/A'}</span>
+        </div>
+      </div>
 
-    ${printDivider()}
+      <div style="border: 1px dashed #000; padding: 10px; border-radius: 4px; margin-bottom: 15px; background: #f9fafb;">
+        <div style="text-align: center; font-weight: 800; text-transform: uppercase; font-size: 9px; margin-bottom: 8px; opacity: 0.6; letter-spacing: 2px;">Période Clôturée</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+           <span style="font-weight: 700; font-size: 10px;">DU:</span>
+           <span>${cloture.date_debut ? formatDateFr(cloture.date_debut) : 'DÉBUT'}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 700; font-size: 10px;">AU:</span>
+           <span>${cloture.date_fin ? formatDateFr(cloture.date_fin) : 'MAINTENANT'}</span>
+        </div>
+      </div>
 
-    <div style="text-align: center; font-weight: bold; margin: 10px 0; text-transform: uppercase;">
-      Période Clôturée
-    </div>
-    
-    ${printRow('Du:', cloture.date_debut ? formatDateFr(cloture.date_debut) : 'Début')}
-    ${printRow('Au:', cloture.date_fin ? formatDateFr(cloture.date_fin) : 'Maintenant')}
-
-    ${printDivider()}
-
-    <div style="font-weight: bold; margin-bottom: 8px;">DÉTAILS PAR MODE</div>
-    ${Object.entries(cloture.details_paiement || {}).map(([mode, montant]) =>
-    printRow(getModeLabel(mode), `${formatMoney(montant)} F`)
+      <div style="margin-bottom: 15px;">
+        <div style="font-weight: 900; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 8px; font-size: 10px;">Détails par mode</div>
+        ${Object.entries(cloture.details_paiement || {}).map(([mode, montant]) =>
+    `<div style="display: flex; justify-content: space-between; padding: 2px 0;">
+             <span style="font-weight: 600;">${getModeLabel(mode)}</span>
+             <span style="font-weight: 700;">${formatMoney(montant)} F</span>
+           </div>`
   ).join('')}
+      </div>
 
-    ${printDivider()}
+      <div style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 10px 0; margin-bottom: 15px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 600;">Total Ventes:</span>
+           <span style="font-weight: 800;">${formatMoney(cloture.total_ventes)} F</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+           <span style="color: #059669;">+ Entrées:</span>
+           <span style="font-weight: 700;">${formatMoney(cloture.total_entrees)} F</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 10px;">
+           <span style="color: #dc2626;">- Sorties:</span>
+           <span style="font-weight: 700;">${formatMoney(cloture.total_sorties)} F</span>
+        </div>
+      </div>
 
-    ${printRow('Total Ventes:', `${formatMoney(cloture.total_ventes)} F`)}
-    ${printRow('+ Entrées:', `${formatMoney(cloture.total_entrees)} F`)}
-    ${printRow('- Sorties:', `${formatMoney(cloture.total_sorties)} F`)}
+      <div style="background: #000; color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+           <span style="opacity: 0.7; font-size: 10px; font-weight: 700; text-transform: uppercase;">Théorique</span>
+           <span style="font-weight: 800; font-size: 12px;">${formatMoney(cloture.montant_theorique)} F</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 8px;">
+           <span style="opacity: 0.7; font-size: 10px; font-weight: 700; text-transform: uppercase;">Réel Encaissé</span>
+           <span style="font-weight: 900; font-size: 14px;">${formatMoney(cloture.montant_reel)} F</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; ${ecart < 0 ? 'color: #fca5a5;' : ecart > 0 ? 'color: #6ee7b7;' : ''}">
+           <span style="font-weight: 900; font-size: 10px; text-transform: uppercase;">Écart constaté</span>
+           <span style="font-weight: 900; font-size: 12px;">${ecart > 0 ? '+' : ''}${formatMoney(cloture.ecart_caisse)} F</span>
+        </div>
+      </div>
 
-    <div class="print-total">
-      ${printRow('THÉORIQUE:', `${formatMoney(cloture.montant_theorique)} F`)}
-      ${printRow('RÉEL:', `${formatMoney(cloture.montant_reel)} F`)}
-      <div class="print-row" style="${ecartStyle}">
-        <span>ÉCART:</span>
-        <span>${ecart > 0 ? '+' : ''}${formatMoney(cloture.ecart_caisse)} F</span>
+      ${cloture.observation ? `
+        <div style="font-size: 10px; border: 1px solid #e5e7eb; padding: 8px; border-radius: 4px; font-style: italic;">
+          <div style="font-weight: 800; text-transform: uppercase; font-size: 8px; margin-bottom: 3px; color: #6b7280;">Observation:</div>
+          ${cloture.observation}
+        </div>
+      ` : ''}
+
+      <div style="text-align: center; margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; font-size: 9px; color: #9ca3af; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
+        Fin du Rapport de Caisse
       </div>
     </div>
-
-    ${cloture.observation ? `
-      ${printDivider()}
-      <div style="font-size: 0.85em;">
-        <strong>Observation:</strong> ${cloture.observation}
-      </div>
-    ` : ''}
   `;
 }
 
@@ -129,29 +147,45 @@ export function generatePromisTemplate(
   promis: PromisData
 ): string {
   return `
-    <div style="text-align: center; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
-      BON DE PROMIS #${promis.id}
-    </div>
-
-    ${printRow('Client:', promis.client_name || 'Non spécifié')}
-    ${promis.client_phone ? printRow('Téléphone:', promis.client_phone) : ''}
-    
-    ${printDivider()}
-
-    <div style="font-weight: bold; margin: 10px 0;">PRODUIT PROMIS</div>
-    ${printRow('Désignation:', promis.produit_nom || 'Non spécifié')}
-    ${printRow('Quantité:', String(promis.quantite))}
-    ${promis.date_promis ? printRow('Date prévue:', formatDateFr(promis.date_promis)) : ''}
-
-    ${promis.notes ? `
-      ${printDivider()}
-      <div style="font-size: 0.85em;">
-        <strong>Notes:</strong> ${promis.notes}
+    <div style="font-family: sans-serif; font-size: 11px; color: #000; line-height: 1.4;">
+      <div style="text-align: center; background: #000; color: #fff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <div style="font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Bon de Promis</div>
+        <div style="margin-top: 5px; font-weight: 700; opacity: 0.8; font-size: 10px;">ID: #${promis.id}</div>
       </div>
-    ` : ''}
 
-    <div style="margin-top: 20px; text-align: center; font-size: 0.8em; font-style: italic;">
-      Présenté ce bon pour récupérer votre commande
+      <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+        <div style="font-weight: 800; font-size: 9px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px; letter-spacing: 1px;">Information Client</div>
+        <div style="font-weight: 900; font-size: 13px;">${(promis.client_name || 'Non spécifié').toUpperCase()}</div>
+        ${promis.client_phone ? `<div style="font-weight: 700; color: #1e40af; margin-top: 2px;">📞 ${promis.client_phone}</div>` : ''}
+      </div>
+
+      <div style="background: #fdf2f2; border: 1px solid #fee2e2; padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+        <div style="font-weight: 800; font-size: 9px; text-transform: uppercase; color: #b91c1c; margin-bottom: 8px; letter-spacing: 1px;">Produit Promis</div>
+        <div style="font-weight: 900; font-size: 12px; margin-bottom: 5px;">${promis.produit_nom?.toUpperCase() || 'Non spécifié'}</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(185,28,28,0.1); pt-5; padding-top: 5px; margin-top: 5px;">
+           <span style="font-weight: 700;">Quantité attendue:</span>
+           <span style="background: #b91c1c; color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 900; font-size: 12px;">${promis.quantite}</span>
+        </div>
+      </div>
+
+      ${promis.date_promis ? `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 700;">
+           <span>Date prévue:</span>
+           <span>${formatDateFr(promis.date_promis)}</span>
+        </div>
+      ` : ''}
+
+      ${promis.notes ? `
+        <div style="background: #f9fafb; border: 1px solid #e5e7eb; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+          <div style="font-weight: 700; font-size: 9px; text-transform: uppercase; margin-bottom: 4px; color: #6b7280;">Notes / Instructions:</div>
+          <div style="font-style: italic;">${promis.notes}</div>
+        </div>
+      ` : ''}
+
+      <div style="text-align: center; border-top: 2px dashed #000; padding-top: 15px; font-weight: 700; font-size: 10px;">
+        Présentez ce bon pour récupérer votre commande.<br/>
+        <span style="font-size: 8px; font-weight: 400; font-style: italic; display: block; margin-top: 5px;">Document généré le ${new Date().toLocaleDateString('fr-FR')}</span>
+      </div>
     </div>
   `;
 }
@@ -163,52 +197,50 @@ export function generateStockRayonTemplate(
   data: StockRayonData
 ): string {
   return `
-    <div style="text-align: center; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
-      ÉTAT DE STOCK<br/>
-      <span style="font-size: 1.1em;">${data.rayon_name}</span>
-    </div>
+    <div style="font-family: sans-serif; font-size: 10px; color: #000; line-height: 1.2;">
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 12px;">
+        <div style="font-weight: 900; font-size: 14px; text-transform: uppercase;">État de Stock</div>
+        <div style="font-weight: 700; color: #4b5563; font-size: 11px; margin-top: 3px;">${data.rayon_name.toUpperCase()}</div>
+      </div>
 
-    <div style="font-size: 0.7em; margin-bottom: 5px;">
-      Imprimé le ${new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-    </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 8px; color: #6b7280; font-weight: 700;">
+        <span>Imprimé le ${new Date().toLocaleString('fr-FR')}</span>
+        <span>${data.products.length} Articles</span>
+      </div>
 
-    ${printDivider()}
-
-    <table style="width: 100%; font-size: 0.8em; border-collapse: collapse;">
-      <thead>
-        <tr style="border-bottom: 1px solid black;">
-          <th style="text-align: left; padding: 3px 0;">Produit</th>
-          <th style="text-align: right; padding: 3px 0;">Qté</th>
-          <th style="text-align: right; padding: 3px 0;">PU</th>
-          <th style="text-align: right; padding: 3px 0;">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.products.map(p => `
-          <tr style="border-bottom: 1px dotted #ccc;">
-            <td style="padding: 2px 0; max-width: 100px; overflow: hidden; text-overflow: ellipsis;">
-              ${p.name}
-            </td>
-            <td style="text-align: right; padding: 2px 0;">${p.stock}</td>
-            <td style="text-align: right; padding: 2px 0;">${formatMoney(p.selling_price)}</td>
-            <td style="text-align: right; padding: 2px 0;">${formatMoney(p.stock * p.selling_price)}</td>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+        <thead>
+          <tr style="background: #000; color: #fff; font-size: 8px; text-transform: uppercase;">
+            <th style="text-align: left; padding: 6px 4px; border-radius: 4px 0 0 0;">Désignation</th>
+            <th style="text-align: right; padding: 6px 4px; width: 30px;">Stock</th>
+            <th style="text-align: right; padding: 6px 4px; width: 45px;">PU</th>
+            <th style="text-align: right; padding: 6px 4px; border-radius: 0 4px 0 0; width: 55px;">Valeur</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          ${data.products.map((p, idx) => `
+            <tr style="border-bottom: 1px solid #f3f4f6; ${idx % 2 === 0 ? 'background: #f9fafb;' : ''}">
+              <td style="padding: 5px 4px; font-weight: 700; font-size: 9px; line-height: 1;">
+                ${p.name}
+              </td>
+              <td style="text-align: right; padding: 5px 4px; font-weight: 900;">${p.stock}</td>
+              <td style="text-align: right; padding: 5px 4px; color: #6b7280;">${formatMoney(p.selling_price)}</td>
+              <td style="text-align: right; padding: 5px 4px; font-weight: 700;">${formatMoney(p.stock * p.selling_price)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
 
-    ${printDivider()}
-
-    ${printTotal('VALEUR TOTALE:', `${formatMoney(data.total_value)} F`)}
-    
-    <div style="text-align: center; margin-top: 10px; font-size: 0.8em;">
-      ${data.products.length} produit(s)
+      <div style="background: #000; color: #fff; padding: 10px; border-radius: 8px; text-align: right;">
+        <div style="font-size: 8px; font-weight: 700; text-transform: uppercase; opacity: 0.7; margin-bottom: 2px;">Valeur Totale Rayon</div>
+        <div style="font-weight: 900; font-size: 16px;">${formatMoney(data.total_value)} <span style="font-size: 10px; font-weight: 400;">F</span></div>
+      </div>
     </div>
   `;
 }
 
 /**
- * Template pour un inventaire
+ * Template pour un inventaire (Thermal 80mm format)
  */
 export function generateInventaireTemplate(
   inventaire: {
@@ -226,46 +258,60 @@ export function generateInventaireTemplate(
   }
 ): string {
   return `
-    <div style="text-align: center; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">
-      INVENTAIRE #${inventaire.id}
-    </div>
+    <div style="font-family: sans-serif; font-size: 10px; color: #000; line-height: 1.2;">
+      <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 12px;">
+        <div style="font-weight: 900; font-size: 14px; text-transform: uppercase;">Inventaire Stock</div>
+        <div style="font-weight: 700; color: #4b5563; font-size: 11px; margin-top: 3px;">RAPPORT #${inventaire.id}</div>
+      </div>
 
-    ${printRow('Date:', formatDateFr(inventaire.date))}
-    ${printRow('Statut:', inventaire.status)}
-    ${inventaire.user_name ? printRow('Par:', inventaire.user_name) : ''}
+      <div style="margin-bottom: 10px; display: flex; flex-direction: column; gap: 2px; font-size: 9px;">
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 700;">Date:</span>
+           <span>${formatDateFr(inventaire.date)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 700;">Intervenant:</span>
+           <span style="text-transform: uppercase;">${inventaire.user_name || 'Pharmacien'}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+           <span style="font-weight: 700;">Statut:</span>
+           <span style="background: #000; color: #fff; padding: 1px 6px; border-radius: 3px; font-size: 8px; font-weight: 800;">${inventaire.status}</span>
+        </div>
+      </div>
 
-    ${printDivider()}
-
-    <table style="width: 100%; font-size: 0.75em; border-collapse: collapse;">
-      <thead>
-        <tr style="border-bottom: 1px solid black;">
-          <th style="text-align: left;">Produit</th>
-          <th style="text-align: right;">Théo.</th>
-          <th style="text-align: right;">Réel</th>
-          <th style="text-align: right;">Écart</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${inventaire.lignes.map(l => `
-          <tr style="border-bottom: 1px dotted #ccc; ${l.ecart !== 0 ? 'font-weight: bold;' : ''}">
-            <td style="padding: 2px 0;">${l.produit_nom}</td>
-            <td style="text-align: right;">${l.stock_theorique}</td>
-            <td style="text-align: right;">${l.stock_reel}</td>
-            <td style="text-align: right; ${l.ecart < 0 ? 'color: red;' : l.ecart > 0 ? 'color: green;' : ''}">
-              ${l.ecart > 0 ? '+' : ''}${l.ecart}
-            </td>
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+        <thead>
+          <tr style="border-bottom: 1.5px solid #000; font-size: 8px; text-transform: uppercase;">
+            <th style="text-align: left; padding: 4px 2px;">Désignation</th>
+            <th style="text-align: right; padding: 4px 2px;">Théo.</th>
+            <th style="text-align: right; padding: 4px 2px;">Réel</th>
+            <th style="text-align: right; padding: 4px 2px;">Écart</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          ${inventaire.lignes.map(l => `
+            <tr style="border-bottom: 1px solid #f3f4f6; ${l.ecart !== 0 ? 'background: #fff5f5;' : ''}">
+              <td style="padding: 4px 2px; font-weight: 600;">${l.produit_nom}</td>
+              <td style="text-align: right; padding: 4px 2px; opacity: 0.6;">${l.stock_theorique}</td>
+              <td style="text-align: right; padding: 4px 2px; font-weight: 700;">${l.stock_reel}</td>
+              <td style="text-align: right; padding: 4px 2px; font-weight: 900; ${l.ecart < 0 ? 'color: #dc2626;' : l.ecart > 0 ? 'color: #059669;' : ''}">
+                ${l.ecart > 0 ? '+' : ''}${l.ecart}
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
 
-    ${inventaire.total_ecart_valeur !== undefined ? `
-      ${printDivider()}
-      ${printTotal('Écart Valeur:', `${formatMoney(inventaire.total_ecart_valeur)} F`)}
-    ` : ''}
+      ${inventaire.total_ecart_valeur !== undefined ? `
+        <div style="background: ${inventaire.total_ecart_valeur < 0 ? '#fef2f2' : '#f0fdf4'}; border: 1px solid ${inventaire.total_ecart_valeur < 0 ? '#fee2e2' : '#dcfce7'}; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+           <span style="font-weight: 800; font-size: 9px; text-transform: uppercase; color: ${inventaire.total_ecart_valeur < 0 ? '#b91c1c' : '#15803d'};">Écart Valeur Total</span>
+           <span style="font-weight: 900; font-size: 13px; color: ${inventaire.total_ecart_valeur < 0 ? '#b91c1c' : '#15803d'};">${formatMoney(inventaire.total_ecart_valeur)} F</span>
+        </div>
+      ` : ''}
 
-    <div style="text-align: center; margin-top: 10px; font-size: 0.8em;">
-      ${inventaire.lignes.length} ligne(s) - ${inventaire.lignes.filter(l => l.ecart !== 0).length} écart(s)
+      <div style="text-align: center; margin-top: 15px; font-size: 8px; color: #9ca3af; font-weight: 600; text-transform: uppercase;">
+        ${inventaire.lignes.length} Lignes vérifiées - ${inventaire.lignes.filter(l => l.ecart !== 0).length} Discrépances
+      </div>
     </div>
   `;
 }
@@ -276,3 +322,4 @@ export default {
   generateStockRayonTemplate,
   generateInventaireTemplate
 };
+

@@ -24,7 +24,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
       <div className="flex items-center justify-between w-full h-8">
         {selectedCount > 0 ? (
           <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
-            <div className="dropdown dropdown-end">
+            <div className="dropdown">
               <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2">
                 <MoreVertical className="w-4 h-4" />
                 {t('common.actions_title', { defaultValue: 'Actions' })}

@@ -152,11 +152,11 @@ export const SalesTable: React.FC<SalesTableProps> = ({
         }
         return (
             <>
-                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}</li>
+                <li className="menu-title text-xs opacity-50 px-4 py-2 uppercase tracking-widest">{t('common.bulk_actions')}</li>
                 <li>
                     <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
                         <Trash2 className="w-4 h-4" />
-                        Supprimer les {selectedIds.length} factures
+                        {t('sales.bulk_delete_btn', { count: selectedIds.length })}
                     </a>
                 </li>
             </>
@@ -164,11 +164,11 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     };
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[450px]">
             <table className="w-full">
-                <thead>
+                <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
                     <tr className="bg-base-200 border-b border-base-300 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">
-                         <th className="px-4 py-4 w-10">
+                        <th className="px-4 py-4 w-10">
                             <input 
                                 type="checkbox" 
                                 className="checkbox checkbox-xs checkbox-primary"
@@ -176,22 +176,29 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 checked={factures.length > 0 && selectedIds.length === factures.length}
                             />
                         </th>
-                        <SelectionHeader
-                            selectedCount={selectedIds.length}
-                            onClear={() => setSelectedIds([])}
-                            colSpan={8}
-                            actions={renderBulkActions()}
-                        >
-                            <div className="grid grid-cols-7 w-full h-full items-center text-xs font-semibold text-base-content/60 uppercase tracking-wider">
-                                <div className="col-span-1">{t('sales.table.invoice_number')}</div>
-                                <div className="col-span-1">{t('sales.table.client')}</div>
-                                <div className="col-span-1 hidden xl:block">{t('sales.table.operator', {defaultValue: "Vendeur"})}</div>
-                                <div className="col-span-1 text-center">{t('sales.table.amount')}</div>
-                                <div className="col-span-1 text-center">Régler</div>
-                                <div className="col-span-1 text-center">En compte</div>
-                                <div className="col-span-1 text-right pr-4">{t('sales.table.actions')}</div>
-                            </div>
-                        </SelectionHeader>
+                        {selectedIds.length > 0 ? (
+                            <SelectionHeader
+                                selectedCount={selectedIds.length}
+                                onClear={() => setSelectedIds([])}
+                                colSpan={9}
+                                actions={renderBulkActions()}
+                            >
+                                {/* Empty children as SelectionHeader handles its own content when selectedCount > 0 */}
+                                <></>
+                            </SelectionHeader>
+                        ) : (
+                            <>
+                                <th className="px-6 py-4">{t('sales.table.invoice_number')}</th>
+                                <th className="px-6 py-4">{t('sales.table.client')}</th>
+                                <th className="px-6 py-4 hidden xl:table-cell">{t('sales.table.operator')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales.table.amount_settled')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales.table.amount_on_account')}</th>
+                                <th className="px-6 py-4 text-center">{t('sales.table.discount')}</th>
+                                <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales.table.status')}</th>
+                                <th className="px-6 py-4 text-right pr-6">{t('sales.table.actions')}</th>
+                            </>
+                        )}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200">
@@ -251,10 +258,17 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                                 <span className="text-success font-bold font-mono text-sm">
                                     {formatCurrency(normalizeNumberInput(facture.montant_regle || '0'))}
                                 </span>
+
+                                
                             </td>
                             <td className="px-6 py-4 text-center">
                                 <span className={`${normalizeNumberInput(facture.montant_en_compte || '0') > 0 ? 'text-warning' : 'text-base-content/30'} font-bold font-mono text-sm`}>
                                     {formatCurrency(normalizeNumberInput(facture.montant_en_compte || '0'))}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4 text-center">
+                                <span className="text-error font-medium font-mono text-sm">
+                                    {formatCurrency(normalizeNumberInput(facture.remise || '0'))}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-center hidden md:table-cell">

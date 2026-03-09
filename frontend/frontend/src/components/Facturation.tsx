@@ -354,9 +354,7 @@ export default function Facturation() {
     ayantDroitMatricule, setAyantDroitMatricule,
     ayantDroitSociete, setAyantDroitSociete,
     showNewAyantDroit, setShowNewAyantDroit
-  } = useFacturationClients({
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL
-  })
+  } = useFacturationClients()
 
   // usePendingSales Hook
   const {
@@ -367,13 +365,86 @@ export default function Facturation() {
       deletePendingSale
   } = usePendingSales()
 
+  // useFacturationUI Hook replacing local state
+  const {
+      // States
+      remiseGlobale, setRemiseGlobale,
+      remiseMode, setRemiseMode,
+      modePaiement, setModePaiement,
+      montantPaye, setMontantPaye,
+      paiements, setPaiements,
+      reference, setReference,
+      
+      isPaymentModalOpen,
+      facturePourPaiement,
+      openPaymentModal,
+      closePaymentModal,
+
+      showTicketPreview, setShowTicketPreview,
+      ticketCaisse, setTicketCaisse,
+
+      showStockResolution, setShowStockResolution,
+      stockResolutionItems, setStockResolutionItems,
+      promisSelections, setPromisSelections,
+      promisPhone, setPromisPhone,
+      promisClientName, setPromisClientName,
+
+      lotModal, openLotModal, closeLotModal,
+      confirmModal, setConfirmModal,
+
+      showOrdonnanceModal, setShowOrdonnanceModal,
+      tempOrdonnanceData, setTempOrdonnanceData,
+      pendingOrdonnanceFacture, setPendingOrdonnanceFacture,
+
+
+      isModificationMode, setIsModificationMode,
+      modificationInvoiceId, setModificationInvoiceId,
+      originalTotalTtc, setOriginalTotalTtc,
+
+      // Actions
+      resetUIState,
+      calculateTotals
+  } = useFacturationUI()
+
+  // Computed Totals
+  const totals = useMemo(() => 
+      calculateTotals(cartStats, clients.find(c => c.id === selectedClient)),
+      [cartStats, selectedClient, calculateTotals]
+  )
+
+  const isNewSale = !facturePourPaiement
+
+  // Helper pour vider les données de vente sans fermer les modals de succès éventuels
+  const _resetSaleDataOnly = () => {
+      setLignesFacture([])
+      setClientSearch('')
+      setManualClientName('')
+      setSelectedClient(null)
+      setActiveSudoCreds(null)
+      // Auto-select "clients divers" after a sale
+      const clientsDivers = clients.find(c => c.name.toLowerCase() === 'clients divers')
+      setSelectedClient(clientsDivers ? clientsDivers.id : null)
+      setUseManualClient(false)
+      setManualClientName('')
+      setRemiseGlobale('0')
+      setRemiseMode('montant')
+      setAyantDroitNom('')
+      setAyantDroitMatricule('')
+      setAyantDroitSociete('')
+      setSelectedAyantDroit(null)
+      setShowNewAyantDroit(false)
+      setSearchQuery('')
+      setTempOrdonnanceData(null) // Clear temp data
+      // Auto-focus search after clearing cart
+      setTimeout(() => searchInputRef.current?.focus(), 50)
+  }
+
   // useSaleCompletion Hook
   const { 
     completeSale, 
     completeExistingInvoicePayment,
     loading: saleLoading
   } = useSaleCompletion({
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     onSuccess: (result) => {
         if (result.success && result.facture) {
             setSuccessInfo(result.facture) // Keep only this local state for toast notifications
@@ -442,6 +513,7 @@ export default function Facturation() {
             closePaymentModal()
         }
     },
+    onReset: _resetSaleDataOnly,
     onError: (msg) => setError(msg)
   })
 
@@ -455,57 +527,6 @@ export default function Facturation() {
   const [centralizedCashRegister, setCentralizedCashRegister] = useState<boolean>(true)
   const [activeSudoCreds, setActiveSudoCreds] = useState<{ validatorId: number, password: string } | null>(null);
 
-  // New UI Hook replacing local state
-  const {
-      // States
-      remiseGlobale, setRemiseGlobale,
-      remiseMode, setRemiseMode,
-      modePaiement, setModePaiement,
-      montantPaye, setMontantPaye,
-      paiements, setPaiements,
-      reference, setReference,
-      
-      isPaymentModalOpen,
-      facturePourPaiement,
-      openPaymentModal,
-      closePaymentModal,
-
-      showTicketPreview, setShowTicketPreview,
-      ticketCaisse, setTicketCaisse,
-
-      showStockResolution, setShowStockResolution,
-      stockResolutionItems, setStockResolutionItems,
-      promisSelections, setPromisSelections,
-      promisPhone, setPromisPhone,
-      promisClientName, setPromisClientName,
-
-      lotModal, openLotModal, closeLotModal,
-      confirmModal, setConfirmModal,
-
-      showOrdonnanceModal, setShowOrdonnanceModal,
-      tempOrdonnanceData, setTempOrdonnanceData,
-      pendingOrdonnanceFacture, setPendingOrdonnanceFacture,
-
-
-      isModificationMode, setIsModificationMode,
-      modificationInvoiceId, setModificationInvoiceId,
-      originalTotalTtc, setOriginalTotalTtc,
-
-      // Actions
-      resetUIState,
-      calculateTotals
-  } = useFacturationUI()
-
-  // Computed Totals
-  const totals = useMemo(() => 
-      calculateTotals(cartStats, clients.find(c => c.id === selectedClient)),
-      [cartStats, selectedClient, calculateTotals]
-  )
-
-  // Derived state (replaces previous local isNewSale logic if needed)
-  // Logic: It's a new sale if we don't have a specific invoice ID being paid (standard checkout)
-  // BUT: Facturation logic was a bit fuzzy. Let's assume !facturePourPaiement means new sale from cart.
-  const isNewSale = !facturePourPaiement
 
 
 
@@ -954,7 +975,7 @@ export default function Facturation() {
         showNewAyantDroit,
         lignesFacture,
         totals: {
-            totalHt: totals.sousTotal,
+            totalHt: totals.totalHt,
             totalTva: totals.totalTva,
             totalTtc: totals.totalTtc,
             remiseMontant: totals.remiseMontant,
@@ -983,30 +1004,6 @@ export default function Facturation() {
     await completeSale(params);
   };
 
-  // Helper pour vider les données de vente sans fermer les modals de succès éventuels
-  const _resetSaleDataOnly = () => {
-      setLignesFacture([])
-      setClientSearch('')
-      setManualClientName('')
-      setSelectedClient(null)
-      setActiveSudoCreds(null)
-      // Auto-select "clients divers" after a sale
-      const clientsDivers = clients.find(c => c.name.toLowerCase() === 'clients divers')
-      setSelectedClient(clientsDivers ? clientsDivers.id : null)
-      setUseManualClient(false)
-      setManualClientName('')
-      setRemiseGlobale('0')
-      setRemiseMode('montant')
-      setAyantDroitNom('')
-      setAyantDroitMatricule('')
-      setAyantDroitSociete('')
-      setSelectedAyantDroit(null)
-      setShowNewAyantDroit(false)
-      setShowNewAyantDroit(false)
-      setSearchQuery('')
-      setTempOrdonnanceData(null) // Clear temp data
-      // On ne clear pas error/successInfo ici si on veut les garder
-  }
   const handleQuantityShortcut = useCallback((qty: number) => {
     if (lignesFacture.length > 0) {
       const lastLine = lignesFacture[lignesFacture.length - 1];
@@ -1170,6 +1167,8 @@ export default function Facturation() {
       } finally {
           setShowClientNameModal(false);
           setPendingPrintFacture(null);
+          // Return focus to search after client name entry
+          setTimeout(() => searchInputRef.current?.focus(), 100);
       }
   };
 
@@ -1386,7 +1385,8 @@ export default function Facturation() {
         } else if (showTicketPreview) {
             setShowTicketPreview(false)
         } else if (successInfo) {
-            setSuccessInfo(null)
+             setSuccessInfo(null)
+             searchInputRef.current?.focus()
         } else {
            setSearchQuery('')
            searchInputRef.current?.blur()
@@ -1637,7 +1637,7 @@ export default function Facturation() {
 
           {/* Footer Totals */}
           <TotalsSection
-            totalHT={totals.sousTotal}
+            totalHT={totals.totalHt}
             remiseGlobale={remiseGlobale}
             setRemiseGlobale={setRemiseGlobale}
             remiseMode={remiseMode}
@@ -1707,7 +1707,10 @@ export default function Facturation() {
       {/* Ticket Preview Modal */}
       <TicketPreviewModal
         isOpen={showTicketPreview}
-        onClose={() => setShowTicketPreview(false)}
+        onClose={() => {
+            setShowTicketPreview(false)
+            setTimeout(() => searchInputRef.current?.focus(), 100)
+        }}
         ticket={ticketCaisse}
         settings={pharmacySettings}
         onSendWhatsApp={handleSendWhatsApp}
@@ -1816,6 +1819,7 @@ export default function Facturation() {
           onClose={() => {
               setShowClientNameModal(false);
               setPendingPrintFacture(null);
+              setTimeout(() => searchInputRef.current?.focus(), 100);
           }}
           onConfirm={handleConfirmPrintClientName}
           facture={pendingPrintFacture}

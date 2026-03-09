@@ -3,7 +3,7 @@ import axios from 'axios';
 import {
   Trash2, Download, Eye, ShieldAlert, AlertTriangle,
   CheckSquare, Square, Calendar, Loader2,
-  Wrench, ChevronDown, ChevronUp, Database, Clock, Save
+  Wrench, ChevronDown, ChevronUp, Database, Clock, Save, Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatNumber } from '../utils/formatters';
@@ -75,8 +75,14 @@ export default function Maintenance() {
   const [purging, setPurging] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(Object.keys(TABLE_CATEGORIES)));
   const [backupLoading, setBackupLoading] = useState(false);
+  const [backupProgress, setBackupProgress] = useState(0);
+  const [backupStep, setBackupStep] = useState('');
   const [pharmacySettings, setPharmacySettings] = useState<any>(null);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [restorePassword, setRestorePassword] = useState('');
+  const [restoring, setRestoring] = useState(false);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
 
   // Fetch available tables and pharmacy settings
   useEffect(() => {
@@ -213,13 +219,48 @@ export default function Maintenance() {
 
   const handleManualBackup = async () => {
     setBackupLoading(true);
+    setBackupProgress(0);
+    setBackupStep('Initialisation...');
+    
+    // Simulation logic
+    const progressInterval = setInterval(() => {
+      setBackupProgress(prev => {
+        if (prev >= 95) return prev;
+        const inc = Math.random() * (prev < 50 ? 15 : prev < 80 ? 5 : 1);
+        return Math.min(prev + inc, 95);
+      });
+    }, 400);
+
+    const steps = [
+      { p: 10, s: 'Analyse de la base de données...' },
+      { p: 30, s: 'Extraction des tables...' },
+      { p: 60, s: 'Génération du fichier SQL...' },
+      { p: 85, s: 'Compression GZip...' },
+    ];
+
+    steps.forEach((step, idx) => {
+      setTimeout(() => setBackupStep(step.s), (idx + 1) * 1500);
+    });
+
     try {
       const res = await axios.post('/api/maintenance/backup/');
+      clearInterval(progressInterval);
+      setBackupProgress(100);
+      setBackupStep('Sauvegarde terminée !');
       toast.success(res.data.message || 'Sauvegarde terminée !');
+      
+      // Reset after success
+      setTimeout(() => {
+        setBackupLoading(false);
+        setBackupProgress(0);
+        setBackupStep('');
+      }, 3000);
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Erreur lors de la sauvegarde');
-    } finally {
+      clearInterval(progressInterval);
       setBackupLoading(false);
+      setBackupProgress(0);
+      setBackupStep('');
+      toast.error(err.response?.data?.detail || 'Erreur lors de la sauvegarde');
     }
   };
 
@@ -237,6 +278,34 @@ export default function Maintenance() {
       toast.error('Erreur lors de l\'enregistrement');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!restoreFile || !restorePassword) {
+      toast.error('Fichier et mot de passe requis');
+      return;
+    }
+
+    setRestoring(true);
+    const formData = new FormData();
+    formData.append('file', restoreFile);
+    formData.append('password', restorePassword);
+
+    try {
+      const res = await axios.post('/api/maintenance/restore/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(res.data.message || 'Restauration réussie !');
+      setShowRestoreConfirm(false);
+      setRestoreFile(null);
+      setRestorePassword('');
+       // Optionnel: Recharger l'application car la DB a changé
+       // window.location.reload();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Erreur lors de la restauration');
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -444,6 +513,20 @@ export default function Maintenance() {
                     {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                     Sauvegarder maintenant
                   </button>
+
+                  {backupLoading && (
+                    <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-primary">
+                        <span>{backupStep}</span>
+                        <span>{Math.round(backupProgress)}%</span>
+                      </div>
+                      <progress 
+                        className="progress progress-primary w-full h-2 shadow-inner" 
+                        value={backupProgress} 
+                        max="100"
+                      ></progress>
+                    </div>
+                  )}
                 </div>
 
                 <div className="divider my-0"></div>
@@ -501,6 +584,39 @@ export default function Maintenance() {
                     Enregistrer les paramètres
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+
+
+          {/* Restoration Section */}
+          <div className="card bg-base-100 shadow-xl border border-error/20">
+            <div className="card-body gap-4">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <Upload className="w-5 h-5 text-error" />
+                Restauration
+              </h2>
+
+              <div className="space-y-4">
+                <p className="text-xs text-base-content/60">Restaurer la base de données à partir d'un fichier .sql.gz. (Action irréversible)</p>
+                
+                <div className="form-control w-full">
+                  <input 
+                    type="file" 
+                    accept=".sql.gz"
+                    className="file-input file-input-bordered file-input-sm w-full" 
+                    onChange={e => setRestoreFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+
+                <button
+                  className="btn btn-error btn-outline btn-sm w-full gap-2"
+                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error('Sélectionnez un fichier'); }}
+                  disabled={restoring || !restoreFile}
+                >
+                  {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
+                  Restaurer maintenant
+                </button>
               </div>
             </div>
           </div>
@@ -661,6 +777,58 @@ export default function Maintenance() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => { setShowConfirmModal(false); setPassword(''); }}></div>
+        </div>
+      )}
+
+      {/* Restore Confirmation Modal */}
+      {showRestoreConfirm && (
+        <div className="modal modal-open">
+          <div className="modal-box border-2 border-error/50 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-full bg-error/20">
+                <AlertTriangle className="w-6 h-6 text-error" />
+              </div>
+              <h3 className="font-bold text-lg text-error">DANGER : Restauration de la base</h3>
+            </div>
+
+            <div className="alert alert-error mb-4 shadow-sm">
+              <ShieldAlert className="w-5 h-5" />
+              <span className="text-sm">
+                Vous allez ÉCRASER TOUTES les données actuelles par celles du fichier : 
+                <div className="font-mono mt-1 font-bold text-xs">{restoreFile?.name}</div>
+              </span>
+            </div>
+
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text text-sm font-semibold">Confirmation Superadmin</span>
+              </label>
+              <input
+                type="password"
+                className="input input-bordered border-error"
+                placeholder="Mot de passe requis"
+                value={restorePassword}
+                onChange={e => setRestorePassword(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleRestore(); }}
+                autoFocus
+              />
+            </div>
+
+            <div className="modal-action">
+              <button className="btn btn-ghost" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}>
+                Annuler
+              </button>
+              <button
+                className="btn btn-error gap-2 px-8"
+                onClick={handleRestore}
+                disabled={restoring || !restorePassword}
+              >
+                {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+                CONFIRMER LA RESTAURATION
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}></div>
         </div>
       )}
     </div>

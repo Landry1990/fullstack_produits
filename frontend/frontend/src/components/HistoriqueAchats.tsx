@@ -166,7 +166,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         <div className="flex-1 min-h-0 flex flex-col">
           <div className="overflow-auto flex-1 bg-base-100 rounded-box shadow-xl border border-base-200">
             <table className="table table-zebra table-pin-rows w-full">
-              <thead>
+              <thead className="sticky top-0 z-10 bg-base-200 opacity-100">
                 <tr className="bg-base-200 text-base-content uppercase text-sm">
                   <th>{t('orders.history.columns.date')}</th>
                   <th className="text-right">{t('orders.history.columns.nb_orders')}</th>

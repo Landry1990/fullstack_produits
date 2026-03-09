@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Eye, Trash2, Printer, MoreVertical, X, GitMerge } from 'lucide-react';
+import { Eye, Trash2, Printer, GitMerge } from 'lucide-react';
 import type { Commande, Fournisseur } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
+
+import SelectionHeader from '../ui/SelectionHeader';
 
 export type SortKey = 'numero' | 'date' | 'fournisseur' | 'status';
 
@@ -176,92 +178,105 @@ export default function CommandeList({
                   />
                 </label>
               </th>
-              <th colSpan={7} className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 py-3">
-                <div className="flex items-center justify-between w-full h-8">
-                  {selectedOrderIds.size > 0 ? (
-                    <div className="flex items-center gap-4 animate-in fade-in slide-in-from-left-2 duration-200">
-                      <div className="dropdown dropdown-end">
-                        <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2">
-                          <MoreVertical className="w-4 h-4" />
-                          {t('common.actions_title', { defaultValue: 'Actions' })}
-                          <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedOrderIds.size}</span>
-                        </div>
-                        <ul tabIndex={0} className="dropdown-content z-[50] menu p-2 shadow-2xl bg-base-100 rounded-box w-60 border border-base-200 mt-2">
-                          {selectedOrderIds.size === 1 ? (
-                            <>
-                              <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                                {t('common.single_selection', { defaultValue: 'Sélection' })}
-                              </li>
-                              {(() => {
-                                const id = Array.from(selectedOrderIds)[0];
-                                const commande = sortedCommandes.find(x => x.id === id);
-                                if (!commande) return null;
-                                return (
-                                  <>
-                                    <li>
-                                      <a onClick={() => onViewDetails(commande)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                                        <Eye className="w-4 h-4" /> {t('orders.list.table.view_details')}
-                                      </a>
-                                    </li>
-                                    {commande.status === 'ATT' && (
-                                        <li>
-                                            <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-3 py-3 hover:bg-neutral/10 text-neutral font-medium">
-                                                <Printer className="w-4 h-4" /> {t('common.print', 'Imprimer')}
-                                            </a>
-                                        </li>
-                                    )}
-                                    {commande.status === 'PREP' && (
-                                         <li>
-                                            <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                                <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
-                                            </a>
-                                        </li>
-                                    )}
-                                  </>
-                                );
-                              })()}
-                            </>
-                          ) : (
-                            <>
-                              <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                                {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
-                              </li>
-                              {canMerge && (
+                {selectedOrderIds.size > 0 ? (
+                  <SelectionHeader
+                    selectedCount={selectedOrderIds.size}
+                    onClear={() => onToggleAllOrdersSelection()}
+                    colSpan={8}
+                    actions={
+                      selectedOrderIds.size === 1 ? (
+                        <>
+                          <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                            {t('common.single_selection', { defaultValue: 'Sélection' })}
+                          </li>
+                          {(() => {
+                            const id = Array.from(selectedOrderIds)[0];
+                            const commande = sortedCommandes.find(x => x.id === id);
+                            if (!commande) return null;
+                            return (
+                              <>
                                 <li>
-                                    <a onClick={onOpenMergeModal} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                                        <GitMerge className="w-4 h-4" /> {t('orders.list.selection.merge')}
-                                    </a>
+                                  <a onClick={() => onViewDetails(commande)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
+                                    <Eye className="w-4 h-4" /> {t('orders.list.table.view_details')}
+                                  </a>
                                 </li>
-                              )}
-                              <li>
-                                <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                  <Trash2 className="w-4 h-4" /> {t('orders.bulk_delete_btn')}
+                                {commande.status === 'ATT' && (
+                                    <li>
+                                        <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-3 py-3 hover:bg-neutral/10 text-neutral font-medium">
+                                            <Printer className="w-4 h-4" /> {t('common.print', 'Imprimer')}
+                                        </a>
+                                    </li>
+                                )}
+                                {commande.status === 'PREP' && (
+                                     <li>
+                                        <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                                            <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
+                                        </a>
+                                    </li>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </>
+                      ) : (
+                        <>
+                          <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
+                            {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                          </li>
+                          {canMerge && (
+                            <li>
+                                <a onClick={onOpenMergeModal} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
+                                    <GitMerge className="w-4 h-4" /> {t('orders.list.selection.merge')}
                                 </a>
-                              </li>
-                            </>
+                            </li>
                           )}
-                        </ul>
+                          <li>
+                            <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
+                              <Trash2 className="w-4 h-4" /> {t('orders.bulk_delete_btn')}
+                            </a>
+                          </li>
+                        </>
+                      )
+                    }
+                  >
+                    <div />
+                  </SelectionHeader>
+                ) : (
+                  <>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('numero')}>
+                      <div className="flex items-center gap-2">
+                        {t('orders.list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
-                      <button 
-                        onClick={() => onToggleAllOrdersSelection()} // Clear selection
-                        className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content"
-                      >
-                        <X className="w-4 h-4" />
-                        {t('common.actions.cancel', { defaultValue: 'Annuler' })}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-7 w-full h-full items-center text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                      <div className="col-span-1">{t('orders.list.table.id')}</div>
-                      <div className="col-span-1">{t('orders.list.table.invoice_number')}</div>
-                      <div className="col-span-1">{t('orders.list.table.date')}</div>
-                      <div className="col-span-2">{t('orders.list.table.provider')}</div>
-                      <div className="col-span-1 text-center">{t('orders.list.table.status')}</div>
-                      <div className="col-span-1 text-right pr-4">{t('orders.list.table.total')}</div>
-                    </div>
-                  )}
-                </div>
-              </th>
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
+                      {t('orders.list.table.invoice_number')}
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('date')}>
+                      <div className="flex items-center gap-2">
+                        {t('common.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('fournisseur')}>
+                      <div className="flex items-center gap-2">
+                        {t('common.supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 text-center sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
+                      {t('orders.list.table.items')}
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 text-right sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
+                      {t('common.total')}
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('status')}>
+                      <div className="flex items-center gap-2 justify-center">
+                        {t('common.status_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                      </div>
+                    </th>
+                    <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 text-right pr-4 sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
+                      {t('common.actions_title')}
+                    </th>
+                  </>
+                )}
             </tr>
           </thead>
           <tbody className="text-base-content font-medium">
@@ -282,19 +297,17 @@ export default function CommandeList({
                     </label>
                 </td>
                 <td>
-                    <span className="font-mono font-bold text-xs opacity-50">#{commande.id}</span>
+                    <span className="font-mono font-bold text-sm text-base-content/90">#{commande.id}</span>
                 </td>
                 <td>
-                    <span className="font-mono text-base-content/80 font-semibold">{commande.numero_facture || '-'}</span>
+                    <span className="font-mono font-medium text-xs text-base-content/80">{commande.numero_facture || '-'}</span>
                 </td>
                 <td>
-                    <div className="flex flex-col">
-                        <span className="text-base-content">
-                            {new Date(commande.date).toLocaleDateString('fr-FR')}
-                        </span>
-                    </div>
+                    <span className="text-sm font-semibold text-base-content/80">
+                        {new Date(commande.date).toLocaleDateString('fr-FR')}
+                    </span>
                 </td>
-                <td className="col-span-2">
+                <td>
                     {(() => {
                         const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
                         const isDeleted = !fournisseur && !!commande.fournisseur_nom;
@@ -302,41 +315,42 @@ export default function CommandeList({
                         
                         return (
                             <div className="flex flex-col">
-                                <span className={`font-bold ${isDeleted ? 'italic text-base-content/60' : 'text-base-content'}`}>
+                                <span className={`font-bold text-sm ${isDeleted ? 'italic text-base-content/60' : 'text-base-content'}`}>
                                     {nom}
                                 </span>
-                                {isDeleted && <span className="text-[10px] uppercase tracking-tighter opacity-50">(Supprimé)</span>}
                             </div>
                         );
                     })()}
+                </td>
+                <td className="text-center">
+                    <span className="text-xs font-mono bg-base-200 px-2 py-0.5 rounded-md">
+                        {commande.items_count || 0}
+                    </span>
+                </td>
+                <td className="font-bold text-right text-primary">
+                    {formatCurrency(Number(commande.total))} F
                 </td>
                 <td className="text-center">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(commande.status)}`}>
                         {commande.status_display}
                     </span>
                 </td>
-                <td className="font-bold text-right text-primary pr-4">
-                    {formatCurrency(Number(commande.total))} F
+                <td className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                            className="btn btn-ghost btn-sm btn-square hover:bg-info/10 hover:text-info transition-colors"
+                            onClick={(e) => { e.stopPropagation(); onViewDetails(commande); }}
+                            title={t('orders.list.table.view_details')}
+                        >
+                            <Eye className="w-4 h-4" />
+                        </button>
+                    </div>
                 </td>
-                
-                {selectedOrderIds.size === 0 && (
-                    <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                                className="btn btn-ghost btn-sm btn-square hover:bg-info/10 hover:text-info transition-colors"
-                                onClick={(e) => { e.stopPropagation(); onViewDetails(commande); }}
-                                title={t('orders.list.table.view_details')}
-                            >
-                                <Eye className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </td>
-                )}
               </tr>
             ))}
             {sortedCommandes.length === 0 && (
                 <tr>
-                    <td colSpan={8} className="text-center py-12 text-base-content/40 italic">
+                    <td colSpan={9} className="text-center py-12 text-base-content/40 italic">
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center not-italic">📦</div>
                             {t('orders.list.table.empty')}

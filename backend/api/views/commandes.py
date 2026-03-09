@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from decimal import Decimal
 from django.db import transaction
-from django.db.models import ProtectedError, F, Sum, DecimalField, Value
+from django.db.models import ProtectedError, F, Sum, DecimalField, Value, Count
 from django.contrib.auth.models import User
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
@@ -108,7 +108,8 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
             montant_paye_annotated=Coalesce(
                 Sum('paiements__montant'), 
                 Value(0, output_field=DecimalField())
-            )
+            ),
+            items_count=Count('produits', distinct=True)
         ).order_by('-date')
         
     serializer_class = CommandeSerializer
@@ -169,6 +170,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
                 'detail': 'Certaines commandes ne peuvent pas être supprimées car elles contiennent des lots déjà utilisés ou vendus.'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+             transaction.set_rollback(True)
              return Response({'detail': f'Erreur lors de la suppression : {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         log_audit(

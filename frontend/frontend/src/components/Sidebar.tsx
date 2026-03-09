@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSidebar } from '../context/SidebarContext';
-import PharmaCrossLogo from './PharmaCrossLogo';
+import ZenithLogo from './ZenithLogo';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -245,10 +245,10 @@ export default function Sidebar() {
         `}
       >
         <div className="pharma-sidebar-header p-4 flex items-center gap-3">
-          <PharmaCrossLogo size={isCollapsed ? 32 : 48} />
+          <ZenithLogo variant={1} size={isCollapsed ? 32 : 48} />
           {!isCollapsed && (
             <div className="min-w-0">
-              <h1 className="text-xl font-bold text-white truncate">Zenith</h1>
+              <h1 className="text-xl font-bold text-white truncate uppercase tracking-wider">Zenith</h1>
               <p className="text-xs text-green-400 truncate">{t('sidebar.app_subtitle')}</p>
             </div>
           )}

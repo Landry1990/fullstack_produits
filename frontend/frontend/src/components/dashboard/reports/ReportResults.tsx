@@ -85,29 +85,29 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
             const columns = Object.keys(results[0]).filter(k => !k.startsWith('_') && k !== 'id');
 
             return (
-                <div className="bg-base-100 rounded-2xl border border-base-300 shadow-sm overflow-hidden animate-in fade-in duration-500">
+                <div className="bg-base-100 rounded-3xl border border-base-300 shadow-sm overflow-hidden animate-in fade-in duration-500">
                     <div className="overflow-x-auto">
-                        <table className="table table-zebra w-full">
+                        <table className="w-full border-separate border-spacing-0">
                             <thead>
                                 <tr className="bg-base-200/50">
-                                    {columns.slice(0, 8).map(col => (
-                                        <th key={col} className="text-[10px] font-black uppercase tracking-widest text-base-content/60 py-4">
+                                    {columns.slice(0, 8).map((col, idx) => (
+                                        <th key={col} className={`text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''}`}>
                                             {formatColumnHeader(col)}
                                         </th>
                                     ))}
-                                    <th className="w-10"></th>
+                                    <th className="w-10 rounded-tr-2xl"></th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-base-100">
                                 {results.slice(0, 100).map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-primary/5 transition-colors group">
-                                        {columns.slice(0, 8).map(col => (
-                                            <td key={col} className="text-sm font-bold text-base-content/80">
+                                    <tr key={idx} className="hover:bg-primary/5 transition-all group">
+                                        {columns.slice(0, 8).map((col, subIdx) => (
+                                            <td key={col} className={`py-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''}`}>
                                                 {formatValue(col, row[col])}
                                             </td>
                                         ))}
-                                        <td>
-                                            <button className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <td className="pr-4">
+                                            <button className="btn btn-ghost btn-xs opacity-0 group-hover:opacity-100 transition-all rounded-lg hover:bg-primary/10 hover:text-primary">
                                                 <Eye className="w-4 h-4" />
                                             </button>
                                         </td>

@@ -18,7 +18,8 @@ export const calculateLineTotal = (
     const montantRemise = Math.abs(sousTotal) * (remise / 100);
 
     // Si la quantité est négative (retour), la remise doit aussi être soustraite pour le crédit net
-    return sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise);
+    const total = sousTotal - (sousTotal < 0 ? -montantRemise : montantRemise);
+    return Number.isFinite(total) ? total : 0;
 };
 
 /**
@@ -26,7 +27,10 @@ export const calculateLineTotal = (
  */
 export const calculateCartStats = (lignes: LigneFacture[]) => {
     const totalLines = lignes.length;
-    const totalQty = lignes.reduce((acc, l) => acc + l.quantite, 0);
+    const totalQty = lignes.reduce((acc, l) => {
+        const qty = Number(l.quantite);
+        return acc + (Number.isFinite(qty) ? qty : 0);
+    }, 0);
 
     let totalTTC = 0;
     let totalTva = 0;
@@ -50,7 +54,12 @@ export const calculateCartStats = (lignes: LigneFacture[]) => {
         }
     });
 
-    return { totalLines, totalQty, sousTotal: totalHT, totalTva, totalTTC };
+    // Safety check for final stats
+    const safeSousTotal = Number.isFinite(totalHT) ? totalHT : 0;
+    const safeTotalTva = Number.isFinite(totalTva) ? totalTva : 0;
+    const safeTotalTTC = Number.isFinite(totalTTC) ? totalTTC : 0;
+
+    return { totalLines, totalQty, sousTotal: safeSousTotal, totalTva: safeTotalTva, totalTTC: safeTotalTTC };
 };
 
 /**
@@ -90,15 +99,18 @@ export const calculateFactureTotals = (
         }
     }
 
-    return {
-        totalHt: cartStats.sousTotal,
-        totalTva: cartStats.totalTva,
-        totalTtc: finalTTC,
-        remiseMontant,
-        tauxCouverture,
-        partAssurance,
-        partPatient
+    // Final safety wrap to ensure no NaN escapes
+    const safeResult = {
+        totalHt: Number.isFinite(cartStats.sousTotal) ? cartStats.sousTotal : 0,
+        totalTva: Number.isFinite(cartStats.totalTva) ? cartStats.totalTva : 0,
+        totalTtc: Number.isFinite(finalTTC) ? finalTTC : 0,
+        remiseMontant: Number.isFinite(remiseMontant) ? remiseMontant : 0,
+        tauxCouverture: Number.isFinite(tauxCouverture) ? tauxCouverture : 0,
+        partAssurance: Number.isFinite(partAssurance) ? partAssurance : 0,
+        partPatient: Number.isFinite(partPatient) ? partPatient : 0
     };
+
+    return safeResult;
 };
 
 /**

@@ -136,14 +136,16 @@ class CommandeListSerializer(serializers.ModelSerializer):
     reste_a_payer = serializers.SerializerMethodField()
     statut_paiement = serializers.SerializerMethodField()
     closed_by_name = serializers.SerializerMethodField()
-    
+    items_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Commande
         fields = [
             'id', 'numero_facture', 'fournisseur', 'fournisseur_nom',
             'date', 'date_cloture', 'status', 'status_display', 'total',
             'type', 'type_display', 'taux_change', 'frais_coefficient',
-            'montant_paye', 'reste_a_payer', 'statut_paiement', 'closed_by_name'
+            'montant_paye', 'reste_a_payer', 'statut_paiement', 'closed_by_name',
+            'items_count'
         ]
 
     def get_closed_by_name(self, obj):

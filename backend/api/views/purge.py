@@ -403,3 +403,53 @@ class PurgeViewSet(ViewSet):
             })
         except Exception as e:
             return Response({'detail': f'Erreur lors de la sauvegarde: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def restore(self, request):
+        """
+        Execute the restoration. Requires superadmin password confirmation.
+        Body (FormData): { file: <binary>, password: "xxx" }
+        """
+        password = request.data.get('password', '')
+        file_obj = request.FILES.get('file')
+
+        if not file_obj:
+            return Response({'detail': 'Fichier de sauvegarde requis.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not password:
+            return Response({'detail': 'Le mot de password est requis pour confirmer la restauration.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Verify superadmin password
+        user = request.user
+        password_valid = user.check_password(password)
+        
+        if not password_valid or not user.is_superuser:
+            return Response({'detail': 'Mot de passe incorrect ou droits insuffisants.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Save uploaded file to a temporary location
+        import tempfile
+        import os
+        from io import StringIO
+
+        with tempfile.NamedTemporaryFile(suffix='.sql.gz', delete=False) as tmp:
+            for chunk in file_obj.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+
+        try:
+            self.stdout = StringIO()
+            # Call the restoration command
+            call_command('restore_database', tmp_path, no_confirm=True, stdout=self.stdout)
+            output = self.stdout.getvalue()
+            
+            # Clean up
+            os.unlink(tmp_path)
+
+            return Response({
+                'message': 'Base de données restaurée avec succès.',
+                'details': output
+            })
+        except Exception as e:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+            return Response({'detail': f'Erreur lors de la restauration: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

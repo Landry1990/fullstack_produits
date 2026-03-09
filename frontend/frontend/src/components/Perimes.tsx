@@ -323,7 +323,7 @@ export default function Perimes() {
   return (
     <div className="h-full flex flex-col bg-base-100 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-base-100/50 backdrop-blur-md sticky top-0 z-30 shrink-0">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-base-200 bg-base-100 sticky top-0 z-30 opacity-100 shrink-0">
         <div className="flex items-center gap-4">
           <div className="p-2.5 bg-error/10 text-error rounded-xl shadow-inner">
             <AlertTriangle className="w-6 h-6" />
@@ -629,7 +629,7 @@ export default function Perimes() {
                 </div>
               ) : (
                 <table className="table table-xs table-pin-rows w-full border-separate border-spacing-0">
-                  <thead className="bg-base-200/80 backdrop-blur-sm">
+                  <thead className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300">
                     <tr className="text-base-content/50 uppercase text-[10px] tracking-widest font-black">
                       <th className="py-3 px-4 w-12 bg-transparent text-center">
                           <input 

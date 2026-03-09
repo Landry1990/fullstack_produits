@@ -153,11 +153,11 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className={`grid grid-cols-1 md:grid-cols-2 ${stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER' ? 'xl:grid-cols-2' : 'xl:grid-cols-4'} gap-4`}>
-        {(stats && (stats.role === 'VENDEUR' || stats.role === 'CAISSIER' ? [
+        {(stats ? (stats.role === 'VENDEUR' || stats.role === 'CAISSIER' ? [
           {
             title: t('dashboard.stats.my_sales'),
-            value: formatCurrency(stats?.user_stats?.sales ?? 0),
-            change: t('dashboard.stats.sales_count', { count: stats?.user_stats?.count || 0 }),
+            value: formatCurrency(stats.user_stats?.sales ?? 0),
+            change: t('dashboard.stats.sales_count', { count: stats.user_stats?.count || 0 }),
             icon: TrendingUp,
             color: "text-indigo-600",
             bgColor: "bg-indigo-100/50",
@@ -167,7 +167,7 @@ export default function Dashboard() {
           },
           {
             title: t('dashboard.stats.my_avg_basket'),
-            value: formatCurrency(stats?.user_stats?.avg_basket ?? 0),
+            value: formatCurrency(stats.user_stats?.avg_basket ?? 0),
             change: t('dashboard.stats.avg_per_client'),
             icon: ShoppingBag,
             color: "text-fuchsia-600",
@@ -176,11 +176,11 @@ export default function Dashboard() {
             isPositive: true
           }
         ] : [
-          ...(stats?.user_stats ? [
+          ...(stats.user_stats ? [
             {
               title: t('dashboard.stats.my_sales'),
-              value: formatCurrency(stats?.user_stats?.sales ?? 0),
-              change: t('dashboard.stats.sales_count', { count: stats?.user_stats?.count ?? 0 }),
+              value: formatCurrency(stats.user_stats.sales ?? 0),
+              change: t('dashboard.stats.sales_count', { count: stats.user_stats.count ?? 0 }),
               icon: TrendingUp,
               color: "text-indigo-600",
               bgColor: "bg-indigo-100/50",
@@ -191,18 +191,18 @@ export default function Dashboard() {
           ] : []),
           { 
             title: t('dashboard.stats.revenue'), 
-            value: formatCurrency(stats?.revenue?.value ?? 0), 
-            change: `${(stats?.revenue?.change || 0) > 0 ? '+' : ''}${stats?.revenue?.change || 0}%`, 
+            value: formatCurrency(stats.revenue?.value ?? 0), 
+            change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
             icon: Wallet, 
             color: "text-emerald-600", 
             bgColor: "bg-emerald-100/50", 
             borderColor: "border-emerald-200/50",
-            isPositive: (stats?.revenue?.change || 0) >= 0,
-            details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats?.discount?.value ?? 0) })
+            isPositive: (stats.revenue?.change || 0) >= 0,
+            details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats.discount?.value ?? 0) })
           },
-          { title: t('dashboard.stats.receivables'), value: formatCurrency(stats?.receivables?.value ?? 0), change: t('dashboard.stats.invoices_count', { count: stats?.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/creances' },
-          { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats?.stock_value?.value ?? 0), change: t('dashboard.stats.products_count', { count: stats?.stock_value?.count ?? 0 }), icon: Package, color: "text-amber-600", bgColor: "bg-amber-100/50", borderColor: "border-amber-200/50", isPositive: true }
-        ])).map((stat: any, index) => {
+          { title: t('dashboard.stats.receivables'), value: formatCurrency(stats.receivables?.value ?? 0), change: t('dashboard.stats.invoices_count', { count: stats.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/creances' },
+          { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats.stock_value?.value ?? 0), change: t('dashboard.stats.products_count', { count: stats.stock_value?.count ?? 0 }), icon: Package, color: "text-amber-600", bgColor: "bg-amber-100/50", borderColor: "border-amber-200/50", isPositive: true }
+        ]) : []).map((stat: any, index) => {
           const Icon = stat.icon;
           const content = (
             <div className={`card-body p-5 flex flex-row items-center justify-between ${stat.link ? 'hover:bg-primary/5 active:scale-[0.98]' : ''} transition-all`}>
@@ -266,24 +266,24 @@ export default function Dashboard() {
               <table className="table w-full border-separate border-spacing-0">
                 <thead>
                   <tr>
-                    <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 py-3 rounded-l-xl">{t('dashboard.ug.provider')}</th>
-                    <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-3">{t('dashboard.ug.acquired')}</th>
-                    <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-3">{t('dashboard.ug.sold')}</th>
-                    <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-3 rounded-r-xl">{t('dashboard.ug.remaining')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl">{t('dashboard.ug.provider')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('dashboard.ug.acquired')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('dashboard.ug.sold')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4 pr-6 rounded-r-2xl">{t('dashboard.ug.remaining')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-100">
                   {(ugStats as any).results.map((stat: any, index: number) => (
                     <tr key={index} className="hover:bg-base-200/30 transition-all group">
-                      <td className="py-4 font-black text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
-                      <td className="text-right py-4 font-mono font-black text-xs text-purple-600">
+                      <td className="py-4 pl-6 font-bold text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
+                      <td className="text-right py-4 font-mono font-bold text-sm text-purple-600">
                         {formatCurrency(stat.valeur_acquise)}
                       </td>
-                      <td className="text-right py-4 font-mono font-black text-xs text-emerald-600">
+                      <td className="text-right py-4 font-mono font-bold text-sm text-emerald-600">
                         {formatCurrency(stat.valeur_vendue)}
                       </td>
-                      <td className="text-right py-4">
-                        <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg font-mono font-black text-xs border border-blue-100">
+                      <td className="text-right py-4 pr-6">
+                        <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-mono font-bold text-sm border border-blue-100 group-hover:bg-blue-100 transition-colors">
                           {formatCurrency(stat.valeur_restante)}
                         </span>
                       </td>
@@ -291,15 +291,15 @@ export default function Dashboard() {
                   ))}
                    {/* Total Row */}
                   {(ugStats as any).results.length > 0 && (
-                      <tr className="bg-base-200/30 font-black border-t-2 border-base-200">
-                        <td className="py-4 uppercase tracking-widest text-[10px] text-base-content/60">{t('dashboard.ug.total')}</td>
-                        <td className="text-right py-4 text-purple-700 font-mono text-sm">
+                      <tr className="bg-base-200/20 font-bold border-t border-base-200">
+                        <td className="py-4 pl-6 uppercase tracking-wider text-[10px] text-base-content/40">{t('dashboard.ug.total')}</td>
+                        <td className="text-right py-4 text-purple-700 font-mono text-sm pr-2">
                           {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0))}
                         </td>
-                        <td className="text-right py-4 text-emerald-700 font-mono text-sm">
+                        <td className="text-right py-4 text-emerald-700 font-mono text-sm pr-2">
                           {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_vendue, 0))}
                         </td>
-                        <td className="text-right py-4 text-blue-700 font-mono text-sm">
+                        <td className="text-right py-4 text-blue-700 font-mono text-sm pr-6">
                           {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_restante, 0))}
                         </td>
                       </tr>
@@ -475,26 +475,26 @@ export default function Dashboard() {
               </div>
               
               {supplierDebts?.suppliers && supplierDebts.suppliers.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="table w-full border-separate border-spacing-y-2">
+                  <div className="overflow-y-auto max-h-72 custom-scrollbar pr-1">
+                    <table className="w-full">
                         <thead>
                             <tr>
-                                <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 py-3 rounded-l-xl">{t('dashboard.debts.supplier')}</th>
-                                <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-3">{t('dashboard.debts.debt')}</th>
-                                <th className="bg-base-200/50 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center py-3 rounded-r-xl">{t('dashboard.debts.action')}</th>
+                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl text-left">{t('dashboard.debts.supplier')}</th>
+                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('dashboard.debts.debt')}</th>
+                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-center py-4 pr-6 rounded-r-2xl">{t('dashboard.debts.action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-base-100">
                             {supplierDebts.suppliers.map((supplier: any) => (
-                                <tr key={supplier.id} className="hover:bg-red-50 transition-all group">
-                                    <td className="py-4 font-black text-sm text-base-content group-hover:text-red-700 transition-colors">{supplier.name}</td>
-                                     <td className="text-right py-4 font-mono font-black text-sm text-red-600">
+                                <tr key={supplier.id} className="hover:bg-red-50/50 transition-all group">
+                                    <td className="py-4 pl-6 font-bold text-sm text-base-content group-hover:text-red-700 transition-colors uppercase tracking-tight">{supplier.name}</td>
+                                     <td className="text-right py-4 font-mono font-bold text-sm text-red-600">
                                          {formatCurrency(supplier.debt)}
                                      </td>
-                                    <td className="text-center py-4">
+                                    <td className="text-center py-4 pr-6">
                                         <Link 
                                             to="/app/fournisseurs" 
-                                            className="btn btn-sm btn-ghost btn-circle text-base-content/20 group-hover:text-red-600 transition-all"
+                                            className="btn btn-sm btn-ghost btn-circle text-base-content/20 group-hover:text-red-600 group-hover:bg-red-100 transition-all"
                                         >
                                             <ArrowRight className="w-5 h-5" />
                                         </Link>

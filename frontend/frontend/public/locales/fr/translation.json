@@ -19,15 +19,17 @@
         "units": "stk",
         "refresh": "Actualiser",
         "restore": "Restaurer",
-        "status": {
-            "draft": "Brouillon"
-        },
+        "status_title": "Statut",
         "actions": {
             "confirm": "Confirmer",
             "cancel": "Annuler",
             "delete": "Supprimer"
         },
         "actions_title": "Actions",
+        "bulk_actions": "Actions Groupées",
+        "date": "Date",
+        "supplier": "Fournisseur",
+        "total": "Total",
         "single_selection": "Sélection",
         "duplicate": "Dupliquer",
         "pagination": {
@@ -751,9 +753,11 @@
             },
             "table": {
                 "id": "ID",
+                "number": "N° Commande",
                 "invoice_number": "N° Facture",
                 "date": "Date",
                 "provider": "Fournisseur",
+                "items": "Articles",
                 "status": "Statut",
                 "total": "Total (F)",
                 "actions": "Actions",
@@ -1441,6 +1445,8 @@
             "invoice_number": "N° Facture",
             "client": "Client",
             "amount": "Montant",
+            "amount_settled": "Régler",
+            "amount_on_account": "En compte",
             "payment_mode": "Mode Paiement",
             "date": "Date",
             "operator": "Vendeur",
@@ -1511,7 +1517,8 @@
             "load_details_error": "Impossible de charger le détail."
         },
         "confirm_delete": "Supprimer cette facture ?",
-        "confirm_bulk_delete": "Confirmer la suppression de {{count}} factures ? (Seuls les brouillons/annulés seront supprimés)"
+        "confirm_bulk_delete": "Confirmer la suppression de {{count}} factures ? (Seuls les brouillons/annulés seront supprimés)",
+        "bulk_delete_btn": "Supprimer les {{count}} factures"
     },
     "perimes": {
         "title": "Gestion des Périmés",
@@ -2115,6 +2122,13 @@
         "title": "Avoirs Fournisseurs (Retours)",
         "subtitle": "Gérez les retours et avoirs fournisseurs",
         "create_btn": "+ Nouvel Avoir",
-        "search_placeholder": "🔍 Rechercher un avoir..."
+        "search_placeholder": "🔍 Rechercher un avoir...",
+        "table": {
+            "date": "Date",
+            "numero": "N° Avoir",
+            "fournisseur": "Fournisseur",
+            "montant": "Montant",
+            "status": "Statut"
+        }
     }
 }

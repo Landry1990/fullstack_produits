@@ -543,7 +543,7 @@ export default function ModuleFinancier() {
               {/* Table */}
               <div className="overflow-x-auto max-h-80">
                 <table className="table table-sm table-zebra">
-                  <thead className="sticky top-0 bg-base-100">
+                  <thead className="sticky top-0 z-10 bg-base-100 opacity-100">
                     <tr>
                       <th>{categoryType === 'rayon' ? t('finance.category.rayon', 'Rayon') : categoryType === 'groupe' ? t('finance.category.groupe', 'Groupe') : t('finance.category.forme', 'Forme')}</th>
                       <th className="text-right">CA</th>

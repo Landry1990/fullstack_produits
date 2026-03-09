@@ -1,11 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from '../config/axios';
-import type { Commande, Fournisseur, Rayon, CommandeProduit } from '../types';
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-const commandesEndpoint = `${apiBaseUrl}/api/commandes/`;
-const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
-const rayonsEndpoint = `${apiBaseUrl}/api/rayons/`;
+import type { Commande, Fournisseur, Rayon, CommandeProduit, PaginatedResponse } from '../types';
+import commandeService from '../services/commandeService';
+import api from '../services/api';
 
 // Types
 interface CommandesFilters {
@@ -14,37 +10,16 @@ interface CommandesFilters {
     status?: string;
 }
 
-interface CommandesResponse {
-    count: number;
-    next: string | null;
-    previous: string | null;
-    results: Commande[];
-}
-
 // ==================== QUERIES ====================
 
 export const useCommandes = (filters: CommandesFilters) => {
     return useQuery({
         queryKey: ['commandes', filters],
-        queryFn: async () => {
-            const params = new URLSearchParams();
-            params.append('page', filters.page.toString());
-            if (filters.type) params.append('type', filters.type);
-            if (filters.status && filters.status !== 'ALL') params.append('status', filters.status);
-
-            const response = await axios.get<CommandesResponse | Commande[]>(commandesEndpoint, { params });
-
-            // Normalize response (handle both paginated and array responses)
-            if (Array.isArray(response.data)) {
-                return {
-                    count: response.data.length,
-                    next: null,
-                    previous: null,
-                    results: response.data
-                };
-            }
-            return response.data;
-        },
+        queryFn: () => commandeService.getAll({
+            page: filters.page,
+            type: filters.type,
+            status: filters.status
+        }),
         placeholderData: (previousData) => previousData,
     });
 };
@@ -52,11 +27,7 @@ export const useCommandes = (filters: CommandesFilters) => {
 export const useCommande = (id: number | null) => {
     return useQuery({
         queryKey: ['commande', id],
-        queryFn: async () => {
-            if (!id) return null;
-            const response = await axios.get<Commande>(`${commandesEndpoint}${id}/`);
-            return response.data;
-        },
+        queryFn: () => id ? commandeService.getById(id) : null,
         enabled: !!id,
     });
 };
@@ -65,11 +36,11 @@ export const useCommandeFournisseurs = () => {
     return useQuery({
         queryKey: ['fournisseurs'],
         queryFn: async () => {
-            const response = await axios.get<Fournisseur[] | { results: Fournisseur[] }>(fournisseursEndpoint);
+            const response = await api.get<Fournisseur[] | PaginatedResponse<Fournisseur>>('fournisseurs/');
             if (Array.isArray(response.data)) return response.data;
             return response.data.results || [];
         },
-        staleTime: 1000 * 60 * 30, // 30 mins - reference data rarely changes
+        staleTime: 1000 * 60 * 30, // 30 mins
     });
 };
 
@@ -77,7 +48,7 @@ export const useCommandeRayons = () => {
     return useQuery({
         queryKey: ['rayons'],
         queryFn: async () => {
-            const response = await axios.get<Rayon[] | { results: Rayon[] }>(rayonsEndpoint);
+            const response = await api.get<Rayon[] | PaginatedResponse<Rayon>>('rayons/');
             if (Array.isArray(response.data)) return response.data;
             return response.data.results || [];
         },
@@ -87,10 +58,19 @@ export const useCommandeRayons = () => {
 
 // ==================== MUTATIONS ====================
 
-// Helper function for Date format MM/YY
+interface SaveCommandeParams {
+    commandeData: Partial<Commande>;
+    commandeProduits: CommandeProduit[];
+    mode: 'CREATE' | 'EDIT';
+    selectedCommandeId?: number | null;
+    isAutoSave?: boolean;
+}
+
+// NOTE: useSaveCommande logic is complex because of bulkSync. 
+// We keep the logic here but call the service.
 function parseMMYYToDate(mmyy: string | null | undefined): string | null {
     if (!mmyy) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(mmyy)) return mmyy; // Already ISO
+    if (/^\d{4}-\d{2}-\d{2}$/.test(mmyy)) return mmyy;
 
     const parts = mmyy.split('/');
     if (parts.length === 2 && parts[1].length === 2) {
@@ -104,50 +84,30 @@ function parseMMYYToDate(mmyy: string | null | undefined): string | null {
     return null;
 }
 
-// Clean payload to avoid circular references
-const cleanPayload = (data: unknown): unknown => {
-    try {
-        return JSON.parse(JSON.stringify(data));
-    } catch {
-        return data;
-    }
-};
-
-interface SaveCommandeParams {
-    commandeData: Partial<Commande>;
-    commandeProduits: CommandeProduit[];
-    mode: 'CREATE' | 'EDIT';
-    selectedCommandeId?: number | null;
-    isAutoSave?: boolean;
-}
-
 export const useSaveCommande = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async ({ commandeData, commandeProduits, mode, selectedCommandeId, isAutoSave }: SaveCommandeParams) => {
-            const cleanedCommandeData = cleanPayload(commandeData);
             let commandeId = selectedCommandeId;
 
-            // 1. Create or update the commande
             if (mode === 'CREATE') {
-                const response = await axios.post<Commande>(commandesEndpoint, cleanedCommandeData);
-                commandeId = response.data.id;
+                const response = await commandeService.create(commandeData);
+                commandeId = response.id;
             } else if (mode === 'EDIT' && commandeId) {
-                await axios.patch<Commande>(`${commandesEndpoint}${commandeId}/`, cleanedCommandeData);
+                await commandeService.update(commandeId, commandeData);
             }
 
             if (!commandeId) throw new Error("ID de commande manquant");
 
-            // 2. Handle products with bulk_sync
             const productsPayload = commandeProduits.map(p => ({
-                id: p.id && !String(p.id).startsWith('temp-') ? p.id : null,
+                id: p.id && !String(p.id).startsWith('temp-') && typeof p.id === 'number' && p.id < 1000000000 ? p.id : null,
                 produit: typeof p.produit === 'object' ? p.produit.id : p.produit,
                 quantity: parseInt(String(p.quantity)),
                 unites_gratuites: parseInt(String(p.unites_gratuites || 0)),
                 price: parseFloat(String(p.price)).toFixed(0),
                 price_cost: parseFloat(String(p.price)).toFixed(0),
-                selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(0) : '0.00',
+                selling_price: p.selling_price ? parseFloat(String(p.selling_price)).toFixed(0) : '0',
                 prix_euro: p.prix_euro ? parseFloat(String(p.prix_euro)).toFixed(0) : null,
                 tva: parseFloat(String(p.tva || 18)).toFixed(0),
                 marge: parseFloat(String(p.marge || 1.3)).toFixed(4),
@@ -155,17 +115,15 @@ export const useSaveCommande = () => {
                 date_expiration: parseMMYYToDate(p.date_expiration)
             }));
 
-            await axios.post(`${commandesEndpoint}${commandeId}/bulk_sync/`, { produits: productsPayload });
+            await commandeService.bulkSyncProduits(commandeId, productsPayload);
 
-            // Return the created/updated commande
-            const { data: updatedCommande } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
+            const updatedCommande = await commandeService.getById(commandeId);
             return { commande: updatedCommande, isAutoSave, mode };
         },
         onSuccess: (result) => {
             if (!result.isAutoSave) {
                 queryClient.invalidateQueries({ queryKey: ['commandes'] });
             }
-            // Update specific commande cache
             queryClient.setQueryData(['commande', result.commande.id], result.commande);
         },
     });
@@ -175,10 +133,7 @@ export const useDeleteCommande = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async (commandeId: number) => {
-            await axios.delete(`${commandesEndpoint}${commandeId}/`);
-            return commandeId;
-        },
+        mutationFn: (commandeId: number) => commandeService.delete(commandeId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['commandes'] });
         },
@@ -190,9 +145,9 @@ export const useClotureCommande = () => {
 
     return useMutation({
         mutationFn: async (commandeId: number) => {
-            const response = await axios.post(`${commandesEndpoint}${commandeId}/cloturer/`);
-            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
-            return { message: response.data.message, commande: updated };
+            const res = await commandeService.cloturer(commandeId);
+            const updated = await commandeService.getById(commandeId);
+            return { message: res.message, commande: updated };
         },
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['commandes'] });
@@ -206,8 +161,8 @@ export const useUpdateCommandeStatus = () => {
 
     return useMutation({
         mutationFn: async ({ commandeId, status }: { commandeId: number; status: string }) => {
-            await axios.patch(`${commandesEndpoint}${commandeId}/`, { status });
-            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
+            await commandeService.update(commandeId, { status });
+            const updated = await commandeService.getById(commandeId);
             return updated;
         },
         onSuccess: (updated) => {
@@ -222,9 +177,9 @@ export const useAnnulerReception = () => {
 
     return useMutation({
         mutationFn: async (commandeId: number) => {
-            const response = await axios.post(`${commandesEndpoint}${commandeId}/annuler_reception/`);
-            const { data: updated } = await axios.get<Commande>(`${commandesEndpoint}${commandeId}/`);
-            return { details: response.data.details, commande: updated };
+            const res = await commandeService.annulerReception(commandeId);
+            const updated = await commandeService.getById(commandeId);
+            return { details: res.details, commande: updated };
         },
         onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ['commandes'] });
@@ -236,10 +191,8 @@ export const useAnnulerReception = () => {
 export const useImprimerReception = () => {
     return useMutation({
         mutationFn: async (commandeId: number) => {
-            const response = await axios.get(`${commandesEndpoint}${commandeId}/imprimer_reception/`, {
-                responseType: 'blob'
-            });
-            return { blob: response.data, commandeId };
+            const blob = await commandeService.imprimerReception(commandeId);
+            return { blob, commandeId };
         },
         onSuccess: (result) => {
             const url = window.URL.createObjectURL(new Blob([result.blob]));

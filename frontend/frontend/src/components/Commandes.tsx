@@ -1,29 +1,31 @@
-
 import { useEffect, useMemo, useState, type FormEvent, useRef, useCallback } from 'react'
-import axios from '../config/axios'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '../hooks/useConfirm'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext';
-import type { ProduitModel, Commande, CommandeProduit } from '../types'
-import ProduitFormModal from './ProduitFormModal'
+import { useSudo } from '../hooks/useSudo'
+import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes'
+import { useCommandeActions } from '../hooks/useCommandeActions'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
-import { useProductSearch } from '../hooks/useProductSearch'
-import SimplePrintLabelsModal from './SimplePrintLabelsModal'
-import SuggestionCommandeModal from './SuggestionCommandeModal'
-import SudoValidationModal from './common/SudoValidationModal'
+import type { Commande, CommandeProduit, ProduitModel } from '../types'
+import { normalizeNumberInput, formatCurrency } from '../utils/formatters'
+import commandeService from '../services/commandeService'
+import produitService from '../services/produitService'
+import api from '../services/api'
 import CommandeList from './Commandes/CommandeList'
 import CommandeForm from './Commandes/CommandeForm'
+import CommandeDetails from './Commandes/CommandeDetails'
+import SuggestionCommandeModal from './Commandes/SuggestionCommandeModal'
+import ProduitFormModal from './ProduitFormModal'
+import { useProductSearch } from '../hooks/useProductSearch'
+import SimplePrintLabelsModal from './SimplePrintLabelsModal'
+import SudoValidationModal from './common/SudoValidationModal'
 import TransferCommandeModal from './Commandes/TransferCommandeModal'
 import MergeCommandesModal from './Commandes/MergeCommandesModal'
-import { useCommandeActions } from '../hooks/useCommandeActions';
-import { useSudo } from '../hooks/useSudo';
 // import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation';
 import { usePharmacySettings } from '../hooks/usePharmacySettings';
-import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hooks/useCommandes';
 import { useFormes } from '../hooks/useProduits';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { formatCurrency, normalizeNumberInput } from '../utils/formatters';
 
 
 
@@ -69,9 +71,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
     if (openDetailsId) {
       const fetchAndShow = async () => {
         try {
-          const resp = await axios.get(`/api/commandes/${openDetailsId}/`);
-          setSelectedCommande(resp.data);
-          setSearchDetailQuery('');
+          const data = await commandeService.getById(Number(openDetailsId));
+          setSelectedCommande(data);
           setViewMode('DETAILS');
         } catch (err) {
           console.error("Erreur lors du chargement de la commande via navigation:", err);
@@ -95,6 +96,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
   // Pagination State
   const [page, setPage] = useState(1)
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
+  const produitsEndpoint = `${apiBaseUrl}/api/produits/for_import/`;
+  const commandesEndpoint = `${apiBaseUrl}/api/commandes/`;
+  const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`;
 
   // React Query Hooks for data fetching
   const { 
@@ -151,16 +157,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const [showPrintLabelsModal, setShowPrintLabelsModal] = useState(false);
   // filterStatus is declared above with React Query hooks
 
-  // Tri pour les produits dans la vue détails
-  const [detailSortKey, setDetailSortKey] = useState<'name' | 'quantity' | 'price'>('name');
-  const [detailSortOrder, setDetailSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [searchDetailQuery, setSearchDetailQuery] = useState('');
-
-  const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isImporting, setIsImporting] = useState(false); // Flag pour désactiver auto-save pendant l'import CSV
-
-
+  const [isImporting, setIsImporting] = useState(false);
 
   const [isCreateProduitModalOpen, setIsCreateProduitModalOpen] = useState(false);
 
@@ -175,37 +173,17 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(new Set());
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
 
+  // Filter products for the search in form
+  const filteredProduits = useMemo(() => {
+    if (!searchProduitQuery) return [];
+    const q = searchProduitQuery.toLowerCase();
+    return produitsList.filter(p => 
+      p.name.toLowerCase().includes(q) || 
+      (p.cip1 && p.cip1.includes(q)) || 
+      (p.cip2 && p.cip2.includes(q))
+    ).slice(0, 10);
+  }, [produitsList, searchProduitQuery]);
 
-
-  // Fonction utilitaire pour gérer les erreurs
-  const handleApiError = useCallback((err: unknown, defaultMessage: string) => {
-    if (axios.isAxiosError(err)) {
-      const errorMessage = err.response?.data?.message || err.message || defaultMessage;
-      toast.error(errorMessage);
-    } else {
-      toast.error(defaultMessage);
-    }
-    console.error('Erreur API:', err);
-  }, []);
-
-  const apiBaseUrl = useMemo(
-    () => (import.meta.env.VITE_API_BASE_URL ?? ''),
-    [],
-  )
-  const commandesEndpoint = apiBaseUrl
-    ? `${String(apiBaseUrl).replace(/\/$/, '')}/api/commandes/`
-    : '/api/commandes/'
-  // Endpoints for reference
-  const produitsEndpoint = `${apiBaseUrl}/api/produits/`
-  const fournisseursEndpoint = `${apiBaseUrl}/api/fournisseurs/`
-
-
-  const filteredProduits = produitsList
-
-
-  // Data fetching is now handled by React Query hooks above
-
-  // Initialize Actions Hook
   const {
       handleSaveCommande,
       handleDeleteCommande,
@@ -216,16 +194,16 @@ export default function Commandes({ forcedType }: CommandesProps) {
       handleBulkDelete,
       executingAction,
   } = useCommandeActions({
-      apiBaseUrl,
-      commandesEndpoint,
       fetchCommandes: async () => { await refetchCommandes(); },
       setSelectedCommande,
       setViewMode,
-      confirm,
+      confirm: confirm as any, // Cast to any to match useConfirm type
       user
   });
 
   const { sudoState, requireSudo, closeSudo } = useSudo();
+
+  const [saving, setSaving] = useState(false);
 
   // Reset selection when selectedCommande changes
   useEffect(() => {
@@ -518,19 +496,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
       const loadProducts = async () => {
         if (!Array.isArray(data.products) || data.products.length === 0) return;
         
-        const apiBase = import.meta.env.VITE_API_BASE_URL ?? '';
-        const produitsEndpoint = apiBase ? `${apiBase}/api/produits/` : '/api/produits/';
-        
-        const newLines: CommandeProduit[] = [];
-        
+        const newLines: CommandeProduit[] = []; // Declare newLines here
         for (const p of data.products) {
           try {
-            // Fetch full product data
-            const { data: fullProduct } = await axios.get<ProduitModel>(`${produitsEndpoint}${p.id}/`);
+            const fullProduct = await produitService.getById(p.id);
             
-            // Smart suggested quantity:
-            // If avg_daily_sales is available (from shortage prediction), order enough for 30 days of coverage
-            // Otherwise, fall back to stock_minimum - stock
             const avgSales = (p as any).avg_daily_sales;
             const coverageDays = 30;
             const suggestedQty = avgSales && avgSales > 0
@@ -576,7 +546,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       // Clear state to avoid re-triggering on refresh
       window.history.replaceState({}, document.title);
     }
-  }, [location.state]);
+  }, [location.state, commandeType, tauxChange, fraisCoefficient]); // Added dependencies for loadProducts
 
   // Raccourcis clavier globaux (Delete, Escape, Ctrl+A)
   useEffect(() => {
@@ -596,8 +566,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       // Escape : Fermer modals
       if (e.key === 'Escape' && !isInput) {
         if (viewMode === 'CREATE' || viewMode === 'EDIT') {
-          handleBackToList();
-
+          // handleBackToList(); // Assuming this function exists
         }
         return;
       }
@@ -647,7 +616,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         if (commandeType === 'DIR' && fieldIndex === 1) {
             setTimeout(() => {
                 const euroInput = document.querySelector(
-                    `input[data-row="${rowIndex}"][data-field="euro"]`
+                    `input[data-row="${rowIndex}"][data-field="prix_euro"]` // Use actual field name
                 ) as HTMLInputElement;
                 euroInput?.focus();
                 euroInput?.select();
@@ -665,7 +634,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
             setFocusedField({ row: rowIndex, field: nextFieldIndex });
             setTimeout(() => {
                 const nextInput = document.querySelector(
-                    `input[data-row="${rowIndex}"][data-field="${nextFieldIndex}"]`
+                    `input[data-row="${rowIndex}"][data-field="${fieldsConfig[nextFieldIndex].name}"]` // Use actual field name
                 ) as HTMLInputElement;
                 nextInput?.focus();
                 nextInput?.select(); // Sélectionner le contenu pour saisie directe
@@ -689,7 +658,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
             setFocusedField({ row: rowIndex, field: prevFieldIndex });
             setTimeout(() => {
                 const prevInput = document.querySelector(
-                    `input[data-row="${rowIndex}"][data-field="${prevFieldIndex}"]`
+                    `input[data-row="${rowIndex}"][data-field="${fieldsConfig[prevFieldIndex].name}"]` // Use actual field name
                 ) as HTMLInputElement;
                 prevInput?.focus();
                 prevInput?.select(); // Sélectionner le contenu pour saisie directe
@@ -716,7 +685,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           setFocusedField({ row: rowIndex + 1, field: fieldIndex });
           setTimeout(() => {
             const nextInput = document.querySelector(
-              `input[data-row="${rowIndex + 1}"][data-field="${fieldIndex}"]`
+              `input[data-row="${rowIndex + 1}"][data-field="${fieldsConfig[fieldIndex].name}"]` // Use actual field name
             ) as HTMLInputElement;
             nextInput?.focus();
             nextInput?.select();
@@ -729,7 +698,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           setFocusedField({ row: rowIndex - 1, field: fieldIndex });
           setTimeout(() => {
             const nextInput = document.querySelector(
-              `input[data-row="${rowIndex - 1}"][data-field="${fieldIndex}"]`
+              `input[data-row="${rowIndex - 1}"][data-field="${fieldsConfig[fieldIndex].name}"]` // Use actual field name
             ) as HTMLInputElement;
             nextInput?.focus();
             nextInput?.select();
@@ -806,7 +775,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         const row = document.querySelector(`input[data-row="${newRowIndex}"]`);
         row?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         const quantityInput = document.querySelector(
-          `input[data-row="${newRowIndex}"][data-field="0"]`
+          `input[data-row="${newRowIndex}"][data-field="${fieldsConfig[0].name}"]` // Use actual field name
         ) as HTMLInputElement;
         quantityInput?.focus();
       }, 50);
@@ -834,7 +803,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       
       setTimeout(() => {
          const quantityInput = document.querySelector(
-           `input[data-row="${newRowIndex}"][data-field="0"]`
+           `input[data-row="${newRowIndex}"][data-field="${fieldsConfig[0].name}"]` // Use actual field name
          ) as HTMLInputElement;
          quantityInput?.focus();
          quantityInput?.select();
@@ -934,10 +903,10 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   // Sélectionner/Désélectionner toutes les commandes filtrées
   function toggleAllOrdersSelection() {
-    if (selectedOrderIds.size === sortedCommandes.length && sortedCommandes.length > 0) {
+    if (selectedOrderIds.size === commandes.length && commandes.length > 0) {
       setSelectedOrderIds(new Set());
     } else {
-      setSelectedOrderIds(new Set(sortedCommandes.map(c => c.id)));
+      setSelectedOrderIds(new Set(commandes.map(c => c.id)));
     }
   }
 
@@ -1085,7 +1054,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
               
               // Déplacer le focus vers la ligne fusionnée
               setTimeout(() => {
-                const targetInput = document.querySelector(`input[data-row="${finalIndex}"][data-field="0"]`) as HTMLInputElement;
+                const targetInput = document.querySelector(`input[data-row="${finalIndex}"][data-field="${fieldsConfig[0].name}"]`) as HTMLInputElement; // Use actual field name
                 targetInput?.focus();
               }, 50);
 
@@ -1096,9 +1065,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
       return updatedList;
     });
   }
-
-
-
 
 
   /**
@@ -1124,19 +1090,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
     setIsImporting(true);
 
     // Charger TOUS les produits depuis l'endpoint optimisé pour l'import CSV
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
-    const produitsEndpoint = apiBaseUrl
-      ? `${apiBaseUrl}/api/produits/for_import/`
-      : '/api/produits/for_import/';
-
     let allProducts: ProduitModel[] = [];
     try {
-      const response = await axios.get(produitsEndpoint);
-      const data = response.data as any;
-      allProducts = Array.isArray(data) ? data : (data.results || []);
+      const response = await api.get(produitsEndpoint);
+      allProducts = response.data;
     } catch (err) {
-      toast.error("Erreur lors du chargement des produits pour l'import CSV");
-      console.error(err);
+      console.error("Failed to load products for import:", err);
+      toast.error(t('orders.messages.import_load_error'));
       setIsImporting(false);
       return;
     }
@@ -1221,6 +1181,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   id: Date.now() + Math.random(), // Unique temp ID
                   produit: product,
                   quantity: qty,
+                  unites_gratuites: 0,
                   prix_euro: commandeType === 'DIR' ? (product.cost_price ? (normalizeNumberInput(product.cost_price) / normalizeNumberInput(tauxChange)).toFixed(0) : '0') : undefined,
                   price: product.cost_price || '0',
                   tva: product.tva || '0',
@@ -1343,7 +1304,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       // 3. Configurer le mode CREATE
       setCommandeProduits(newLines);
       
-      // Si un fournisseur était filtré, le sélectionner pour la commande
+      // If a supplier was filtered, select it for the order
       setNewCommandeFournisseurId(supplierId);
       
       setNumeroFacture(''); 
@@ -1352,11 +1313,14 @@ export default function Commandes({ forcedType }: CommandesProps) {
   }
 
 
-
-
-
-
-
+  const handleSortChange = useCallback((key: 'numero' | 'date' | 'fournisseur' | 'status') => {
+    if (key === sortKey) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortOrder('desc'); // Default new sort to desc often better for dates/ids
+    }
+  }, [sortKey]);
 
 
   // Fonction pour obtenir la classe CSS du badge de statut
@@ -1523,12 +1487,11 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   async function handleViewDetails(commande: Commande) {
     try {
-      const response = await axios.get<Commande>(`${commandesEndpoint}${commande.id}/`);
-      setSelectedCommande(response.data);
-      setSearchDetailQuery('');
+      const data = await commandeService.getById(commande.id);
+      setSelectedCommande(data);
       setViewMode('DETAILS');
     } catch (err) {
-      handleApiError(err, "Erreur lors du chargement des détails de la commande");
+      toast.error("Erreur lors du chargement des détails");
     }
   }
 
@@ -1572,33 +1535,24 @@ export default function Commandes({ forcedType }: CommandesProps) {
       {/* Vue conditionnelle basée sur viewMode */}
       {viewMode === 'LIST' && (
         <div className="flex-1 min-h-0 overflow-hidden">
-        /* LISTE DES COMMANDES - REFACTOR */
+        {/* LISTE DES COMMANDES - REFACTOR */}
         <CommandeList
-          commandes={commandes}
           sortedCommandes={sortedCommandes}
           fournisseurs={fournisseurs}
-          loading={loading || executingAction}
+          loading={loading}
           totalCount={totalCount}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
           sortKey={sortKey}
           sortOrder={sortOrder}
-          onSortChange={(key) => {
-            if (key === sortKey) {
-              setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-            } else {
-              setSortKey(key);
-              setSortOrder('desc'); // Default new sort to desc often better for dates/ids
-            }
-          }}
+          onSortChange={handleSortChange}
           filterStatus={filterStatus}
           onFilterStatusChange={setFilterStatus}
           selectedOrderIds={selectedOrderIds}
           onToggleOrderSelection={toggleOrderSelection}
           onToggleAllOrdersSelection={toggleAllOrdersSelection}
           canMerge={canMergeSelectedOrders().canMerge}
-          mergeReason={canMergeSelectedOrders().reason}
           onOpenMergeModal={openMergeModal}
           onOpenCreateView={() => openCreateView(activeTab)}
           onOpenSuggestionModal={() => setIsSuggestionModalOpen(true)}
@@ -1609,326 +1563,24 @@ export default function Commandes({ forcedType }: CommandesProps) {
       )}
 
       {viewMode === 'DETAILS' && selectedCommande && (
-        /* DÉTAILS DE LA COMMANDE */
-        <div className="flex-1 min-h-0 flex flex-col p-4 space-y-4">
-          {/* Header */}
-          <div className="flex items-center gap-4 shrink-0">
-             <button onClick={handleBackToList} className="btn btn-circle btn-sm btn-ghost">←</button>
-             <h2 className="text-lg md:text-xl font-bold">Commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
-             <div className="ml-auto flex flex-wrap gap-2">
-                  <button 
-                    className="btn btn-secondary btn-sm"
-                     onClick={() => openEditView(selectedCommande)}
-                    disabled={selectedCommande.status === 'CLOT' || executingAction}
-                  >
-                    {t('orders.details.edit')}
-                  </button>
-                  <button 
-                    className={`btn btn-sm ${selectedCommande.status === 'ATT' ? 'btn-info' : 'btn-warning'}`}
-                    onClick={onMettreEnAttente}
-                    disabled={selectedCommande.status === 'CLOT' || executingAction}
-                  >
-                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : (selectedCommande.status === 'ATT' ? t('orders.details.resume') : t('orders.details.suspend'))}
-                  </button>
-                  <button 
-                    className="btn btn-success btn-sm text-white"
-                    onClick={onCloture}
-                    disabled={selectedCommande.status === 'CLOT' || executingAction}
-                  >
-                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders.details.close')}
-                  </button>
-                  <button
-                    onClick={() => setShowPrintLabelsModal(true)}
-                    className="btn btn-primary btn-sm"
-                    disabled={executingAction}
-                  >
-                    {t('orders.details.labels')}
-                  </button>
-                  
-                  <button 
-                    className="btn btn-error btn-outline btn-sm"
-                    onClick={onDelete}
-                    disabled={executingAction}
-                  >
-                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders.details.delete')}
-                  </button>
-                  <button 
-                    className="btn btn-primary btn-outline btn-sm"
-                    onClick={onImprimer}
-                    disabled={selectedCommande.status !== 'CLOT' || executingAction}
-                  >
-                    {executingAction ? <span className="loading loading-spinner loading-xs"></span> : t('orders.details.print_receipt')}
-                  </button>
-                  {/* Bouton Annuler Réception - visible uniquement pour commandes clôturées */}
-                  {selectedCommande.status === 'CLOT' && (
-                    <button 
-                      className="btn btn-warning btn-outline btn-sm gap-1"
-                      onClick={onAnnulerReception}
-                      disabled={executingAction}
-                      title={t('orders.details.cancel_reception')}
-                    >
-                      {executingAction ? <span className="loading loading-spinner loading-xs"></span> : `↩️ ${t('orders.details.cancel_reception')}`}
-                    </button>
-                  )}
-                  {/* Bouton Créer Avoir (Visible uniquement si commande clôturée) */}
-                  {selectedCommande.status === 'CLOT' && (
-                       <button
-                          type="button"
-                          className="btn btn-warning btn-sm btn-outline gap-1"
-                          onClick={handleCreateAvoirFromCommande}
-                          title={t('orders.details.return')}
-                       >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                          </svg>
-                          {selectedRows.size > 0 ? `${t('orders.details.return')} (${selectedRows.size})` : t('orders.details.return')}
-                       </button>
-                  )}
-             </div>
-          </div>
-
-          {/* Grid Info */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm shrink-0">
-            <div>
-                <div className="text-xs text-gray-500 uppercase">{t('orders.details.id')}</div>
-                <div className="font-bold">{selectedCommande.id}</div>
-            </div>
-            <div>
-                <div className="text-xs text-gray-500 uppercase">{t('orders.details.invoice')}</div>
-                <div className="font-bold">{selectedCommande.numero_facture || 'N/A'}</div>
-            </div>
-            <div>
-                <div className="text-xs text-gray-500 uppercase">{t('orders.details.provider')}</div>
-                <div className="font-bold">{fournisseurs.find(f => f.id === selectedCommande.fournisseur)?.name ?? `ID: ${selectedCommande.fournisseur}`}</div>
-            </div>
-            <div>
-                 <div className="text-xs text-gray-500 uppercase">{t('orders.details.date')}</div>
-                 <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</div>
-            </div>
-            <div>
-                 <div className="text-xs text-gray-500 uppercase">{t('orders.details.status')}</div>
-                 <div><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></div>
-            </div>
-            {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
-                <div>
-                    <div className="text-xs text-gray-500 uppercase">{t('orders.details.closed_by')}</div>
-                    <div className="font-bold">{selectedCommande.closed_by_name}</div>
-                </div>
-            )}
-            <div className="col-span-2 md:col-span-1 border-l pl-4 border-base-200">
-                 <div className="text-xs text-gray-500 uppercase mb-1">{t('orders.details.financial_summary')}</div>
-                 {(() => {
-                    const stats = (selectedCommande.produits || []).reduce((acc, p) => {
-                        const qty = normalizeNumberInput(p.quantity || 0);
-                        const price = normalizeNumberInput(p.price || 0);
-                        const tvaRate = normalizeNumberInput(p.tva || 0);
-                        
-                        const lineHT = qty * price;
-                        const lineTVA = lineHT * (tvaRate / 100);
-                        
-                        return { ht: acc.ht + lineHT, tva: acc.tva + lineTVA };
-                    }, { ht: 0, tva: 0 });
-                    const totalTTC = stats.ht + stats.tva;
-                    
-                    return (
-                        <div className="flex flex-col gap-0.5 text-xs">
-                           <div className="flex justify-between">
-                                <span className="text-base-content/60">HT:</span> 
-                                 <span className="font-semibold">{formatCurrency(stats.ht)} F</span>
-                           </div>
-                           <div className="flex justify-between">
-                                <span className="text-base-content/60">TVA:</span> 
-                                <span className="font-semibold">{formatCurrency(stats.tva)} F</span>
-                           </div>
-                           <div className="flex justify-between border-t border-base-200 pt-0.5 mt-0.5">
-                                <span className="font-bold text-primary">TTC:</span> 
-                                <span className="font-bold text-primary text-sm">{formatCurrency(totalTTC)} F</span>
-                           </div>
-                        </div>
-                    );
-                 })()}
-            </div>
-          </div>
-
-          {/* Récapitulatif UG */}
-          {(() => {
-            const totalUG = (selectedCommande.produits || []).reduce((sum, p) => sum + normalizeNumberInput(p.unites_gratuites || 0), 0);
-            if (totalUG > 0) {
-              return (
-                <div className="p-4 bg-success/10 border border-success/20 rounded-lg mb-4 shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center">
-                       <span className="text-success font-bold">UG</span>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-success text-sm">{t('orders.details.ug_title')}</h4>
-                      <p className="text-xs text-base-content/70">
-                        {t('orders.details.ug_message', { count: totalUG })}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
-
-
-
-          {/* Liste des produits (Read Only) */}
-          <div className="bg-white rounded-lg shadow overflow-hidden flex flex-col flex-1 min-h-0">
-            <div className="p-3 border-b border-base-200 flex justify-between items-center gap-4 bg-base-50 shrink-0">
-              <h3 className="font-bold text-sm text-base-content/80">{t('orders.details.products_list', 'Produits de la commande')}</h3>
-              
-              {selectedCommande.produits && selectedCommande.produits.length > 0 && (
-                <div className="relative">
-                    <input
-                        type="text"
-                        placeholder={t('orders.product_table.search_placeholder', 'Rechercher un produit...')}
-                        className="input input-sm input-bordered w-full sm:w-64 pl-8"
-                        value={searchDetailQuery}
-                        onChange={(e) => setSearchDetailQuery(e.target.value)}
-                    />
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2.5 top-2.5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    {searchDetailQuery && (
-                        <button 
-                            className="btn btn-ghost btn-xs btn-circle absolute right-1 top-1.5"
-                            onClick={() => setSearchDetailQuery('')}
-                        >
-                            ✕
-                        </button>
-                    )}
-                </div>
-              )}
-            </div>
-            
-            <div className="overflow-auto flex-1 bg-base-100">
-            {(!selectedCommande.produits || selectedCommande.produits.length === 0) ? (
-              <p className="text-base-content/70 text-center py-8 text-sm">{t('orders.details.empty_products')}</p>
-            ) : (
-                <table className="table table-zebra table-pin-rows w-full">
-                  <thead className="bg-base-200">
-                    <tr>
-                      <th className="w-10">
-                        <input 
-                            type="checkbox" 
-                            className="checkbox checkbox-xs"
-                            checked={selectedRows.size === selectedCommande.produits.length && selectedCommande.produits.length > 0}
-                            onChange={() => {
-                                if (selectedRows.size === selectedCommande.produits.length) {
-                                    setSelectedRows(new Set());
-                                } else {
-                                    setSelectedRows(new Set(selectedCommande.produits.map((_, i) => i)));
-                                }
-                            }}
-                        />
-                      </th>
-                      <th className="cursor-pointer" onClick={() => { if (detailSortKey === 'name') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('name'); setDetailSortOrder('asc'); } }}>
-                        {t('orders.product_table.headers.product')} {detailSortKey === 'name' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th>{t('orders.product_table.headers.cip')}</th>
-                      <th className="text-center">{t('products.table.stock')}</th>
-                      <th className="text-center">Rot.</th>
-                      <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
-                        {t('orders.product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th className="text-center bg-success/5">{t('orders.product_table.headers.ug')}</th>
-                      <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'price') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('price'); setDetailSortOrder('desc'); } }}>
-                        {t('orders.details.price_unit')} {detailSortKey === 'price' && (detailSortOrder === 'asc' ? '↑' : '↓')}
-                      </th>
-                      <th>{t('orders.product_table.headers.lot')}</th>
-                      <th>{t('orders.product_table.headers.exp_date')}</th>
-                      <th className="text-right">{t('orders.product_table.total_ht')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...(selectedCommande.produits || [])]
-                      .map((p, originalIndex) => {
-                        const produitData = (typeof p.produit === 'object') 
-                          ? p.produit 
-                          : produitsList.find(prod => prod.id === p.produit);
-                        
-                        const produitName = (p as any).produit_nom || (produitData?.name || `Produit #${p.produit}`);
-                        const cip = (p as any).produit_cip || produitData?.cip1 || '-';
-                        
-                        return { ...p, produitName, cip, originalIndex };
-                      })
-                      .filter(p => {
-                        if (!searchDetailQuery) return true;
-                        const q = searchDetailQuery.toLowerCase();
-                        return p.produitName.toLowerCase().includes(q) || 
-                               p.cip.toLowerCase().includes(q);
-                      })
-                      .sort((a, b) => {
-                        let comparison = 0;
-                        if (detailSortKey === 'name') {
-                          comparison = a.produitName.localeCompare(b.produitName);
-                        } else if (detailSortKey === 'quantity') {
-                          comparison = normalizeNumberInput(a.quantity) - normalizeNumberInput(b.quantity);
-                        } else if (detailSortKey === 'price') {
-                          comparison = normalizeNumberInput(a.price) - normalizeNumberInput(b.price);
-                        }
-                        return detailSortOrder === 'asc' ? comparison : -comparison;
-                      })
-                      .map((p) => {
-                        // First check if produit is already an object from backend
-                        let produitData: ProduitModel | undefined;
-                        if (typeof p.produit === 'object') {
-                          produitData = p.produit;
-                        } else {
-                          produitData = produitsList.find(prod => prod.id === p.produit);
-                        }
-                        
-                        const stock = produitData?.stock ?? ((p as any).produit_stock ?? '-');
-                        const stockNum = typeof stock === 'number' ? stock : 0;
-                        const rotation = produitData?.rotation_moyenne ?? (p as any).produit_rotation_moyenne;
-                        const rotationDisplay = rotation ? normalizeNumberInput(String(rotation)).toFixed(1) : '-';
-                        
-                        const isDeleted = p.produit === null;
-
-                        return (
-                        <tr key={p.id} className="hover" onClick={() => toggleRowSelection(p.originalIndex)}>
-                          <td>
-                            <input 
-                                type="checkbox" 
-                                className="checkbox checkbox-xs"
-                                checked={selectedRows.has(p.originalIndex)}
-                                onChange={() => toggleRowSelection(p.originalIndex)}
-                                onClick={(e) => e.stopPropagation()} 
-                            />
-                          </td>
-                          <td className={`font-bold ${isDeleted ? 'italic' : ''}`}>
-                              {p.produitName}
-                              {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
-                          </td>
-                          <td className="font-mono text-xs">{p.cip}</td>
-                          <td className="text-center">
-                            <span className={`font-mono ${stockNum === 0 ? 'text-error font-bold' : stockNum < 0 ? 'text-error' : 'text-success'}`}>
-                              {stock}
-                            </span>
-                          </td>
-                          <td className="text-center font-mono opacity-70">{rotationDisplay}</td>
-                          <td className="text-right font-bold">{p.quantity}</td>
-                          <td className="text-center bg-success/5">
-                            <span className={`font-bold ${(p.unites_gratuites || 0) > 0 ? 'text-success' : 'text-base-content/20'}`}>
-                              {p.unites_gratuites || 0}
-                            </span>
-                          </td>
-                           <td className="text-right font-mono">{formatCurrency(normalizeNumberInput(p.price))} F</td>
-                           <td className="text-xs font-mono">{p.lot || '-'}</td>
-                           <td className="text-xs text-gray-400">{p.date_expiration ? (() => { const d = new Date(p.date_expiration); return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`; })() : ''}</td>
-                           <td className="text-right font-bold text-primary">{formatCurrency(normalizeNumberInput(p.quantity) * normalizeNumberInput(p.price))} F</td>
-                        </tr>
-                       );
-                     })}
-                  </tbody>
-                </table>
-            )}
-            </div>
-          </div>
-        </div>
+        <CommandeDetails
+          commande={selectedCommande}
+          fournisseurs={fournisseurs}
+          produitsList={produitsList}
+          executingAction={executingAction}
+          onBack={handleBackToList}
+          onEdit={openEditView}
+          onMettreEnAttente={onMettreEnAttente}
+          onCloture={onCloture}
+          onDelete={onDelete}
+          onImprimer={onImprimer}
+          onAnnulerReception={onAnnulerReception}
+          onCreateAvoir={handleCreateAvoirFromCommande}
+          onOpenLabelsModal={() => setShowPrintLabelsModal(true)}
+          selectedRows={selectedRows}
+          toggleRowSelection={toggleRowSelection}
+          setSelectedRows={setSelectedRows}
+        />
       )}
 
       {(viewMode === 'CREATE' || viewMode === 'EDIT') && (
