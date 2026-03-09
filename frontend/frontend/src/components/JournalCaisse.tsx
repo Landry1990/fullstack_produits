@@ -721,7 +721,8 @@ export default function JournalCaisse() {
                 <button
                     onClick={openClosingModal}
                     className="btn btn-sm btn-primary shadow-sm gap-2"
-                    disabled={loading}
+                    disabled={loading || !selectedUser}
+                    title={!selectedUser ? "Veuillez sélectionner un caissier pour clôturer" : "Clôturer la caisse"}
                 >
                     <Lock className="w-4 h-4" /> Clôturer
                 </button>
@@ -930,8 +931,8 @@ export default function JournalCaisse() {
                 </div>
             ) : (
                 <table className="table table-sm w-full border-separate border-spacing-0">
-                    <thead className="sticky top-0 z-10">
-                        <tr className="bg-base-50/50 backdrop-blur-md">
+                    <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
+                        <tr className="border-b border-base-300">
                             <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pl-6">DATE & HEURE</th>
                             <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">CAISSIER</th>
                             <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">SAISIE PAR</th>

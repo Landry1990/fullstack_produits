@@ -25,7 +25,8 @@ i18n
         // Options common to all backends
         backend: {
             loadPath: '/locales/{{lng}}/{{ns}}.json',
-        }
+        },
+        load: 'languageOnly' // Avoid fr-FR if we only have fr
     });
 
 export default i18n;

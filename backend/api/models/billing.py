@@ -344,7 +344,13 @@ class ClotureCaisse(models.Model):
     
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, 
-        related_name='clotures_caisse'
+        related_name='clotures_caisse',
+        help_text="Le caissier dont la caisse est clôturée"
+    )
+    cloture_par = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, 
+        related_name='clotures_effectuees',
+        help_text="L'utilisateur (admin) ayant effectué la clôture"
     )
     observation = models.TextField(blank=True, null=True, help_text="Notes ou observations sur la clôture")
     

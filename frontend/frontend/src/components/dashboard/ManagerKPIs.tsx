@@ -162,7 +162,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                             </div>
                             
                             <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter opacity-50">
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-tight opacity-50">
                                     <span>{t('manager_dashboard.progression', 'Progression')}</span>
                                     <span>{t('manager_dashboard.target', 'Cible')}: {formatCurrency(data.target)}</span>
                                 </div>
@@ -180,7 +180,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                         if (!palier) return null;
                                         return (
                                             <>
-                                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-tighter text-warning">
+                                                <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-warning">
                                                     <span className="flex items-center gap-1"><Zap size={12} className="fill-warning" /> Objectif Palier {palier.level}</span>
                                                     <span>{formatCurrency(palier.target)}</span>
                                                 </div>

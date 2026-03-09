@@ -159,22 +159,26 @@ export const PromisTable: React.FC<PromisTableProps> = ({
                                 />
                             </label>
                         </th>
-                        <SelectionHeader
-                            selectedCount={selectedIds.size}
-                            onClear={onClearSelection}
-                            colSpan={7}
-                            actions={renderBulkActions()}
-                        >
-                            <div className="grid grid-cols-7 w-full h-full items-center text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="col-span-1">{t('promis.table.date', { defaultValue: 'Date' })}</div>
-                                <div className="col-span-1">{t('promis.table.client', { defaultValue: 'Client' })}</div>
-                                <div className="col-span-1">{t('promis.table.phone', { defaultValue: 'Téléphone' })}</div>
-                                <div className="col-span-1">{t('promis.table.product', { defaultValue: 'Produit' })}</div>
-                                <div className="col-span-1 text-center">{t('promis.table.qty', { defaultValue: 'Qté' })}</div>
-                                <div className="col-span-1 text-center">{t('promis.table.status', { defaultValue: 'Statut' })}</div>
-                                <div className="col-span-1 text-right pr-4">{t('promis.table.actions', { defaultValue: 'Actions' })}</div>
-                            </div>
-                        </SelectionHeader>
+                        {selectedIds.size > 0 ? (
+                            <SelectionHeader
+                                selectedCount={selectedIds.size}
+                                onClear={onClearSelection}
+                                colSpan={7}
+                                actions={renderBulkActions()}
+                            >
+                                <></>
+                            </SelectionHeader>
+                        ) : (
+                            <>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.date', { defaultValue: 'Date' })}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.client', { defaultValue: 'Client' })}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.phone', { defaultValue: 'Téléphone' })}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('promis.table.product', { defaultValue: 'Produit' })}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('promis.table.qty', { defaultValue: 'Qté' })}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('promis.table.status', { defaultValue: 'Statut' })}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('promis.table.actions', { defaultValue: 'Actions' })}</th>
+                            </>
+                        )}
                     </tr>
                 </thead>
                 <tbody className="text-base-content font-medium">

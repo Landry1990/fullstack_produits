@@ -245,16 +245,16 @@ export default function CartTable({
 
   return (
     <table className="table table-pin-rows table-sm w-full">
-      <thead>
-        <tr className="bg-base-50 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-          <th className="bg-base-50 pl-2 md:pl-4 min-w-[120px]">{t('facturation.cart.headers.product')}</th>
-          <th className="bg-base-50 text-right w-12 sm:w-20">{t('facturation.cart.headers.qty')}</th>
-          <th className="bg-base-50 text-right w-16 sm:w-24">{t('facturation.cart.headers.price')}</th>
-          <th className="bg-base-50 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation.cart.headers.discount')}</th>
-          <th className="bg-base-50 text-center w-24 hidden md:table-cell">{t('facturation.cart.headers.stock')}</th>
-          <th className="bg-base-50 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation.cart.headers.lot')}</th>
-          <th className="bg-base-50 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
-          <th className="bg-base-50 w-8"></th>
+      <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
+        <tr className="bg-base-200 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
+          <th className="bg-base-200 pl-2 md:pl-4 min-w-[120px]">{t('facturation.cart.headers.product')}</th>
+          <th className="bg-base-200 text-right w-12 sm:w-20">{t('facturation.cart.headers.qty')}</th>
+          <th className="bg-base-200 text-right w-16 sm:w-24">{t('facturation.cart.headers.price')}</th>
+          <th className="bg-base-200 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation.cart.headers.discount')}</th>
+          <th className="bg-base-200 text-center w-24 hidden md:table-cell">{t('facturation.cart.headers.stock')}</th>
+          <th className="bg-base-200 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation.cart.headers.lot')}</th>
+          <th className="bg-base-200 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
+          <th className="bg-base-200 w-8"></th>
         </tr>
       </thead>
       <tbody>

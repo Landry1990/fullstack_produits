@@ -762,6 +762,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
 
 
     @action(detail=True, methods=['get', 'post'], url_path='lignes')
+    @transaction.atomic
     def lignes(self, request, pk=None):
         """
         GET: Liste les lignes d'un inventaire.
@@ -789,70 +790,68 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
             return Response(serializer.data)
         
         elif request.method == 'POST':
-            data = request.data.copy()
-            data['inventaire'] = inventaire.id
-            
-        if 'stock_lot' in data and data['stock_lot']:
             try:
-                lot = StockLot.objects.get(id=data['stock_lot'])
-                data['stock_theorique'] = lot.quantity_remaining
-                if 'quantite_physique' not in data:
-                    data['quantite_physique'] = lot.quantity_remaining
-            except StockLot.DoesNotExist:
-                return Response({'error': 'Lot non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        elif 'lot_numero' in data and data['lot_numero']:
-            # Mode NOUVEAU LOT ou LOT PAR NUMERO
-            lot_num = data.get('lot_numero')
-            lot_exp = data.get('lot_expiration') # Optional
-            produit_id = data.get('produit')
-            
-            try:
-                produit = Produit.objects.get(id=produit_id)
-            except Produit.DoesNotExist:
-                return Response({'error': 'Produit non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
+                data = request.data.copy()
+                data['inventaire'] = inventaire.id
                 
-            # Chercher si le lot existe déjà pour ce produit
-            existing_lot = StockLot.objects.filter(produit=produit, lot=lot_num).first()
-            
-            if existing_lot:
-                # Utiliser le lot existant
-                data['stock_lot'] = existing_lot.id
-                data['stock_theorique'] = existing_lot.quantity_remaining
-            else:
-                # Créer un nouveau lot (vide par défaut)
-                new_lot = StockLot.objects.create(
-                    produit=produit,
-                    lot=lot_num,
-                    date_expiration=lot_exp if lot_exp else None,
-                    quantity_remaining=0, # Stock théorique 0 car nouveau
-                    quantity_initial=0,
-                    price_cost=produit.cost_price,
-                    selling_price=produit.selling_price,
-                    date_reception=timezone.now()
-                )
-                data['stock_lot'] = new_lot.id
-                data['stock_theorique'] = 0
-            
-            if 'quantite_physique' not in data:
-                 data['quantite_physique'] = data.get('quantite_comptee', 0)
+                if 'stock_lot' in data and data['stock_lot']:
+                    lot = StockLot.objects.get(id=data['stock_lot'])
+                    data['stock_theorique'] = lot.quantity_remaining
+                    if 'quantite_physique' not in data:
+                        data['quantite_physique'] = lot.quantity_remaining
+                
+                elif 'lot_numero' in data and data['lot_numero']:
+                    # Mode NOUVEAU LOT ou LOT PAR NUMERO
+                    lot_num = data.get('lot_numero')
+                    lot_exp = data.get('lot_expiration') # Optional
+                    produit_id = data.get('produit')
+                    
+                    produit = Produit.objects.get(id=produit_id)
+                    # Chercher si le lot existe déjà pour ce produit
+                    existing_lot = StockLot.objects.filter(produit=produit, lot=lot_num).first()
+                    
+                    if existing_lot:
+                        # Utiliser le lot existant
+                        data['stock_lot'] = existing_lot.id
+                        data['stock_theorique'] = existing_lot.quantity_remaining
+                    else:
+                        # Créer un nouveau lot (vide par défaut)
+                        new_lot = StockLot.objects.create(
+                            produit=produit,
+                            lot=lot_num,
+                            date_expiration=lot_exp if lot_exp else None,
+                            quantity_remaining=0, # Stock théorique 0 car nouveau
+                            quantity_initial=0,
+                            price_cost=produit.cost_price,
+                            selling_price=produit.selling_price,
+                            date_reception=timezone.now()
+                        )
+                        data['stock_lot'] = new_lot.id
+                        data['stock_theorique'] = 0
+                    
+                    if 'quantite_physique' not in data:
+                        data['quantite_physique'] = data.get('quantite_comptee', 0)
 
-        else:
-            # Mode PRODUIT GLOBAL: Utiliser le stock total
-            try:
-                produit = Produit.objects.get(id=data['produit'])
-                if 'stock_theorique' not in data:
-                    data['stock_theorique'] = produit.stock
-                if 'quantite_physique' not in data:
-                    data['quantite_physique'] = data.get('quantite_comptee', produit.stock)
-            except Produit.DoesNotExist:
-                return Response({'error': 'Produit non trouvé'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer = LigneInventaireSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    # Mode PRODUIT GLOBAL: Utiliser le stock total
+                    produit = Produit.objects.get(id=data['produit'])
+                    if 'stock_theorique' not in data:
+                        data['stock_theorique'] = produit.stock
+                    if 'quantite_physique' not in data:
+                        data['quantite_physique'] = data.get('quantite_comptee', produit.stock)
+                
+                serializer = LigneInventaireSerializer(data=data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
+            except (StockLot.DoesNotExist, Produit.DoesNotExist) as e:
+                transaction.set_rollback(True)
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                transaction.set_rollback(True)
+                return Response({'error': f'Erreur interne: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'], url_path='lignes/bulk-delete')
     @transaction.atomic

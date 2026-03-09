@@ -44,3 +44,14 @@ export const safeFormatNumber = (value: any) => {
     const num = Number(value);
     return isNaN(num) ? formatCurrency(0) : formatCurrency(num);
 }
+
+export const formatDateFr = (dateString: string | Date) => {
+    if (!dateString) return '--/--/----';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '--/--/----';
+    return new Intl.DateTimeFormat('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }).format(date);
+}

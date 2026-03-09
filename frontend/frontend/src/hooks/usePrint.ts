@@ -303,58 +303,8 @@ export function usePrint(): UsePrintReturn {
   };
 }
 
-// ============== HELPER FUNCTIONS ==============
+// ============== HELPER FUNCTIONS (RE-EXPORTED FOR COMPATIBILITY) ==============
 
-/**
- * Formate un nombre en format monétaire français
- */
-export function formatMoney(value: number | string): string {
-  const num = Math.round(parseFloat(String(value)));
-  return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
-}
-
-/**
- * Formate une date en format français
- */
-export function formatDateFr(dateString: string): string {
-  return new Date(dateString).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-}
-
-/**
- * Génère une ligne de détail pour impression
- */
-export function printRow(label: string, value: string): string {
-  return `
-    <div class="print-row">
-      <span>${label}</span>
-      <span>${value}</span>
-    </div>
-  `;
-}
-
-/**
- * Génère un séparateur horizontal
- */
-export function printDivider(): string {
-  return '<div class="print-divider"></div>';
-}
-
-/**
- * Génère une ligne de total
- */
-export function printTotal(label: string, value: string): string {
-  return `
-    <div class="print-row print-total">
-      <span>${label}</span>
-      <span>${value}</span>
-    </div>
-  `;
-}
+export { formatMoney, formatDateFr, printRow, printDivider, printTotal } from '../utils/print/printHelpers';
 
 export default usePrint;

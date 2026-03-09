@@ -98,7 +98,7 @@ const Ventes: React.FC = () => {
             </div>
 
             {/* Main Content: Table */}
-            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden">
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-visible">
                 <SalesTable 
                     factures={filteredFactures}
                     loading={loading}

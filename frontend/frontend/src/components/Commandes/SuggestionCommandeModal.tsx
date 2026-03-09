@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
-import { formatPrice } from '../utils/formatters'
-import type { Fournisseur, ProduitModel, CommandeProduit } from '../types'
-import PremiumModal from './common/PremiumModal'
+import { formatPrice } from '../../utils/formatters'
+import type { Fournisseur, ProduitModel, CommandeProduit } from '../../types'
+import PremiumModal from '../common/PremiumModal'
 import { 
     Brain, 
     Calendar, 

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import ZenithLogo from './ZenithLogo';
+import { User, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -10,9 +12,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  // Color constants
-  const PHARMA_GREEN = '#10B981'; // Emerald 500 equivalent
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,96 +40,84 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-sans" style={{ background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)' }}>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-sans bg-slate-950">
       
-      {/* Animated Background Elements */}
+      {/* Cinematic Background Elements */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        {/* Soft Gradients - Adjusted opacity for dark background */}
-        <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] bg-emerald-500/10 rounded-full blur-[100px] animate-pulse-slow"></div>
-        <div className="absolute top-[40%] -right-[10%] w-[50vw] h-[50vw] bg-teal-500/10 rounded-full blur-[80px] animate-pulse-slow delay-1000"></div>
-        <div className="absolute bottom-[-10%] left-[20%] w-[40vw] h-[40vw] bg-cyan-500/10 rounded-full blur-[90px] animate-pulse-slow delay-2000"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[60vw] h-[60vw] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-blue-600/10 rounded-full blur-[100px] animate-pulse delay-700"></div>
+        <div className="absolute top-[30%] right-[20%] w-[30vw] h-[30vw] bg-indigo-500/5 rounded-full blur-[80px] animate-pulse delay-1000"></div>
       </div>
 
-
-      {/* Main Card */}
-      <div className="relative z-10 w-full max-w-md p-8 mx-4">
+      {/* Main Glassmorphic Container */}
+      <div className="relative z-10 w-full max-w-md p-6 group">
         
-        {/* Glassmorphism Card */}
-        <div className="bg-white/10 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 transition-all duration-500">
+        {/* Decorative elements outside the card */}
+        <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-500/10 blur-xl rounded-full group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
+        <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-blue-500/10 blur-xl rounded-full group-hover:bg-blue-500/20 transition-colors duration-500"></div>
+
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-[2.5rem] p-10 transition-all duration-300 hover:border-white/20">
           
-          {/* Header & Logo */}
+          {/* Header & Identity */}
           <div className="text-center mb-10">
-            <div 
-              className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-2xl shadow-lg transform rotate-3 hover:rotate-6 transition-transform duration-300"
-              style={{ backgroundColor: PHARMA_GREEN }}
-            >
-              {/* Medical Cross Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 10h-5V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v5H5a1 1 0 00-1 1v2a1 1 0 001 1h5v5a1 1 0 001 1h2a1 1 0 001-1v-5h5a1 1 0 001-1v-2a1 1 0 00-1-1z" />
-              </svg>
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full animate-pulse"></div>
+              <div className="relative w-24 h-24 flex items-center justify-center rounded-3xl bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-inner transform rotate-6 transition-transform hover:rotate-12 duration-500">
+                <ZenithLogo variant={1} size={56} />
+              </div>
             </div>
             
-            <h1 className="text-3xl font-extrabold tracking-tight text-white mb-2 font-sans">
+            <h1 className="text-4xl font-black text-white tracking-tighter uppercase mb-2">
               Zenith
             </h1>
-            <p className="text-sm text-gray-400 font-medium tracking-wide uppercase">
-              Portail de Gestion Sécurisé
-            </p>
+            <div className="flex items-center justify-center gap-2">
+              <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/20"></div>
+              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
+                Secure Ecosystem
+              </p>
+              <div className="h-px w-8 bg-gradient-to-l from-transparent to-white/20"></div>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r shadow-sm animate-fade-in-up">
-                <div className="flex">
-                  <div className="flex-shrink-0 text-red-500">
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                </div>
+              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-xs font-bold text-red-200">{error}</p>
               </div>
             )}
 
-            {/* Inputs */}
-            <div className="space-y-5">
-              <div className="group">
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-1">Utilisateur</label>
+            {/* Inputs Container */}
+            <div className="space-y-4">
+              <div className="group/input">
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">Utilisateur</label>
                 <div className="relative">
-                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <svg className="h-5 w-5 text-gray-500 group-focus-within:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                     </svg>
+                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
+                     <User className="h-4 w-4" />
                    </div>
                    <input
                     type="text"
                     required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-700/50 rounded-xl leading-5 bg-gray-900/50 text-white placeholder-gray-500 focus:outline-none focus:bg-gray-900 focus:ring-2 focus:ring-offset-0 transition-all duration-200 ease-in-out sm:text-sm shadow-inner"
-                    style={{ '--tw-ring-color': PHARMA_GREEN } as React.CSSProperties}
-                    placeholder="Entrez votre identifiant"
+                    className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10"
+                    placeholder="ADMIN"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                    />
                 </div>
               </div>
 
-              <div className="group">
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 ml-1">Mot de passe</label>
+              <div className="group/input">
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">Mot de passe</label>
                 <div className="relative">
-                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <svg className="h-5 w-5 text-gray-500 group-focus-within:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                     </svg>
+                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
+                     <Lock className="h-4 w-4" />
                    </div>
                    <input
                     type="password"
                     required
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-700/50 rounded-xl leading-5 bg-gray-900/50 text-white placeholder-gray-500 focus:outline-none focus:bg-gray-900 focus:ring-2 focus:ring-offset-0 transition-all duration-200 ease-in-out sm:text-sm shadow-inner"
-                    style={{ '--tw-ring-color': PHARMA_GREEN } as React.CSSProperties}
+                    className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10 shadow-inner"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -139,35 +126,46 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Action Button */}
-            <div className="pt-4">
+            {/* Submit Button */}
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-lg text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 transform transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
-                style={{ backgroundColor: PHARMA_GREEN, '--tw-ring-color': PHARMA_GREEN } as React.CSSProperties}
+                className="group relative w-full h-14 overflow-hidden rounded-2xl bg-emerald-500 font-black text-white text-xs uppercase tracking-widest transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.5)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? (
-                   <div className="flex items-center space-x-2">
-                     <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                     </svg>
-                     <span>Connexion en cours...</span>
-                   </div>
-                ) : (
-                  'Se connecter'
-                )}
+                {/* Button Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-500 transition-opacity opacity-0 group-hover:opacity-100 duration-300"></div>
+                
+                <div className="relative flex items-center justify-center gap-3">
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin w-4 h-4" />
+                      <span>Authentification...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Se connecter</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </div>
               </button>
             </div>
 
           </form>
         </div>
 
-        {/* Footer */}
-        <p className="mt-8 text-center text-xs text-gray-500">
-          © {new Date().getFullYear()} Zenith v2.0 - Tous droits réservés.
-        </p>
+        {/* Brand Footer */}
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-[10px] font-black tracking-[0.4em] text-white/10 uppercase">
+            © {new Date().getFullYear()} Zenith OS • v2.0
+          </p>
+          <div className="flex items-center justify-center gap-4 opacity-20">
+             <div className="h-px w-12 bg-white/20"></div>
+             <div className="w-1 h-1 rounded-full bg-white/50"></div>
+             <div className="h-px w-12 bg-white/20"></div>
+          </div>
+        </div>
 
       </div>
     </div>

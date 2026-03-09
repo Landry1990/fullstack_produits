@@ -1,0 +1,26 @@
+export interface PharmacySettings {
+    id?: number
+    pharmacy_name: string
+    address: string
+    phone: string
+    email: string
+    nif?: string
+    rccm?: string
+    ticket_footer_message?: string
+    receipt_header?: string
+    logo?: string
+    coefficient_direct_commande?: string
+    niu?: string
+    registre_commerce?: string
+    primary_color?: string
+    secondary_color?: string
+    accent_color?: string
+    font_family?: string
+    website?: string
+    low_stock_threshold_days?: number
+    dormant_stock_days?: number
+    debt_alert_threshold?: string
+    ticket_paper_width?: number
+    currency_symbol?: string
+    locale?: string
+}

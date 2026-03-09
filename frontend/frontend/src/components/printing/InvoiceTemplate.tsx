@@ -68,7 +68,7 @@ interface InvoiceTemplateProps {
 }
 
 const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data }) => {
-  const primaryColor = settings.primary_color || '#10b981'; // Emerald-500 default
+  const primaryColor = settings.primary_color || '#10b981';
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(price);
@@ -87,213 +87,234 @@ const InvoiceTemplate: React.FC<InvoiceTemplateProps> = ({ settings, data }) => 
     });
   };
 
-  // Helper to calculate HT Unit from TTC and Tax
   const calculateHTUnit = (priceTTC: number, tva: number) => {
-    // priceTTC is the selling price (brut). Discount is amount reduced? 
-    // Assuming discount is amount per unit.
-    // In backend serializer we computed Base HT differently.
-    // Here we need to display "HT U Brut".
-    // HT U Brut = PriceTTC / (1 + TVA)
     return priceTTC / (1 + (Number(tva) || 0) / 100);
   };
 
   const totalQuantity = data.produits.reduce((acc, item) => acc + item.quantity, 0);
 
-
   return (
-    <div className="bg-white p-8 max-w-[210mm] mx-auto text-slate-900 font-sans text-xs leading-tight shadow-none print:shadow-none" style={{ minHeight: '297mm' }}>
+    <div className="bg-white p-12 max-w-[210mm] mx-auto text-slate-900 font-sans text-[11px] leading-relaxed shadow-none print:shadow-none print:p-8" style={{ minHeight: '297mm', display: 'flex', flexDirection: 'column' }}>
       
-      {/* HEADER SECTION - MODERN */}
-      <div className="flex justify-between items-start mb-10">
+      {/* HEADER SECTION - PREMIUM */}
+      <div className="flex justify-between items-start mb-12 border-b-2 border-slate-100 pb-8">
         
         {/* Left: Pharmacy Info & Logo */}
         <div className="flex-1">
              {settings.logo ? (
-                <img src={settings.logo} alt="Logo" className="h-20 mb-4 object-contain" />
+                <img src={settings.logo} alt="Logo" className="h-24 mb-4 object-contain" />
               ) : (
-                <div style={{ color: primaryColor }} className="text-2xl font-bold mb-3 uppercase tracking-tighter">
+                <div style={{ color: primaryColor }} className="text-3xl font-black mb-2 uppercase tracking-tight">
                     {settings.pharmacy_name}
                 </div>
               )}
             
-            <div className="space-y-1 text-slate-600">
-                <div className="font-bold text-slate-800 uppercase">{settings.pharmacy_name}</div>
-                <div className="whitespace-pre-line leading-snug">
+            <div className="space-y-1.5 text-slate-600 max-w-sm">
+                <div className="font-bold text-slate-800 uppercase text-sm tracking-wide">{settings.pharmacy_name}</div>
+                <div className="whitespace-pre-line leading-relaxed italic">
                     {settings.address}
                 </div>
-                <div className="flex flex-col gap-0.5 mt-1">
-                    {settings.phone && <div><span className="font-semibold text-slate-700">Tél:</span> {settings.phone}</div>}
-                    {settings.email && <div><span className="font-semibold text-slate-700">Email:</span> {settings.email}</div>}
+                <div className="grid grid-cols-1 gap-1 mt-3">
+                    {settings.phone && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest w-8">Tél</span>
+                        <span className="text-slate-700 font-medium">{settings.phone}</span>
+                      </div>
+                    )}
+                    {settings.email && (
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-400 text-[10px] uppercase tracking-widest w-8">Email</span>
+                        <span className="text-slate-700 font-medium lowercase">{settings.email}</span>
+                      </div>
+                    )}
                 </div>
-                
-                
-                {/* 
-                <div className="flex gap-3 mt-3 text-[10px] text-slate-400 uppercase tracking-widest">
-                    {settings.niu && <div>NIU: {settings.niu}</div>}
-                    {settings.registre_commerce && <div>RC: {settings.registre_commerce}</div>}
-                </div> 
-                */}
             </div>
         </div>
 
         {/* Right: Invoice Info & Client */}
-        <div className="w-1/3 flex flex-col items-end text-right">
-            
-            <div className="mb-6">
-                <h1 className="text-3xl font-light tracking-tight text-slate-900 mb-1">
+        <div className="w-1/3 flex flex-col items-end">
+            <div className="mb-8 text-right">
+                <h1 className="text-4xl font-light tracking-tighter text-slate-900 leading-none">
                     {data.type === 'DEVIS' || data.status === 'PROFORMA' ? 'PROFORMA' : 'FACTURE'}
                 </h1>
-                <div className="text-sm font-bold text-slate-500">#{data.numero_facture || data.id}</div>
-                <div className="text-sm text-slate-500 mt-1">{formatDate(data.date)}</div>
-            </div>
-
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 w-full text-right">
-                <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">Facturé à</div>
-                
-                <div className="font-bold text-base text-slate-900 mb-1">{data.client?.name || "CLIENT COMPTOIR"}</div>
-                
-                <div className="text-slate-600 space-y-0.5">
-                    {data.client?.address && <div>{data.client.address}</div>}
-                    {data.client?.phone && <div>{data.client.phone}</div>}
-                    {data.client?.niu && <div>NIU: {data.client.niu}</div>}
-                </div>
-                <div className="mt-2 pt-2 border-t border-slate-200 text-[10px] text-slate-400">
-                    Ref Client: {data.client?.id || '-'}
+                <div className="mt-2 flex flex-col items-end gap-1">
+                  <div className="bg-slate-900 text-white px-3 py-1 text-xs font-bold rounded">
+                    N° {data.numero_facture || data.id}
+                  </div>
+                  <div className="text-slate-400 font-bold uppercase tracking-widest text-[10px] mt-1">
+                    Émis le {formatDate(data.date)}
+                  </div>
                 </div>
             </div>
 
+            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200 w-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-slate-200/50 rotate-45 translate-x-8 -translate-y-8"></div>
+                <div className="text-[10px] uppercase tracking-[0.2em] font-black text-slate-400 mb-3 border-b border-slate-200 pb-2">Destinataire</div>
+                
+                <div className="font-black text-lg text-slate-900 mb-1 leading-tight">{data.client?.name || "CLIENT COMPTOIR"}</div>
+                
+                <div className="text-slate-600 space-y-1 mt-2">
+                    {data.client?.address && <div className="flex items-start gap-2"><span className="text-slate-300">📍</span> {data.client.address}</div>}
+                    {data.client?.phone && <div className="flex items-start gap-2"><span className="text-slate-300">📞</span> {data.client.phone}</div>}
+                    {data.client?.niu && <div className="text-[10px] bg-white px-2 py-0.5 rounded border border-slate-100 inline-block mt-1">NIU: {data.client.niu}</div>}
+                </div>
+            </div>
         </div>
       </div>
 
       {/* METADATA BAR */}
-      <div className="bg-slate-50 rounded-lg p-3 flex justify-between border border-slate-100 mb-6 text-[10px] text-slate-600">
-          <div>
-              <span className="uppercase tracking-wider font-bold text-slate-400 mr-2">Vendeur</span>
-              <span className="font-semibold text-slate-900 uppercase">{data.vendeur_nom}</span>
+      <div className="bg-slate-50/50 rounded-xl p-4 flex justify-between border border-slate-100 mb-8 text-[10px]">
+          <div className="flex flex-col gap-1">
+              <span className="uppercase tracking-widest font-black text-slate-400">Vendeur</span>
+              <span className="font-bold text-slate-900 uppercase text-xs">{data.vendeur_nom || '---'}</span>
           </div>
-          <div>
-              <span className="uppercase tracking-wider font-bold text-slate-400 mr-2">Mode de règlement</span>
-              <span className="font-semibold text-slate-900">{data.mode_reglement || 'Non défini'}</span>
+          <div className="flex flex-col gap-1 px-8 border-x border-slate-200">
+              <span className="uppercase tracking-widest font-black text-slate-400">Règlement</span>
+              <span className="font-bold text-slate-900 text-xs">{data.mode_reglement || 'Non défini'}</span>
           </div>
-          <div>
-              <span className="uppercase tracking-wider font-bold text-slate-400 mr-2">Echéance</span>
-              <span className="font-semibold text-slate-900">À réception</span>
+          <div className="flex flex-col gap-1 text-right">
+              <span className="uppercase tracking-widest font-black text-slate-400">Échéance</span>
+              <span className="font-bold text-slate-900 text-xs text-emerald-600">À RÉCEPTION</span>
           </div>
       </div>
 
-      {/* PRODUCTS TABLE - CLEAN MODERN */}
-      <table className="w-full mb-6">
-          <thead>
-              <tr className="border-b-2 border-slate-800 text-slate-800 text-[10px] uppercase tracking-wider">
-                  <th className="py-2 px-3 text-left font-bold">Désignation</th>
-                  <th className="py-2 px-3 text-center font-bold w-16">Qté</th>
-                  <th className="py-2 px-3 text-right font-bold w-24">P.U HT</th>
-                  <th className="py-2 px-3 text-right font-bold w-20">Rem.</th>
-                  <th className="py-2 px-3 text-right font-bold w-24">Total HT</th>
-              </tr>
-          </thead>
-          <tbody className="text-[10px] text-slate-700">
-              {data.produits.map((item, idx) => {
-                  const htUnit = calculateHTUnit(item.selling_price, item.tva);
-                  // Total line net HT = (PriceTTC - Discount) * Qty / (1+TVA)
-                  const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
-                  
-                  return (
-                    <tr key={idx} className="border-b border-slate-100 last:border-0 odd:bg-slate-50/50">
-                        <td className="py-2 px-3">
-                            <div className="font-semibold text-slate-900">{item.produit_nom}</div>
-                            {item.cip && <div className="text-[9px] text-slate-400 font-mono tracking-tighter">{item.cip}</div>}
-                        </td>
-                        <td className="py-2 px-3 text-center align-top pt-2.5 font-medium">{item.quantity}</td>
-                        <td className="py-2 px-3 text-right align-top pt-2.5">{formatNumber(htUnit, 0)}</td>
-                        <td className="py-2 px-3 text-right align-top pt-2.5 text-slate-400">{item.discount > 0 ? formatNumber(item.discount, 0) : '-'}</td>
-                        <td className="py-2 px-3 text-right align-top pt-2.5 font-bold text-slate-900">{formatNumber(totalLineNetHT, 0)}</td>
-                    </tr>
-                  );
-              })}
-          </tbody>
-      </table>
-      
-      <div className="mb-6 text-[10px] uppercase font-bold text-slate-400 tracking-wider flex justify-end gap-6">
-           <span>Nombre de lignes : {data.produits.length}</span>
-           <span>Quantité Totale : {totalQuantity}</span>
-      </div>
-
-      {/* FOOTER SECTION: VAT & TOTALS */}
-      <div className="flex gap-8 items-start border-t border-slate-200 pt-6">
-          
-          {/* VAT Analysis - Compact */}
-          <div className="w-1/2">
-              <div className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-2">Analyse TVA</div>
-              <table className="w-full text-[9px] text-slate-600">
-                  <thead className="border-b border-slate-200">
-                      <tr>
-                          <th className="py-1 text-left font-semibold">Taux</th>
-                          <th className="py-1 text-right font-semibold">Base HT</th>
-                          <th className="py-1 text-right font-semibold">TVA</th>
+      {/* PRODUCTS TABLE - PREMIUM COMPACT */}
+      <div className="flex-grow">
+        <table className="w-full mb-8 border-collapse">
+            <thead>
+                <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-[0.15em]">
+                    <th className="py-4 px-4 text-left font-black rounded-l-lg">Désignation</th>
+                    <th className="py-4 px-2 text-center font-black w-16">Qté</th>
+                    <th className="py-4 px-2 text-right font-black w-24">P.U HT</th>
+                    <th className="py-4 px-2 text-right font-black w-20">Rem.</th>
+                    <th className="py-4 px-4 text-right font-black w-28 rounded-r-lg">Total HT</th>
+                </tr>
+            </thead>
+            <tbody className="text-[11px]">
+                {data.produits.map((item, idx) => {
+                    const htUnit = calculateHTUnit(item.selling_price, item.tva);
+                    const totalLineNetHT = ((Number(item.selling_price) - Number(item.discount)) * item.quantity) / (1 + (Number(item.tva)||0)/100);
+                    
+                    return (
+                      <tr key={idx} className="group border-b border-slate-50 hover:bg-slate-50/30 transition-colors">
+                          <td className="py-4 px-4">
+                              <div className="font-bold text-slate-800 text-xs">{item.produit_nom}</div>
+                              {item.cip && <div className="text-[9px] text-slate-400 font-mono mt-0.5 tracking-tight">CIP: {item.cip}</div>}
+                          </td>
+                          <td className="py-4 px-2 text-center align-middle font-bold text-slate-900">{item.quantity}</td>
+                          <td className="py-4 px-2 text-right align-middle text-slate-600 font-medium">{formatNumber(htUnit, 0)}</td>
+                          <td className="py-4 px-2 text-right align-middle text-red-400/80 font-medium">{item.discount > 0 ? `-${formatNumber(item.discount, 0)}` : '—'}</td>
+                          <td className="py-4 px-4 text-right align-middle font-black text-slate-900 text-xs px-4">{formatNumber(totalLineNetHT, 0)}</td>
                       </tr>
-                  </thead>
-                  <tbody>
-                      {data.tva_analysis && data.tva_analysis.length > 0 ? (
-                          data.tva_analysis.map((line, idx) => (
-                              <tr key={idx} className="border-b border-slate-100 last:border-0">
-                                  <td className="py-1 text-left">{formatNumber(Number(line.taux), 2)}%</td>
-                                  <td className="py-1 text-right">{formatNumber(line.base_ht, 0)}</td>
-                                  <td className="py-1 text-right">{formatNumber(line.montant_tva, 0)}</td>
-                              </tr>
-                          ))
-                      ) : (
-                        <tr>
-                            <td className="py-1 text-left">0.0%</td>
-                            <td className="py-1 text-right">{formatNumber(data.total_ht, 0)}</td>
-                            <td className="py-1 text-right">0</td>
-                        </tr>
-                      )}
-                  </tbody>
-              </table>
-              
-              <div className="mt-6 text-[11px] text-slate-600">
-                  Arrêté la présente facture à la somme de :<br/>
-                  <div className="font-bold italic text-slate-900 mt-1 uppercase leading-snug">
-                     {data.total_lettres || '---'}
-                  </div>
-              </div>
-          </div>
-
-          {/* Grand Totals Box - Clean */}
-          <div className="w-1/2 flex flex-col gap-2">
-              <div className="flex justify-between items-center py-1 text-slate-600">
-                  <span className="text-xs">Total HT</span>
-                  <span className="font-mono font-bold">{formatPrice(data.total_ht)}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 text-slate-600">
-                  <span className="text-xs">Total TVA</span>
-                  <span className="font-mono font-bold">{formatPrice(data.total_tva)}</span>
-              </div>
-              
-              {data.remise > 0 && (
-                <div className="flex justify-between items-center py-1 text-red-500">
-                    <span className="text-xs font-semibold">Remise</span>
-                    <span className="font-mono font-bold">-{formatPrice(data.remise)}</span>
-                </div>
-              )}
-              
-              <div className="border-t-2 border-slate-900 mt-2 pt-2 flex justify-between items-center">
-                  <span className="text-sm font-bold uppercase text-slate-900">Net à Payer</span>
-                  <span style={{ color: primaryColor }} className="text-2xl font-bold font-mono tracking-tight">{formatPrice(data.total_ttc)}</span>
-              </div>
-          </div>
+                    );
+                })}
+            </tbody>
+        </table>
+        
+        <div className="px-4 py-3 bg-slate-50 rounded-lg flex justify-between items-center text-[10px] uppercase font-bold text-slate-400 tracking-widest">
+             <div className="flex gap-8">
+               <span>Lignes : <span className="text-slate-900">{data.produits.length}</span></span>
+               <span>Articles : <span className="text-slate-900">{totalQuantity}</span></span>
+             </div>
+             <div className="text-slate-300 italic">Document généré numériquement</div>
+        </div>
       </div>
 
-      {/* FOOTER MESSAGE & LEGAL */}
-      <div className="mt-auto pt-6 border-t border-slate-300 text-center text-[10px] text-slate-500">
-          <p className="font-medium text-slate-700 mb-1">{settings.ticket_footer_message}</p>
-          <p className="mb-2">Merci de votre confiance.</p>
-          
-          <div className="flex justify-center gap-6 text-[9px] uppercase tracking-wider text-slate-400">
-             {settings.niu && <div>NIU: {settings.niu}</div>}
-             {settings.registre_commerce && <div>RC: {settings.registre_commerce}</div>}
-          </div>
+      {/* FOOTER AREA */}
+      <div className="mt-12">
+        <div className="flex gap-12 items-start border-t-2 border-slate-900 pt-8">
+            
+            {/* VAT Analysis & Text Amount */}
+            <div className="flex-1">
+                <div className="text-[10px] uppercase tracking-widest font-black text-slate-400 mb-3 ml-1">Analyse des taxes (TVA)</div>
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-8">
+                  <table className="w-full text-[10px]">
+                      <thead>
+                          <tr className="text-slate-400 font-bold border-b border-slate-200">
+                              <th className="py-2 text-left pb-2">Code TVA</th>
+                              <th className="py-2 text-right pb-2">Taux</th>
+                              <th className="py-2 text-right pb-2">Base HT</th>
+                              <th className="py-2 text-right pb-2">Montant TVA</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {data.tva_analysis && data.tva_analysis.length > 0 ? (
+                              data.tva_analysis.map((line, idx) => (
+                                  <tr key={idx} className="text-slate-700">
+                                      <td className="py-2 text-left font-bold">TVA-{idx+1}</td>
+                                      <td className="py-2 text-right">{formatNumber(Number(line.taux), 1)}%</td>
+                                      <td className="py-2 text-right font-medium">{formatNumber(line.base_ht, 0)}</td>
+                                      <td className="py-2 text-right font-bold">{formatNumber(line.montant_tva, 0)}</td>
+                                  </tr>
+                              ))
+                          ) : (
+                            <tr className="text-slate-700">
+                                <td className="py-2 text-left font-bold">TVA-EXO</td>
+                                <td className="py-2 text-right">0.0%</td>
+                                <td className="py-2 text-right font-medium">{formatNumber(data.total_ht, 0)}</td>
+                                <td className="py-2 text-right font-bold">0</td>
+                            </tr>
+                          )}
+                      </tbody>
+                  </table>
+                </div>
+                
+                <div className="bg-emerald-50/30 border border-emerald-100 rounded-xl p-5">
+                    <div className="text-[9px] uppercase tracking-[0.2em] font-black text-emerald-800/40 mb-2">Montant en toutes lettres</div>
+                    <div className="font-bold italic text-slate-900 text-sm uppercase leading-snug tracking-tight">
+                       {data.total_lettres || '---'}
+                    </div>
+                </div>
+            </div>
+
+            {/* Totals & Signature */}
+            <div className="w-72">
+                <div className="space-y-3 mb-10">
+                    <div className="flex justify-between items-center px-2 py-1 text-slate-500">
+                        <span className="text-[10px] uppercase font-bold tracking-widest">Total HT</span>
+                        <span className="font-mono font-bold text-slate-900">{formatPrice(data.total_ht)}</span>
+                    </div>
+                    <div className="flex justify-between items-center px-2 py-1 text-slate-500">
+                        <span className="text-[10px] uppercase font-bold tracking-widest">Taxes (TVA)</span>
+                        <span className="font-mono font-bold text-slate-900">{formatPrice(data.total_tva)}</span>
+                    </div>
+                    
+                    {data.remise > 0 && (
+                      <div className="flex justify-between items-center px-2 py-2 bg-red-50 rounded-lg text-red-600">
+                          <span className="text-[10px] uppercase font-black tracking-widest">Remise commerciale</span>
+                          <span className="font-mono font-black text-sm">-{formatPrice(data.remise)}</span>
+                      </div>
+                    )}
+                    
+                    <div className="bg-slate-900 text-white rounded-xl p-4 shadow-xl shadow-slate-200 mt-6 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rotate-45 translate-x-12 -translate-y-12"></div>
+                        <div className="text-[10px] uppercase font-black tracking-[0.3em] text-white/40 mb-1">Net à Payer</div>
+                        <div className="text-3xl font-black font-mono tracking-tighter text-white flex justify-between items-baseline">
+                          {formatNumber(data.total_ttc, 0)}
+                          <span className="text-sm font-light ml-1 opacity-60">FCFA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center">
+                    <div className="text-[9px] uppercase font-black tracking-widest text-slate-400 mb-12">Cachet & Signature</div>
+                    <div className="w-48 h-24 border-2 border-dashed border-slate-100 rounded-2xl flex items-center justify-center text-[9px] text-slate-200 bg-slate-50/30">
+                        EMPLACEMENT CACHET
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* LEGAL FOOTER */}
+        <div className="mt-16 pt-8 border-t border-slate-200 text-center">
+            <p className="font-bold text-slate-800 text-[11px] mb-2">{settings.ticket_footer_message || 'Merci de votre confiance.'}</p>
+            
+            <div className="flex justify-center flex-wrap gap-x-12 gap-y-2 text-[9px] uppercase tracking-[0.15em] font-bold text-slate-400">
+               {settings.niu && <div className="flex items-center gap-1.5"><span className="text-slate-300">●</span> NIU: <span className="text-slate-600">{settings.niu}</span></div>}
+               {settings.registre_commerce && <div className="flex items-center gap-1.5"><span className="text-slate-300">●</span> RC: <span className="text-slate-600">{settings.registre_commerce}</span></div>}
+               <div className="flex items-center gap-1.5"><span className="text-slate-300">●</span> LOGICIEL: <span className="text-slate-600">ANTIGRAVITY POS</span></div>
+            </div>
+        </div>
       </div>
 
     </div>

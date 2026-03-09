@@ -1,0 +1,77 @@
+/**
+ * Utilitaires d'assistance pour l'impression
+ */
+
+/**
+ * Formate un nombre en format monétaire français pour l'impression
+ */
+export function formatMoney(value: number | string): string {
+  const num = Math.round(parseFloat(String(value)));
+  return new Intl.NumberFormat('fr-FR').format(num).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
+}
+
+/**
+ * Formate une date en format français pour l'impression
+ */
+export function formatDateFr(dateString: string): string {
+  if (!dateString) return '';
+  try {
+    return new Date(dateString).toLocaleString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return dateString;
+  }
+}
+
+/**
+ * Génère une ligne de détail pour impression HTML
+ */
+export function printRow(label: string, value: string): string {
+  return `
+    <div class="print-row">
+      <span>${label}</span>
+      <span>${value}</span>
+    </div>
+  `;
+}
+
+/**
+ * Génère un séparateur horizontal pour impression HTML
+ */
+export function printDivider(): string {
+  return '<div class="print-divider"></div>';
+}
+
+/**
+ * Génère une ligne de total pour impression HTML
+ */
+export function printTotal(label: string, value: string): string {
+  return `
+    <div class="print-row print-total">
+      <span>${label}</span>
+      <span>${value}</span>
+    </div>
+  `;
+}
+
+/**
+ * Retourne le libellé d'un mode de paiement
+ */
+export function getModeLabel(mode: string): string {
+  const labels: Record<string, string> = {
+    especes: 'Espèces',
+    cheque: 'Chèque',
+    carte: 'Carte',
+    virement: 'Virement',
+    om: 'Orange Money',
+    momo: 'Mobile Money',
+    coupon: 'Coupon de Monnaie',
+    en_compte: 'En Compte'
+  };
+  return labels[mode] || mode?.toUpperCase() || 'N/A';
+}

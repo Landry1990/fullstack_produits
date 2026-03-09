@@ -22,6 +22,11 @@
         "actions": {
             "confirm": "Confirm"
         },
+        "bulk_actions": "Bulk Actions",
+        "date": "Date",
+        "supplier": "Supplier",
+        "total": "Total",
+        "status_title": "Status",
         "download": "Download",
         "export_success": "Export successful",
         "export_error": "Error during export",
@@ -659,9 +664,11 @@
             },
             "table": {
                 "id": "ID",
+                "number": "Order No.",
                 "invoice_number": "Invoice #",
                 "date": "Date",
                 "provider": "Provider",
+                "items": "Items",
                 "status": "Status",
                 "total": "Total (F)",
                 "actions": "Actions",
@@ -1305,8 +1312,12 @@
         "table": {
             "invoice_number": "Invoice #",
             "client": "Client",
+            "amount": "Amount",
+            "amount_settled": "Settled",
+            "amount_on_account": "On Account",
             "date": "Date",
             "status": "Status",
+            "operator": "Seller",
             "cancellation_reason": "Cancellation Reason",
             "discount": "Discount",
             "amount_ttc": "Amount TTC",
@@ -1373,7 +1384,8 @@
             "load_details_error": "Unable to load details."
         },
         "confirm_delete": "Delete this invoice?",
-        "confirm_bulk_delete": "Confirm deletion of {{count}} invoices? (Only drafts/cancelled will be deleted)"
+        "confirm_bulk_delete": "Confirm deletion of {{count}} invoices? (Only drafts/cancelled will be deleted)",
+        "bulk_delete_btn": "Delete {{count}} invoices"
     },
     "perimes": {
         "title": "Expired Products Management",
@@ -1905,5 +1917,18 @@
             "completed": "Completed Session"
         },
         "no_data": "No session data found for this period"
+    },
+    "avoirs": {
+        "title": "Supplier Credits (Returns)",
+        "subtitle": "Manage supplier returns and credits",
+        "create_btn": "+ New Credit",
+        "search_placeholder": "🔍 Search credits...",
+        "table": {
+            "date": "Date",
+            "numero": "Credit #",
+            "fournisseur": "Supplier",
+            "montant": "Amount",
+            "status": "Status"
+        }
     }
 }

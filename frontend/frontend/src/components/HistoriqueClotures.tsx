@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast'
 import { fr } from 'date-fns/locale'
 import 'react-datepicker/dist/react-datepicker.css'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import { usePharmacySettings } from '../hooks/usePharmacySettings'
+import { generateClotureTemplate } from '../utils/print/printTemplates'
 import BestCashierMetric from './BestCashierMetric'
 import { format } from 'date-fns'
 import { formatCurrency, normalizeNumberInput } from '../utils/formatters'
@@ -33,6 +33,7 @@ interface ClotureCaisse {
   date_fin: string | null
   user: number | null
   user_name: string
+  cloture_par_name?: string
   username: string
   observation: string | null
 }
@@ -55,7 +56,7 @@ export default function HistoriqueClotures() {
   
   // Sélection
   const [selectedCloture, setSelectedCloture] = useState<ClotureCaisse | null>(null)
-  const { settings: pharmacySettings } = usePharmacySettings()
+  // const { settings: pharmacySettings } = usePharmacySettings()
 
   // Metric month/year (default to now)
   const [metricMonth, setMetricMonth] = useState<string>(format(new Date(), 'MM'))
@@ -149,90 +150,46 @@ export default function HistoriqueClotures() {
   const handlePrint = (cloture: ClotureCaisse) => {
     const win = window.open('', '', 'height=600,width=400')
     if (win) {
-      const content = `
-        <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black;">
-          <div style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid black; padding-bottom: 10px;">
-            <h2 style="margin: 0; font-size: 1.2em; font-weight: bold;">${pharmacySettings.pharmacy_name}</h2>
-            <div style="font-size: 0.9em;">HISTORIQUE CLÔTURE</div>
-            <div style="font-size: 0.8em; margin-top: 5px;">Clôture #${cloture.id}</div>
-          </div>
-
-          <div style="font-size: 0.8em; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between;">
-              <span>Date clôture:</span>
-              <span>${formatDate(cloture.date)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between;">
-              <span>Caissier:</span>
-              <span>${cloture.user_name || cloture.username || 'N/A'}</span>
-            </div>
-          </div>
-
-          <div style="border-top: 1px dashed black; border-bottom: 1px dashed black; padding: 8px 0; margin-bottom: 15px;">
-            <div style="font-weight: bold; text-align: center; margin-bottom: 5px; text-transform: uppercase;">Période Clôturée</div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-              <span>Du:</span>
-              <span>${cloture.date_debut ? formatDate(cloture.date_debut) : 'Début'}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-              <span>Au:</span>
-              <span>${cloture.date_fin ? formatDate(cloture.date_fin) : 'Maintenant'}</span>
-            </div>
-          </div>
-
-          <div style="margin-bottom: 15px;">
-            <div style="font-weight: bold; margin-bottom: 5px; border-bottom: 1px dashed black;">DÉTAILS</div>
-            ${Object.entries(cloture.details_paiement || {}).map(([mode, montant]) => `
-              <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-                <span>${getModeLabel(mode)}</span>
-                <span>${formatMoney(montant)} F</span>
-              </div>
-            `).join('')}
-          </div>
-
-          <div style="border-top: 1px dashed black; padding-top: 5px; margin-bottom: 10px;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-              <span>Total Ventes:</span>
-              <span>${formatMoney(cloture.total_ventes)} F</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-              <span>+ Entrées:</span>
-              <span>${formatMoney(cloture.total_entrees)} F</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.9em;">
-              <span>- Sorties:</span>
-              <span>${formatMoney(cloture.total_sorties)} F</span>
-            </div>
-          </div>
-
-          <div style="border-top: 2px solid black; padding-top: 10px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold;">
-              <span>THÉORIQUE:</span>
-              <span>${formatMoney(cloture.montant_theorique)} F</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold;">
-              <span>RÉEL:</span>
-              <span>${formatMoney(cloture.montant_reel)} F</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; margin-top: 5px; ${normalizeNumberInput(cloture.ecart_caisse) !== 0 ? 'color: red;' : ''}">
-              <span>ÉCART:</span>
-              <span>${formatMoney(cloture.ecart_caisse)} F</span>
-            </div>
-          </div>
-
-          <div style="text-align: center; font-size: 0.7em; margin-top: 20px;">
-            --- Fin du rapport ---
-          </div>
-        </div>
-      `
+      const htmlContent = generateClotureTemplate({
+        ...cloture,
+        montant_reel: cloture.montant_reel,
+        montant_theorique: cloture.montant_theorique,
+        ecart_caisse: cloture.ecart_caisse,
+        total_ventes: cloture.total_ventes,
+        total_entrees: cloture.total_entrees,
+        total_sorties: cloture.total_sorties,
+        details_paiement: cloture.details_paiement
+      });
       
-      win.document.write('<html><head><title>Clôture Caisse</title>')
-      win.document.write('<style>body { font-family: monospace; padding: 0; margin: 0; } @media print { body { padding: 0; margin: 0; } }</style>')
-      win.document.write('</head><body>')
-      win.document.write(content)
-      win.document.write('</body></html>')
+      win.document.write(`
+        <html>
+          <head>
+            <title>Clôture Caisse #${cloture.id}</title>
+            <style>
+              @media print {
+                body { margin: 0; padding: 0; }
+                @page { margin: 0; }
+              }
+              body { margin: 0; padding: 2mm; width: 80mm; background: white; }
+            </style>
+          </head>
+          <body>
+            ${htmlContent}
+          </body>
+        </html>
+      `)
       win.document.close()
-      win.print()
+      
+      // Wait for resources if any (none in this template currently but good practice)
+      win.onload = () => {
+        win.print();
+        // win.close(); // Optionnel: fermer après impression
+      };
+      
+      // Fallback if onload doesn't trigger
+      setTimeout(() => {
+        if (win) win.print();
+      }, 500);
     }
   }
 
@@ -418,10 +375,11 @@ export default function HistoriqueClotures() {
         <div className="bg-base-100 border border-base-200 rounded-xl shadow-sm flex-1 flex flex-col overflow-hidden">
           <div className="overflow-x-auto flex-1">
             <table className="table table-sm w-full">
-              <thead className="bg-base-200/50 sticky top-0 z-10 backdrop-blur-sm">
+              <thead className="bg-base-200 sticky top-0 z-10 opacity-100">
                 <tr>
                   <th className="py-4 text-xs tracking-wider uppercase">Date Clôture</th>
                   <th className="py-4 text-xs tracking-wider uppercase">Caissier</th>
+                  <th className="py-4 text-xs tracking-wider uppercase">Effectué par</th>
                   <th className="text-right py-4 text-xs tracking-wider uppercase">Théorique</th>
                   <th className="text-right py-4 text-xs tracking-wider uppercase">Réel</th>
                   <th className="text-right py-4 text-xs tracking-wider uppercase">Écart</th>
@@ -456,6 +414,9 @@ export default function HistoriqueClotures() {
                       </td>
                       <td className="py-3">
                          <div className="font-medium">{cloture.user_name || cloture.username || 'N/A'}</div>
+                      </td>
+                      <td className="py-3">
+                         <div className="text-xs font-semibold text-base-content/70">{cloture.cloture_par_name || '-'}</div>
                       </td>
                       <td className="text-right py-3 text-base-content/80 font-medium">
                         {formatMoney(cloture.montant_theorique)}
@@ -548,7 +509,10 @@ export default function HistoriqueClotures() {
                 <Banknote className="w-6 h-6" />
                 Détails de la Clôture
               </h3>
-              <p className="opacity-80 text-sm mt-1 pb-1">Enregistrée par {selectedCloture.user_name || selectedCloture.username || 'Inconnu'}</p>
+              <p className="opacity-80 text-sm mt-1 pb-1">
+                Caisse de {selectedCloture.user_name || selectedCloture.username || 'Inconnu'} 
+                {selectedCloture.cloture_par_name && ` (Clôturée par ${selectedCloture.cloture_par_name})`}
+              </p>
             </div>
 
             <div className="p-6 space-y-6">

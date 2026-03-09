@@ -331,7 +331,7 @@ class ProduitSerializer(serializers.ModelSerializer):
             'taux_marge', 'pourcentage_marge', 'is_supplier_exclusive',
             'active_promotion', 'is_chronic', 'default_treatment_days',
             'stock_reserve', 'has_reserve_storage', 'capacite_rayon', 'min_rayon',
-            'stock_minimum', 'stock_maximum'
+            'stock_minimum', 'stock_maximum', 'is_active'
         ]
         read_only_fields = ['created_at', 'updated_at', 'taux_marge', 'pourcentage_marge', 'total_stock']
 
@@ -706,6 +706,22 @@ class FactureSerializer(serializers.ModelSerializer):
         # (simplifié - on pourrait vérifier le pourcentage exact mais avec les arrondis c'est complexe)
         return obj.remise and obj.remise > 0
 
+    montant_regle = serializers.SerializerMethodField()
+    montant_en_compte = serializers.SerializerMethodField()
+
+    def get_montant_regle(self, obj):
+        # Somme des paiements complétés hors 'en_compte'
+        return obj.paiements.filter(
+            statut='completee'
+        ).exclude(mode_paiement='en_compte').aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+
+    def get_montant_en_compte(self, obj):
+        # Somme des paiements 'en_compte' complétés
+        return obj.paiements.filter(
+            statut='completee',
+            mode_paiement='en_compte'
+        ).aggregate(total=Sum('montant'))['total'] or Decimal('0.00')
+
     class Meta:
         model = Facture
         fields = [
@@ -715,7 +731,8 @@ class FactureSerializer(serializers.ModelSerializer):
             'total_ht', 'remise', 'tva', 'total_tva', 'total_ttc', 'notes',
             'points_fidelite_gagnes', 'points_fidelite_utilises', 'montant_fidelite',
             'is_remise_auto', 'part_client', 'paiements', 'created_by_name',
-            'validated_by_name', 'cancelled_by_name', 'session_ticket_number'
+            'validated_by_name', 'cancelled_by_name', 'session_ticket_number',
+            'montant_regle', 'montant_en_compte'
         ]
 
     session_ticket_number = serializers.IntegerField(source='ticket_session', read_only=True)
@@ -751,6 +768,7 @@ class FactureProduitAllocationSerializer(serializers.ModelSerializer):
 
 class ClotureCaisseSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
+    cloture_par_name = serializers.SerializerMethodField()
     username = serializers.CharField(source='user.username', read_only=True, default='')
     
     class Meta:
@@ -761,6 +779,11 @@ class ClotureCaisseSerializer(serializers.ModelSerializer):
     def get_user_name(self, obj):
         if obj.user:
             return obj.user.get_full_name() or obj.user.username
+        return 'N/A'
+
+    def get_cloture_par_name(self, obj):
+        if obj.cloture_par:
+            return obj.cloture_par.get_full_name() or obj.cloture_par.username
         return 'N/A'
 
 class CreanceSerializer(serializers.ModelSerializer):

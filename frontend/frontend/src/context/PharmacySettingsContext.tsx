@@ -72,7 +72,7 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   const [settings, setSettings] = useState<PharmacySettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { syncTime } = useAuth();
+  const { syncTime, isAuthenticated } = useAuth();
 
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
   const endpoint = apiBaseUrl ? `${apiBaseUrl}/api/pharmacy-settings/` : '/api/pharmacy-settings/';
@@ -107,8 +107,12 @@ export const PharmacySettingsProvider = ({ children }: { children: ReactNode }) 
   }, [endpoint]);
 
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (isAuthenticated) {
+      fetchSettings();
+    } else {
+      setLoading(false);
+    }
+  }, [fetchSettings, isAuthenticated]);
 
   return (
     <PharmacySettingsContext.Provider value={{ settings, loading, error, updateSettings, refetch: fetchSettings }}>

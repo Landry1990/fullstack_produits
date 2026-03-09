@@ -73,7 +73,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
     <>
       <div className="overflow-x-auto">
         <table className="table table-sm w-full">
-          <thead className="bg-base-200/50 sticky top-0 z-10">
+          <thead className="bg-base-200 opacity-100 sticky top-0 z-10">
             <tr className="text-xs uppercase tracking-wider text-base-content/60">
               <th>{t('table.ticket')}</th>
               <th>{t('table.invoice')}</th>

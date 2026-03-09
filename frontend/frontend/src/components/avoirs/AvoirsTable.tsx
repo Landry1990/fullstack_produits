@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { Eye, Edit, Trash2, CheckCircle2, X, Check } from 'lucide-react';
+import { Eye, Edit, Trash2, CheckCircle2, Check } from 'lucide-react';
 import type { Avoir } from '../../types';
 import { formatCurrency } from '../../utils/formatters';
 import ActionIcon from '../ui/ActionIcon';
@@ -43,7 +43,6 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     const getStatusStyle = (status: string) => {
         switch (status) {
-            case 'BRO':
             case 'BROUILLON': return 'bg-warning/10 text-warning border-warning/20';
             case 'VAL':
             case 'VALIDÉ': return 'bg-success/10 text-success border-success/20';
@@ -78,12 +77,12 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </div>
-                <p>{t('avoirs.empty', 'Aucun avoir trouvé')}</p>
+                <p>{t('avoirs.empty')}</p>
             </div>
         );
     }
 
-    const draftAvoirsCount = avoirs.filter(a => a.status === 'BROUILLON' || a.status === 'BRO').length;
+    const draftAvoirsCount = avoirs.filter(a => a.status === 'BROUILLON').length;
     const allSelected = draftAvoirsCount > 0 && selectedIds.size === draftAvoirsCount;
 
     const renderBulkActions = () => {
@@ -94,28 +93,28 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
             return (
                 <>
                     <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                        {t('common.single_selection', { defaultValue: 'Sélection' })}
+                        {t('common.single_selection')}
                     </li>
                     <li>
                         <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                            <Eye className="w-4 h-4" /> {t('common.view', 'Voir')}
+                            <Eye className="w-4 h-4" /> {t('common.view')}
                         </a>
                     </li>
-                    {(avoir.status === 'BROUILLON' || avoir.status === 'BRO') && (
+                    {avoir.status === 'BROUILLON' && (
                         <>
                             <li>
                                 <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
-                                    <Edit className="w-4 h-4" /> {t('common.edit', 'Modifier')}
+                                    <Edit className="w-4 h-4" /> {t('common.edit')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
-                                    <CheckCircle2 className="w-4 h-4" /> {t('common.validate', 'Valider')}
+                                    <CheckCircle2 className="w-4 h-4" /> {t('common.validate')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                    <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
+                                    <Trash2 className="w-4 h-4" /> {t('common.delete')}
                                 </a>
                             </li>
                         </>
@@ -126,18 +125,18 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
         return (
             <>
                 <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                    {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                    {t('common.bulk_actions')}
                 </li>
                 <li>
                     <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
                         {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="w-4 h-4" />}
-                        {t('common.validate_all', 'Valider tous')}
+                        {t('common.validate_all')}
                     </a>
                 </li>
                 <li>
                     <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
                         {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="w-4 h-4" />}
-                        {t('common.delete_all', 'Supprimer tous')}
+                        {t('common.delete_all')}
                     </a>
                 </li>
             </>
@@ -160,21 +159,25 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                 />
                             </label>
                         </th>
-                        <SelectionHeader
-                            selectedCount={selectedIds.size}
-                            onClear={onClearSelection}
-                            colSpan={6}
-                            actions={renderBulkActions()}
-                        >
-                            <div className="grid grid-cols-6 w-full h-full items-center text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="col-span-1">{t('avoirs.table.date', { defaultValue: 'Date' })}</div>
-                                <div className="col-span-1">{t('avoirs.table.numero', { defaultValue: 'N° Avoir' })}</div>
-                                <div className="col-span-1">{t('avoirs.table.fournisseur', { defaultValue: 'Fournisseur' })}</div>
-                                <div className="col-span-1">{t('avoirs.table.type', { defaultValue: 'Type' })}</div>
-                                <div className="col-span-1 text-right">{t('avoirs.table.montant', { defaultValue: 'Montant' })}</div>
-                                <div className="col-span-1 text-center">{t('avoirs.table.status', { defaultValue: 'Statut' })}</div>
-                            </div>
-                        </SelectionHeader>
+                        {selectedIds.size > 0 ? (
+                            <SelectionHeader
+                                selectedCount={selectedIds.size}
+                                onClear={onClearSelection}
+                                colSpan={6}
+                                actions={renderBulkActions()}
+                            >
+                                <></>
+                            </SelectionHeader>
+                        ) : (
+                            <>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.date')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.numero')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.fournisseur')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right">{t('avoirs.table.montant')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('avoirs.table.status')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common.actions')}</th>
+                            </>
+                        )}
                     </tr>
                 </thead>
                 <tbody className="text-base-content font-medium">
@@ -185,7 +188,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             onClick={() => selectedIds.size === 0 && onView(avoir)}
                         >
                             <td className="text-center" onClick={(e) => e.stopPropagation()}>
-                                {(avoir.status === 'BROUILLON' || avoir.status === 'BRO') && (
+                                {avoir.status === 'BROUILLON' && (
                                     <label className="cursor-pointer label p-0 justify-center">
                                         <input 
                                             type="checkbox" 
@@ -226,29 +229,29 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                     <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                                         <ActionIcon 
                                             icon={Eye}
-                                            onClick={(e) => onView(avoir)}
-                                            title={t('common.view', 'Voir')}
+                                            onClick={() => onView(avoir)}
+                                            title={t('common.view')}
                                             variant="info"
                                         />
                                         
-                                        {(avoir.status === 'BROUILLON' || avoir.status === 'BRO') && (
+                                        {avoir.status === 'BROUILLON' && (
                                             <>
                                                 <ActionIcon 
                                                     icon={Edit}
-                                                    onClick={(e) => onEdit(avoir)}
-                                                    title={t('common.edit', 'Modifier')}
+                                                    onClick={() => onEdit(avoir)}
+                                                    title={t('common.edit')}
                                                     variant="warning"
                                                 />
                                                 <ActionIcon 
                                                     icon={CheckCircle2}
-                                                    onClick={(e) => onValidate(avoir)}
-                                                    title={t('common.validate', 'Valider')}
+                                                    onClick={() => onValidate(avoir)}
+                                                    title={t('common.validate')}
                                                     variant="success"
                                                 />
                                                 <ActionIcon 
                                                     icon={Trash2}
-                                                    onClick={(e) => onDelete(avoir)}
-                                                    title={t('common.delete', 'Supprimer')}
+                                                    onClick={() => onDelete(avoir)}
+                                                    title={t('common.delete')}
                                                     variant="error"
                                                 />
                                             </>
