@@ -305,7 +305,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     || 'Client de passage';
 
                 const ticketCaisse: TicketCaisse = {
-                    id: 0,
+                    id: finalFacture.id,
                     facture: finalFacture,
                     mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0]?.mode as TicketCaisse['mode_paiement'] || 'N/A'),
                     montant: finalFacture.total_ttc,
@@ -315,7 +315,8 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                     client_name: clientNameForTicket,
                     paiements_details: paiementsList,
                     date_paiement: new Date().toISOString(),
-                    user_details: { id: 0, username: finalFacture.validated_by_name || finalFacture.created_by_name || '' }
+                    user_details: { id: 0, username: finalFacture.validated_by_name || finalFacture.created_by_name || '' },
+                    reference: params.reference || null
                 };
 
                 toast.success(t('sales.messages.success_with_id', { id: finalFacture.numero_facture || finalFacture.id }));
@@ -482,7 +483,7 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 || 'Client de passage';
 
             const ticketCaisse: TicketCaisse = {
-                id: 0,
+                id: updatedFacture.id,
                 facture: updatedFacture,
                 mode_paiement: paiementsList.length > 1 ? 'Mixte' : (paiementsList[0].mode as TicketCaisse['mode_paiement']),
                 montant: updatedFacture.total_ttc,
@@ -492,7 +493,8 @@ export function useSaleCompletion(options: UseSaleCompletionOptions = {}): UseSa
                 client_name: clientNameForTicket,
                 date_paiement: new Date().toISOString(),
                 paiements_details: paiementsList,
-                user_details: { id: 0, username: updatedFacture.validated_by_name || updatedFacture.created_by_name || '' }
+                user_details: { id: 0, username: updatedFacture.validated_by_name || updatedFacture.created_by_name || '' },
+                reference: reference || null
             };
 
             const result: SaleCompletionResult = { success: true, facture: updatedFacture, ticketCaisse, rendu };

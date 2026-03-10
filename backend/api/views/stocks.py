@@ -39,6 +39,7 @@ from ..serializer_mixins import OptimizedSerializerMixin
 from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
+from ..pagination import StandardResultsSetPagination
 
 from django.db.models import F, Sum, DecimalField, Case, When, Value, ExpressionWrapper, Count
 from django.db.models.functions import Coalesce, Cast, Abs
@@ -55,6 +56,7 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     filterset_fields = ['produit', 'fournisseur']
     ordering_fields = ['date_expiration', 'date_reception']
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     
     # Serializers optimisés
     list_serializer_class = StockLotListSerializer
@@ -459,18 +461,12 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
 
 
 
-from rest_framework.pagination import PageNumberPagination
-
-class InventairePagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
 
 class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     queryset = Inventaire.objects.all().order_by('-date')
     serializer_class = InventaireSerializer
     permission_classes = [IsAuthenticated]
-    pagination_class = InventairePagination
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
 
     filterset_fields = {
@@ -1557,6 +1553,7 @@ class LigneInventaireViewSet(viewsets.ModelViewSet):
     queryset = LigneInventaire.objects.all().order_by('id')
     serializer_class = LigneInventaireSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['inventaire']
     
@@ -1645,6 +1642,7 @@ class StockAdjustmentViewSet(MultiTermSearchMixin, viewsets.ReadOnlyModelViewSet
     """
     queryset = StockAdjustment.objects.select_related('produit', 'user', 'stock_lot').order_by('-created_at')
     serializer_class = StockAdjustmentSerializer
+    pagination_class = StandardResultsSetPagination
     permission_classes = [permissions.AllowAny] # As per original view
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = {
@@ -1886,6 +1884,7 @@ class RelationTransformationViewSet(viewsets.ModelViewSet):
     queryset = RelationTransformation.objects.all()
     serializer_class = RelationTransformationSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     @action(detail=True, methods=['post'])
     @action(detail=True, methods=['post'])
@@ -2101,6 +2100,7 @@ class HistoriqueTransformationViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = HistoriqueTransformation.objects.all()
     serializer_class = HistoriqueTransformationSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['produit_source', 'produit_destination']
     ordering_fields = ['date_transformation']

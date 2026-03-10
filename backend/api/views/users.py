@@ -14,6 +14,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from ..models import Profile as UserProfile, Client, AuditLog, UserDailySession
 from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerializer
 from ..audit_helpers import log_audit
+from ..pagination import StandardResultsSetPagination
 
 class CustomAuthToken(ObtainAuthToken):
     """
@@ -122,6 +123,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('username')
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     
     def get_queryset(self):
@@ -275,7 +277,7 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = UserDailySession.objects.all().order_by('-date', '-first_login')
     permission_classes = [IsAuthenticated]
-    pagination_class = None
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['user', 'date']
     ordering_fields = ['first_login', 'last_logout', 'date']

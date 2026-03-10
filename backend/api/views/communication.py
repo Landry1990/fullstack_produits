@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from ..models import SmsLog, SmsTemplate, Promis, Client, WhatsAppLog
 from ..serializers import SmsLogSerializer, SmsTemplateSerializer, WhatsAppLogSerializer
 from ..services.sms import SmsService
+from ..pagination import StandardResultsSetPagination
 
 class SmsViewSet(viewsets.ModelViewSet):
     """
@@ -12,6 +13,7 @@ class SmsViewSet(viewsets.ModelViewSet):
     queryset = SmsLog.objects.all().order_by('-created_at')
     serializer_class = SmsLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         # Filtres optionnels
@@ -79,6 +81,7 @@ class SmsTemplateViewSet(viewsets.ModelViewSet):
     queryset = SmsTemplate.objects.filter(is_active=True)
     serializer_class = SmsTemplateSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
 class WhatsAppLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -87,6 +90,7 @@ class WhatsAppLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WhatsAppLog.objects.all().order_by('-created_at')
     serializer_class = WhatsAppLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         qs = super().get_queryset()

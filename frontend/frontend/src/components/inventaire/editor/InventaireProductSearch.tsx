@@ -159,9 +159,9 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 <div className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center mb-2 shadow-sm border border-base-300">
                                     <Database className="h-8 w-8 text-base-content/20" />
                                 </div>
-                                <h4 className="font-bold text-base-content text-lg">Aucun lot disponible</h4>
+                                <h4 className="font-bold text-base-content text-lg">{t('stock.inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>
                                 <p className="text-sm text-base-content/60 max-w-sm">
-                                    Il n'y a actuellement aucun lot en stock pour ce produit. Vous pouvez soit créer un nouveau lot spécifiquement pour cet inventaire, soit inventorier le produit globalement.
+                                    {t('stock.inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit. Vous pouvez soit créer un nouveau lot spécifiquement pour cet inventaire, soit inventorier le produit globalement.")}
                                 </p>
                             </div>
                         ) : (
@@ -186,7 +186,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-sm font-bold">
-                                                    {lot.quantity_remaining} unités
+                                                    {lot.quantity_remaining} {t('common.units_short', 'unités')}
                                                 </div>
                                             </div>
                                         </div>
@@ -246,7 +246,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         setShowLotModal(false);
                         setSelectedProductForLot(null);
                         focusInput();
-                    }}>close</button>
+                    }}>{t('common.actions.close', 'close')}</button>
                 </form>
             </dialog>
             )}

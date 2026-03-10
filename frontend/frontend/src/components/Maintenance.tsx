@@ -82,6 +82,8 @@ export default function Maintenance() {
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
   const [restorePassword, setRestorePassword] = useState('');
   const [restoring, setRestoring] = useState(false);
+  const [restoreProgress, setRestoreProgress] = useState(0);
+  const [restoreStep, setRestoreStep] = useState('');
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
 
   // Fetch available tables and pharmacy settings
@@ -288,6 +290,29 @@ export default function Maintenance() {
     }
 
     setRestoring(true);
+    setRestoreProgress(0);
+    setRestoreStep('Initialisation...');
+
+    // Simulation de progression
+    const progressInterval = setInterval(() => {
+      setRestoreProgress(prev => {
+        if (prev >= 98) return prev;
+        const inc = Math.random() * (prev < 30 ? 20 : prev < 70 ? 5 : 1);
+        return Math.min(prev + inc, 98);
+      });
+    }, 500);
+
+    const steps = [
+      { p: 15, s: 'Vérification du fichier...' },
+      { p: 40, s: 'Décompression GZip...' },
+      { p: 70, s: 'Restauration PostgreSQL (psql)...' },
+      { p: 90, s: 'Synchronisation des séquences...' },
+    ];
+
+    steps.forEach((step, idx) => {
+      setTimeout(() => setRestoreStep(step.s), (idx + 1) * 3000);
+    });
+
     const formData = new FormData();
     formData.append('file', restoreFile);
     formData.append('password', restorePassword);
@@ -296,16 +321,22 @@ export default function Maintenance() {
       const res = await axios.post('/api/maintenance/restore/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      clearInterval(progressInterval);
+      setRestoreProgress(100);
+      setRestoreStep('Restauration terminée !');
       toast.success(res.data.message || 'Restauration réussie !');
       setShowRestoreConfirm(false);
       setRestoreFile(null);
       setRestorePassword('');
-       // Optionnel: Recharger l'application car la DB a changé
-       // window.location.reload();
+       
+       // Rechargement après succès car la DB a changé
+       setTimeout(() => window.location.reload(), 2000);
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Erreur lors de la restauration');
-    } finally {
+      clearInterval(progressInterval);
       setRestoring(false);
+      setRestoreProgress(0);
+      setRestoreStep('');
+      toast.error(err.response?.data?.detail || 'Erreur lors de la restauration');
     }
   };
 
@@ -617,6 +648,21 @@ export default function Maintenance() {
                   {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
                   Restaurer maintenant
                 </button>
+
+                {restoring && (
+                  <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-error">
+                      <span>{restoreStep}</span>
+                      <span>{Math.round(restoreProgress)}%</span>
+                    </div>
+                    <progress 
+                      className="progress progress-error w-full h-2 shadow-inner" 
+                      value={restoreProgress} 
+                      max="100"
+                    ></progress>
+                    <p className="text-[10px] text-center text-error/60 italic">L'application redémarrera automatiquement une fois terminé.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

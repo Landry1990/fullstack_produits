@@ -494,6 +494,7 @@ export default function Dashboard() {
                                     <td className="text-center py-4 pr-6">
                                         <Link 
                                             to="/app/fournisseurs" 
+                                            state={{ selectedSupplierId: supplier.id, openFinance: true }}
                                             className="btn btn-sm btn-ghost btn-circle text-base-content/20 group-hover:text-red-600 group-hover:bg-red-100 transition-all"
                                         >
                                             <ArrowRight className="w-5 h-5" />

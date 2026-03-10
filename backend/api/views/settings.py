@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from ..models import LoyaltySetting, InvoiceSettings, PharmacySettings, AuditLog, ConfigurationOption
 from ..serializers import LoyaltySettingSerializer, InvoiceSettingsSerializer, PharmacySettingsSerializer, ConfigurationOptionSerializer
 from ..audit_helpers import log_audit
+from ..pagination import StandardResultsSetPagination
 
 # ... (existing classes)
 
@@ -16,6 +17,7 @@ class ConfigurationOptionViewSet(viewsets.ModelViewSet):
     queryset = ConfigurationOption.objects.all()
     serializer_class = ConfigurationOptionSerializer
     permission_classes = [permissions.IsAuthenticated] # Read allowed for all, Write restricted if needed elsewhere
+    pagination_class = StandardResultsSetPagination
     filterset_fields = ['type', 'code', 'is_active']
     ordering_fields = ['order', 'label']
 
@@ -181,6 +183,7 @@ class TVAViewSet(viewsets.ModelViewSet):
     queryset = TVA.objects.all()
     serializer_class = TVASerializer
     permission_classes = [permissions.IsAuthenticated] # Read/Write for authenticated users (manage in settings)
+    pagination_class = StandardResultsSetPagination
     
     def perform_create(self, serializer):
         obj = serializer.save()

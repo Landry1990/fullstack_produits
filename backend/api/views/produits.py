@@ -34,6 +34,7 @@ from ..search_mixins import MultiTermSearchMixin
 from ..cache_utils import SearchCache
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
+from ..pagination import StandardResultsSetPagination
 
 class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -50,6 +51,7 @@ class ProduitViewSet(CachedSearchMixin, MultiTermSearchMixin, OptimizedSerialize
     queryset = Produit.objects.select_related('rayon', 'fournisseur', 'forme').order_by('name')
     serializer_class = ProduitSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.OrderingFilter]  # Removed SearchFilter, using custom search
     ordering_fields = ['name', 'stock', 'selling_price', 'updated_at']
     search_fields = ['^name', '^cip1', '^cip2', '^cip3']
@@ -1308,6 +1310,7 @@ class CategorieViewSet(viewsets.ModelViewSet):
     queryset = Rayon.objects.all().order_by('name')
     serializer_class = RayonSerializer
     permission_classes = [permissions.AllowAny]
+    pagination_class = StandardResultsSetPagination
 
     @action(detail=True, methods=['get'])
     def imprimer_etat_stock(self, request, pk=None):
@@ -1465,6 +1468,7 @@ class FournisseurViewSet(viewsets.ModelViewSet):
     queryset = Fournisseur.objects.all().order_by('name')
     serializer_class = FournisseurSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'email', 'phone']
 

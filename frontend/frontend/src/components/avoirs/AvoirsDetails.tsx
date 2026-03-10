@@ -1,6 +1,5 @@
-import React from 'react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, CheckCircle2, Lock, Unlock, Printer } from 'lucide-react';
 import type { UseAvoirsDataReturn } from '../../hooks/useAvoirsData';
 import { formatCurrency } from '../../utils/formatters';
@@ -19,6 +18,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
         handleToggleAllCloture,
         savingValidation
     } = data;
+    const { t } = useTranslation();
 
     if (!selectedAvoir) return null;
 
@@ -34,10 +34,10 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
 
     const getTypeAvoirLabel = (type: string) => {
         switch (type) {
-            case 'PERIME': return 'Périmé';
-            case 'CASSE': return 'Cassé';
-            case 'ERREUR_LIVRAISON': return 'Erreur Livraison';
-            case 'AUTRE': return 'Autre';
+            case 'PERIME': return t('avoirs.types.perime', 'Périmé');
+            case 'CASSE': return t('avoirs.types.casse', 'Cassé');
+            case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison', 'Erreur Livraison');
+            case 'AUTRE': return t('avoirs.types.autre', 'Autre');
             default: return type;
         }
     };
@@ -51,25 +51,25 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                     <button 
                         onClick={handleBackToList}
                         className="btn btn-circle btn-ghost btn-sm"
-                        title="Retour à la liste"
+                        title={t('avoirs.details.back')}
                     >
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
                         <div className="flex items-center gap-3">
                             <h1 className="text-xl font-bold font-mono">
-                                Avoir {selectedAvoir.numero}
+                                {t('avoirs.details.title', { numero: selectedAvoir.numero })}
                             </h1>
                             <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusStyle(selectedAvoir.status)}`}>
                                 {selectedAvoir.status_display}
                             </span>
                         </div>
                         <p className="text-sm text-base-content/60 mt-0.5 flex items-center gap-2">
-                            <span>Créé le {format(new Date(selectedAvoir.created_at || selectedAvoir.date), 'dd MMMM yyyy à HH:mm', { locale: fr })}</span>
+                            <span>{t('avoirs.details.created_at', { date: format(new Date(selectedAvoir.created_at || selectedAvoir.date), 'dd/MM/yyyy HH:mm') })}</span>
                             {selectedAvoir.created_by_name && (
                                 <>
                                     <span className="w-1 h-1 rounded-full bg-base-content/30" />
-                                    <span>Par {selectedAvoir.created_by_name}</span>
+                                    <span>{t('avoirs.details.created_by', { name: selectedAvoir.created_by_name })}</span>
                                 </>
                             )}
                         </p>
@@ -82,7 +82,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         className="btn btn-ghost flex-1 sm:flex-none gap-2"
                     >
                         <Printer className="w-4 h-4" />
-                        <span className="hidden sm:inline">Imprimer</span>
+                        <span className="hidden sm:inline">{t('avoirs.details.print')}</span>
                     </button>
 
                     {selectedAvoir.status === 'BROUILLON' && (
@@ -92,7 +92,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 onClick={() => handleDelete(selectedAvoir)}
                                 disabled={savingValidation}
                             >
-                                Supprimer
+                                {t('avoirs.details.delete')}
                             </button>
                             <button 
                                 className="btn btn-success flex-1 sm:flex-none gap-2 text-white shadow-sm"
@@ -100,7 +100,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 disabled={savingValidation}
                             >
                                 <CheckCircle2 className="w-4 h-4" />
-                                Valider
+                                {t('avoirs.details.validate')}
                             </button>
                         </>
                     )}
@@ -114,7 +114,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                     {/* Fournisseur Info */}
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5">
                         <h2 className="text-sm font-bold text-base-content/50 uppercase tracking-widest mb-4">
-                            Informations Fournisseur
+                            {t('avoirs.details.fournisseur_info')}
                         </h2>
                         <div className="space-y-4">
                             <div>
@@ -122,14 +122,14 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 <p className="font-bold text-lg">{selectedAvoir.fournisseur_name}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-base-content/60 mb-1">Type de retour</p>
+                                <p className="text-sm text-base-content/60 mb-1">{t('avoirs.details.type_label')}</p>
                                 <div className="inline-flex items-center px-2.5 py-1 rounded-md bg-base-200 text-base-content/70 text-sm font-medium border border-base-300">
                                     {getTypeAvoirLabel(selectedAvoir.type_avoir)}
                                 </div>
                             </div>
                             {selectedAvoir.observations && (
                                 <div>
-                                    <p className="text-sm text-base-content/60 mb-1">Observations</p>
+                                    <p className="text-sm text-base-content/60 mb-1">{t('avoirs.details.observations_label')}</p>
                                     <p className="text-sm bg-base-200/50 p-3 rounded-xl border border-base-200/50">
                                         {selectedAvoir.observations}
                                     </p>
@@ -141,21 +141,21 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                     {/* Summary Card */}
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-5">
                         <h2 className="text-sm font-bold text-base-content/50 uppercase tracking-widest mb-4">
-                            Récapitulatif Financier
+                            {t('avoirs.details.financial_summary')}
                         </h2>
                         <div className="space-y-3">
                             <div className="flex justify-between items-center py-2 border-b border-base-200/50">
-                                <span className="text-base-content/70">Nombre d'articles</span>
+                                <span className="text-base-content/70">{t('avoirs.details.items_count')}</span>
                                 <span className="font-bold">{selectedAvoir.produits?.length || 0}</span>
                             </div>
                             <div className="flex justify-between items-center py-2 border-b border-base-200/50">
-                                <span className="text-base-content/70">Quantité totale</span>
+                                <span className="text-base-content/70">{t('avoirs.details.total_qty')}</span>
                                 <span className="font-bold">
                                     {selectedAvoir.produits?.reduce((sum, p) => sum + Number(p.quantity || 0), 0)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center pt-2">
-                                <span className="text-base font-bold">Montant Total HT</span>
+                                <span className="text-base font-bold">{t('avoirs.details.total_ht')}</span>
                                 <span className="text-2xl font-black text-primary font-mono tracking-tight">
                                     {formatCurrency(Number(selectedAvoir.total_ht) || 0)}
                                 </span>
@@ -171,13 +171,13 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         <div className="p-4 sm:p-5 border-b border-base-200 bg-base-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <h3 className="font-bold text-lg flex items-center gap-2">
-                                    Lignes de l'avoir
+                                    {t('avoirs.details.lines_title')}
                                     <span className="badge badge-primary badge-sm">
                                         {selectedAvoir.produits?.length || 0}
                                     </span>
                                 </h3>
                                 <p className="text-sm text-base-content/60 mt-0.5">
-                                    Détail des produits retournés au fournisseur
+                                    {t('avoirs.details.lines_subtitle')}
                                 </p>
                             </div>
                             
@@ -188,12 +188,12 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 {allLinesClosed ? (
                                     <>
                                         <Unlock className="w-4 h-4" />
-                                        Réouvrir tout
+                                        {t('avoirs.details.reopen_all')}
                                     </>
                                 ) : (
                                     <>
                                         <Lock className="w-4 h-4" />
-                                        Conclure tout
+                                        {t('avoirs.details.close_all')}
                                     </>
                                 )}
                             </button>
@@ -229,10 +229,10 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                             </td>
                                             <td>
                                                 <div className="font-mono text-xs bg-base-200 px-2 py-1 rounded w-fit mb-1 font-bold">
-                                                    {ligne.lot || 'Sans Lot'}
+                                                    {ligne.lot || t('avoirs.form.no_lot')}
                                                 </div>
                                                 <div className="text-xs text-base-content/60">
-                                                    {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy') : 'Aucune date'}
+                                                    {ligne.date_expiration ? format(new Date(ligne.date_expiration), 'dd/MM/yyyy') : t('avoirs.form.no_date')}
                                                 </div>
                                             </td>
                                             <td className="text-center">
@@ -252,7 +252,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                     {(!selectedAvoir.produits || selectedAvoir.produits.length === 0) && (
                                         <tr>
                                             <td colSpan={6} className="text-center py-8 text-base-content/50">
-                                                Aucune ligne dans cet avoir
+                                                {t('avoirs.details.no_lines')}
                                             </td>
                                         </tr>
                                     )}

@@ -46,7 +46,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                                     <div className="max-w-[150px] md:max-w-xs">
                                         <div className="font-bold text-sm text-base-content group-hover:text-primary transition-colors truncate">{p.produit_nom}</div>
                                         <div className={`text-[10px] font-bold ${colorClass}/60 uppercase tracking-tight mt-0.5`}>
-                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common.units', { defaultValue: 'unités' })}
+                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common.units_short', 'unités')}
                                         </div>
                                     </div>
                                 </div>

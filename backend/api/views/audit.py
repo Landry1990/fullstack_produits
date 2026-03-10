@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 
 from ..models import AuditLog
 from ..serializers import AuditLogSerializer
+from ..pagination import StandardResultsSetPagination
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """
@@ -13,6 +14,7 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AuditLog.objects.select_related('user').all().order_by('-timestamp')
     serializer_class = AuditLogSerializer
     permission_classes = [permissions.IsAuthenticated] # Custom permisssion check in get_queryset or similar logic if needed
+    pagination_class = StandardResultsSetPagination
     
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['action', 'model_name', 'user']

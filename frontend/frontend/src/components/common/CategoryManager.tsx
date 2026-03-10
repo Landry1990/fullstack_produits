@@ -5,6 +5,7 @@ import {
   Search, Package, LayoutGrid, Printer,
   Download, ChevronLeft, ChevronRight 
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { safeStorage } from '../../utils/storage';
 import { useConfirm } from '../../hooks/useConfirm';
@@ -49,6 +50,7 @@ export default function CategoryManager({
   hasHierarchy = false,
   hasDescription = true 
 }: CategoryManagerProps) {
+  const { t } = useTranslation();
   const confirm = useConfirm();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,7 @@ export default function CategoryManager({
       setCategories(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error(`Error fetching ${type}s:`, err);
-      toast.error(`Erreur lors du chargement des ${type}s`);
+      toast.error(t('stock.organisation.category_manager.load_error', { defaultValue: `Erreur lors du chargement des ${type}s`, type }));
     } finally {
       setLoading(false);
     }
@@ -127,7 +129,7 @@ export default function CategoryManager({
       setCurrentPage(page);
     } catch (err) {
       console.error("Error fetching products:", err);
-      toast.error("Erreur lors du chargement des produits");
+      toast.error(t('common.load_error', { defaultValue: "Erreur lors du chargement des produits" }));
     } finally {
       setProductsLoading(false);
     }
@@ -175,7 +177,7 @@ export default function CategoryManager({
       toast.success("Export réussi");
     } catch (err) {
       console.error("Export error:", err);
-      toast.error("Erreur lors de l'exportation");
+      toast.error(t('common.export_error', { defaultValue: "Erreur lors de l'exportation" }));
     }
   };
 
@@ -197,12 +199,12 @@ export default function CategoryManager({
         await axios.put(`${apiBaseUrl}${apiPath}${editingCategory.id}/`, payload, {
           headers: { Authorization: `Token ${token}` }
         });
-        toast.success(`${title} mis à jour avec succès`);
+        toast.success(t('stock.organisation.category_manager.success_save', { defaultValue: `${title} mis à jour avec succès`, type: title }));
       } else {
         await axios.post(`${apiBaseUrl}${apiPath}`, payload, {
           headers: { Authorization: `Token ${token}` }
         });
-        toast.success(`${title} créé avec succès`);
+        toast.success(t('stock.organisation.category_manager.success_save', { defaultValue: `${title} créé avec succès`, type: title }));
       }
       setIsModalOpen(false);
       fetchCategories();
@@ -213,8 +215,8 @@ export default function CategoryManager({
 
   const handleDelete = async (id: number) => {
     const confirmed = await confirm({
-      title: "Supprimer cet élément ?",
-      message: "Cette action est irréversible et affectera les produits associés.",
+      title: t('stock.organisation.category_manager.delete_confirm_title', { defaultValue: "Supprimer cet élément ?", name: "" }),
+      message: t('stock.organisation.category_manager.delete_confirm_msg', { defaultValue: "Cette action est irréversible et affectera les produits associés." }),
       variant: 'danger'
     });
     if (!confirmed) return;
@@ -224,7 +226,7 @@ export default function CategoryManager({
       await axios.delete(`${apiBaseUrl}${apiPath}${id}/`, {
         headers: { Authorization: `Token ${token}` }
       });
-      toast.success("Supprimé avec succès");
+      toast.success(t('stock.organisation.category_manager.success_delete', { defaultValue: "Supprimé avec succès", type: "" }));
       if (selectedCategory?.id === id) setSelectedCategory(null);
       fetchCategories();
     } catch (err) {
@@ -281,7 +283,7 @@ export default function CategoryManager({
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, payload, {
         headers: { Authorization: `Token ${token}` }
       });
-      toast.success(`${product.name} ajouté au ${type}`);
+      toast.success(t('stock.organisation.category_manager.product_added', { defaultValue: `${product.name} ajouté au ${type}`, name: product.name, type }));
       fetchProducts(selectedCategory.id);
       // Remove from search results to avoid double add
       setSearchResults(searchResults.filter(p => p.id !== product.id));
@@ -292,8 +294,8 @@ export default function CategoryManager({
 
   const handleRemoveProduct = async (product: Product) => {
     const confirmed = await confirm({
-      title: "Retirer le produit ?",
-      message: `Voulez-vous retirer ${product.name} de ce ${type} ?`,
+      title: t('stock.organisation.category_manager.remove_product_title', { defaultValue: "Retirer le produit ?" }),
+      message: t('stock.organisation.category_manager.remove_product_msg', { defaultValue: `Voulez-vous retirer ${product.name} de ce ${type} ?`, name: product.name, type }),
     });
     if (!confirmed) return;
 
@@ -305,7 +307,7 @@ export default function CategoryManager({
       await axios.patch(`${apiBaseUrl}/api/produits/${product.id}/`, payload, {
         headers: { Authorization: `Token ${token}` }
       });
-      toast.success("Produit retiré");
+      toast.success(t('stock.organisation.category_manager.product_removed', { defaultValue: "Produit retiré" }));
       fetchProducts(selectedCategory!.id);
     } catch (err) {
       toast.error("Erreur lors de la suppression");
@@ -362,7 +364,7 @@ export default function CategoryManager({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
               <input 
                 type="text" 
-                placeholder={`Rechercher un ${type}...`}
+                placeholder={t('stock.organisation.category_manager.search', { defaultValue: `Rechercher un ${type}...`, type })}
                 className="input input-sm w-full pl-10 bg-base-200/50 border-none rounded-xl focus:ring-2 focus:ring-primary/20"
               />
            </div>
@@ -372,7 +374,7 @@ export default function CategoryManager({
            {loading ? (
               <div className="flex justify-center p-8"><span className="loading loading-dots text-primary"></span></div>
            ) : hierarchy.length === 0 ? (
-              <div className="text-center p-8 opacity-40 italic text-sm">Aucun {type} trouvé</div>
+              <div className="text-center p-8 opacity-40 italic text-sm">{t('stock.organisation.category_manager.no_items', { defaultValue: `Aucun ${type} trouvé`, type })}</div>
            ) : (
               hierarchy.map((cat: any) => (
                 <div key={cat.id} className="space-y-1">
@@ -472,31 +474,31 @@ export default function CategoryManager({
                      <div>
                         <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-widest mb-1">
                            <LayoutGrid size={12} />
-                           Détails du {type}
+                           {t('stock.organisation.category_manager.details_title', { defaultValue: `Détails du ${type}`, type })}
                         </div>
                         <h1 className="text-3xl font-black">{getCategoryName(selectedCategory)}</h1>
                         {selectedCategory.description && (
                            <p className="mt-2 text-base-content/60 max-w-2xl">{selectedCategory.description}</p>
                         )}
                         {selectedCategory.parent_name && (
-                           <div className="mt-2 badge badge-outline opacity-50">Parent: {selectedCategory.parent_name}</div>
+                           <div className="mt-2 badge badge-outline opacity-50">{t('stock.organisation.category_manager.parent_label', { defaultValue: "Parent" })}: {selectedCategory.parent_name}</div>
                         )}
                      </div>
                      <div className="flex gap-2">
                         <button 
                            onClick={handleExportExcel}
                            className="btn btn-outline btn-success rounded-2xl px-4 gap-2"
-                           title="Exporter la liste en CSV pour Excel"
+                           title={t('common.export_csv_title', { defaultValue: "Exporter la liste en CSV pour Excel" })}
                         >
                            <Download size={18} />
-                           Excel
+                           {t('common.excel', { defaultValue: "Excel" })}
                         </button>
                         <button 
                           onClick={() => setIsAddProductModalOpen(true)}
                           className="btn btn-primary rounded-2xl px-6 gap-2 shadow-lg shadow-primary/20"
                         >
                           <Plus size={18} />
-                          Ajouter des produits
+                          {t('stock.organisation.category_manager.add_products_btn', { defaultValue: "Ajouter des produits" })}
                         </button>
                         <button 
                            onClick={() => handleDelete(selectedCategory.id)}
@@ -512,13 +514,13 @@ export default function CategoryManager({
                   {productsLoading ? (
                      <div className="flex flex-col items-center justify-center h-64 gap-4">
                         <span className="loading loading-spinner loading-lg text-primary"></span>
-                        <p className="text-sm font-medium opacity-50">Chargement des produits...</p>
+                        <p className="text-sm font-medium opacity-50">{t('common.loading_products', { defaultValue: "Chargement des produits..." })}</p>
                      </div>
                   ) : products.length === 0 ? (
                      <div className="flex flex-col items-center justify-center h-64 text-base-content/20">
                         <Package size={64} strokeWidth={1} className="mb-4" />
-                        <p className="text-lg font-bold">Aucun produit associé</p>
-                        <p className="text-sm">Associez des produits pour commencer.</p>
+                        <p className="text-lg font-bold">{t('common.no_products_associated', { defaultValue: "Aucun produit associé" })}</p>
+                        <p className="text-sm">{t('common.associate_products_hint', { defaultValue: "Associez des produits pour commencer." })}</p>
                      </div>
                   ) : (
                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -583,8 +585,8 @@ export default function CategoryManager({
                   <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
                   <LayoutGrid size={120} strokeWidth={1} className="relative" />
                </div>
-               <h3 className="text-2xl font-black mb-2 text-base-content/30 tracking-tight">Sélectionnez un {type}</h3>
-               <p className="text-sm font-medium opacity-40">Choisissez une catégorie dans la liste pour voir ses produits.</p>
+               <h3 className="text-2xl font-black mb-2 text-base-content/30 tracking-tight">{t('stock.organisation.category_manager.select_item', { defaultValue: `Sélectionnez un ${type}`, type })}</h3>
+               <p className="text-sm font-medium opacity-40">{t('stock.organisation.category_manager.select_item_hint', { defaultValue: "Choisissez une catégorie dans la liste pour voir ses produits." })}</p>
             </div>
          )}
       </div>
@@ -593,13 +595,17 @@ export default function CategoryManager({
       <PremiumModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingCategory ? `Modifier le ${type}` : `Nouveau ${type}`}
-        subtitle={editingCategory ? 'Mettre à jour les informations' : `Créer une nouvelle entrée dans ${title}s`}
+        title={editingCategory 
+          ? t('stock.organisation.category_manager.edit_title', { defaultValue: `Modifier le ${type}`, type }) 
+          : t('stock.organisation.category_manager.new_title', { defaultValue: `Nouveau ${type}`, type })}
+        subtitle={editingCategory 
+          ? t('stock.organisation.category_manager.edit_subtitle', { defaultValue: 'Mettre à jour les informations' }) 
+          : t('stock.organisation.category_manager.new_subtitle', { defaultValue: `Créer une nouvelle entrée dans ${title}s`, type: title })}
         icon={editingCategory ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
       >
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Nom du {type}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('stock.organisation.category_manager.name_label', { defaultValue: `Nom du ${type}`, type })}</label>
               <input 
                 type="text" 
                 className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-medium" 
@@ -610,15 +616,15 @@ export default function CategoryManager({
               />
            </div>
 
-           {hasHierarchy && (
+            {hasHierarchy && (
               <div>
-                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Parent</label>
+                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('stock.organisation.category_manager.parent_label', { defaultValue: "Parent" })}</label>
                  <select 
                    className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                    value={formData.parent}
                    onChange={e => setFormData({...formData, parent: e.target.value})}
                  >
-                   <option value="">Aucun (Catégorie parente)</option>
+                   <option value="">{t('stock.organisation.category_manager.parent_select_none', { defaultValue: "Aucun (Catégorie parente)" })}</option>
                    {categories.filter(c => !c.parent && c.id !== editingCategory?.id).map(c => (
                      <option key={c.id} value={c.id.toString()}>{getCategoryName(c)}</option>
                    ))}
@@ -628,7 +634,7 @@ export default function CategoryManager({
 
            {hasDescription && (
               <div>
-                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Description</label>
+                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('stock.organisation.category_manager.description_label', { defaultValue: "Description" })}</label>
                  <textarea 
                    className="textarea textarea-bordered w-full rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                    value={formData.description}
@@ -639,8 +645,8 @@ export default function CategoryManager({
            )}
 
            <div className="flex justify-end gap-3 pt-4">
-              <button type="button" className="btn btn-ghost rounded-xl px-6" onClick={() => setIsModalOpen(false)}>Annuler</button>
-              <button type="submit" className="btn btn-primary rounded-xl px-10 shadow-lg shadow-primary/20">Enregistrer</button>
+              <button type="button" className="btn btn-ghost rounded-xl px-6" onClick={() => setIsModalOpen(false)}>{t('stock.organisation.category_manager.cancel', { defaultValue: 'Annuler' })}</button>
+              <button type="submit" className="btn btn-primary rounded-xl px-10 shadow-lg shadow-primary/20">{t('stock.organisation.category_manager.save', { defaultValue: 'Enregistrer' })}</button>
            </div>
         </form>
       </PremiumModal>
@@ -649,8 +655,8 @@ export default function CategoryManager({
       <PremiumModal
         isOpen={isAddProductModalOpen}
         onClose={() => setIsAddProductModalOpen(false)}
-        title="Associer des produits"
-        subtitle={`Recherche et ajout massif de produits pour : ${selectedCategory ? getCategoryName(selectedCategory) : ''}`}
+        title={t('stock.organisation.category_manager.assoc_products_title', { defaultValue: "Associer des produits" })}
+        subtitle={t('stock.organisation.category_manager.assoc_products_subtitle', { defaultValue: `Recherche et ajout massif de produits pour : {{name}}`, name: selectedCategory ? getCategoryName(selectedCategory) : '' })}
         maxWidth="max-w-4xl"
         icon={<Plus className="w-6 h-6" />}
       >
@@ -659,7 +665,7 @@ export default function CategoryManager({
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30" />
               <input 
                 type="text" 
-                placeholder="Rechercher par nom ou CIP..." 
+                placeholder={t('stock.organisation.category_manager.search_products_placeholder', { defaultValue: "Rechercher par nom ou CIP..." })} 
                 className="input input-bordered w-full pl-12 h-14 rounded-2xl shadow-inner bg-base-200/30 border-none focus:ring-2 focus:ring-primary/20"
                 value={productSearchTerm}
                 onChange={e => handleSearchProducts(e.target.value)}
@@ -725,13 +731,13 @@ export default function CategoryManager({
       <PremiumModal
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
-        title="Imprimer l'état du stock"
+        title={t('stock.organisation.category_manager.print_stock_title', { defaultValue: "Imprimer l'état du stock" })}
         subtitle={printTarget?.name || ''}
         icon={<Printer className="h-5 w-5 text-info" />}
       >
         <div className="p-6 space-y-6">
            <div className="bg-info/5 p-4 rounded-2xl border border-info/10">
-              <p className="text-sm">Générez un rapport PDF de l'état actuel des stocks pour cette catégorie.</p>
+              <p className="text-sm">{t('stock.organisation.category_manager.print_help', { defaultValue: "Générez un rapport PDF de l'état actuel des stocks pour cette catégorie." })}</p>
            </div>
            
            <div className="form-control">
@@ -742,18 +748,18 @@ export default function CategoryManager({
                    checked={excludeZeroStock}
                    onChange={e => setExcludeZeroStock(e.target.checked)}
                  />
-                 <span className="label-text font-bold text-base-content/70">Exclure les produits en rupture de stock</span>
+                 <span className="label-text font-bold text-base-content/70">{t('stock.organisation.category_manager.exclude_zero_stock', { defaultValue: "Exclure les produits en rupture de stock" })}</span>
               </label>
            </div>
 
            <div className="flex justify-end gap-3 pt-4">
-              <button className="btn btn-ghost px-6 rounded-xl" onClick={() => setIsPrintModalOpen(false)}>Annuler</button>
+              <button className="btn btn-ghost px-6 rounded-xl" onClick={() => setIsPrintModalOpen(false)}>{t('stock.organisation.category_manager.cancel', { defaultValue: 'Annuler' })}</button>
               <button 
                 className="btn btn-info px-10 rounded-xl text-white shadow-lg shadow-info/20 gap-2"
                 onClick={handleConfirmPrint}
               >
                 <Printer size={18} />
-                Lancer l'impression
+                {t('stock.organisation.category_manager.print_btn', { defaultValue: "Lancer l'impression" })}
               </button>
            </div>
         </div>

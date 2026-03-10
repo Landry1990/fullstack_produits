@@ -2,6 +2,7 @@ from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from ..models import Forme
 from ..serializers_forme import FormeSerializer
+from ..pagination import StandardResultsSetPagination
 
 class FormeViewSet(viewsets.ModelViewSet):
     """
@@ -12,4 +13,4 @@ class FormeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nom', 'description']
-    pagination_class = None
+    pagination_class = StandardResultsSetPagination

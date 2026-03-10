@@ -126,7 +126,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 <button 
                     className="btn btn-ghost btn-sm btn-square rounded-lg"
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    title={sortOrder === 'asc' ? 'Croissant' : 'Décroissant'}
+                    title={sortOrder === 'asc' ? t('common.sort.asc', 'Croissant') : t('common.sort.desc', 'Décroissant')}
                 >
                     {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                 </button>
@@ -152,7 +152,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                         <div className="col-span-1.5 text-center">{t('stock.inventaire.detail.col_theo')}</div>
                         <div className="col-span-1.5 text-center">{t('stock.inventaire.detail.col_phys')}</div>
                         <div className="col-span-1 text-center">{t('stock.inventaire.detail.col_gap')}</div>
-                        {!isReadOnly && <div className="col-span-1 text-right">Actions</div>}
+                        {!isReadOnly && <div className="col-span-1 text-right">{t('stock.inventaire.detail.col_actions', 'Actions')}</div>}
                     </div>
 
                     {/* Grouped Table Body */}
@@ -185,7 +185,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         <div className="text-xs font-mono opacity-50 flex gap-2 items-center leading-none mt-1">
                                             <span>{l.produit_cip || (l.produit as any).cip1}</span>
                                             {(l as any).lot_numero && (
-                                                <span className="text-primary font-bold">Lot: {(l as any).lot_numero}</span>
+                                                <span className="text-primary font-bold">{t('stock.inventaire.detail.lot_label', 'Lot:')} {(l as any).lot_numero}</span>
                                             )}
                                         </div>
                                     </div>
@@ -284,7 +284,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 className="btn btn-ghost btn-sm btn-circle text-error/30 hover:text-error hover:bg-error/10 transition-colors"
                                                 onClick={() => handleDeleteLine(l.id)}
                                                 disabled={saving}
-                                                title="Retirer"
+                                                title={t('common.remove', 'Retirer')}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>

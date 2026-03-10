@@ -31,6 +31,7 @@ from ..serializer_mixins import OptimizedSerializerMixin
 from ..search_mixins import MultiTermSearchMixin
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
+from ..pagination import StandardResultsSetPagination
 import logging
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,7 @@ class CommandeViewSet(MultiTermSearchMixin, OptimizedSerializerMixin, viewsets.M
         
     serializer_class = CommandeSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['type', 'status', 'fournisseur']
     search_fields = ['id', 'fournisseur__name', 'numero_facture', 'fournisseur_nom']
@@ -1111,6 +1113,7 @@ class AvoirViewSet(viewsets.ModelViewSet):
     queryset = Avoir.objects.all().select_related('fournisseur', 'created_by').prefetch_related('produits__produit')
     serializer_class = AvoirSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['numero', 'fournisseur__name', 'observations']
     ordering_fields = ['date', 'created_at', 'numero']
@@ -1222,6 +1225,7 @@ class LigneAvoirViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['avoir']
+    pagination_class = StandardResultsSetPagination
 
 
 class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
@@ -1231,6 +1235,7 @@ class PromisViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
     queryset = Promis.objects.select_related('client', 'produit', 'facture', 'created_by').all()
     serializer_class = PromisSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['status', 'client', 'produit']
     search_fields = ['client_name', 'client_phone', 'produit__name', 'notes']

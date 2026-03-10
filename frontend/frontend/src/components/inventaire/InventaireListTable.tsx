@@ -63,7 +63,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                         <th className="px-6 py-4 rounded-tl-2xl">
                             {selectedIds.size > 0 ? (
                                 <span className="text-primary font-bold normal-case text-sm">
-                                    {selectedIds.size} sélectionné(s)
+                                    {t('common.selection_count', { count: selectedIds.size, defaultValue: '{{count}} sélectionné(s)' })}
                                 </span>
                             ) : t('stock.inventaire.list.date')}
                         </th>

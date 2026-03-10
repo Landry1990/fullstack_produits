@@ -340,21 +340,21 @@ export default function Perimes() {
               onClick={() => setActiveTab('dashboard')}
             >
               <BarChart2 className="w-3.5 h-3.5" />
-              <span className="font-semibold">Dashboard</span>
+              <span className="font-semibold">{t('perimes.tabs.dashboard', 'Dashboard')}</span>
             </button>
             <button 
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'list' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('list')}
             >
               <List className="w-3.5 h-3.5" />
-              <span className="font-semibold">Liste</span>
+              <span className="font-semibold">{t('perimes.tabs.list', 'Liste')}</span>
             </button>
             <button 
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'history' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('history')}
             >
               <History className="w-3.5 h-3.5" />
-              <span className="font-semibold">Historique</span>
+              <span className="font-semibold">{t('perimes.tabs.history', 'Historique')}</span>
             </button>
           </div>
           <button 
@@ -403,7 +403,7 @@ export default function Perimes() {
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.valeur_perimes', 'Pertes (Coût)')}</p>
                           <p className="text-2xl font-bold text-error">{formatCurrency(stats.perimes.valeur_cout)} F</p>
-                          <p className="text-xs text-base-content/50">{stats.perimes.count_lots} lots périmés</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.lots_count', { defaultValue: '{{count}} lots périmés', count: stats.perimes.count_lots })}</p>
                         </div>
                       </div>
                     </div>
@@ -419,7 +419,7 @@ export default function Perimes() {
                         <div>
                           <p className="text-sm text-base-content/60">{t('perimes.stats.manque_gagner', 'Manque à Gagner')}</p>
                           <p className="text-2xl font-bold text-warning">{formatCurrency(stats.perimes.valeur_vente_perdue)} F</p>
-                          <p className="text-xs text-base-content/50">Au prix de vente</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.at_sale_price', 'Au prix de vente')}</p>
                         </div>
                       </div>
                     </div>
@@ -452,31 +452,31 @@ export default function Perimes() {
                       {/* 30 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['30j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">30 jours</span>
-                          <span className="badge badge-sm">{stats.previsions['30j'].count_lots} lots</span>
+                          <span className="font-bold text-base-content">30 {t('common.days', 'jours')}</span>
+                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { defaultValue: '{{count}} lots', count: stats.previsions['30j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)} F</p>
-                        <p className="text-xs text-base-content/60 mt-1">Valeur vente potentielle à risque</p>
-                      </div>
+                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk', 'Valeur vente potentielle à risque')}</p>
+                     </div>
 
                       {/* 60 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['60j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">60 jours</span>
-                          <span className="badge badge-sm">{stats.previsions['60j'].count_lots} lots</span>
+                          <span className="font-bold text-base-content">60 {t('common.days', 'jours')}</span>
+                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { defaultValue: '{{count}} lots', count: stats.previsions['60j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)} F</p>
-                        <p className="text-xs text-base-content/60 mt-1">Valeur vente potentielle à risque</p>
+                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk', 'Valeur vente potentielle à risque')}</p>
                       </div>
 
                       {/* 90 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['90j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">90 jours</span>
-                          <span className="badge badge-sm">{stats.previsions['90j'].count_lots} lots</span>
+                          <span className="font-bold text-base-content">90 {t('common.days', 'jours')}</span>
+                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { defaultValue: '{{count}} lots', count: stats.previsions['90j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)} F</p>
-                        <p className="text-xs text-base-content/60 mt-1">Valeur vente potentielle à risque</p>
+                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk', 'Valeur vente potentielle à risque')}</p>
                       </div>
                     </div>
                   </div>
@@ -579,7 +579,7 @@ export default function Perimes() {
                               <div className="p-2 bg-error/10 text-error rounded-lg">
                                 <AlertTriangle className="w-5 h-5" />
                               </div>
-                              <h2 className="font-bold text-lg tracking-tight">Lots à Risque</h2>
+                              <h2 className="font-bold text-lg tracking-tight">{t('perimes.risk_lots', 'Lots à Risque')}</h2>
                               <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{lots.length}</span>
                            </div>
                            <div className="flex gap-3 items-center">
@@ -602,10 +602,10 @@ export default function Perimes() {
                                         value={filterDays} 
                                         onChange={(e) => setFilterDays(parseInt(e.target.value))}
                                     >
-                                        <option value={30}>30 jours</option>
-                                        <option value={60}>60 jours</option>
-                                        <option value={90}>90 jours</option>
-                                        <option value={180}>180 jours</option>
+                                        <option value={30}>30 {t('common.days', 'jours')}</option>
+                                        <option value={60}>60 {t('common.days', 'jours')}</option>
+                                        <option value={90}>90 {t('common.days', 'jours')}</option>
+                                        <option value={180}>180 {t('common.days', 'jours')}</option>
                                     </select>
                                 )}
                               </div>
@@ -740,14 +740,14 @@ export default function Perimes() {
                         onClick={handlePrintHistory}
                         disabled={adjustments.length === 0}
                     >
-                        🖨️ Imprimer
+                         {t('perimes.history.print', 'Imprimer')}
                     </button>
                     <button 
                         className="btn btn-sm btn-success text-white gap-2 rounded-lg"
                         onClick={handleExportExcel}
                         disabled={adjustments.length === 0}
                     >
-                        Excel
+                         {t('perimes.history.excel', 'Excel')}
                     </button>
                 </div>
              </div>

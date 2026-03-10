@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, type FormEvent, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { formatCurrency } from '../utils/formatters';
 import { 
@@ -55,11 +56,11 @@ const emptyForm: Omit<Fournisseur, 'id'> = {
 
 export default function Fournisseurs() {
   const { t } = useTranslation();
+  const location = useLocation();
   const confirm = useConfirm()
   const { user } = useAuth();
   const [fournisseurs, setFournisseurs] = useState<Fournisseur[]>([]);
   const [selectedFournisseur, setSelectedFournisseur] = useState<Fournisseur | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -164,7 +165,6 @@ export default function Fournisseurs() {
   }, [selectedFournisseur?.id]);
 
   async function fetchFournisseurs() {
-    setLoading(true);
     setError(null);
     try {
       const response = await axios.get(fournisseursEndpoint, {
@@ -194,7 +194,7 @@ export default function Fournisseurs() {
         setError(t('providers.messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
       }
     } finally {
-      setLoading(false);
+      // setLoading deleted
     }
   }
 
@@ -208,6 +208,21 @@ export default function Fournisseurs() {
       setSelectedFournisseur(null);
     }
   }, [fournisseurs, selectedFournisseur]);
+
+  // Handle incoming state from Dashboard (Supplier Debts)
+  useEffect(() => {
+    if (location.state?.selectedSupplierId && fournisseurs.length > 0) {
+      const supplier = fournisseurs.find(f => f.id === location.state.selectedSupplierId);
+      if (supplier) {
+        setSelectedFournisseur(supplier);
+        if (location.state.openFinance) {
+          setFinanceModalState({ isOpen: true });
+        }
+        // Clean up state to prevent re-opening on manual refresh
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, fournisseurs]);
 
   function openAddModal() {
     setNewFournisseur(emptyForm);

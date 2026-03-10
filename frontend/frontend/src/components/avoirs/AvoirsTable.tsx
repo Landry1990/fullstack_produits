@@ -52,10 +52,10 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     const getTypeAvoirLabel = (type: string) => {
         switch (type) {
-            case 'PERIME': return 'Périmé';
-            case 'CASSE': return 'Cassé';
-            case 'ERREUR_LIVRAISON': return 'Erreur Livraison';
-            case 'AUTRE': return 'Autre';
+            case 'PERIME': return t('avoirs.types.perime', 'Périmé');
+            case 'CASSE': return t('avoirs.types.casse', 'Cassé');
+            case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison', 'Erreur Livraison');
+            case 'AUTRE': return t('avoirs.types.autre', 'Autre');
             default: return type;
         }
     };
@@ -64,7 +64,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
                 <span className="loading loading-spinner loading-md text-primary" />
-                <p>Chargement des avoirs...</p>
+                <p>{t('avoirs.loading', 'Chargement des avoirs...')}</p>
             </div>
         );
     }

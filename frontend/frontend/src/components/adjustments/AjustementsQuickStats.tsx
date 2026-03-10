@@ -1,5 +1,6 @@
 import React from 'react';
 import { Activity, PlusCircle, MinusCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface AjustementsQuickStatsProps {
     totalCount: number;
@@ -12,10 +13,11 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
     positiveSum,
     negativeSum
 }) => {
+    const { t } = useTranslation();
 
     const stats = [
         {
-            label: 'Total Ajustements',
+            label: t('stock.ajustements.stats.total', { defaultValue: 'Total Ajustements' }),
             value: totalCount,
             icon: <Activity className="w-6 h-6" />,
             color: 'primary',
@@ -24,7 +26,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
             border: 'border-primary/20'
         },
         {
-            label: 'Total Entrées (+)',
+            label: t('stock.ajustements.stats.positive', { defaultValue: 'Total Entrées (+)' }),
             value: `+${positiveSum}`,
             icon: <PlusCircle className="w-6 h-6" />,
             color: 'success',
@@ -33,7 +35,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
             border: 'border-success/20'
         },
         {
-            label: 'Total Sorties (-)',
+            label: t('stock.ajustements.stats.negative', { defaultValue: 'Total Sorties (-)' }),
             value: negativeSum,
             icon: <MinusCircle className="w-6 h-6" />,
             color: 'error',

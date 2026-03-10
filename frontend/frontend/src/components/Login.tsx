@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import ZenithLogo from './ZenithLogo';
 import { User, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +35,22 @@ export default function Login() {
       navigate('/app');
     } catch (err) {
       console.error('Login error:', err);
-      setError('Identifiants incorrects. Veuillez réessayer.');
+      if (axios.isAxiosError(err)) {
+        if (!err.response) {
+          // Network error or server completely down
+          setError(t('common.messages.server_unreachable'));
+        } else if (err.response.status === 400 || err.response.status === 401) {
+          // Credential issues (DRF returns 400 or 401 for bad login)
+          setError(t('common.messages.login_invalid'));
+        } else if (err.response.status >= 500) {
+          // Server crashed
+          setError(t('common.messages.server_error'));
+        } else {
+          setError(t('common.messages.error_generic'));
+        }
+      } else {
+        setError(t('common.messages.error_generic'));
+      }
     } finally {
       setLoading(false);
     }
@@ -73,7 +90,7 @@ export default function Login() {
             <div className="flex items-center justify-center gap-2">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/20"></div>
               <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
-                Secure Ecosystem
+                {t('login.subtitle')}
               </p>
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-white/20"></div>
             </div>
@@ -92,7 +109,7 @@ export default function Login() {
             {/* Inputs Container */}
             <div className="space-y-4">
               <div className="group/input">
-                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">Utilisateur</label>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">{t('login.username')}</label>
                 <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
                      <User className="h-4 w-4" />
@@ -109,7 +126,7 @@ export default function Login() {
               </div>
 
               <div className="group/input">
-                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">Mot de passe</label>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">{t('login.password')}</label>
                 <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
                      <Lock className="h-4 w-4" />
@@ -140,11 +157,11 @@ export default function Login() {
                   {loading ? (
                     <>
                       <Loader2 className="animate-spin w-4 h-4" />
-                      <span>Authentification...</span>
+                      <span>{t('login.loading')}</span>
                     </>
                   ) : (
                     <>
-                      <span>Se connecter</span>
+                      <span>{t('login.submit')}</span>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}
