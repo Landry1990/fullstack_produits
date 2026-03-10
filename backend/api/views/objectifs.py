@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from ..models import ObjectifCommercial
 from ..serializers import ObjectifCommercialSerializer
+from ..pagination import StandardResultsSetPagination
 
 class ObjectifViewSet(viewsets.ModelViewSet):
     """
@@ -12,6 +13,7 @@ class ObjectifViewSet(viewsets.ModelViewSet):
     queryset = ObjectifCommercial.objects.all()
     serializer_class = ObjectifCommercialSerializer
     permission_classes = [permissions.IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
 
     def get_queryset(self):
         queryset = super().get_queryset()

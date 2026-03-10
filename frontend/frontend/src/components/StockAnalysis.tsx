@@ -40,10 +40,10 @@ const StockAnalysis = () => {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-base-content">
-                                    Analyse de <span className="text-primary italic">Stock</span>
+                                    {t('stockAnalysis.title', { defaultValue: 'Analyse de' })} <span className="text-primary italic">Stock</span>
                                 </h1>
                                 <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1">
-                                    Optimisation, invendus et alertes de rupture
+                                    {t('stockAnalysis.subtitle', { defaultValue: 'Optimisation, invendus et alertes de rupture' })}
                                 </p>
                             </div>
                         </div>
@@ -99,7 +99,7 @@ const StockAnalysis = () => {
                     {!loading && data && data.total_pages && data.total_pages > 1 && (
                         <div className="p-6 border-t border-base-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="text-sm font-medium text-base-content/50 uppercase tracking-wider">
-                                Page <span className="font-black text-base-content">{data.current_page}</span> sur <span className="font-black text-base-content">{data.total_pages}</span>
+                                {t('common.pagination.page', { defaultValue: 'Page' })} <span className="font-black text-base-content">{data.current_page}</span> {t('common.pagination.of', { defaultValue: 'sur' })} <span className="font-black text-base-content">{data.total_pages}</span>
                             </div>
                             
                             <div className="join join-horizontal shadow-sm">

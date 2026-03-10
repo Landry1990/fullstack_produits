@@ -84,11 +84,11 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                                 value={unsoldDays}
                                 onChange={(e) => onUnsoldDaysChange(Number(e.target.value))}
                             >
-                                <option value={30}>30 {t('stockAnalysis.days')}</option>
-                                <option value={60}>60 {t('stockAnalysis.days')}</option>
-                                <option value={90}>90 {t('stockAnalysis.days')}</option>
-                                <option value={180}>180 {t('stockAnalysis.days')}</option>
-                                <option value={365}>365 {t('stockAnalysis.days')}</option>
+                                <option value={30}>30 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
+                                <option value={60}>60 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
+                                <option value={90}>90 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
+                                <option value={180}>180 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
+                                <option value={365}>365 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
                             </select>
                         </div>
                     )}

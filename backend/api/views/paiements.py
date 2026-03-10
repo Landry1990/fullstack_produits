@@ -6,12 +6,14 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from ..models import PaiementFournisseur, Fournisseur, Commande
 from ..serializers import PaiementFournisseurSerializer
+from ..pagination import StandardResultsSetPagination
 
 class PaiementFournisseurViewSet(viewsets.ModelViewSet):
     """API endpoint for supplier payments."""
     queryset = PaiementFournisseur.objects.all().select_related('fournisseur', 'commande', 'created_by')
     serializer_class = PaiementFournisseurSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['fournisseur', 'commande', 'mode_paiement']
     search_fields = ['reference', 'fournisseur__name', 'notes']

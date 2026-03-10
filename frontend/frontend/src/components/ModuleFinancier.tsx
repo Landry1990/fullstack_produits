@@ -135,7 +135,7 @@ export default function ModuleFinancier() {
 
       {/* KPIs Cards */}
       {loadingKPIs ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div data-testid="finance-loading" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="card bg-base-100 shadow-lg animate-pulse h-32"></div>
           ))}

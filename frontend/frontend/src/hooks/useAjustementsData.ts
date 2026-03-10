@@ -64,7 +64,7 @@ export const useAjustementsData = () => {
             delete statsParams.page;
             delete statsParams.page_size;
 
-            const statsResponse = await axios.get<StockAdjustmentStats>(`${adjustmentsEndpoint}stats//`, { params: statsParams });
+            const statsResponse = await axios.get<StockAdjustmentStats>(`${adjustmentsEndpoint}stats/`, { params: statsParams });
             if (statsResponse.data) {
                 setStats(statsResponse.data);
             }

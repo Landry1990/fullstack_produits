@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from ..models import CouponMonnaie, Facture, Caisse, AuditLog
 from ..serializers import CouponMonnaieSerializer
+from ..pagination import StandardResultsSetPagination
 from ..audit_helpers import log_audit
 import logging
 
@@ -18,6 +19,7 @@ class CouponMonnaieViewSet(viewsets.ModelViewSet):
     queryset = CouponMonnaie.objects.all()
     serializer_class = CouponMonnaieSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['numero', 'cree_par__username', 'utilise_par__username']
     ordering_fields = ['date_creation', 'montant', 'status']

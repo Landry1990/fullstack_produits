@@ -39,6 +39,7 @@ from ..serializer_mixins import OptimizedSerializerMixin
 from ..audit_helpers import log_audit
 from ..sudo_utils import validate_sudo_mode
 from ..whatsapp_service import WhatsAppService
+from ..pagination import StandardResultsSetPagination
 
 logger = logging.getLogger(__name__)
 business_logger = logging.getLogger('api.business')
@@ -129,6 +130,7 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         return queryset
     serializer_class = FactureSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = {
         'status': ['exact', 'in'],
@@ -955,6 +957,7 @@ class CaisseViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['facture', 'mode_paiement', 'statut', 'user']
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     
     def perform_create(self, serializer):
         validation_user, error_res = validate_sudo_mode(self.request)
@@ -1098,11 +1101,20 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_entrees = moves_aggregated['entrees']
         total_sorties = moves_aggregated['sorties']
         
-        # Le total théorique de CAISSE PHYSIQUE exclut les coupons (qui ne sont pas des espèces)
-        # On calcule le montant total des coupons pour l'ajustement
+        # Le total théorique de CAISSE PHYSIQUE concerne les espèces opérationnelles
         total_coupons = transactions.filter(mode_paiement='coupon').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        total_theorique = total_ventes_especes + total_entrees - total_sorties
         
-        total_theorique = total_ventes_especes + total_entrees - total_sorties - total_coupons
+        # Auditing for preview
+        mouvements_list = []
+        for m in mouvements.select_related('user'):
+            mouvements_list.append({
+                'type': m.type,
+                'montant': float(m.montant),
+                'motif': m.motif,
+                'user_nom': m.user.get_full_name() or m.user.username if m.user else "Inconnu",
+                'date': m.date.isoformat()
+            })
         
         return Response({
             'start_date': start_date,
@@ -1112,7 +1124,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'total_entrees': total_entrees,
             'total_sorties': total_sorties,
             'total_coupons': total_coupons,
-            'details': details
+            'details': details,
+            'mouvements_audit': mouvements_list
         })
 
     @action(detail=False, methods=['get'], url_path='page_init')
@@ -1170,6 +1183,63 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'mouvements': mouvements_data,
             'totals': totals_response.data,
             'users': users_data,
+        })
+
+    @action(detail=False, methods=['get'])
+    def get_user_shift(self, request):
+        """
+        Detects the active shift period for a user.
+        Returns first and last activity (transaction or movement).
+        """
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'detail': 'user_id is required'}, status=400)
+            
+        now = timezone.now()
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        # 1. Last closure for this user
+        last_cloture = ClotureCaisse.objects.filter(user_id=user_id).order_by('-date').first()
+        search_from = last_cloture.date if last_cloture else today_start
+        
+        # Ensure search_from is at least today_start to avoid picking old shifts unless forced
+        if search_from < today_start:
+            search_from = today_start
+
+        # 2. Find first and last activity
+        txs = Caisse.objects.filter(user_id=user_id, date_paiement__gte=search_from).order_by('date_paiement')
+        mvs = MouvementCaisse.objects.filter(user_id=user_id, date__gte=search_from).order_by('date')
+        
+        first_dates = []
+        last_dates = []
+        
+        if txs.exists():
+            first_dates.append(txs.first().date_paiement)
+            last_dates.append(txs.last().date_paiement)
+        if mvs.exists():
+            first_dates.append(mvs.first().date)
+            last_dates.append(mvs.last().date)
+            
+        if not first_dates:
+            return Response({
+                'user_id': user_id,
+                'start_date': None,
+                'end_date': None,
+                'has_activity': False
+            })
+            
+        start_date = min(first_dates)
+        end_date = max(last_dates)
+        
+        # If the shift just started (only 1 activity), pad end_date by 5 mins or use now
+        if start_date == end_date:
+            end_date = now
+
+        return Response({
+            'user_id': user_id,
+            'start_date': start_date,
+            'end_date': end_date,
+            'has_activity': True
         })
 
     @action(detail=False, methods=['post'], url_path='cloturer')
@@ -1274,7 +1344,8 @@ class CaisseViewSet(viewsets.ModelViewSet):
         total_entrees = entrees_mouvements
         total_sorties = mouvements.filter(type='SORTIE').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
         
-        total_ventes_especes = transactions.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
+        # Espèces : Uniquement les ventes opérationnelles, exclut les recouvrements (user request)
+        total_ventes_especes = paiements_sales.filter(mode_paiement='especes').aggregate(Sum('montant'))['montant__sum'] or Decimal('0.00')
 
         if total_ventes == 0 and total_entrees == 0 and total_sorties == 0:
              return Response({
@@ -1290,6 +1361,18 @@ class CaisseViewSet(viewsets.ModelViewSet):
             'total_entrees': float(total_entrees),
             'total_sorties': float(total_sorties)
         }
+        
+        # Auditing: Save movements list in details
+        mouvements_list = []
+        for m in mouvements.select_related('user'):
+            mouvements_list.append({
+                'type': m.type,
+                'montant': float(m.montant),
+                'motif': m.motif,
+                'user_nom': m.user.get_full_name() or m.user.username if m.user else "Inconnu",
+                'date': m.date.isoformat()
+            })
+        details['mouvements_audit'] = mouvements_list
         
         cloture = ClotureCaisse.objects.create(
             montant_reel=montant_reel,
@@ -1341,6 +1424,7 @@ class ClotureCaisseViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = ClotureCaisseSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
         queryset = ClotureCaisse.objects.select_related('user').order_by('-date')
@@ -1467,6 +1551,7 @@ class CreanceViewSet(viewsets.ReadOnlyModelViewSet):
     """
     serializer_class = CreanceSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
         """
@@ -2134,6 +2219,7 @@ class MouvementCaisseViewSet(viewsets.ModelViewSet):
     queryset = MouvementCaisse.objects.select_related('user').all().order_by('-date')
     serializer_class = MouvementCaisseSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['type', 'user']
     search_fields = ['motif', 'description']

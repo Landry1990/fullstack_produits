@@ -99,9 +99,15 @@ export const TicketTemplate = forwardRef<HTMLDivElement, TicketTemplateProps>(({
             </div>
         )}
         <div className="flex justify-between border-b border-dotted border-black/20 pb-0.5">
-            <span className="font-bold">Ticket N°:</span>
-            <span>#{ticket.id}</span>
+            <span className="font-bold">Facture N°:</span>
+            <span>{facture?.numero_facture || `#${ticket.id}`}</span>
         </div>
+        {facture?.session_ticket_number && (
+            <div className="flex justify-between bg-black/5 px-1 font-bold">
+                <span>N° d'ordre:</span>
+                <span className="text-sm">{facture.session_ticket_number}</span>
+            </div>
+        )}
         <div className="flex justify-between">
             <span className="font-bold">Date:</span>
             <span>{formatDate(ticket.date_paiement)}</span>

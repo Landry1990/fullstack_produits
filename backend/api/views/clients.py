@@ -11,6 +11,7 @@ from ..models import Client, Facture, Caisse, AyantDroit
 from ..serializers import ClientSerializer, AyantDroitSerializer
 from ..serializers_optimized import ClientListSerializer, ClientDetailSerializer
 from ..serializer_mixins import OptimizedSerializerMixin
+from ..pagination import StandardResultsSetPagination
 
 class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     """
@@ -56,6 +57,7 @@ class ClientViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     ).order_by('name')
     serializer_class = ClientSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'email', 'phone', 'address']
     
@@ -153,5 +155,6 @@ class AyantDroitViewSet(viewsets.ModelViewSet):
     queryset = AyantDroit.objects.select_related('client').order_by('nom')
     serializer_class = AyantDroitSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['client']

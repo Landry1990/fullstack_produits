@@ -128,23 +128,22 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                 {/* Pagination Controls */}
                 <div className="p-4 border-t border-base-200 flex items-center justify-between">
                     <div className="text-sm text-base-content/60 font-medium">
-                        Page {currentPage} - Total: <span className="text-base-content font-bold">{totalCount}</span> {t('stock.inventaire.list.title_short', { defaultValue: 'inventaires' })}
+                        {t('common.pagination.page_info', { current: currentPage, total: totalCount, label: t('stock.inventaire.list.title_short', 'inventaires') })}
                     </div>
                     <div className="flex gap-2">
                         <button 
                             className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
-                            disabled={!prevPage || loading}
                             onClick={() => prevPage && fetchInventaires(prevPage)}
                         >
                             <ChevronLeft className="h-4 w-4" />
-                            {t('common.pagination.prev', { defaultValue: 'Précédent' })}
+                            {t('common.pagination.prev', 'Précédent')}
                         </button>
                         <button 
                             className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
                             disabled={!nextPage || loading}
                             onClick={() => nextPage && fetchInventaires(nextPage)}
                         >
-                            {t('common.pagination.next', { defaultValue: 'Suivant' })}
+                            {t('common.pagination.next', 'Suivant')}
                             <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>

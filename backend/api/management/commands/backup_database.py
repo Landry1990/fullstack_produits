@@ -102,6 +102,8 @@ class Command(BaseCommand):
                 '-h', db_host,
                 '-p', db_port,
                 '-U', db_user,
+                '--clean',
+                '--if-exists',
                 '-F', 'p',  # Plain text format
                 '-f', backup_file,
                 db_name

@@ -400,7 +400,7 @@ export default function CaisseCentralisee() {
           || 'Client de passage';
       
       setTicketCaisse({
-        id: 0,
+        id: factureFinale.id,
         facture: factureFinale,
         mode_paiement: paiementsValides.length > 1 ? 'Mixte' : (paiementsValides[0]?.mode || 'especes'),
         montant: factureFinale.total_ttc,
@@ -412,7 +412,8 @@ export default function CaisseCentralisee() {
         date_paiement: new Date().toISOString(),
         client_name: clientNameForTicket,
         paiements_details: (factureFinale as any).paiements || [],
-        user_details: user
+        user_details: user,
+        reference: null
       } as any)
 
       // 6. Fermer la modale de paiement et afficher le ticket

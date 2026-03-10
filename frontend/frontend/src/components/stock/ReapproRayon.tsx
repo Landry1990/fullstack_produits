@@ -44,7 +44,7 @@ export default function ReapproRayon() {
       setProducts(Array.isArray(data) ? data : (data.results || []));
     } catch (error) {
       console.error('Error fetching refill needs:', error);
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(t('messages.error_loading_products', { defaultValue: 'Erreur lors du chargement des produits' }));
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,7 @@ export default function ReapproRayon() {
     const suggest = Math.min(needed, produit.stock_reserve ?? 0);
     
     if (suggest <= 0) {
-      toast.error("Réapprovisionnement non nécessaire ou réserve vide");
+      toast.error(t('stock.reappro.messages.no_refill_needed', { defaultValue: "Réapprovisionnement non nécessaire ou réserve vide" }));
       return;
     }
 
@@ -109,11 +109,11 @@ export default function ReapproRayon() {
       }
 
       await axios.post(`/api/produits/${produit.id}/transfer_to_shelf/`, payload);
-      toast.success(`${quantity} unités transférées pour ${produit.name}`);
+      toast.success(t('stock.reappro.messages.transfer_success', { defaultValue: `${quantity} unités transférées pour ${produit.name}`, count: quantity, name: produit.name }));
       fetchNeedsRefill();
     } catch (error: any) {
       console.error('Transfer error:', error);
-      toast.error(error.response?.data?.detail || 'Erreur lors du transfert');
+      toast.error(error.response?.data?.detail || t('common.transfer_error', { defaultValue: 'Erreur lors du transfert' }));
     } finally {
       setTransferringIds(prev => prev.filter(id => id !== produit.id));
     }
@@ -204,7 +204,7 @@ export default function ReapproRayon() {
               <span className="text-primary">📦</span> {t('stock.reappro.title', { defaultValue: 'Réapprovisionnement Rayon' })}
             </h1>
             <p className="text-base-content/60 text-sm mt-1">
-              Surveillance et transfert de la réserve vers les rayons.
+              {t('stock.reappro.subtitle', { defaultValue: 'Surveillance et transfert de la réserve vers les rayons.' })}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function ReapproRayon() {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50">🔍</span>
             <input 
               type="text" 
-              placeholder="Rechercher un produit..." 
+              placeholder={t('common.search_product_placeholder', { defaultValue: "Rechercher un produit..." })} 
               className="input input-sm input-bordered w-full pl-10 bg-base-100"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
@@ -271,16 +271,16 @@ export default function ReapproRayon() {
             ))}
           </select>
           <div className="flex items-center justify-end text-sm text-base-content/60 px-2 font-medium">
-            {stats.totalDisplayed} produits avec réserve
+            {t('stock.reappro.stats.displayed_products', { defaultValue: `${stats.totalDisplayed} produits avec réserve`, count: stats.totalDisplayed })}
           </div>
         </div>
       </div>
 
       {/* Print Only Header */}
       <div className="print-only mb-8">
-        <h1 className="text-3xl font-bold border-b-2 border-primary pb-2">Rapport de Réapprovisionnement Rayon</h1>
-        <p className="mt-2 text-gray-600">Date: {new Date().toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</p>
-        <p className="text-sm italic">Ce document liste les produits nécessitant un transfert de la réserve vers les rayons.</p>
+        <h1 className="text-3xl font-bold border-b-2 border-primary pb-2">{t('stock.reappro.print_title', { defaultValue: 'Rapport de Réapprovisionnement Rayon' })}</h1>
+        <p className="mt-2 text-gray-600">Date: {new Date().toLocaleString('fr-FR')}</p>
+        <p className="text-sm italic">{t('stock.reappro.print_hint', { defaultValue: 'Ce document liste les produits nécessitant un transfert de la réserve vers les rayons.' })}</p>
       </div>
 
       {/* Quick Stats Grid */}
@@ -290,15 +290,15 @@ export default function ReapproRayon() {
             {stats.totalItems > 0 ? '⚠️' : '✅'}
           </div>
           <div>
-            <p className="text-xs uppercase font-bold opacity-50">Urgences Rayon</p>
+            <p className="text-xs uppercase font-bold opacity-50">{t('stock.reappro.stats.urgencies', { defaultValue: 'Urgences Rayon' })}</p>
             <p className="text-2xl font-black">{stats.totalItems}</p>
           </div>
         </div>
         <div className="bg-base-100 p-4 rounded-xl shadow-sm border border-base-300 flex items-center gap-4">
           <div className="w-12 h-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xl font-bold">🚚</div>
           <div>
-            <p className="text-xs uppercase font-bold opacity-50">Volume suggéré</p>
-            <p className="text-2xl font-black">{stats.totalToTransfer} <span className="text-xs font-normal opacity-70">Unités</span></p>
+            <p className="text-xs uppercase font-bold opacity-50">{t('stock.reappro.stats.suggested_volume', { defaultValue: 'Volume suggéré' })}</p>
+            <p className="text-2xl font-black">{stats.totalToTransfer} <span className="text-xs font-normal opacity-70">{t('stock.reappro.stats.units', { defaultValue: 'Unités' })}</span></p>
           </div>
         </div>
       </div>
@@ -309,14 +309,14 @@ export default function ReapproRayon() {
           <table className="table table-zebra w-full text-base-content">
             <thead className="bg-base-200/50">
               <tr>
-                <th className="text-xs uppercase opacity-70">Produit</th>
-                <th className="text-xs uppercase opacity-70">Niveau Rayon</th>
-                <th className="text-xs uppercase opacity-70 text-center hidden xl:table-cell">Min Rayon</th>
-                <th className="text-xs uppercase opacity-70 text-center hidden xl:table-cell">Capacité Rayon</th>
-                <th className="text-xs uppercase opacity-70 text-center">En Rayon</th>
-                <th className="text-xs uppercase opacity-70 text-center">En Réserve</th>
-                <th className="text-xs uppercase opacity-70 text-center text-primary">Suggestion</th>
-                <th className="text-xs uppercase opacity-70 text-right no-print">Actions</th>
+                <th className="text-xs uppercase opacity-70">{t('stock.reappro.table.product', { defaultValue: 'Produit' })}</th>
+                <th className="text-xs uppercase opacity-70">{t('stock.reappro.table.level', { defaultValue: 'Niveau Rayon' })}</th>
+                <th className="text-xs uppercase opacity-70 text-center hidden xl:table-cell">{t('stock.reappro.table.min', { defaultValue: 'Min Rayon' })}</th>
+                <th className="text-xs uppercase opacity-70 text-center hidden xl:table-cell">{t('stock.reappro.table.capacity', { defaultValue: 'Capacité Rayon' })}</th>
+                <th className="text-xs uppercase opacity-70 text-center">{t('stock.reappro.table.on_shelf', { defaultValue: 'En Rayon' })}</th>
+                <th className="text-xs uppercase opacity-70 text-center">{t('stock.reappro.table.in_reserve', { defaultValue: 'En Réserve' })}</th>
+                <th className="text-xs uppercase opacity-70 text-center text-primary">{t('stock.reappro.table.suggestion', { defaultValue: 'Suggestion' })}</th>
+                <th className="text-xs uppercase opacity-70 text-right no-print">{t('stock.reappro.table.actions', { defaultValue: 'Actions' })}</th>
               </tr>
             </thead>
             <tbody>
@@ -357,7 +357,7 @@ export default function ReapproRayon() {
                         <div className="flex flex-col gap-1">
                           <div className="flex justify-between items-center px-1">
                              <span className={`text-[10px] font-bold ${isLow ? 'text-error' : 'text-success'}`}>
-                                {isLow ? 'À RÉAPPROVISIONNER' : 'STABILISÉ'}
+                                {isLow ? t('stock.reappro.table.need_refill', { defaultValue: 'À RÉAPPROVISIONNER' }) : t('stock.reappro.table.stabilized', { defaultValue: 'STABILISÉ' })}
                              </span>
                              <span className="text-[10px] opacity-60 font-mono">{Math.round(percent)}%</span>
                           </div>
@@ -386,10 +386,10 @@ export default function ReapproRayon() {
                         {suggest > 0 ? (
                             <div className="flex flex-col">
                                 <span className="font-black text-primary text-lg">+{suggest}</span>
-                                <span className="text-[10px] text-primary/60 font-bold uppercase">Suggéré</span>
+                                <span className="text-[10px] text-primary/60 font-bold uppercase">{t('stock.reappro.table.suggested', { defaultValue: 'Suggéré' })}</span>
                             </div>
                         ) : (
-                            <span className="text-xs opacity-30 italic">Complet</span>
+                            <span className="text-xs opacity-30 italic">{t('stock.reappro.table.complete', { defaultValue: 'Complet' })}</span>
                         )}
                       </td>
                       <td className="text-right no-print">
@@ -398,7 +398,7 @@ export default function ReapproRayon() {
                           className={`btn btn-sm ${isLow ? 'btn-primary' : 'btn-outline border-base-300'} ${isTransferring ? 'loading' : ''}`}
                           disabled={isTransferring || suggest === 0}
                         >
-                          {!isTransferring && '🚚 Transférer'}
+                          {!isTransferring && `🚚 ${t('stock.reappro.table.transfer_btn', { defaultValue: 'Transférer' })}`}
                         </button>
                       </td>
                     </tr>
@@ -413,7 +413,7 @@ export default function ReapproRayon() {
         {!loading && filteredProducts.length > itemsPerPage && (
             <div className="p-4 border-t border-base-200 flex items-center justify-between bg-base-50/50 no-print">
                 <div className="text-sm text-base-content/60">
-                    Affichage de {paginatedProducts.length} sur {filteredProducts.length} produits
+                    {t('common.pagination_info_products', { defaultValue: `Affichage de {{count}} sur {{total}} produits`, count: paginatedProducts.length, total: filteredProducts.length })}
                 </div>
                 <div className="join shadow-sm border border-base-300">
                     <button 
@@ -421,17 +421,17 @@ export default function ReapproRayon() {
                         disabled={page === 1}
                         onClick={() => setPage(page - 1)}
                     >
-                        Précédent
+                        {t('common.previous', { defaultValue: 'Précédent' })}
                     </button>
                     <button className="join-item btn btn-sm bg-base-100 no-animation">
-                        Page {page} / {totalPages}
+                        {t('common.page_info', { defaultValue: `Page {{current}} / {{total}}`, current: page, total: totalPages })}
                     </button>
                     <button 
                         className="join-item btn btn-sm btn-outline bg-base-100" 
                         disabled={page === totalPages}
                         onClick={() => setPage(page + 1)}
                     >
-                        Suivant
+                        {t('common.next', { defaultValue: 'Suivant' })}
                     </button>
                 </div>
             </div>
@@ -442,7 +442,7 @@ export default function ReapproRayon() {
       <PremiumModal
         isOpen={showConfirmAll}
         onClose={() => setShowConfirmAll(false)}
-        title="Confirmation de Transfert Groupé"
+        title={t('stock.reappro.modal_confirm.title', { defaultValue: "Confirmation de Transfert Groupé" })}
         maxWidth="max-w-md"
         icon={<span className="text-2xl">🚚</span>}
       >
@@ -450,22 +450,22 @@ export default function ReapproRayon() {
           <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
             📦
           </div>
-          <h3 className="text-xl font-bold text-base-content mb-2">Êtes-vous sûr ?</h3>
+          <h3 className="text-xl font-bold text-base-content mb-2">{t('stock.reappro.modal_confirm.question', { defaultValue: "Êtes-vous sûr ?" })}</h3>
           <p className="text-base-content/60 text-sm mb-6 leading-relaxed">
-            Vous allez transférer les quantités suggérées pour <span className="text-primary font-bold">{toProcessAll.length} produits</span> de la réserve vers le rayon.
+            {t('stock.reappro.modal_confirm.message', { defaultValue: `Vous allez transférer les quantités suggérées pour {{count}} produits de la réserve vers le rayon.`, count: toProcessAll.length })}
           </p>
           <div className="flex gap-3 justify-center">
             <button 
               className="btn btn-ghost px-6" 
               onClick={() => setShowConfirmAll(false)}
             >
-              Annuler
+              {t('stock.reappro.modal_confirm.cancel', { defaultValue: "Annuler" })}
             </button>
             <button 
               className="btn btn-primary px-8 shadow-lg shadow-primary/20" 
               onClick={handleExecuteAllTransfer}
             >
-              Confirmer le transfert
+              {t('stock.reappro.modal_confirm.confirm', { defaultValue: "Confirmer le transfert" })}
             </button>
           </div>
         </div>
@@ -480,8 +480,8 @@ export default function ReapproRayon() {
         }}
         onValidate={handleSudoValidate}
         saving={sudoSaving}
-        title="Validation Sudo Requise"
-        message="Veuillez confirmer vos identifiants ou demander à un administrateur de valider ce transfert de stock."
+        title={t('stock.reappro.modal_sudo.title', { defaultValue: "Validation Sudo Requise" })}
+        message={t('stock.reappro.modal_sudo.message', { defaultValue: "Veuillez confirmer vos identifiants ou demander à un administrateur de valider ce transfert de stock." })}
       />
     </div>
   );

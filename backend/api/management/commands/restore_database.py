@@ -110,18 +110,29 @@ class Command(BaseCommand):
                 env = os.environ.copy()
                 env['PGPASSWORD'] = db_password
 
-                # Note: We don't drop the database here because it might be in use
-                # The SQL file usually contains commands to drop/recreate tables if dump was done correctly
-                # or it will just append data. 
-                # For a clean restore, the dump should ideally have been done with --clean (which ours wasn't).
-                # Simplified approach: We assume the user wants a full override.
+                # 1. Wipe the current schema to ensure a clean slate
+                # This is necessary because older backups might not have --clean
+                self.stdout.write("Wiping existing schema 'public'...")
+                wipe_command = [
+                    psql_cmd,
+                    '-h', db_host,
+                    '-p', db_port,
+                    '-U', db_user,
+                    '-d', db_name,
+                    '-c', 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'
+                ]
                 
+                subprocess.run(wipe_command, env=env, capture_output=True, check=True)
+
+                # 2. Run the actual restoration
+                # We use --set ON_ERROR_STOP=1 to make sure we catch any SQL errors
                 restore_command = [
                     psql_cmd,
                     '-h', db_host,
                     '-p', db_port,
                     '-U', db_user,
                     '-d', db_name,
+                    '--set', 'ON_ERROR_STOP=1',
                     '-f', temp_sql_file,
                 ]
 
@@ -134,8 +145,30 @@ class Command(BaseCommand):
 
                 if result.returncode != 0:
                     self.stdout.write(self.style.ERROR(f'Restoration failed: {result.stderr}'))
-                else:
-                    self.stdout.write(self.style.SUCCESS('Database restored successfully!'))
+                    return
+                
+                self.stdout.write(self.style.SUCCESS('Database content restored successfully!'))
+                
+                # 3. Reset PostgreSQL sequences to avoid IntegrityErrors
+                self.stdout.write("Resetting PostgreSQL sequences for 'api' app...")
+                try:
+                    from django.core.management import call_command
+                    from django.db import connection
+                    from io import StringIO
+                    
+                    output = StringIO()
+                    call_command('sqlsequencereset', 'api', stdout=output)
+                    sql_commands = output.getvalue()
+                    
+                    if sql_commands:
+                        with connection.cursor() as cursor:
+                            cursor.execute(sql_commands)
+                        self.stdout.write(self.style.SUCCESS('Sequences reset successfully!'))
+                    else:
+                        self.stdout.write(self.style.WARNING('No sequences to reset found for app "api".'))
+                except Exception as seq_err:
+                    self.stdout.write(self.style.WARNING(f'Could not reset sequences: {str(seq_err)}'))
+                    self.stdout.write("Tip: You might need to run 'python manage.py sqlsequencereset api' manually.")
                     
             except Exception as e:
                 self.stdout.write(self.style.ERROR(f'Error during restoration: {str(e)}'))

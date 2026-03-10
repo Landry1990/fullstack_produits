@@ -65,7 +65,7 @@ export const InventaireQuickStats: React.FC<InventaireQuickStatsProps> = ({ inve
                             {stats.ecart_total > 0 ? '+' : ''}{formatCurrency(stats.ecart_total)} F
                         </div>
                         <div className="text-xs text-base-content/60">
-                            Sur tous les inventaires
+                            {t('stock.inventaire.stats.all_inventories', { defaultValue: 'Sur tous les inventaires' })}
                         </div>
                     </div>
                 </div>

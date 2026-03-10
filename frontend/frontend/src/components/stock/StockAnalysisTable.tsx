@@ -21,7 +21,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     onToggleSelect,
     onToggleSelectAll
 }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     const getUrgencyBadge = (urgency: string) => {
         switch (urgency) {
@@ -53,7 +53,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
             <div className="flex flex-col items-center justify-center h-96 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
                 <p className="text-sm font-medium text-base-content/40 uppercase tracking-widest animate-pulse">
-                    Chargement de l'analyse...
+                    {t('stockAnalysis.messages.loading', { defaultValue: "Chargement de l'analyse..." })}
                 </p>
             </div>
         );
@@ -113,11 +113,11 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
                         {activeTab === 'unsold' ? (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Dernier Achat</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Dernière Vente</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">Inactif depuis</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('stockAnalysis.columns.cost_price')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stockAnalysis.columns.stock_value')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stockAnalysis.columns.last_purchase', { defaultValue: 'Dernier Achat' })}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stockAnalysis.columns.last_sale', { defaultValue: 'Dernière Vente' })}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stockAnalysis.columns.inactive_since', { defaultValue: 'Inactif depuis' })}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('stockAnalysis.columns.cost_price', { defaultValue: 'Prix Achat' })}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stockAnalysis.columns.stock_value', { defaultValue: 'Valeur' })}</th>
                             </>
                         ) : activeTab === 'overstock' ? (
                             <>
@@ -172,7 +172,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                             {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString('fr-FR') : '-'}
                                         </td>
                                         <td className="font-mono text-xs text-base-content/60">
-                                            {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString('fr-FR') : <span className="text-error font-black italic">Jamais</span>}
+                                            {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US') : <span className="text-error font-black italic">{t('stockAnalysis.messages.never_sold', { defaultValue: 'Jamais' })}</span>}
                                         </td>
                                         <td className="text-center">
                                             <div className="badge border-none bg-warning/20 text-warning font-black italic">

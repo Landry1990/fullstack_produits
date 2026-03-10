@@ -58,7 +58,14 @@ export default function JournalCaisse() {
     total_sorties: number,
     total_coupons: number,
     total_recouvrement: number,
-    details: Record<string, number>
+    details: Record<string, number>,
+    mouvements_audit?: any[]
+  } | null>(null)
+
+  const [detectedShift, setDetectedShift] = useState<{
+    start: Date,
+    end: Date,
+    active: boolean
   } | null>(null)
 
   const toggleReleve = (releveId: number) => {
@@ -148,6 +155,44 @@ export default function JournalCaisse() {
     setPage(1)
     fetchData()
   }, [selectedUser, dateDebut, dateFin])
+
+  // New effect for shift detection when user is selected
+  useEffect(() => {
+    if (selectedUser) {
+      handleUserShiftDetection(selectedUser)
+    }
+  }, [selectedUser])
+
+  const handleUserShiftDetection = async (userId: string) => {
+    try {
+      const response = await axios.get(`${caisseEndpoint}get_user_shift/`, {
+        params: { user_id: userId }
+      })
+      const { start_date, end_date, has_activity } = response.data
+      
+      if (has_activity && start_date) {
+        const start = new Date(start_date)
+        const end = end_date ? new Date(end_date) : new Date()
+        
+        setDetectedShift({ start, end, active: true })
+        setDateDebut(start)
+        setDateFin(end)
+        toast.success("Tranche horaire détectée")
+      } else {
+        setDetectedShift(null)
+        // Default to whole day if no activity
+        const today = getServerDate()
+        today.setHours(0,0,0,0)
+        const endToday = getServerDate()
+        endToday.setHours(23,59,59,999)
+        setDateDebut(today)
+        setDateFin(endToday)
+      }
+    } catch (err) {
+      console.error("Erreur détection shift:", err)
+      setDetectedShift(null)
+    }
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -344,7 +389,7 @@ export default function JournalCaisse() {
                 if (totaux.recouv_par_mode[item.mode_paiement] !== undefined) {
                     totaux.recouv_par_mode[item.mode_paiement] += montant
                 }
-                // DO NOT add to totaux[mode] or totaux.total as per user request (Operational only)
+                // DO NOT add to totaux[mode] or totaux.total as per user request (Recoveries are not cash register operations)
             } else {
                 totaux.ventes += montant
                 if (totaux.ventes_par_mode[item.mode_paiement] !== undefined) {
@@ -457,15 +502,24 @@ export default function JournalCaisse() {
     
     setLoading(true)
     try {
-      await axios.post(`${caisseEndpoint}cloturer/`, {
+      const response = await axios.post(`${caisseEndpoint}cloturer/`, {
         montant_reel: normalizeNumberInput(actualAmount),
-        date_debut: dateDebut ? formatLocalISOString(dateDebut) : undefined,
-        date_fin: dateFin ? formatLocalISOString(dateFin) : undefined,
-        user_id: selectedUser || undefined
+        date_debut: dateDebut ? formatLocalISOString(dateDebut) : null,
+        date_fin: dateFin ? formatLocalISOString(dateFin) : null,
+        user_id: selectedUser
       })
+      
+      toast.success('Clôture effectuée avec succès')
+      const completeData = response.data.cloture;
+      setClosingTotals(completeData)
+      
+      // Automatiquement imprimer après succès
+      setTimeout(() => {
+          handleImprimerCloture(completeData);
+      }, 500);
+      
       setIsClosingModalOpen(false)
-      toast.success('Caisse clôturée avec succès !')
-      fetchTransactions() // Refresh list
+      fetchData()
     } catch (err: any) {
       console.error('Erreur clôture:', err)
       const errorMessage = err.response?.data?.detail || err.message || 'Erreur inconnue'
@@ -476,21 +530,23 @@ export default function JournalCaisse() {
     }
   }
 
-  const handleImprimerCloture = () => {
-    if (!closingTotals) return
-    
-    const win = window.open('', '', 'height=600,width=400');
-    if (win) {
-      const formatDateLong = (d: string) => {
-        return new Date(d).toLocaleString('fr-FR', { 
-          day: 'numeric', month: 'numeric', year: 'numeric', 
-          hour: '2-digit', minute: '2-digit' 
-        });
-      };
+  const handleImprimerCloture = (dataToPrint?: any) => {
+    const data = dataToPrint || closingTotals;
+    if (!data) return
 
-      const startStr = closingTotals.start_date ? formatDateLong(closingTotals.start_date) : 'Début';
-      const endStr = dateFin ? formatDateLong(dateFin.toISOString()) : 'Maintenant';
-      const soldeOp = closingTotals.total_ventes + closingTotals.total_entrees - closingTotals.total_sorties;
+    const win = window.open('', '_blank', 'width=800,height=600')
+    if (win) {
+      const startStr = data.start_date ? new Date(data.start_date).toLocaleString('fr-FR') : '--'
+      const endStr = data.date_fin ? new Date(data.date_fin).toLocaleString('fr-FR') : '--'
+      
+      const soldeOp = (data.total_ventes || 0) + (data.total_entrees || 0) - (data.total_sorties || 0)
+      
+      // Filter out technical keys for display
+      const displayDetails = Object.entries(data.details || {}).filter(
+        ([key]) => !key.startsWith('__') && key !== 'mouvements_audit' && key !== 'mouvements'
+      );
+
+      const movementsAudit = data.mouvements_audit || [];
 
       const content = `
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black; line-height: 1.2;">
@@ -506,7 +562,7 @@ export default function JournalCaisse() {
                 </div>
                 <div style="display: flex; justify-content: space-between;">
                     <span>Opérateur:</span>
-                    <span>${closingTotals.user || 'Admin'}</span>
+                    <span>${data.user || 'Admin'}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 5px;">
                     <span>Du: ${startStr}</span>
@@ -520,15 +576,15 @@ export default function JournalCaisse() {
                 <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">ACTIVITÉ DU JOUR (OPÉRATIONNEL)</div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Ventes Nettes (CA)</span>
-                    <span>${formatCurrency(closingTotals.total_ventes)}</span>
+                    <span>${formatCurrency(data.total_ventes)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Entrées Diverses</span>
-                    <span>${formatCurrency(closingTotals.total_entrees)}</span>
+                    <span>${formatCurrency(data.total_entrees)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
                     <span>Sorties/Dépenses</span>
-                    <span>-${formatCurrency(closingTotals.total_sorties)}</span>
+                    <span>-${formatCurrency(data.total_sorties)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px dashed black; margin-top: 3px; padding-top: 2px;">
                     <span>SOLDE NET À JUSTIFIER</span>
@@ -536,12 +592,24 @@ export default function JournalCaisse() {
                 </div>
             </div>
 
+            ${movementsAudit.length > 0 ? `
+            <div style="margin-bottom: 10px;">
+                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">DÉTAILS DES DÉPENSES (ESPÈCES)</div>
+                ${movementsAudit.map((m: any) => `
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-bottom: 2px;">
+                        <span style="max-width: 70%;">${m.motif} (${m.user_nom})</span>
+                        <span style="font-weight: bold;">${formatCurrency(m.montant)}</span>
+                    </div>
+                `).join('')}
+            </div>
+            ` : ''}
+
             <div style="margin-bottom: 15px;">
                 <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">RÉCAPITULATIF DES MODES (VENTES)</div>
-                ${Object.entries(closingTotals.details).map(([mode, montant]) => `
+                ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
                         <span style="text-transform: capitalize;">${mode}</span>
-                        <span>${formatCurrency(montant)}</span>
+                        <span>${formatCurrency(normalizeNumberInput(montant as any))}</span>
                     </div>
                 `).join('')}
             </div>
@@ -549,7 +617,7 @@ export default function JournalCaisse() {
             <div style="border-top: 2px solid black; padding-top: 5px; margin-top: 5px;">
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05em;">
                     <span>TOTAL À JUSTIFIER</span>
-                    <span>${formatCurrency(closingTotals.total_theorique)}</span>
+                    <span>${formatCurrency(data.total_theorique)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px;">
                     <span>Montant Réel (Compté)</span>
@@ -557,7 +625,7 @@ export default function JournalCaisse() {
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid black; margin-top: 3px; padding-top: 3px;">
                     <span>ÉCART DE CAISSE</span>
-                    <span>${actualAmount ? formatCurrency(normalizeNumberInput(actualAmount) - closingTotals.total_theorique) : '_________'}</span>
+                    <span>${actualAmount ? formatCurrency(normalizeNumberInput(actualAmount) - data.total_theorique) : '_________'}</span>
                 </div>
             </div>
 
@@ -671,10 +739,15 @@ export default function JournalCaisse() {
                     dateFormat="dd/MM/yy HH:mm"
                     placeholderText="Début"
                     locale="fr"
-                    className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
+                     className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
                     isClearable
                  />
-                 <span className="text-base-content/20 text-xs">→</span>
+                 {detectedShift?.active && (
+                    <div className="flex flex-col items-center justify-center px-1 border-x border-base-200">
+                        <span className="text-[8px] font-black text-primary uppercase leading-none">Shift</span>
+                        <div className="w-1 h-1 rounded-full bg-primary animate-pulse mt-0.5"></div>
+                    </div>
+                 )}
                  <DatePicker
                     selected={dateFin}
                     onChange={(date: Date | null) => setDateFin(date)}

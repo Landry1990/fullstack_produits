@@ -1,29 +1,31 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from '../config/axios';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAuditLogs, useAuditStats, useUsers } from '../hooks/useAudit';
 import { formatNumber } from '../utils/formatters';
 
-const ACTION_TYPES = [
-  { value: '', label: 'Tous' },
-  { value: 'STOCK_ADJ', label: 'Ajustement stock' },
-  { value: 'PRICE_CHG', label: 'Changement prix' },
-  { value: 'CLOTURE', label: 'Clôture caisse' },
-  { value: 'INV_CANCEL', label: 'Annulation facture' },
-  { value: 'INV_DEL', label: 'Suppression facture' },
-  { value: 'INV_VALID', label: 'Validation facture' },
-  { value: 'INV_CRE', label: 'Création inventaire' },
-  { value: 'INV_VAL', label: 'Validation inventaire' },
-
-  { value: 'ORD_RECV', label: 'Réception commande' },
-  { value: 'ORD_CNCL', label: 'Annulation réception' },
-  { value: 'CREATE', label: 'Création' },
-  { value: 'UPDATE', label: 'Modification' },
-  { value: 'DELETE', label: 'Suppression' },
-];
-
 const JournalAudit: React.FC = () => {
+    const { t, i18n } = useTranslation();
+
+    const ACTION_TYPES = [
+      { value: '', label: t('audit.actions.all', { defaultValue: 'Tous' }) },
+      { value: 'STOCK_ADJ', label: t('audit.actions.STOCK_ADJ', { defaultValue: 'Ajustement stock' }) },
+      { value: 'PRICE_CHG', label: t('audit.actions.PRICE_CHG', { defaultValue: 'Changement prix' }) },
+      { value: 'CLOTURE', label: t('audit.actions.CLOTURE', { defaultValue: 'Clôture caisse' }) },
+      { value: 'INV_CANCEL', label: t('audit.actions.INV_CANCEL', { defaultValue: 'Annulation facture' }) },
+      { value: 'INV_DEL', label: t('audit.actions.INV_DEL', { defaultValue: 'Suppression facture' }) },
+      { value: 'INV_VALID', label: t('audit.actions.INV_VALID', { defaultValue: 'Validation facture' }) },
+      { value: 'INV_CRE', label: t('audit.actions.INV_CRE', { defaultValue: 'Création inventaire' }) },
+      { value: 'INV_VAL', label: t('audit.actions.INV_VAL', { defaultValue: 'Validation inventaire' }) },
+    
+      { value: 'ORD_RECV', label: t('audit.actions.ORD_RECV', { defaultValue: 'Réception commande' }) },
+      { value: 'ORD_CNCL', label: t('audit.actions.ORD_CNCL', { defaultValue: 'Annulation réception' }) },
+      { value: 'CREATE', label: t('audit.actions.CREATE', { defaultValue: 'Création' }) },
+      { value: 'UPDATE', label: t('audit.actions.UPDATE', { defaultValue: 'Modification' }) },
+      { value: 'DELETE', label: t('audit.actions.DELETE', { defaultValue: 'Suppression' }) },
+    ];
     // State for UI only (filters and view mode)
     const [page, setPage] = useState(1);
     const [actionFilter, setActionFilter] = useState('');
@@ -104,7 +106,7 @@ const JournalAudit: React.FC = () => {
           link.remove();
         } catch (err) {
           console.error('Erreur export CSV:', err);
-          alert('Erreur lors de l\'export CSV');
+          alert(t('audit.messages.export_error', { defaultValue: "Erreur lors de l'export CSV" }));
         }
     };
 
@@ -148,13 +150,13 @@ const JournalAudit: React.FC = () => {
 
         // Custom formatting logic based on action and details structure
         if (log.action === 'PRICE_CHG') {
-            return `Prix : ${d.old_price} F ➔ ${d.new_price} F`;
+            return t('audit.details.price_change', { old: d.old_price, new: d.new_price, defaultValue: `Prix : ${d.old_price} F ➔ ${d.new_price} F` });
         }
         if (log.action === 'STOCK_ADJ') {
-            return `Stock : ${d.old_quantity} ➔ ${d.new_quantity} (${d.reason || 'Ajustement'})`;
+            return t('audit.details.stock_adj', { old: d.old_quantity, new: d.new_quantity, reason: d.reason || 'Ajustement', defaultValue: `Stock : ${d.old_quantity} ➔ ${d.new_quantity} (${d.reason || 'Ajustement'})` });
         }
         if (d.sudo_validation) {
-            return `Validé par ${d.sudo_user} pour ${d.sudo_permission}`;
+            return t('audit.details.sudo_val', { user: d.sudo_user, permission: d.sudo_permission, defaultValue: `Validé par ${d.sudo_user} pour ${d.sudo_permission}` });
         }
         if (d.changes) {
             return Object.entries(d.changes)
@@ -164,10 +166,10 @@ const JournalAudit: React.FC = () => {
         
         // Fallback: search for common keys
         const highlights = [];
-        if ('amount' in d) highlights.push(`Montant: ${d.amount} F`);
-        if ('montant' in d) highlights.push(`Montant: ${d.montant} F`);
-        if ('quantity' in d) highlights.push(`Quantité: ${d.quantity}`);
-        if ('ecart' in d) highlights.push(`Écart: ${d.ecart}`);
+        if ('amount' in d) highlights.push(t('audit.details.amount', { amount: d.amount, defaultValue: `Montant: ${d.amount} F` }));
+        if ('montant' in d) highlights.push(t('audit.details.amount', { amount: d.montant, defaultValue: `Montant: ${d.montant} F` }));
+        if ('quantity' in d) highlights.push(t('audit.details.quantity', { quantity: d.quantity, defaultValue: `Quantité: ${d.quantity}` }));
+        if ('ecart' in d) highlights.push(t('audit.details.ecart', { ecart: d.ecart, defaultValue: `Écart: ${d.ecart}` }));
         
         return highlights.length > 0 ? highlights.join(' | ') : null;
     };
@@ -179,8 +181,8 @@ const JournalAudit: React.FC = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">📋 Journal d'Audit</h2>
-            <p className="text-gray-600">Suivez toutes les actions effectuées sur le système</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">📋 {t('audit.title', { defaultValue: "Journal d'Audit" })}</h2>
+            <p className="text-gray-600">{t('audit.subtitle', { defaultValue: "Suivez toutes les actions effectuées sur le système" })}</p>
           </div>
           
           {error && (
@@ -189,7 +191,7 @@ const JournalAudit: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Erreur lors du chargement des logs.</span>
+                <span>{t('audit.messages.load_error', { defaultValue: 'Erreur lors du chargement des logs.' })}</span>
               </div>
             </div>
           )}
@@ -198,19 +200,19 @@ const JournalAudit: React.FC = () => {
           {statistics && showStats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className="stat bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-blue-100">Total Logs</div>
+                <div className="stat-title text-blue-100">{t('audit.stats.total', { defaultValue: 'Total Logs' })}</div>
                 <div className="stat-value">{formatNumber(statistics.total_logs)}</div>
               </div>
               <div className="stat bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-green-100">Dernières 24h</div>
+                <div className="stat-title text-green-100">{t('audit.stats.last_24h', { defaultValue: 'Dernières 24h' })}</div>
                 <div className="stat-value">{statistics.recent_activity.last_24h}</div>
               </div>
               <div className="stat bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-purple-100">Derniers 7 jours</div>
+                <div className="stat-title text-purple-100">{t('audit.stats.last_7d', { defaultValue: 'Derniers 7 jours' })}</div>
                 <div className="stat-value">{statistics.recent_activity.last_7d}</div>
               </div>
               <div className="stat bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-lg shadow-lg">
-                <div className="stat-title text-orange-100">Derniers 30 jours</div>
+                <div className="stat-title text-orange-100">{t('audit.stats.last_30d', { defaultValue: 'Derniers 30 jours' })}</div>
                 <div className="stat-value">{statistics.recent_activity.last_30d}</div>
               </div>
             </div>
@@ -221,28 +223,28 @@ const JournalAudit: React.FC = () => {
             <div className="p-4 bg-base-200/50 flex flex-wrap items-center justify-between gap-4 border-b border-base-200">
                 <div className="flex items-center gap-2">
                     <span className="p-2 bg-primary/10 rounded-lg">🔍</span>
-                    <h3 className="font-black text-sm uppercase tracking-wider opacity-70">Outil de recherche & Filtres</h3>
+                    <h3 className="font-black text-sm uppercase tracking-wider opacity-70">{t('audit.filters.title', { defaultValue: 'Outil de recherche & Filtres' })}</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={() => setShowStats(!showStats)} className={`btn btn-sm ${showStats ? 'btn-primary' : 'btn-ghost'} rounded-lg font-bold`}>
-                        {showStats ? 'MASQUER STATS' : 'AFFICHER STATS'}
+                        {showStats ? t('audit.filters.hide_stats', { defaultValue: 'MASQUER STATS' }) : t('audit.filters.show_stats', { defaultValue: 'AFFICHER STATS' })}
                     </button>
-                    <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold">EXPORTER CSV</button>
-                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg opacity-50 hover:opacity-100">RÉINITIALISER</button>
+                    <button onClick={handleExportCSV} className="btn btn-sm btn-success text-white rounded-lg font-bold">{t('audit.filters.export', { defaultValue: 'EXPORTER CSV' })}</button>
+                    <button onClick={handleResetFilters} className="btn btn-sm btn-ghost rounded-lg opacity-50 hover:opacity-100">{t('audit.filters.reset', { defaultValue: 'RÉINITIALISER' })}</button>
                 </div>
             </div>
 
             <div className="p-5 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Action</label>
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('audit.filters.action_label', { defaultValue: 'Action' })}</label>
                     <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>
                         {ACTION_TYPES.map(type => <option key={type.value} value={type.value}>{type.label}</option>)}
                     </select>
                 </div>
                 <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Utilisateur</label>
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('audit.filters.user_label', { defaultValue: 'Utilisateur' })}</label>
                     <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
-                        <option value="">Tous les utilisateurs</option>
+                        <option value="">{t('audit.filters.all_users', { defaultValue: 'Tous les utilisateurs' })}</option>
                         {users.map(user => (
                             <option key={user.id} value={user.id.toString()}>
                                 {user.first_name || user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
@@ -251,28 +253,28 @@ const JournalAudit: React.FC = () => {
                     </select>
                 </div>
                 <div className="flex flex-col gap-1 lg:col-span-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Période (Début)</label>
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('audit.filters.date_from', { defaultValue: 'Période (Début)' })}</label>
                     <input type="datetime-local" className="input input-bordered input-sm w-full font-bold" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }} />
                 </div>
                 <div className="flex flex-col gap-1 lg:col-span-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Période (Fin)</label>
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('audit.filters.date_to', { defaultValue: 'Période (Fin)' })}</label>
                     <input type="datetime-local" className="input input-bordered input-sm w-full font-bold" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }} />
                 </div>
                 <div className="flex flex-col gap-1 lg:col-span-1">
-                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">Recherche textuelle</label>
-                    <input type="text" placeholder="Facture, motif, produit..." className="input input-bordered input-sm w-full font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                    <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('audit.filters.search_label', { defaultValue: 'Recherche textuelle' })}</label>
+                    <input type="text" placeholder={t('audit.filters.search_placeholder', { defaultValue: 'Facture, motif, produit...' })} className="input input-bordered input-sm w-full font-bold" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
                 </div>
             </div>
           </div>
             {/* View Toggle */}
           <div className="flex justify-between items-center mb-4">
               <div className="flex items-center gap-2">
-                  <h3 className="font-black text-xs uppercase opacity-40">Flux d'activité</h3>
-                  <div className="badge badge-ghost font-bold text-[10px]">{filteredLogs.length} items</div>
+                  <h3 className="font-black text-xs uppercase opacity-40">{t('audit.view.flux', { defaultValue: "Flux d'activité" })}</h3>
+                  <div className="badge badge-ghost font-bold text-[10px]">{filteredLogs.length} {t('audit.view.items', { defaultValue: 'items' })}</div>
               </div>
               <div className="join bg-base-100 shadow-sm border border-base-200 p-0.5 rounded-xl">
-                  <button onClick={() => setViewMode('cards')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'cards' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>🗂️ CARTES</button>
-                    <button onClick={() => setViewMode('table')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'table' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>📄 TABLEAU</button>
+                  <button onClick={() => setViewMode('cards')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'cards' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('audit.view.cards_btn', { defaultValue: '🗂️ CARTES' })}</button>
+                    <button onClick={() => setViewMode('table')} className={`join-item btn btn-xs px-4 rounded-lg font-bold ${viewMode === 'table' ? 'btn-neutral' : 'btn-ghost opacity-40'}`}>{t('audit.view.table_btn', { defaultValue: '📄 TABLEAU' })}</button>
               </div>
           </div>
 
@@ -280,13 +282,13 @@ const JournalAudit: React.FC = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 bg-base-100 rounded-3xl border-2 border-dashed border-base-200">
               <div className="loading loading-spinner loading-lg text-primary"></div>
-              <span className="mt-4 font-black uppercase text-xs opacity-30 tracking-widest">Synchronisation du journal...</span>
+              <span className="mt-4 font-black uppercase text-xs opacity-30 tracking-widest">{t('audit.view.loading', { defaultValue: 'Synchronisation du journal...' })}</span>
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="bg-base-100 rounded-3xl border-2 border-dashed border-base-200 p-24 text-center">
               <div className="text-5xl mb-6 opacity-20">🍃</div>
-              <p className="font-black text-lg opacity-40 uppercase">Aucune activité trouvée</p>
-              <p className="text-sm opacity-30 mt-1">Ajustez vos filtres ou vérifiez la période sélectionnée.</p>
+              <p className="font-black text-lg opacity-40 uppercase">{t('audit.view.empty_title', { defaultValue: 'Aucune activité trouvée' })}</p>
+              <p className="text-sm opacity-30 mt-1">{t('audit.view.empty_subtitle', { defaultValue: 'Ajustez vos filtres ou vérifiez la période sélectionnée.' })}</p>
             </div>
           ) : viewMode === 'cards' ? (
             <div className="space-y-4">
@@ -313,14 +315,14 @@ const JournalAudit: React.FC = () => {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className="font-bold text-sm text-base-content/80 line-clamp-1">{log.description || `${log.model_name} #${log.object_id}`}</span>
-                                    {isSudo && <span className="badge badge-error badge-sm font-black text-[9px] text-white">VALIDATION SUDO</span>}
+                                    {isSudo && <span className="badge badge-error badge-sm font-black text-[9px] text-white">{t('audit.view.sudo_badge', { defaultValue: 'VALIDATION SUDO' })}</span>}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
                                     <span className="flex items-center gap-1 font-bold opacity-60">
                                         <div className="w-1.5 h-1.5 rounded-full bg-base-300"></div>
-                                        {log.user_name || 'SYSTÈME'}
+                                        {log.user_name || t('audit.view.system_user', { defaultValue: 'SYSTÈME' })}
                                     </span>
-                                    <span className="opacity-30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: fr })}</span>
+                                    <span className="opacity-30 font-bold">{format(new Date(log.timestamp), 'dd MMMM yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
                                     {formattedDetails && (
                                         <span className="font-black text-primary/80 bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
                                             {formattedDetails}
@@ -332,7 +334,7 @@ const JournalAudit: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 {log.details && (
                                     <button onClick={() => toggleExpandLog(log.id)} className={`btn btn-circle btn-sm ${isExpanded ? 'btn-neutral' : 'btn-ghost'}`}>
-                                        {isExpanded ? '▲' : 'JSON'}
+                                        {isExpanded ? '▲' : t('audit.view.json_btn', { defaultValue: 'JSON' })}
                                     </button>
                                 )}
                             </div>
@@ -342,7 +344,7 @@ const JournalAudit: React.FC = () => {
                     {isExpanded && log.details && (
                       <div className="bg-neutral text-neutral-content p-6 font-mono text-[11px] border-t border-neutral-focus">
                         <div className="flex justify-between items-center mb-4 opacity-50">
-                            <span className="font-black">RAW TRANSACTION DATA</span>
+                            <span className="font-black">{t('audit.view.raw_data', { defaultValue: 'RAW TRANSACTION DATA' })}</span>
                             <span className="text-[9px]">ID: {log.id}</span>
                         </div>
                         <pre className="whitespace-pre-wrap leading-relaxed opacity-80">
@@ -359,11 +361,11 @@ const JournalAudit: React.FC = () => {
               <table className="table w-full">
                 <thead>
                   <tr className="bg-base-200/50">
-                    <th className="font-black text-[10px] uppercase opacity-50 pl-6">Horodatage</th>
-                    <th className="font-black text-[10px] uppercase opacity-50">Utilisateur</th>
-                    <th className="font-black text-[10px] uppercase opacity-50">Opération</th>
-                    <th className="font-black text-[10px] uppercase opacity-50">Description & Changements</th>
-                    <th className="font-black text-[10px] uppercase opacity-50 text-right pr-6">Statut</th>
+                    <th className="font-black text-[10px] uppercase opacity-50 pl-6">{t('audit.table.timestamp', { defaultValue: 'Horodatage' })}</th>
+                    <th className="font-black text-[10px] uppercase opacity-50">{t('audit.table.user', { defaultValue: 'Utilisateur' })}</th>
+                    <th className="font-black text-[10px] uppercase opacity-50">{t('audit.table.operation', { defaultValue: 'Opération' })}</th>
+                    <th className="font-black text-[10px] uppercase opacity-50">{t('audit.table.description', { defaultValue: 'Description & Changements' })}</th>
+                    <th className="font-black text-[10px] uppercase opacity-50 text-right pr-6">{t('audit.table.status', { defaultValue: 'Statut' })}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200">
@@ -376,16 +378,16 @@ const JournalAudit: React.FC = () => {
                       <tr key={log.id} className="hover:bg-base-200/30 transition-colors">
                         <td className="pl-6 border-none">
                             <div className="flex flex-col">
-                                <span className="font-black text-xs">{format(new Date(log.timestamp), 'HH:mm:ss', { locale: fr })}</span>
-                                <span className="text-[9px] font-bold opacity-30">{format(new Date(log.timestamp), 'dd/MM/yy', { locale: fr })}</span>
+                                <span className="font-black text-xs">{format(new Date(log.timestamp), 'HH:mm:ss', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
+                                <span className="text-[9px] font-bold opacity-30">{format(new Date(log.timestamp), 'dd/MM/yy', { locale: i18n.language === 'fr' ? fr : undefined })}</span>
                             </div>
                         </td>
                         <td className="border-none">
                             <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center font-black text-[10px] uppercase">
-                                    {(log.user_name || 'S')[0]}
+                                    {(log.user_name || t('audit.view.system_user', { defaultValue: 'SYSTÈME' }))[0]}
                                 </div>
-                                <span className="font-bold text-xs uppercase opacity-80">{log.user_name || 'SYSTÈME'}</span>
+                                <span className="font-bold text-xs uppercase opacity-80">{log.user_name || t('audit.view.system_user', { defaultValue: 'SYSTÈME' })}</span>
                             </div>
                         </td>
                         <td className="border-none">
@@ -404,7 +406,7 @@ const JournalAudit: React.FC = () => {
                         <td className="text-right pr-6 border-none">
                             {isSudo && log.details ? (
                                 <div className="tooltip tooltip-left" data-tip={`Validé par ${log.details.sudo_user}`}>
-                                    <span className="badge badge-error text-white font-black text-[9px]">SUDO</span>
+                                    <span className="badge badge-error text-white font-black text-[9px]">{t('audit.table.sudo', { defaultValue: 'SUDO' })}</span>
                                 </div>
                             ) : (
                                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
@@ -426,18 +428,18 @@ const JournalAudit: React.FC = () => {
                 disabled={page === 1} 
                 onClick={() => setPage(page - 1)}
               >
-                ← Précédent
+                ← {t('common.pagination.prev', { defaultValue: 'Précédent' })}
               </button>
               <div className="px-4 py-2 bg-white rounded-lg shadow-md">
-                <span className="font-semibold">Page {page}</span>
-                {totalPages > 1 && <span className="text-gray-500"> sur {totalPages}</span>}
+                <span className="font-semibold">{t('common.page_info_simple', { defaultValue: 'Page {{page}}', page })}</span>
+                {totalPages > 1 && <span className="text-gray-500"> {t('common.page_of', { defaultValue: 'sur {{count}}', count: totalPages })}</span>}
               </div>
               <button 
                 className="btn btn-outline" 
                 disabled={page >= totalPages} 
                 onClick={() => setPage(page + 1)}
               >
-                Suivant →
+                {t('common.pagination.next', { defaultValue: 'Suivant' })} →
               </button>
             </div>
           )}

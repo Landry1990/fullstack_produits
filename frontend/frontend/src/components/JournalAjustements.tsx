@@ -1,10 +1,12 @@
 import { Toaster } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAjustementsData } from '../hooks/useAjustementsData';
 import { AjustementsQuickStats } from './adjustments/AjustementsQuickStats';
 import { AjustementsFilters } from './adjustments/AjustementsFilters';
 import { AjustementsTable } from './adjustments/AjustementsTable';
 
 export default function JournalAjustements() {
+    const { t } = useTranslation();
     const {
         adjustments,
         loading,
@@ -32,10 +34,10 @@ export default function JournalAjustements() {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-base-content">
-                                    Ajustements de <span className="text-primary italic">Stock</span>
+                                    {t('stock.ajustements.title', { defaultValue: 'Ajustements de Stock' })}
                                 </h1>
                                 <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest">
-                                    Historique complet des mouvements manuels
+                                    {t('stock.ajustements.subtitle', { defaultValue: 'Historique complet des mouvements manuels' })}
                                 </p>
                             </div>
                         </div>

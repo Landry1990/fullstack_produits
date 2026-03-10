@@ -45,8 +45,10 @@ interface ProductAutocompleteProps {
 }
 
 const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
-  label, icon, selected, onSelect, onClear, placeholder = 'Rechercher un produit...'
+  label, icon, selected, onSelect, onClear, placeholder
 }) => {
+  const { t } = useTranslation();
+  const placeholderText = placeholder || t('stock.transformations.modal_relation.search_placeholder', {defaultValue: 'Rechercher un produit...'});
   const { produits, loading, searchQuery, setSearchQuery } = useProductSearch({
     minSearchLength: 2,
     debounceMs: 250,
@@ -127,7 +129,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           ref={inputRef}
           type="text"
           className="input input-bordered w-full pl-10 h-12 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all rounded-xl"
-          placeholder={placeholder}
+          placeholder={placeholderText}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsFocused(true)}
@@ -148,7 +150,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
             {produits.length === 0 && !loading && (
               <div className="p-4 text-center text-gray-400 italic text-sm">
-                Aucun produit trouvé
+                {t('common.no_results_found', {defaultValue: 'Aucun produit trouvé'})}
               </div>
             )}
             {produits.map((p, idx) => {
@@ -237,7 +239,7 @@ const Transformations: React.FC = () => {
       setLoading(false);
     } catch (error) {
       console.error("Erreur fetch:", error);
-      toast.error(t('transformations.messages.load_error'));
+      toast.error(t('stock.transformations.messages.load_error'));
       setLoading(false);
     }
   };
@@ -252,7 +254,7 @@ const Transformations: React.FC = () => {
         produit_destination: selectedDestination.id,
         ratio: normalizeNumberInput(ratioValue)
       });
-      toast.success(t('transformations.messages.create_success'));
+      toast.success(t('stock.transformations.messages.create_success'));
       setIsRelationModalOpen(false);
       resetRelationForm();
       fetchData();
@@ -261,7 +263,7 @@ const Transformations: React.FC = () => {
       const errorMsg = error.response?.data?.non_field_errors?.[0] 
         || error.response?.data?.error 
         || error.response?.data?.detail
-        || t('transformations.messages.create_error');
+        || t('stock.transformations.messages.create_error');
       
       if (typeof error.response?.data === 'object') {
          const firstError = Object.values(error.response.data)[0];
@@ -283,18 +285,18 @@ const Transformations: React.FC = () => {
 
   const handleDeleteRelation = async (id: number) => {
     const confirmed = await confirm({
-      title: t('transformations.messages.delete_confirm_title'),
-      message: t('transformations.messages.delete_confirm_message'),
+      title: t('stock.transformations.messages.delete_confirm_title'),
+      message: t('stock.transformations.messages.delete_confirm_message'),
       variant: 'danger',
-      confirmText: t('transformations.messages.delete_confirm_btn')
+      confirmText: t('stock.transformations.messages.delete_confirm_btn')
     })
     if (!confirmed) return;
     try {
       await axios.delete(`${apiBaseUrl}/relations-transformation/${id}/`);
-      toast.success(t('transformations.messages.delete_success'));
+      toast.success(t('stock.transformations.messages.delete_success'));
       fetchData();
     } catch (error) {
-      toast.error(t('transformations.messages.delete_error'));
+      toast.error(t('stock.transformations.messages.delete_error'));
     }
   };
 
@@ -320,12 +322,12 @@ const Transformations: React.FC = () => {
       });
       
       if (res.data.success) {
-        toast.success(res.data.message || t('transformations.messages.transform_success'));
+        toast.success(res.data.message || t('stock.transformations.messages.transform_success'));
         setIsTransformerModalOpen(false);
         fetchData(); 
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || t('transformations.messages.transform_error'));
+      toast.error(error.response?.data?.error || t('stock.transformations.messages.transform_error'));
       setSubmitting(false);
     }
   };
@@ -345,10 +347,10 @@ const Transformations: React.FC = () => {
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
               </div>
-              {t('transformations.title')}
+              {t('stock.transformations.title')}
             </h1>
             <p className="text-base-content/60 text-sm mt-1">
-              Gérez vos règles de transformation de produits et suivez l'historique des opérations
+              {t('stock.transformations.subtitle')}
             </p>
           </div>
           <button 
@@ -356,7 +358,7 @@ const Transformations: React.FC = () => {
             className="btn btn-primary rounded-xl shadow-lg shadow-primary/20 gap-2"
           >
             <Plus size={20} />
-            {t('transformations.new_relation_btn')}
+            {t('stock.transformations.new_relation_btn')}
           </button>
         </div>
 
@@ -366,13 +368,13 @@ const Transformations: React.FC = () => {
             className={`btn btn-sm rounded-xl px-6 transition-all ${activeTab === 'relations' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
             onClick={() => setActiveTab('relations')}
           >
-            {t('transformations.tabs.configured_relations')}
+            {t('stock.transformations.tabs.configured_relations')}
           </button>
           <button 
             className={`btn btn-sm rounded-xl px-6 transition-all ${activeTab === 'historique' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
             onClick={() => setActiveTab('historique')}
           >
-            {t('transformations.tabs.history')}
+            {t('stock.transformations.tabs.history')}
           </button>
         </div>
       </div>
@@ -382,7 +384,7 @@ const Transformations: React.FC = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
             <span className="loading loading-spinner loading-lg text-primary"></span>
-            <p className="text-sm font-medium opacity-50">Chargement des données...</p>
+            <p className="text-sm font-medium opacity-50">{t('common.loading', {defaultValue: 'Chargement des données...'})}</p>
           </div>
         ) : (
           <div className="p-6">
@@ -396,7 +398,7 @@ const Transformations: React.FC = () => {
                              {relation.produit_source_nom.charAt(0)}
                           </div>
                           <div className="max-w-[150px]">
-                             <div className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">Source</div>
+                             <div className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">{t('common.source', {defaultValue: 'Source'})}</div>
                              <div className="font-bold text-sm truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
                           </div>
                        </div>
@@ -412,7 +414,7 @@ const Transformations: React.FC = () => {
                     </div>
 
                     <div className="bg-white/50 rounded-xl p-3 border border-base-200 flex justify-between items-center mb-6">
-                       <div className="text-xs font-medium opacity-60">Ratio de conversion</div>
+                       <div className="text-xs font-medium opacity-60">{t('stock.transformations.modal_relation.ratio_label')}</div>
                        <div className="badge badge-primary font-mono font-bold">1 : {formatNumber(relation.ratio)}</div>
                     </div>
 
@@ -500,7 +502,7 @@ const Transformations: React.FC = () => {
         isOpen={isRelationModalOpen}
         onClose={() => setIsRelationModalOpen(false)}
         title={t('transformations.modal_relation.title')}
-        subtitle="Configurez une nouvelle règle de transformation"
+        subtitle={t('stock.transformations.modal_relation.subtitle', {defaultValue: 'Configurez une nouvelle règle de transformation'})}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -510,7 +512,7 @@ const Transformations: React.FC = () => {
         <form onSubmit={handleCreateRelation} className="p-6 space-y-5">
           {/* Produit Source */}
           <ProductAutocomplete
-            label={t('transformations.modal_relation.source')}
+            label={t('stock.transformations.modal_relation.source')}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -519,7 +521,7 @@ const Transformations: React.FC = () => {
             selected={selectedSource}
             onSelect={setSelectedSource}
             onClear={() => setSelectedSource(null)}
-            placeholder="Rechercher le produit source..."
+            placeholder={t('stock.transformations.modal_relation.source_placeholder', {defaultValue: 'Rechercher le produit source...'})}
           />
 
           {/* Flèche séparatrice */}
@@ -537,7 +539,7 @@ const Transformations: React.FC = () => {
 
           {/* Produit Destination */}
           <ProductAutocomplete
-            label={t('transformations.modal_relation.destination')}
+            label={t('stock.transformations.modal_relation.destination')}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -546,7 +548,7 @@ const Transformations: React.FC = () => {
             selected={selectedDestination}
             onSelect={setSelectedDestination}
             onClear={() => setSelectedDestination(null)}
-            placeholder="Rechercher le produit destination..."
+            placeholder={t('stock.transformations.modal_relation.destination_placeholder', {defaultValue: 'Rechercher le produit destination...'})}
           />
 
           {/* Ratio */}
@@ -555,7 +557,7 @@ const Transformations: React.FC = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
               </svg>
-              {t('transformations.modal_relation.ratio_label')}
+              {t('stock.transformations.modal_relation.ratio_label')}
             </label>
             <input 
               type="number" 
@@ -567,7 +569,7 @@ const Transformations: React.FC = () => {
               required
             />
             <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-              {t('transformations.modal_relation.ratio_help')}
+              {t('stock.transformations.modal_relation.ratio_help')}
             </p>
           </div>
 
@@ -596,7 +598,7 @@ const Transformations: React.FC = () => {
           {/* Footer Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={() => setIsRelationModalOpen(false)}>
-              {t('transformations.modal_relation.cancel')}
+              {t('stock.transformations.modal_relation.cancel')}
             </button>
             <button 
               type="submit" 
@@ -606,7 +608,7 @@ const Transformations: React.FC = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
-              {t('transformations.modal_relation.create')}
+              {t('stock.transformations.modal_relation.create')}
             </button>
           </div>
         </form>
@@ -616,8 +618,8 @@ const Transformations: React.FC = () => {
       <PremiumModal
         isOpen={isTransformerModalOpen && !!transformationData.relation}
         onClose={() => setIsTransformerModalOpen(false)}
-        title={t('transformations.modal_transform.title')}
-        subtitle="Exécuter une transformation de stock"
+        title={t('stock.transformations.modal_transform.title')}
+        subtitle={t('stock.transformations.modal_transform.subtitle', {defaultValue: 'Exécuter une transformation de stock'})}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -639,7 +641,7 @@ const Transformations: React.FC = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
                   </svg>
-                  Source
+                  {t('common.source', {defaultValue: 'Source'})}
                 </div>
                 <div className="font-bold text-gray-800 text-sm mb-3 truncate">{transformationData.relation.produit_source_nom}</div>
                 <input 
@@ -651,7 +653,7 @@ const Transformations: React.FC = () => {
                   required
                   autoFocus
                 />
-                <div className="text-[10px] text-gray-400 mt-2">{t('transformations.modal_transform.qty_to_transform')}</div>
+                <div className="text-[10px] text-gray-400 mt-2">{t('stock.transformations.modal_transform.qty_to_transform')}</div>
               </div>
 
               {/* Arrow */}
@@ -670,13 +672,13 @@ const Transformations: React.FC = () => {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                   </svg>
-                  Destination
+                  {t('common.destination', {defaultValue: 'Destination'})}
                 </div>
                 <div className="font-bold text-gray-800 text-sm mb-3 truncate">{transformationData.relation.produit_destination_nom}</div>
                 <div className="w-full h-14 rounded-xl bg-success/10 border-2 border-success/20 flex items-center justify-center font-black text-2xl text-success">
                   {formatNumber(quantiteDestinationCalculee)}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-2">{t('transformations.modal_transform.qty_obtained')}</div>
+                <div className="text-[10px] text-gray-400 mt-2">{t('stock.transformations.modal_transform.qty_obtained')}</div>
               </div>
             </div>
 
@@ -686,11 +688,11 @@ const Transformations: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                {t('transformations.modal_transform.notes_label')}
+                {t('stock.transformations.modal_transform.notes_label')}
               </label>
               <textarea 
                 className="textarea textarea-bordered w-full h-20 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none" 
-                placeholder={t('transformations.modal_transform.notes_placeholder')}
+                placeholder={t('stock.transformations.modal_transform.notes_placeholder')}
                 value={transformationData.notes}
                 onChange={e => setTransformationData({...transformationData, notes: e.target.value})}
               ></textarea>
@@ -704,7 +706,7 @@ const Transformations: React.FC = () => {
                 onClick={() => setIsTransformerModalOpen(false)} 
                 disabled={submitting}
               >
-                {t('transformations.modal_relation.cancel')}
+                {t('stock.transformations.modal_relation.cancel')}
               </button>
               <button 
                 type="submit" 
@@ -718,7 +720,7 @@ const Transformations: React.FC = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    {t('transformations.modal_transform.confirm_btn')}
+                    {t('stock.transformations.modal_transform.confirm_btn')}
                   </>
                 )}
               </button>

@@ -98,8 +98,8 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         )}
                         {activeInventaire?.inventory_type && (
                             <span className="badge badge-info rounded-full text-[10px] font-bold uppercase tracking-wider px-3 border-none text-white">
-                                {activeInventaire.inventory_type === 'RESERVE' ? 'STOCK RÉSERVE' : 
-                                 activeInventaire.inventory_type === 'RAYON' ? 'STOCK RAYON' : 'STOCK GLOBAL'}
+                                {activeInventaire.inventory_type === 'RESERVE' ? t('stock.inventaire.types.reserve', 'STOCK RÉSERVE') : 
+                                 activeInventaire.inventory_type === 'RAYON' ? t('stock.inventaire.types.rayon', 'STOCK RAYON') : t('stock.inventaire.types.global', 'STOCK GLOBAL')}
                             </span>
                         )}
                     </div>
@@ -124,7 +124,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
 
                   <button 
                     className="btn btn-primary rounded-xl px-6 gap-2 shadow-lg shadow-primary/20" 
-                    onClick={() => generateEtatPDF(activeInventaire, lignes)}
+                    onClick={() => activeInventaire && generateEtatPDF(activeInventaire, lignes)}
                     disabled={!activeInventaire?.id}
                   >
                     <Download className="h-5 w-5" />
@@ -150,10 +150,10 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             className="btn btn-secondary rounded-xl px-4 gap-2 shadow-lg shadow-secondary/20" 
                             onClick={() => fileInputRef.current?.click()}
                             disabled={importing || saving}
-                            title="Importer un fichier CSV (Cip, Quantite)"
+                            title={t('stock.inventaire.detail.import_csv_title', 'Importer un fichier CSV (Cip, Quantite)')}
                         >
                             {importing ? <span className="loading loading-spinner loading-sm"></span> : <Upload className="h-5 w-5" />}
-                            <span className="hidden sm:inline">Importer</span>
+                            <span className="hidden sm:inline">{t('common.import', 'Importer')}</span>
                         </button>
 
                         <button 
@@ -230,10 +230,10 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     />
                 </>
             ) : (
-                inventoryStats && (
+                inventoryStats && activeInventaire && (
                     <InventaireAnalysisTab 
                         inventoryStats={inventoryStats}
-                        handlePrintEcartsFrontend={() => generateEcartsPDF(activeInventaire, lignes)}
+                        handlePrintEcartsFrontend={() => activeInventaire && generateEcartsPDF(activeInventaire, lignes)}
                     />
                 )
             )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PackageOpen, Calendar, Download, RefreshCw, IndianRupee, Printer } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 
@@ -39,6 +40,7 @@ interface UGReportData {
 }
 
 export default function StockUGReport() {
+  const { t } = useTranslation();
   const [data, setData] = useState<UGReportData | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -75,7 +77,7 @@ export default function StockUGReport() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching UG report:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('common.messages.error_loading', { defaultValue: 'Erreur lors du chargement des données' }));
     } finally {
       setLoading(false);
     }
@@ -97,7 +99,7 @@ export default function StockUGReport() {
     ]);
     
     // Add total row
-    rows.push(['TOTAL GÉNÉRAL', '', data.global_total_ug, data.global_total_valeur]);
+    rows.push([t('common.total_general', { defaultValue: 'TOTAL GÉNÉRAL' }), '', data.global_total_ug, data.global_total_valeur]);
     
     const csvContent = "data:text/csv;charset=utf-8," 
       + headers.join(';') + '\n' 
@@ -144,19 +146,19 @@ export default function StockUGReport() {
               
               <div class="kpi-grid">
                 <div class="kpi-card">
-                  <div class="kpi-label">Histo. UG Reçues</div>
+                  <div class="kpi-label">${t('rapport_ug.stats.history_ug', { defaultValue: 'Histo. UG Reçues' })}</div>
                   <div class="kpi-value">${formatNumber(data.global_total_ug)}</div>
                 </div>
                 <div class="kpi-card" style="border-left: 4px solid #10b981;">
-                  <div class="kpi-label" style="color: #10b981;">Stock UG Actuel</div>
+                  <div class="kpi-label" style="color: #10b981;">${t('rapport_ug.stats.current_stock_ug', { defaultValue: 'Stock UG Actuel' })}</div>
                   <div class="kpi-value">${formatNumber(data.global_total_ug_restantes)}</div>
                 </div>
                 <div class="kpi-card">
-                  <div class="kpi-label">Valeur Reçue</div>
+                  <div class="kpi-label">${t('rapport_ug.stats.estimated_value', { defaultValue: 'Valeur Reçue' })}</div>
                   <div class="kpi-value">${formatCurrency(data.global_total_valeur)} F</div>
                 </div>
                 <div class="kpi-card" style="border-left: 4px solid #3b82f6;">
-                  <div class="kpi-label" style="color: #3b82f6;">Trésorerie Latente</div>
+                  <div class="kpi-label" style="color: #3b82f6;">${t('rapport_ug.stats.latent_cash', { defaultValue: 'Trésorerie Latente' })}</div>
                   <div class="kpi-value">${formatCurrency(data.global_total_valeur_restante)} F</div>
                 </div>
               </div>
@@ -164,11 +166,11 @@ export default function StockUGReport() {
               <table>
                 <thead>
                   <tr>
-                    <th>Fournisseur / Produit</th>
-                    <th>N° Lot / Facture</th>
-                    <th style="text-align: right;">Qté Reçue</th>
-                    <th style="text-align: right;">Reliquat UG</th>
-                    <th style="text-align: right;">Valeur Rest.</th>
+                    <th>{t('rapport_ug.table.details.product', { defaultValue: 'Fournisseur / Produit' })}</th>
+                    <th>{t('rapport_ug.table.details.lot', { defaultValue: 'N° Lot / Facture' })}</th>
+                    <th style="text-align: right;">{t('rapport_ug.table.details.received', { defaultValue: 'Qté Reçue' })}</th>
+                    <th style="text-align: right;">{t('rapport_ug.table.remaining', { defaultValue: 'Reliquat UG' })}</th>
+                    <th style="text-align: right;">{t('rapport_ug.table.details.val_rest', { defaultValue: 'Valeur Rest.' })}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -193,7 +195,7 @@ export default function StockUGReport() {
               </table>
               
               <div style="text-align: center; margin-top: 40px; font-size: 9px; color: #94a3b8; font-weight: bold; text-transform: uppercase;">
-                --- Fin du rapport de stock promotionnel ---
+                --- {t('rapport_ug.print_template.footer', { defaultValue: 'Fin du rapport de stock promotionnel' })} ---
               </div>
             </body>
           </html>
@@ -218,10 +220,10 @@ export default function StockUGReport() {
               </div>
               <div>
                 <h1 className="text-3xl font-black tracking-tight text-slate-800">
-                  Rapport des <span className="text-indigo-500 italic">Unités Gratuites</span>
+                  {t('rapport_ug.title_part1', { defaultValue: 'Rapport des' })} <span className="text-indigo-500 italic">{t('rapport_ug.title_part2', { defaultValue: 'Unités Gratuites' })}</span>
                 </h1>
                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mt-1">
-                  Suivi des entrées promotionnelles (UG) par fournisseur
+                  {t('rapport_ug.subtitle', { defaultValue: 'Suivi des entrées promotionnelles (UG) par fournisseur' })}
                 </p>
               </div>
             </div>
@@ -234,7 +236,7 @@ export default function StockUGReport() {
               disabled={loading || !data?.fournisseurs.length}
             >
               <Printer className="w-4 h-4" />
-              Imprimer
+              {t('rapport_ug.print', { defaultValue: 'Imprimer' })}
             </button>
             <button 
               onClick={exportCSV}
@@ -242,7 +244,7 @@ export default function StockUGReport() {
               disabled={loading || !data?.fournisseurs.length}
             >
               <Download className="w-4 h-4" />
-              CSV
+              {t('rapport_ug.export', { defaultValue: 'CSV' })}
             </button>
             <button 
               onClick={fetchData}
@@ -250,7 +252,7 @@ export default function StockUGReport() {
               disabled={loading}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Actualiser
+              {t('rapport_ug.refresh', { defaultValue: 'Actualiser' })}
             </button>
           </div>
         </div>
@@ -263,7 +265,7 @@ export default function StockUGReport() {
                  <PackageOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">Historique UG Reçues</p>
+                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.history_ug', { defaultValue: 'Historique UG Reçues' })}</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
                   {loading ? '...' : formatNumber(data?.global_total_ug ?? 0)}
                 </p>
@@ -277,7 +279,7 @@ export default function StockUGReport() {
                  <PackageOpen className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">Stock UG Actuel (Restant)</p>
+                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.current_stock_ug', { defaultValue: 'Stock UG Actuel (Restant)' })}</p>
                 <p className="text-2xl font-black text-emerald-600 tracking-tight">
                   {loading ? '...' : formatNumber(data?.global_total_ug_restantes ?? 0)}
                 </p>
@@ -291,7 +293,7 @@ export default function StockUGReport() {
                  <IndianRupee className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">Valeur Reçue Estimée</p>
+                <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.estimated_value', { defaultValue: 'Valeur Reçue Estimée' })}</p>
                 <p className="text-2xl font-black text-slate-600 tracking-tight">
                   {loading ? '...' : `${formatCurrency(data?.global_total_valeur ?? 0)} F`}
                 </p>
@@ -305,7 +307,7 @@ export default function StockUGReport() {
                  <IndianRupee className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">Trésorerie Latente UG</p>
+                <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('rapport_ug.stats.latent_cash', { defaultValue: 'Trésorerie Latente UG' })}</p>
                 <p className="text-2xl font-black text-slate-800 tracking-tight">
                   {loading ? '...' : `${formatCurrency(data?.global_total_valeur_restante ?? 0)} F`}
                 </p>
@@ -319,7 +321,7 @@ export default function StockUGReport() {
           {/* Toolbar */}
           <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-50/50">
             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              Répartition par Fournisseur
+              {t('rapport_ug.filters.supplier_split', { defaultValue: 'Répartition par Fournisseur' })}
               {data && <span className="badge badge-primary badge-sm ml-2">{data.fournisseurs.length}</span>}
             </h2>
             
@@ -331,10 +333,10 @@ export default function StockUGReport() {
                   className="bg-transparent border-none outline-none text-sm text-slate-700 w-full"
                   value={dateDebut}
                   onChange={e => setDateDebut(e.target.value)}
-                  placeholder="Début"
+                  placeholder={t('rapport_ug.filters.date_from', { defaultValue: 'Début' })}
                 />
               </div>
-              <span className="text-slate-400 font-medium whitespace-nowrap">au</span>
+              <span className="text-slate-400 font-medium whitespace-nowrap">{t('rapport_ug.filters.to', { defaultValue: 'au' })}</span>
               <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-300 transition-all shadow-sm w-full sm:w-auto">
                 <Calendar className="w-4 h-4 text-slate-400" />
                 <input 
@@ -342,7 +344,7 @@ export default function StockUGReport() {
                   className="bg-transparent border-none outline-none text-sm text-slate-700 w-full"
                   value={dateFin}
                   onChange={e => setDateFin(e.target.value)}
-                  placeholder="Fin"
+                  placeholder={t('rapport_ug.filters.date_to', { defaultValue: 'Fin' })}
                 />
               </div>
               
@@ -350,7 +352,7 @@ export default function StockUGReport() {
                 <button 
                   className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-red-500"
                   onClick={() => { setDateDebut(''); setDateFin(''); }}
-                  title="Effacer les dates"
+                  title={t('rapport_ug.filters.clear_dates', { defaultValue: 'Effacer les dates' })}
                 >
                   <RefreshCw className="w-4 h-4" />
                 </button>
@@ -363,11 +365,11 @@ export default function StockUGReport() {
             <table className="table table-zebra w-full whitespace-nowrap">
               <thead className="bg-slate-50 sticky top-0 opacity-100 z-10 text-slate-500 text-xs uppercase font-extrabold tracking-wider border-b border-slate-200">
                 <tr>
-                  <th className="px-6 py-4">Fournisseur</th>
-                  <th className="px-6 py-4 text-right">Nb Réceptions (Lots)</th>
-                  <th className="px-6 py-4 text-right">UG Reçues (Histo.)</th>
-                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50">Stock UG Restant</th>
-                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50">Valeur Restante (FCFA)</th>
+                  <th className="px-6 py-4">{t('rapport_ug.table.supplier', { defaultValue: 'Fournisseur' })}</th>
+                  <th className="px-6 py-4 text-right">{t('rapport_ug.table.lots_count', { defaultValue: 'Nb Réceptions (Lots)' })}</th>
+                  <th className="px-6 py-4 text-right">{t('rapport_ug.table.received_ug', { defaultValue: 'UG Reçues (Histo.)' })}</th>
+                  <th className="px-6 py-4 text-right text-emerald-600 bg-emerald-50">{t('rapport_ug.table.remaining_stock', { defaultValue: 'Stock UG Restant' })}</th>
+                  <th className="px-6 py-4 text-right text-blue-600 bg-blue-50">{t('rapport_ug.table.remaining_value', { defaultValue: 'Valeur Restante (FCFA)' })}</th>
                 </tr>
               </thead>
               <tbody className="text-sm font-medium text-slate-600">
@@ -384,7 +386,7 @@ export default function StockUGReport() {
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-slate-400">
                       <PackageOpen className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      <p className="font-medium text-slate-500">Aucune unité gratuite trouvée sur cette période</p>
+                      <p className="font-medium text-slate-500">{t('rapport_ug.table.empty', { defaultValue: 'Aucune unité gratuite trouvée sur cette période' })}</p>
                     </td>
                   </tr>
                 ) : (
@@ -426,15 +428,15 @@ export default function StockUGReport() {
                              <table className="table table-sm w-full bg-white rounded-xl shadow-sm border border-slate-200">
                                <thead className="bg-slate-100 text-slate-500">
                                  <tr>
-                                   <th>Produit</th>
-                                   <th>N° Lot</th>
-                                   <th>Date Réception</th>
-                                   <th>N° Commande</th>
-                                   <th>N° Facture</th>
-                                   <th className="text-right">Prix Vente</th>
-                                   <th className="text-right">Reçues</th>
-                                   <th className="text-right text-emerald-600">Restantes</th>
-                                   <th className="text-right text-blue-600">Valeur Rest.</th>
+                                   <th>{t('rapport_ug.table.details.product', { defaultValue: 'Produit' })}</th>
+                                   <th>{t('rapport_ug.table.details.lot', { defaultValue: 'N° Lot' })}</th>
+                                   <th>{t('rapport_ug.table.details.date', { defaultValue: 'Date Réception' })}</th>
+                                   <th>{t('rapport_ug.table.details.order', { defaultValue: 'N° Commande' })}</th>
+                                   <th>{t('rapport_ug.table.details.invoice', { defaultValue: 'N° Facture' })}</th>
+                                   <th className="text-right">{t('rapport_ug.table.details.price', { defaultValue: 'Prix Vente' })}</th>
+                                   <th className="text-right">{t('rapport_ug.table.details.received', { defaultValue: 'Reçues' })}</th>
+                                   <th className="text-right text-emerald-600">{t('rapport_ug.table.details.remaining', { defaultValue: 'Restantes' })}</th>
+                                   <th className="text-right text-blue-600">{t('rapport_ug.table.details.val_rest', { defaultValue: 'Valeur Rest.' })}</th>
                                  </tr>
                                </thead>
                                <tbody>

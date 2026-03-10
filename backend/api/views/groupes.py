@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, filters
 from ..models import Groupe
 from ..serializers import GroupeSerializer
+from ..pagination import StandardResultsSetPagination
 
 class GroupeViewSet(viewsets.ModelViewSet):
     """
@@ -12,4 +13,4 @@ class GroupeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['nom', 'description']
-    pagination_class = None
+    pagination_class = StandardResultsSetPagination
