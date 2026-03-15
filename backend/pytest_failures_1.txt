@@ -1,0 +1,218 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Projet Fullstack\fullstack_produits\backend
+plugins: Faker-40.5.1, django-4.12.0, mock-3.15.1
+collected 0 items / 10 errors
+
+=================================== ERRORS ====================================
+_____________________ ERROR collecting api/test_cache.py ______________________
+api\test_cache.py:13: in <module>
+    from api.models import Produit
+api\models\__init__.py:10: in <module>
+    from .users import Profile, create_user_profile, save_user_profile
+api\models\users.py:7: in <module>
+    from django.contrib.auth.models import User
+my_env01\Lib\site-packages\django\contrib\auth\models.py:5: in <module>
+    from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+my_env01\Lib\site-packages\django\contrib\auth\base_user.py:43: in <module>
+    class AbstractBaseUser(models.Model):
+my_env01\Lib\site-packages\django\db\models\base.py:131: in __new__
+    app_config = apps.get_containing_app_config(module)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\apps\registry.py:260: in get_containing_app_config
+    self.check_apps_ready()
+my_env01\Lib\site-packages\django\apps\registry.py:137: in check_apps_ready
+    settings.INSTALLED_APPS
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting INSTALLED_APPS, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+_______________ ERROR collecting api/tests/test_cash_closure.py _______________
+api\tests\test_cash_closure.py:13: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+_____________ ERROR collecting api/tests/test_clinical_service.py _____________
+api\tests\test_clinical_service.py:3: in <module>
+    from api.models import Produit, Substance, DrugInteraction
+api\models\__init__.py:10: in <module>
+    from .users import Profile, create_user_profile, save_user_profile
+api\models\users.py:7: in <module>
+    from django.contrib.auth.models import User
+my_env01\Lib\site-packages\django\contrib\auth\models.py:5: in <module>
+    from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+my_env01\Lib\site-packages\django\contrib\auth\base_user.py:43: in <module>
+    class AbstractBaseUser(models.Model):
+my_env01\Lib\site-packages\django\db\models\base.py:131: in __new__
+    app_config = apps.get_containing_app_config(module)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\apps\registry.py:260: in get_containing_app_config
+    self.check_apps_ready()
+my_env01\Lib\site-packages\django\apps\registry.py:137: in check_apps_ready
+    settings.INSTALLED_APPS
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting INSTALLED_APPS, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+_________ ERROR collecting api/tests/test_critical_business_logic.py __________
+api\tests\test_critical_business_logic.py:12: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+________________ ERROR collecting api/tests/test_dashboard.py _________________
+api\tests\test_dashboard.py:12: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+__________ ERROR collecting api/tests/test_dashboard_optimization.py __________
+api\tests\test_dashboard_optimization.py:3: in <module>
+    from rest_framework.test import APIClient
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+_______________ ERROR collecting api/tests/test_facturation.py ________________
+api\tests\test_facturation.py:11: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+_________ ERROR collecting api/tests/test_integration_recent_fixes.py _________
+api\tests\test_integration_recent_fixes.py:3: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+____________ ERROR collecting api/tests/test_invoice_validation.py ____________
+api\tests\test_invoice_validation.py:13: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+_____________ ERROR collecting api/tests/test_order_management.py _____________
+api\tests\test_order_management.py:12: in <module>
+    from rest_framework.test import APITestCase
+my_env01\Lib\site-packages\rest_framework\test.py:138: in <module>
+    class APIRequestFactory(DjangoRequestFactory):
+my_env01\Lib\site-packages\rest_framework\test.py:139: in APIRequestFactory
+    renderer_classes_list = api_settings.TEST_REQUEST_RENDERER_CLASSES
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:220: in __getattr__
+    val = self.user_settings[attr]
+          ^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\rest_framework\settings.py:211: in user_settings
+    self._user_settings = getattr(settings, 'REST_FRAMEWORK', {})
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\conf\__init__.py:81: in __getattr__
+    self._setup(name)
+my_env01\Lib\site-packages\django\conf\__init__.py:61: in _setup
+    raise ImproperlyConfigured(
+E   django.core.exceptions.ImproperlyConfigured: Requested setting REST_FRAMEWORK, but settings are not configured. You must either define the environment variable DJANGO_SETTINGS_MODULE or call settings.configure() before accessing settings.
+=========================== short test summary info ===========================
+ERROR api/test_cache.py - django.core.exceptions.ImproperlyConfigured: Reques...
+ERROR api/tests/test_cash_closure.py - django.core.exceptions.ImproperlyConfi...
+ERROR api/tests/test_clinical_service.py - django.core.exceptions.ImproperlyC...
+ERROR api/tests/test_critical_business_logic.py - django.core.exceptions.Impr...
+ERROR api/tests/test_dashboard.py - django.core.exceptions.ImproperlyConfigur...
+ERROR api/tests/test_dashboard_optimization.py - django.core.exceptions.Impro...
+ERROR api/tests/test_facturation.py - django.core.exceptions.ImproperlyConfig...
+ERROR api/tests/test_integration_recent_fixes.py - django.core.exceptions.Imp...
+ERROR api/tests/test_invoice_validation.py - django.core.exceptions.Improperl...
+ERROR api/tests/test_order_management.py - django.core.exceptions.ImproperlyC...
+!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 10 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+============================= 10 errors in 1.16s ==============================

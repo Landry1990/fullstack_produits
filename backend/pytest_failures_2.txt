@@ -1,0 +1,189 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+django: version: 5.2.5, settings: backend.settings (from ini)
+rootdir: C:\Projet Fullstack\fullstack_produits\backend
+configfile: pytest.ini
+plugins: Faker-40.5.1, django-4.12.0, mock-3.15.1
+collected 107 items / 8 errors
+
+=================================== ERRORS ====================================
+________________________ ERROR collecting api/tests.py ________________________
+import file mismatch:
+imported module 'api.tests' has this __file__ attribute:
+  C:\Projet Fullstack\fullstack_produits\backend\api\tests
+which is not the same as the test file we want to collect:
+  C:\Projet Fullstack\fullstack_produits\backend\api\tests.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_________ ERROR collecting scripts/tests/test_client_ayants_droit.py __________
+scripts\tests\test_client_ayants_droit.py:9: in <module>
+    username = input("Username: ")
+               ^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\_pytest\capture.py:229: in read
+    raise OSError(
+E   OSError: pytest: reading from stdin while output is captured!  Consider using `-s`.
+------------------------------- Captured stdout -------------------------------
+Veuillez entrer vos identifiants:
+Username: 
+_________________ ERROR collecting scripts/tests/test_data.py _________________
+scripts\tests\test_data.py:16: in <module>
+    print(f"Total factures VAL/PAY: {factures.count()}\n")
+                                     ^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:604: in count
+    return self.query.get_count(using=self.db)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\sql\query.py:644: in get_count
+    return obj.get_aggregation(using, {"__count": Count("*")})["__count"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\sql\query.py:626: in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\sql\compiler.py:1621: in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+E   RuntimeError: Database access not allowed, use the "django_db" mark, or the "db" or "transactional_db" fixtures to enable it.
+------------------------------- Captured stdout -------------------------------
+============================================================
+FACTURES VALID╔ES/PAY╔ES (Recent Transactions)
+============================================================
+____________ ERROR collecting scripts/tests/test_label_element.py _____________
+ImportError while importing test module 'C:\Projet Fullstack\fullstack_produits\backend\scripts\tests\test_label_element.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts\tests\test_label_element.py:10: in <module>
+    from api.models import LabelTemplate, LabelElement
+E   ImportError: cannot import name 'LabelTemplate' from 'api.models' (C:\Projet Fullstack\fullstack_produits\backend\api\models\__init__.py)
+_____________ ERROR collecting scripts/tests/test_new_ca_logic.py _____________
+scripts\tests\test_new_ca_logic.py:34: in <module>
+    for facture in factures:
+                   ^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:384: in __iter__
+    self._fetch_all()
+my_env01\Lib\site-packages\django\db\models\query.py:1949: in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:91: in __iter__
+    results = compiler.execute_sql(
+my_env01\Lib\site-packages\django\db\models\sql\compiler.py:1621: in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+E   RuntimeError: Database access not allowed, use the "django_db" mark, or the "db" or "transactional_db" fixtures to enable it.
+------------------------------- Captured stdout -------------------------------
+================================================================================
+TEST - NOUVELLE LOGIQUE CA HT (avec soustraction des remises)
+================================================================================
+
+___________ ERROR collecting scripts/tests/test_python_approach.py ____________
+scripts\tests\test_python_approach.py:21: in <module>
+    print(f'Nombre de factures Ó crÚdit: {toutes_factures_credit.count()}')
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:604: in count
+    return self.query.get_count(using=self.db)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\sql\query.py:644: in get_count
+    return obj.get_aggregation(using, {"__count": Count("*")})["__count"]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\sql\query.py:626: in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\sql\compiler.py:1621: in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+E   RuntimeError: Database access not allowed, use the "django_db" mark, or the "db" or "transactional_db" fixtures to enable it.
+------------------------------- Captured stdout -------------------------------
+================================================================================
+TEST - NOUVELLE APPROCHE PYTHON POUR LES CREANCES
+================================================================================
+
+_____________ ERROR collecting scripts/tests/test_rapport_api.py ______________
+scripts\tests\test_rapport_api.py:17: in <module>
+    user = User.objects.first()
+           ^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\manager.py:87: in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:1104: in first
+    for obj in queryset[:1]:
+               ^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:384: in __iter__
+    self._fetch_all()
+my_env01\Lib\site-packages\django\db\models\query.py:1949: in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:91: in __iter__
+    results = compiler.execute_sql(
+my_env01\Lib\site-packages\django\db\models\sql\compiler.py:1621: in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+E   RuntimeError: Database access not allowed, use the "django_db" mark, or the "db" or "transactional_db" fixtures to enable it.
+__________________ ERROR collecting test_dashboard_alert.py ___________________
+test_dashboard_alert.py:20: in <module>
+    response = view.clients_depassement(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+api\views\dashboard.py:575: in clients_depassement
+    for client in clients:
+                  ^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:384: in __iter__
+    self._fetch_all()
+my_env01\Lib\site-packages\django\db\models\query.py:1949: in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\models\query.py:91: in __iter__
+    results = compiler.execute_sql(
+my_env01\Lib\site-packages\django\db\models\sql\compiler.py:1621: in execute_sql
+    cursor = self.connection.cursor()
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\utils\asyncio.py:26: in inner
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:320: in cursor
+    return self._cursor()
+           ^^^^^^^^^^^^^^
+my_env01\Lib\site-packages\django\db\backends\base\base.py:296: in _cursor
+    self.ensure_connection()
+E   RuntimeError: Database access not allowed, use the "django_db" mark, or the "db" or "transactional_db" fixtures to enable it.
+=========================== short test summary info ===========================
+ERROR api/tests.py
+ERROR scripts/tests/test_client_ayants_droit.py - OSError: pytest: reading fr...
+ERROR scripts/tests/test_data.py - RuntimeError: Database access not allowed,...
+ERROR scripts/tests/test_label_element.py
+ERROR scripts/tests/test_new_ca_logic.py - RuntimeError: Database access not ...
+ERROR scripts/tests/test_python_approach.py - RuntimeError: Database access n...
+ERROR scripts/tests/test_rapport_api.py - RuntimeError: Database access not a...
+ERROR test_dashboard_alert.py - RuntimeError: Database access not allowed, us...
+!!!!!!!!!!!!!!!!!!! Interrupted: 8 errors during collection !!!!!!!!!!!!!!!!!!!
+============================== 8 errors in 3.07s ==============================

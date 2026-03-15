@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FormEvent } from 'react';
 import axios from 'axios';
 import type { ProduitForm, ProduitModel, Rayon, Fournisseur, Forme, Groupe } from '../types';
@@ -31,34 +32,19 @@ export default function ProduitFormModal({
   formes = [],
   groupes = [],
 }: ProduitFormModalProps) {
+  const { t } = useTranslation();
   const { tvaList, loading: loadingTVA } = useTVA();
   
-  const [form, setForm] = useState<ProduitForm & { groupe?: string; use_lot_management: boolean }>({
-    name: '',
-    description: '',
-    stock: '',
-    cost_price: '',
-    selling_price: '',
-    cip1: '',
-    cip2: '',
-    cip3: '',
-    expire_date: '',
-    stock_alert: '',
-    stock_minimum: '',
-    stock_maximum: '',
-    rayon: '',
-    fournisseur: '',
-    forme: '',
-    groupe: '',
-    tva: '19.25',
-    is_supplier_exclusive: false,
-    requires_prescription: false,
-    use_lot_management: true,
+  const [form, setForm] = useState<ProduitForm>({
+    name: '', stock: '', cost_price: '', selling_price: '', cip1: '', cip2: '', cip3: '',
+    expire_date: '', stock_alert: '', stock_minimum: '', stock_maximum: '', tva: '19.25',
+    rayon: '', fournisseur: '', description: '', unite_mesure: '', is_perissable: false,
+    forme: '', groupe: '',
+    use_lot_management: true, requires_prescription: false,
+    surveillance_category: 'NONE', is_supplier_exclusive: false, has_reserve_storage: false,
+    capacite_rayon: '0', min_rayon: '0',
     is_chronic: false,
     default_treatment_days: '30',
-    has_reserve_storage: false,
-    capacite_rayon: '0',
-    min_rayon: '0',
     ...initialData,
   });
 
@@ -92,7 +78,7 @@ export default function ProduitFormModal({
 
 
   function formatBackendErrors(data: unknown): string {
-    if (data == null) return 'Erreur inconnue du serveur';
+    if (data == null) return t('errors.unknown_server');
     if (typeof data === 'string') return data;
     if (typeof data === 'object') {
       try {
@@ -146,7 +132,7 @@ export default function ProduitFormModal({
       };
 
       if (!payload.name || !payload.selling_price || !payload.cost_price || payload.stock == null) {
-        setError('Les champs Nom, Stock, Prix de revient et Prix de vente sont obligatoires');
+        setError(t('products.form.validation.required_fields'));
         setLoading(false);
         return;
       }
@@ -159,7 +145,7 @@ export default function ProduitFormModal({
         const detail = err.response?.data ?? err.message;
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail));
       } else {
-        setError("Erreur inconnue lors de l'ajout du produit");
+        setError(t('products.form.validation.unknown_error'));
       }
     } finally {
       setLoading(false);
@@ -186,9 +172,9 @@ export default function ProduitFormModal({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">Informations Générales</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">{t('products.form.general_info')}</h4>
             <label className="form-control w-full">
-              <div className="label"><span className="label-text font-semibold">Nom du produit *</span></div>
+              <div className="label"><span className="label-text font-semibold">{t('products.form.name')}</span></div>
               <input
                 type="text"
                 className="input input-bordered w-full focus:input-primary"
@@ -201,7 +187,7 @@ export default function ProduitFormModal({
 
             <div className="grid grid-cols-2 gap-4">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold">Stock Initial *</span></div>
+                <div className="label"><span className="label-text font-semibold">{t('products.form.initial_stock')}</span></div>
                 <input
                   type="number"
                   className="input input-bordered w-full"
@@ -213,13 +199,13 @@ export default function ProduitFormModal({
                 />
               </label>
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold text-xs">Rayon</span></div>
+                <div className="label"><span className="label-text font-semibold text-xs">{t('products.form.rayon')}</span></div>
                 <select 
                   className="select select-bordered w-full" 
                   value={form.rayon}
                   onChange={(e) => setForm((f) => ({ ...f, rayon: e.target.value }))}
                 >
-                  <option value="">Sélectionner un rayon</option>
+                  <option value="">{t('products.form.select_rayon')}</option>
                   {rayons
                     .filter(r => !r.parent)
                     .map(parent => (
@@ -242,7 +228,7 @@ export default function ProduitFormModal({
 
             <div className="grid grid-cols-2 gap-4">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold">CIP1</span></div>
+                <div className="label"><span className="label-text font-semibold">{t('products.form.cip1')}</span></div>
                 <input 
                   className="input input-bordered w-full font-mono" 
                   value={form.cip1}
@@ -251,12 +237,12 @@ export default function ProduitFormModal({
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text text-xs font-semibold">CIP2</span></div>
+                  <div className="label"><span className="label-text text-xs font-semibold">{t('products.form.cip2')}</span></div>
                   <input className="input input-bordered input-sm w-full font-mono" value={form.cip2}
                     onChange={(e) => setForm((p) => ({ ...p, cip2: e.target.value }))} />
                 </label>
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text text-xs font-semibold">CIP3</span></div>
+                  <div className="label"><span className="label-text text-xs font-semibold">{t('products.form.cip3')}</span></div>
                   <input className="input input-bordered input-sm w-full font-mono" value={form.cip3}
                     onChange={(e) => setForm((p) => ({ ...p, cip3: e.target.value }))} />
                 </label>
@@ -265,7 +251,7 @@ export default function ProduitFormModal({
 
             <div className="grid grid-cols-2 gap-4">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold">Fournisseur</span></div>
+                <div className="label"><span className="label-text font-semibold">{t('products.form.provider')}</span></div>
                 <select 
                   className="select select-bordered w-full" 
                   value={form.fournisseur}
@@ -286,7 +272,7 @@ export default function ProduitFormModal({
 
             <div className="grid grid-cols-3 gap-2">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text text-xs font-semibold">Alerte</span></div>
+                <div className="label"><span className="label-text text-xs font-semibold">{t('products.form.alert')}</span></div>
                 <input 
                   type="number" 
                   className="input input-bordered input-sm w-full" 
@@ -297,7 +283,7 @@ export default function ProduitFormModal({
                 />
               </label>
               <label className="form-control w-full">
-                <div className="label"><span className="label-text text-xs">Min</span></div>
+                <div className="label"><span className="label-text text-xs">{t('products.form.min')}</span></div>
                 <input 
                   type="number" 
                   className="input input-bordered input-sm w-full" 
@@ -308,7 +294,7 @@ export default function ProduitFormModal({
                 />
               </label>
               <label className="form-control w-full">
-                <div className="label"><span className="label-text text-xs">Max</span></div>
+                <div className="label"><span className="label-text text-xs">{t('products.form.max')}</span></div>
                 <input 
                   type="number" 
                   className="input input-bordered input-sm w-full" 
@@ -322,7 +308,7 @@ export default function ProduitFormModal({
 
             <div className="grid grid-cols-2 gap-4">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold text-xs">Forme</span></div>
+                <div className="label"><span className="label-text font-semibold text-xs">{t('products.form.forme')}</span></div>
                 <select 
                   className="select select-bordered select-sm w-full" 
                   value={form.forme}
@@ -333,7 +319,7 @@ export default function ProduitFormModal({
                 </select>
               </label>
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold text-xs">Groupe</span></div>
+                <div className="label"><span className="label-text font-semibold text-xs">{t('products.form.groupe')}</span></div>
                 <select 
                   className="select select-bordered select-sm w-full" 
                   value={form.groupe}
@@ -347,10 +333,10 @@ export default function ProduitFormModal({
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">Prix et Marge (HT)</h4>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">{t('products.form.price_margin')}</h4>
             <div className="grid grid-cols-2 gap-4">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold">Prix revient *</span></div>
+                <div className="label"><span className="label-text font-semibold">{t('products.form.cost_price')}</span></div>
                 <div className="join w-full">
                   <input
                     type="number"
@@ -364,7 +350,7 @@ export default function ProduitFormModal({
                 </div>
               </label>
               <label className="form-control w-full">
-                <div className="label"><span className="label-text font-semibold text-primary">Prix vente *</span></div>
+                <div className="label"><span className="label-text font-semibold text-primary">{t('products.form.selling_price')}</span></div>
                 <div className="join w-full">
                   <input
                     type="number"
@@ -381,7 +367,7 @@ export default function ProduitFormModal({
 
             <div className="grid grid-cols-3 gap-2">
               <label className="form-control w-full">
-                <div className="label"><span className="label-text text-xs font-semibold text-primary">TVA (%)</span></div>
+                <div className="label"><span className="label-text text-xs font-semibold text-primary">{t('products.form.tva')}</span></div>
                 <select
                   className="select select-bordered select-sm w-full"
                   value={form.tva}
@@ -396,13 +382,13 @@ export default function ProduitFormModal({
                 </select>
               </label>
               <div className="form-control w-full">
-                 <div className="label"><span className="label-text text-xs">Coef.</span></div>
+                 <div className="label"><span className="label-text text-xs">{t('products.form.margin_coeff')}</span></div>
                  <div className={`input input-bordered input-sm w-full flex items-center justify-center font-bold ${tauxMarge < 1 ? 'text-error' : 'text-success'}`}>
                    {tauxMarge.toFixed(0)}
                  </div>
               </div>
               <div className="form-control w-full">
-                 <div className="label"><span className="label-text text-xs">% Marge</span></div>
+                 <div className="label"><span className="label-text text-xs">{t('products.form.margin_percent')}</span></div>
                  <div className={`input input-bordered input-sm w-full flex items-center justify-center font-bold ${pourcMarge < 0 ? 'text-error' : 'text-success'}`}>
                     {pourcMarge.toFixed(1)}%
                  </div>
@@ -410,7 +396,7 @@ export default function ProduitFormModal({
             </div>
 
             <label className="form-control w-full">
-              <div className="label"><span className="label-text font-semibold">Date expiration</span></div>
+              <div className="label"><span className="label-text font-semibold">{t('products.form.expiration_date')}</span></div>
               <input 
                 type="date" 
                 className="input input-bordered w-full" 
@@ -428,8 +414,8 @@ export default function ProduitFormModal({
                   onChange={(e) => setForm((p) => ({ ...p, use_lot_management: e.target.checked }))} 
                 />
                 <div>
-                  <span className="label-text font-bold">Gestion par lots FIFO</span>
-                  <p className="text-[10px] opacity-60">Recommandé pour médicaments et produits périssables</p>
+                  <span className="label-text font-bold">{t('products.form.lot_management')}</span>
+                  <p className="text-[10px] opacity-60">{t('products.form.lot_management_desc')}</p>
                 </div>
               </label>
             </div>
@@ -447,8 +433,8 @@ export default function ProduitFormModal({
                   onChange={(e) => setForm(p => ({ ...p, requires_prescription: e.target.checked }))}
                 />
                 <div>
-                  <span className="label-text font-bold">Prescription Requise</span>
-                  <p className="text-xs text-base-content/60">Nécessite une ordonnance valide</p>
+                  <span className="label-text font-bold">{t('products.form.requires_prescription')}</span>
+                  <p className="text-xs text-base-content/60">{t('products.form.prescription_desc')}</p>
                 </div>
               </label>
            </div>
@@ -464,9 +450,11 @@ export default function ProduitFormModal({
                   disabled={!form.fournisseur}
                 />
                 <div>
-                  <span className="label-text font-bold">Exclusivité Fournisseur</span>
+                  <span className="label-text font-bold">{t('products.form.supplier_exclusive')}</span>
                   <p className="text-xs text-base-content/60">
-                    Uniquement commandable chez {form.fournisseur ? fournisseurs.find(f => String(f.id) === form.fournisseur)?.name : 'le fournisseur'}
+                    {t('products.form.exclusive_desc', { 
+                      provider: form.fournisseur ? fournisseurs.find(f => String(f.id) === form.fournisseur)?.name : t('products.form.provider_placeholder_short') 
+                    })}
                   </p>
                 </div>
               </label>
@@ -477,8 +465,8 @@ export default function ProduitFormModal({
         <div className="mt-6 p-4 rounded-xl border-2 border-primary/20 bg-primary/5">
            <div className="flex items-center justify-between mb-4">
               <div>
-                <h4 className="text-sm font-bold uppercase tracking-wider text-primary">Réserve et Réapprovisionnement</h4>
-                <p className="text-xs opacity-60">Gérer le stock tampon et les seuils de rayon</p>
+                <h4 className="text-sm font-bold uppercase tracking-wider text-primary">{t('products.form.reserve_title')}</h4>
+                <p className="text-xs opacity-60">{t('products.form.reserve_desc')}</p>
               </div>
               <input 
                 type="checkbox" 
@@ -501,33 +489,33 @@ export default function ProduitFormModal({
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                 <label className="form-control w-full">
                   <div className="label">
-                    <span className="label-text font-semibold">Capacité Rayon</span>
+                    <span className="label-text font-semibold">{t('products.form.rayon_capacity')}</span>
                   </div>
                   <input
                     type="number"
                     className="input input-bordered w-full"
-                    placeholder="Ex: 50"
+                    placeholder={t('products.form.placeholder_capacity')}
                     value={form.capacite_rayon}
                     onChange={(e) => setForm(p => ({ ...p, capacite_rayon: e.target.value }))}
                   />
                   <div className="label">
-                    <span className="label-text-alt text-xs opacity-60">Quantité max. exposée</span>
+                    <span className="label-text-alt text-xs opacity-60">{t('products.form.capacity_desc')}</span>
                   </div>
                 </label>
 
                 <label className="form-control w-full">
                   <div className="label">
-                    <span className="label-text font-semibold">Seuil Réappro Rayon (Min)</span>
+                    <span className="label-text font-semibold">{t('products.form.rayon_reorder_threshold')}</span>
                   </div>
                   <input
                     type="number"
                     className="input input-bordered w-full"
-                    placeholder="Ex: 10"
+                    placeholder={t('products.form.placeholder_reorder')}
                     value={form.min_rayon}
                     onChange={(e) => setForm(p => ({ ...p, min_rayon: e.target.value }))}
                   />
                   <div className="label">
-                    <span className="label-text-alt text-xs opacity-60">Avertir si stock rayon ≤ seuil</span>
+                    <span className="label-text-alt text-xs opacity-60">{t('products.form.reorder_desc')}</span>
                   </div>
                 </label>
              </div>
@@ -545,14 +533,14 @@ export default function ProduitFormModal({
                 onChange={(e) => setForm((p) => ({ ...p, is_chronic: e.target.checked }))}
               />
               <div>
-                <span className="label-text font-bold">Produit pour Pathologie Chronique</span>
-                <p className="text-xs text-base-content/60">Active les rappels automatique d'achat pour les patients</p>
+                <span className="label-text font-bold">{t('products.form.chronic_pathology')}</span>
+                <p className="text-xs text-base-content/60">{t('products.form.chronic_desc')}</p>
               </div>
             </label>
             
             {form.is_chronic && (
               <label className="form-control w-full md:w-48">
-                <div className="label"><span className="label-text text-xs font-semibold">Durée traitement (jours)</span></div>
+                <div className="label"><span className="label-text text-xs font-semibold">{t('products.form.treatment_duration')}</span></div>
                 <div className="join">
                   <input
                     type="number"
@@ -561,7 +549,7 @@ export default function ProduitFormModal({
                     onChange={(e) => setForm((p) => ({ ...p, default_treatment_days: e.target.value }))}
                     min={1}
                   />
-                  <span className="join-item btn btn-sm btn-disabled bg-base-200">Jours</span>
+                  <span className="join-item btn btn-sm btn-disabled bg-base-200">{t('common.days')}</span>
                 </div>
               </label>
             )}
@@ -570,10 +558,10 @@ export default function ProduitFormModal({
 
         <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
           <button type="button" className="btn btn-ghost px-8" onClick={onClose} disabled={loading}>
-            Annuler
+            {t('common.cancel')}
           </button>
           <button type="submit" className="btn btn-primary px-10 shadow-lg shadow-primary/20" disabled={loading}>
-            {loading ? <span className="loading loading-spinner"></span> : '💾 Créer le produit'}
+            {loading ? <span className="loading loading-spinner"></span> : `💾 ${t('products.actions.create')}`}
           </button>
         </div>
       </form>

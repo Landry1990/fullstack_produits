@@ -125,7 +125,7 @@ class CommandeListSerializer(serializers.ModelSerializer):
     Serializer allégé pour la liste des commandes.
     Inclut les champs pour les commandes directes (type, taux_change, frais_coefficient).
     """
-    fournisseur_nom = serializers.CharField(source='fournisseur.name', read_only=True)
+    fournisseur_nom = serializers.SerializerMethodField()
     # Use annotated fields for better performance
     total = serializers.DecimalField(source='total_annotated', max_digits=12, decimal_places=2, read_only=True)
     montant_paye = serializers.DecimalField(source='montant_paye_annotated', max_digits=12, decimal_places=2, read_only=True)
@@ -147,6 +147,11 @@ class CommandeListSerializer(serializers.ModelSerializer):
             'montant_paye', 'reste_a_payer', 'statut_paiement', 'closed_by_name',
             'items_count'
         ]
+
+    def get_fournisseur_nom(self, obj):
+        if obj.fournisseur:
+            return obj.fournisseur.name
+        return obj.fournisseur_nom or "N/A"
 
     def get_closed_by_name(self, obj):
         if obj.closed_by:

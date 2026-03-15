@@ -244,7 +244,7 @@ export default function CategoryManager({
     if (!printTarget) return;
     let url = "";
     if (printTarget.id === -1) {
-      url = `${apiBaseUrl}/api/categories/imprimer_sans_rayon/?exclude_zero=${excludeZeroStock}`;
+      url = `${apiBaseUrl}/api/rayons/imprimer_sans_rayon/?exclude_zero=${excludeZeroStock}`;
     } else {
       url = `${apiBaseUrl}${apiPath}${printTarget.id}/imprimer_etat_stock/?exclude_zero=${excludeZeroStock}`;
     }

@@ -82,7 +82,7 @@ export default function EtatsInventaire() {
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
 
-      toast.success('PDF téléchargé avec succès');
+      toast.success(t('stock.etats_inventaire.messages.success', { defaultValue: 'PDF téléchargé avec succès' }));
     } catch (error) {
       console.error('Erreur téléchargement PDF', error);
       toast.error(t('stock.etats_inventaire.messages.error', { defaultValue: 'Erreur lors du téléchargement du PDF' }));

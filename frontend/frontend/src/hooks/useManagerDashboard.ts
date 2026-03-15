@@ -64,6 +64,18 @@ export const useManagerDashboard = () => {
                     }));
 
                     const ws = XLSX.utils.json_to_sheet(excelData);
+
+                    // Auto-adjust column widths
+                    const colWidths = Object.keys(excelData[0] || {}).map(key => {
+                        const headerLen = key.length;
+                        const maxContentLen = excelData.reduce((max, row) => {
+                            const val = String(row[key as keyof typeof row] || "");
+                            return Math.max(max, val.length);
+                        }, 0);
+                        return { wch: Math.max(headerLen, maxContentLen) + 2 };
+                    });
+                    ws['!cols'] = colWidths;
+
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Stocks Morts');
 

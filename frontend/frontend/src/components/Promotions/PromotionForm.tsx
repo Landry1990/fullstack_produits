@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Promotion } from '../../types/Promotion';
 import { DiscountType, ApplicationMode } from '../../types/Promotion';
 import { safeStorage } from '../../utils/storage';
@@ -16,6 +17,7 @@ interface PromotionFormProps {
 }
 
 const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialData }) => {
+    const { t } = useTranslation();
     const [name, setName] = useState(initialData?.name || '');
     const [description] = useState(initialData?.description || '');
     const [discountType, setDiscountType] = useState<DiscountType>(initialData?.discount_type || DiscountType.PERCENTAGE);
@@ -32,12 +34,12 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
     const [selectedProducts, setSelectedProducts] = useState<any[]>(() => {
         if (!initialData) return [];
         if (initialData.products) {
-            return initialData.products.map(id => ({ id, name: 'Chargement...', quantity: 1 }));
+            return initialData.products.map(id => ({ id, name: t('promotions.form.products.loading_names'), quantity: 1 }));
         }
         if (initialData.pack_items) {
             return initialData.pack_items.map((item: any) => ({
                 id: item.product,
-                name: 'Chargement...',
+                name: t('promotions.form.products.loading_names'),
                 quantity: item.quantity
             }));
         }
@@ -111,7 +113,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
     // Effect to resolve product names if missing (Edit mode for regular promotions)
     useEffect(() => {
         const resolveNames = async () => {
-            const hasPlaceholders = selectedProducts.some(p => p.name === 'Chargement...');
+            const hasPlaceholders = selectedProducts.some(p => p.name === t('promotions.form.products.loading_names'));
             if (!hasPlaceholders) return;
 
             const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
@@ -119,14 +121,14 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
 
             try {
                 const updated = await Promise.all(selectedProducts.map(async (p) => {
-                    if (p.name !== 'Chargement...') return p;
+                    if (p.name !== t('promotions.form.products.loading_names')) return p;
                     try {
                         const { data } = await axios.get(`${apiBaseUrl}/api/produits/${p.id}/`, {
                             headers: { 'Authorization': `Token ${token}` }
                         });
                         return { ...p, name: data.name, selling_price: data.selling_price, stock: data.stock };
                     } catch (e) {
-                        return { ...p, name: `Erreur ID #${p.id}` };
+                        return { ...p, name: t('promotions.form.products.error_id', { id: p.id }) };
                     }
                 }));
                 setSelectedProducts(updated);
@@ -184,13 +186,13 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                 body: JSON.stringify(payload)
             });
 
-            if (!response.ok) throw new Error('Erreur sauvegarde');
+            if (!response.ok) throw new Error(t('promotions.form.save_error'));
             
             onSave();
             onClose();
         } catch (error) {
             console.error(error);
-            alert('Erreur lors de la sauvegarde');
+            alert(t('promotions.form.save_error'));
         } finally {
             setLoading(false);
         }
@@ -204,9 +206,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                     <div>
                         <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                             {initialData ? <Tag className="text-primary" /> : <Plus className="text-success" />}
-                            {initialData ? 'Modifier' : 'Nouvelle'} Promotion
+                            {initialData ? t('promotions.form.title_edit') : t('promotions.form.title_new')}
                         </h2>
-                        <p className="text-sm text-gray-500">Configurez vos remises et packs produits</p>
+                        <p className="text-sm text-gray-500">{t('promotions.form.subtitle')}</p>
                     </div>
                     <button onClick={onClose} className="btn btn-ghost btn-circle">
                         <X size={24} />
@@ -219,29 +221,29 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                         <div className="md:col-span-2 space-y-6">
                             <div className="bg-white p-5 rounded-xl border shadow-sm space-y-4">
                                 <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider flex items-center gap-2">
-                                    <ShoppingBag size={14} /> Informations Générales
+                                    <ShoppingBag size={14} /> {t('promotions.form.general_info')}
                                 </h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nom du Pack/Promotion</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">{t('promotions.form.pack_name')}</label>
                                     <input 
                                         type="text" 
                                         className="input input-bordered w-full font-medium" 
                                         value={name} 
                                         onChange={e => setName(e.target.value)} 
-                                        placeholder="Ex: Pack Beauté, Promotion Noël..."
+                                        placeholder={t('promotions.form.pack_placeholder')} 
                                         required 
                                     />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2 text-primary">
-                                            <Calendar size={14} /> Date de Début
+                                            <Calendar size={14} /> {t('promotions.form.start_date')}
                                         </label>
                                         <input type="date" className="input input-bordered w-full" value={startDate} onChange={e => setStartDate(e.target.value)} required />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1 flex items-center gap-2 text-error">
-                                            <Calendar size={14} /> Date de Fin
+                                            <Calendar size={14} /> {t('promotions.form.end_date')}
                                         </label>
                                         <input type="date" className="input input-bordered w-full" value={endDate} onChange={e => setEndDate(e.target.value)} />
                                     </div>
@@ -252,25 +254,25 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                         {/* Configuration Section */}
                         <div className="space-y-6">
                             <div className="bg-base-200/50 p-5 rounded-xl border border-base-300 space-y-4">
-                                <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">Type & Valeur</h3>
+                                <h3 className="text-xs font-bold uppercase text-gray-400 tracking-wider">{t('promotions.form.type_value')}</h3>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-1">Type de Promo</label>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-1">{t('promotions.form.promo_type')}</label>
                                     <select 
                                         className="select select-bordered w-full font-bold" 
                                         value={discountType} 
                                         onChange={e => setDiscountType(e.target.value as DiscountType)}
                                     >
-                                        <option value={DiscountType.PERCENTAGE}>% Pourcentage</option>
-                                        <option value={DiscountType.FIXED_AMOUNT}>F Montant Fixe</option>
-                                        <option value={DiscountType.BUY_X_GET_Y}>Buy X Get Y</option>
-                                        <option value={DiscountType.BUNDLE}>📦 Pack / Bundle</option>
+                                        <option value={DiscountType.PERCENTAGE}>{t('promotions.form.types.percentage')}</option>
+                                        <option value={DiscountType.FIXED_AMOUNT}>{t('promotions.form.types.fixed')}</option>
+                                        <option value={DiscountType.BUY_X_GET_Y}>{t('promotions.form.types.buy_get')}</option>
+                                        <option value={DiscountType.BUNDLE}>{t('promotions.form.types.bundle')}</option>
                                     </select>
                                 </div>
 
                                 {(discountType === DiscountType.PERCENTAGE || discountType === DiscountType.FIXED_AMOUNT || discountType === DiscountType.BUNDLE) && (
                                     <div className="bg-white p-3 rounded-lg border">
                                         <label className="block text-xs font-bold uppercase text-gray-500 mb-1">
-                                            {discountType === DiscountType.BUNDLE ? 'Prix Total du Pack' : 'Valeur de la Remise'}
+                                            {discountType === DiscountType.BUNDLE ? t('promotions.form.labels.pack_price') : t('promotions.form.labels.discount_value')}
                                         </label>
                                         <div className="relative">
                                             <input 
@@ -289,11 +291,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                 {discountType === DiscountType.BUY_X_GET_Y && (
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="bg-white p-2 rounded-lg border">
-                                            <label className="block text-[10px] font-bold uppercase text-gray-500">Achète</label>
+                                            <label className="block text-[10px] font-bold uppercase text-gray-500">{t('promotions.form.labels.buy')}</label>
                                             <input type="number" className="input input-bordered w-full input-sm font-bold" value={buyQuantity} onChange={e => setBuyQuantity(Number(e.target.value))} min="1" />
                                         </div>
                                         <div className="bg-white p-2 rounded-lg border">
-                                            <label className="block text-[10px] font-bold uppercase text-gray-500">Offert</label>
+                                            <label className="block text-[10px] font-bold uppercase text-gray-500">{t('promotions.form.labels.get')}</label>
                                             <input type="number" className="input input-bordered w-full input-sm font-bold text-success" value={getQuantity} onChange={e => setGetQuantity(Number(e.target.value))} />
                                         </div>
                                     </div>
@@ -308,9 +310,9 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                             <div className="flex items-center justify-between">
                                 <h3 className="font-bold text-lg flex items-center gap-2">
                                     <Package size={20} className="text-secondary" /> 
-                                    Produits Inclus dans la Promotion/Pack
+                                    {t('promotions.form.products.title')}
                                 </h3>
-                                <span className="badge badge-lg badge-ghost">{selectedProducts.length} produit(s)</span>
+                                <span className="badge badge-lg badge-ghost">{t('promotions.form.products.count', { count: selectedProducts.length })}</span>
                             </div>
 
                             <div className="relative group">
@@ -321,7 +323,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                     ref={searchInputRef}
                                     type="text" 
                                     className="input input-bordered w-full pl-14 h-16 text-xl shadow-lg ring-primary/10 focus:ring-4 transition-all" 
-                                    placeholder="Rechercher et ajouter un produit par nom ou CIP..." 
+                                    placeholder={t('promotions.form.products.search_placeholder')} 
                                     value={searchQuery}
                                     onChange={(e) => handleSearchChange(e.target.value)}
                                     onKeyDown={handleSearchKeyDown}
@@ -346,7 +348,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                             <div className="text-xs text-gray-500 flex gap-4">
                                                                 <span>CIP: {p.cip1 || 'N/A'}</span>
                                                                 <span className="flex items-center gap-1">
-                                                                    Stock: <b className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>{p.stock}</b>
+                                                                    {t('promotions.form.products.stock')} <b className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>{p.stock}</b>
                                                                 </span>
                                                                 <span className="font-bold">{p.selling_price} F</span>
                                                             </div>
@@ -369,11 +371,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                             <table className="table w-full">
                                 <thead className="bg-gray-50 border-b">
                                     <tr className="text-gray-500 uppercase text-[10px] tracking-widest">
-                                        <th className="py-4">Désignation Produit</th>
-                                        <th className="py-4 text-center">Stock</th>
-                                        <th className="py-4 text-center w-32">Qté Requise</th>
-                                        <th className="py-4 text-right">Prix Unitaire</th>
-                                        {discountType !== DiscountType.BUNDLE && <th className="py-4 text-right">Effet Remise</th>}
+                                        <th className="py-4">{t('promotions.form.products.table.product')}</th>
+                                        <th className="py-4 text-center">{t('promotions.form.products.table.stock')}</th>
+                                        <th className="py-4 text-center w-32">{t('promotions.form.products.table.qty')}</th>
+                                        <th className="py-4 text-right">{t('promotions.form.products.table.unit_price')}</th>
+                                        {discountType !== DiscountType.BUNDLE && <th className="py-4 text-right">{t('promotions.form.products.table.discount_effect')}</th>}
                                         <th className="py-4 w-20"></th>
                                     </tr>
                                 </thead>
@@ -383,7 +385,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                             <td colSpan={6} className="text-center py-16">
                                                 <div className="flex flex-col items-center gap-3 text-gray-400">
                                                     <Search size={48} strokeWidth={1} />
-                                                    <p className="italic">Aucun produit sélectionné.<br/>Utilisez la barre de recherche ci-dessus.</p>
+                                                    <p className="italic">{t('promotions.form.products.table.empty')}</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -432,7 +434,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                     <td className="py-4 text-right">
                                                          <span className="px-3 py-1 bg-primary/10 text-primary font-bold rounded-full text-xs">
                                                             {discountType === DiscountType.BUY_X_GET_Y ? (
-                                                                `+${getQuantity} Offert(s)`
+                                                                t('promotions.form.products.table.offered', { count: getQuantity })
                                                             ) : (
                                                                 discountType === DiscountType.PERCENTAGE ? `-${value}%` : `-${value} F`
                                                             )}
@@ -459,15 +461,15 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                 {/* Footer */}
                 <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
                     <div className="flex gap-4 text-xs font-bold text-gray-400 uppercase">
-                        <span>Status: {loading ? 'En cours...' : 'Prêt'}</span>
+                        <span>Status: {loading ? t('promotions.form.status.loading') : t('promotions.form.status.ready')}</span>
                         {discountType === DiscountType.BUNDLE && (
-                            <span className="text-secondary">Prix Total Fixé: {value} F</span>
+                            <span className="text-secondary">{t('promotions.form.status.total_fixed', { value })}</span>
                         )}
                     </div>
                     <div className="flex gap-3">
-                        <button type="button" className="btn btn-ghost px-6" onClick={onClose} disabled={loading}>Annuler</button>
+                        <button type="button" className="btn btn-ghost px-6" onClick={onClose} disabled={loading}>{t('promotions.form.actions.cancel')}</button>
                         <button type="submit" className="btn btn-primary px-10 shadow-lg shadow-primary/20" onClick={handleSubmit} disabled={loading}>
-                            {loading ? <span className="loading loading-spinner"></span> : 'Enregistrer la Promotion'}
+                            {loading ? <span className="loading loading-spinner"></span> : t('promotions.form.actions.save')}
                         </button>
                     </div>
                 </div>

@@ -82,17 +82,17 @@ export default function Sidebar() {
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
       ),
       submenus: [
-        { path: '/app/inventaire', label: t('sidebar.stock.inventaire'), key: 'inventaire_saisie' },
+        { path: '/app/inventaire', label: t('sidebar.stock.inventaire.title'), key: 'inventaire_saisie' },
         { path: '/app/journal-ajustements', label: t('sidebar.stock.journal'), key: 'inventaire_journal' },
-        { path: '/app/stock-analysis', label: t('sidebar.stock.analyse'), key: 'inventaire_analyse' },
-        { path: '/app/reappro-rayon', label: 'Réappro Rayon', key: 'inventaire_reappro' },
+        { path: '/app/stock-analysis', label: t('sidebar.stock.analyse.title'), key: 'inventaire_analyse' },
+        { path: '/app/reappro-rayon', label: t('sidebar.stock.reappro.title', 'Réappro Rayon'), key: 'inventaire_reappro' },
         { path: '/app/avoirs', label: t('sidebar.stock.avoirs'), key: 'inventaire_avoirs' },
         { path: '/app/promis', label: t('sidebar.stock.promis'), key: 'inventaire_promis' },
-        { path: '/app/transformations', label: t('sidebar.stock.transformations'), key: 'inventaire_transformations' },
-        { path: '/app/perimes', label: t('sidebar.stock.perimes'), key: 'inventaire_perimes' },
-        { path: '/app/organisation', label: 'Organisation (Rayons, Formes...)', key: 'inventaire_organisation' },
-        { path: '/app/etats-inventaire', label: 'États Inventaires', key: 'inventaire_etats' },
-        { path: '/app/rapport-ug', label: 'Rapport Unités Gratuites (UG)', key: 'inventaire_rapport_ug' }
+        { path: '/app/transformations', label: t('sidebar.stock.transformations.title'), key: 'inventaire_transformations' },
+        { path: '/app/perimes', label: t('sidebar.stock.perimes.title'), key: 'inventaire_perimes' },
+        { path: '/app/organisation', label: t('sidebar.stock.organisation.title', 'Organisation'), key: 'inventaire_organisation' },
+        { path: '/app/etats-inventaire', label: t('sidebar.stock.etats_inventaire.title', 'États Inventaires'), key: 'inventaire_etats' },
+        { path: '/app/rapport-ug', label: t('sidebar.stock.rapport_ug.title', 'Rapport Unités Gratuites (UG)'), key: 'inventaire_rapport_ug' }
       ]
     },
     { 

@@ -35,7 +35,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
         const products = [...data.top_pertes];
         return products.sort((a, b) => {
-            const key = sortConfig.key;
+            const key = sortConfig.key as keyof typeof a;
             const aValue = Number(a[key] || 0);
             const bValue = Number(b[key] || 0);
 

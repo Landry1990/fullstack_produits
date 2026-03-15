@@ -1,0 +1,22 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+django: version: 5.2.5, settings: backend.settings (from ini)
+rootdir: C:\Projet Fullstack\fullstack_produits\backend
+configfile: pytest.ini
+plugins: Faker-40.5.1, django-4.12.0, mock-3.15.1
+collected 49 items
+
+api\tests\test_facturation.py ............................               [ 57%]
+api\tests\test_critical_business_logic.py ......                         [ 69%]
+api\tests\test_stock_management.py .......                               [ 83%]
+api\tests\test_critical_business_logic.py ........                       [100%]
+
+============================== warnings summary ===============================
+api/tests/test_facturation.py: 23 warnings
+api/tests/test_critical_business_logic.py: 7 warnings
+api/tests/test_stock_management.py: 6 warnings
+  C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py:133: UserWarning: No directory at: C:\Projet Fullstack\fullstack_produits\backend\staticfiles\
+    self._inner = middleware(get_response, *args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+====================== 49 passed, 36 warnings in 23.98s =======================

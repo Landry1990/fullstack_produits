@@ -8,6 +8,7 @@ from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
 from decimal import Decimal
+from api.pagination import StandardResultsSetPagination
 from api.models import Facture, FactureProduitAllocation, Caisse, FactureProduit, CommandeProduit, Produit
 
 
@@ -606,6 +607,94 @@ class RapportViewSet(viewsets.ViewSet):
         
         data = self._get_rapport_data(date_debut, date_fin, mois)
         return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def produits_annules(self, request):
+        """
+        Liste les produits issus de factures annulées.
+        """
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+
+        queryset = FactureProduit.objects.filter(
+            facture__status=Facture.Status.ANNULEE
+        ).select_related('facture', 'produit', 'facture__cancelled_by').order_by('-facture__date_annulation')
+
+        if date_debut:
+            queryset = queryset.filter(facture__date_annulation__gte=date_debut)
+        if date_fin:
+            # Ensure date_fin includes the whole day (23:59:59)
+            if len(date_fin) == 10: # YYYY-MM-DD
+                from django.utils import timezone
+                from datetime import datetime, time
+                end_dt = datetime.combine(datetime.strptime(date_fin, '%Y-%m-%d').date(), time.max)
+                end_dt = timezone.make_aware(end_dt)
+                queryset = queryset.filter(facture__date_annulation__lte=end_dt)
+            else:
+                queryset = queryset.filter(facture__date_annulation__lte=date_fin)
+
+        # Pagination handles large results
+        paginator = self.paginator
+        page = paginator.paginate_queryset(queryset, self.request, view=self)
+        if page is not None:
+            data = []
+            for fp in page:
+                notes = fp.facture.notes or ""
+                motif = notes.split('Motif: ')[-1] if 'Motif: ' in notes else ""
+                
+                # Determine source from motif
+                source = "VENTES"
+                if "Annulation depuis Caisse Centrale" in notes:
+                    source = "CAISSE_CENTRALE"
+                elif "Modification (Reload)" in notes:
+                    source = "VENTES_MODIF"
+
+                data.append({
+                    'date_annulation': fp.facture.date_annulation.strftime('%d/%m/%Y %H:%M') if fp.facture.date_annulation else "",
+                    'numero_facture': fp.facture.numero_facture or f"#{fp.facture.id}",
+                    'nom_produit': fp.produit.name if fp.produit else fp.produit_nom,
+                    'quantite_annulee': fp.quantity,
+                    'lot': fp.lot,
+                    'stock_actuel': fp.produit.stock if fp.produit else 0,
+                    'annule_par': fp.facture.cancelled_by.username if fp.facture.cancelled_by else "Système",
+                    'motif': motif,
+                    'source': source
+                })
+            return paginator.get_paginated_response(data)
+
+        data = []
+        for fp in queryset:
+            notes = fp.facture.notes or ""
+            motif = notes.split('Motif: ')[-1] if 'Motif: ' in notes else ""
+            
+            # Determine source from motif
+            source = "VENTES"
+            if "Annulation depuis Caisse Centrale" in notes:
+                source = "CAISSE_CENTRALE"
+            elif "Modification (Reload)" in notes:
+                source = "VENTES_MODIF"
+
+            data.append({
+                'date_annulation': fp.facture.date_annulation.strftime('%d/%m/%Y %H:%M') if fp.facture.date_annulation else "",
+                'numero_facture': fp.facture.numero_facture or f"#{fp.facture.id}",
+                'nom_produit': fp.produit.name if fp.produit else fp.produit_nom,
+                'quantite_annulee': fp.quantity,
+                'lot': fp.lot,
+                'stock_actuel': fp.produit.stock if fp.produit else 0,
+                'annule_par': fp.facture.cancelled_by.username if fp.facture.cancelled_by else "Système",
+                'motif': motif,
+                'source': source
+            })
+        return Response(data)
+
+    @property
+    def paginator(self):
+        """
+        Instancie le paginateur si nécessaire et le stocke.
+        """
+        if not hasattr(self, '_paginator'):
+            self._paginator = StandardResultsSetPagination()
+        return self._paginator
 
     @action(detail=False, methods=['get'])
     def rapport_mensuel_pdf(self, request):

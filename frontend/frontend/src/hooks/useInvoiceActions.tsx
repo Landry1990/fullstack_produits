@@ -188,6 +188,7 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
             date_paiement: fullFacture.date,
             montant_verse: fullFacture.total_ttc,
             rendu: '0',
+            reference: null,
             is_duplicate: true, // Marquer comme duplicata
             user_details: {
                 id: 0,
@@ -299,7 +300,9 @@ export const useInvoiceActions = ({ setFacturesLocal }: UseInvoiceActionsProps) 
                 status: 'BROU',
                 paiements: [], // Pas de paiements liés
                 session_ticket_number: undefined,
-                date: new Date().toISOString()
+                date: new Date().toISOString(),
+                date_paiement: new Date().toISOString(),
+                reference: null,
             };
 
             // Sauvegarder la facture "avoir" pour le chargement dans Facturation

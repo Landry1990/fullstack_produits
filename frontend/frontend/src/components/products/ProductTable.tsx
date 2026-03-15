@@ -48,11 +48,11 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                   className="checkbox checkbox-xs checkbox-primary"
                   checked={selectedProductIds.length === products.length && products.length > 0}
                   onChange={onSelectAll}
-                  title="Tout sélectionner"
+                  title={t('products.table.select_all')}
                 />
               </th>
-              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider w-20">CIP</th>
-              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider">Produit</th>
+              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider w-20">{t('products.table.cip')}</th>
+              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider">{t('products.table.product')}</th>
             </tr>
           </thead>
           <tbody>
@@ -102,7 +102,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       {produit.is_supplier_exclusive && (
                         <div 
                           className="tooltip tooltip-right z-50 inline-flex shrink-0" 
-                          data-tip={`Exclusivité: ${produit.fournisseur_name || 'Fournisseur Spécifique'}`}
+                          data-tip={`${t('products.table.exclusivity')}: ${produit.fournisseur_name || t('products.form.provider_placeholder')}`}
                         >
                           <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
                             E

@@ -16,6 +16,30 @@ from ..serializers import UserSerializer, ProfileSerializer as UserProfileSerial
 from ..audit_helpers import log_audit
 from ..pagination import StandardResultsSetPagination
 
+def auto_close_old_sessions(user=None):
+    """
+    Closes any unclosed sessions from previous days.
+    If user is provided, only closes sessions for that user.
+    """
+    from django.utils import timezone
+    import datetime
+    today = timezone.now().date()
+    
+    # We use a separate import here to avoid circular dependencies if any
+    from ..models import UserDailySession
+    
+    query = UserDailySession.objects.filter(date__lt=today, last_logout__isnull=True)
+    if user:
+        query = query.filter(user=user)
+        
+    for session in query:
+        # Set logout to 23:59:59 of that day
+        end_of_day = timezone.make_aware(
+            datetime.datetime.combine(session.date, datetime.time.max)
+        )
+        session.last_logout = end_of_day
+        session.save()
+
 class CustomAuthToken(ObtainAuthToken):
     """
     Custom auth token view that returns user details along with the token.
@@ -72,19 +96,8 @@ class CustomAuthToken(ObtainAuthToken):
         import datetime
         today = timezone.now().date()
         
-        # 1. Auto-close old unclosed sessions from previous days
-        unclosed_old_sessions = UserDailySession.objects.filter(
-            user=user, 
-            date__lt=today, 
-            last_logout__isnull=True
-        )
-        for old_session in unclosed_old_sessions:
-            # Set logout to 23:59:59 of that day
-            end_of_day = timezone.make_aware(
-                datetime.datetime.combine(old_session.date, datetime.time.max)
-            )
-            old_session.last_logout = end_of_day
-            old_session.save()
+        # 1. Auto-close old unclosed sessions for THIS user
+        auto_close_old_sessions(user=user)
 
         # 2. Get or create today's session
         # get_or_create handles the "first login of the day" logic naturally
@@ -284,13 +297,53 @@ class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        
+        # Auto-close old sessions when viewing the list
+        # If superuser, close ALL old sessions. If regular user, only close their own.
         if user.is_superuser:
+            auto_close_old_sessions()
             return UserDailySession.objects.all().order_by('-date', '-first_login')
+        
+        auto_close_old_sessions(user=user)
         return UserDailySession.objects.filter(user=user).order_by('-date', '-first_login')
 
     def get_serializer_class(self):
         from ..serializers_sessions import UserDailySessionSerializer
         return UserDailySessionSerializer
+    @action(detail=True, methods=['post'])
+    def force_logout(self, request, pk=None):
+        """
+        Forces a user logout by deleting their auth tokens and closing the session.
+        Only superusers can perform this action.
+        """
+        if not request.user.is_superuser:
+            return Response({'detail': 'Permission refusée.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        session = self.get_object()
+        user = session.user
+        
+        # 1. Delete all tokens for this user
+        from rest_framework.authtoken.models import Token
+        Token.objects.filter(user=user).delete()
+        
+        # 2. Update session logout time if not already set
+        if not session.last_logout:
+            from django.utils import timezone
+            session.last_logout = timezone.now()
+            session.save()
+            
+        log_audit(
+            user=request.user,
+            action=AuditLog.Action.UPDATE,
+            model_name='UserDailySession',
+            object_id=session.id,
+            description=f"Déconnexion forcée pour l'utilisateur: {user.username}",
+            details={'user_id': user.id, 'username': user.username},
+            request=request
+        )
+        
+        return Response({'status': f'Utilisateur {user.username} déconnecté avec succès.'})
+
     @action(detail=False, methods=['get'])
     def recap_mensuel(self, request):
         """

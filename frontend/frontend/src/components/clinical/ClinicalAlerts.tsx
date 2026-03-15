@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 
 export interface ClinicalAlert {
   type: string
@@ -13,6 +14,7 @@ interface ClinicalAlertsProps {
 }
 
 export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
+  const { t } = useTranslation();
   if (!alerts || alerts.length === 0) return null
 
   // Group by gravity for sorting/styling
@@ -28,11 +30,11 @@ export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
           <div className="flex-1">
             <h3 className="font-bold uppercase tracking-wide flex items-center gap-2">
               {alert.title}
-              <span className="badge badge-sm badge-white text-error font-extrabold">{alert.gravity}</span>
+              <span className="badge badge-sm badge-white text-error font-extrabold">{t(`clinical.alerts.gravities.${alert.gravity}`)}</span>
             </h3>
             <div className="text-sm mt-1">{alert.description}</div>
             <div className="text-xs mt-1 opacity-90 font-mono">
-              Produits : {alert.product_a.name} ↔ {alert.product_b.name}
+              {t('clinical.alerts.products_label')} {alert.product_a.name} ↔ {alert.product_b.name}
             </div>
           </div>
         </div>
@@ -45,7 +47,7 @@ export default function ClinicalAlerts({ alerts }: ClinicalAlertsProps) {
           <div className="flex-1">
             <h3 className="font-bold flex items-center gap-2">
               {alert.title}
-              {alert.gravity === 'A_PRENDRE_EN_COMPTE' && <span className="badge badge-sm badge-ghost">A surveiller</span>}
+              {alert.gravity === 'A_PRENDRE_EN_COMPTE' && <span className="badge badge-sm badge-ghost">{t('clinical.alerts.to_watch')}</span>}
             </h3>
             <div className="text-xs">{alert.description}</div>
             <div className="text-xs mt-1 font-mono opacity-80">

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import axios from 'axios'
+import { useTranslation } from 'react-i18next'
 import { normalizeNumberInput } from '../utils/formatters'
 import PremiumModal from './common/PremiumModal'
 
@@ -10,6 +11,7 @@ interface CashMovementModalProps {
 }
 
 export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMovementModalProps) {
+  const { t } = useTranslation('caisse')
   const [type, setType] = useState<'ENTREE' | 'SORTIE'>('SORTIE')
   const [montant, setMontant] = useState('')
   const [motif, setMotif] = useState('')
@@ -30,10 +32,10 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
     try {
       const val = normalizeNumberInput(montant)
       if (!montant || isNaN(val) || val <= 0) {
-        throw new Error("Montant invalide")
+        throw new Error(t('journal.movement_modal.invalid_amount'))
       }
       if (!motif.trim()) {
-        throw new Error("Le motif est requis")
+        throw new Error(t('journal.movement_modal.reason_required'))
       }
 
       await axios.post(`${apiBaseUrl}/api/mouvements-caisse/`, {
@@ -53,7 +55,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
       onClose()
     } catch (err: any) {
       console.error('Erreur creation mouvement:', err)
-      setError(err.response?.data?.detail || err.message || "Erreur lors de l'enregistrement")
+      setError(err.response?.data?.detail || err.message || t('journal.movement_modal.save_error'))
     } finally {
       setLoading(false)
     }
@@ -63,8 +65,8 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={type === 'SORTIE' ? '📤 Nouvelle Dépense (Sortie)' : '📥 Nouvelle Entrée Divers'}
-      subtitle="Enregistrer un mouvement de caisse"
+      title={type === 'SORTIE' ? `📤 ${t('journal.movement_modal.title_out')}` : `📥 ${t('journal.movement_modal.title_in')}`}
+      subtitle={t('journal.movement_modal.subtitle')}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${type === 'SORTIE' ? 'text-error' : 'text-success'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -83,7 +85,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
               className="join-item btn btn-sm px-6" 
               type="radio" 
               name="options" 
-              aria-label="Sortie (Dépense)"
+              aria-label={t('journal.movement_modal.type_out')}
               checked={type === 'SORTIE'}
               onChange={() => setType('SORTIE')} 
             />
@@ -91,7 +93,7 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
               className="join-item btn btn-sm px-6" 
               type="radio" 
               name="options" 
-              aria-label="Entrée (Apport)"
+              aria-label={t('journal.movement_modal.type_in')}
               checked={type === 'ENTREE'}
               onChange={() => setType('ENTREE')} 
             />
@@ -99,11 +101,11 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Montant</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('journal.movement_modal.amount')}</label>
           <input 
             type="number" 
-            placeholder="Ex: 5000" 
-            className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+            placeholder={t('journal.movement_modal.amount_placeholder')} 
+            className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-bold" 
             value={montant}
             onChange={(e) => setMontant(e.target.value)}
             required
@@ -112,10 +114,10 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Motif</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('journal.movement_modal.reason')}</label>
           <input 
             type="text" 
-            placeholder="Ex: Facture Electricité, Carburant..." 
+            placeholder={t('journal.movement_modal.reason_placeholder')} 
             className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
             value={motif}
             onChange={(e) => setMotif(e.target.value)}
@@ -124,10 +126,10 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Description / Détails (Optionnel)</label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('journal.movement_modal.description')}</label>
           <textarea 
             className="textarea textarea-bordered w-full h-24 rounded-xl resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
-            placeholder="Plus de détails..."
+            placeholder={t('journal.movement_modal.description_placeholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           ></textarea>
@@ -142,14 +144,14 @@ export default function CashMovementModal({ isOpen, onClose, onSuccess }: CashMo
 
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={loading}>
-            Annuler
+            {t('common.cancel') || 'Annuler'}
           </button>
           <button 
             type="submit" 
             className={`btn ${type === 'SORTIE' ? 'btn-error shadow-lg shadow-error/20' : 'btn-success shadow-lg shadow-success/20'} text-white px-8 rounded-xl`}
             disabled={loading}
           >
-            {loading ? <span className="loading loading-spinner"></span> : 'Enregistrer'}
+            {loading ? <span className="loading loading-spinner"></span> : t('journal.movement_modal.save')}
           </button>
         </div>
       </form>

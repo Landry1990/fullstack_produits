@@ -1,0 +1,5 @@
+
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+src/components/Commandes.tsx(1706,1): error TS1128: Declaration or statement expected.

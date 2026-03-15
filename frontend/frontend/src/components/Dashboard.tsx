@@ -139,12 +139,12 @@ export default function Dashboard() {
         <div className="flex items-center gap-3 bg-base-100 px-4 py-2.5 rounded-xl shadow-sm border border-base-300">
           <CalendarDays className="w-4 h-4 text-primary" />
           <span className="text-xs font-black uppercase tracking-widest text-base-content/60">
-            {getServerDate().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {getServerDate().toLocaleDateString(t('common.locale', { defaultValue: 'fr-FR' }), { day: 'numeric', month: 'short', year: 'numeric' })}
           </span>
           <button 
             className={`btn btn-xs btn-ghost btn-circle ${statsLoading || chartLoading ? 'loading' : 'hover:bg-primary/10 hover:text-primary'}`}
             onClick={handleRefreshAll}
-            title="Actualiser les données"
+            title={t('dashboard.refresh_tooltip')}
           >
             {!(statsLoading || chartLoading) && <RefreshCw className="w-3.5 h-3.5" />}
           </button>
@@ -324,7 +324,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.revenue_evolution')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">7 derniers jours</p>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.charts.last_7_days')}</p>
                   </div>
                 </div>
               </div>
@@ -390,8 +390,8 @@ export default function Dashboard() {
                     <History className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.hourly_traffic_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Fréquentation horaire</p>
+                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.hourly_traffic_title')}</h2>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.hourly_traffic_desc')}</p>
                   </div>
                 </div>
               </div>
@@ -456,7 +456,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.debts.supplier_debts_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Dettes envers les fournisseurs</p>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.debts.supplier_debts_desc')}</p>
                   </div>
                 </div>
                  <div className="flex items-center gap-3">
@@ -580,7 +580,7 @@ export default function Dashboard() {
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{p.client.length > 15 ? p.client.substring(0, 15) + '...' : p.client}</span>
                           <span className="text-[10px] text-base-content/30">•</span>
-                          <span className="text-[10px] font-black text-base-content/50">{p.quantite} UNITÉS</span>
+                          <span className="text-[10px] font-black text-base-content/50">{p.quantite} {t('dashboard.alerts.units')}</span>
                         </div>
                       </div>
                       <div className="bg-emerald-50 text-emerald-700 font-black text-[9px] px-2 py-1 rounded-lg uppercase tracking-widest">
@@ -609,7 +609,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('dashboard.alerts.stock_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Alertes de rupture</p>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.alerts.stock_subtitle')}</p>
                   </div>
                 </div>
                 {stats && (stats.low_stock?.value || 0) > 0 && (
@@ -639,7 +639,7 @@ export default function Dashboard() {
                             </span>
                             {(item as any).days_remaining > 0 && item.stock > 0 && (
                                 <span className="text-[9px] font-bold text-base-content/20 uppercase tracking-widest">
-                                    {Math.round((item as any).days_remaining)} JOURS RESTANTS
+                                    {Math.round((item as any).days_remaining)} {t('dashboard.alerts.remaining_days')}
                                 </span>
                             )}
                       </div>
@@ -666,7 +666,7 @@ export default function Dashboard() {
                       });
                     }}
                   >
-                    Commander
+                    {t('dashboard.alerts.order')}
                   </button>
                 )}
                 <Link 
@@ -674,7 +674,7 @@ export default function Dashboard() {
                   className="btn btn-ghost bg-base-100 hover:bg-base-200 btn-sm flex-1 text-base-content/60 text-[9px] font-black uppercase tracking-widest rounded-lg border border-base-300"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Tout voir
+                  {t('dashboard.alerts.view_all')}
                 </Link>
               </div>
             </div>
@@ -693,7 +693,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('dashboard.alerts.expiry_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">Produits périmés bientôt</p>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.alerts.expiry_subtitle')}</p>
                   </div>
                 </div>
               </div>

@@ -103,7 +103,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                             onChange={(e) => setSellerFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="">Tous les vendeurs</option>
+                            <option value="">{t('sales.filters.all_sellers')}</option>
                             {users.map(u => (
                                 <option key={u.id} value={u.id}>
                                     {u.first_name} {u.last_name} ({u.username})
@@ -127,7 +127,7 @@ export const SalesFilters: React.FC<SalesFiltersProps> = ({ filters, onDeleteDra
                     <button
                         onClick={onRefresh}
                         className="btn btn-ghost btn-sm text-base-content/60"
-                        title="Actualiser"
+                        title={t('common.refresh', { defaultValue: 'Actualiser' })}
                     >
                         <RefreshCw className="w-5 h-5" />
                     </button>

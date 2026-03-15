@@ -57,16 +57,20 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           ...prev,
           patient_nom: facture.client_name || '',
           lignes: facture.produits
-            .filter((p: any) => {
-                const prod = p.produit as ProduitModel;
+            .filter((p) => {
+                const prod = typeof p.produit === 'object' ? p.produit : null;
+                if (!prod) return false;
                 return prod.requires_prescription || (prod.surveillance_category && prod.surveillance_category !== 'NONE');
             })
-            .map((p: any) => ({
-              produit_id: p.produit.id,
-              produit_nom: p.produit.name,
-              quantite: p.quantity,
-              surveillance_category: p.produit.surveillance_category || 'NONE'
-            }))
+            .map((p) => {
+              const prod = p.produit as ProduitModel;
+              return {
+                produit_id: prod.id,
+                produit_nom: prod.name,
+                quantite: p.quantity,
+                surveillance_category: prod.surveillance_category || 'NONE'
+              };
+            })
         }));
       } else if (lignes) {
         setFormData(prev => ({

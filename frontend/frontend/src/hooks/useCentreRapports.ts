@@ -197,6 +197,28 @@ export const QUERIES: QueryDefinition[] = [
             { key: 'date_fin', label: 'Fin', type: 'date', required: true }
         ],
         resultType: 'table'
+    },
+    {
+        id: 'recap_paiements_fournisseurs',
+        name: 'Récapitulatif Paiements Fournisseurs',
+        description: 'Somme des paiements par date et fournisseur',
+        endpoint: '/api/paiements-fournisseurs/recap_journalier/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: true },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: true }
+        ],
+        resultType: 'table'
+    },
+    {
+        id: 'produits_annules',
+        name: 'Produits Annulés',
+        description: 'Liste des produits issus de factures annulées avec quantités et lots',
+        endpoint: '/api/rapports/produits_annules/',
+        params: [
+            { key: 'date_debut', label: 'Début', type: 'date', required: false },
+            { key: 'date_fin', label: 'Fin', type: 'date', required: false }
+        ],
+        resultType: 'table'
     }
 ];
 
@@ -211,25 +233,61 @@ export const COLUMN_LABELS: Record<string, string> = {
     name: 'Nom',
     nom_produit: 'Produit',
     cip: 'CIP',
+    total_montant: 'Montant Total',
     stock: 'Stock',
     rayon: 'Rayon',
     fournisseur: 'Fournisseur',
+    mode_paiement: 'Mode Règl.',
+    reference: 'Référence',
     valeur: 'Valeur',
     pmp: 'PMP',
     vendeur: 'Vendeur',
     nbre_ventes: 'Nb Ventes',
-    date: 'Date',
     total: 'Total',
     status: 'Statut',
-    dernier_vente: 'Dernière Vente'
+    dernier_vente: 'Dernière Vente',
+    date_annulation: 'Date Annulation',
+    numero_facture: 'Facture',
+    quantite_annulee: 'Qté Annulée',
+    lot: 'Lot',
+    stock_actuel: 'Stock Actuel',
+    annule_par: 'Annulé Par',
+    motif: 'Motif',
+    source: 'Source'
 };
 
 export const formatColumnHeader = (col: string): string => {
     return COLUMN_LABELS[col] || col.replace(/_/g, ' ');
 };
 
-export const formatValue = (key: string, value: unknown): string => {
+export const isNumericColumn = (col: string): boolean => {
+    const c = col.toLowerCase();
+    return c.includes('montant') || 
+           c.includes('total') || 
+           c.includes('ca') || 
+           c.includes('price') || 
+           c.includes('cout') || 
+           c.includes('marge') || 
+           c.includes('chiffre_affaires') ||
+           c.includes('solde') ||
+           c.includes('quantite') ||
+           c.includes('nbre_ventes') ||
+           c.includes('nb_ventes') ||
+           c.includes('panier_moyen');
+};
+
+export const formatValue = (key: string, value: unknown, t?: any): string => {
     if (value === null || value === undefined) return '-';
+    
+    if (key === 'source' && t) {
+        return t(`reports.results.sources.${value}`, { defaultValue: String(value) });
+    }
+
+    if (key === 'status' && t) {
+        // Handle common status translations if needed
+        return t(`common.status.${String(value).toLowerCase()}`, { defaultValue: String(value) });
+    }
+
     if (typeof value === 'number') {
         if (key.includes('taux') || key.includes('percent')) {
             return formatNumber(value, 1) + ' %';
@@ -444,6 +502,18 @@ export function useCentreRapports() {
         }
 
         const ws = XLSX.utils.json_to_sheet(data);
+
+        // Auto-adjust column widths
+        const colWidths = Object.keys(data[0] || {}).map(key => {
+            const headerLen = key.length;
+            const maxContentLen = data.reduce((max, row) => {
+                const val = String(row[key] || "");
+                return Math.max(max, val.length);
+            }, 0);
+            return { wch: Math.max(headerLen, maxContentLen) + 2 };
+        });
+        ws['!cols'] = colWidths;
+
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Rapport');
         const today = new Date().toISOString().slice(0, 10);

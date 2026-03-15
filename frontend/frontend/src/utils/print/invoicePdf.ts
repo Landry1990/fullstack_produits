@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import { formatNumber } from './formatters';
+import { formatNumber, formatDateFr } from '../../utils/formatters';
 
 interface InvoicePdfData {
     numero_facture: string;
@@ -64,7 +64,7 @@ export function generateInvoiceA4(data: InvoicePdfData): jsPDF {
     doc.text(`FACTURE N° ${data.numero_facture}`, pageWidth - 80, 20);
 
     doc.setFontSize(10);
-    doc.text(`Date: ${data.date}`, pageWidth - 80, 28);
+    doc.text(`Date: ${formatDateFr(data.date)}`, 15, 65);
     doc.text(`Client: ${data.client_name}`, pageWidth - 80, 34);
     if (data.client_phone) {
         doc.text(`Tél Client: ${data.client_phone}`, pageWidth - 80, 40);

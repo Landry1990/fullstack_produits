@@ -38,10 +38,11 @@ export {
 
 // Sale completion hook
 export {
-    useSaleCompletion,
-    type SaleCompletionParams,
-    type SaleCompletionResult,
-    type UseSaleCompletionReturn
+    useSaleCompletion
 } from './useSaleCompletion';
 
-export type { PaymentDetails, TotalsData, AyantDroit as AyantDroitData } from '../types';
+export type {
+    UseSaleCompletionReturn
+} from './useSaleCompletion';
+
+export type { PaymentDetails, TotalsData, AyantDroit as AyantDroitData, SaleCompletionParams, SaleCompletionResult } from '../types';

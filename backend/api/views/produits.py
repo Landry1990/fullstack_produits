@@ -1309,7 +1309,7 @@ class CategorieViewSet(viewsets.ModelViewSet):
     """API endpoint for categories (rayons) - Fresh implementation."""
     queryset = Rayon.objects.all().order_by('name')
     serializer_class = RayonSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAuthenticated]
     pagination_class = StandardResultsSetPagination
 
     @action(detail=True, methods=['get'])

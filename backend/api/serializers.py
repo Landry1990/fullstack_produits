@@ -447,17 +447,17 @@ class ProduitSerializer(serializers.ModelSerializer):
 
 class CommandeProduitSerializer(serializers.ModelSerializer):
     produit_nom = serializers.SerializerMethodField()
-    produit_stock = serializers.IntegerField(source='produit.stock', read_only=True)
-    produit_rotation_moyenne = serializers.CharField(source='produit.rotation_moyenne', read_only=True)
-    produit_cip = serializers.CharField(source='produit.cip1', read_only=True)
+    produit_stock = serializers.SerializerMethodField()
+    produit_rotation_moyenne = serializers.SerializerMethodField()
+    produit_cip = serializers.SerializerMethodField()
     
     # Nouveaux champs pour l'aide à la décision
-    produit_dernier_achat = serializers.DateField(source='produit.dernier_achat', read_only=True, allow_null=True, default=None)
-    produit_dernier_vente = serializers.DateField(source='produit.dernier_vente', read_only=True, allow_null=True, default=None)
-    produit_stock_minimum = serializers.IntegerField(source='produit.stock_minimum', read_only=True, allow_null=True, default=0)
-    produit_stock_maximum = serializers.IntegerField(source='produit.stock_maximum', read_only=True, allow_null=True, default=0)
-    produit_stock_alert = serializers.IntegerField(source='produit.stock_alert', read_only=True, allow_null=True, default=0)
-    produit_cost_price = serializers.DecimalField(source='produit.cost_price', max_digits=10, decimal_places=2, read_only=True, allow_null=True, default=None)
+    produit_dernier_achat = serializers.SerializerMethodField()
+    produit_dernier_vente = serializers.SerializerMethodField()
+    produit_stock_minimum = serializers.SerializerMethodField()
+    produit_stock_maximum = serializers.SerializerMethodField()
+    produit_stock_alert = serializers.SerializerMethodField()
+    produit_cost_price = serializers.SerializerMethodField()
     
     commande_date = serializers.DateTimeField(source='commande.date', read_only=True)
     fournisseur_name = serializers.SerializerMethodField()
@@ -470,7 +470,38 @@ class CommandeProduitSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at', 'total_quantity', 'effective_cost']
 
     def get_produit_nom(self, obj):
-        return obj.produit.name if obj.produit else obj.produit_nom
+        if obj.produit:
+            return obj.produit.name
+        if obj.produit_nom:
+            return f"{obj.produit_nom} (supprimé)"
+        return "Produit inconnu (supprimé)"
+
+    def get_produit_stock(self, obj):
+        return obj.produit.stock if obj.produit else 0
+
+    def get_produit_rotation_moyenne(self, obj):
+        return obj.produit.rotation_moyenne if obj.produit else "0"
+
+    def get_produit_cip(self, obj):
+        return obj.produit.cip1 if obj.produit else ""
+
+    def get_produit_dernier_achat(self, obj):
+        return obj.produit.dernier_achat if obj.produit else None
+
+    def get_produit_dernier_vente(self, obj):
+        return obj.produit.dernier_vente if obj.produit else None
+
+    def get_produit_stock_minimum(self, obj):
+        return obj.produit.stock_minimum if obj.produit else 0
+
+    def get_produit_stock_maximum(self, obj):
+        return obj.produit.stock_maximum if obj.produit else 0
+
+    def get_produit_stock_alert(self, obj):
+        return obj.produit.stock_alert if obj.produit else 0
+
+    def get_produit_cost_price(self, obj):
+        return obj.produit.cost_price if obj.produit else None
 
     def get_fournisseur_name(self, obj):
         if obj.commande.fournisseur:
@@ -490,10 +521,9 @@ class CommandeSerializer(serializers.ModelSerializer):
         read_only_fields = ['date', 'closed_by']
         extra_kwargs = {
             'fournisseur': {
-                'required': True,
-                'allow_null': False,
+                'required': False,
+                'allow_null': True,
                 'error_messages': {
-                    'required': 'Le fournisseur est obligatoire pour créer une commande.',
                     'null': 'Le fournisseur ne peut pas être vide.'
                 }
             }

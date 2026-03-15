@@ -71,7 +71,7 @@ export function useCart({ apiBaseUrl = '', onRequirePrescription, quantityInputs
                         const price = fullProduit.last_purchase_price
                             ? fullProduit.last_purchase_price
                             : fullProduit.cost_price ?? '0'
-                        basePrice = price
+                        basePrice = price.toString()
                     }
 
                     const prixUnitaire = normalizeNumberInput(basePrice, { min: 0 })

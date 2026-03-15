@@ -245,8 +245,8 @@ const JournalAudit: React.FC = () => {
                     <label className="text-[10px] font-black uppercase opacity-40 ml-1">{t('audit.filters.user_label', { defaultValue: 'Utilisateur' })}</label>
                     <select className="select select-bordered select-sm w-full font-bold focus:ring-0" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}>
                         <option value="">{t('audit.filters.all_users', { defaultValue: 'Tous les utilisateurs' })}</option>
-                        {users.map(user => (
-                            <option key={user.id} value={user.id.toString()}>
+                        {users.filter(u => u.id).map(user => (
+                            <option key={user.id} value={user.id?.toString()}>
                                 {user.first_name || user.last_name ? `${user.first_name} ${user.last_name}` : user.username}
                             </option>
                         ))}

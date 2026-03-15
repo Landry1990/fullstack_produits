@@ -33,3 +33,41 @@ class PaiementFournisseurViewSet(viewsets.ModelViewSet):
         paiements = self.queryset.filter(fournisseur_id=fournisseur_id)
         serializer = self.get_serializer(paiements, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def recap_journalier(self, request):
+        """
+        Génère un récapitulatif des paiements par date et fournisseur.
+        """
+        date_debut = request.query_params.get('date_debut')
+        date_fin = request.query_params.get('date_fin')
+        
+        query = PaiementFournisseur.objects.all().select_related('fournisseur')
+        
+        if date_debut:
+            query = query.filter(date_paiement__gte=date_debut)
+        if date_fin:
+            query = query.filter(date_paiement__lte=date_fin)
+            
+        from django.db.models import Sum, F
+        from django.db.models.functions import TruncDate
+        
+        recap = query.annotate(
+            jour=TruncDate('date_paiement')
+        ).values(
+            'jour', 'fournisseur__name', 'mode_paiement', 'reference'
+        ).annotate(
+            total_montant=Sum('montant')
+        ).order_by('-jour', 'fournisseur__name')
+        
+        data = []
+        for item in recap:
+            data.append({
+                'date': item['jour'],
+                'fournisseur': item['fournisseur__name'],
+                'mode_paiement': item['mode_paiement'],
+                'reference': item['reference'] or '-',
+                'total_montant': item['total_montant']
+            })
+            
+        return Response(data)

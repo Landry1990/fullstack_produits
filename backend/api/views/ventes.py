@@ -229,32 +229,38 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         """
         Supprime une facture (si brouillon ou annulée).
-        Logs l'action avant suppression.
+        Si la facture est VALIDEE ou PAYEE, on réintègre d'abord le stock via cancel_invoice.
         """
         instance = self.get_object()
-        
-        # Vérification sécurité supplémentaire (si nécessaire)
-        # if instance.status not in [Facture.Status.BROUILLON, Facture.Status.ANNULEE]:
-        #     return Response({'detail': 'Seules les factures brouillon ou annulées peuvent être supprimées.'}, status=status.HTTP_400_BAD_REQUEST)
         
         facture_id = instance.id
         numero = instance.numero_facture
         montant = instance.total_ttc
         client_nom = instance.client.name if instance.client else 'Passager'
+        status_initial = instance.status
 
         try:
-            # Log avant suppression car l'objet n'existera plus
+            # 1. Si la facture est VALIDEE, PAYEE ou EN_COMPTE, on doit réintégrer le stock
+            # avant de supprimer physiquement l'objet de la base.
+            if status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'PAY', 'VAL', 'EN_COMPTE']:
+                # On utilise SalesService pour remettre les produits en stock
+                success, message = SalesService.cancel_invoice(instance, request.user, motif=f"Réintégration automatique avant suppression par {request.user.username}")
+                if not success:
+                    return Response({'detail': f"Erreur lors de la réintégration du stock : {message}"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # 2. Log d'audit avant suppression
             log_audit(
                 user=request.user,
                 action=AuditLog.Action.INVOICE_DELETE,
                 model_name='Facture',
                 object_id=numero or str(facture_id),
-                description=f"Suppression Facture {numero or '#' + str(facture_id)}",
+                description=f"Suppression Facture {numero or '#' + str(facture_id)} (Statut initial: {status_initial})",
                 details={
                     'id': facture_id,
                     'numero': numero,
                     'amount': float(montant),
-                    'client': client_nom
+                    'client': client_nom,
+                    'reintegrated_stock': status_initial in [Facture.Status.VALIDEE, Facture.Status.PAYEE, 'PAY', 'VAL', 'EN_COMPTE']
                 },
                 request=request
             )

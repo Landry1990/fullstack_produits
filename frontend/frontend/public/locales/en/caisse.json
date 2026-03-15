@@ -100,5 +100,222 @@
         },
         "confirm": "Confirm payment",
         "success": "Payment recorded"
+    },
+    "stats_pending_title": "Pending",
+    "stats_pending_desc": "invoice(s) to process",
+    "stats_total_title": "Total Amount",
+    "stats_total_desc": "to collect",
+    "stats_coupons_title": "Active Coupons",
+    "stats_coupons_desc": "coupon(s) available",
+    "journal": {
+        "title": "Cash Journal",
+        "subtitle": "Cash flow history",
+        "operations_count": "{{count}} operations",
+        "search_placeholder": "Search...",
+        "all_modes": "All modes",
+        "all_cashiers": "All cashiers",
+        "date_start": "Start",
+        "date_end": "End",
+        "today": "Today",
+        "today_short": "Today",
+        "refresh": "Refresh",
+        "new_operation": "Operation",
+        "close_register": "Close Register",
+        "select_cashier_to_close": "Please select a cashier to close",
+        "filter": {
+            "all": "All",
+            "entries": "Entries",
+            "exits": "Exits"
+        },
+        "stats": {
+            "net_sales": "Net Sales",
+            "ca_real": "Actual interval revenue",
+            "recoveries": "Recoveries",
+            "memo": "Memo",
+            "debt_collection": "Debt collection",
+            "cash_to_justify": "Cash to Justify",
+            "cash_formula": "Cash Sales + Entries - Exits",
+            "mobile_payments": "Mobile Payments",
+            "bank_digital": "Bank / Digital",
+            "non_cash_sales": "Non-Cash Sales",
+            "flow_details": "Flow details:",
+            "interval_activity": "Interval activity:",
+            "expenses": "Expenses:",
+            "net_operational_balance": "Net Operational Balance",
+            "excluding_recoveries": "Excluding Recoveries"
+        },
+        "table": {
+            "date_time": "DATE & TIME",
+            "cashier": "CASHIER",
+            "entered_by": "ENTERED BY",
+            "client_label": "CUSTOMER / LABEL",
+            "piece_num": "DOC NO.",
+            "amount": "AMOUNT",
+            "mode": "METHOD",
+            "status": "STATUS",
+            "no_transaction": "No transactions found",
+            "loading": "Loading journal...",
+            "user": "User",
+            "operation": "Operation",
+            "no_description": "No description",
+            "validated": "Validated",
+            "paid": "PAID",
+            "cancelled": "CANCELLED",
+            "pending": "PENDING",
+            "grouped_releve": "Grouped Doc"
+        },
+        "pagination": {
+            "showing": "Showing",
+            "lines": "line",
+            "lines_plural": "lines",
+            "of": "of",
+            "total": "total"
+        },
+        "closing": {
+            "title": "Cash Closing",
+            "security": "FUNDS SECURITY",
+            "real_amount": "Real Amount (Physical)",
+            "cash_gap": "Cash Gap",
+            "mode_details": "Details by method",
+            "confirm": "CONFIRM CLOSING",
+            "ticket": "TICKET"
+        },
+        "movement_modal": {
+            "title_out": "New Expense (Exit)",
+            "title_in": "New Miscellaneous Entry",
+            "subtitle": "Record a cash movement",
+            "type_out": "Exit (Expense)",
+            "type_in": "Entry (Deposit)",
+            "amount": "Amount",
+            "amount_placeholder": "Ex: 5000",
+            "reason": "Reason",
+            "reason_placeholder": "Ex: Electricity Bill, Fuel...",
+            "description": "Description / Details (Optional)",
+            "description_placeholder": "More details...",
+            "invalid_amount": "Invalid amount",
+            "reason_required": "Reason is required",
+            "save_error": "Error during saving",
+            "save": "Save"
+        },
+        "modes": {
+            "especes": "Cash",
+            "cheque": "Check",
+            "carte": "Card",
+            "virement": "Transfer",
+            "om": "Orange Money",
+            "momo": "Mobile Money",
+            "recouvrement": "Recovery",
+            "recouvrement_caps": "RECOUVREMENT",
+            "coupon": "Coupon"
+        }
+    },
+    "closing_history": {
+        "title": "Closing History",
+        "description": "Consult and export the complete history of recorded cash closings.",
+        "filters": {
+            "date_start": "Start Date",
+            "date_end": "End Date",
+            "select_placeholder": "Select...",
+            "filter_btn": "Filter",
+            "reset_btn": "Reset",
+            "reset_title": "Reset Filters"
+        },
+        "performance": {
+            "title": "Cashier Performance & Rigor",
+            "hide": "Hide",
+            "show": "Show",
+            "waiting_ranking": "Ranking Pending",
+            "no_closures_desc": "No cash closures have been recorded for this period.",
+            "best_cashier": "Best Cashier",
+            "rigor_score": "Rigor Score (Abs)",
+            "avg_trend": "Average Trend",
+            "total_closures": "Total Closures",
+            "ranking_title": "Rigor Ranking",
+            "table": {
+                "rank": "Rank",
+                "operator": "Operator",
+                "closures": "Closures",
+                "avg_gap": "Avg Gap",
+                "trend": "Trend"
+            },
+            "badges": {
+                "1st": "1st",
+                "2nd": "2nd",
+                "3rd": "3rd"
+            },
+            "months": {
+                "01": "January",
+                "02": "February",
+                "03": "March",
+                "04": "April",
+                "05": "May",
+                "06": "June",
+                "07": "July",
+                "08": "August",
+                "09": "September",
+                "10": "October",
+                "11": "November",
+                "12": "December"
+            }
+        },
+        "stats": {
+            "theoretical_total": "Theoretical Total",
+            "real_total": "Real Total",
+            "global_gap": "Global Gap"
+        },
+        "table": {
+            "header_date": "Closing Date",
+            "header_cashier": "Cashier",
+            "header_done_by": "Done by",
+            "header_theoretical": "Theoretical",
+            "header_real": "Real",
+            "header_gap": "Gap",
+            "header_actions": "Actions",
+            "no_cloture": "No closings found",
+            "no_cloture_desc": "Try adjusting your search filters.",
+            "period_desc": "From {{start}} to {{end}}",
+            "view_details": "View Details",
+            "print": "Print",
+            "period_total": "PERIOD TOTAL ({{count}} closings)"
+        },
+        "pagination": {
+            "showing": "Showing {{start}} to {{end}} of {{total}} results",
+            "per_page": "/ page",
+            "prev": "« Previous",
+            "next": "Next »",
+            "page": "Page {{current}} / {{total}}"
+        },
+        "modal": {
+            "title": "Closing Details",
+            "cash_of": "Cashier: {{name}}",
+            "closed_by": " (Closed by {{name}})",
+            "date_label": "Closing Date",
+            "period_label": "Period",
+            "period_from": "From {{date}}",
+            "period_to": "To {{date}}",
+            "theoretical_label": "Theoretical Amount",
+            "real_label": "Real Amount",
+            "gap_label": "Observed Gap",
+            "flows_summary": "Flows Summary",
+            "ventes": "Sales",
+            "entries": "+ Entries",
+            "exits": "- Exits",
+            "mode_details": "Details by mode (Sales)",
+            "observations": "Observations",
+            "print": "Print",
+            "close": "Close"
+        }
+    },
+    "common": {
+        "unknown": "Unknown",
+        "creance": "DEBT",
+        "pieces": "pieces",
+        "piece": "PIECE",
+        "print": "Print",
+        "cancel": "Cancel",
+        "pagination": {
+            "prev": "Previous",
+            "next": "Next"
+        }
     }
-}
+}

@@ -218,7 +218,7 @@ export const useProductSearch = (
             produit: product,
             produit_nom: product.name,
             produit_cip: product.cip1 || undefined,
-            produit_rayon: product.rayon_name,
+            produit_rayon: product.rayon_name || undefined,
             stock_lot: stockLotId,
             stock_theorique: initialStock ?? baseStock,
             quantite_physique: initialStock ?? baseStock,

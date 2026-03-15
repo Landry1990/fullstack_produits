@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackageOpen, Calendar, Download, RefreshCw, IndianRupee, Printer } from 'lucide-react';
+import { PackageOpen, Calendar, Download, RefreshCw, Banknote, Printer } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +60,8 @@ export default function StockUGReport() {
     setExpandedSupplierIds(newSet);
   };
 
+  const apiBaseUrl = React.useMemo(() => (import.meta as any).env.VITE_API_BASE_URL ?? '', []);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -70,7 +72,7 @@ export default function StockUGReport() {
       if (dateFin) params.append('date_fin', dateFin);
       
       const response = await axios.get(
-        `http://127.0.0.1:8000/api/stock-lots/rapport_ug/?${params.toString()}`,
+        `${apiBaseUrl}/api/stock-lots/rapport_ug/?${params.toString()}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
@@ -290,7 +292,7 @@ export default function StockUGReport() {
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center">
             <div className="flex items-center gap-4 mb-2">
               <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
-                 <IndianRupee className="w-6 h-6" />
+                 <Banknote className="w-6 h-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-400 tracking-wider uppercase">{t('rapport_ug.stats.estimated_value', { defaultValue: 'Valeur Reçue Estimée' })}</p>
@@ -304,7 +306,7 @@ export default function StockUGReport() {
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-200 flex flex-col justify-center border-l-4 border-l-blue-500">
             <div className="flex items-center gap-4 mb-2">
               <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
-                 <IndianRupee className="w-6 h-6" />
+                 <Banknote className="w-6 h-6" />
               </div>
               <div>
                 <p className="text-xs font-bold text-blue-400 tracking-wider uppercase">{t('rapport_ug.stats.latent_cash', { defaultValue: 'Trésorerie Latente UG' })}</p>

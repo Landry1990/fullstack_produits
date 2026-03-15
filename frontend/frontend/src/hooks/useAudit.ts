@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from '../config/axios';
-import type { AuditLogResponse, Statistics, AuditFilters, User } from '../types/audit';
+import type { AuditLogResponse, Statistics, AuditFilters } from '../types/audit';
+import type { User } from '../types/auth';
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 

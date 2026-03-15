@@ -20,7 +20,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
     totalCount,
     onPageChange
 }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
 
     if (loading) {
         return (
@@ -58,7 +58,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
                                 <div className="flex items-center gap-1.5"><Hash className="w-3 h-3" /> {t('stock.ajustements.table.cip_header', { defaultValue: 'CIP' })}</div>
-                            </th>
+                                </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
                                 <div className="flex items-center gap-1.5"><User className="w-3 h-3" /> {t('stock.ajustements.table.user_header', { defaultValue: 'Utilisateur' })}</div>
                             </th>
@@ -75,10 +75,10 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                             <tr key={adj.id} className="hover:bg-base-200/50 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="font-mono text-xs text-base-content/60">
-                                        {new Date(adj.created_at).toLocaleDateString('fr-FR')}
+                                        {new Date(adj.created_at).toLocaleDateString(i18n.language)}
                                     </div>
                                     <div className="text-[10px] font-bold text-base-content/40">
-                                        {new Date(adj.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                        {new Date(adj.created_at).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}
                                     </div>
                                 </td>
                                 <td className="font-bold text-base-content tracking-tight">{adj.produit_name}</td>
