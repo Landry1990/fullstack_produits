@@ -27,6 +27,7 @@ class Profile(models.Model):
     
     # New Sudo-Specific Permissions
     can_cancel_invoice = models.BooleanField(default=False, verbose_name="Annuler des factures")
+    can_modify_invoice = models.BooleanField(default=False, verbose_name="Modifier des factures (Caisse)")
     can_cancel_promis = models.BooleanField(default=False, verbose_name="Annuler des promis")
     can_manage_perimes = models.BooleanField(default=False, verbose_name="Gérer les produits périmés")
     can_manage_avoirs = models.BooleanField(default=False, verbose_name="Gérer les avoirs fournisseurs")

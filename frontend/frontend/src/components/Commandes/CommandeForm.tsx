@@ -203,8 +203,8 @@ export default function CommandeForm({
                         📤 {t('orders.form.export_btn')}
                       </div>
                       <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-base-200">
-                        <li><a onClick={() => handleCsvExport('UBIPHARM')}>Ubipharm (CIP1)</a></li>
-                        <li><a onClick={() => handleCsvExport('LABOREX')}>Laborex (CIP2)</a></li>
+                        <li><a onClick={() => handleCsvExport('UBIPHARM')}>{t('orders.form.export_options.ubipharm', 'Ubipharm (CIP1)')}</a></li>
+                        <li><a onClick={() => handleCsvExport('LABOREX')}>{t('orders.form.export_options.laborex', 'Laborex (CIP2)')}</a></li>
                       </ul>
       </div>
 
@@ -235,7 +235,7 @@ export default function CommandeForm({
                             type="button"
                             className="btn btn-warning btn-sm btn-outline gap-1"
                             onClick={onCreateAvoir}
-                            title="Créer un avoir / retour fournisseur à partir de cette commande"
+                            title={t('orders.messages.create_credit_note_help', 'Créer un avoir / retour fournisseur à partir de cette commande')}
                          >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />

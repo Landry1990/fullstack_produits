@@ -211,12 +211,12 @@ export function useCommandeActions({
         }
     };
 
-    const handleBulkDelete = async (ids: number[]) => {
+    const handleBulkDelete = async (ids: number[], sudoCredentials?: any) => {
         if (executingAction || ids.length === 0) return;
         setExecutingAction(true);
         try {
-            await commandeService.bulkDelete(ids);
-            toast.success(t('orders.bulk_delete_success', { count: ids.length }));
+            await commandeService.bulkDelete(ids, sudoCredentials);
+            toast.success(t('orders.messages.bulk_delete_success', { count: ids.length }));
             fetchCommandes();
             setSelectedCommande(null);
             setViewMode('LIST');

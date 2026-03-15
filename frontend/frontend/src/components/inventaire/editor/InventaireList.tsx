@@ -57,7 +57,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                     {t('stock.inventaire.title')}
                                 </h1>
                                 <p className="text-base-content/60 text-sm mt-1">
-                                    {t('stock.inventaire.subtitle', { defaultValue: "Gérez et validez vos inventaires de stock" })}
+                                    {t('stock.inventaire.subtitle')}
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                     onClick={onOpenAudit}
                                 >
                                     <BarChart3 className="h-4 w-4" />
-                                    {t('stock.inventaire.audit_btn', { defaultValue: 'Audit & Pertes' })}
+                                    {t('stock.inventaire.audit_btn')}
                                 </button>
                                 <button 
                                     className="btn btn-primary rounded-xl px-6 shadow-lg shadow-primary/20 gap-2" 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Facture, CouponMonnaie } from '../../types'
 import PremiumModal from '../common/PremiumModal'
@@ -13,6 +13,8 @@ interface FacturesTableProps {
   onModify: (facture: Facture) => void
   onCancel: (facture: Facture) => void
   onApplyCoupon: (facture: Facture) => void
+  onUpdateProductQuantity: (factureId: number, produitId: number, newQty: number) => void
+  onRemoveProduct: (factureId: number, produitId: number) => void
   couponsParFacture: Record<number, CouponMonnaie>
   user: any // Replace with proper User type if available
 }
@@ -27,11 +29,30 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
   onModify,
   onCancel,
   onApplyCoupon,
+  onUpdateProductQuantity,
+  onRemoveProduct,
   couponsParFacture,
   user
 }) => {
   const { t } = useTranslation('caisse')
   const [previewFacture, setPreviewFacture] = useState<Facture | null>(null)
+
+  const canModify = user?.is_superuser || (user as any)?.can_modify_invoice || user?.profile?.can_modify_invoice
+  const canCancel = user?.is_superuser || (user as any)?.can_cancel_invoice || user?.profile?.can_cancel_invoice
+  const canCashOut = user?.is_superuser || (user as any)?.can_cash_out || user?.profile?.can_cash_out
+
+  // Sync preview modal if the invoice is updated in the list
+  useEffect(() => {
+    if (previewFacture) {
+      const updated = sortedFactures.find(f => f.id === previewFacture.id)
+      if (updated) {
+        setPreviewFacture(updated)
+      } else {
+        // If it's no longer in the list (e.g. cancelled), close the modal
+        setPreviewFacture(null)
+      }
+    }
+  }, [sortedFactures, previewFacture?.id])
 
   if (loading && sortedFactures.length === 0) {
     return (
@@ -182,7 +203,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
                         className="btn btn-xs btn-outline btn-warning"
-                        title={t('table.modify')}
+                        title={canModify ? t('table.modify') : t('table.not_authorized')}
+                        disabled={!canModify}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -195,7 +217,8 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
                         className="btn btn-xs btn-outline btn-error"
-                        title={t('table.cancel')}
+                        title={canCancel ? t('table.cancel') : t('table.not_authorized')}
+                        disabled={!canCancel}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -222,9 +245,9 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                           onEncaisser(facture)
                         }}
                         onDoubleClick={(e) => e.stopPropagation()}
-                        disabled={!(user as any)?.can_cash_out && !(user?.is_superuser)}
+                        disabled={!canCashOut}
                         className="btn btn-xs btn-success text-white gap-1"
-                        title={!(user as any)?.can_cash_out && !(user?.is_superuser) ? t('table.not_authorized') : t('table.cash_in')}
+                        title={!canCashOut ? t('table.not_authorized') : t('table.cash_in')}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -268,12 +291,68 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     const name = getProductName(p)
                     const qty = p.quantity || p.quantite || 1
                     const price = Number(p.selling_price || p.prix_vente || 0)
+                    const canModify = user?.is_superuser || user?.profile?.can_modify_invoice || (user as any)?.can_modify_invoice
+                    
                     return (
-                      <tr key={idx}>
-                        <td className="font-medium">{name}</td>
-                        <td className="text-center">{qty}</td>
+                      <tr key={idx} className="hover:bg-base-100">
+                        <td className="font-medium">
+                          <div className="flex flex-col">
+                            <span>{name}</span>
+                            {p.lot && <span className="text-[10px] opacity-60">Lot: {p.lot}</span>}
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {canModify ? (
+                              <>
+                                <button 
+                                  className="btn btn-xs btn-circle btn-ghost text-error"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (qty > 1) {
+                                      onUpdateProductQuantity(previewFacture.id, p.produit, qty - 1);
+                                    } else if (window.confirm(t('confirm_delete_product', { name }))) {
+                                      onRemoveProduct(previewFacture.id, p.produit);
+                                    }
+                                  }}
+                                >
+                                  -
+                                </button>
+                                <span className="font-bold min-w-[1.5rem]">{qty}</span>
+                                <button 
+                                  className="btn btn-xs btn-circle btn-ghost text-success"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUpdateProductQuantity(previewFacture.id, p.produit, qty + 1);
+                                  }}
+                                >
+                                  +
+                                </button>
+                              </>
+                            ) : (
+                              <span className="font-bold min-w-[1.5rem]">{qty}</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="text-right font-mono">{Math.round(price)} F</td>
                         <td className="text-right font-mono font-bold">{Math.round(qty * price)} F</td>
+                        <td className="text-right">
+                          {canModify && (
+                            <button 
+                              className="btn btn-xs btn-ghost text-error btn-square"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(t('confirm_delete_product', { name }))) {
+                                  onRemoveProduct(previewFacture.id, p.produit);
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     )
                   })}
@@ -284,6 +363,7 @@ export const FacturesTable: React.FC<FacturesTableProps> = ({
                     <td className="text-right font-mono font-bold text-primary">
                       {Math.round(Number(previewFacture.total_ttc))} F
                     </td>
+                    <td></td>
                   </tr>
                 </tfoot>
               </table>

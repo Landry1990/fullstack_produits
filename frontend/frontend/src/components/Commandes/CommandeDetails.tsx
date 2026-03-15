@@ -60,7 +60,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
       {/* Header */}
       <div className="flex items-center gap-4 shrink-0">
         <button onClick={onBack} className="btn btn-circle btn-sm btn-ghost">←</button>
-        <h2 className="text-lg md:text-xl font-bold">Commande #{selectedCommande.numero_facture || selectedCommande.id}</h2>
+        <h2 className="text-lg md:text-xl font-bold">{t('orders.details.title', { id: selectedCommande.numero_facture || selectedCommande.id })}</h2>
         <div className="ml-auto flex flex-wrap gap-2">
           <button
             className="btn btn-secondary btn-sm"
@@ -147,11 +147,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
         </div>
         <div>
           <div className="text-xs text-gray-500 uppercase">{t('orders.details.date')}</div>
-          <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString('fr-FR')}</div>
+          <div className="font-bold">{new Date(selectedCommande.date).toLocaleDateString(t('common.locale', 'fr-FR'))}</div>
         </div>
         <div>
           <div className="text-xs text-gray-500 uppercase">{t('orders.details.status')}</div>
-          <div><span className={getStatusBadgeClass(selectedCommande.status)}>{selectedCommande.status_display}</span></div>
+          <div><span className={getStatusBadgeClass(selectedCommande.status)}>
+            {selectedCommande.status === 'PREP' ? t('orders.status.prep') : 
+             selectedCommande.status === 'ATT' ? t('orders.status.pending') : 
+             t('orders.status.closed')}
+          </span></div>
         </div>
         {selectedCommande.status === 'CLOT' && selectedCommande.closed_by_name && (
           <div>
@@ -174,15 +178,15 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
             return (
               <div className="flex flex-col gap-0.5 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-base-content/60">HT:</span>
+                  <span className="text-base-content/60">{t('orders.product_table.total_ht', 'HT')}:</span>
                   <span className="font-semibold">{formatCurrency(stats.ht)} F</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-base-content/60">TVA:</span>
+                  <span className="text-base-content/60">{t('orders.product_table.total_tva', 'TVA')}:</span>
                   <span className="font-semibold">{formatCurrency(stats.tva)} F</span>
                 </div>
                 <div className="flex justify-between border-t border-base-200 pt-0.5 mt-0.5">
-                  <span className="font-bold text-primary">TTC:</span>
+                  <span className="font-bold text-primary">{t('orders.product_table.total_ttc', 'TTC')}:</span>
                   <span className="font-bold text-primary text-sm">{formatCurrency(totalTTC)} F</span>
                 </div>
               </div>
@@ -263,7 +267,7 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                   </th>
                   <th>{t('orders.product_table.headers.cip')}</th>
                   <th className="text-center">{t('products.table.stock')}</th>
-                  <th className="text-center">Rot.</th>
+                  <th className="text-center">{t('orders.product_table.headers.rotation', 'Rot.')}</th>
                   <th className="text-right cursor-pointer" onClick={() => { if (detailSortKey === 'quantity') { setDetailSortOrder(detailSortOrder === 'asc' ? 'desc' : 'asc'); } else { setDetailSortKey('quantity'); setDetailSortOrder('desc'); } }}>
                     {t('orders.product_table.headers.qty')} {detailSortKey === 'quantity' && (detailSortOrder === 'asc' ? '↑' : '↓')}
                   </th>
@@ -314,9 +318,9 @@ const CommandeDetails: React.FC<CommandeDetailsProps> = ({
                             onClick={(e) => e.stopPropagation()}
                           />
                         </td>
-                        <td className={`font-bold ${isDeleted ? 'italic' : ''}`}>
+                        <td className={`font-bold ${isDeleted ? 'italic text-base-content/50' : ''}`}>
                           {p.produitName}
-                          {isDeleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+                          {isDeleted && <span className="text-xs ml-2 opacity-75">({t('products.status.deleted', 'Supprimé')})</span>}
                         </td>
                         <td className="font-mono text-xs">{p.cip}</td>
                         <td className="text-center">

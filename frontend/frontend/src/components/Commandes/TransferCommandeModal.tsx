@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import type { Commande, CommandeProduit, Fournisseur, ProduitModel } from '../../types';
@@ -46,6 +47,7 @@ export default function TransferCommandeModal({
     fournisseursEndpoint,
     onTransferSuccess
 }: TransferCommandeModalProps) {
+    const { t } = useTranslation();
     const [transferTargetFournisseur, setTransferTargetFournisseur] = useState('');
     const [transferCataloguePrices, setTransferCataloguePrices] = useState<Map<number, number>>(new Map());
     const [loadingCatalogue, setLoadingCatalogue] = useState(false);
@@ -127,7 +129,7 @@ export default function TransferCommandeModal({
 
     const handleTransfer = async () => {
         if (!transferTargetFournisseur) {
-            toast.error('Veuillez sélectionner un fournisseur de destination.');
+            toast.error(t('orders.transfer_modal.select_supplier_error'));
             return;
         }
 
@@ -163,17 +165,6 @@ export default function TransferCommandeModal({
                     date_expiration: parseMMYYToDate(p.date_expiration), 
                 };
                 
-                 // Note: Commandes.tsx had parseMMYYToDate logic.  
-                 // Usually date_expiration in p is already string.
-                 // If it's MM/YY, the backend might need parsing. 
-                 // The original code used parseMMYYToDate(p.date_expiration). 
-                 // We should replicate that or import the helper.
-                 // For now, let's assume we need to parse if it's not ISO.
-                 // But simply passing p.date_expiration might be enough if it's already proper format 
-                 // or if we duplicate the helper.
-                 // Let's duplicate the helper for safety or better, import it? 
-                 // It's not exported. I will quickly add the helper here.
-                
                 await axios.post(commandeProduitsEndpoint, payload);
             }
 
@@ -183,7 +174,7 @@ export default function TransferCommandeModal({
 
         } catch (err) {
             console.error('Erreur lors du transfert:', err);
-            toast.error('Erreur lors du transfert des produits.');
+            toast.error(t('orders.transfer_modal.transfer_error'));
         }
     };
 
@@ -193,24 +184,24 @@ export default function TransferCommandeModal({
         <div className="modal modal-open">
             <div className="modal-box max-w-2xl">
                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    ➡️ Transférer vers un autre fournisseur
+                    {t('orders.transfer_modal.title')}
                 </h3>
 
-                <p className="text-sm text-base-content/70 mb-4">
-                    Les produits sélectionnés seront retirés de cette commande et ajoutés à une <strong>nouvelle commande</strong> chez le fournisseur choisi.
-                </p>
+                <p className="text-sm text-base-content/70 mb-4"
+                   dangerouslySetInnerHTML={{ __html: t('orders.transfer_modal.description') }}
+                />
 
                 {/* Sélection du fournisseur */}
                 <div className="form-control mb-4">
                     <label className="label">
-                        <span className="label-text font-semibold">Fournisseur de destination</span>
+                        <span className="label-text font-semibold">{t('orders.transfer_modal.supplier_label')}</span>
                     </label>
                     <select
                         className="select select-bordered w-full"
                         value={transferTargetFournisseur}
                         onChange={handleSupplierChange}
                     >
-                        <option value="">Sélectionnez un fournisseur...</option>
+                        <option value="">{t('orders.transfer_modal.select_supplier')}</option>
                         {fournisseurs
                             .filter(f => f.id !== parseInt(currentSupplierId || '0'))
                             .map(f => (
@@ -222,7 +213,7 @@ export default function TransferCommandeModal({
 
                 {/* Liste des produits à transférer */}
                 <div className="bg-base-200 rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
-                    <h4 className="font-semibold text-sm mb-2">Produits à transférer ({selectedProducts.length})</h4>
+                    <h4 className="font-semibold text-sm mb-2">{t('orders.transfer_modal.products_title', { count: selectedProducts.length })}</h4>
                     <div className="space-y-2">
                         {selectedProducts.map((p, i) => {
                             const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
@@ -248,7 +239,7 @@ export default function TransferCommandeModal({
                                         <span className={`font-medium ${isDeleted ? 'italic text-base-content/50' : ''}`}>
                                             {produitName}
                                         </span>
-                                        <span className="text-base-content/50 ml-2">(Qté: {quantity})</span>
+                                        <span className="text-base-content/50 ml-2">({t('orders.transfer_modal.qty_label', { qty: quantity })})</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-base-content/60">{formatCurrency(currentPrice)} F</span>
@@ -266,7 +257,7 @@ export default function TransferCommandeModal({
                                             </>
                                         )}
                                         {!hasPriceInfo && transferTargetFournisseur && !loadingCatalogue && (
-                                            <span className="badge badge-ghost badge-xs">Prix inconnu</span>
+                                            <span className="badge badge-ghost badge-xs">{t('orders.transfer_modal.unknown_price')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -280,16 +271,16 @@ export default function TransferCommandeModal({
                     <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-4">
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <div className="text-xs text-base-content/50 uppercase">Coût actuel</div>
+                                <div className="text-xs text-base-content/50 uppercase">{t('orders.transfer_modal.current_cost')}</div>
                                 <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)} F</div>
                             </div>
                             <div>
-                                <div className="text-xs text-base-content/50 uppercase">Nouveau coût</div>
+                                <div className="text-xs text-base-content/50 uppercase">{t('orders.transfer_modal.new_cost')}</div>
                                 <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)} F</div>
                             </div>
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">
-                                    {transferCalc.isGain ? 'Économie' : 'Surcoût'}
+                                    {transferCalc.isGain ? t('orders.transfer_modal.savings') : t('orders.transfer_modal.overspend')}
                                 </div>
                                 <div className={`font-bold text-lg ${transferCalc.isGain ? 'text-success' : transferCalc.difference < 0 ? 'text-error' : ''}`}>
                                     {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)} F
@@ -298,7 +289,7 @@ export default function TransferCommandeModal({
                         </div>
                         {transferCalc.productsWithoutPricing > 0 && (
                             <div className="mt-2 text-xs text-warning text-center">
-                                ⚠️ {transferCalc.productsWithoutPricing} produit(s) sans historique de prix chez ce fournisseur
+                                {t('orders.transfer_modal.no_price_warning', { count: transferCalc.productsWithoutPricing })}
                             </div>
                         )}
                     </div>
@@ -307,7 +298,7 @@ export default function TransferCommandeModal({
                 {loadingCatalogue && (
                     <div className="flex items-center justify-center py-4">
                         <span className="loading loading-spinner loading-sm mr-2"></span>
-                        Chargement des prix...
+                        {t('orders.transfer_modal.loading_prices')}
                     </div>
                 )}
 
@@ -317,7 +308,7 @@ export default function TransferCommandeModal({
                         className="btn btn-ghost"
                         onClick={onClose}
                     >
-                        Annuler
+                        {t('orders.transfer_modal.cancel')}
                     </button>
                     <button
                         type="button"
@@ -325,7 +316,7 @@ export default function TransferCommandeModal({
                         onClick={handleTransfer}
                         disabled={!transferTargetFournisseur || loadingCatalogue}
                     >
-                        Transférer {selectedProducts.length} produit(s)
+                        {t('orders.transfer_modal.transfer_btn', { count: selectedProducts.length })}
                     </button>
                 </div>
             </div>

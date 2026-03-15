@@ -264,7 +264,7 @@ export default function Sidebar() {
           </svg>
         </button>
         
-        <nav className="flex-1 overflow-y-auto py-2">
+        <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
           <ul className={`menu w-full gap-1 ${isCollapsed ? 'px-1' : 'px-2'}`}>
             {menuItems.map((item) => {
               const hasSubmenus = !!item.submenus;

@@ -29,9 +29,9 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
     const { t } = useTranslation();
 
     const tabs = [
-        { id: 'unsold', label: t('stockAnalysis.tabs.unsold'), icon: <Accessibility className="w-4 h-4" /> },
-        { id: 'overstock', label: t('stockAnalysis.tabs.overstock'), icon: <TrendingUp className="w-4 h-4" /> },
-        { id: 'shortage', label: t('stockAnalysis.tabs.shortage'), icon: <AlertTriangle className="w-4 h-4" /> }
+        { id: 'unsold', label: t('stock.analyse.tabs.unsold'), icon: <Accessibility className="w-4 h-4" /> },
+        { id: 'overstock', label: t('stock.analyse.tabs.overstock'), icon: <TrendingUp className="w-4 h-4" /> },
+        { id: 'shortage', label: t('stock.analyse.tabs.shortage'), icon: <AlertTriangle className="w-4 h-4" /> }
     ];
 
     return (
@@ -59,14 +59,14 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                     {/* Supplier Filter */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <User className="w-3 h-3" /> {t('stockAnalysis.filters.supplier')}
+                            <User className="w-3 h-3" /> {t('stock.analyse.filters.supplier')}
                         </label>
                         <select 
                             className="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
                             value={selectedFournisseur}
                             onChange={(e) => onFournisseurChange(e.target.value)}
                         >
-                            <option value="">{t('stockAnalysis.filters.all_suppliers')}</option>
+                            <option value="">{t('stock.analyse.filters.all_suppliers')}</option>
                             {fournisseurs.map(f => (
                                 <option key={f.id} value={f.id}>{f.name}</option>
                             ))}
@@ -77,18 +77,18 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                     {activeTab === 'unsold' && (
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                                <Calendar className="w-3 h-3" /> {t('stockAnalysis.filters.days_threshold')}
+                                <Calendar className="w-3 h-3" /> {t('stock.analyse.filters.days_threshold')}
                             </label>
                             <select 
                                 className="select select-sm select-bordered w-full font-bold focus:ring-2 focus:ring-primary/20 transition-all"
                                 value={unsoldDays}
                                 onChange={(e) => onUnsoldDaysChange(Number(e.target.value))}
                             >
-                                <option value={30}>30 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
-                                <option value={60}>60 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
-                                <option value={90}>90 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
-                                <option value={180}>180 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
-                                <option value={365}>365 {t('stockAnalysis.days', { defaultValue: 'jours' })}</option>
+                                <option value={30}>30 {t('stock.analyse.days')}</option>
+                                <option value={60}>60 {t('stock.analyse.days')}</option>
+                                <option value={90}>90 {t('stock.analyse.days')}</option>
+                                <option value={180}>180 {t('stock.analyse.days')}</option>
+                                <option value={365}>365 {t('stock.analyse.days')}</option>
                             </select>
                         </div>
                     )}
@@ -101,7 +101,7 @@ export const StockAnalysisFilters: React.FC<StockAnalysisFiltersProps> = ({
                         disabled={loading}
                     >
                         {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
-                        {t('stockAnalysis.filters.refresh')}
+                        {t('stock.analyse.filters.refresh')}
                     </button>
                 </div>
             </div>

@@ -56,8 +56,8 @@ const commandeService = {
         return response.data;
     },
 
-    bulkDelete: async (ids: number[]): Promise<void> => {
-        await api.post('commandes/bulk_delete/', { ids });
+    bulkDelete: async (ids: number[], sudoData: any = {}): Promise<void> => {
+        await api.post('commandes/bulk_delete/', { ids, ...sudoData });
     },
 
     bulkSyncProduits: async (commandeId: number, produits: any[]): Promise<any> => {

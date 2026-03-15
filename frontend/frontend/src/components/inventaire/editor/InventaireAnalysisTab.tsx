@@ -67,12 +67,12 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {renderList(
-                    t('stock.inventaire.analysis.top_losses', { defaultValue: 'Top 10 Écarts Négatifs' }), 
+                    t('stock.inventaire.analysis.top_losses'), 
                     inventoryStats?.top_pertes || [], 
                     'negative'
                 )}
                 {renderList(
-                    t('stock.inventaire.analysis.top_surplus', { defaultValue: 'Top 10 Écarts Positifs' }), 
+                    t('stock.inventaire.analysis.top_surplus'), 
                     inventoryStats?.top_surplus || [], 
                     'positive'
                 )}
@@ -86,7 +86,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                         onClick={handlePrintEcartsFrontend}
                     >
                         <Download className="h-5 w-5" />
-                        {t('stock.inventaire.analysis.print_report', { defaultValue: 'Imprimer le rapport d\'écarts' })}
+                        {t('stock.inventaire.analysis.print_report')}
                     </button>
                 </div>
             )}

@@ -92,7 +92,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             'allowed_menus', 'can_do_returns', 'can_sell_negative_stock', 'can_cash_out', 'role',
             'can_delete_product', 'can_adjust_stock', 'can_delete_fournisseur', 'can_delete_commande', 'can_close_commande',
             'can_generate_coupon', 'can_modify_price', 'max_discount_rate',
-            'can_cancel_invoice', 'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs'
+            'can_cancel_invoice', 'can_modify_invoice', 'can_cancel_promis', 'can_manage_perimes', 'can_manage_avoirs'
         ]
 
 class InvoiceSettingsSerializer(serializers.ModelSerializer):
@@ -145,6 +145,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_close_commande = profile_data.get('can_close_commande', False)
             profile.can_generate_coupon = profile_data.get('can_generate_coupon', False)
             profile.can_cancel_invoice = profile_data.get('can_cancel_invoice', False)
+            profile.can_modify_invoice = profile_data.get('can_modify_invoice', False)
             profile.can_cancel_promis = profile_data.get('can_cancel_promis', False)
             profile.can_manage_perimes = profile_data.get('can_manage_perimes', False)
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', False)
@@ -180,6 +181,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile.can_close_commande = profile_data.get('can_close_commande', profile.can_close_commande)
             profile.can_generate_coupon = profile_data.get('can_generate_coupon', profile.can_generate_coupon)
             profile.can_cancel_invoice = profile_data.get('can_cancel_invoice', profile.can_cancel_invoice)
+            profile.can_modify_invoice = profile_data.get('can_modify_invoice', profile.can_modify_invoice)
             profile.can_cancel_promis = profile_data.get('can_cancel_promis', profile.can_cancel_promis)
             profile.can_manage_perimes = profile_data.get('can_manage_perimes', profile.can_manage_perimes)
             profile.can_manage_avoirs = profile_data.get('can_manage_avoirs', profile.can_manage_avoirs)

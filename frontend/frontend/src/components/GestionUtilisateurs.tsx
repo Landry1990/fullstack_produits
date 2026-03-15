@@ -30,6 +30,7 @@ interface User {
     can_manage_perimes?: boolean;
     can_manage_avoirs?: boolean;
     can_modify_price?: boolean;
+    can_modify_invoice?: boolean;
     max_discount_rate?: string | number;
   };
 }
@@ -174,6 +175,7 @@ export default function GestionUtilisateurs() {
     can_manage_perimes: false,
     can_manage_avoirs: false,
     can_modify_price: false,
+    can_modify_invoice: false,
     max_discount_rate: 0,
   });
 
@@ -214,6 +216,7 @@ export default function GestionUtilisateurs() {
       updates.can_manage_perimes = true;
       updates.can_manage_avoirs = true;
       updates.can_modify_price = true;
+      updates.can_modify_invoice = true;
       updates.max_discount_rate = 100;
       updates.allowed_menus = getAllMenuKeys();
     } else if (role === 'CAISSIER') {
@@ -227,6 +230,7 @@ export default function GestionUtilisateurs() {
       updates.can_delete_commande = false;
       updates.can_close_commande = false;
       updates.can_generate_coupon = false;
+      updates.can_modify_invoice = true; // Caissier can modify sales by default
       updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
@@ -244,6 +248,7 @@ export default function GestionUtilisateurs() {
       updates.can_manage_perimes = false;
       updates.can_manage_avoirs = false;
       updates.can_modify_price = false;
+      updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
       // Vendeur a accès à la caisse pour les rappels seulement (sera géré dans CaisseCentralisee)
       updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
@@ -278,6 +283,7 @@ export default function GestionUtilisateurs() {
         can_manage_perimes: user.profile?.can_manage_perimes || false,
         can_manage_avoirs: user.profile?.can_manage_avoirs || false,
         can_modify_price: user.profile?.can_modify_price || false,
+        can_modify_invoice: user.profile?.can_modify_invoice || false,
         max_discount_rate: Number(user.profile?.max_discount_rate || 0),
       });
     } else {
@@ -305,6 +311,7 @@ export default function GestionUtilisateurs() {
         can_manage_perimes: false,
         can_manage_avoirs: false,
         can_modify_price: false,
+        can_modify_invoice: false,
         max_discount_rate: 0,
       });
       handleRoleChange('VENDEUR'); // Initialize defaults
@@ -430,6 +437,7 @@ export default function GestionUtilisateurs() {
           can_manage_perimes: formData.can_manage_perimes,
           can_manage_avoirs: formData.can_manage_avoirs,
           can_modify_price: formData.can_modify_price,
+          can_modify_invoice: formData.can_modify_invoice,
           max_discount_rate: formData.max_discount_rate
         }
       };
@@ -745,6 +753,10 @@ export default function GestionUtilisateurs() {
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_generate_coupon} onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})} />
                           <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.generate_coupon')}</span>
+                        </label>
+                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                          <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_invoice} onChange={e => setFormData({...formData, can_modify_invoice: e.target.checked})} />
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.modify_invoice')}</span>
                         </label>
                       </div>
 
