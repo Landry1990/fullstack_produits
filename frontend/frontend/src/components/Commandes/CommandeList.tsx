@@ -210,9 +210,9 @@ export default function CommandeList({
                                 {commande.status === 'PREP' && (
                                      <li>
                                         <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                            <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
+                                            <Trash2 className="w-4 h-4" /> {t('common.actions.delete')}
                                         </a>
-                                    </li>
+                                     </li>
                                 )}
                               </>
                             );
@@ -304,14 +304,14 @@ export default function CommandeList({
                 </td>
                 <td>
                     <span className="text-sm font-semibold text-base-content/80">
-                        {new Date(commande.date).toLocaleDateString('fr-FR')}
+                        {new Date(commande.date).toLocaleDateString(t('common.locale', 'fr-FR'))}
                     </span>
                 </td>
                 <td>
                     {(() => {
                         const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
                         const isDeleted = !fournisseur && !!commande.fournisseur_nom;
-                        const nom = fournisseur?.name ?? (commande.fournisseur_nom || `ID: ${commande.fournisseur}`);
+                        const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common.id', { defaultValue: 'ID' })}: ${commande.fournisseur}`);
                         
                         return (
                             <div className="flex flex-col">
@@ -332,7 +332,9 @@ export default function CommandeList({
                 </td>
                 <td className="text-center">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(commande.status)}`}>
-                        {commande.status_display}
+                        {commande.status === 'PREP' ? t('orders.status.prep') : 
+                         commande.status === 'ATT' ? t('orders.status.pending') : 
+                         t('orders.status.closed')}
                     </span>
                 </td>
                 <td className="text-right pr-4" onClick={(e) => e.stopPropagation()}>

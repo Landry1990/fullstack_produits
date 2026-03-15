@@ -40,10 +40,10 @@ const StockAnalysis = () => {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-base-content">
-                                    {t('stockAnalysis.title', { defaultValue: 'Analyse de' })} <span className="text-primary italic">Stock</span>
+                                    {t('stock.analyse.title')} <span className="text-primary italic">Stock</span>
                                 </h1>
                                 <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1">
-                                    {t('stockAnalysis.subtitle', { defaultValue: 'Optimisation, invendus et alertes de rupture' })}
+                                    {t('stock.analyse.subtitle')}
                                 </p>
                             </div>
                         </div>
@@ -135,7 +135,7 @@ const StockAnalysis = () => {
                                         {selectedItems.size}
                                     </div>
                                     <span className="font-bold text-sm uppercase tracking-tighter">
-                                        {t('stockAnalysis.shortage.selected')}
+                                        {t('stock.analyse.shortage.selected')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ const StockAnalysis = () => {
                                         onClick={actions.handleGenerateOrder}
                                     >
                                         <ShoppingBag className="w-4 h-4" />
-                                        {t('stockAnalysis.shortage.generate_order')}
+                                        {t('stock.analyse.shortage.generate_order')}
                                     </button>
                                     <button
                                         className="btn btn-sm btn-ghost btn-circle text-primary-content/60 hover:text-white"

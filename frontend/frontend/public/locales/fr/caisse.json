@@ -69,8 +69,13 @@
         "coupon_applied_to": "Coupon #{{numero}} appliqué au ticket {{ticket}}",
         "coupon_removed": "Coupon retiré",
         "coupon_not_found": "Coupon non trouvé",
-        "search_error": "Erreur lors de la recherche"
+        "search_error": "Erreur lors de la recherche",
+        "modification_success": "Facture modifiée avec succès",
+        "product_removed": "Produit supprimé de la facture",
+        "confirm_cancel_empty": "La facture est vide. Voulez-vous l'annuler ?",
+        "modification_error": "Erreur lors de la modification"
     },
+    "confirm_delete_product": "Supprimer {{name}} de cette facture ?",
     "payment": {
         "title": "Encaissement",
         "title_with_num": "Encaissement — #{{num}}",
@@ -144,6 +149,33 @@
             "net_operational_balance": "Solde Opérationnel Net",
             "excluding_recoveries": "Hors Recouvrements"
         },
+        "messages": {
+            "shift_detected": "Tranche horaire détectée",
+            "close_success": "Clôture effectuée avec succès",
+            "close_error": "Erreur lors de la clôture",
+            "no_cashier_selected": "Veuillez sélectionner un caissier pour clôturer"
+        },
+        "print": {
+            "report_title": "RAPPORT DE CLÔTURE",
+            "print_date": "Date Impression",
+            "operator": "Opérateur",
+            "from": "Du",
+            "to": "Au",
+            "activity_title": "ACTIVITÉ DU JOUR (OPÉRATIONNEL)",
+            "net_sales": "Ventes Nettes (CA)",
+            "misc_entries": "Entrées Diverses",
+            "expenses": "Sorties/Dépenses",
+            "solde_to_justify": "SOLDE NET À JUSTIFIER",
+            "expense_details": "DÉTAILS DES DÉPENSES (ESPÈCES)",
+            "mode_summary": "RÉCAPITULATIF DES MODES (VENTES)",
+            "total_to_justify": "TOTAL À JUSTIFIER",
+            "actual_amount": "Montant Réel (Compté)",
+            "cash_gap": "ÉCART DE CAISSE",
+            "cashier": "Caissier",
+            "manager": "Responsable",
+            "footer": "Généré le {{date}} - Logiciel de Gestion Pharmacie",
+            "window_title": "Clôture Caisse"
+        },
         "table": {
             "date_time": "DATE & HEURE",
             "cashier": "CAISSIER",
@@ -155,6 +187,7 @@
             "status": "STATUT",
             "no_transaction": "Aucune transaction trouvée",
             "loading": "Chargement du journal...",
+            "loading_error": "Erreur lors du chargement des données",
             "user": "Utilisateur",
             "operation": "Opération",
             "no_description": "Pas de description",
@@ -206,7 +239,11 @@
             "momo": "Mobile Money",
             "recouvrement": "Recouvrement",
             "recouvrement_caps": "RECOUVREMENT",
-            "coupon": "Coupon"
+            "coupon": "Coupon",
+            "om_short": "O.M.",
+            "momo_short": "MoMo",
+            "entry_caps": "ENTRÉE",
+            "exit_caps": "SORTIE"
         }
     },
     "closing_history": {

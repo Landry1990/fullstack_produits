@@ -282,7 +282,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                 onChange={e => setValue(Number(e.target.value))} 
                                             />
                                             <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">
-                                                {discountType === DiscountType.PERCENTAGE ? '%' : 'F'}
+                                                {discountType === DiscountType.PERCENTAGE ? '%' : t('common.currency')}
                                             </span>
                                         </div>
                                     </div>
@@ -346,11 +346,11 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                         <div>
                                                             <div className="font-bold text-gray-800">{p.name}</div>
                                                             <div className="text-xs text-gray-500 flex gap-4">
-                                                                <span>CIP: {p.cip1 || 'N/A'}</span>
+                                                                <span>{t('common.cip')}: {p.cip1 || t('common.not_available')}</span>
                                                                 <span className="flex items-center gap-1">
                                                                     {t('promotions.form.products.stock')} <b className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>{p.stock}</b>
                                                                 </span>
-                                                                <span className="font-bold">{p.selling_price} F</span>
+                                                                <span className="font-bold">{p.selling_price} {t('common.currency')}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -401,7 +401,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                 </td>
                                                 <td className="py-4 text-center">
                                                     <span className={`font-black ${p.stock <= 0 ? 'text-error' : 'text-success'}`}>
-                                                        {p.stock ?? 'N/A'}
+                                                        {p.stock ?? t('common.not_available')}
                                                     </span>
                                                 </td>
                                                 <td className="py-4">
@@ -428,7 +428,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                     </div>
                                                 </td>
                                                 <td className="py-4 text-right font-medium text-gray-600">
-                                                    {p.selling_price} F
+                                                    {p.selling_price} {t('common.currency')}
                                                 </td>
                                                 {discountType !== DiscountType.BUNDLE && (
                                                     <td className="py-4 text-right">
@@ -436,7 +436,7 @@ const PromotionForm: React.FC<PromotionFormProps> = ({ onClose, onSave, initialD
                                                             {discountType === DiscountType.BUY_X_GET_Y ? (
                                                                 t('promotions.form.products.table.offered', { count: getQuantity })
                                                             ) : (
-                                                                discountType === DiscountType.PERCENTAGE ? `-${value}%` : `-${value} F`
+                                                                discountType === DiscountType.PERCENTAGE ? `-${value}%` : `-${value} ${t('common.currency')}`
                                                             )}
                                                          </span>
                                                     </td>

@@ -30,11 +30,11 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={`✏️ ${t('products.edit_title')}`}
+      title={form.id ? `✏️ ${t('products.edit_title')}` : `➕ ${t('products.create_title')}`}
       subtitle={form.name}
       maxWidth="max-w-4xl"
-      icon={<span>✏️</span>}
-      gradientFrom="warning/20"
+      icon={<span>{form.id ? '✏️' : '➕'}</span>}
+      gradientFrom={form.id ? "warning/20" : "success/20"}
       gradientTo="primary/20"
     >
       <form className="p-6 space-y-6" onSubmit={onSubmit}>
@@ -136,11 +136,11 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
              <h4 className="text-sm font-bold uppercase tracking-wider text-base-content/50 border-b pb-2">{t('products.form.price_margin')}</h4>
              <div className="grid grid-cols-2 gap-4">
                 <label className="form-control w-full">
-                  <div className="label"><span className="label-text font-semibold">Prix Revient</span></div>
+                  <div className="label"><span className="label-text font-semibold">{t('products.form.cost_price')}</span></div>
                   <div className="join w-full">
                     <input type="number" className="input input-bordered join-item w-full" value={form.cost_price}
                       onChange={(e) => setForm({ ...form, cost_price: e.target.value })} />
-                    <span className="join-item btn btn-disabled bg-base-200">F</span>
+                    <span className="join-item btn btn-disabled bg-base-200">{t('common.currency')}</span>
                   </div>
                 </label>
                 <label className="form-control w-full">
@@ -148,7 +148,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   <div className="join w-full">
                     <input type="number" className="input input-bordered join-item w-full font-bold text-primary" value={form.selling_price}
                       onChange={(e) => setForm({ ...form, selling_price: e.target.value })} />
-                    <span className="join-item btn btn-disabled bg-base-200">F</span>
+                    <span className="join-item btn btn-disabled bg-base-200">{t('common.currency')}</span>
                   </div>
                 </label>
              </div>
@@ -266,7 +266,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
         <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
           <button type="button" className="btn btn-ghost px-8" onClick={onClose}>{t('common.cancel')}</button>
-          <button type="submit" className="btn btn-primary px-10 shadow-lg shadow-primary/20">💾 {t('common.save')}</button>
+          <button type="submit" className="btn btn-primary px-10 shadow-lg shadow-primary/20">💾 {form.id ? t('common.save') : t('common.confirm')}</button>
         </div>
       </form>
     </PremiumModal>

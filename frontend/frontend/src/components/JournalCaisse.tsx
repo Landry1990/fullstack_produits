@@ -131,7 +131,7 @@ export default function JournalCaisse() {
     } finally {
       setLoading(false)
     }
-  }, [caisseEndpoint, selectedUser, dateDebut, dateFin, processTransactionsData])
+  }, [caisseEndpoint, selectedUser, dateDebut, dateFin, processTransactionsData, t])
 
   // Initial load uses page_init
   useEffect(() => {
@@ -179,7 +179,7 @@ export default function JournalCaisse() {
         setDetectedShift({ start, end, active: true })
         setDateDebut(start)
         setDateFin(end)
-        toast.success(t('journal.messages.shift_detected') || "Tranche horaire détectée")
+        toast.success(t('journal.messages.shift_detected'))
       } else {
         setDetectedShift(null)
         // Default to whole day if no activity
@@ -511,7 +511,7 @@ export default function JournalCaisse() {
         user_id: selectedUser
       })
       
-      toast.success(t('journal.messages.close_success') || 'Clôture effectuée avec succès')
+      toast.success(t('journal.messages.close_success'))
       const completeData = response.data.cloture;
       setClosingTotals(completeData)
       
@@ -525,7 +525,7 @@ export default function JournalCaisse() {
     } catch (err: any) {
       console.error('Erreur clôture:', err)
       const errorMessage = err.response?.data?.detail || err.message || 'Erreur inconnue'
-      setError(`${t('journal.messages.close_error') || 'Erreur lors de la clôture'}: ${errorMessage}`)
+      setError(`${t('journal.messages.close_error')}: ${errorMessage}`)
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -554,49 +554,49 @@ export default function JournalCaisse() {
         <div style="font-family: monospace; width: 80mm; margin: 0 auto; padding: 10px; color: black; line-height: 1.2;">
             <div style="text-align: center; margin-bottom: 10px; border-bottom: 2px solid black; padding-bottom: 5px;">
                 <h2 style="margin: 0; font-size: 1.1em; font-weight: bold;">${pharmacySettings?.pharmacy_name || 'Ma Pharmacie'}</h2>
-                <div style="font-size: 0.8em; margin-top: 2px;">RAPPORT DE CLÔTURE</div>
+                <div style="font-size: 0.8em; margin-top: 2px;">${t('journal.print.report_title')}</div>
             </div>
 
             <div style="font-size: 0.8em; margin-bottom: 10px;">
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Date Impression:</span>
+                    <span>${t('journal.print.print_date')}:</span>
                     <span>${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR')}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Opérateur:</span>
+                    <span>${t('journal.print.operator')}:</span>
                     <span>${data.user || 'Admin'}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; margin-top: 5px; border-top: 1px dotted #ccc; padding-top: 5px;">
-                    <span>Du: ${startStr}</span>
+                    <span>${t('journal.print.from')}: ${startStr}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between;">
-                    <span>Au: ${endStr}</span>
+                    <span>${t('journal.print.to')}: ${endStr}</span>
                 </div>
             </div>
 
             <div style="margin-bottom: 10px; background: #f9f9f9; padding: 5px; border: 1px solid #eee;">
-                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">ACTIVITÉ DU JOUR (OPÉRATIONNEL)</div>
+                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('journal.print.activity_title')}</div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
-                    <span>Ventes Nettes (CA)</span>
+                    <span>${t('journal.print.net_sales')}</span>
                     <span>${formatCurrency(data.total_ventes)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
-                    <span>Entrées Diverses</span>
+                    <span>${t('journal.print.misc_entries')}</span>
                     <span>${formatCurrency(data.total_entrees)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
-                    <span>Sorties/Dépenses</span>
+                    <span>${t('journal.print.expenses')}</span>
                     <span>-${formatCurrency(data.total_sorties)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px dashed black; margin-top: 3px; padding-top: 2px;">
-                    <span>SOLDE NET À JUSTIFIER</span>
+                    <span>${t('journal.print.solde_to_justify')}</span>
                     <span>${formatCurrency(soldeOp)}</span>
                 </div>
             </div>
 
             ${movementsAudit.length > 0 ? `
             <div style="margin-bottom: 10px;">
-                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">DÉTAILS DES DÉPENSES (ESPÈCES)</div>
+                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('journal.print.expense_details')}</div>
                 ${movementsAudit.map((m: any) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.75em; margin-bottom: 2px;">
                         <span style="max-width: 70%;">${m.motif} (${m.user_nom})</span>
@@ -607,7 +607,7 @@ export default function JournalCaisse() {
             ` : ''}
 
             <div style="margin-bottom: 15px;">
-                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">RÉCAPITULATIF DES MODES (VENTES)</div>
+                <div style="font-weight: bold; margin-bottom: 3px; border-bottom: 1px solid black; font-size: 0.85em;">${t('journal.print.mode_summary')}</div>
                 ${displayDetails.map(([mode, montant]) => `
                     <div style="display: flex; justify-content: space-between; font-size: 0.8em; margin-bottom: 1px;">
                         <span style="text-transform: capitalize;">${mode}</span>
@@ -618,35 +618,35 @@ export default function JournalCaisse() {
 
             <div style="border-top: 2px solid black; padding-top: 5px; margin-top: 5px;">
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.05em;">
-                    <span>TOTAL À JUSTIFIER</span>
+                    <span>${t('journal.print.total_to_justify')}</span>
                     <span>${formatCurrency(data.total_theorique)}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.85em; margin-top: 3px;">
-                    <span>Montant Réel (Compté)</span>
+                    <span>${t('journal.print.actual_amount')}</span>
                     <span>${actualAmount ? formatCurrency(normalizeNumberInput(actualAmount)) : '_________'}</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid black; margin-top: 3px; padding-top: 3px;">
-                    <span>ÉCART DE CAISSE</span>
+                    <span>${t('journal.print.cash_gap')}</span>
                     <span>${actualAmount ? formatCurrency(normalizeNumberInput(actualAmount) - data.total_theorique) : '_________'}</span>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: space-between; margin-top: 30px; font-size: 0.7em;">
                 <div style="text-align: center; width: 45%;">
-                    <p style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 2px;">Caissier</p>
+                    <p style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 2px;">${t('journal.print.cashier')}</p>
                 </div>
                 <div style="text-align: center; width: 45%;">
-                    <p style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 2px;">Responsable</p>
+                    <p style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 2px;">${t('journal.print.manager')}</p>
                 </div>
             </div>
             
             <div style="text-align: center; font-size: 0.6em; margin-top: 15px; font-style: italic; opacity: 0.5;">
-                Généré le ${new Date().toLocaleDateString('fr-FR')} - Logiciel de Gestion Pharmacie
+                ${t('journal.print.footer', { date: new Date().toLocaleDateString('fr-FR') })}
             </div>
         </div>
       `;
       
-      win.document.write('<html><head><title>Clôture Caisse</title>');
+      win.document.write('<html><head><title>' + t('journal.print.window_title') + '</title>');
       win.document.write('<style>body { font-family: monospace; padding: 0; margin: 0; } @media print { body { padding: 0; margin: 0; } }</style>');
       win.document.write('</head><body>');
       win.document.write(content);
@@ -676,21 +676,21 @@ export default function JournalCaisse() {
       <div className="bg-base-100 border-b border-base-200 shrink-0 p-6 sticky-header">
         <div className="flex flex-col xl:flex-row gap-6 justify-between items-start xl:items-end">
           <div>
-            <h1 className="text-2xl font-bold text-base-content flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <h1 className="text-xl md:text-2xl font-bold text-base-content flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary shrink-0">
                 <Banknote className="w-6 h-6" />
               </div>
-              {t('journal.title')}
+              <span className="truncate">{t('journal.title')}</span>
             </h1>
-            <div className="text-base-content/60 mt-1 pl-12 text-sm flex items-center gap-2">
+            <div className="text-base-content/60 mt-1 pl-0 md:pl-12 text-xs md:text-sm flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span>{t('journal.subtitle')}</span>
-                <span className="w-1 h-1 rounded-full bg-base-300"></span>
+                <span className="hidden md:inline w-1 h-1 rounded-full bg-base-300"></span>
                 <span className="font-mono text-primary font-semibold">{t('journal.operations_count', { count: totalCount })}</span>
             </div>
           </div>
           
-          <div className="flex flex-wrap lg:flex-nowrap gap-3 items-end w-full lg:w-auto">
-             <div className="relative flex-1 lg:w-48">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-nowrap gap-3 items-end w-full lg:w-auto mt-4 xl:mt-0">
+             <div className="relative w-full lg:w-48">
                 <input
                     type="text"
                     placeholder={t('journal.search_placeholder')}
@@ -717,7 +717,7 @@ export default function JournalCaisse() {
                 </select>
              </div>
 
-             <div className="form-control flex-1 lg:w-40">
+             <div className="form-control w-full lg:w-40">
                 <select
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
@@ -732,7 +732,7 @@ export default function JournalCaisse() {
                 </select>
              </div>
 
-             <div className="flex items-center gap-2 bg-base-50 border border-base-200 rounded-lg p-1">
+             <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 bg-base-50 border border-base-200 rounded-lg p-1 w-full lg:w-auto justify-between sm:justify-start">
                  <DatePicker
                     selected={dateDebut}
                     onChange={(date: Date | null) => setDateDebut(date)}
@@ -770,14 +770,14 @@ export default function JournalCaisse() {
                         setDateDebut(today)
                         setDateFin(endToday)
                     }}
-                    className="btn btn-xs btn-ghost text-primary px-2"
+                    className="btn btn-xs btn-ghost text-primary px-1 sm:px-2"
                     title={t('journal.today')}
                  >
                     {t('journal.today_short') || 'Auj.'}
-                 </button>
+                  </button>
              </div>
 
-             <div className="flex gap-2">
+             <div className="flex gap-2 w-full lg:w-nowrap justify-end sm:justify-start">
                 <button
                     onClick={fetchData}
                     className="btn btn-sm btn-ghost btn-square"
@@ -789,25 +789,25 @@ export default function JournalCaisse() {
                 <div className="h-8 w-px bg-base-200 mx-1"></div>
                 <button
                     onClick={() => setIsMovementModalOpen(true)}
-                    className="btn btn-sm btn-outline border-base-300 btn-primary gap-2"
+                    className="btn btn-sm btn-outline border-base-300 btn-primary gap-2 flex-1 sm:flex-none"
                 >
-                    <Plus className="w-4 h-4" /> {t('journal.new_operation')}
+                    <Plus className="w-4 h-4" /> <span className="sm:inline">{t('journal.new_operation')}</span>
                 </button>
                 <button
                     onClick={openClosingModal}
-                    className="btn btn-sm btn-primary shadow-sm gap-2"
+                    className="btn btn-sm btn-primary shadow-sm gap-2 flex-1 sm:flex-none"
                     disabled={loading || !selectedUser}
-                    title={!selectedUser ? t('journal.select_cashier_to_close') || "Veuillez sélectionner un caissier pour clôturer" : t('journal.close_register')}
+                    title={!selectedUser ? t('journal.messages.no_cashier_selected') : t('journal.close_register')}
                 >
-                    <Lock className="w-4 h-4" /> {t('journal.close_register')}
+                    <Lock className="w-4 h-4" /> <span className="sm:inline">{t('journal.close_register')}</span>
                 </button>
              </div>
           </div>
         </div>
 
         {/* Status Filters Bar */}
-        <div className="mt-4 pt-4 border-t border-base-200 flex items-center justify-between">
-           <div className="join bg-base-50 p-1 rounded-lg border border-base-200">
+        <div className="mt-4 pt-4 border-t border-base-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="join bg-base-50 p-1 rounded-lg border border-base-200 w-full sm:w-auto overflow-x-auto">
                 <button 
                     className={`join-item btn btn-sm border-none font-medium px-6 ${filterType === 'all' ? 'bg-base-100 shadow-sm text-base-content' : 'bg-transparent text-base-content/60 hover:text-base-content'}`}
                     onClick={() => setFilterType('all')}
@@ -831,8 +831,7 @@ export default function JournalCaisse() {
       </div>
 
       {/* Global Stats Cards */}
-      {/* Global Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-6 pb-2 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 p-4 md:p-6 pb-2 shrink-0">
           {/* Card 1: Sales */}
           <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm flex flex-col justify-center">
               <div className="flex justify-between items-start">
@@ -973,9 +972,9 @@ export default function JournalCaisse() {
               </div>
 
               {/* Final Operational Balance */}
-              <div className="flex items-center gap-4 bg-primary text-white py-2 px-6 rounded-r-emerald-none rounded-r-full shadow-xl shadow-primary/20">
+              <div className="flex items-center gap-4 bg-primary text-white py-2 px-6 rounded-r-emerald-none rounded-r-full shadow-xl shadow-primary/20 flex-1 sm:flex-none justify-center sm:justify-start">
                   <div className="flex flex-col items-start">
-                     <span className="text-[10px] font-black uppercase opacity-70 tracking-wider">{t('journal.stats.net_operational_balance')}</span>
+                     <span className="text-[10px] font-black uppercase opacity-70 tracking-wider leading-tight">{t('journal.stats.net_operational_balance')}</span>
                      <span className="text-[8px] opacity-60 uppercase font-bold">{t('journal.stats.excluding_recoveries')}</span>
                   </div>
                   <div className="w-px h-6 bg-white/20 mx-1"></div>

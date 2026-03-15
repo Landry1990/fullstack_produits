@@ -18,12 +18,13 @@ import {
 import { useConfirm } from '../hooks/useConfirm';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import PasswordConfirmModal from './PasswordConfirmModal';
 import PremiumModal from './common/PremiumModal';
 import type { Fournisseur } from '../types';
 import FinanceFournisseurModal from './FinanceFournisseurModal';
 import EcheancierFournisseursModal from './EcheancierFournisseursModal';
 import PointageReleveModal from './PointageReleveModal';
+import { useSudo } from '../hooks/useSudo';
+import SudoValidationModal from './common/SudoValidationModal';
 
 interface CatalogueItem {
   produit_id: number;
@@ -67,9 +68,7 @@ export default function Fournisseurs() {
   const itemsPerPage = 50;
 
   // Sudo Mode State
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [passwordModalConfig, setPasswordModalConfig] = useState<{ title: string; message: string }>({ title: '', message: '' });
-  const [pendingAction, setPendingAction] = useState<() => Promise<void>>(() => Promise.resolve());
+  const { sudoState, requireSudo, closeSudo } = useSudo();
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
@@ -378,9 +377,9 @@ export default function Fournisseurs() {
       if (selectedFournisseur && selectedIds.includes(selectedFournisseur.id!)) {
         setSelectedFournisseur(null);
       }
-      toast.success(`${selectedIds.length} fournisseur(s) supprimé(s) avec succès`);
+      toast.success(t('providers.messages.bulk_delete_success', { count: selectedIds.length }));
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || err.response?.data?.error || "Erreur lors de la suppression groupée");
+      toast.error(err.response?.data?.detail || err.response?.data?.error || t('providers.messages.bulk_delete_error'));
       console.error(err);
     }
   }
@@ -406,12 +405,13 @@ export default function Fournisseurs() {
     })
     
     if (confirmed) {
-        setPasswordModalConfig({
+        requireSudo(async () => {
+            await executeBulkDeleteFournisseurs();
+        }, {
             title: t('providers.messages.sudo_title'),
-            message: t('providers.messages.sudo_message')
-        })
-        setPendingAction(() => () => executeBulkDeleteFournisseurs());
-        setIsPasswordModalOpen(true);
+            message: t('providers.messages.sudo_message'),
+            permission: 'can_delete_fournisseur'
+        });
     }
   }
 
@@ -446,13 +446,13 @@ export default function Fournisseurs() {
     })
     
     if (confirmed) {
-        // Trigger Password Modal
-        setPasswordModalConfig({
+        requireSudo(async () => {
+            await executeDeleteFournisseur(selectedFournisseur.id);
+        }, {
             title: t('providers.messages.sudo_title'),
-            message: t('providers.messages.sudo_message')
-        })
-        setPendingAction(() => () => executeDeleteFournisseur(selectedFournisseur.id));
-        setIsPasswordModalOpen(true);
+            message: t('providers.messages.sudo_message'),
+            permission: 'can_delete_fournisseur'
+        });
     }
   }
 
@@ -500,7 +500,7 @@ export default function Fournisseurs() {
                               </li>
                               <li>
                                 <a onClick={handleBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                  <Trash2 className="w-4 h-4" /> {t('common.delete', 'Supprimer')}
+                                  <Trash2 className="w-4 h-4" /> {t('common.actions.delete')}
                                 </a>
                               </li>
                             </ul>
@@ -519,21 +519,21 @@ export default function Fournisseurs() {
                               <div className="p-2 bg-primary/10 text-primary rounded-lg">
                                 <Truck className="w-5 h-5" />
                               </div>
-                              <h2 className="font-bold text-lg tracking-tight">Fournisseurs</h2>
+                              <h2 className="font-bold text-lg tracking-tight">{t('providers.title')}</h2>
                               <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{fournisseurs.length}</span>
                            </div>
                            <div className="flex gap-1 items-center">
                               <button 
                                  className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'bg-base-200 text-base-content' : 'text-base-content/40'}`} 
                                  onClick={() => setShowInactive(!showInactive)}
-                                 title={showInactive ? "Masquer les inactifs" : "Afficher les inactifs"}
+                                 title={showInactive ? t('providers.hide_inactive') : t('providers.show_inactive')}
                               >
                                  {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                               </button>
-                              <button className="btn btn-sm btn-ghost btn-square text-secondary/60 hover:text-secondary hover:bg-secondary/10" onClick={() => setIsEcheancierModalOpen(true)} title="Échéancier">
+                              <button className="btn btn-sm btn-ghost btn-square text-secondary/60 hover:text-secondary hover:bg-secondary/10" onClick={() => setIsEcheancierModalOpen(true)} title={t('providers.schedule')}>
                                 <Calendar className="w-4 h-4" />
                               </button>
-                              <button className="btn btn-sm btn-ghost btn-square text-neutral/60 hover:text-neutral hover:bg-neutral/10" onClick={() => setIsPointageModalOpen(true)} title="Pointer">
+                              <button className="btn btn-sm btn-ghost btn-square text-neutral/60 hover:text-neutral hover:bg-neutral/10" onClick={() => setIsPointageModalOpen(true)} title={t('providers.pointage')}>
                                 <CheckSquare className="w-4 h-4" />
                               </button>
                               <button className="btn btn-sm btn-primary gap-2 h-9 px-4 shadow-sm" onClick={openAddModal}>
@@ -628,7 +628,7 @@ export default function Fournisseurs() {
             {totalPages > 1 && (
               <div className="p-2 border-t border-slate-200 bg-white flex items-center justify-between text-xs shrink-0">
                 <span className="text-slate-400">
-                  {totalCount} fournisseur{totalCount > 1 ? 's' : ''}
+                  {totalCount} {t('common.items', { defaultValue: 'fournisseur' })}{totalCount > 1 ? 's' : ''}
                 </span>
                 <div className="join">
                   <button
@@ -667,17 +667,17 @@ export default function Fournisseurs() {
                   <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-white shrink-0 flex justify-between items-start sticky-header">
                      <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">Fournisseur</span>
+                          <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">{t('providers.table.provider')}</span>
                         </div>
                         <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedFournisseur.name}</h2>
                      </div>
                      <div className="flex gap-2">
-                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-primary transition-colors" onClick={openEditModal} title="Modifier">
+                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-primary transition-colors" onClick={openEditModal} title={t('providers.details.edit')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                         </button>
-                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-error transition-colors" onClick={handleDeleteFournisseur} title="Supprimer">
+                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-error transition-colors" onClick={handleDeleteFournisseur} title={t('providers.details.delete')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -685,7 +685,7 @@ export default function Fournisseurs() {
                         <button 
                           className={`btn btn-sm btn-circle btn-ghost transition-colors ${selectedFournisseur.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
                           onClick={handleToggleActive}
-                          title={selectedFournisseur.is_active === false ? 'Réactiver' : 'Masquer'}
+                          title={selectedFournisseur.is_active === false ? t('providers.details.reactivate') : t('providers.details.hide')}
                         >
                           {selectedFournisseur.is_active === false ? '👁️' : '🙈'}
                         </button>
@@ -762,7 +762,7 @@ export default function Fournisseurs() {
                               </div>
                            </div>
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs italic">
-                              Historique disponible dans le gestionnaire
+                              {t('providers.details.history_available')}
                            </div>
                         </div>
                       </div>
@@ -1211,12 +1211,13 @@ export default function Fournisseurs() {
 
 
       {/* Sudo Mode Password Modal */}
-      <PasswordConfirmModal
-        isOpen={isPasswordModalOpen}
-        onClose={() => setIsPasswordModalOpen(false)}
-        onConfirm={pendingAction}
-        title={passwordModalConfig.title}
-        message={passwordModalConfig.message}
+      <SudoValidationModal
+         isOpen={sudoState.isOpen}
+         onClose={closeSudo}
+         onValidate={sudoState.onValidate}
+         title={sudoState.title}
+         message={sudoState.message}
+         saving={isSubmitting}
       />
 
       {/* Modal Échéancier */}

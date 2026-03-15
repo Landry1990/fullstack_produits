@@ -69,8 +69,13 @@
         "coupon_applied_to": "Coupon #{{numero}} applied to ticket {{ticket}}",
         "coupon_removed": "Coupon removed",
         "coupon_not_found": "Coupon not found",
-        "search_error": "Search error"
+        "search_error": "Search error",
+        "modification_success": "Invoice modified successfully",
+        "product_removed": "Product removed from invoice",
+        "confirm_cancel_empty": "The invoice is empty. Do you want to cancel it?",
+        "modification_error": "Error during modification"
     },
+    "confirm_delete_product": "Remove {{name}} from this invoice?",
     "payment": {
         "title": "Payment",
         "title_with_num": "Payment — #{{num}}",
@@ -144,6 +149,33 @@
             "net_operational_balance": "Net Operational Balance",
             "excluding_recoveries": "Excluding Recoveries"
         },
+        "messages": {
+            "shift_detected": "Shift detected",
+            "close_success": "Closing completed successfully",
+            "close_error": "Error during closing",
+            "no_cashier_selected": "Please select a cashier to close"
+        },
+        "print": {
+            "report_title": "CLOSING REPORT",
+            "print_date": "Print Date",
+            "operator": "Operator",
+            "from": "From",
+            "to": "To",
+            "activity_title": "DAILY ACTIVITY (OPERATIONAL)",
+            "net_sales": "Net Sales (Revenue)",
+            "misc_entries": "Misc. Entries",
+            "expenses": "Exits/Expenses",
+            "solde_to_justify": "NET BALANCE TO JUSTIFY",
+            "expense_details": "EXPENSE DETAILS (CASH)",
+            "mode_summary": "METHOD SUMMARY (SALES)",
+            "total_to_justify": "TOTAL TO JUSTIFY",
+            "actual_amount": "Actual Amount (Counted)",
+            "cash_gap": "CASH GAP",
+            "cashier": "Cashier",
+            "manager": "Manager",
+            "footer": "Generated on {{date}} - Pharmacy Management Software",
+            "window_title": "Cash Closing"
+        },
         "table": {
             "date_time": "DATE & TIME",
             "cashier": "CASHIER",
@@ -155,6 +187,7 @@
             "status": "STATUS",
             "no_transaction": "No transactions found",
             "loading": "Loading journal...",
+            "loading_error": "Error loading data",
             "user": "User",
             "operation": "Operation",
             "no_description": "No description",
@@ -206,7 +239,11 @@
             "momo": "Mobile Money",
             "recouvrement": "Recovery",
             "recouvrement_caps": "RECOUVREMENT",
-            "coupon": "Coupon"
+            "coupon": "Coupon",
+            "om_short": "O.M.",
+            "momo_short": "MoMo",
+            "entry_caps": "ENTRY",
+            "exit_caps": "EXIT"
         }
     },
     "closing_history": {

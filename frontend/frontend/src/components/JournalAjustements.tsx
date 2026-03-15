@@ -34,10 +34,10 @@ export default function JournalAjustements() {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-base-content">
-                                    {t('stock.ajustements.title', { defaultValue: 'Ajustements de Stock' })}
+                                    {t('stock.ajustements.title')}
                                 </h1>
                                 <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest">
-                                    {t('stock.ajustements.subtitle', { defaultValue: 'Historique complet des mouvements manuels' })}
+                                    {t('stock.ajustements.subtitle')}
                                 </p>
                             </div>
                         </div>

@@ -114,7 +114,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                           </div>
                           <div className="flex items-center gap-3">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${idx === selectedItemIndex ? 'bg-white/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
-                                {p.stock ?? 0} {t('common.units', { defaultValue: 'TEST_STK' })}
+                                {p.stock ?? 0} {t('common.units_short')}
                             </span>
                           </div>
                         </div>
@@ -237,7 +237,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 focusInput();
                             }}
                         >
-                            {t('common.actions.cancel', { defaultValue: 'Annuler' })} (Esc)
+                            {t('common.cancel')} (Esc)
                         </button>
                     </div>
                 </div>

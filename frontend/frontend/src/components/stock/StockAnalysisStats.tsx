@@ -23,16 +23,16 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
 
     const getValueLabel = () => {
         switch (activeTab) {
-            case 'shortage': return t('stockAnalysis.stats.value_at_risk');
-            case 'overstock': return t('stockAnalysis.stats.overstock_value');
-            default: return t('stockAnalysis.stats.estimated_value');
+            case 'shortage': return t('stock.analyse.stats.value_at_risk');
+            case 'overstock': return t('stock.analyse.stats.overstock_value');
+            default: return t('stock.analyse.stats.estimated_value');
         }
     };
 
     const stats = [
         {
-            label: t('stockAnalysis.stats.supplier'),
-            value: supplierName || t('stockAnalysis.filters.all_suppliers'),
+            label: t('stock.analyse.stats.supplier'),
+            value: supplierName || t('stock.analyse.filters.all_suppliers'),
             icon: <Info className="w-6 h-6" />,
             color: 'primary',
             bg: 'bg-primary/10',
@@ -40,7 +40,7 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             border: 'border-primary/20'
         },
         {
-            label: t('stockAnalysis.stats.item_count'),
+            label: t('stock.analyse.stats.item_count'),
             value: totalItems,
             icon: <Package className="w-6 h-6" />,
             color: 'warning',
@@ -58,9 +58,9 @@ export const StockAnalysisStats: React.FC<StockAnalysisStatsProps> = ({
             border: 'border-error/20'
         },
         ...(activeTab === 'shortage' ? [{
-            label: t('stockAnalysis.stats.critical_alerts'),
+            label: t('stock.analyse.stats.critical_alerts'),
             value: criticalCount,
-            subValue: `+ ${warningCount} ${t('stockAnalysis.shortage.warnings')}`,
+            subValue: `+ ${warningCount} ${t('stock.analyse.shortage.warnings')}`,
             icon: <AlertTriangle className="w-6 h-6" />,
             color: 'error',
             bg: 'bg-error/10',

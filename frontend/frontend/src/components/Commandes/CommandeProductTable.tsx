@@ -109,16 +109,16 @@ export default function CommandeProductTable({
                 )}
                 {commandeProduits.length > 0 && onSortProduits && (
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">Trier par:</span>
+                        <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">{t('common.sort.title', 'Trier par:')}</span>
                         <select 
                             className="select select-bordered select-sm text-xs" 
                             value={commandeSortBy || 'chrono'} 
                             onChange={(e) => onSortProduits(e.target.value as any)}
                         >
-                            <option value="chrono">Chronologie</option>
-                            <option value="stock">Qté en stock</option>
-                            <option value="name">Nom</option>
-                            <option value="qty">Qté saisie</option>
+                            <option value="chrono">{t('orders.product_table.sort_options.chrono', 'Chronologie')}</option>
+                            <option value="stock">{t('orders.product_table.sort_options.stock', 'Qté en stock')}</option>
+                            <option value="name">{t('orders.product_table.sort_options.name', 'Nom')}</option>
+                            <option value="qty">{t('orders.product_table.sort_options.qty', 'Qté saisie')}</option>
                         </select>
                     </div>
                 )}
@@ -208,7 +208,7 @@ export default function CommandeProductTable({
                     </th>
                     <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">{t('orders.product_table.headers.product')}</th>
                     <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">{t('orders.product_table.headers.cip')}</th>
-                    <th className="bg-base-200 text-center w-24 font-semibold text-xs uppercase text-orange-600 bg-orange-50">Stock</th>
+                    <th className="bg-base-200 text-center w-24 font-semibold text-xs uppercase text-orange-600 bg-orange-50">{t('orders.product_table.info_row.stock', 'Stock')}</th>
                     <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.qty')}</th>
                     <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">{t('orders.product_table.headers.ug')}</th>
                     {commandeType === 'DIR' && (
@@ -478,7 +478,7 @@ export default function CommandeProductTable({
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
                             onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-xs w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                            placeholder="N° Lot"
+                            placeholder={t('orders.product_table.headers.lot', 'N° Lot')}
                             autoFocus={focusedField?.row === index && focusedField?.field === 6}
                             readOnly={!fieldsConfig[6].editable}
                             tabIndex={!fieldsConfig[6].editable ? -1 : 0}
@@ -507,7 +507,7 @@ export default function CommandeProductTable({
                                 <button
                                     type="button"
                                     className="btn btn-ghost btn-xs text-info"
-                                    title="Infos d'aide à la décision"
+                                    title={t('common.info_help', "Infos d'aide à la décision")}
                                     onClick={() => setExpandedRow(expandedRow === index ? null : index)}
                                 >
                                     ℹ️
@@ -552,37 +552,37 @@ export default function CommandeProductTable({
                                     return (
                                         <div className="p-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-sm">
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Historique d'Achat</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.purchase_history', "Historique d'Achat")}</div>
                                                 <div className="font-medium text-base-content">{formatAchat}</div>
-                                                <div className="text-xs text-base-content/60 mt-0.5">Dernier prix d'achat: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) + ' F' : '-'}</div>
+                                                <div className="text-xs text-base-content/60 mt-0.5">{t('orders.product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) + ' F' : '-'}</div>
                                             </div>
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Historique de Vente</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.sales_history', "Historique de Vente")}</div>
                                                 <div className="font-medium text-base-content">{formatVente}</div>
                                                 {stats.rotation_moyenne && (
-                                                    <div className="text-xs text-info mt-0.5 font-medium">Rotation: {Number(stats.rotation_moyenne).toFixed(2)} / jour</div>
+                                                    <div className="text-xs text-info mt-0.5 font-medium">{t('orders.product_table.info_row.rotation', 'Rotation')}: {Number(stats.rotation_moyenne).toFixed(2)} / jour</div>
                                                 )}
                                             </div>
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Alertes Stock</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.stock_alerts', 'Alertes Stock')}</div>
                                                 <div className="font-medium">
                                                     Min: <span className="text-warning">{stats.stock_minimum}</span> / Max: <span className="text-success">{stats.stock_maximum}</span>
                                                 </div>
                                                 {stats.stock_alert > 0 && (
-                                                    <div className="text-xs text-error mt-0.5">Seuil d'alerte: {stats.stock_alert}</div>
+                                                    <div className="text-xs text-error mt-0.5">{t('orders.product_table.info_row.alert_threshold', "Seuil d'alerte")}: {stats.stock_alert}</div>
                                                 )}
                                             </div>
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">Indicateurs</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.indicators', 'Indicateurs')}</div>
                                                 <div className="flex flex-col gap-1">
                                                     {stats.stock <= 0 ? (
-                                                        <div className="text-xs text-error font-medium">⚠️ Stock en rupture</div>
+                                                        <div className="text-xs text-error font-medium">⚠️ {t('orders.product_table.info_row.stock_out', 'Stock en rupture')}</div>
                                                     ) : stats.rotation_moyenne && Number(stats.rotation_moyenne) > 0 ? (
                                                         <div className="text-xs">
-                                                            Durée de vie stock actuel: <span className="font-bold">~{Math.round(stats.stock / Number(stats.rotation_moyenne))} j</span>
+                                                            {t('orders.product_table.info_row.stock_life', "Durée de vie stock actuel")}: <span className="font-bold">~{Math.round(stats.stock / Number(stats.rotation_moyenne))} j</span>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs text-base-content/50">Rotation inconnue</div>
+                                                        <div className="text-xs text-base-content/50">{t('orders.product_table.info_row.rotation_unknown', 'Rotation inconnue')}</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -604,14 +604,14 @@ export default function CommandeProductTable({
             {productToDelete !== null && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg text-error">Confirmer la suppression</h3>
-                        <p className="py-4">Êtes-vous sûr de vouloir retirer ce produit de la commande ?</p>
+                        <h3 className="font-bold text-lg text-error">{t('common.confirm_deletion', 'Confirmer la suppression')}</h3>
+                        <p className="py-4">{t('orders.messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</p>
                         <div className="modal-action">
-                            <button className="btn btn-ghost" onClick={() => setProductToDelete(null)}>Annuler</button>
+                            <button className="btn btn-ghost" onClick={() => setProductToDelete(null)}>{t('common.cancel', 'Annuler')}</button>
                             <button className="btn btn-error text-white" onClick={() => {
                                 onRemoveProduct(productToDelete);
                                 setProductToDelete(null);
-                            }}>Confirmer</button>
+                            }}>{t('common.confirm', 'Confirmer')}</button>
                         </div>
                     </div>
                 </div>
@@ -620,14 +620,14 @@ export default function CommandeProductTable({
             {isDeletingMultiple && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg text-error">Confirmer la suppression multiple</h3>
-                        <p className="py-4">Êtes-vous sûr de vouloir supprimer les {selectedRows.size} produits sélectionnés ?</p>
+                        <h3 className="font-bold text-lg text-error">{t('orders.bulk_delete_title', 'Confirmer la suppression multiple')}</h3>
+                        <p className="py-4">{t('orders.bulk_delete_confirm_minimal', { count: selectedRows.size, defaultValue: `Êtes-vous sûr de vouloir supprimer les ${selectedRows.size} produits sélectionnés ?` })}</p>
                         <div className="modal-action">
-                            <button className="btn btn-ghost" onClick={() => setIsDeletingMultiple(false)}>Annuler</button>
+                            <button className="btn btn-ghost" onClick={() => setIsDeletingMultiple(false)}>{t('common.cancel', 'Annuler')}</button>
                             <button className="btn btn-error text-white" onClick={() => {
                                 deleteSelectedRows();
                                 setIsDeletingMultiple(false);
-                            }}>Confirmer</button>
+                            }}>{t('common.confirm', 'Confirmer')}</button>
                         </div>
                     </div>
                 </div>

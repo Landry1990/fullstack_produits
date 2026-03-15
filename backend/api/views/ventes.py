@@ -362,10 +362,17 @@ class FactureViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
     def modifier(self, request, pk=None):
         """
         Modifie une facture via SalesService.
+        Supports standard permissions or Sudo validation.
         """
         facture = self.get_object()
+        
+        # Permission check with Sudo support
+        validation_user, error_res = validate_sudo_mode(request, permission_attr='can_modify_invoice')
+        if error_res:
+            return error_res
+
         try:
-            facture, old_total, difference = SalesService.modify_sale(facture, request.user, request.data)
+            facture, old_total, difference = SalesService.modify_sale(facture, validation_user, request.data)
             
             # Audit log
             log_audit(

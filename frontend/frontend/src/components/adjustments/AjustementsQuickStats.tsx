@@ -17,7 +17,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
 
     const stats = [
         {
-            label: t('stock.ajustements.stats.total', { defaultValue: 'Total Ajustements' }),
+            label: t('stock.ajustements.stats.total'),
             value: totalCount,
             icon: <Activity className="w-6 h-6" />,
             color: 'primary',
@@ -26,7 +26,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
             border: 'border-primary/20'
         },
         {
-            label: t('stock.ajustements.stats.positive', { defaultValue: 'Total Entrées (+)' }),
+            label: t('stock.ajustements.stats.positive'),
             value: `+${positiveSum}`,
             icon: <PlusCircle className="w-6 h-6" />,
             color: 'success',
@@ -35,7 +35,7 @@ export const AjustementsQuickStats: React.FC<AjustementsQuickStatsProps> = ({
             border: 'border-success/20'
         },
         {
-            label: t('stock.ajustements.stats.negative', { defaultValue: 'Total Sorties (-)' }),
+            label: t('stock.ajustements.stats.negative'),
             value: negativeSum,
             icon: <MinusCircle className="w-6 h-6" />,
             color: 'error',

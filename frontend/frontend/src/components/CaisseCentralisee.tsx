@@ -557,6 +557,79 @@ export default function CaisseCentralisee() {
     }
   }
 
+  // Modifier la quantité d'un produit directement (Partial Modification)
+  const handleUpdateProductQuantity = async (factureId: number, produitId: number, newQty: number) => {
+    try {
+      setLoading(true)
+      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      
+      const facture = facturesEnAttente.find(f => f.id === factureId)
+      if (!facture) return
+      
+      const updatedProducts = (facture.produits || []).map((p: any) => {
+        if (p.produit === produitId) {
+          return { ...p, quantity: newQty }
+        }
+        return p
+      })
+      
+      const response = await axios.post(`${facturesEndpoint}${factureId}/modifier/`, {
+        produits: updatedProducts,
+        remise: facture.remise,
+        client: facture.client,
+        client_name_override: facture.client_name_override
+      })
+      
+      const updatedFacture = response.data.facture
+      setFacturesEnAttente(prev => prev.map(f => f.id === factureId ? { ...updatedFacture, session_ticket_number: f.session_ticket_number } : f))
+      toast.success(t('messages.modification_success'))
+      
+    } catch (err: any) {
+      console.error('Erreur modification produit:', err)
+      toast.error(err.response?.data?.detail || t('messages.modification_error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Supprimer un produit directement (Partial Modification)
+  const handleRemoveProduct = async (factureId: number, produitId: number) => {
+    try {
+      setLoading(true)
+      const facturesEndpoint = apiBaseUrl ? `${apiBaseUrl}/api/factures/` : '/api/factures/'
+      
+      const facture = facturesEnAttente.find(f => f.id === factureId)
+      if (!facture) return
+      
+      const updatedProducts = (facture.produits || []).filter((p: any) => p.produit !== produitId)
+      
+      if (updatedProducts.length === 0) {
+        if (window.confirm(t('messages.confirm_cancel_empty'))) {
+          await handleAnnuler(facture)
+        }
+        setLoading(false)
+        return
+      }
+      
+      const response = await axios.post(`${facturesEndpoint}${factureId}/modifier/`, {
+        produits: updatedProducts,
+        remise: facture.remise,
+        client: facture.client,
+        client_name_override: facture.client_name_override
+      })
+      
+      const updatedFacture = response.data.facture
+      setFacturesEnAttente(prev => prev.map(f => f.id === factureId ? { ...updatedFacture, session_ticket_number: f.session_ticket_number } : f))
+      toast.success(t('messages.product_removed'))
+      
+    } catch (err: any) {
+      console.error('Erreur suppression produit:', err)
+      toast.error(err.response?.data?.detail || t('messages.modification_error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Compute stats for the header cards
   const totalMontantEnAttente = useMemo(() => 
     facturesEnAttente.reduce((acc, f) => acc + Number(f.total_ttc || 0), 0), 
@@ -672,6 +745,8 @@ export default function CaisseCentralisee() {
               onModify={handleModifier}
               onCancel={handleAnnuler}
               onApplyCoupon={openCouponSelectionForFacture}
+              onUpdateProductQuantity={handleUpdateProductQuantity}
+              onRemoveProduct={handleRemoveProduct}
               couponsParFacture={couponsParFacture}
               user={user}
             />

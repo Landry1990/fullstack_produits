@@ -97,15 +97,15 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </span>
                                     <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
                                         <Calendar className="w-3 h-3" />
-                                        {new Date(inv.date).toLocaleDateString('fr-FR')}
+                                        {new Date(inv.date).toLocaleDateString(t('common.date_locale', 'fr-FR'))}
                                     </span>
                                 </div>
                             </td>
                             <td className="px-6 py-4 max-w-xs truncate font-medium">
-                                {inv.description || '-'}
+                                {inv.description || t('stock.inventaire.list.no_description', '-')}
                                 <div className="text-[10px] text-base-content/40 mt-1 flex items-center gap-1">
                                     <History className="h-3 w-3" />
-                                    Par {inv.created_by_name || '-'}
+                                    {t('stock.inventaire.list.created_by_prefix', 'Par')} {inv.created_by_name || '-'}
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-base-content">
@@ -128,7 +128,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     ${inv.status === 'VALIDEE' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
                                 >
                                     {inv.status === 'VALIDEE' ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                                    {inv.status}
+                                    {inv.status === 'VALIDEE' ? t('stock.inventaire.status.validated') : t('stock.inventaire.status.draft')}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
@@ -144,7 +144,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                         className="p-2 text-base-content/60 hover:text-error hover:bg-error/10 rounded-lg transition-all" 
                                         onClick={() => onDelete(inv.id)} 
                                         disabled={inv.status === 'VALIDEE' || deleting}
-                                        title={t('rayons.table.delete')}
+                                        title={t('common.delete')}
                                     >
                                         {deleting ? <span className="loading loading-spinner loading-xs"></span> : <Trash2 className="h-4 w-4" />}
                                     </button>

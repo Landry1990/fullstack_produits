@@ -60,7 +60,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     </div>
                     <input
                         type="text"
-                        placeholder={t('stock.inventaire.filters.search_placeholder', { defaultValue: 'Rechercher un inventaire...' })}
+                        placeholder={t('stock.inventaire.filters.search_placeholder')}
                         className="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -99,7 +99,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="">{t('stock.inventaire.filters.status_all', { defaultValue: 'Tous les statuts' })}</option>
+                            <option value="">{t('stock.inventaire.filters.status_all')}</option>
                             <option value="EN_COURS">{t('stock.inventaire.status.draft', { defaultValue: 'En cours' })}</option>
                             <option value="VALIDEE">{t('stock.inventaire.status.validated', { defaultValue: 'Validée' })}</option>
                         </select>
@@ -115,7 +115,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             onChange={(e) => setCreatorFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="">{t('stock.inventaire.filters.creators_all', { defaultValue: 'Tous les créateurs' })}</option>
+                            <option value="">{t('stock.inventaire.filters.creators_all')}</option>
                             {users.map(u => (
                                 <option key={u.id} value={u.id}>
                                     {u.first_name} {u.last_name} ({u.username})

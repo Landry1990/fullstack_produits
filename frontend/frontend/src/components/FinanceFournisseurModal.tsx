@@ -37,7 +37,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
             setMontant(prefilledMontant ? prefilledMontant.toString() : '');
             setModePaiement('ESP');
             setReference('');
-            setNotes(commandeIds && commandeIds.length > 0 ? `Règlement global du Pointage des factures (Qté: ${commandeIds.length})` : '');
+            setNotes(commandeIds && commandeIds.length > 0 ? t('providers.finance.pointage_note', { count: commandeIds.length }) : '');
         }
     }, [isOpen, fournisseur, fetchPaiements, prefilledMontant, commandeIds]);
 
@@ -208,7 +208,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                     {paiements.map((paiement) => (
                                         <tr key={paiement.id} className="hover:bg-white transition-colors border-b border-slate-100">
                                             <td className="font-mono text-sm">
-                                                {new Date(paiement.date_paiement).toLocaleDateString('fr-FR')}
+                                                {new Date(paiement.date_paiement).toLocaleDateString(t('common.date_format_short') === 'dd/MM/yyyy' ? 'fr-FR' : 'en-US')}
                                             </td>
                                             <td>
                                                 <span className={`badge badge-sm font-semibold capitalize ${
@@ -243,7 +243,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                             <td className="text-center">
                                                 <button 
                                                     className="btn btn-ghost btn-xs text-error tooltip tooltip-left" 
-                                                    data-tip="Supprimer"
+                                                    data-tip={t('providers.finance.delete_tooltip')}
                                                     onClick={() => handleDelete(paiement.id)}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

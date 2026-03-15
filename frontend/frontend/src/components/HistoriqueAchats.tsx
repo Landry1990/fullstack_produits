@@ -3,6 +3,7 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DailyPurchase {
   date: string;
@@ -99,135 +100,180 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   };
 
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  // Summary stats for the current page
+  const totalOrdersPage = data.reduce((acc, row) => acc + row.nb_commandes, 0);
+  const totalAmountPage = data.reduce((acc, row) => acc + row.total_achat, 0);
+
   return (
     <div className="h-full flex flex-col p-6 overflow-hidden">
-      <div className="sticky-header">
-        <h1 className="text-2xl font-bold mb-6 shrink-0">
-          {t('orders.history.title')} 
-          {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
-        </h1>
+      <div className="max-w-4xl mx-auto w-full flex flex-col h-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5 shrink-0">
+          <div>
+            <h1 className="text-xl font-bold text-base-content flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              {t('orders.history.title')}
+              <span className="text-primary text-sm md:text-xl">
+                {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
+              </span>
+            </h1>
+            <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('orders.history.results_found')}</p>
+          </div>
+        </div>
 
-        <div className="flex flex-wrap gap-4 mb-6 bg-base-200 p-4 rounded-lg items-end shadow-sm shrink-0">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">{t('orders.history.start_date')}</span>
-            </label>
+        {/* Compact Filters Bar */}
+        <div className="flex flex-wrap items-center gap-3 mb-4 shrink-0">
+          <div className="group relative">
             <input 
               type="date" 
-              className="input input-bordered" 
+              className="input input-sm input-bordered rounded-lg bg-base-100 w-36 text-xs transition-all focus:ring-2 focus:ring-primary/20" 
               value={dateDebut}
               onChange={(e) => setDateDebut(e.target.value)}
             />
           </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">{t('orders.history.end_date')}</span>
-            </label>
+          <span className="text-base-content/30 text-xs font-bold">→</span>
+          <div className="group relative">
             <input 
               type="date" 
-              className="input input-bordered" 
+              className="input input-sm input-bordered rounded-lg bg-base-100 w-36 text-xs transition-all focus:ring-2 focus:ring-primary/20" 
               value={dateFin}
               onChange={(e) => setDateFin(e.target.value)}
             />
           </div>
-          
-          <div className="form-control min-w-[200px]">
-            <label className="label">
-              <span className="label-text">{t('orders.history.provider_filter')}</span>
-            </label>
-            <select 
-              className="select select-bordered"
-              value={selectedSupplier}
-              onChange={(e) => setSelectedSupplier(e.target.value)}
-            >
-              <option value="">{t('orders.history.all_providers')}</option>
-              {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-control">
-               <button className="btn btn-primary" onClick={() => fetchHistory(page)}>{t('orders.history.refresh')}</button>
-          </div>
+          <select 
+            className="select select-sm select-bordered rounded-lg bg-base-100 text-xs min-w-[160px] focus:ring-2 focus:ring-primary/20"
+            value={selectedSupplier}
+            onChange={(e) => setSelectedSupplier(e.target.value)}
+          >
+            <option value="">{t('orders.history.all_providers')}</option>
+            {suppliers.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <button 
+            className="btn btn-sm btn-primary rounded-lg gap-2 shadow-sm hover:shadow-md transition-all active:scale-95"
+            onClick={() => fetchHistory(page)}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">{t('orders.history.refresh')}</span>
+          </button>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="flex justify-center p-8 shrink-0">
-          <span className="loading loading-spinner loading-lg"></span>
-        </div>
-      ) : (
-        <div className="flex-1 min-h-0 flex flex-col">
-          <div className="overflow-auto flex-1 bg-base-100 rounded-box shadow-xl border border-base-200">
-            <table className="table table-zebra table-pin-rows w-full">
-              <thead className="sticky top-0 z-10 bg-base-200 opacity-100">
-                <tr className="bg-base-200 text-base-content uppercase text-sm">
-                  <th>{t('orders.history.columns.date')}</th>
-                  <th className="text-right">{t('orders.history.columns.nb_orders')}</th>
-                  <th className="text-right">{t('orders.history.columns.total_purchase')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row) => (
-                  <tr key={row.date} className="hover">
-                    <td className="font-medium whitespace-nowrap">{format(new Date(row.date), 'dd/MM/yyyy')}</td>
-                    <td className="text-right font-bold">{row.nb_commandes}</td>
-                    <td className="text-right font-bold">{formatMoney(row.total_achat)}</td>
-                  </tr>
-                ))}
-                {data.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="text-center p-8 text-base-content/50">
-                      {t('orders.history.no_data')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-              <tfoot className="bg-base-200 font-bold text-base-content">
-                  <tr>
-                      <td>{t('orders.history.total')} (page)</td>
-                      <td className="text-right">{data.reduce((acc, row) => acc + row.nb_commandes, 0)}</td>
-                      <td className="text-right">{formatMoney(data.reduce((acc, row) => acc + row.total_achat, 0))}</td>
-                  </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex flex-col items-center gap-4 mt-4 shrink-0">
-              <div className="join shadow-lg">
-                <button 
-                  className="join-item btn btn-md" 
-                  disabled={page === 1}
-                  onClick={() => handlePageChange(page - 1)}
-                >
-                  «
-                </button>
-                <button className="join-item btn btn-md no-animation">
-                  Page {page} / {totalPages}
-                </button>
-                <button 
-                  className="join-item btn btn-md" 
-                  disabled={page === totalPages}
-                  onClick={() => handlePageChange(page + 1)}
-                >
-                  »
-                </button>
+        {/* Summary Info - Centered and Compact */}
+        <div className="grid grid-cols-2 gap-4 mb-4 shrink-0">
+          <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                <Package className="w-5 h-5 text-primary" />
               </div>
-              <div className="text-sm text-base-content/60 italic">
-                {totalCount} {t('orders.history.results_found')}
+              <div>
+                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('orders.history.columns.nb_orders')}</p>
+                <p className="text-xl font-black text-base-content antialiased leading-none">{totalOrdersPage}</p>
               </div>
             </div>
-          )}
+          </div>
+          <div className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-3 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('orders.history.columns.total_purchase')}</p>
+                <p className="text-xl font-black text-base-content antialiased leading-none">
+                  {formatMoney(totalAmountPage)} <span className="text-xs font-bold text-base-content/30 ml-0.5">F</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+
+        {/* Table Content */}
+        {loading && data.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center py-20 bg-base-100 rounded-3xl border border-base-200">
+            <span className="loading loading-spinner loading-lg text-primary/40"></span>
+            <p className="text-sm text-base-content/40 mt-4 font-medium italic">Chargement de l'historique...</p>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 flex flex-col">
+            <div className={`overflow-auto flex-1 rounded-3xl border-2 border-base-200/60 bg-base-100 shadow-sm transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+              <table className="table table-sm table-pin-rows w-full border-separate border-spacing-0">
+                <thead>
+                  <tr className="bg-base-200/80 text-[11px] font-black text-base-content/50 uppercase tracking-[0.15em]">
+                    <th className="py-4 pl-8 border-b border-base-200/60 bg-base-200/80">{t('orders.history.columns.date')}</th>
+                    <th className="text-center py-4 border-b border-base-200/60 bg-base-200/80">{t('orders.history.columns.nb_orders')}</th>
+                    <th className="text-right py-4 pr-8 border-b border-base-200/60 bg-base-200/80">{t('orders.history.columns.total_purchase')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-base-100">
+                  {data.map((row, i) => (
+                    <tr key={row.date} className="group hover:bg-primary/[0.03] transition-colors">
+                      <td className="py-3 pl-8">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
+                          <span className="text-sm font-bold text-base-content/70">
+                            {format(new Date(row.date), 'dd MMMM yyyy', { locale: undefined })}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3 text-center">
+                        <span className="inline-flex items-center justify-center h-7 px-3 rounded-full bg-base-200 text-base-content/70 text-xs font-black group-hover:bg-primary group-hover:text-primary-content transition-colors">
+                          {row.nb_commandes}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right pr-8">
+                        <span className="text-base font-black text-base-content group-hover:text-primary transition-colors">
+                          {formatMoney(row.total_achat)}
+                        </span>
+                        <span className="text-[10px] font-bold text-base-content/30 ml-1">FCFA</span>
+                      </td>
+                    </tr>
+                  ))}
+                  {data.length === 0 && !loading && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-24">
+                        <div className="flex flex-col items-center gap-3 opacity-20">
+                          <Package className="w-12 h-12" />
+                          <p className="text-sm font-bold uppercase tracking-widest">{t('orders.history.no_data')}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-5 px-2 shrink-0">
+                <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
+                  Page {page} <span className="mx-1 text-base-content/20">/</span> {totalPages}
+                </div>
+                <div className="flex gap-2">
+                  <button 
+                    className="btn btn-xs rounded-xl bg-base-100 border-2 border-base-200 hover:border-primary/50 text-base-content transition-all active:scale-90" 
+                    disabled={page === 1}
+                    onClick={() => handlePageChange(page - 1)}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button 
+                    className="btn btn-xs rounded-xl bg-base-100 border-2 border-base-200 hover:border-primary/50 text-base-content transition-all active:scale-90" 
+                    disabled={page === totalPages}
+                    onClick={() => handlePageChange(page + 1)}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
