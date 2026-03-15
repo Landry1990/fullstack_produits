@@ -157,18 +157,23 @@ export default function Produit() {
     if (!produit.has_reserve_storage || (produit.stock_reserve ?? 0) <= 0) return;
     const needed = Math.max(0, (produit.capacite_rayon ?? 0) - (produit.stock ?? 0));
     const suggest = Math.min(needed, produit.stock_reserve ?? 0);
-    const qtyStr = prompt(`Transférer de la réserve vers le rayon ?\nStock Réserve disponible: ${produit.stock_reserve}\nCapacité Rayon: ${produit.capacite_rayon}\nBesoin Rayon: ${needed}`, String(suggest));
+    const informMsg = t('products.messages.transfer_prompt', { 
+      reserve: produit.stock_reserve, 
+      capacity: produit.capacite_rayon, 
+      needed: needed 
+    });
+    const qtyStr = prompt(informMsg, String(suggest));
     if (qtyStr === null) return;
     const qty = parseInt(qtyStr, 10);
-    if (isNaN(qty) || qty <= 0) { toast.error('Quantité invalide'); return; }
+    if (isNaN(qty) || qty <= 0) { toast.error(t('products.messages.invalid_quantity')); return; }
 
     setTransferLoading(true);
     try {
       await axios.post(`${produitsEndpoint}${produit.id}/transfer_to_shelf/`, { quantity: qty });
-      toast.success(`${qty} unités transférées au rayon`);
+      toast.success(t('products.messages.transfer_success', { count: qty }));
       refetchProduits();
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Erreur lors du transfert');
+      toast.error(err.response?.data?.detail || t('products.messages.transfer_error'));
     } finally { setTransferLoading(false); }
   };
 
@@ -180,7 +185,7 @@ export default function Produit() {
         const response = await axios.get(`/api/factures/${item.facture}/`);
         setSelectedFacture(response.data);
       } catch (error) {
-        toast.error('Erreur lors du chargement des détails de la facture');
+        toast.error(t('products.messages.facture_load_error'));
         setShowSalesModal(false);
       } finally { setLoadingFacture(false); }
     } else if (item.commande) {
@@ -193,7 +198,7 @@ export default function Produit() {
       await deleteProduitMutation.mutateAsync(produitId);
       setSelectedProduit(null)
       toast.success(t('products.messages.delete_success'))
-    } catch (err) { toast.error('Erreur lors de la suppression') }
+    } catch (err) { toast.error(t('products.messages.delete_error')) }
   }
 
   const handleDeleteProduit = async (produit: ProduitModel) => {
@@ -220,10 +225,10 @@ export default function Produit() {
     try {
       const response = await axios.post(`${produitsEndpoint}${produit.id}/toggle_active/`)
       const isActive = response.data.is_active
-      toast.success(isActive ? 'Produit réactivé' : 'Produit masqué')
+      toast.success(isActive ? t('products.messages.status_reactivated') : t('products.messages.status_hidden'))
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
       refetchProduits()
-    } catch (err) { toast.error('Erreur lors du changement de statut') }
+    } catch (err) { toast.error(t('products.messages.status_error')) }
   }
 
   const handleOpenEditModal = (produit: ProduitModel) => {
@@ -285,7 +290,7 @@ export default function Produit() {
       setSelectedProduit(updatedProduit)
       setIsEditModalOpen(false)
       toast.success(t('products.messages.update_success'))
-    } catch (err) { toast.error('Erreur lors de la mise à jour') }
+    } catch (err) { toast.error(t('products.messages.update_error')) }
   }
 
   const executeStockAdjustment = async () => {
@@ -296,10 +301,18 @@ export default function Produit() {
         quantity: parseInt(adjustmentForm.new_quantity),
         reason: adjustmentForm.reason_type
       });
-      toast.success(`Stock ajusté: ${data.quantity_change >= 0 ? '+' : ''}${data.quantity_change}`)
-      setSelectedProduit(prev => prev ? ({ ...prev, stock: data.quantity_after }) : null)
+      const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
+      toast.success(t('products.messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
+      const qtyChange = data.quantity_change ?? 0;
+      setSelectedProduit(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          stock: (prev.stock ?? 0) + qtyChange
+        };
+      });
       setIsAdjustmentModalOpen(false)
-    } catch (err: any) { toast.error(err.response?.data?.detail || 'Erreur lors de l\'ajustement') }
+    } catch (err: any) { toast.error(err.response?.data?.detail || t('products.messages.adjust_error')) }
   }
 
   const handleStockAdjustmentSubmit = async (e: React.FormEvent) => {
@@ -394,12 +407,11 @@ export default function Produit() {
         <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden">
           <div className="p-3 border-b bg-white shrink-0 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-800">{t('products.table.product')}s</h2>
+              <h2 className="text-sm font-bold text-slate-800">{t('products.title')}</h2>
               <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">{totalCount}</span>
             </div>
             <button className="btn btn-sm btn-primary gap-2" onClick={() => setIsCreateModalOpen(true)}>➕ {t('products.actions.create')}</button>
           </div>
-          
           <ProductFilters 
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
             filterRayon={filterRayon} setFilterRayon={setFilterRayon}
@@ -474,7 +486,7 @@ export default function Produit() {
       />
       <ProduitCreateModal 
         open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} onCreated={() => { refetchProduits(); setIsCreateModalOpen(false); }}
-        produitsEndpoint={produitsEndpoint} rayons={rayons} fournisseurs={fournisseurs} formes={formes} groupes={groupes}
+        produitsEndpoint={produitsEndpoint} rayons={rayons} fournisseurs={fournisseurs} formes={formes} groupes={groupes as any}
       />
       <SalesDetailsModal isOpen={showSalesModal} onClose={() => { setShowSalesModal(false); setSelectedFacture(null); }} facture={selectedFacture} loading={loadingFacture} />
       <ProductDetailsModal 

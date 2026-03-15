@@ -11,6 +11,7 @@ interface UseCreanceActionsProps {
     selectedIds: number[];
     setSelectedIds: (ids: number[]) => void;
     filteredCreances: Creance[];
+    creancesEndpoint?: string;
 }
 
 export const useCreanceActions = ({

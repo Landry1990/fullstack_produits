@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CommandeProduit, ProduitModel, Commande } from '../../types';
-import { formatCurrency, formatNumber } from '../../utils/formatters';
+import { formatCurrency } from '../../utils/formatters';
 
 interface FieldConfig {
     name: string;
@@ -225,40 +225,45 @@ export default function CommandeProductTable({
                 </thead>
                 <tbody>
                     {commandeProduits.map((p, index) => {
-                        let name = '';
+                        let produitName = '';
                         let cip = '';
                         let isExclusive = false;
                         let supplierName = '';
 
                         // Resolve Product Data
-                        if (typeof p.produit === 'object' && p.produit.name) {
-                            name = p.produit.name;
-                            cip = p.produit.cip1 || '';
-                            isExclusive = p.produit.is_supplier_exclusive || false;
-                            supplierName = p.produit.fournisseur_name || '';
+                        const isObjectProduit = p.produit && typeof p.produit === 'object';
+                        const produitId = isObjectProduit ? (p.produit as any).id : p.produit;
+
+                        if (isObjectProduit && (p.produit as any).name) {
+                            produitName = (p.produit as any).name;
+                            cip = (p.produit as any).cip1 || '';
+                            isExclusive = (p.produit as any).is_supplier_exclusive || false;
+                            supplierName = (p.produit as any).fournisseur_name || '';
                         } else {
-                            // Try to find in produitsList
-                            const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
-                            const found = produitsList.find(prod => prod.id === produitId);
+                            // Try to find in produitsList (local cache)
+                            const found = produitId ? produitsList.find(prod => prod.id === produitId) : null;
                             if (found) {
-                                name = found.name;
+                                produitName = found.name;
                                 cip = found.cip1 || '';
                                 isExclusive = found.is_supplier_exclusive || false;
                                 supplierName = found.fournisseur_name || '';
                             } else if ((p as any).produit_nom) {
-                                 // Fallback to flattened fields from API
-                                 name = (p as any).produit_nom;
-                                 cip = (p as any).cip || (p as any).produit_cip || (p as any).produit_ref || ''; 
-                                 if (cip === name) cip = ''; // Avoid dupes if ref is name
+                                 // Fallback to flattened fields from API (backend already appends "(supprimé)" if needed)
+                                 produitName = (p as any).produit_nom;
+                                 cip = (p as any).produit_cip || (p as any).produit_ref || '';
+                            } else if (p.produit === null) {
+                                produitName = t('common.unknown_product_deleted', { defaultValue: 'Produit inconnu (supprimé)' });
                             } else {
-                                name = `Produit #${produitId}`;
+                                produitName = `Produit #${produitId}`;
                             }
                         }
+
+                        const isDeleted = p.produit === null || produitName.includes('(supprimé)');
 
                         // Local Search Filter
                         if (searchQuery) {
                             const q = searchQuery.toLowerCase();
-                            const matchesName = name.toLowerCase().includes(q);
+                            const matchesName = produitName.toLowerCase().includes(q);
                             const matchesCip = cip.toLowerCase().includes(q);
                             if (!matchesName && !matchesCip) {
                                 return null;
@@ -281,8 +286,8 @@ export default function CommandeProductTable({
                             <td className="pl-4 py-2 md:py-3">
                             <div className="font-medium text-sm">
                                 <div className="flex items-center gap-1 flex-wrap">
-                                    <span className="break-words max-w-[200px]">
-                                        {name}
+                                    <span className={`break-words max-w-[200px] ${isDeleted ? 'italic text-base-content/50' : ''}`}>
+                                        {produitName}
                                     </span>
                                     {isExclusive && (
                                         <div 
@@ -302,10 +307,10 @@ export default function CommandeProductTable({
                             <span className="text-xs font-mono text-base-content/70">
                                 {(() => {
                                     // 1. Try direct object
-                                    if (typeof p.produit === 'object' && p.produit.cip1) return p.produit.cip1;
+                                    if (p.produit && typeof p.produit === 'object' && p.produit.cip1) return p.produit.cip1;
                                     
                                     // 2. Try lookup in list
-                                    const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                                    const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
                                     const found = produitsList.find(prod => prod.id === produitId);
                                     if (found && found.cip1) return found.cip1;
                                     
@@ -320,7 +325,7 @@ export default function CommandeProductTable({
                         {/* Stock Actuel */}
                         <td className="text-center py-2 md:py-3 bg-orange-50/20">
                             {(() => {
-                                const currentStock = (typeof p.produit === 'object' && p.produit.stock !== undefined) 
+                                const currentStock = (p.produit && typeof p.produit === 'object' && p.produit.stock !== undefined) 
                                     ? p.produit.stock 
                                     : (p as any).produit_stock ?? 0;
                                 
@@ -526,18 +531,18 @@ export default function CommandeProductTable({
                             <td colSpan={14} className="p-0">
                                 {(() => {
                                     // Extract stats either from full product object or from flattened serializer fields
-                                    const pObj = typeof p.produit === 'object' ? p.produit : null;
+                                    const pObj = (p.produit && typeof p.produit === 'object') ? p.produit : null;
                                     const pAny = p as any;
                                     
                                     // Merge available data
                                     const stats = {
-                                        dernier_achat: pObj?.dernier_achat || pAny.produit_dernier_achat,
-                                        dernier_vente: pObj?.dernier_vente || pAny.produit_dernier_vente,
+                                        dernier_achat: (pObj as any)?.dernier_achat || pAny.produit_dernier_achat,
+                                        dernier_vente: (pObj as any)?.dernier_vente || pAny.produit_dernier_vente,
                                         rotation_moyenne: pObj?.rotation_moyenne || pAny.produit_rotation_moyenne,
                                         stock_minimum: pObj?.stock_minimum || pAny.produit_stock_minimum || 0,
-                                        stock_maximum: pObj?.stock_maximum || pAny.produit_stock_maximum || 0,
+                                        stock_maximum: (pObj as any)?.stock_maximum || pAny.produit_stock_maximum || 0,
                                         stock_alert: pObj?.stock_alert || pAny.produit_stock_alert || 0,
-                                        cost_price: pObj?.cost_price || pAny.produit_cost_price || p.price,
+                                        cost_price: (pObj as any)?.cost_price || pAny.produit_cost_price || p.price,
                                         stock: pObj?.stock ?? pAny.produit_stock ?? 0,
                                     };
                                     

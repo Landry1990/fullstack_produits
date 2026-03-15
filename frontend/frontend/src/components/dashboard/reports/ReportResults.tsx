@@ -2,7 +2,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
     formatColumnHeader, 
-    formatValue 
+    formatValue,
+    isNumericColumn
 } from '../../../hooks/useCentreRapports';
 import type { QueryDefinition, PaginationData } from '../../../hooks/useCentreRapports';
 import { MonthlyReportView } from './MonthlyReportView';
@@ -53,7 +54,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                         {Object.entries(value as object).map(([subKey, subValue]) => (
                                             <div key={subKey} className="flex justify-between items-center text-sm border-b border-base-200/50 pb-2 last:border-0 last:pb-0">
                                                 <span className="text-base-content/60 font-bold uppercase text-[10px] tracking-tight">{subKey.replace(/_/g, ' ')}</span>
-                                                <span className="font-black text-base-content">{formatValue(subKey, subValue)}</span>
+                                                <span className="font-black text-base-content">{formatValue(subKey, subValue, t)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -63,7 +64,7 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                         return (
                             <div key={key} className="bg-base-100 rounded-2xl p-6 border border-base-300 shadow-sm flex flex-col justify-center">
                                 <div className="text-[10px] font-bold uppercase text-base-content/40 tracking-widest mb-1">{key.replace(/_/g, ' ')}</div>
-                                <div className="text-2xl font-black text-base-content">{formatValue(key, value)}</div>
+                                <div className="text-2xl font-black text-base-content">{formatValue(key, value, t)}</div>
                             </div>
                         );
                     })}
@@ -91,7 +92,10 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                             <thead>
                                 <tr className="bg-base-200/50">
                                     {columns.slice(0, 8).map((col, idx) => (
-                                        <th key={col} className={`text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''}`}>
+                                        <th 
+                                            key={col} 
+                                            className={`text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 px-4 ${idx === 0 ? 'pl-6 rounded-tl-2xl' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
+                                        >
                                             {formatColumnHeader(col)}
                                         </th>
                                     ))}
@@ -102,8 +106,11 @@ export const ReportResults: React.FC<ReportResultsProps> = ({
                                 {results.slice(0, 100).map((row, idx) => (
                                     <tr key={idx} className="hover:bg-primary/5 transition-all group">
                                         {columns.slice(0, 8).map((col, subIdx) => (
-                                            <td key={col} className={`py-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''}`}>
-                                                {formatValue(col, row[col])}
+                                            <td 
+                                                key={col} 
+                                                className={`py-4 px-4 text-sm font-medium text-base-content/80 ${subIdx === 0 ? 'pl-6 font-bold' : ''} ${isNumericColumn(col) ? 'text-right' : 'text-left'}`}
+                                            >
+                                                {formatValue(col, row[col], t)}
                                             </td>
                                         ))}
                                         <td className="pr-4">

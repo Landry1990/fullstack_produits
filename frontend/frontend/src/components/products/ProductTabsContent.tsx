@@ -34,7 +34,7 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           { id: 'prix', label: t('products.detail.tabs.price') },
           { id: 'lots', label: t('products.detail.tabs.lots') },
           { id: 'stats', label: t('products.detail.tabs.stats') },
-          { id: 'mvmts', label: `📜 MVMTS` }
+          { id: 'mvmts', label: t('products.detail.tabs.movements') }
         ].map((tab) => (
           <a 
             key={tab.id}
@@ -134,11 +134,11 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
           </div>
         )}
 
-        {activeTab === 'lots' && propsTabsContentLots(lots)}
+        {activeTab === 'lots' && propsTabsContentLots(lots, t)}
 
         {activeTab === 'stats' && propsTabsContentStats(monthlyStats, t)}
 
-        {activeTab === 'mvmts' && propsTabsContentMovements(stockHistory, loadingHistory, onMovementClick)}
+        {activeTab === 'mvmts' && propsTabsContentMovements(stockHistory, loadingHistory, onMovementClick, t)}
       </div>
     </div>
   );
@@ -146,20 +146,20 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
 
 // Helper components to keep the main one cleaner
 
-const propsTabsContentLots = (lots: StockLot[]) => {
-    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">Aucun lot en stock pour ce produit</p>;
+const propsTabsContentLots = (lots: StockLot[], t: any) => {
+    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products.detail.lots.empty')}</p>;
 
     return (
         <div className="overflow-x-auto">
             <table className="table table-sm">
                 <thead className="bg-base-200 sticky top-0">
                     <tr>
-                        <th className="text-xs">Date Réception</th>
-                        <th className="text-xs">Numéro de Lot</th>
-                        <th className="text-xs">Expiration</th>
-                        <th className="text-xs">Fournisseur</th>
-                        <th className="text-xs text-right">Qté Initiale</th>
-                        <th className="text-xs text-right">Qté Restante</th>
+                        <th className="text-xs">{t('products.detail.lots.date_reception')}</th>
+                        <th className="text-xs">{t('products.detail.lots.lot_number')}</th>
+                        <th className="text-xs">{t('products.detail.lots.expiration')}</th>
+                        <th className="text-xs">{t('products.detail.lots.provider')}</th>
+                        <th className="text-xs text-right">{t('products.detail.lots.initial_qty')}</th>
+                        <th className="text-xs text-right">{t('products.detail.lots.remaining_qty')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -226,35 +226,35 @@ const propsTabsContentStats = (monthlyStats: any[], t: any) => {
                 </tbody>
             </table>
             <div className="mt-2 text-[10px] text-base-content/50 flex justify-around">
-                <span>V = Vendue</span>
-                <span>C = Commandée</span>
-                <span>Nb = Nombre</span>
+                <span>{t('products.detail.stats.legend_sold')}</span>
+                <span>{t('products.detail.stats.legend_ordered')}</span>
+                <span>{t('products.detail.stats.legend_count')}</span>
             </div>
         </div>
     );
 };
 
-const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean, onMovementClick: (item: any) => void) => {
+const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean, onMovementClick: (item: any) => void, t: any) => {
     if (loadingHistory) return (
         <div className="flex justify-center py-12">
             <span className="loading loading-spinner loading-lg"></span>
         </div>
     );
 
-    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-base-content/50 py-8">Aucun mouvement de stock enregistré</p>;
+    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products.detail.movements.empty')}</p>;
 
     return (
         <div className="overflow-x-auto">
             <table className="table table-sm">
                 <thead className="bg-base-200 sticky top-0">
                     <tr>
-                        <th className="text-xs">Date</th>
-                        <th className="text-xs">Type</th>
-                        <th className="text-xs">Libellé</th>
-                        <th className="text-xs">Opérateur</th>
-                        <th className="text-xs text-right">Avant</th>
-                        <th className="text-xs text-right">Qté</th>
-                        <th className="text-xs text-right">Après</th>
+                        <th className="text-xs">{t('products.detail.movements.date')}</th>
+                        <th className="text-xs">{t('products.detail.movements.type')}</th>
+                        <th className="text-xs">{t('products.detail.movements.label')}</th>
+                        <th className="text-xs">{t('products.detail.movements.operator')}</th>
+                        <th className="text-xs text-right">{t('products.detail.movements.before')}</th>
+                        <th className="text-xs text-right">{t('products.detail.movements.qty')}</th>
+                        <th className="text-xs text-right">{t('products.detail.movements.after')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -283,7 +283,7 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                 <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
                                     <div className="flex items-center gap-1">
                                         {(item.facture || item.commande) && (
-                                            <span className="text-primary" title={item.facture ? "Cliquez pour voir la facture" : "Cliquez pour voir la commande"}>🔍</span>
+                                            <span className="text-primary" title={item.facture ? t('products.detail.movements.view_invoice') : t('products.detail.movements.view_order')}>🔍</span>
                                         )}
                                         {item.libelle}
                                         {item.commande_numero && (

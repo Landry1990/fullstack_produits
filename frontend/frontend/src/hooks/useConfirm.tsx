@@ -2,7 +2,7 @@ import { createContext, useContext, useState, type ReactNode } from 'react'
 import ConfirmDialog from '../components/ConfirmDialog'
 
 interface ConfirmOptions {
-  title: string
+  title?: string
   message: string
   confirmText?: string
   cancelText?: string
@@ -53,7 +53,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       {children}
       <ConfirmDialog
         isOpen={confirmState.isOpen}
-        title={confirmState.options.title}
+        title={confirmState.options.title || ''}
         message={confirmState.options.message}
         confirmText={confirmState.options.confirmText}
         cancelText={confirmState.options.cancelText}

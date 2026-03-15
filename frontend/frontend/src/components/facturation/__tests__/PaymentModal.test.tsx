@@ -138,7 +138,8 @@ describe('PaymentModal', () => {
       tva: '0',
       total_ht: '10000',
       total_tva: '0',
-      total_ttc: '10000',
+      total_ttc: '2010',
+      montant_paye: '2010',
       produits: []
     }
     

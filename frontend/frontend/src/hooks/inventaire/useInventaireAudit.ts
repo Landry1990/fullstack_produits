@@ -4,10 +4,30 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 export interface AuditData {
-    top_pertes: Array<{ produit_nom: string; ecart: number; valeur: number }>;
-    top_surplus: Array<{ produit_nom: string; ecart: number; valeur: number }>;
-    par_rayon: Array<{ rayon: string; total: number }>;
-    par_groupe: Array<{ groupe: string; total: number }>;
+    top_pertes: Array<{ 
+        produit__name: string; 
+        produit__cip1: string; 
+        total_quantite: number; 
+        total_valeur: number; 
+        occurrence: number;
+    }>;
+    top_surplus: Array<{ 
+        produit__name: string; 
+        produit__cip1: string; 
+        total_quantite: number; 
+        total_valeur: number; 
+        occurrence: number;
+    }>;
+    par_rayon: Array<{ 
+        produit__rayon__name: string; 
+        total_valeur: number; 
+        nombre_lignes: number;
+    }>;
+    par_groupe: Array<{ 
+        produit__groupe__name: string; 
+        total_valeur: number; 
+        nombre_lignes: number;
+    }>;
     stats_globales: {
         total_perte: number;
         total_gain: number;

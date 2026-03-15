@@ -71,6 +71,18 @@ export interface ProduitModel {
     fournisseur_name?: string | null
     taux_marge?: string | number
     is_deleted?: boolean
+    stock_maximum?: number
+    pourcentage_marge?: string | number
+    requires_prescription?: boolean
+    surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
+    dernier_achat?: string | null
+    dernier_vente?: string | null
+    famille_risque?: number | null
+    famille_risque_nom?: string | null
+    quantity_change?: number
+    quantity_after?: number
+    use_lot_management?: boolean
+    last_purchase_price?: string | number
 }
 
 export interface ProduitForm {
@@ -85,14 +97,18 @@ export interface ProduitForm {
     expire_date: string
     stock_alert: string
     stock_minimum: string
+    stock_maximum: string
     unite_mesure: string
     is_perissable: boolean
     tva: string
     forme: string
     groupe: string
     rayon: string
+    fournisseur: string
     is_supplier_exclusive?: boolean
     use_lot_management?: boolean
+    requires_prescription?: boolean
+    surveillance_category?: 'NONE' | 'STANDARD' | 'RENFORCEE'
     is_chronic?: boolean
     default_treatment_days?: string
     has_reserve_storage?: boolean

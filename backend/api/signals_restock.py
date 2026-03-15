@@ -130,7 +130,14 @@ def _process_cancelled_facture(facture):
             if ligne_commande.quantity >= qte_vendue:
                 ligne_commande.quantity -= qte_vendue
                 if ligne_commande.quantity <= 0:
-                    ligne_commande.delete()
+                    from django.db.models.deletion import ProtectedError
+                    try:
+                        ligne_commande.delete()
+                    except ProtectedError:
+                        # Si la ligne est déjà référencée (ex: stock déjà reçu), on ne peut pas la supprimer
+                        # On la laisse à 0 pour indiquer qu'elle n'est plus "demandée" par cette vente
+                        ligne_commande.quantity = 0
+                        ligne_commande.save(update_fields=['quantity'])
                 else:
                     ligne_commande.save()
         except CommandeProduit.DoesNotExist:

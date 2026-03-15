@@ -1,0 +1,34 @@
+
+> frontend@0.0.0 build
+> tsc -b && vite build
+
+src/components/Commandes.tsx(12,11): error TS6133: 'formatDateFr' is declared but its value is never read.
+src/components/facturation/__tests__/PaymentModal.test.tsx(145,62): error TS2741: Property 'montant_paye' is missing in type '{ id: number; numero_facture: string; client: number; date: string; status: string; status_display: string; remise: string; tva: string; total_ht: string; total_tva: string; total_ttc: string; produits: never[]; }' but required in type 'Facture'.
+src/components/JournalAudit.tsx(249,58): error TS18048: 'user.id' is possibly 'undefined'.
+src/components/products/modals/ProductDetailsModal.tsx(70,54): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/components/Produit.tsx(299,38): error TS18048: 'data.quantity_change' is possibly 'undefined'.
+src/components/Produit.tsx(300,26): error TS2345: Argument of type '(prev: ProduitModel | null) => { stock: number | undefined; id: number; name: string; description: string; cost_price: string; selling_price: string; cip1?: string | null | undefined; ... 40 more ...; last_purchase_price?: string | ... 1 more ... | undefined; } | null' is not assignable to parameter of type 'SetStateAction<ProduitModel | null>'.
+  Type '(prev: ProduitModel | null) => { stock: number | undefined; id: number; name: string; description: string; cost_price: string; selling_price: string; cip1?: string | null | undefined; ... 40 more ...; last_purchase_price?: string | ... 1 more ... | undefined; } | null' is not assignable to type '(prevState: ProduitModel | null) => ProduitModel | null'.
+    Type '{ stock: number | undefined; id: number; name: string; description: string; cost_price: string; selling_price: string; cip1?: string | null | undefined; cip2?: string | null | undefined; ... 39 more ...; last_purchase_price?: string | ... 1 more ... | undefined; } | null' is not assignable to type 'ProduitModel | null'.
+      Type '{ stock: number | undefined; id: number; name: string; description: string; cost_price: string; selling_price: string; cip1?: string | null; cip2?: string | null; cip3?: string | null; ... 38 more ...; last_purchase_price?: string | number; }' is not assignable to type 'ProduitModel'.
+        Types of property 'stock' are incompatible.
+          Type 'number | undefined' is not assignable to type 'number'.
+            Type 'undefined' is not assignable to type 'number'.
+src/components/Produit.tsx(477,105): error TS2322: Type 'Record<string, unknown>[]' is not assignable to type 'Groupe[]'.
+  Type 'Record<string, unknown>' is missing the following properties from type 'Groupe': id, nom
+src/hooks/inventaire/useProductSearch.ts(221,13): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+src/hooks/useCart.ts(74,25): error TS2322: Type 'string | number' is not assignable to type 'string'.
+  Type 'number' is not assignable to type 'string'.
+src/hooks/useInvoiceActions.tsx(180,15): error TS2741: Property 'reference' is missing in type '{ id: number; facture: Facture; facture_numero: string | undefined; client_name: string; mode_paiement: "especes" | "cheque" | "carte" | "virement" | "om" | "momo" | "en_compte" | "Mixte"; ... 7 more ...; paiements_details: any[]; }' but required in type 'TicketCaisse'.
+src/utils/print/invoicePdf.ts(3,1): error TS6192: All imports in import declaration are unused.
+src/utils/print/invoicePdf.ts(3,26): error TS2724: '"../../utils/formatters"' has no exported member named 'formatDate'. Did you mean 'formatDateFr'?
+src/utils/print/invoicePdf.ts(77,9): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(78,9): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(101,17): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(104,17): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(107,17): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(112,17): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(118,21): error TS2304: Cannot find name 'formatNumber'.
+src/utils/print/invoicePdf.ts(121,21): error TS2304: Cannot find name 'formatNumber'.

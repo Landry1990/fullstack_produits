@@ -80,16 +80,16 @@ const MENU_HIERARCHY = [
     label: 'Stock', 
     labelKey: 'sidebar.stock.title',
     submenus: [
-      { key: 'inventaire_saisie', label: 'Saisie Inventaire', labelKey: 'sidebar.stock.inventaire' },
+      { key: 'inventaire_saisie', label: 'Saisie Inventaire', labelKey: 'sidebar.stock.inventaire.title' },
       { key: 'inventaire_journal', label: 'Journal Ajustements', labelKey: 'sidebar.stock.journal' },
-      { key: 'inventaire_analyse', label: 'Analyse Stock', labelKey: 'sidebar.stock.analyse' },
-      { key: 'inventaire_reappro', label: 'Réappro Rayon' },
+      { key: 'inventaire_analyse', label: 'Analyse Stock', labelKey: 'sidebar.stock.analyse.title' },
+      { key: 'inventaire_reappro', label: 'Réappro Rayon', labelKey: 'sidebar.stock.reappro.title' },
       { key: 'inventaire_avoirs', label: 'Avoirs Fournisseurs', labelKey: 'sidebar.stock.avoirs' },
       { key: 'inventaire_promis', label: 'Produits Promis', labelKey: 'sidebar.stock.promis' },
-      { key: 'inventaire_transformations', label: 'Transformations', labelKey: 'sidebar.stock.transformations' },
-      { key: 'inventaire_perimes', label: 'Périmés / Retours', labelKey: 'sidebar.stock.perimes' },
-      { key: 'inventaire_organisation', label: 'Organisation', labelKey: 'sidebar.stock.rayons' },
-      { key: 'inventaire_etats', label: 'États Inventaires', labelKey: 'sidebar.stock.etats' }
+      { key: 'inventaire_transformations', label: 'Transformations', labelKey: 'sidebar.stock.transformations.title' },
+      { key: 'inventaire_perimes', label: 'Périmés / Retours', labelKey: 'sidebar.stock.perimes.title' },
+      { key: 'inventaire_organisation', label: 'Organisation', labelKey: 'sidebar.stock.organisation.title' },
+      { key: 'inventaire_etats', label: 'États Inventaires', labelKey: 'sidebar.stock.etats_inventaire.title' }
     ]
   },
   { 

@@ -1,0 +1,13 @@
+--- Testing Simple Product ---
+Initial Stock: 100
+Stock after sale (status VAL): 90
+Cancellation result: True, Facture annulée avec succès.
+Stock after cancellation: 100
+SUCCESS: Stock reintegrated correctly!
+
+--- Testing Product with Lots ---
+Initial Product Stock: 100, Lot Stock: 100
+Stock after sale: Product=90, Lot=90
+Cancellation result: True, Facture annulée avec succès.
+Stock after cancellation: Product=100, Lot=100
+SUCCESS: Stock and Lot reintegrated correctly!

@@ -371,7 +371,7 @@ class CouponMonnaie(models.Model):
         EXPIRE = 'EXPIRE', 'Expiré'
         ANNULE = 'ANNULE', 'Annulé'
     
-    numero = models.CharField(max_length=10, unique=True, editable=False)
+    numero = models.CharField(max_length=50, unique=True, editable=False)
     montant = models.DecimalField(max_digits=10, decimal_places=0)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIF)
     date_creation = models.DateTimeField(auto_now_add=True)

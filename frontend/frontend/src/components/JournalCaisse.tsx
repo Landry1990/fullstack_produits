@@ -13,11 +13,13 @@ import {
   ArrowUpRight, ArrowDownRight, Banknote, Printer, CreditCard 
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTranslation } from 'react-i18next'
 
 // Register French locale
 registerLocale('fr', fr)
 
 export default function JournalCaisse() {
+  const { t } = useTranslation('caisse')
   const [transactions, setTransactions] = useState<CaisseTransaction[]>([])
   const [mouvements, setMouvements] = useState<MouvementCaisse[]>([])
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false)
@@ -124,7 +126,7 @@ export default function JournalCaisse() {
       if (totalsData) setServerTotals(totalsData)
       if (usersData) setUsers(usersData)
     } catch (err) {
-      setError('Erreur lors du chargement des données')
+      setError(t('journal.table.loading_error') || 'Erreur lors du chargement des données')
       console.error('Erreur page_init caisse:', err)
     } finally {
       setLoading(false)
@@ -177,7 +179,7 @@ export default function JournalCaisse() {
         setDetectedShift({ start, end, active: true })
         setDateDebut(start)
         setDateFin(end)
-        toast.success("Tranche horaire détectée")
+        toast.success(t('journal.messages.shift_detected') || "Tranche horaire détectée")
       } else {
         setDetectedShift(null)
         // Default to whole day if no activity
@@ -204,7 +206,7 @@ export default function JournalCaisse() {
         fetchTotals()
       ])
     } catch (err) {
-      setError('Erreur lors du chargement des données')
+      setError(t('journal.table.loading_error') || 'Erreur lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -509,7 +511,7 @@ export default function JournalCaisse() {
         user_id: selectedUser
       })
       
-      toast.success('Clôture effectuée avec succès')
+      toast.success(t('journal.messages.close_success') || 'Clôture effectuée avec succès')
       const completeData = response.data.cloture;
       setClosingTotals(completeData)
       
@@ -523,7 +525,7 @@ export default function JournalCaisse() {
     } catch (err: any) {
       console.error('Erreur clôture:', err)
       const errorMessage = err.response?.data?.detail || err.message || 'Erreur inconnue'
-      setError(`Erreur lors de la clôture: ${errorMessage}`)
+      setError(`${t('journal.messages.close_error') || 'Erreur lors de la clôture'}: ${errorMessage}`)
       toast.error(errorMessage)
     } finally {
       setLoading(false)
@@ -678,12 +680,12 @@ export default function JournalCaisse() {
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <Banknote className="w-6 h-6" />
               </div>
-              Journal de Caisse
+              {t('journal.title')}
             </h1>
             <div className="text-base-content/60 mt-1 pl-12 text-sm flex items-center gap-2">
-                <span>Historique des flux de caisse</span>
+                <span>{t('journal.subtitle')}</span>
                 <span className="w-1 h-1 rounded-full bg-base-300"></span>
-                <span className="font-mono text-primary font-semibold">{totalCount} opérations</span>
+                <span className="font-mono text-primary font-semibold">{t('journal.operations_count', { count: totalCount })}</span>
             </div>
           </div>
           
@@ -691,7 +693,7 @@ export default function JournalCaisse() {
              <div className="relative flex-1 lg:w-48">
                 <input
                     type="text"
-                    placeholder="Rechercher..."
+                    placeholder={t('journal.search_placeholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="input input-sm input-bordered w-full pl-8 bg-base-50"
@@ -705,13 +707,13 @@ export default function JournalCaisse() {
                     onChange={(e) => setFilterMode(e.target.value)}
                     className="select select-bordered select-sm w-full bg-base-50 font-medium"
                 >
-                    <option value="all">Tous modes</option>
-                    <option value="especes">💵 Espèces</option>
-                    <option value="cheque">✍️ Chèque</option>
-                    <option value="carte">💳 Carte</option>
-                    <option value="virement">🏦 Virement</option>
-                    <option value="om">📶 Orange Money</option>
-                    <option value="momo">📶 Mobile Money</option>
+                    <option value="all">{t('journal.all_modes')}</option>
+                    <option value="especes">💵 {t('journal.modes.especes')}</option>
+                    <option value="cheque">✍️ {t('journal.modes.cheque')}</option>
+                    <option value="carte">💳 {t('journal.modes.carte')}</option>
+                    <option value="virement">🏦 {t('journal.modes.virement')}</option>
+                    <option value="om">📶 {t('journal.modes.om')}</option>
+                    <option value="momo">📶 {t('journal.modes.momo')}</option>
                 </select>
              </div>
 
@@ -721,7 +723,7 @@ export default function JournalCaisse() {
                     onChange={(e) => setSelectedUser(e.target.value)}
                     className="select select-bordered select-sm w-full bg-base-50 font-medium"
                 >
-                    <option value="">👤 Tous les caissiers</option>
+                    <option value="">👤 {t('journal.all_cashiers')}</option>
                     {users.map((u: any) => (
                         <option key={u.id} value={u.id}>
                             {u.first_name ? `${u.first_name} ${u.last_name || ''}` : u.username}
@@ -737,7 +739,7 @@ export default function JournalCaisse() {
                     showTimeSelect
                     timeFormat="HH:mm"
                     dateFormat="dd/MM/yy HH:mm"
-                    placeholderText="Début"
+                    placeholderText={t('journal.date_start')}
                     locale="fr"
                      className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
                     isClearable
@@ -754,7 +756,7 @@ export default function JournalCaisse() {
                     showTimeSelect
                     timeFormat="HH:mm"
                     dateFormat="dd/MM/yy HH:mm"
-                    placeholderText="Fin"
+                    placeholderText={t('journal.date_end')}
                     locale="fr"
                     className="w-28 text-xs bg-transparent focus:outline-none cursor-pointer text-center font-medium"
                     isClearable
@@ -769,9 +771,9 @@ export default function JournalCaisse() {
                         setDateFin(endToday)
                     }}
                     className="btn btn-xs btn-ghost text-primary px-2"
-                    title="Aujourd'hui"
+                    title={t('journal.today')}
                  >
-                    Auj.
+                    {t('journal.today_short') || 'Auj.'}
                  </button>
              </div>
 
@@ -780,7 +782,7 @@ export default function JournalCaisse() {
                     onClick={fetchData}
                     className="btn btn-sm btn-ghost btn-square"
                     disabled={loading}
-                    title="Actualiser"
+                    title={t('journal.refresh')}
                 >
                     {loading ? <span className="loading loading-spinner loading-xs"></span> : <RefreshCw className="w-4 h-4 text-base-content/70" />}
                 </button>
@@ -789,15 +791,15 @@ export default function JournalCaisse() {
                     onClick={() => setIsMovementModalOpen(true)}
                     className="btn btn-sm btn-outline border-base-300 btn-primary gap-2"
                 >
-                    <Plus className="w-4 h-4" /> Opération
+                    <Plus className="w-4 h-4" /> {t('journal.new_operation')}
                 </button>
                 <button
                     onClick={openClosingModal}
                     className="btn btn-sm btn-primary shadow-sm gap-2"
                     disabled={loading || !selectedUser}
-                    title={!selectedUser ? "Veuillez sélectionner un caissier pour clôturer" : "Clôturer la caisse"}
+                    title={!selectedUser ? t('journal.select_cashier_to_close') || "Veuillez sélectionner un caissier pour clôturer" : t('journal.close_register')}
                 >
-                    <Lock className="w-4 h-4" /> Clôturer
+                    <Lock className="w-4 h-4" /> {t('journal.close_register')}
                 </button>
              </div>
           </div>
@@ -810,19 +812,19 @@ export default function JournalCaisse() {
                     className={`join-item btn btn-sm border-none font-medium px-6 ${filterType === 'all' ? 'bg-base-100 shadow-sm text-base-content' : 'bg-transparent text-base-content/60 hover:text-base-content'}`}
                     onClick={() => setFilterType('all')}
                 >
-                    Tout
+                    {t('journal.filter.all')}
                 </button>
                 <button 
                     className={`join-item btn btn-sm border-none font-medium px-6 flex items-center gap-1 ${filterType === 'entrees' ? 'bg-success text-white shadow-sm' : 'bg-transparent text-success/70 hover:text-success'}`}
                     onClick={() => setFilterType('entrees')}
                 >
-                    <ArrowUpRight className="w-4 h-4" /> Entrées
+                    <ArrowUpRight className="w-4 h-4" /> {t('journal.filter.entries')}
                 </button>
                 <button 
                     className={`join-item btn btn-sm border-none font-medium px-6 flex items-center gap-1 ${filterType === 'sorties' ? 'bg-error text-white shadow-sm' : 'bg-transparent text-error/70 hover:text-error'}`}
                     onClick={() => setFilterType('sorties')}
                 >
-                    <ArrowDownRight className="w-4 h-4" /> Sorties
+                    <ArrowDownRight className="w-4 h-4" /> {t('journal.filter.exits')}
                 </button>
            </div>
         </div>
@@ -835,9 +837,9 @@ export default function JournalCaisse() {
           <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm flex flex-col justify-center">
               <div className="flex justify-between items-start">
                   <div>
-                      <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">Ventes Nettes</h3>
+                      <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">{t('journal.stats.net_sales')}</h3>
                       <div className="text-2xl font-black text-primary">{formatCurrency(serverTotals?.total_ventes ?? totauxParMode.ventes)}</div>
-                      <div className="text-[10px] text-base-content/40 mt-1 font-medium">CA de l'intervalle réel</div>
+                      <div className="text-[10px] text-base-content/40 mt-1 font-medium">{t('journal.stats.ca_real')}</div>
                   </div>
                   <div className="p-3 bg-primary/10 rounded-lg text-primary">
                      <ArrowUpRight className="w-5 h-5" />
@@ -850,11 +852,11 @@ export default function JournalCaisse() {
               <div className="flex justify-between items-start">
                   <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-base-content/60 text-[10px] font-bold uppercase tracking-wider">Recouvrements</h3>
-                        <span className="badge badge-ghost badge-xs text-[8px] uppercase font-bold opacity-50">Mémo</span>
+                        <h3 className="text-base-content/60 text-[10px] font-bold uppercase tracking-wider">{t('journal.stats.recoveries')}</h3>
+                        <span className="badge badge-ghost badge-xs text-[8px] uppercase font-bold opacity-50">{t('journal.stats.memo')}</span>
                       </div>
                       <div className="text-xl font-bold text-base-content/70">{formatCurrency(serverTotals?.total_recouvrement ?? totauxParMode.recouvrement)}</div>
-                      <div className="text-[9px] text-base-content/40 mt-1 font-medium">Encaissements de créances</div>
+                      <div className="text-[9px] text-base-content/40 mt-1 font-medium">{t('journal.stats.debt_collection')}</div>
                   </div>
                   <div className="p-2 bg-base-200 rounded-lg text-base-content/30">
                      <Wallet className="w-4 h-4" />
@@ -866,9 +868,9 @@ export default function JournalCaisse() {
           <div className="bg-base-100 p-5 rounded-xl border-l-4 border-l-success border border-base-200 shadow-md flex flex-col justify-center">
               <div className="flex justify-between items-start">
                   <div>
-                      <h3 className="text-success text-xs font-black uppercase tracking-wider mb-1">Espèces à Justifier</h3>
+                      <h3 className="text-success text-xs font-black uppercase tracking-wider mb-1">{t('journal.stats.cash_to_justify')}</h3>
                       <div className="text-2xl font-black text-success">{formatCurrency(serverTotals?.total_theorique ?? totauxParMode.total)}</div>
-                      <div className="text-[10px] text-success/60 font-medium mt-1 uppercase italic">Ventes Espèces + Entrées - Sorties</div>
+                      <div className="text-[10px] text-success/60 font-medium mt-1 uppercase italic">{t('journal.stats.cash_formula')}</div>
                   </div>
                   <div className="p-3 bg-success/10 rounded-lg text-success">
                      <Banknote className="w-5 h-5" />
@@ -879,7 +881,7 @@ export default function JournalCaisse() {
           {/* Card 4: Digital / Mobile Money */}
           <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm flex flex-col justify-between">
               <div className="flex justify-between items-start">
-                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">Paiements Mobiles</h3>
+                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">{t('journal.stats.mobile_payments')}</h3>
                   <div className="text-xs font-bold text-orange-500">{formatCurrency((serverTotals?.details?.om || 0) + (serverTotals?.details?.momo || 0) || (totauxParMode.ventes_par_mode.om + totauxParMode.ventes_par_mode.momo))}</div>
               </div>
               <div className="flex flex-col gap-1 mt-2">
@@ -898,9 +900,9 @@ export default function JournalCaisse() {
           <div className="bg-base-100 p-5 rounded-xl border border-base-200 shadow-sm flex flex-col justify-center">
               <div className="flex justify-between items-start">
                   <div>
-                      <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">Banque / Digital</h3>
+                      <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider mb-1">{t('journal.stats.bank_digital')}</h3>
                       <div className="text-xl font-bold text-info">{formatCurrency((serverTotals?.details?.carte || 0) + (serverTotals?.details?.cheque || 0) + (serverTotals?.details?.virement || 0) || (totauxParMode.ventes_par_mode.carte + totauxParMode.ventes_par_mode.cheque + totauxParMode.ventes_par_mode.virement))}</div>
-                      <div className="text-[10px] text-base-content/40 mt-1 font-medium uppercase text-xs">Ventes Hors Cash</div>
+                      <div className="text-[10px] text-base-content/40 mt-1 font-medium uppercase text-xs">{t('journal.stats.non_cash_sales')}</div>
                   </div>
                   <div className="p-3 bg-info/10 rounded-lg text-info">
                      <CreditCard className="w-5 h-5" />
@@ -911,7 +913,7 @@ export default function JournalCaisse() {
 
       {/* Adaptive Details Bar: Only show if there are secondary payments or movements */}
       <div className="px-6 flex flex-wrap gap-2 items-center mb-4 min-h-[32px]">
-          <span className="text-[10px] font-black uppercase text-base-content/40 mr-2">Détails flux :</span>
+          <span className="text-[10px] font-black uppercase text-base-content/40 mr-2">{t('journal.stats.flow_details')}</span>
           
           {/* Part 1: Sales breakdown - using server totals details if avail */}
           {Object.entries(serverTotals?.details || totauxParMode.ventes_par_mode).map(([mode, value]) => {
@@ -919,13 +921,13 @@ export default function JournalCaisse() {
               if (numValue === 0) return null;
               
               const labels: Record<string, {label: string, color: string}> = {
-                  especes: { label: 'Ventes Esp.', color: 'success' },
-                  cheque: { label: 'Chèque', color: 'info' },
-                  carte: { label: 'Carte', color: 'info' },
-                  virement: { label: 'Virement', color: 'info' },
-                  om: { label: 'O.M.', color: 'warning' },
-                  momo: { label: 'MoMo', color: 'warning' },
-                  recouvrement: { label: 'Recouvrement', color: 'primary' }
+                  especes: { label: t('journal.modes.especes'), color: 'success' },
+                  cheque: { label: t('journal.modes.cheque'), color: 'info' },
+                  carte: { label: t('journal.modes.carte'), color: 'info' },
+                  virement: { label: t('journal.modes.virement'), color: 'info' },
+                  om: { label: t('journal.modes.om_short') || 'O.M.', color: 'warning' },
+                  momo: { label: t('journal.modes.momo_short') || 'MoMo', color: 'warning' },
+                  recouvrement: { label: t('journal.modes.recouvrement'), color: 'primary' }
               }
               
               const info = labels[mode] || { label: mode.toUpperCase(), color: 'ghost' };
@@ -960,12 +962,12 @@ export default function JournalCaisse() {
               {/* Part 1: Breakdown (Ventes + Flux) */}
               <div className="flex items-center gap-4 bg-base-200 py-2 px-6 rounded-l-full border border-base-300">
                   <div className="flex flex-col">
-                    <span className="text-[9px] font-black uppercase opacity-50">Activité intervalle :</span>
+                    <span className="text-[9px] font-black uppercase opacity-50">{t('journal.stats.interval_activity')}</span>
                     <span className="text-sm font-bold text-base-content">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees))}</span>
                   </div>
                   <div className="w-px h-6 bg-base-300"></div>
                   <div className="flex flex-col opacity-60">
-                    <span className="text-[9px] font-black uppercase italic">Dépenses :</span>
+                    <span className="text-[9px] font-black uppercase italic">{t('journal.stats.expenses')}</span>
                     <span className="text-sm font-bold">-{formatCurrency(serverTotals?.total_sorties ?? totauxParMode.sorties)}</span>
                   </div>
               </div>
@@ -973,8 +975,8 @@ export default function JournalCaisse() {
               {/* Final Operational Balance */}
               <div className="flex items-center gap-4 bg-primary text-white py-2 px-6 rounded-r-emerald-none rounded-r-full shadow-xl shadow-primary/20">
                   <div className="flex flex-col items-start">
-                     <span className="text-[10px] font-black uppercase opacity-70 tracking-wider">Solde Opérationnel Net</span>
-                     <span className="text-[8px] opacity-60 uppercase font-bold">Hors Recouvrements</span>
+                     <span className="text-[10px] font-black uppercase opacity-70 tracking-wider">{t('journal.stats.net_operational_balance')}</span>
+                     <span className="text-[8px] opacity-60 uppercase font-bold">{t('journal.stats.excluding_recoveries')}</span>
                   </div>
                   <div className="w-px h-6 bg-white/20 mx-1"></div>
                   <span className="text-xl font-black">{formatCurrency((serverTotals?.total_ventes ?? totauxParMode.ventes) + (serverTotals?.total_entrees ?? totauxParMode.entrees) - (serverTotals?.total_sorties ?? totauxParMode.sorties))}</span>
@@ -995,25 +997,25 @@ export default function JournalCaisse() {
             {loading ? (
                 <div className="flex flex-col items-center justify-center h-64 bg-base-100 gap-4">
                     <span className="loading loading-spinner loading-lg text-primary"></span>
-                    <p className="text-base-content/60 font-medium animate-pulse">Chargement du journal...</p>
+                    <p className="text-base-content/60 font-medium animate-pulse">{t('journal.table.loading')}</p>
                 </div>
             ) : filteredItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-base-content/30 gap-3">
                     <span className="text-6xl opacity-20">📂</span>
-                    <p className="text-lg font-medium italic">Aucune transaction trouvée</p>
+                    <p className="text-lg font-medium italic">{t('journal.table.no_transaction')}</p>
                 </div>
             ) : (
                 <table className="table table-sm w-full border-separate border-spacing-0">
                     <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
                         <tr className="border-b border-base-300">
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pl-6">DATE & HEURE</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">CAISSIER</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">SAISIE PAR</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">CLIENT / LIBELLÉ</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">N° PIÈCE</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 text-right">MONTANT</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">MODE</th>
-                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pr-6 text-right">STATUT</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pl-6">{t('journal.table.date_time')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('journal.table.cashier')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('journal.table.entered_by')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('journal.table.client_label')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('journal.table.piece_num')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 text-right">{t('journal.table.amount')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3">{t('journal.table.mode')}</th>
+                            <th className="border-b-2 border-base-200 text-xs font-bold text-base-content/50 py-3 pr-6 text-right">{t('journal.table.status')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-base-100 bg-white">
@@ -1029,8 +1031,8 @@ export default function JournalCaisse() {
                                                     {(mouv.user_nom || 'U')[0]}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-sm text-base-content">{mouv.user_nom || 'Utilisateur'}</span>
-                                                    <span className="text-[10px] text-base-content/50 uppercase tracking-wider font-bold">Opération</span>
+                                                    <span className="font-bold text-sm text-base-content">{mouv.user_nom || t('journal.table.user')}</span>
+                                                    <span className="text-[10px] text-base-content/50 uppercase tracking-wider font-bold">{t('journal.table.operation')}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -1039,7 +1041,7 @@ export default function JournalCaisse() {
                                         </td>
                                         <td className="py-4">
                                             <div className="font-bold text-sm text-base-content">{mouv.motif}</div>
-                                            <div className="text-xs text-base-content/50 italic max-w-xs truncate" title={mouv.description}>{mouv.description || 'Pas de description'}</div>
+                                            <div className="text-xs text-base-content/50 italic max-w-xs truncate" title={mouv.description}>{mouv.description || t('journal.table.no_description')}</div>
                                         </td>
                                         <td className="font-mono text-[10px] py-4 opacity-50">MOUV-{mouv.id}</td>
                                         <td className={`text-right font-black text-base py-4 ${mouv.type === 'ENTREE' ? 'text-success' : 'text-error'}`}>
@@ -1047,12 +1049,12 @@ export default function JournalCaisse() {
                                         </td>
                                         <td className="py-4">
                                             <div className={`badge badge-sm font-bold gap-1 py-1 px-2 border-none ${mouv.type === 'ENTREE' ? 'bg-success text-white' : 'bg-error text-white'}`}>
-                                                {mouv.type === 'ENTREE' ? 'ENTRÉE' : 'SORTIE'}
+                                                {mouv.type === 'ENTREE' ? t('journal.filter.entry_caps') || 'ENTRÉE' : t('journal.filter.exit_caps') || 'SORTIE'}
                                             </div>
                                         </td>
                                         <td className="py-4 pr-6 text-right">
                                             <span className="inline-flex items-center gap-1 text-success font-bold text-[10px] bg-success/10 px-2 py-1 rounded-md uppercase">
-                                                Validé
+                                                {t('journal.table.validated')}
                                             </span>
                                         </td>
                                     </tr>
@@ -1073,7 +1075,7 @@ export default function JournalCaisse() {
                                                 <span>{formatDate(transaction.date_paiement)}</span>
                                                 {transaction.isReleveGroup && (
                                                     <span className="text-[9px] font-black text-primary uppercase mt-1 flex items-center gap-1 bg-white px-1.5 py-0.5 rounded-full border border-primary/20 w-fit">
-                                                        {isExpanded ? '▼' : '▶'} Relevé Groupé
+                                                        {isExpanded ? '▼' : '▶'} {t('journal.table.grouped_releve')}
                                                     </span>
                                                 )}
                                             </div>
@@ -1085,7 +1087,7 @@ export default function JournalCaisse() {
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-sm">
-                                                        {transaction.user_details?.full_name || 'Inconnu'}
+                                                        {transaction.user_details?.full_name || t('common.unknown') || 'Inconnu'}
                                                     </span>
                                                     <span className="text-[10px] text-base-content/40 font-mono tracking-tight">
                                                         @{transaction.user_details?.username || 'user'}
@@ -1111,7 +1113,7 @@ export default function JournalCaisse() {
                                             <div className="flex items-center gap-2">
                                                 <span className="font-bold text-sm text-base-content">{transaction.client_name}</span>
                                                 {transaction.is_creance_settlement && (
-                                                    <span className="badge badge-sm badge-info text-white font-bold text-[9px] px-1.5">CRÉANCE</span>
+                                                    <span className="badge badge-sm badge-info text-white font-bold text-[9px] px-1.5">{t('common.creance') || 'CRÉANCE'}</span>
                                                 )}
                                             </div>
                                             {transaction.isReleveGroup && (
@@ -1120,7 +1122,7 @@ export default function JournalCaisse() {
                                         </td>
                                         <td className="font-mono text-xs py-4">
                                             {transaction.isReleveGroup ? (
-                                                <span className="text-primary/70 font-bold italic">{transaction.items?.length} pièces</span>
+                                                <span className="text-primary/70 font-bold italic">{transaction.items?.length} {t('common.pieces') || 'pièces'}</span>
                                             ) : (
                                                 <span className="bg-base-200 px-2 py-1 rounded font-bold text-base-content/60">{transaction.facture_numero || '-'}</span>
                                             )}
@@ -1138,7 +1140,7 @@ export default function JournalCaisse() {
                                                 return (
                                                     <div className="flex flex-col">
                                                         <div className={`badge border-none font-bold text-[10px] gap-1.5 py-3 ${isRecouvrement ? 'bg-primary text-white' : 'bg-base-200 text-base-content'}`}>
-                                                            {isRecouvrement ? '💸' : getModeIcon(transaction.mode_paiement)} {isRecouvrement ? 'RECOUVREMENT' : transaction.mode_paiement_display?.toUpperCase()}
+                                                            {isRecouvrement ? '💸' : getModeIcon(transaction.mode_paiement)} {isRecouvrement ? t('journal.modes.recouvrement_caps') || 'RECOUVREMENT' : transaction.mode_paiement_display?.toUpperCase()}
                                                         </div>
                                                         {transaction.reference && (
                                                             <span className="text-[10px] text-base-content/50 mt-1 max-w-[120px] truncate" title={transaction.reference}>
@@ -1151,11 +1153,11 @@ export default function JournalCaisse() {
                                          </td>
                                         <td className="py-4 pr-6 text-right">
                                             {transaction.statut === 'completee' ? (
-                                                <span className="inline-flex items-center text-success font-bold text-[10px] bg-success/10 px-2 py-1 rounded-md uppercase">PAYÉ</span>
+                                                <span className="inline-flex items-center text-success font-bold text-[10px] bg-success/10 px-2 py-1 rounded-md uppercase">{t('journal.table.paid')}</span>
                                             ) : transaction.statut === 'annulee' ? (
-                                                <span className="inline-flex items-center text-error font-bold text-[10px] bg-error/10 px-2 py-1 rounded-md uppercase">ANNULÉ</span>
+                                                <span className="inline-flex items-center text-error font-bold text-[10px] bg-error/10 px-2 py-1 rounded-md uppercase">{t('journal.table.cancelled')}</span>
                                             ) : (
-                                                <span className="inline-flex items-center text-warning font-bold text-[10px] bg-warning/10 px-2 py-1 rounded-md uppercase">ATTENTE</span>
+                                                <span className="inline-flex items-center text-warning font-bold text-[10px] bg-warning/10 px-2 py-1 rounded-md uppercase">{t('journal.table.pending')}</span>
                                             )}
                                         </td>
                                     </tr>
@@ -1186,7 +1188,7 @@ export default function JournalCaisse() {
         {/* Footer avec pagination unifié */}
         <div className="p-6 border-t border-base-200 bg-base-50/50 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-base-content/50 font-medium">
-                Affichage de <span className="text-base-content">{filteredItems.length}</span> ligne{filteredItems.length > 1 ? 's' : ''} sur <span className="text-base-content">{totalCount}</span> au total
+                {t('journal.pagination.showing')} <span className="text-base-content">{filteredItems.length}</span> {filteredItems.length > 1 ? t('journal.pagination.lines_plural') : t('journal.pagination.lines')} {t('journal.pagination.of')} <span className="text-base-content">{totalCount}</span> {t('journal.pagination.total')}
             </div>
             
             {!loading && totalCount > 0 && (
@@ -1198,14 +1200,14 @@ export default function JournalCaisse() {
                             disabled={page === 1} 
                             onClick={() => setPage(page - 1)}
                         >
-                            Précédent
+                            {t('common.pagination.prev') || 'Précédent'}
                         </button>
                         <button 
                             className="btn btn-sm px-4 bg-white hover:bg-base-200 border-base-300 shadow-sm transition-all" 
                             disabled={page >= totalPages} 
                             onClick={() => setPage(page + 1)}
                         >
-                            Suivant
+                            {t('common.pagination.next') || 'Suivant'}
                         </button>
                     </div>
                 </div>
@@ -1218,8 +1220,8 @@ export default function JournalCaisse() {
         <div className="modal-box max-w-md p-0 overflow-hidden rounded-2xl border border-base-300 shadow-2xl">
           <div className="bg-primary p-6 text-white overflow-hidden relative">
             <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl">🔒</div>
-            <h3 className="font-black text-2xl tracking-tight">Clôture de Caisse</h3>
-            <p className="text-primary-content/80 text-xs mt-1 font-bold uppercase tracking-widest">SÉCURISATION DES FONDS</p>
+            <h3 className="font-black text-2xl tracking-tight">{t('journal.closing.title')}</h3>
+            <p className="text-primary-content/80 text-xs mt-1 font-bold uppercase tracking-widest">{t('journal.closing.security')}</p>
           </div>
           
           <div className="p-8 space-y-6">
@@ -1227,20 +1229,20 @@ export default function JournalCaisse() {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-3">
                         <div className="p-5 bg-primary/5 border border-primary/20 rounded-xl shadow-sm text-center">
-                            <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">Solde Opérationnel Net</div>
+                            <div className="text-[10px] font-black text-primary/60 uppercase mb-1 tracking-widest">{t('journal.stats.net_operational_balance')}</div>
                             <div className="text-3xl font-black text-primary">{formatCurrency(Math.round(closingTotals.total_ventes + closingTotals.total_entrees - closingTotals.total_sorties))} F</div>
-                            <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">Ventes + Entrées - Sorties</div>
+                            <div className="text-[10px] font-bold text-primary/40 mt-1 uppercase">{t('journal.stats.cash_formula')}</div>
                         </div>
                         <div className="p-4 bg-success/5 border border-success/20 rounded-xl text-center">
-                            <div className="text-[9px] font-black text-success/60 uppercase mb-1 tracking-widest">Espèces à Justifier</div>
+                            <div className="text-[9px] font-black text-success/60 uppercase mb-1 tracking-widest">{t('journal.stats.cash_to_justify')}</div>
                             <div className="text-2xl font-black text-success">{formatCurrency(Math.round(closingTotals.total_theorique))} F</div>
-                            <div className="text-[9px] font-bold text-success/40 mt-1 uppercase">Ventes Espèces + Entrées - Sorties</div>
+                            <div className="text-[10px] font-bold text-success/40 mt-1 uppercase">{t('journal.stats.cash_formula')}</div>
                         </div>
                     </div>
 
                     <div className="form-control w-full">
                         <label className="label py-1">
-                            <span className="label-text text-xs font-black text-base-content/50 uppercase">Montant Réel (Physique)</span>
+                            <span className="label-text text-xs font-black text-base-content/50 uppercase">{t('journal.closing.real_amount')}</span>
                         </label>
                         <div className="relative">
                             <input 
@@ -1254,7 +1256,7 @@ export default function JournalCaisse() {
                             <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-base-content/20">CFA</span>
                         </div>
                         <div className="mt-4 flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                            <span className="text-xs font-bold text-base-content/60 uppercase">Écart de caisse (Espèces)</span>
+                            <span className="text-xs font-bold text-base-content/60 uppercase">{t('journal.closing.cash_gap')}</span>
                             <span className={`text-sm font-black ${
                                 !actualAmount ? 'text-base-content/20' : 
                                 (normalizeNumberInput(actualAmount) - closingTotals.total_theorique) >= 0 ? 'text-success' : 'text-error'
@@ -1267,7 +1269,7 @@ export default function JournalCaisse() {
                     <div className="collapse collapse-arrow bg-base-100 border border-base-200 rounded-xl">
                         <input type="checkbox" /> 
                         <div className="collapse-title text-sm font-bold flex items-center gap-2">
-                           📊 Détails par mode
+                           📊 {t('journal.closing.mode_details')}
                         </div>
                         <div className="collapse-content"> 
                             <div className="space-y-2 pt-2 border-t border-base-200 mt-2">
@@ -1289,14 +1291,14 @@ export default function JournalCaisse() {
                   onClick={handleCloseCaisse}
                   disabled={loading || !actualAmount}
                 >
-                    {loading ? <span className="loading loading-spinner"></span> : 'CONFIRMER LA CLÔTURE'}
+                    {loading ? <span className="loading loading-spinner"></span> : t('journal.closing.confirm')}
                 </button>
                 <div className="grid grid-cols-2 gap-3">
                     <button className="btn btn-outline border-base-300 font-bold flex items-center justify-center gap-2" onClick={handleImprimerCloture}>
-                        <Printer className="w-5 h-5" /> TICKET
+                        <Printer className="w-5 h-5" /> {t('journal.closing.ticket')}
                     </button>
                     <button className="btn btn-ghost font-bold opacity-50" onClick={() => setIsClosingModalOpen(false)}>
-                        ANNULER
+                        {t('common.cancel') || 'ANNULER'}
                     </button>
                 </div>
             </div>

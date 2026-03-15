@@ -1,0 +1,125 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0
+django: version: 5.2.5, settings: backend.settings (from ini)
+rootdir: C:\Projet Fullstack\fullstack_produits\backend
+configfile: pytest.ini
+plugins: Faker-40.5.1, django-4.12.0, mock-3.15.1
+collected 42 items
+
+api\tests\test_facturation.py ............................               [ 66%]
+api\tests\test_critical_business_logic.py ......FFFFFFFF                 [100%]
+
+================================== FAILURES ===================================
+_______ FIFOAllocationTestCase.test_fefo_allocation_expiration_priority _______
+
+self = <api.tests.test_critical_business_logic.FIFOAllocationTestCase testMethod=test_fefo_allocation_expiration_priority>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:32: AttributeError
+_ FIFOAllocationTestCase.test_fifo_allocation_insufficient_stock_across_lots __
+
+self = <api.tests.test_critical_business_logic.FIFOAllocationTestCase testMethod=test_fifo_allocation_insufficient_stock_across_lots>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:32: AttributeError
+__________ FIFOAllocationTestCase.test_fifo_allocation_multiple_lots __________
+
+self = <api.tests.test_critical_business_logic.FIFOAllocationTestCase testMethod=test_fifo_allocation_multiple_lots>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:32: AttributeError
+______ ComplexTransactionsTestCase.test_complex_transaction_all_features ______
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_complex_transaction_all_features>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+____ ComplexTransactionsTestCase.test_transaction_multiple_payment_methods ____
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_transaction_multiple_payment_methods>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+____ ComplexTransactionsTestCase.test_transaction_with_automatic_discount _____
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_transaction_with_automatic_discount>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+__________ ComplexTransactionsTestCase.test_transaction_with_coupon ___________
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_transaction_with_coupon>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+______ ComplexTransactionsTestCase.test_transaction_with_loyalty_points _______
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_transaction_with_loyalty_points>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+============================== warnings summary ===============================
+api/tests/test_facturation.py: 23 warnings
+api/tests/test_critical_business_logic.py: 1 warning
+  C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py:133: UserWarning: No directory at: C:\Projet Fullstack\fullstack_produits\backend\staticfiles\
+    self._inner = middleware(get_response, *args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fefo_allocation_expiration_priority
+FAILED api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fifo_allocation_insufficient_stock_across_lots
+FAILED api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fifo_allocation_multiple_lots
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_complex_transaction_all_features
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_multiple_payment_methods
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_with_automatic_discount
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_with_coupon
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_with_loyalty_points
+================= 8 failed, 34 passed, 24 warnings in 22.95s ==================

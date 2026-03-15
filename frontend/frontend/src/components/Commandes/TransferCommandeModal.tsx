@@ -98,7 +98,7 @@ export default function TransferCommandeModal({
         let productsWithoutPricing = 0;
 
         selectedProducts.forEach(p => {
-            const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+            const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
             const currentPrice = parseFloat(String(p.price || 0));
             const quantity = parseInt(String(p.quantity || 0));
             const currentTotal = currentPrice * quantity;
@@ -145,7 +145,7 @@ export default function TransferCommandeModal({
                 : '/api/commande-produits/';
 
             for (const p of selectedProducts) {
-                const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
                 const newPrice = transferCataloguePrices.get(produitId);
                 const priceToUse = newPrice !== undefined ? newPrice : parseFloat(String(p.price || 0));
 
@@ -225,9 +225,9 @@ export default function TransferCommandeModal({
                     <h4 className="font-semibold text-sm mb-2">Produits à transférer ({selectedProducts.length})</h4>
                     <div className="space-y-2">
                         {selectedProducts.map((p, i) => {
-                            const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
+                            const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
                             let produitName = '';
-                            if (typeof p.produit === 'object' && p.produit.name) {
+                            if (p.produit && typeof p.produit === 'object' && p.produit.name) {
                                 produitName = p.produit.name;
                             } else if ((p as any).produit_nom) {
                                 produitName = (p as any).produit_nom;
@@ -235,6 +235,7 @@ export default function TransferCommandeModal({
                                 const found = produitsList.find(prod => prod.id === produitId);
                                 produitName = found?.name || `Produit #${produitId}`;
                             }
+                            const isDeleted = p.produit === null || produitName.includes('(supprimé)');
                             const currentPrice = parseFloat(String(p.price || 0));
                             const quantity = parseInt(String(p.quantity || 0));
                             const newPrice = transferCataloguePrices.get(produitId);
@@ -244,7 +245,9 @@ export default function TransferCommandeModal({
                             return (
                                 <div key={i} className="flex justify-between items-center text-sm bg-white p-2 rounded">
                                     <div>
-                                        <span className="font-medium">{produitName}</span>
+                                        <span className={`font-medium ${isDeleted ? 'italic text-base-content/50' : ''}`}>
+                                            {produitName}
+                                        </span>
                                         <span className="text-base-content/50 ml-2">(Qté: {quantity})</span>
                                     </div>
                                     <div className="flex items-center gap-2">

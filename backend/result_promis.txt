@@ -1,0 +1,21 @@
+--- Testing Simple Product ---
+Initial Stock: 100
+Stock after sale (status VAL): 90
+Cancellation result: True, Facture annulée avec succès.
+Stock after cancellation: 100
+SUCCESS: Stock reintegrated correctly!
+
+--- Testing Product with Lots ---
+Initial Product Stock: 100, Lot Stock: 100
+Stock after sale: Product=90, Lot=90
+Cancellation result: True, Facture annulée avec succès.
+Stock after cancellation: Product=100, Lot=100
+SUCCESS: Stock and Lot reintegrated correctly!
+
+--- Testing Product with Promis ---
+Initial Stock: 100
+Stock after sale (10 promised): 90
+ERROR: Stock should NOT have been decremented for promised items!
+Cancellation result: True, Facture annulée avec succès.
+Stock after cancellation: 100
+SUCCESS: Stock remained correct after promis cancellation!

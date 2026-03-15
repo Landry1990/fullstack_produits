@@ -1,0 +1,596 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.7, pytest-9.0.2, pluggy-1.6.0 -- C:\Projet Fullstack\fullstack_produits\backend\my_env01\Scripts\python.exe
+cachedir: .pytest_cache
+django: version: 5.2.5, settings: backend.settings (from ini)
+rootdir: C:\Projet Fullstack\fullstack_produits\backend
+configfile: pytest.ini
+testpaths: api
+plugins: Faker-40.5.1, django-4.12.0, mock-3.15.1
+collecting ... collected 95 items
+
+api/tests/test_cash_closure.py::CashClosureTotalsTestCase::test_get_totals_includes_cash_movements PASSED [  1%]
+api/tests/test_cash_closure.py::CashClosureTotalsTestCase::test_get_totals_returns_correct_amounts PASSED [  2%]
+api/tests/test_cash_closure.py::CashClosureCreationTestCase::test_cloturer_calculates_ecart FAILED [  3%]
+api/tests/test_cash_closure.py::CashClosureCreationTestCase::test_cloturer_creates_record FAILED [  4%]
+api/tests/test_cash_closure.py::CashClosureCreationTestCase::test_cloturer_date_range_filter PASSED [  5%]
+api/tests/test_clinical_service.py::ClinicalServiceTest::test_detection_interaction PASSED [  6%]
+api/tests/test_clinical_service.py::ClinicalServiceTest::test_empty_list PASSED [  7%]
+api/tests/test_clinical_service.py::ClinicalServiceTest::test_no_interaction PASSED [  8%]
+api/tests/test_clinical_service.py::ClinicalServiceTest::test_single_product PASSED [  9%]
+api/tests/test_critical_business_logic.py::CreancesManagementTestCase::test_calculate_client_debt_fully_paid_invoice PASSED [ 10%]
+api/tests/test_critical_business_logic.py::CreancesManagementTestCase::test_calculate_client_debt_multiple_invoices PASSED [ 11%]
+api/tests/test_critical_business_logic.py::CreancesManagementTestCase::test_calculate_client_debt_partial_payment PASSED [ 12%]
+api/tests/test_critical_business_logic.py::CreancesManagementTestCase::test_calculate_client_debt_single_invoice PASSED [ 13%]
+api/tests/test_critical_business_logic.py::CreancesManagementTestCase::test_client_debt_exceeds_plafond PASSED [ 14%]
+api/tests/test_critical_business_logic.py::CreancesManagementTestCase::test_professional_client_partial_payment_creance PASSED [ 15%]
+api/tests/test_dashboard.py::DashboardStatsTestCase::test_stats_returns_receivables PASSED [ 16%]
+api/tests/test_dashboard.py::DashboardStatsTestCase::test_stats_returns_revenue PASSED [ 17%]
+api/tests/test_dashboard.py::DashboardStatsTestCase::test_stats_returns_stock_value_with_count PASSED [ 18%]
+api/tests/test_dashboard.py::DashboardStatsTestCase::test_stats_returns_user_stats PASSED [ 20%]
+api/tests/test_dashboard.py::DashboardStatsTestCase::test_stats_role_pharmacien_gets_full_data PASSED [ 21%]
+api/tests/test_dashboard.py::DashboardStatsTestCase::test_stats_unauthenticated PASSED [ 22%]
+api/tests/test_dashboard.py::DashboardLowStockTestCase::test_low_stock_includes_days_remaining PASSED [ 23%]
+api/tests/test_dashboard.py::DashboardLowStockTestCase::test_low_stock_returns_critical_products PASSED [ 24%]
+api/tests/test_dashboard.py::DashboardSupplierDebtsTestCase::test_supplier_debts_returns_debts PASSED [ 25%]
+api/tests/test_dashboard.py::DashboardSupplierDebtsTestCase::test_supplier_no_debt_when_fully_paid PASSED [ 26%]
+api/tests/test_dashboard.py::DashboardManagerStatsTestCase::test_manager_stats_returns_ca_and_margin PASSED [ 27%]
+api/tests/test_dashboard_optimization.py::DashboardOptimizationTest::test_suppliers_stats_correctness PASSED [ 28%]
+api/tests/test_dashboard_optimization.py::DashboardOptimizationTest::test_suppliers_stats_queries FAILED [ 29%]
+api/tests/test_facturation.py::FinaliserVenteTests::test_finaliser_centralized_validates_and_destocks PASSED [ 30%]
+api/tests/test_facturation.py::FinaliserVenteTests::test_finaliser_creates_invoice_and_products PASSED [ 31%]
+api/tests/test_facturation.py::FinaliserVenteTests::test_finaliser_creates_payment_in_non_centralized PASSED [ 32%]
+api/tests/test_facturation.py::FinaliserVenteTests::test_finaliser_empty_products_rejected PASSED [ 33%]
+api/tests/test_facturation.py::FinaliserVenteTests::test_finaliser_non_centralized_validates PASSED [ 34%]
+api/tests/test_facturation.py::FinaliserVenteTests::test_finaliser_with_discount PASSED [ 35%]
+api/tests/test_facturation.py::MarquerPayeeTests::test_marquer_payee_already_paid_rejected PASSED [ 36%]
+api/tests/test_facturation.py::MarquerPayeeTests::test_marquer_payee_brouillon_rejected PASSED [ 37%]
+api/tests/test_facturation.py::MarquerPayeeTests::test_marquer_payee_valid PASSED [ 38%]
+api/tests/test_facturation.py::DestroyFactureTests::test_destroy_brouillon_succeeds PASSED [ 40%]
+api/tests/test_facturation.py::BulkDeleteTests::test_bulk_delete_brouillons PASSED [ 41%]
+api/tests/test_facturation.py::BulkDeleteTests::test_bulk_delete_no_ids PASSED [ 42%]
+api/tests/test_facturation.py::BulkDeleteTests::test_bulk_delete_skips_validated PASSED [ 43%]
+api/tests/test_facturation.py::StatsJourTests::test_stats_jour_empty PASSED [ 44%]
+api/tests/test_facturation.py::StatsJourTests::test_stats_jour_with_sales PASSED [ 45%]
+api/tests/test_facturation.py::HistoriqueVentesTests::test_historique_list PASSED [ 46%]
+api/tests/test_facturation.py::HistoriqueVentesTests::test_ventes_par_tranche_with_dates PASSED [ 47%]
+api/tests/test_facturation.py::CalculateTotalsTests::test_part_client_with_coverage PASSED [ 48%]
+api/tests/test_facturation.py::CalculateTotalsTests::test_totals_simple PASSED [ 49%]
+api/tests/test_facturation.py::CalculateTotalsTests::test_totals_with_global_discount PASSED [ 50%]
+api/tests/test_facturation.py::CalculateTotalsTests::test_totals_with_line_discount PASSED [ 51%]
+api/tests/test_facturation.py::CalculateTotalsTests::test_totals_with_tva PASSED [ 52%]
+api/tests/test_facturation.py::AnnulationTests::test_annuler_already_cancelled PASSED [ 53%]
+api/tests/test_facturation.py::AnnulationTests::test_annuler_creates_mouvement_stock PASSED [ 54%]
+api/tests/test_facturation.py::AnnulationTests::test_annuler_restores_lot_quantities PASSED [ 55%]
+api/tests/test_facturation.py::CaisseCappingTests::test_caisse_payment_capped_to_invoice_total PASSED [ 56%]
+api/tests/test_facturation.py::CaisseCappingTests::test_caisse_payment_capped_to_part_patient PASSED [ 57%]
+api/tests/test_facturation.py::CaisseCappingTests::test_caisse_payment_partial_capped PASSED [ 58%]
+api/tests/test_integration_recent_fixes.py::RecentFixesIntegrationTest::test_cancel_alerts_endpoint_works PASSED [ 60%]
+api/tests/test_integration_recent_fixes.py::RecentFixesIntegrationTest::test_stock_alerts_refined_logic PASSED [ 61%]
+api/tests/test_invoice_validation.py::InvoiceValidationTestCase::test_cancel_invoice_restores_stock PASSED [ 62%]
+api/tests/test_invoice_validation.py::InvoiceValidationTestCase::test_validate_invoice_creates_payment PASSED [ 63%]
+api/tests/test_invoice_validation.py::InvoiceValidationTestCase::test_validate_invoice_decrements_stock PASSED [ 64%]
+api/tests/test_invoice_validation.py::InvoiceValidationTestCase::test_validate_invoice_fifo_allocation PASSED [ 65%]
+api/tests/test_invoice_validation.py::InvoiceValidationTestCase::test_validate_invoice_with_insufficient_stock PASSED [ 66%]
+api/tests/test_invoice_validation.py::InvoiceStatusTransitionTests::test_cannot_validate_already_validated_invoice PASSED [ 67%]
+api/tests/test_order_management.py::OrderManagementTestCase::test_add_lines_to_commande PASSED [ 68%]
+api/tests/test_order_management.py::OrderManagementTestCase::test_close_command_updates_pmp PASSED [ 69%]
+api/tests/test_order_management.py::OrderManagementTestCase::test_close_command_updates_stock_and_creates_lot PASSED [ 70%]
+api/tests/test_order_management.py::OrderManagementTestCase::test_create_commande PASSED [ 71%]
+api/tests/test_pointage_global.py::PointageGlobalTestCase::test_paiement_global_lie_factures PASSED [ 72%]
+api/tests/test_produit_filtering.py::ProduitFilteringTest::test_filter_ignores_other_products PASSED [ 73%]
+api/tests/test_produit_filtering.py::ProduitFilteringTest::test_filter_products_by_groupe PASSED [ 74%]
+api/tests/test_produit_filtering.py::ProduitFilteringTest::test_filter_products_by_other_groupe PASSED [ 75%]
+api/tests/test_promotions.py::PromotionServiceTest::test_buy_x_get_y PASSED [ 76%]
+api/tests/test_promotions.py::PromotionServiceTest::test_percentage_promotion PASSED [ 77%]
+api/tests/test_stock_history_global.py::GlobalStockHistoryTestCase::test_global_stock_history_flow PASSED [ 78%]
+api/tests/test_stock_loophole.py::StockLoopholeTestCase::test_stock_aggregation_validation FAILED [ 80%]
+api/tests/test_stock_loophole.py::StockLoopholeTestCase::test_superuser_can_still_force_stock PASSED [ 81%]
+api/tests/test_stock_management.py::StockAdjustmentTestCase::test_adjust_stock_creates_adjustment_record PASSED [ 82%]
+api/tests/test_stock_management.py::StockAdjustmentTestCase::test_adjust_stock_records_difference PASSED [ 83%]
+api/tests/test_stock_management.py::StockAdjustmentTestCase::test_adjust_stock_updates_product_stock PASSED [ 84%]
+api/tests/test_stock_management.py::StockLotManagementTestCase::test_lot_reception_creates_stock_lot PASSED [ 85%]
+api/tests/test_stock_management.py::StockLotManagementTestCase::test_lot_reception_updates_stock PASSED [ 86%]
+api/tests/test_stock_management.py::PMPCalculationTestCase::test_pmp_calculated_on_order_closure PASSED [ 87%]
+api/tests/test_stock_management.py::StockHistoryTestCase::test_adjustment_creates_movement PASSED [ 88%]
+api/tests/test_temporal_analysis.py::TemporalAnalysisTests::test_daily_comparison_endpoint PASSED [ 89%]
+api/tests/test_temporal_analysis.py::TemporalAnalysisTests::test_peak_hours_endpoint PASSED [ 90%]
+api/tests/test_temporal_analysis.py::TemporalAnalysisTests::test_seasonality_endpoint PASSED [ 91%]
+api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fefo_allocation_expiration_priority FAILED [ 92%]
+api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fifo_allocation_insufficient_stock_across_lots FAILED [ 93%]
+api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fifo_allocation_multiple_lots FAILED [ 94%]
+api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_complex_transaction_all_features FAILED [ 95%]
+api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_multiple_payment_methods FAILED [ 96%]
+api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_with_automatic_discount FAILED [ 97%]
+
+================================== FAILURES ===================================
+_________ CashClosureCreationTestCase.test_cloturer_calculates_ecart __________
+
+self = <api.tests.test_cash_closure.CashClosureCreationTestCase testMethod=test_cloturer_calculates_ecart>
+
+    def test_cloturer_calculates_ecart(self):
+        """
+        Test that Úcart (difference) is calculated correctly.
+        """
+        # Create sales totaling 1000
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj,
+            status='VAL',
+            total_ttc=Decimal('1000.00')
+        )
+        TestDataFactory.create_caisse(
+            facture=facture,
+            montant=Decimal('1000.00'),
+            mode_paiement='especes',
+            user=self.user
+        )
+    
+        url = reverse('caisse-cloturer')
+        today = timezone.now().date()
+    
+        # Close with 950 actual amount (50 short)
+        response = self.client.post(url, {
+            'date_debut': f'{today}T00:00:00',
+            'date_fin': f'{today}T23:59:59',
+            'montant_reel': '950.00'
+        })
+    
+>       self.assertEqual(response.status_code, status.HTTP_200_OK)
+E       AssertionError: 400 != 200
+
+api\tests\test_cash_closure.py:188: AssertionError
+---------------------------- Captured stderr call -----------------------------
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 207 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 172 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 172 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 172 validation/payment
+__________ CashClosureCreationTestCase.test_cloturer_creates_record ___________
+
+self = <api.tests.test_cash_closure.CashClosureCreationTestCase testMethod=test_cloturer_creates_record>
+
+    def test_cloturer_creates_record(self):
+        """
+        Test that cl¶turer action creates a ClotureCaisse record.
+        """
+        # Create a sale
+        facture = TestDataFactory.create_facture(
+            client=self.client_obj,
+            status='VAL',
+            total_ttc=Decimal('1000.00')
+        )
+        TestDataFactory.create_caisse(
+            facture=facture,
+            montant=Decimal('1000.00'),
+            mode_paiement='especes',
+            user=self.user
+        )
+    
+        initial_count = ClotureCaisse.objects.count()
+    
+        url = reverse('caisse-cloturer')
+        today = timezone.now().date()
+        response = self.client.post(url, {
+            'date_debut': f'{today}T00:00:00',
+            'date_fin': f'{today}T23:59:59',
+            'montant_reel': '1000.00'
+        })
+    
+>       self.assertEqual(response.status_code, status.HTTP_200_OK)
+E       AssertionError: 400 != 200
+
+api\tests\test_cash_closure.py:154: AssertionError
+---------------------------- Captured stderr call -----------------------------
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 208 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 173 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 173 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 173 validation/payment
+___________ DashboardOptimizationTest.test_suppliers_stats_queries ____________
+
+self = <api.tests.test_dashboard_optimization.DashboardOptimizationTest testMethod=test_suppliers_stats_queries>
+
+    def test_suppliers_stats_queries(self):
+        url = reverse('dashboard-supplier-debts')
+    
+        # Determine expected query count
+        # Currently N+1 problem exists.
+        # With optimization, it should be constant low number.
+    
+>       with self.assertNumQueries(1): # Optimized to 1 query!
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 12 != 1 : 12 queries executed, 1 expected
+E       Captured queries were:
+E       1. INSERT INTO "silk_request" ("id", "path", "query_params", "raw_body", "body", "method", "start_time", "view_name", "end_time", "time_taken", "encoded_headers", "meta_time", "meta_num_queries", "meta_time_spent_queries", "pyprofile", "prof_file", "num_sql_queries") VALUES ('32f40ddd-7505-44ea-baa8-2a32e5481c21', '/api/dashboard/supplier_debts/', '', '', '', 'GET', '2026-03-14T13:07:03.297856'::timestamp, 'dashboard-supplier-debts', NULL, NULL, '{"cookie": "********************", "content-type": "application/octet-stream"}', NULL, NULL, NULL, '', '', 0)
+E       2. SELECT "api_fournisseur"."id", "api_fournisseur"."name", "api_fournisseur"."address", "api_fournisseur"."phone", "api_fournisseur"."email", "api_fournisseur"."is_active", "api_fournisseur"."type_reglement", "api_fournisseur"."delai_paiement_jours", COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) AS "total_ordered_db", COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0) AS "total_paid_db", (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) AS "debt_db" FROM "api_fournisseur" WHERE (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) > 0 ORDER BY 11 DESC
+E       3. EXPLAIN SELECT "api_fournisseur"."id", "api_fournisseur"."name", "api_fournisseur"."address", "api_fournisseur"."phone", "api_fournisseur"."email", "api_fournisseur"."is_active", "api_fournisseur"."type_reglement", "api_fournisseur"."delai_paiement_jours", COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) AS "total_ordered_db", COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0) AS "total_paid_db", (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) AS "debt_db" FROM "api_fournisseur" WHERE (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) > 0 ORDER BY 11 DESC
+E       4. SAVEPOINT "s8024_x91"
+E       5. INSERT INTO "silk_response" ("id", "request_id", "status_code", "raw_body", "body", "encoded_headers") VALUES ('71a482f4-0fbc-4548-8f67-4c5b1e993465', '32f40ddd-7505-44ea-baa8-2a32e5481c21', 200, 'eyJ0b3RhbF9kZWJ0IjoyMDAuMCwic3VwcGxpZXJzIjpbeyJpZCI6MTcyLCJuYW1lIjoiRjEiLCJkZWJ0IjoxNTAuMCwicGhvbmUiOiIxMjM0NTY3ODkifSx7ImlkIjoxNzMsIm5hbWUiOiJGMiIsImRlYnQiOjUwLjAsInBob25lIjoiOTg3NjU0MzIxIn1dfQ==', '{
+E           "suppliers": [
+E               {
+E                   "debt": 150.0,
+E                   "id": 172,
+E                   "name": "F1",
+E                   "phone": "123456789"
+E               },
+E               {
+E                   "debt": 50.0,
+E                   "id": 173,
+E                   "name": "F2",
+E                   "phone": "987654321"
+E               }
+E           ],
+E           "total_debt": 200.0
+E       }', '{"Content-Type": "application/json", "Vary": "Accept, origin", "Allow": "GET, HEAD, OPTIONS", "X-Frame-Options": "DENY", "Content-Length": "145"}')
+E       6. SAVEPOINT "s8024_x92"
+E       7. UPDATE "silk_request" SET "num_sql_queries" = 1 WHERE "silk_request"."id" = '32f40ddd-7505-44ea-baa8-2a32e5481c21'
+E       8. INSERT INTO "silk_sqlquery" ("query", "start_time", "end_time", "time_taken", "identifier", "request_id", "traceback", "analysis") VALUES ('SELECT "api_fournisseur"."id", "api_fournisseur"."name", "api_fournisseur"."address", "api_fournisseur"."phone", "api_fournisseur"."email", "api_fournisseur"."is_active", "api_fournisseur"."type_reglement", "api_fournisseur"."delai_paiement_jours", COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = CLOT) GROUP BY U1."fournisseur_id"), 0) AS "total_ordered_db", COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0) AS "total_paid_db", (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = CLOT) GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) AS "debt_db" FROM "api_fournisseur" WHERE (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = CLOT) GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) > 0 ORDER BY 11 DESC', '2026-03-14T13:07:03.305071'::timestamp, '2026-03-14T13:07:03.308345'::timestamp, 3.274, 1, '32f40ddd-7505-44ea-baa8-2a32e5481c21', '  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\sql.py", line 92, in execute_sql
+E           tb = ''''.join(reversed(traceback.format_stack()))
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+E           results = compiler.execute_sql(
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+E           self._result_cache = list(self._iterable_class(self))
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+E           self._fetch_all()
+E         File "C:\Projet Fullstack\fullstack_produits\backend\api\views\dashboard.py", line 635, in supplier_debts
+E           for s in suppliers:
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+E           response = handler(request, *args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+E           return self.dispatch(request, *args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+E           return view_func(request, *args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\views.py", line 87, in sentry_wrapped_callback
+E           return callback(request, *args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+E           response = wrapped_callback(request, *callback_args, **callback_kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\corsheaders\middleware.py", line 56, in __call__
+E           result = self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\middleware.py", line 95, in __call__
+E           response = self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\whitenoise\middleware.py", line 123, in __call__
+E           return self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+E           response = response or self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+E           return f(*args, **kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+E           response = get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 140, in get_response
+E           response = self._middleware_chain(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\__init__.py", line 479, in sentry_patched_get_response
+E           rv = old_get_response(self, request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 261, in get_response
+E           return super().get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 186, in __call__
+E           response = self.get_response(request)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 1082, in request
+E           response = self.handler(environ)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 241, in request
+E           request = super().request(**kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 289, in request
+E           return super().request(**kwargs)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 671, in generic
+E           return self.request(**r)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 237, in generic
+E           return super().generic(
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 209, in get
+E           return self.generic(''GET'', path, **r)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 292, in get
+E           response = super().get(path, data=data, **extra)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard_optimization.py", line 63, in test_suppliers_stats_queries
+E           self.client.get(url)
+E         File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+E           if method() is not None:
+E         File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+E           self._callTestMethod(testMethod)
+E         File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+E           return self.run(*args, **kwds)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+E           super().__call__(result)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+E           self._setup_and_call(result)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pytest_django\plugin.py", line 587, in non_debugging_runtest
+E           self._testcase(result=self)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\runner.py", line 179, in pytest_runtest_call
+E           item.runtest()
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+E           res = hook_impl.function(*args)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+E           return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+E           return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\runner.py", line 245, in <lambda>
+E           lambda: runtest_hook(item=item, **kwds),
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\runner.py", line 353, in from_call
+E           result: TResult | None = func()
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\runner.py", line 244, in call_and_report
+E           call = CallInfo.from_call(
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\runner.py", line 137, in runtestprotocol
+E           reports.append(call_and_report(item, "call", log))
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\runner.py", line 118, in pytest_runtest_protocol
+E           runtestprotocol(item, nextitem=nextitem)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+E           res = hook_impl.function(*args)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+E           return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+E           return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\main.py", line 396, in pytest_runtestloop
+E           item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+E           res = hook_impl.function(*args)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+E           return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+E           return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\main.py", line 372, in _main
+E           config.hook.pytest_runtestloop(session=session)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\main.py", line 318, in wrap_session
+E           session.exitstatus = doit(config, session) or 0
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\main.py", line 365, in pytest_cmdline_main
+E           return wrap_session(config, _main)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_callers.py", line 121, in _multicall
+E           res = hook_impl.function(*args)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_manager.py", line 120, in _hookexec
+E           return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\pluggy\_hooks.py", line 512, in __call__
+E           return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\config\__init__.py", line 199, in main
+E           ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\_pytest\config\__init__.py", line 223, in console_main
+E           code = main()
+E         File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Scripts\pytest.exe\__main__.py", line 6, in <module>
+E           sys.exit(console_main())
+E         File "<frozen runpy>", line 88, in _run_code
+E         File "<frozen runpy>", line 198, in _run_module_as_main
+E       ', 'Sort  (cost=3300.27..3300.34 rows=27 width=981)
+E         Sort Key: ((COALESCE((SubPlan 3), ''0''::numeric) - COALESCE((SubPlan 4), ''0''::numeric))) DESC
+E         ->  Seq Scan on api_fournisseur  (cost=0.00..3299.63 rows=27 width=981)
+E               Filter: ((COALESCE((SubPlan 5), ''0''::numeric) - COALESCE((SubPlan 6), ''0''::numeric)) > ''0''::numeric)
+E               SubPlan 1
+E                 ->  GroupAggregate  (cost=0.29..16.36 rows=1 width=36)
+E                       ->  Nested Loop  (cost=0.29..16.34 rows=2 width=24)
+E                             ->  Index Scan using api_commande_fournisseur_id_fa0db1a6 on api_commande u1  (cost=0.14..8.16 rows=1 width=8)
+E                                   Index Cond: (fournisseur_id = api_fournisseur.id)
+E                                   Filter: ((status)::text = ''CLOT''::text)
+E                             ->  Index Scan using api_commandeproduit_commande_id_e153af55 on api_commandeproduit u0  (cost=0.14..8.16 rows=1 width=24)
+E                                   Index Cond: (commande_id = u1.id)
+E               SubPlan 2
+E                 ->  GroupAggregate  (cost=0.14..8.18 rows=1 width=36)
+E                       ->  Index Scan using api_paiementfournisseur_fournisseur_id_0a5e93cb on api_paiementfournisseur u0_1  (cost=0.14..8.16 rows=1 width=20)
+E                             Index Cond: (fournisseur_id = api_fournisseur.id)
+E               SubPlan 3
+E                 ->  GroupAggregate  (cost=0.29..16.36 rows=1 width=36)
+E                       ->  Nested Loop  (cost=0.29..16.34 rows=2 width=24)
+E                             ->  Index Scan using api_commande_fournisseur_id_fa0db1a6 on api_commande u1_1  (cost=0.14..8.16 rows=1 width=8)
+E                                   Index Cond: (fournisseur_id = api_fournisseur.id)
+E                                   Filter: ((status)::text = ''CLOT''::text)
+E                             ->  Index Scan using api_commandeproduit_commande_id_e153af55 on api_commandeproduit u0_2  (cost=0.14..8.16 rows=1 width=24)
+E                                   Index Cond: (commande_id = u1_1.id)
+E               SubPlan 4
+E                 ->  GroupAggregate  (cost=0.14..8.18 rows=1 width=36)
+E                       ->  Index Scan using api_paiementfournisseur_fournisseur_id_0a5e93cb on api_paiementfournisseur u0_3  (cost=0.14..8.16 rows=1 width=20)
+E                             Index Cond: (fournisseur_id = api_fournisseur.id)
+E               SubPlan 5
+E                 ->  GroupAggregate  (cost=0.29..16.36 rows=1 width=36)
+E                       ->  Nested Loop  (cost=0.29..16.34 rows=2 width=24)
+E                             ->  Index Scan using api_commande_fournisseur_id_fa0db1a6 on api_commande u1_2  (cost=0.14..8.16 rows=1 width=8)
+E                                   Index Cond: (fournisseur_id = api_fournisseur.id)
+E                                   Filter: ((status)::text = ''CLOT''::text)
+E                             ->  Index Scan using api_commandeproduit_commande_id_e153af55 on api_commandeproduit u0_4  (cost=0.14..8.16 rows=1 width=24)
+E                                   Index Cond: (commande_id = u1_2.id)
+E               SubPlan 6
+E                 ->  GroupAggregate  (cost=0.14..8.18 rows=1 width=36)
+E                       ->  Index Scan using api_paiementfournisseur_fournisseur_id_0a5e93cb on api_paiementfournisseur u0_5  (cost=0.14..8.16 rows=1 width=20)
+E                             Index Cond: (fournisseur_id = api_fournisseur.id)') RETURNING "silk_sqlquery"."id"
+E       9. RELEASE SAVEPOINT "s8024_x92"
+E       10. SELECT "silk_sqlquery"."id", "silk_sqlquery"."query", "silk_sqlquery"."start_time", "silk_sqlquery"."end_time", "silk_sqlquery"."time_taken", "silk_sqlquery"."identifier", "silk_sqlquery"."request_id", "silk_sqlquery"."traceback", "silk_sqlquery"."analysis" FROM "silk_sqlquery" WHERE "silk_sqlquery"."request_id" = '32f40ddd-7505-44ea-baa8-2a32e5481c21'
+E       11. UPDATE "silk_request" SET "path" = '/api/dashboard/supplier_debts/', "query_params" = '', "raw_body" = '', "body" = '', "method" = 'GET', "start_time" = '2026-03-14T13:07:03.297856'::timestamp, "view_name" = 'dashboard-supplier-debts', "end_time" = '2026-03-14T13:07:03.310513'::timestamp, "time_taken" = 12.657, "encoded_headers" = '{"cookie": "********************", "content-type": "application/octet-stream"}', "meta_time" = NULL, "meta_num_queries" = NULL, "meta_time_spent_queries" = NULL, "pyprofile" = '', "prof_file" = '', "num_sql_queries" = 1 WHERE "silk_request"."id" = '32f40ddd-7505-44ea-baa8-2a32e5481c21'
+E       12. RELEASE SAVEPOINT "s8024_x91"
+
+api\tests\test_dashboard_optimization.py:62: AssertionError
+---------------------------- Captured stderr call -----------------------------
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 144 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 145 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 146 closure
+___________ StockLoopholeTestCase.test_stock_aggregation_validation ___________
+
+self = <api.tests.test_stock_loophole.StockLoopholeTestCase testMethod=test_stock_aggregation_validation>
+
+    def test_stock_aggregation_validation(self):
+        """Test that multiple lines of the same product are correctly aggregated during validation."""
+        # Create invoice with 2 lines of 1 unit each. Total = 2. Stock = 1.
+        facture = TestDataFactory.create_facture(status='BROU')
+    
+        # Line 1
+        TestDataFactory.create_facture_produit(
+            facture=facture,
+            produit=self.produit,
+            quantity=1,
+            selling_price=100
+        )
+        # Line 2
+        TestDataFactory.create_facture_produit(
+            facture=facture,
+            produit=self.produit,
+            quantity=1,
+            selling_price=100
+        )
+    
+        # Attempt to validate
+        url = reverse('facture-valider', kwargs={'pk': facture.pk})
+        response = self.client.post(url, {'mode_paiement': 'especes'})
+    
+        # Should FAIL with 400 Bad Request
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Stock insuffisant', response.data['detail'])
+>       self.assertIn('QuantitÚ totale demandÚe: 2', response.data['detail'])
+E       AssertionError: 'QuantitÚ totale demandÚe: 2' not found in 'Stock insuffisant pour le produit Produit Rare.'
+
+api\tests\test_stock_loophole.py:53: AssertionError
+---------------------------- Captured stderr call -----------------------------
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 286 change
+_______ FIFOAllocationTestCase.test_fefo_allocation_expiration_priority _______
+
+self = <api.tests.test_critical_business_logic.FIFOAllocationTestCase testMethod=test_fefo_allocation_expiration_priority>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:32: AttributeError
+_ FIFOAllocationTestCase.test_fifo_allocation_insufficient_stock_across_lots __
+
+self = <api.tests.test_critical_business_logic.FIFOAllocationTestCase testMethod=test_fifo_allocation_insufficient_stock_across_lots>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:32: AttributeError
+__________ FIFOAllocationTestCase.test_fifo_allocation_multiple_lots __________
+
+self = <api.tests.test_critical_business_logic.FIFOAllocationTestCase testMethod=test_fifo_allocation_multiple_lots>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:32: AttributeError
+______ ComplexTransactionsTestCase.test_complex_transaction_all_features ______
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_complex_transaction_all_features>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+____ ComplexTransactionsTestCase.test_transaction_multiple_payment_methods ____
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_transaction_multiple_payment_methods>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+____ ComplexTransactionsTestCase.test_transaction_with_automatic_discount _____
+
+self = <api.tests.test_critical_business_logic.ComplexTransactionsTestCase testMethod=test_transaction_with_automatic_discount>
+
+    def setUp(self):
+        """Set up test data."""
+        self.user = TestDataFactory.create_superuser()
+>       self.client.force_authenticate(user=self.user)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+api\tests\test_critical_business_logic.py:404: AttributeError
+============================== warnings summary ===============================
+api/tests/test_cash_closure.py: 5 warnings
+api/tests/test_critical_business_logic.py: 1 warning
+api/tests/test_dashboard.py: 11 warnings
+api/tests/test_dashboard_optimization.py: 2 warnings
+api/tests/test_facturation.py: 23 warnings
+api/tests/test_integration_recent_fixes.py: 2 warnings
+api/tests/test_invoice_validation.py: 6 warnings
+api/tests/test_order_management.py: 4 warnings
+api/tests/test_pointage_global.py: 1 warning
+api/tests/test_produit_filtering.py: 3 warnings
+api/tests/test_stock_history_global.py: 1 warning
+api/tests/test_stock_loophole.py: 2 warnings
+api/tests/test_stock_management.py: 6 warnings
+api/tests/test_temporal_analysis.py: 3 warnings
+  C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py:133: UserWarning: No directory at: C:\Projet Fullstack\fullstack_produits\backend\staticfiles\
+    self._inner = middleware(get_response, *args, **kwargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED api/tests/test_cash_closure.py::CashClosureCreationTestCase::test_cloturer_calculates_ecart
+FAILED api/tests/test_cash_closure.py::CashClosureCreationTestCase::test_cloturer_creates_record
+FAILED api/tests/test_dashboard_optimization.py::DashboardOptimizationTest::test_suppliers_stats_queries
+FAILED api/tests/test_stock_loophole.py::StockLoopholeTestCase::test_stock_aggregation_validation
+FAILED api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fefo_allocation_expiration_priority
+FAILED api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fifo_allocation_insufficient_stock_across_lots
+FAILED api/tests/test_critical_business_logic.py::FIFOAllocationTestCase::test_fifo_allocation_multiple_lots
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_complex_transaction_all_features
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_multiple_payment_methods
+FAILED api/tests/test_critical_business_logic.py::ComplexTransactionsTestCase::test_transaction_with_automatic_discount
+!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 10 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+================= 10 failed, 83 passed, 70 warnings in 38.24s =================

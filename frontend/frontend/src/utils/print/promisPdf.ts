@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
-import type { PharmacySettings } from '../hooks/usePharmacySettings';
-import type { ProduitModel } from '../types';
+import type { PharmacySettings } from '../../hooks/usePharmacySettings';
+import type { ProduitModel } from '../../types';
 
 // Interface for the data needed to generate the ticket
 export interface PromisItem {

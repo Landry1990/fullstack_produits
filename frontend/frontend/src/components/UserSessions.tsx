@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { LogOut } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 interface UserSession {
     id: number;
@@ -34,6 +36,7 @@ const UserSessions: React.FC = () => {
     const [recapData, setRecapData] = useState<RecapStats[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'daily' | 'monthly'>('daily');
+    const [disconnectingId, setDisconnectingId] = useState<number | null>(null);
     
     // Daily filters
     const [startDate, setStartDate] = useState(format(getServerDate(), 'yyyy-MM-dd'));
@@ -76,7 +79,9 @@ const UserSessions: React.FC = () => {
             if (selectedUser) url += `&user=${selectedUser}`;
             
             const response = await axios.get(url);
-            setSessions(response.data);
+            // Handle both paginated and non-paginated responses
+            const sessionData = Array.isArray(response.data) ? response.data : response.data.results;
+            setSessions(sessionData || []);
         } catch (err) {
             console.error("Error fetching sessions:", err);
         } finally {
@@ -104,6 +109,24 @@ const UserSessions: React.FC = () => {
     const handleRecapFilter = (e: React.FormEvent) => {
         e.preventDefault();
         fetchRecap();
+    };
+
+    const handleForceLogout = async (sessionId: number, username: string) => {
+        if (!window.confirm(`Êtes-vous sûr de vouloir déconnecter l'utilisateur @${username} ? Cette action supprimera son accès immédiat.`)) {
+            return;
+        }
+
+        setDisconnectingId(sessionId);
+        try {
+            await axios.post(`/api/user-sessions/${sessionId}/force_logout/`);
+            toast.success(`L'utilisateur @${username} a été déconnecté.`);
+            fetchSessions();
+        } catch (err) {
+            console.error("Error during force logout:", err);
+            toast.error("Erreur lors de la déconnexion forcée.");
+        } finally {
+            setDisconnectingId(null);
+        }
     };
 
     const formatTime = (dateStr: string | null) => {
@@ -282,24 +305,39 @@ const UserSessions: React.FC = () => {
                                             <td className="py-4 px-6 font-mono font-bold text-warning">{formatTime(session.last_logout)}</td>
                                             <td className="py-4 px-6 font-semibold text-primary">{session.duration_display}</td>
                                             <td className="py-4 px-6 text-right">
-                                                {session.last_logout ? (
-                                                    <div className="badge badge-success badge-sm gap-1 py-3 px-3">
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-success-content opacity-50"></div>
-                                                        {t('user_sessions.closed')}
-                                                    </div>
-                                                ) : (
-                                                    format(getServerDate(), 'yyyy-MM-dd') === session.date ? (
-                                                        <div className="badge badge-info badge-sm gap-1 py-3 px-4 animate-pulse">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-info-content"></div>
-                                                            {t('user_sessions.ongoing')}
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {session.last_logout ? (
+                                                        <div className="badge badge-success badge-sm gap-1 py-3 px-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-success-content opacity-50"></div>
+                                                            {t('user_sessions.closed')}
                                                         </div>
                                                     ) : (
-                                                        <div className="badge badge-ghost badge-sm gap-1 py-3 px-4 opacity-50 border border-base-content/20">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-base-content opacity-30"></div>
-                                                            {t('user_sessions.not_closed')}
-                                                        </div>
-                                                    )
-                                                )}
+                                                        <>
+                                                            {format(getServerDate(), 'yyyy-MM-dd') === session.date ? (
+                                                                <div className="badge badge-info badge-sm gap-1 py-3 px-4 animate-pulse">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-info-content"></div>
+                                                                    {t('user_sessions.ongoing')}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="badge badge-ghost badge-sm gap-1 py-3 px-4 opacity-50 border border-base-content/20">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-base-content opacity-30"></div>
+                                                                    {t('user_sessions.not_closed')}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {user?.is_superuser && (
+                                                                <button 
+                                                                    className={`btn btn-circle btn-ghost btn-xs text-error hover:bg-error/10 ${disconnectingId === session.id ? 'loading' : ''}`}
+                                                                    title="Forcer la déconnexion"
+                                                                    onClick={() => handleForceLogout(session.id, session.username)}
+                                                                    disabled={!!disconnectingId}
+                                                                >
+                                                                    {disconnectingId !== session.id && <LogOut size={16} />}
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

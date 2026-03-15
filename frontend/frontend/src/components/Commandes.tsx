@@ -9,7 +9,9 @@ import { useCommandes, useCommandeFournisseurs, useCommandeRayons } from '../hoo
 import { useCommandeActions } from '../hooks/useCommandeActions'
 import { useSearchNavigation } from '../hooks/useSearchNavigation'
 import type { Commande, CommandeProduit, ProduitModel } from '../types'
-import { normalizeNumberInput, formatCurrency } from '../utils/formatters'
+import {  
+  normalizeNumberInput
+} from '../utils/formatters'
 import commandeService from '../services/commandeService'
 import produitService from '../services/produitService'
 import api from '../services/api'
@@ -1322,21 +1324,6 @@ export default function Commandes({ forcedType }: CommandesProps) {
     }
   }, [sortKey]);
 
-
-  // Fonction pour obtenir la classe CSS du badge de statut
-  function getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'PREP':
-        return 'badge badge-info'; // Bleu - En préparation
-      case 'ATT':
-        return 'badge badge-warning'; // Orange - En attente
-      case 'CLOT':
-        return 'badge badge-success'; // Vert - Clôturée
-      default:
-        return 'badge badge-ghost';
-    }
-  }
-
   // Ordre de priorité pour le tri par statut
   const statusOrder: Record<string, number> = { 'PREP': 1, 'ATT': 2, 'CLOT': 3 };
 
@@ -1439,7 +1426,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
   function openEditView(commande: Commande) {
     // Initialiser le formulaire avec les données de la commande
-    setNewCommandeFournisseurId(String(commande.fournisseur));
+    setNewCommandeFournisseurId(commande.fournisseur ? String(commande.fournisseur) : '');
     setNumeroFacture(commande.numero_facture || '');
     setCommandeType((commande.type as 'LOC' | 'DIR') || 'LOC');
     
@@ -1450,8 +1437,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
     
     // Cloner les produits et enrichir les données manquantes
     const enrichedProducts = commande.produits.map(p => {
-        const produitId = typeof p.produit === 'object' ? p.produit.id : p.produit;
-        const fullProduct = produitsList.find(prod => prod.id === produitId);
+        const produitObj = typeof p.produit === 'object' ? p.produit : null;
+        const produitId = produitObj ? produitObj.id : p.produit;
+        const fullProduct = produitId ? produitsList.find(prod => prod.id === produitId) : null;
 
         let marge = p.marge;
         const cost = normalizeNumberInput(p.price);

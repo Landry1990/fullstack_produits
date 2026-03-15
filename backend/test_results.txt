@@ -1,0 +1,882 @@
+Using existing test database for alias 'default'...
+
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 112 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 100 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 100 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 100 validation/payment
+C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py:133: UserWarning: No directory at: C:\Projet Fullstack\fullstack_produits\backend\staticfiles\
+  self._inner = middleware(get_response, *args, **kwargs)
+FINFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 113 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 101 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 101 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 101 validation/payment
+FINFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 114 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 102 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 102 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 102 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 103 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 103 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 103 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 115 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 116 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 104 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 104 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 104 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 105 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 105 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 105 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 117 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 118 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 119 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 120 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 121 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 122 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 123 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 124 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 125 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 126 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 127 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 128 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 129 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 106 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 106 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 106 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 130 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 107 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 108 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 109 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 131 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 110 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 132 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 111 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 133 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 112 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 113 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 134 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 114 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 114 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 114 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 135 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 136 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 137 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 138 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 139 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 115 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 115 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 116 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 117 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 140 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 118 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 119 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 141 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 142 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 143 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 144 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 121 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 122 validation/payment
+...INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 145 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 85 closure
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 146 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 86 closure
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 87 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 88 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 89 closure
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 90 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 91 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 92 closure
+FINFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 147 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 148 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 124 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 124 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 124 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 124 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 124 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 149 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 149 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 125 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 125 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 125 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 125 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 125 validation/payment
+...INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 129 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 131 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 131 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 131 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 132 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 132 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 132 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 133 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 133 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 133 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 150 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 151 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 152 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 153 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 154 change
+..INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 155 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 155 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 140 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 140 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 140 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 156 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 141 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 141 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 141 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 157 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 157 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 142 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 142 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 142 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 142 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 142 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 158 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 159 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 159 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 143 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 143 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 143 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 143 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 143 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 160 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 144 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 144 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 144 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 145 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 161 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 146 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 146 validation/payment
+DEBUG    api.views.historique_ventes | [VENTES PAR TRANCHE] Recherche de 2026-03-14 09:21:40.558345+01:00 Ó 2026-03-14 12:21:40.558345+01:00
+DEBUG    api.views.historique_ventes | [DEBUG] DerniÞres 10 factures VAL/PAY:
+DEBUG    api.views.historique_ventes |   - Facture #146 (None): 2026-03-14 11:21:40.538527 - Status: VAL
+DEBUG    api.views.historique_ventes | [DEBUG] Factures dans la tranche horaire: 1
+DEBUG    api.views.historique_ventes |   - Facture #146: 2026-03-14 11:21:40.538527
+DEBUG    api.views.historique_ventes | [VENTES PAR TRANCHE] TrouvÚ 1 produits distincts
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 147 validation/payment
+..INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 149 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 149 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 149 validation/payment
+..INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 162 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 163 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 150 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 150 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 150 validation/payment
+..INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 164 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 165 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 166 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 167 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 168 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 169 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 170 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 151 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 171 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 152 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 152 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 152 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 152 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 152 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 172 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 153 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 153 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 153 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 153 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 153 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 173 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 154 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 154 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 154 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 154 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 154 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 174 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 174 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 155 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 155 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 155 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 155 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 155 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 175 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 156 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 156 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 156 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 156 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 156 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 176 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 177 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 177 change
+INFO     api.business         | [COMMANDE] Cloture demandee #115 par admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 115 closure
+INFO     api.business         | [COMMANDE] Cloture OK #115 | fournisseur=Pharma Grossiste | produits=1 | lots=1 | user=admin
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 178 change
+INFO     api.business         | [COMMANDE] Cloture demandee #116 par admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 116 closure
+INFO     api.business         | [COMMANDE] Cloture OK #116 | fournisseur=Pharma Grossiste | produits=1 | lots=1 | user=admin
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 179 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 118 closure
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 180 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 119 closure
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 181 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 182 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 183 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 184 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 185 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 186 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 187 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 188 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 189 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 190 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 191 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 192 change
+INFO     api.business         | [COMMANDE] Cloture demandee #120 par admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 120 closure
+INFO     api.business         | [COMMANDE] Cloture OK #120 | fournisseur=Fournisseur Test | produits=1 | lots=1 | user=admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 192 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 192
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 192 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 193 change
+FINFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 194 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 160 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 160 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 160 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 160 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 160 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 195 change
+INFO     api.business         | [COMMANDE] Cloture demandee #122 par admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 122 closure
+INFO     api.business         | [COMMANDE] Cloture OK #122 | fournisseur=Fournisseur Test | produits=1 | lots=1 | user=admin
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 196 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 196
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 196 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 197 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 197
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 197 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 198 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after stock adjustment for product 198
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 198 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 199 change
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 200 change
+INFO     api.business         | [COMMANDE] Cloture demandee #123 par admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 123 closure
+INFO     api.business         | [COMMANDE] Cloture OK #123 | fournisseur=Fournisseur Test | produits=1 | lots=1 | user=admin
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 201 change
+INFO     api.business         | [COMMANDE] Cloture demandee #124 par admin
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after order 124 closure
+INFO     api.business         | [COMMANDE] Cloture OK #124 | fournisseur=Fournisseur Test | produits=1 | lots=1 | user=admin
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 202 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 161 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 161 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 162 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 162 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 163 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 163 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 203 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 164 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 164 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 165 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 165 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 166 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 166 validation/payment
+.INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after product 204 change
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 167 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 167 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 168 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 168 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 169 validation/payment
+INFO     api.cache            | Product cache (lists and searches) invalidated successfully
+DEBUG    api.cache            | Cache invalidated after invoice 169 validation/payment
+.EEEEEEEE
+======================================================================
+ERROR: test_complex_transaction_all_features (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_complex_transaction_all_features)
+Test une transaction complexe combinant tous les ÚlÚments:
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 404, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_transaction_multiple_payment_methods (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_multiple_payment_methods)
+Test une transaction avec plusieurs modes de paiement.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 404, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_transaction_with_automatic_discount (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_with_automatic_discount)
+Test une transaction avec remise automatique client.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 404, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_transaction_with_coupon (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_with_coupon)
+Test une transaction avec un coupon de monnaie.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 404, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_transaction_with_loyalty_points (api.tests.test_critical_business_logic.ComplexTransactionsTestCase.test_transaction_with_loyalty_points)
+Test une transaction avec utilisation de points de fidÚlitÚ.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 404, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_fefo_allocation_expiration_priority (api.tests.test_critical_business_logic.FIFOAllocationTestCase.test_fefo_allocation_expiration_priority)
+Test FEFO: les lots avec expiration la plus proche sont utilisÚs en premier,
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 32, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_fifo_allocation_insufficient_stock_across_lots (api.tests.test_critical_business_logic.FIFOAllocationTestCase.test_fifo_allocation_insufficient_stock_across_lots)
+Test que la vente Úchoue si le stock total est insuffisant, mÛme rÚparti sur plusieurs lots.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 32, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+ERROR: test_fifo_allocation_multiple_lots (api.tests.test_critical_business_logic.FIFOAllocationTestCase.test_fifo_allocation_multiple_lots)
+Test FIFO avec plusieurs lots: les lots les plus anciens sont utilisÚs en premier.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_critical_business_logic.py", line 32, in setUp
+    self.client.force_authenticate(user=self.user)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Client' object has no attribute 'force_authenticate'
+
+======================================================================
+FAIL: test_cloturer_calculates_ecart (api.tests.test_cash_closure.CashClosureCreationTestCase.test_cloturer_calculates_ecart)
+Test that Úcart (difference) is calculated correctly.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_cash_closure.py", line 188, in test_cloturer_calculates_ecart
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 200
+
+======================================================================
+FAIL: test_cloturer_creates_record (api.tests.test_cash_closure.CashClosureCreationTestCase.test_cloturer_creates_record)
+Test that cl¶turer action creates a ClotureCaisse record.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_cash_closure.py", line 154, in test_cloturer_creates_record
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 200
+
+======================================================================
+FAIL: test_suppliers_stats_queries (api.tests.test_dashboard_optimization.DashboardOptimizationTest.test_suppliers_stats_queries)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard_optimization.py", line 62, in test_suppliers_stats_queries
+    with self.assertNumQueries(1): # Optimized to 1 query!
+         ~~~~~~~~~~~~~~~~~~~~~^^^
+AssertionError: 12 != 1 : 12 queries executed, 1 expected
+Captured queries were:
+1. INSERT INTO "silk_request" ("id", "path", "query_params", "raw_body", "body", "method", "start_time", "view_name", "end_time", "time_taken", "encoded_headers", "meta_time", "meta_num_queries", "meta_time_spent_queries", "pyprofile", "prof_file", "num_sql_queries") VALUES ('d711bfc0-4549-4f38-827a-f346df10c9b8', '/api/dashboard/supplier_debts/', '', '', '', 'GET', '2026-03-14T11:21:35.579062'::timestamp, 'dashboard-supplier-debts', NULL, NULL, '{"cookie": "********************", "content-type": "application/octet-stream"}', NULL, NULL, NULL, '', '', 0)
+2. SELECT "api_fournisseur"."id", "api_fournisseur"."name", "api_fournisseur"."address", "api_fournisseur"."phone", "api_fournisseur"."email", "api_fournisseur"."is_active", "api_fournisseur"."type_reglement", "api_fournisseur"."delai_paiement_jours", COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) AS "total_ordered_db", COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0) AS "total_paid_db", (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) AS "debt_db" FROM "api_fournisseur" WHERE (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) > 0 ORDER BY 11 DESC
+3. EXPLAIN SELECT "api_fournisseur"."id", "api_fournisseur"."name", "api_fournisseur"."address", "api_fournisseur"."phone", "api_fournisseur"."email", "api_fournisseur"."is_active", "api_fournisseur"."type_reglement", "api_fournisseur"."delai_paiement_jours", COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) AS "total_ordered_db", COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0) AS "total_paid_db", (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) AS "debt_db" FROM "api_fournisseur" WHERE (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = 'CLOT') GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) > 0 ORDER BY 11 DESC
+4. SAVEPOINT "s16800_x91"
+5. INSERT INTO "silk_response" ("id", "request_id", "status_code", "raw_body", "body", "encoded_headers") VALUES ('73e3eb26-6751-48e4-8fa6-5982cf44928a', 'd711bfc0-4549-4f38-827a-f346df10c9b8', 200, 'eyJ0b3RhbF9kZWJ0IjoyMDAuMCwic3VwcGxpZXJzIjpbeyJpZCI6MTA2LCJuYW1lIjoiRjEiLCJkZWJ0IjoxNTAuMCwicGhvbmUiOiIxMjM0NTY3ODkifSx7ImlkIjoxMDcsIm5hbWUiOiJGMiIsImRlYnQiOjUwLjAsInBob25lIjoiOTg3NjU0MzIxIn1dfQ==', '{
+    "suppliers": [
+        {
+            "debt": 150.0,
+            "id": 106,
+            "name": "F1",
+            "phone": "123456789"
+        },
+        {
+            "debt": 50.0,
+            "id": 107,
+            "name": "F2",
+            "phone": "987654321"
+        }
+    ],
+    "total_debt": 200.0
+}', '{"Content-Type": "application/json", "Vary": "Accept, origin", "Allow": "GET, HEAD, OPTIONS", "X-Frame-Options": "DENY", "Content-Length": "145"}')
+6. SAVEPOINT "s16800_x92"
+7. UPDATE "silk_request" SET "num_sql_queries" = 1 WHERE "silk_request"."id" = 'd711bfc0-4549-4f38-827a-f346df10c9b8'
+8. INSERT INTO "silk_sqlquery" ("query", "start_time", "end_time", "time_taken", "identifier", "request_id", "traceback", "analysis") VALUES ('SELECT "api_fournisseur"."id", "api_fournisseur"."name", "api_fournisseur"."address", "api_fournisseur"."phone", "api_fournisseur"."email", "api_fournisseur"."is_active", "api_fournisseur"."type_reglement", "api_fournisseur"."delai_paiement_jours", COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = CLOT) GROUP BY U1."fournisseur_id"), 0) AS "total_ordered_db", COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0) AS "total_paid_db", (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = CLOT) GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) AS "debt_db" FROM "api_fournisseur" WHERE (COALESCE((SELECT SUM((U0."quantity" * U0."price")) AS "total" FROM "api_commandeproduit" U0 INNER JOIN "api_commande" U1 ON (U0."commande_id" = U1."id") WHERE (U1."fournisseur_id" = ("api_fournisseur"."id") AND U1."status" = CLOT) GROUP BY U1."fournisseur_id"), 0) - COALESCE((SELECT SUM(U0."montant") AS "total" FROM "api_paiementfournisseur" U0 WHERE U0."fournisseur_id" = ("api_fournisseur"."id") GROUP BY U0."fournisseur_id"), 0)) > 0 ORDER BY 11 DESC', '2026-03-14T11:21:35.587597'::timestamp, '2026-03-14T11:21:35.590586'::timestamp, 2.989, 1, 'd711bfc0-4549-4f38-827a-f346df10c9b8', '  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\sql.py", line 92, in execute_sql
+    tb = ''''.join(reversed(traceback.format_stack()))
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\db\models\query.py", line 384, in __iter__
+    self._fetch_all()
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\views\dashboard.py", line 635, in supplier_debts
+    for s in suppliers:
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\views\decorators\csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\views.py", line 87, in sentry_wrapped_callback
+    return callback(request, *args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\corsheaders\middleware.py", line 56, in __call__
+    result = self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\silk\middleware.py", line 95, in __call__
+    response = self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\whitenoise\middleware.py", line 123, in __call__
+    return self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\utils\deprecation.py", line 120, in __call__
+    response = response or self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\middleware.py", line 169, in __call__
+    return f(*args, **kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\handlers\base.py", line 140, in get_response
+    response = self._middleware_chain(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\sentry_sdk\integrations\django\__init__.py", line 479, in sentry_patched_get_response
+    rv = old_get_response(self, request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 261, in get_response
+    return super().get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 186, in __call__
+    response = self.get_response(request)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 1082, in request
+    response = self.handler(environ)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 241, in request
+    request = super().request(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 289, in request
+    return super().request(**kwargs)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\client.py", line 671, in generic
+    return self.request(**r)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 237, in generic
+    return super().generic(
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 209, in get
+    return self.generic(''GET'', path, **r)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\rest_framework\test.py", line 292, in get
+    response = super().get(path, data=data, **extra)
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_dashboard_optimization.py", line 63, in test_suppliers_stats_queries
+    self.client.get(url)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 606, in _callTestMethod
+    if method() is not None:
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 651, in run
+    self._callTestMethod(testMethod)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\case.py", line 707, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 376, in _setup_and_call
+    super().__call__(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\testcases.py", line 321, in __call__
+    self._setup_and_call(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 122, in run
+    test(result)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\suite.py", line 84, in __call__
+    return self.run(*args, **kwds)
+  File "C:\Users\nkaha\AppData\Local\Programs\Python\Python313\Lib\unittest\runner.py", line 240, in run
+    test(result)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1026, in run_suite
+    return runner.run(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\test\runner.py", line 1099, in run_tests
+    result = self.run_suite(suite)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 63, in handle
+    failures = test_runner.run_tests(test_labels)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 460, in execute
+    output = self.handle(*args, **options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\base.py", line 416, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\commands\test.py", line 24, in run_from_argv
+    super().run_from_argv(argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 436, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\my_env01\Lib\site-packages\django\core\management\__init__.py", line 442, in execute_from_command_line
+    utility.execute()
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 24, in main
+    execute_from_command_line(sys.argv)
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+', 'Sort  (cost=3300.27..3300.34 rows=27 width=981)
+  Sort Key: ((COALESCE((SubPlan 3), ''0''::numeric) - COALESCE((SubPlan 4), ''0''::numeric))) DESC
+  ->  Seq Scan on api_fournisseur  (cost=0.00..3299.63 rows=27 width=981)
+        Filter: ((COALESCE((SubPlan 5), ''0''::numeric) - COALESCE((SubPlan 6), ''0''::numeric)) > ''0''::numeric)
+        SubPlan 1
+          ->  GroupAggregate  (cost=0.29..16.36 rows=1 width=36)
+                ->  Nested Loop  (cost=0.29..16.34 rows=2 width=24)
+                      ->  Index Scan using api_commande_fournisseur_id_fa0db1a6 on api_commande u1  (cost=0.14..8.16 rows=1 width=8)
+                            Index Cond: (fournisseur_id = api_fournisseur.id)
+                            Filter: ((status)::text = ''CLOT''::text)
+                      ->  Index Scan using api_commandeproduit_commande_id_e153af55 on api_commandeproduit u0  (cost=0.14..8.16 rows=1 width=24)
+                            Index Cond: (commande_id = u1.id)
+        SubPlan 2
+          ->  GroupAggregate  (cost=0.14..8.18 rows=1 width=36)
+                ->  Index Scan using api_paiementfournisseur_fournisseur_id_0a5e93cb on api_paiementfournisseur u0_1  (cost=0.14..8.16 rows=1 width=20)
+                      Index Cond: (fournisseur_id = api_fournisseur.id)
+        SubPlan 3
+          ->  GroupAggregate  (cost=0.29..16.36 rows=1 width=36)
+                ->  Nested Loop  (cost=0.29..16.34 rows=2 width=24)
+                      ->  Index Scan using api_commande_fournisseur_id_fa0db1a6 on api_commande u1_1  (cost=0.14..8.16 rows=1 width=8)
+                            Index Cond: (fournisseur_id = api_fournisseur.id)
+                            Filter: ((status)::text = ''CLOT''::text)
+                      ->  Index Scan using api_commandeproduit_commande_id_e153af55 on api_commandeproduit u0_2  (cost=0.14..8.16 rows=1 width=24)
+                            Index Cond: (commande_id = u1_1.id)
+        SubPlan 4
+          ->  GroupAggregate  (cost=0.14..8.18 rows=1 width=36)
+                ->  Index Scan using api_paiementfournisseur_fournisseur_id_0a5e93cb on api_paiementfournisseur u0_3  (cost=0.14..8.16 rows=1 width=20)
+                      Index Cond: (fournisseur_id = api_fournisseur.id)
+        SubPlan 5
+          ->  GroupAggregate  (cost=0.29..16.36 rows=1 width=36)
+                ->  Nested Loop  (cost=0.29..16.34 rows=2 width=24)
+                      ->  Index Scan using api_commande_fournisseur_id_fa0db1a6 on api_commande u1_2  (cost=0.14..8.16 rows=1 width=8)
+                            Index Cond: (fournisseur_id = api_fournisseur.id)
+                            Filter: ((status)::text = ''CLOT''::text)
+                      ->  Index Scan using api_commandeproduit_commande_id_e153af55 on api_commandeproduit u0_4  (cost=0.14..8.16 rows=1 width=24)
+                            Index Cond: (commande_id = u1_2.id)
+        SubPlan 6
+          ->  GroupAggregate  (cost=0.14..8.18 rows=1 width=36)
+                ->  Index Scan using api_paiementfournisseur_fournisseur_id_0a5e93cb on api_paiementfournisseur u0_5  (cost=0.14..8.16 rows=1 width=20)
+                      Index Cond: (fournisseur_id = api_fournisseur.id)') RETURNING "silk_sqlquery"."id"
+9. RELEASE SAVEPOINT "s16800_x92"
+10. SELECT "silk_sqlquery"."id", "silk_sqlquery"."query", "silk_sqlquery"."start_time", "silk_sqlquery"."end_time", "silk_sqlquery"."time_taken", "silk_sqlquery"."identifier", "silk_sqlquery"."request_id", "silk_sqlquery"."traceback", "silk_sqlquery"."analysis" FROM "silk_sqlquery" WHERE "silk_sqlquery"."request_id" = 'd711bfc0-4549-4f38-827a-f346df10c9b8'
+11. UPDATE "silk_request" SET "path" = '/api/dashboard/supplier_debts/', "query_params" = '', "raw_body" = '', "body" = '', "method" = 'GET', "start_time" = '2026-03-14T11:21:35.579062'::timestamp, "view_name" = 'dashboard-supplier-debts', "end_time" = '2026-03-14T11:21:35.592693'::timestamp, "time_taken" = 13.631, "encoded_headers" = '{"cookie": "********************", "content-type": "application/octet-stream"}', "meta_time" = NULL, "meta_num_queries" = NULL, "meta_time_spent_queries" = NULL, "pyprofile" = '', "prof_file" = '', "num_sql_queries" = 1 WHERE "silk_request"."id" = 'd711bfc0-4549-4f38-827a-f346df10c9b8'
+12. RELEASE SAVEPOINT "s16800_x91"
+
+======================================================================
+FAIL: test_stock_aggregation_validation (api.tests.test_stock_loophole.StockLoopholeTestCase.test_stock_aggregation_validation)
+Test that multiple lines of the same product are correctly aggregated during validation.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\api\tests\test_stock_loophole.py", line 53, in test_stock_aggregation_validation
+    self.assertIn('QuantitÚ totale demandÚe: 2', response.data['detail'])
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'QuantitÚ totale demandÚe: 2' not found in 'Stock insuffisant pour le produit Produit Rare.'
+
+----------------------------------------------------------------------
+Ran 95 tests in 34.451s
+
+FAILED (failures=4, errors=8)
+Preserving test database for alias 'default'...
+
+Found 95 test(s).
+System check identified no issues (0 silenced).

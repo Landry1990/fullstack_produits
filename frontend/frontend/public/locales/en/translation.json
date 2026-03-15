@@ -9,6 +9,7 @@
         "save": "Save",
         "passerby_client": "Walk-in Customer",
         "close": "Close",
+        "view": "View",
         "receipt": "Receipt",
         "print_a4": "A4 Invoice",
         "print_ticket": "Print Ticket",
@@ -68,7 +69,20 @@
             "import_error": "Error during import",
             "login_invalid": "Invalid credentials. Please try again.",
             "server_unreachable": "Server is unreachable. Check your connection or try again later."
-        }
+        },
+        "edit": "Edit",
+        "items": "items",
+        "pagination_info": "Page {{page}} of {{total}} ({{count}} {{label}})",
+        "previous": "Previous",
+        "next": "Next",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "save_changes": "Save Changes",
+        "no_address": "No address",
+        "rayon": "Shelf",
+        "forme": "Form",
+        "groupe": "Group"
     },
     "manager_dashboard": {
         "title": "Manager Dashboard",
@@ -331,47 +345,6 @@
                 "create_btn": "Create",
                 "merge_btn": "Merge"
             },
-            "adjustments": {
-                "title": "Stock Adjustments Log",
-                "subtitle": "History of manual stock movements",
-                "stats": {
-                    "total": "Total Adjustments",
-                    "positives": "Entries (Value)",
-                    "negatives": "Exits (Value)",
-                    "net_impact": "Net Impact"
-                },
-                "filters": {
-                    "search": "Product, No or Note...",
-                    "all_types": "All types",
-                    "all_users": "All users",
-                    "entry": "Entry (+)",
-                    "exit": "Exit (-)"
-                },
-                "table": {
-                    "date": "Date & Time",
-                    "produit": "Product",
-                    "type": "Type",
-                    "qty": "Qty",
-                    "user": "Author",
-                    "reason": "Reason"
-                }
-            },
-            "analyse": {
-                "title": "Stock Analysis",
-                "subtitle": "Optimize your inventory and visualize trends",
-                "stats": {
-                    "rotation": "Rotation Rate",
-                    "immobilise": "Tied-up Capital",
-                    "prevision": "Demand Forecast (30d)",
-                    "valorisation": "Total Valuation"
-                },
-                "charts": {
-                    "evolution": "Stock Value Evolution",
-                    "categories": "Breakdown by Category",
-                    "fast_moving": "Fast-Moving Products (Sales)",
-                    "dead_stock": "Dead Stock"
-                }
-            },
             "perimes": {
                 "title": "Expired Management",
                 "subtitle": "Loss analysis and forecasts",
@@ -468,49 +441,6 @@
                     "confirm_btn": "Confirm Transformation"
                 }
             },
-            "ajustements": {
-                "title": "Stock Adjustments",
-                "subtitle": "Complete history of manual movements",
-                "stats": {
-                    "total": "Total Adjustments",
-                    "positive": "Total In (+)",
-                    "negative": "Total Out (-)"
-                },
-                "filters": {
-                    "search_label": "Search",
-                    "search_placeholder": "Product, CIP, user...",
-                    "date_start": "Start date",
-                    "date_end": "End date",
-                    "reason_label": "Reason",
-                    "all_reasons": "All reasons",
-                    "reasons": {
-                        "INVENTAIRE": "Inventory adjustment",
-                        "CASSE": "Broken",
-                        "VOL": "Theft",
-                        "CONFUSION": "Confusion",
-                        "ERR_ENTREE": "Entry error",
-                        "AVARIE": "Damaged",
-                        "USAGE_INT": "Internal use",
-                        "PERIME": "Expired"
-                    },
-                    "refresh": "Refresh",
-                    "export": "Export",
-                    "reset": "Reset"
-                },
-                "table": {
-                    "loading": "Loading adjustments...",
-                    "empty": "No adjustments found",
-                    "date_header": "Date/Time",
-                    "product_header": "Product",
-                    "cip_header": "CIP",
-                    "user_header": "User",
-                    "before_header": "Before",
-                    "after_header": "After",
-                    "diff_header": "Diff",
-                    "reason_header": "Reason",
-                    "pagination": "Page {{current}} of {{total}} ({{count}} items)"
-                }
-            },
             "reappro": {
                 "title": "Shelf Replenishment",
                 "subtitle": "Monitoring and transfer from reserve to shelves.",
@@ -601,7 +531,7 @@
                     "footer": "--- End of promotional stock report ---"
                 }
             },
-            "stockAnalysis": {
+            "analyse": {
                 "title": "Stock Analysis",
                 "subtitle": "Optimization, slow-movers, and stockout alerts",
                 "days": "days",
@@ -640,6 +570,12 @@
                     "days_until_stockout": "Autonomy",
                     "urgency": "Urgency",
                     "value_at_risk": "Value at Risk"
+                },
+                "charts": {
+                    "evolution": "Stock Value Evolution",
+                    "categories": "Breakdown by Category",
+                    "fast_moving": "Fast-Moving Products (Sales)",
+                    "dead_stock": "Dead Stock"
                 },
                 "shortage": {
                     "urgency": {
@@ -742,7 +678,11 @@
                     "search_products_placeholder": "Search by name or CIP...",
                     "searching": "Searching...",
                     "search_min_chars": "Enter at least 2 characters",
-                    "search_no_results": "No results found"
+                    "search_no_results": "No results found",
+                    "print_help": "Generate a PDF report of the current stock status for this category.",
+                    "exclude_zero_stock": "Exclude products out of stock",
+                    "print_btn": "Start Printing",
+                    "name_labels": "names"
                 }
             },
             "avoirs": "Claims",
@@ -1003,6 +943,7 @@
             "history": "Payment History",
             "no_payments": "No payments recorded",
             "close": "Close",
+            "view": "View",
             "modes": {
                 "cash": "Cash",
                 "check": "Check",
@@ -1236,6 +1177,86 @@
                 "total_rayon": "TOTAL",
                 "total_global": "GLOBAL GAP TOTAL (VALUE): {{sign}}{{amount}}",
                 "no_gaps": "No discrepancy found."
+            },
+            "ajustements": {
+                "title": "Stock Adjustments",
+                "subtitle": "Complete history of manual movements",
+                "stats": {
+                    "total": "Total Adjustments",
+                    "positive": "Total In (+)",
+                    "negative": "Total Out (-)"
+                },
+                "filters": {
+                    "search_label": "Search",
+                    "search_placeholder": "Product, CIP, user...",
+                    "date_start": "Start date",
+                    "date_end": "End date",
+                    "reason_label": "Reason",
+                    "all_reasons": "All reasons",
+                    "reasons": {
+                        "INVENTAIRE": "Inventory adjustment",
+                        "CASSE": "Broken",
+                        "VOL": "Theft",
+                        "CONFUSION": "Confusion",
+                        "ERR_ENTREE": "Entry error",
+                        "AVARIE": "Damaged",
+                        "USAGE_INT": "Internal use",
+                        "PERIME": "Expired"
+                    },
+                    "refresh": "Refresh",
+                    "export": "Export",
+                    "reset": "Reset"
+                },
+                "table": {
+                    "loading": "Loading adjustments...",
+                    "empty": "No adjustments found",
+                    "date_header": "Date/Time",
+                    "product_header": "Product",
+                    "cip_header": "CIP",
+                    "user_header": "User",
+                    "before_header": "Before",
+                    "after_header": "After",
+                    "diff_header": "Diff",
+                    "reason_header": "Reason",
+                    "pagination": "Page {{current}} of {{total}} ({{count}} items)"
+                }
+            }
+        },
+        "etats_inventaire": {
+            "title": "Inventory Reports",
+            "generate_title": "Generate an inventory report",
+            "grouping_title": "Grouping",
+            "groups": {
+                "rayon": "By Shelf",
+                "forme": "By Form",
+                "groupe": "By Group"
+            },
+            "to_print_label": "{{type}} to print",
+            "all_entities": "All (Default)",
+            "loading_entities": "Loading...",
+            "stock_display_title": "Stock Display",
+            "stock_options": {
+                "machine": "Machine Stock (current values)",
+                "zero": "Zero Stock (for manual entry)"
+            },
+            "summary": {
+                "recap": "Summary:",
+                "title": "Inventory status",
+                "all": "All",
+                "with": "with"
+            },
+            "generating": "Generating...",
+            "download_btn": "Download PDF",
+            "help": {
+                "title": "How to use?",
+                "step1": "1. Choose the grouping type",
+                "step2": "2. Select a specific {{type}} or leave \"All\"",
+                "step3": "3. Choose the stock display",
+                "step4": "4. Click on \"Download PDF\""
+            },
+            "messages": {
+                "success": "PDF downloaded successfully",
+                "error": "Error while downloading PDF"
             }
         }
     },
@@ -1368,6 +1389,7 @@
             "suspend": "Suspend",
             "resume": "Resume",
             "close": "Close",
+            "view": "View",
             "labels": "Labels",
             "delete": "Delete",
             "print_receipt": "Print Receipt",
@@ -1494,6 +1516,14 @@
             "meilleurs_clients": {
                 "name": "Best Customers",
                 "description": "Customer ranking by revenue and sales count"
+            },
+            "recap_paiements_fournisseurs": {
+                "name": "Supplier Payments Summary",
+                "description": "Sum of payments by date and supplier"
+            },
+            "produits_annules": {
+                "name": "Cancelled Products",
+                "description": "List of products from cancelled invoices with quantities and lots"
             }
         },
         "params": {
@@ -1510,7 +1540,10 @@
             "months": "Months without sales",
             "threshold": "Cancellation threshold",
             "days": "Over last (days)",
-            "client_id": "Client"
+            "client_id": "Client",
+            "seuil": "Threshold (%)",
+            "nb_jours": "Number of days",
+            "exclude_zero": "Exclude zero stock"
         },
         "results": {
             "title": "Results",
@@ -1523,12 +1556,19 @@
             "error_execution": "Error executing query",
             "export_no_result": "No results to export",
             "export_unsupported": "Unsupported format for export",
-            "export_success": "Export downloaded: {{filename}}"
+            "export_success": "Export downloaded: {{filename}}",
+            "sources": {
+                "CAISSE_CENTRALE": "Central Cashier",
+                "VENTES": "Sales",
+                "VENTES_MODIF": "Sales (Modification)"
+            }
         }
     },
     "dashboard": {
         "title": "Dashboard",
         "subtitle": "Overview of pharmacy activity",
+        "refresh_success": "Data updated",
+        "refresh_tooltip": "Refresh data",
         "stats": {
             "revenue": "Revenue",
             "revenue_details": "Incl. {{amount}} F discounts",
@@ -1539,11 +1579,11 @@
             "stock_value_details": "valuation",
             "stock_alerts": "Stock Alerts",
             "stock_alerts_sub": "out of stock or low",
-            "sales_user_title": "MY SALES (TODAY)",
-            "sales_user_details": "Personal cashings",
+            "my_sales": "MY SALES (TODAY)",
+            "personal_cash": "Personal cashings",
             "sales_count": "{{count}} sales",
-            "avg_basket_user_title": "MY AVG BASKET",
-            "avg_basket_user_change": "Average per client",
+            "my_avg_basket": "MY AVG BASKET",
+            "avg_per_client": "Average per client",
             "vs_yesterday": "vs yesterday",
             "invoices_count": "{{count}} invoices",
             "products_count": "{{count}} products"
@@ -1557,12 +1597,16 @@
         },
         "charts": {
             "revenue_evolution": "Revenue Evolution (Last 7 Days)",
+            "last_7_days": "Last 7 days",
             "sales_trend": "Sales Trend (Last 7 Days)",
-            "hourly_traffic_title": "Average Hourly Traffic (30 days)",
+            "hourly_traffic": "Average Hourly Traffic (30 days)",
+            "hourly_traffic_title": "Traffic per Hour",
+            "hourly_traffic_desc": "Hourly traffic",
             "sales_label": "Sales"
         },
         "debts": {
             "supplier_debts_title": "Supplier Debts",
+            "supplier_debts_desc": "Debts towards suppliers",
             "total_debt": "Total",
             "supplier": "Supplier",
             "debt": "Debt",
@@ -1587,10 +1631,16 @@
             "no_stock_alerts": "No stock alerts",
             "view_all_stock": "View all stock",
             "expiry_title": "High Expiry Risk",
+            "expiry_subtitle": "Products expiring soon",
             "expiry_period": "Alert Period",
             "no_expiry_alerts": "No items expiring soon",
             "manage_expiry": "Manage Expired",
+            "units": "UNITS",
+            "remaining_days": "DAYS LEFT",
+            "order": "Order",
+            "view_all": "View all",
             "rupture": "Out of Stock",
+            "stock_subtitle": "Stock Out alerts",
             "rupture_imminent": "Imminent OOS",
             "rupture_in": "OOS in {{days}}d",
             "remaining_stock": "Remains: {{count}}",
@@ -1613,7 +1663,7 @@
             "confirm": "Confirm"
         },
         "filters": {
-            "search_placeholder": "Search...",
+            "search_placeholder": "Search by name or phone...",
             "no_results": "No clients found",
             "select_prompt_title": "Select a client",
             "select_prompt_subtitle": "or create a new one"
@@ -1632,7 +1682,8 @@
             "email_placeholder": "Ex: john.doe@email.com",
             "address": "Full Address",
             "address_placeholder": "Ex: 123 Peace Street",
-            "internal_id": "Internal ID"
+            "internal_id": "Internal ID",
+            "type": "Customer Type"
         },
         "fidelity": {
             "program_title": "Loyalty Program",
@@ -1663,6 +1714,8 @@
         },
         "sections": {
             "contact": "Contact Info",
+            "general_info": "General Information",
+            "finance": "Financial Information",
             "programs": "Programs"
         },
         "modals": {
@@ -1674,6 +1727,8 @@
             "create_success": "Client created successfully",
             "update_success": "Client updated successfully",
             "delete_success": "Client deleted successfully",
+            "error_fetch": "Error fetching customers",
+            "error_save": "Error during save",
             "error_create": "Error creating client",
             "error_update": "Error updating client",
             "error_delete": "Error deleting client",
@@ -1698,6 +1753,50 @@
             "low_stock": "Low Stock",
             "out_of_stock": "Out of Stock"
         },
+        "form": {
+            "name": "Product Name *",
+            "initial_stock": "Initial Stock *",
+            "rayon": "Shelf",
+            "select_rayon": "Select a shelf",
+            "cip1": "CIP1",
+            "cip2": "CIP2",
+            "cip3": "CIP3",
+            "provider": "Supplier",
+            "alert": "Alert",
+            "min": "Min",
+            "max": "Max",
+            "forme": "Form",
+            "groupe": "Group",
+            "cost_price": "Cost Price *",
+            "selling_price": "Selling Price *",
+            "tva": "VAT (%)",
+            "margin_coeff": "Coeff.",
+            "margin_percent": "Margin %",
+            "expiration_date": "Expiration Date",
+            "lot_management": "FIFO Lot Management",
+            "lot_management_desc": "Recommended for medications and perishable products",
+            "requires_prescription": "Prescription Required",
+            "prescription_desc": "Requires a valid prescription",
+            "supplier_exclusive": "Supplier Exclusivity",
+            "exclusive_desc": "Only orderable from {{provider}}",
+            "reserve_title": "Reserve and Replenishment",
+            "reserve_desc": "Manage buffer stock and shelf thresholds",
+            "rayon_capacity": "Shelf Capacity",
+            "rayon_reorder_threshold": "Shelf Reorder Threshold (Min)",
+            "capacity_desc": "Max quantity on display",
+            "reorder_desc": "Warn if shelf stock ≤ threshold",
+            "placeholder_capacity": "Ex: 50",
+            "placeholder_reorder": "Ex: 10",
+            "chronic_pathology": "Chronic Pathology Product",
+            "chronic_desc": "Enables automatic purchase reminders for patients",
+            "treatment_duration": "Treatment duration (days)",
+            "provider_placeholder_short": "the supplier",
+            "validation": {
+                "required_fields": "Name, Stock, Cost Price and Selling Price fields are required",
+                "unknown_error": "Unknown error while adding product"
+            },
+            "price_margin": "Price and Margin (HT)"
+        },
         "actions": {
             "create": "Create Product",
             "refresh": "Refresh",
@@ -1712,20 +1811,52 @@
             "bulk_provider": "Supplier",
             "deselect": "Deselect",
             "selected": "selected",
-            "confirm": "Confirm"
+            "confirm": "Confirm",
+            "refill_rayon": "Refill shelf from reserve",
+            "reactivate": "Reactivate product",
+            "deactivate": "Hide product"
         },
         "filters": {
             "search_placeholder": "Name or CIP...",
             "rayon_placeholder": "Shelf",
-            "provider_placeholder": "Supplier"
+            "provider_placeholder": "Supplier",
+            "reset": "Clear active filters",
+            "rayon_active": "Active Rayon",
+            "provider_active": "Active Supplier",
+            "exclusive_only": "Exclusives",
+            "inactive_only": "Inactives"
         },
         "table": {
             "cip": "CIP",
             "product": "Product",
             "stock": "Stock",
-            "empty": "No products found"
+            "empty": "No products",
+            "select_all": "Select all",
+            "exclusivity": "Exclusivity"
+        },
+        "adjustment": {
+            "title": "Adjust Stock",
+            "current_stock": "Current stock:",
+            "new_quantity": "New quantity *",
+            "difference": "Difference:",
+            "reason_type": "Reason type *",
+            "reasons": {
+                "INVENTAIRE": "Inventory adjustment",
+                "CASSE": "Broken",
+                "VOL": "Theft",
+                "CONFUSION": "Confusion",
+                "ERR_ENTREE": "Stock entry error",
+                "AVARIE": "Damaged",
+                "USAGE_INT": "Internal use"
+            }
         },
         "detail": {
+            "title": "Product Details",
+            "none_selected": "No product selected",
+            "select_hint": "Select a product from the list to see its details",
+            "rayon_label": "Shelf",
+            "total_stock": "Total Stock",
+            "reserve_label": "Reserve",
             "cip": "CIP",
             "tabs": {
                 "general": "General",
@@ -1734,7 +1865,7 @@
                 "lots": "Lots",
                 "adjustments": "Adjust.",
                 "stats": "Stats",
-                "movements": "Mvmts"
+                "movements": "📜 MVMTS"
             },
             "general": {
                 "description": "Description",
@@ -1779,61 +1910,37 @@
                 "status": "Status",
                 "empty": "No lots available",
                 "exhausted": "Exhausted",
-                "available": "Avail."
-            },
-            "adjustments": {
-                "date": "Date",
-                "user": "User",
-                "before": "Before",
-                "after": "After",
-                "delta": "Δ",
-                "reason": "Reason",
-                "empty": "No adjustments recorded"
+                "available": "Avail.",
+                "date_reception": "Reception Date",
+                "lot_number": "Lot Number",
+                "provider": "Supplier",
+                "initial_qty": "Initial Qty",
+                "remaining_qty": "Remaining Qty"
             },
             "stats": {
                 "month": "Month",
                 "qty_sold": "Sold Qty",
                 "qty_ordered": "Order Qty",
-                "nb_clients": "Client #"
+                "nb_clients": "Client #",
+                "empty": "No statistics recorded",
+                "legend_sold": "V = Sold",
+                "legend_ordered": "O = Ordered",
+                "legend_count": "Nb = Count",
+                "avg_rotation": "Avg. Rotation"
             },
             "movements": {
                 "date": "Date",
                 "type": "Type",
-                "qty": "Qty",
-                "stock_after": "Stock",
-                "details": "Details",
-                "user": "User",
+                "label": "Label",
                 "operator": "Operator",
-                "empty": "No movements recorded"
+                "before": "Before",
+                "qty": "Qty",
+                "after": "After",
+                "empty": "No movements recorded",
+                "view_invoice": "Click to view invoice",
+                "view_order": "Click to view order",
+                "stock_after": "Stock after"
             }
-        },
-        "messages": {
-            "loading": "Loading products...",
-            "delete_confirm_title": "Delete Product",
-            "delete_confirm_body": "Are you sure you want to delete product \"{{name}}\"?\n\nThis action is irreversible.",
-            "delete_success": "Product deleted successfully",
-            "update_success": "Product updated",
-            "bulk_delete_title": "Bulk Delete",
-            "bulk_delete_body": "Delete {{count}} selected product(s)?",
-            "bulk_update_success": "{{count}} product(s) updated",
-            "labels_prompt": "Number of labels for {{name}}?",
-            "recalculate_title": "Recalculate Rotations",
-            "recalculate_body": "Recalculate average rotation for ALL products?\n\nThis may take a few seconds.",
-            "recalculate_success": "Rotation recalculation completed",
-            "stock_update_warning": "Stock cannot be modified here.",
-            "bulk_rayon_change_title": "Change Shelf",
-            "bulk_rayon_change_body": "Assign {{count}} product(s) to shelf \"{{name}}\"?",
-            "bulk_provider_change_title": "Change Supplier",
-            "bulk_provider_change_body": "Assign {{count}} product(s) to supplier \"{{name}}\"?",
-            "password_confirm_delete_title": "Confirm Deletion",
-            "password_confirm_delete_body": "This action is sensitive. Please enter your password to confirm the permanent deletion of this product.",
-            "password_confirm_adjust_title": "Confirm Stock Adjustment",
-            "password_confirm_adjust_body": "You are about to modify the stock of \"{{name}}\": {{oldStock}} → {{newStock}}",
-            "invalid_quantity": "Invalid Quantity",
-            "generation_error": "Error generating labels",
-            "access_denied_delete": "Access Denied: You do not have permission to delete products.",
-            "access_denied_adjust": "Access Denied",
-            "input_quantity_error": "Please enter the new quantity"
         }
     },
     "promis": {
@@ -1920,6 +2027,7 @@
             "confirm_refund": "Confirm Refund",
             "cancel": "Cancel",
             "close": "Close",
+            "view": "View",
             "hide_report": "Hide Report",
             "delete_drafts": "Clear Drafts"
         },
@@ -1929,8 +2037,27 @@
             "validated": "Validated",
             "cancelled": "Cancelled",
             "start_date": "Start",
-            "end_date": "End"
+            "end_date": "End",
+            "all_sellers": "All sellers",
+            "status_all": "All statuses"
         },
+        "tranche_horaire": {
+            "title": "Hourly Slot Verification",
+            "subtitle": "Compare sales amounts for a specific period",
+            "start_time": "Start time",
+            "end_time": "End time",
+            "verify_btn": "Verify",
+            "error_loading": "Error fetching data"
+        },
+        "status": {
+            "paid": "Paid",
+            "validated": "Validated",
+            "draft": "Draft",
+            "cancelled": "Cancelled",
+            "validated_by": "Validated by",
+            "cancelled_by": "Cancelled by"
+        },
+        "delete_drafts": "Clear drafts",
         "table": {
             "invoice_number": "Invoice #",
             "client": "Client",
@@ -2170,21 +2297,42 @@
     },
     "salesHistory": {
         "title": "Daily Sales History",
+        "subtitle": "View and export your daily sales statistics",
+        "export_excel": "Export Excel",
+        "loading": "Loading history...",
         "start_date": "Start Date",
         "end_date": "End Date",
         "no_data": "No sales found for this period",
         "total": "TOTAL",
+        "total_period": "TOTAL PERIOD",
         "columns": {
             "date": "Date",
-            "ca_ttc": "Revenue (incl. tax)",
+            "ca_ttc": "Total Revenue",
             "ca_ht": "Revenue (excl. tax)",
-            "tva": "TVA",
+            "tva": "VAT",
             "cash": "Cash",
-            "card": "Card",
-            "check": "Check",
-            "mobile_money": "Mobile Money",
+            "card": "Cards",
+            "check": "Checks",
+            "virement": "Transf.",
+            "mobiles": "Mobile",
+            "coupons": "Coupons",
+            "en_compte": "On Account",
+            "nb_ventes": "Sales",
             "nb_invoices": "Invoice Count",
-            "avg_basket": "Avg. Basket"
+            "panier_moyen": "Avg. Basket"
+        },
+        "pagination": {
+            "showing": "Showing",
+            "days_of": "days of",
+            "total": "total",
+            "prev": "Previous",
+            "next": "Next",
+            "page": "Page"
+        },
+        "messages": {
+            "error_loading": "Error loading history",
+            "export_success": "Excel export successful",
+            "export_error": "Error during Excel export"
         }
     },
     "stockAnalysis": {
@@ -2616,6 +2764,12 @@
     "avoirs": {
         "title": "Supplier Credits (Returns)",
         "subtitle": "Manage supplier returns and credits",
+        "types": {
+            "perime": "Expired",
+            "casse": "Broken",
+            "erreur_livraison": "Delivery Error",
+            "autre": "Other"
+        },
         "create_btn": "+ New Credit",
         "search_placeholder": "🔍 Search credits...",
         "table": {
@@ -2638,5 +2792,199 @@
         "submit": "Log In",
         "loading": "Authenticating...",
         "subtitle": "Secure Ecosystem"
+    },
+    "abc_analysis": {
+        "title": "ABC Analysis",
+        "subtitle": "Product classification by contribution to turnover (Pareto 80/20)",
+        "loading": "Loading analysis...",
+        "error_loading": "Error loading data",
+        "filters": {
+            "months_3": "3 months",
+            "months_6": "6 months",
+            "months_12": "12 months",
+            "all_rayons": "All rayons",
+            "all_suppliers": "All suppliers",
+            "copy": "Copy"
+        },
+        "alerts": {
+            "shortage": "{{count}} product(s) A out of stock!",
+            "shortage_plural": "{{count}} products A out of stock!"
+        },
+        "stats": {
+            "total_ca": "Total Turnover",
+            "period_info": "Over {{count}} months",
+            "category_a": "Category A",
+            "category_b": "Category B",
+            "category_c": "Category C"
+        },
+        "tabs": {
+            "vital": "A - Vital",
+            "important": "B - Important",
+            "secondary": "C - Secondary"
+        },
+        "table": {
+            "product": "Product",
+            "cip": "CIP",
+            "rayon": "Rayon",
+            "stock": "Stock",
+            "qty_sold": "Qty Sold",
+            "sale_price": "Sale Price",
+            "ca": "CA",
+            "ca_percent": "% CA",
+            "cumulated_percent": "% Cumulated",
+            "no_products": "No products in this category",
+            "shortage_badge": "Stockout"
+        },
+        "footer": {
+            "analyzed_since": "Data analyzed since {{date}}",
+            "total_products": "{{count}} products total"
+        },
+        "messages": {
+            "copy_success": "{{count}} lines copied! Paste into Excel.",
+            "copy_error": "Error copying data"
+        }
+    },
+    "ordonnancier": {
+        "title": "📋 Prescriptions",
+        "export_pdf": "Export PDF",
+        "stats": {
+            "total_entries": "Total Entries",
+            "total_entries_desc": "Recorded prescriptions",
+            "delivered_meds": "Delivered Meds",
+            "delivered_meds_desc": "Total boxes",
+            "under_surveillance": "Under Surveillance",
+            "under_surveillance_desc": "Sensitive medications"
+        },
+        "filters": {
+            "date_start": "Start Date",
+            "date_end": "End Date",
+            "patient": "Patient",
+            "patient_placeholder": "Name...",
+            "prescriber": "Prescriber",
+            "prescriber_placeholder": "Doctor...",
+            "product": "Product",
+            "product_placeholder": "Medication...",
+            "surveillance": "Surveillance",
+            "surveillance_options": {
+                "none": "All",
+                "standard": "Standard",
+                "renforcee": "Reinforced"
+            }
+        },
+        "table": {
+            "order_num": "Order No.",
+            "date": "Date",
+            "patient": "Patient",
+            "prescriber": "Prescriber",
+            "meds": "Medications",
+            "action": "Action",
+            "empty": "No entries found",
+            "loading": "Loading...",
+            "recorded_by": "Recorded by",
+            "surveillance_badges": {
+                "renf": "REINF.",
+                "std": "STD."
+            }
+        }
+    },
+    "clinical": {
+        "alerts": {
+            "products_label": "Products:",
+            "to_watch": "To monitor",
+            "gravities": {
+                "PRECAUTION": "Precaution",
+                "A_PRENDRE_EN_COMPTE": "To consider",
+                "DECONSEILLE": "Not recommended",
+                "CONTRE_INDIQUE": "Contraindicated"
+            }
+        }
+    },
+    "promotions": {
+        "title": "Promotions",
+        "new_btn": "+ New Promotion",
+        "loading": "Loading...",
+        "error_loading": "Impossible to load promotions",
+        "fetch_error": "Error loading promotions",
+        "delete_confirm": "Are you sure you want to delete this promotion?",
+        "delete_error": "Impossible to delete promotion: {{message}}",
+        "list": {
+            "table": {
+                "name": "Name",
+                "type": "Type",
+                "detail": "Detail",
+                "period": "Period",
+                "status": "Status",
+                "actions": "Actions"
+            },
+            "types": {
+                "special_offer": "Special Offer",
+                "discount": "Discount"
+            },
+            "discount": {
+                "buy_get": "Buy {{buy}}, +{{get}} free"
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            },
+            "actions": {
+                "edit": "Edit",
+                "delete": "Delete"
+            },
+            "period": {
+                "indefinite": "(Indefinite)"
+            }
+        },
+        "form": {
+            "title_new": "New Promotion",
+            "title_edit": "Edit Promotion",
+            "subtitle": "Configure your discounts and product packs",
+            "general_info": "General Information",
+            "pack_name": "Pack/Promotion Name",
+            "pack_placeholder": "Ex: Beauty Pack, Christmas Promo...",
+            "start_date": "Start Date",
+            "end_date": "End Date",
+            "type_value": "Type & Value",
+            "promo_type": "Promo Type",
+            "types": {
+                "percentage": "% Percentage",
+                "fixed": "F Fixed Amount",
+                "buy_get": "Buy X Get Y",
+                "bundle": "📦 Pack / Bundle"
+            },
+            "labels": {
+                "pack_price": "Total Pack Price",
+                "discount_value": "Discount Value",
+                "buy": "Buy",
+                "get": "Free"
+            },
+            "products": {
+                "title": "Products Included in Promotion/Pack",
+                "count": "{{count}} product(s)",
+                "search_placeholder": "Search and add a product by name or CIP...",
+                "stock": "Stock:",
+                "loading_names": "Loading...",
+                "error_id": "Error ID #{{id}}",
+                "table": {
+                    "product": "Product Name",
+                    "stock": "Stock",
+                    "qty": "Required Qty",
+                    "unit_price": "Unit Price",
+                    "discount_effect": "Discount Effect",
+                    "empty": "No product selected. Use the search bar above.",
+                    "offered": "+{{count}} Free"
+                }
+            },
+            "status": {
+                "loading": "In progress...",
+                "ready": "Ready",
+                "total_fixed": "Fixed Total Price: {{value}} F"
+            },
+            "save_error": "Error during save",
+            "actions": {
+                "cancel": "Cancel",
+                "save": "Save Promotion"
+            }
+        }
     }
 }

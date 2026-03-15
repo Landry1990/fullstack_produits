@@ -64,10 +64,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
               {t('products.filters.reset') || "❌ Effacer les filtres actifs"}
             </button>
             <div className="flex gap-1 flex-wrap">
-              {filterRayon && <span className="badge badge-info badge-outline badge-xs px-2">Rayon actif</span>}
-              {filterFournisseur && <span className="badge badge-warning badge-outline badge-xs px-2">Fournisseur actif</span>}
-              {filterExclusive && <span className="badge badge-primary badge-outline badge-xs px-2">Exclusifs</span>}
-              {showInactive && <span className="badge badge-secondary badge-outline badge-xs px-2">Inactifs</span>}
+              {filterRayon && <span className="badge badge-info badge-outline badge-xs px-2">{t('products.filters.rayon_active')}</span>}
+              {filterFournisseur && <span className="badge badge-warning badge-outline badge-xs px-2">{t('products.filters.provider_active')}</span>}
+              {filterExclusive && <span className="badge badge-primary badge-outline badge-xs px-2">{t('products.filters.exclusive_only')}</span>}
+              {showInactive && <span className="badge badge-secondary badge-outline badge-xs px-2">{t('products.filters.inactive_only')}</span>}
             </div>
           </div>
         )}

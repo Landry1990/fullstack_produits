@@ -21,7 +21,7 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
         type: 'rayon' as const,
         title: t('stock.organisation.category_manager.name_label', { type: 'Rayon' }),
         icon: <FolderTree size={20} />,
-        apiPath: '/api/categories/',
+        apiPath: '/api/rayons/',
         hasHierarchy: true,
         hasDescription: false
       }

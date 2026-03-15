@@ -40,8 +40,8 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
         <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
           <span className="text-3xl">📦</span>
         </div>
-        <p className="font-bold text-slate-400">Aucun produit sélectionné</p>
-        <p className="text-sm text-slate-300 mt-1 max-w-[200px]">Sélectionnez un produit dans la liste pour voir ses détails</p>
+        <p className="font-bold text-slate-400">{t('products.detail.none_selected')}</p>
+        <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('products.detail.select_hint')}</p>
       </div>
     );
   }
@@ -60,9 +60,9 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :
                   'badge-success'
                 }`}>
-                  Rayon: {selectedProduit.stock ?? 0}
+                  {t('products.detail.rayon_label')}: {selectedProduit.stock ?? 0}
                   {selectedProduit.has_reserve_storage && (
-                    <> / Réserve: {selectedProduit.stock_reserve ?? 0}</>
+                    <> / {t('products.detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
                   )}
                 </span>
               </div>
@@ -83,7 +83,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                 <button 
                   className={`btn btn-sm btn-ghost text-primary hover:bg-primary/10 ${transferLoading ? 'loading' : ''}`}
                   onClick={() => props.onTransferToRayon(selectedProduit)}
-                  title="Réapprovisionner le rayon depuis la réserve"
+                  title={t('products.actions.refill_rayon')}
                 >
                   📦 ⬇️
                 </button>
@@ -112,7 +112,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
               <button 
                 className={`btn btn-sm btn-ghost ${selectedProduit.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
                 onClick={() => props.onToggleActive(selectedProduit)}
-                title={selectedProduit.is_active === false ? 'Réactiver le produit' : 'Masquer le produit'}
+                title={selectedProduit.is_active === false ? t('products.actions.reactivate') : t('products.actions.deactivate')}
               >
                 {selectedProduit.is_active === false ? '👁️' : '🙈'}
               </button>

@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value
+from django.db.models import Sum, Count, Avg, F, Q, DecimalField, Value, ExpressionWrapper
 from django.db.models.functions import TruncDay, TruncMonth, Coalesce
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -33,65 +33,66 @@ class DashboardViewSet(viewsets.ViewSet):
         if request.user.is_superuser or request.user.is_staff:
             role = 'PHARMACIEN'
             
-        # Global stats (1 Query to get today/yesterday CA and Counts)
-        global_stats = {'ca_today': 0, 'ca_yesterday': 0, 'sales_today': 0, 'sales_yesterday': 0}
+        # 1. Combined Global & User Metrics (Factures)
+        from django.db.models import Case, When, Value, DecimalField, Count, Sum
+        from django.db.models.functions import TruncDate
         
+        global_stats = {}
+        
+        # Aggregate everything related to Facture in one pass for [today, yesterday]
+        facture_metrics = Facture.objects.filter(
+            date__date__in=[today, yesterday],
+            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
+        ).aggregate(
+            ca_today=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            sales_today=Count(Case(When(date__date=today, then=Value(1)))),
+            discount_today=Coalesce(Sum(Case(When(date__date=today, then=F('remise')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            
+            ca_yesterday=Coalesce(Sum(Case(When(date__date=yesterday, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            sales_yesterday=Count(Case(When(date__date=yesterday, then=Value(1)))),
+            
+            user_ca_today=Coalesce(Sum(Case(When(Q(date__date=today) & Q(created_by=request.user), then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            user_sales_today=Count(Case(When(Q(date__date=today) & Q(created_by=request.user), then=Value(1))))
+        )
+        
+        global_stats['ca_today'] = facture_metrics['ca_today']
+        global_stats['sales_today'] = facture_metrics['sales_today']
+        global_stats['ca_yesterday'] = facture_metrics['ca_yesterday']
+        global_stats['sales_yesterday'] = facture_metrics['sales_yesterday']
+        discount_total = facture_metrics['discount_today']
+        
+        user_ca_today = facture_metrics['user_ca_today']
+        user_sales_count = facture_metrics['user_sales_today']
+
+        revenue_change = 0
+        if global_stats['ca_yesterday'] > 0:
+            revenue_change = round(((global_stats['ca_today'] - global_stats['ca_yesterday']) / global_stats['ca_yesterday']) * 100, 1)
+
+        sales_change = 0
+        if global_stats['sales_yesterday'] > 0:
+            sales_change = round(((global_stats['sales_today'] - global_stats['sales_yesterday']) / global_stats['sales_yesterday']) * 100, 1)
+
         if role not in ['VENDEUR', 'CAISSIER']:
-            # Combine queries into one grouped by date
-            from django.db.models import Sum, Count
-            from django.db.models.functions import TruncDate
-            
-            factures_stats = Facture.objects.filter(
-                date__date__in=[today, yesterday],
-                status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-            ).annotate(
-                day=TruncDate('date')
-            ).values('day').annotate(
-                total_ca=Sum('total_ttc'),
-                total_sales=Count('id'),
-                total_discount=Sum('remise')
+            # 2. Combined Product Metrics (Stock Value & Critical Stock)
+            # Critical stock criteria: stock <= stock_min OR stock <= 0 OR stock < 15 days of rotation
+            # rotation_moyenne is monthly, so daily is /30. 15 days = (rotation/30)*15 = rotation/2
+            product_stats = Produit.objects.aggregate(
+                stock_value=Coalesce(Sum(ExpressionWrapper(F('stock') * F('pmp'), output_field=DecimalField())), Decimal('0')),
+                stock_count=Count(Case(When(stock__gt=0, then=Value(1)))),
+                stock_critique=Count(Case(When(
+                    Q(is_active=True) & (
+                        Q(stock__lte=F('stock_minimum')) | 
+                        Q(stock__lte=0) |
+                        (Q(rotation_moyenne__gt=0) & Q(stock__lt=F('rotation_moyenne') / 2.0))
+                    ),
+                    then=Value(1)
+                )))
             )
-            
-            discount_total = Decimal('0.00')
-            
-            for stat in factures_stats:
-                day = stat['day']
-                # Sometimes TruncDate returns datetime or date depending on DB and timezone settings
-                if hasattr(day, 'date'):
-                    day = day.date()
-                    
-                if day == today:
-                    global_stats['ca_today'] = stat['total_ca'] or Decimal('0.00')
-                    global_stats['sales_today'] = stat['total_sales'] or 0
-                    discount_total = stat['total_discount'] or Decimal('0.00')
-                elif day == yesterday:
-                    global_stats['ca_yesterday'] = stat['total_ca'] or Decimal('0.00')
-                    global_stats['sales_yesterday'] = stat['total_sales'] or 0
+            stock_critique = product_stats['stock_critique']
+            stock_agg = {'total': product_stats['stock_value'], 'count': product_stats['stock_count']}
 
-            revenue_change = 0
-            if global_stats['ca_yesterday'] > 0:
-                revenue_change = round(((global_stats['ca_today'] - global_stats['ca_yesterday']) / global_stats['ca_yesterday']) * 100, 1)
-
-            sales_change = 0
-            if global_stats['sales_yesterday'] > 0:
-                sales_change = round(((global_stats['sales_today'] - global_stats['sales_yesterday']) / global_stats['sales_yesterday']) * 100, 1)
-
-            # 3. Low stock count
-            from django.db.models.functions import Cast
-            from django.db.models import FloatField
-            
-            stock_critique = Produit.objects.filter(
-                rotation_moyenne__gt=0
-            ).annotate(
-                days_remaining=Cast(F('stock'), FloatField()) / (Cast(F('rotation_moyenne'), FloatField()) / 30.0)
-            ).filter(
-                Q(days_remaining__lte=15) | Q(stock__lte=0) | Q(stock__lte=F('stock_minimum'))
-            ).count()
-
-            # 4. Receivables (Créances) — Calculé par facture pour cohérence avec le reste du système
+            # 3. Receivables (Créances) — Resté séparé car nécessite une sous-requête complexe sur Caisse
             from django.db.models import Subquery, OuterRef
-            
-            # Sous-requête pour le total payé par facture (hors mode en_compte)
             paid_sub = Caisse.objects.filter(
                 facture=OuterRef('pk'),
                 statut='completee'
@@ -113,25 +114,6 @@ class DashboardViewSet(viewsets.ViewSet):
                 total_debt=Coalesce(Sum('debt'), Decimal('0')),
                 count=Count('id')
             )
-
-            # 6. Stock value
-            stock_agg = Produit.objects.filter(stock__gt=0).aggregate(
-                total=Coalesce(Sum(F('stock') * F('pmp'), output_field=DecimalField()), Decimal('0')),
-                count=Count('id')
-            )
-
-        # 7. User specific stats (My Daily Stats)
-        user_daily_invoices = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE],
-            created_by=request.user
-        ).aggregate(
-            total=Coalesce(Sum('total_ttc'), Decimal('0')),
-            count=Count('id')
-        )
-        
-        user_ca_today = user_daily_invoices['total']
-        user_sales_count = user_daily_invoices['count']
         user_avg_basket = (user_ca_today / user_sales_count) if user_sales_count > 0 else Decimal('0')
 
         # Base response
@@ -177,50 +159,46 @@ class DashboardViewSet(viewsets.ViewSet):
         # Primary KPI is Turnover (CA) to align with Goals and Caisse
         # Secondary KPI is Margin for profitability tracking
         
-        # --- DAILY ---
-        ca_jour = Facture.objects.filter(
-            date__date=today,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
-
-        from ..models import FactureProduitAllocation
-        margin_jour = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__date__date=today,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
+        # 2. Performance Metrics (Grouped queries)
+        from django.db.models import Case, When, Value, DecimalField
         
-        obj_jour_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.JOUR)
-        obj_jour = obj_jour_model.ca_objectif if obj_jour_model else Decimal('0')
-        taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
-        
-        # --- WEEKLY ---
-        ca_sem = Facture.objects.filter(
-            date__date__gte=start_of_week,
-            status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
-
-        margin_sem = FactureProduitAllocation.objects.filter(
-            facture_produit__facture__date__date__gte=start_of_week,
-            facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
-        
-        obj_sem_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.SEMAINE)
-        obj_sem = obj_sem_model.ca_objectif if obj_sem_model else Decimal('0')
-        taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
-        
-        # --- MONTHLY ---
-        ca_mois = Facture.objects.filter(
+        # --- Chiffre d'Affaires (Grouped) ---
+        ca_stats = Facture.objects.filter(
             date__date__gte=start_of_month,
             status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total=Coalesce(Sum('total_ttc'), Decimal('0')))['total']
+        ).aggregate(
+            ca_jour=Coalesce(Sum(Case(When(date__date=today, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ca_sem=Coalesce(Sum(Case(When(date__date__gte=start_of_week, then=F('total_ttc')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            ca_mois=Coalesce(Sum(F('total_ttc')), Decimal('0'))
+        )
+        ca_jour = ca_stats['ca_jour']
+        ca_sem = ca_stats['ca_sem']
+        ca_mois = ca_stats['ca_mois']
 
-        margin_mois = FactureProduitAllocation.objects.filter(
+        # --- Marge (Grouped) ---
+        from ..models import FactureProduitAllocation
+        margin_stats = FactureProduitAllocation.objects.filter(
             facture_produit__facture__date__date__gte=start_of_month,
             facture_produit__facture__status__in=[Facture.Status.VALIDEE, Facture.Status.PAYEE]
-        ).aggregate(total_marge=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity'), output_field=DecimalField()), Decimal('0')))['total_marge']
+        ).aggregate(
+            margin_jour=Coalesce(Sum(Case(When(facture_produit__facture__date__date=today, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            margin_sem=Coalesce(Sum(Case(When(facture_produit__facture__date__date__gte=start_of_week, then=(F('selling_price') - F('cost_price')) * F('quantity')), default=Value(0, output_field=DecimalField()))), Decimal('0')),
+            margin_mois=Coalesce(Sum((F('selling_price') - F('cost_price')) * F('quantity')), Decimal('0'))
+        )
+        margin_jour = margin_stats['margin_jour']
+        margin_sem = margin_stats['margin_sem']
+        margin_mois = margin_stats['margin_mois']
         
-        obj_mois_model = ObjectifCommercial.get_objectif_actuel(ObjectifCommercial.Periode.MOIS)
-        obj_mois = obj_mois_model.ca_objectif if obj_mois_model else Decimal('0')
+        # --- Objectifs (Full fetch) ---
+        objectifs_data = ObjectifCommercial.get_objectifs_courants()
+        
+        obj_jour = objectifs_data['jour'].ca_objectif if objectifs_data['jour'] else Decimal('0')
+        taux_jour = float((ca_jour / obj_jour) * 100) if obj_jour > 0 else 0
+        
+        obj_sem = objectifs_data['semaine'].ca_objectif if objectifs_data['semaine'] else Decimal('0')
+        taux_sem = float((ca_sem / obj_sem) * 100) if obj_sem > 0 else 0
+        
+        obj_mois = objectifs_data['mois'].ca_objectif if objectifs_data['mois'] else Decimal('0')
         taux_mois = float((ca_mois / obj_mois) * 100) if obj_mois > 0 else 0
         
         # 5. Smart Alerts

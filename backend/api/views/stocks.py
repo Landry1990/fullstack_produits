@@ -360,104 +360,102 @@ class StockLotViewSet(OptimizedSerializerMixin, viewsets.ModelViewSet):
         """
         Rapport des Unités Gratuites (UG) groupées par fournisseur, avec détails par lot.
         """
-        date_debut = request.query_params.get('date_debut')
-        date_fin = request.query_params.get('date_fin')
+        try:
+            date_debut = request.query_params.get('date_debut')
+            date_fin = request.query_params.get('date_fin')
 
-        qs = StockLot.objects.filter(quantity_free__gt=0).select_related('fournisseur', 'produit', 'commande_produit__commande')
+            qs = StockLot.objects.filter(quantity_free__gt=0).select_related('fournisseur', 'produit', 'commande_produit__commande')
 
-        if date_debut:
-            qs = qs.filter(date_reception__gte=date_debut)
-        if date_fin:
-            try:
-                date_fin_obj = datetime.strptime(date_fin, '%Y-%m-%d')
-                date_fin_inclusive = date_fin_obj + timedelta(days=1) - timedelta(seconds=1)
-                qs = qs.filter(date_reception__lte=date_fin_inclusive)
-            except ValueError:
-                 pass
+            if date_debut:
+                qs = qs.filter(date_reception__gte=date_debut)
+            if date_fin:
+                try:
+                    date_fin_obj = datetime.strptime(date_fin, '%Y-%m-%d')
+                    date_fin_inclusive = date_fin_obj + timedelta(days=1) - timedelta(seconds=1)
+                    qs = qs.filter(date_reception__lte=date_fin_inclusive)
+                except ValueError:
+                     pass
 
-        # Since we want details, pulling all matching lots into memory is fine if the volume of UG is reasonable.
-        # Alternatively, we can group in Python.
-        lots = list(qs)
-        
-        fournisseurs_map = {}
-        global_total_ug = 0
-        global_total_ug_restantes = 0
-        global_total_valeur = Decimal('0')
-        global_total_valeur_restante = Decimal('0')
-
-        for lot in lots:
-            # Prioritize the wholesaler from the Command over the manufacturer from the Lot
-            f_id = lot.fournisseur_id or 0
-            f_name = lot.fournisseur.name if lot.fournisseur else "Fournisseur Inconnu"
+            lots = list(qs)
             
-            if lot.commande_produit and lot.commande_produit.commande and lot.commande_produit.commande.fournisseur:
-                f_id = lot.commande_produit.commande.fournisseur.id
-                f_name = lot.commande_produit.commande.fournisseur.name
+            fournisseurs_map = {}
+            global_total_ug = 0
+            global_total_ug_restantes = 0
+            global_total_valeur = Decimal('0')
+            global_total_valeur_restante = Decimal('0')
+
+            for lot in lots:
+                # Priorité au grossiste de la Commande sur le labo du Lot
+                f_id = lot.fournisseur_id or 0
+                f_name = lot.fournisseur.name if lot.fournisseur else "Fournisseur Inconnu"
                 
-            if f_id not in fournisseurs_map:
-                fournisseurs_map[f_id] = {
-                    'fournisseur_id': f_id,
-                    'fournisseur_nom': f_name,
-                    'total_ug': 0,
-                    'total_ug_restantes': 0,
-                    'total_valeur': Decimal('0'),
-                    'total_valeur_restante': Decimal('0'),
-                    'lots_count': 0,
-                    'details': []
-                }
-            
-            valeur_estimee = Decimal(lot.quantity_free) * lot.selling_price
-            valeur_restante = Decimal(lot.quantity_free_remaining) * lot.selling_price
-            
-            fournisseurs_map[f_id]['total_ug'] += lot.quantity_free
-            fournisseurs_map[f_id]['total_ug_restantes'] += lot.quantity_free_remaining
-            fournisseurs_map[f_id]['total_valeur'] += valeur_estimee
-            fournisseurs_map[f_id]['total_valeur_restante'] += valeur_restante
-            fournisseurs_map[f_id]['lots_count'] += 1
-            
-            global_total_ug += lot.quantity_free
-            global_total_ug_restantes += lot.quantity_free_remaining
-            global_total_valeur += valeur_estimee
-            global_total_valeur_restante += valeur_restante
+                if lot.commande_produit and lot.commande_produit.commande and lot.commande_produit.commande.fournisseur:
+                    f_id = lot.commande_produit.commande.fournisseur.id
+                    f_name = lot.commande_produit.commande.fournisseur.name
+                    
+                if f_id not in fournisseurs_map:
+                    fournisseurs_map[f_id] = {
+                        'fournisseur_id': f_id,
+                        'fournisseur_nom': f_name,
+                        'total_ug': 0,
+                        'total_ug_restantes': 0,
+                        'total_valeur': Decimal('0'),
+                        'total_valeur_restante': Decimal('0'),
+                        'lots_count': 0,
+                        'details': []
+                    }
+                
+                valeur_estimee = Decimal(lot.quantity_free) * lot.selling_price
+                valeur_restante = Decimal(lot.quantity_free_remaining) * lot.selling_price
+                
+                fournisseurs_map[f_id]['total_ug'] += lot.quantity_free
+                fournisseurs_map[f_id]['total_ug_restantes'] += lot.quantity_free_remaining
+                fournisseurs_map[f_id]['total_valeur'] += valeur_estimee
+                fournisseurs_map[f_id]['total_valeur_restante'] += valeur_restante
+                fournisseurs_map[f_id]['lots_count'] += 1
+                
+                global_total_ug += lot.quantity_free
+                global_total_ug_restantes += lot.quantity_free_remaining
+                global_total_valeur += valeur_estimee
+                global_total_valeur_restante += valeur_restante
 
-            # Build detailed info
-            cmd_numero = "N/A"
-            facture_numero = "N/A"
-            if lot.commande_produit and lot.commande_produit.commande:
-                cmd_numero = f"CMD-{lot.commande_produit.commande.id}"
-                if lot.commande_produit.commande.numero_facture:
-                    facture_numero = lot.commande_produit.commande.numero_facture
+                cmd_numero = "N/A"
+                facture_numero = "N/A"
+                if lot.commande_produit and lot.commande_produit.commande:
+                    cmd_numero = f"CMD-{lot.commande_produit.commande.id}"
+                    if lot.commande_produit.commande.numero_facture:
+                        facture_numero = lot.commande_produit.commande.numero_facture
 
-            fournisseurs_map[f_id]['details'].append({
-                'lot_id': lot.id,
-                'lot_numero': lot.lot,
-                'produit_nom': lot.produit.name if lot.produit else (lot.produit_nom or 'Inconnu'),
-                'date_reception': lot.date_reception.isoformat() if lot.date_reception else None,
-                'commande_numero': cmd_numero,
-                'facture_numero': facture_numero,
-                'quantity_free': lot.quantity_free,
-                'quantity_free_remaining': lot.quantity_free_remaining,
-                'valeur_estimee': float(valeur_estimee),
-                'valeur_restante': float(valeur_restante),
-                'prix_vente': float(lot.selling_price)
+                fournisseurs_map[f_id]['details'].append({
+                    'lot_id': lot.id,
+                    'lot_numero': lot.lot,
+                    'produit_nom': lot.produit.name if lot.produit else (lot.produit_nom or 'Inconnu'),
+                    'date_reception': lot.date_reception.isoformat() if lot.date_reception else None,
+                    'commande_numero': cmd_numero,
+                    'facture_numero': facture_numero,
+                    'quantity_free': lot.quantity_free,
+                    'quantity_free_remaining': lot.quantity_free_remaining,
+                    'valeur_estimee': float(valeur_estimee),
+                    'valeur_restante': float(valeur_restante),
+                    'prix_vente': float(lot.selling_price)
+                })
+
+            result = list(fournisseurs_map.values())
+            result.sort(key=lambda x: x['total_valeur'], reverse=True)
+            
+            for r in result:
+                r['total_valeur'] = float(r['total_valeur'])
+                r['total_valeur_restante'] = float(r['total_valeur_restante'])
+
+            return Response({
+                'global_total_ug': global_total_ug,
+                'global_total_ug_restantes': global_total_ug_restantes,
+                'global_total_valeur': float(global_total_valeur),
+                'global_total_valeur_restante': float(global_total_valeur_restante),
+                'fournisseurs': result
             })
-
-        # Convert back to list and sort by total_valeur desc
-        result = list(fournisseurs_map.values())
-        result.sort(key=lambda x: x['total_valeur'], reverse=True)
-        
-        # Convert Decimal to float for JSON serialization
-        for r in result:
-            r['total_valeur'] = float(r['total_valeur'])
-            r['total_valeur_restante'] = float(r['total_valeur_restante'])
-
-        return Response({
-            'global_total_ug': global_total_ug,
-            'global_total_ug_restantes': global_total_ug_restantes,
-            'global_total_valeur': float(global_total_valeur),
-            'global_total_valeur_restante': float(global_total_valeur_restante),
-            'fournisseurs': result
-        })
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -539,10 +537,7 @@ class InventaireViewSet(MultiTermSearchMixin, viewsets.ModelViewSet):
         return queryset
 
 
-    def get_permissions(self):
-        if self.action == 'imprimer_etat':
-            return [permissions.AllowAny()]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)

@@ -107,7 +107,214 @@
     "stats_total_desc": "à encaisser",
     "stats_coupons_title": "Coupons Actifs",
     "stats_coupons_desc": "coupon(s) disponible(s)",
+    "journal": {
+        "title": "Journal de Caisse",
+        "subtitle": "Historique des flux de caisse",
+        "operations_count": "{{count}} opérations",
+        "search_placeholder": "Rechercher...",
+        "all_modes": "Tous modes",
+        "all_cashiers": "Tous les caissiers",
+        "date_start": "Début",
+        "date_end": "Fin",
+        "today": "Aujourd'hui",
+        "today_short": "Auj.",
+        "refresh": "Actualiser",
+        "new_operation": "Opération",
+        "close_register": "Clôturer",
+        "select_cashier_to_close": "Veuillez sélectionner un caissier pour clôturer",
+        "filter": {
+            "all": "Tout",
+            "entries": "Entrées",
+            "exits": "Sorties"
+        },
+        "stats": {
+            "net_sales": "Ventes Nettes",
+            "ca_real": "CA de l'intervalle réel",
+            "recoveries": "Recouvrements",
+            "memo": "Mémo",
+            "debt_collection": "Encaissements de créances",
+            "cash_to_justify": "Espèces à Justifier",
+            "cash_formula": "Ventes Espèces + Entrées - Sorties",
+            "mobile_payments": "Paiements Mobiles",
+            "bank_digital": "Banque / Digital",
+            "non_cash_sales": "Ventes Hors Cash",
+            "flow_details": "Détails flux :",
+            "interval_activity": "Activité intervalle :",
+            "expenses": "Dépenses :",
+            "net_operational_balance": "Solde Opérationnel Net",
+            "excluding_recoveries": "Hors Recouvrements"
+        },
+        "table": {
+            "date_time": "DATE & HEURE",
+            "cashier": "CAISSIER",
+            "entered_by": "SAISIE PAR",
+            "client_label": "CLIENT / LIBELLÉ",
+            "piece_num": "N° PIÈCE",
+            "amount": "MONTANT",
+            "mode": "MODE",
+            "status": "STATUT",
+            "no_transaction": "Aucune transaction trouvée",
+            "loading": "Chargement du journal...",
+            "user": "Utilisateur",
+            "operation": "Opération",
+            "no_description": "Pas de description",
+            "validated": "Validé",
+            "paid": "PAYÉ",
+            "cancelled": "ANNULÉ",
+            "pending": "ATTENTE",
+            "grouped_releve": "Relevé Groupé"
+        },
+        "pagination": {
+            "showing": "Affichage de",
+            "lines": "ligne",
+            "lines_plural": "lignes",
+            "of": "sur",
+            "total": "au total"
+        },
+        "closing": {
+            "title": "Clôture de Caisse",
+            "security": "SÉCURISATION DES FONDS",
+            "real_amount": "Montant Réel (Physique)",
+            "cash_gap": "Écart de caisse (Espèces)",
+            "mode_details": "Détails par mode",
+            "confirm": "CONFIRMER LA CLÔTURE",
+            "ticket": "TICKET"
+        },
+        "movement_modal": {
+            "title_out": "Nouvelle Dépense (Sortie)",
+            "title_in": "Nouvelle Entrée Divers",
+            "subtitle": "Enregistrer un mouvement de caisse",
+            "type_out": "Sortie (Dépense)",
+            "type_in": "Entrée (Apport)",
+            "amount": "Montant",
+            "amount_placeholder": "Ex: 5000",
+            "reason": "Motif",
+            "reason_placeholder": "Ex: Facture Electricité, Carburant...",
+            "description": "Description / Détails (Optionnel)",
+            "description_placeholder": "Plus de détails...",
+            "invalid_amount": "Montant invalide",
+            "reason_required": "Le motif est requis",
+            "save_error": "Erreur lors de l'enregistrement",
+            "save": "Enregistrer"
+        },
+        "modes": {
+            "especes": "Espèces",
+            "cheque": "Chèque",
+            "carte": "Carte",
+            "virement": "Virement",
+            "om": "Orange Money",
+            "momo": "Mobile Money",
+            "recouvrement": "Recouvrement",
+            "recouvrement_caps": "RECOUVREMENT",
+            "coupon": "Coupon"
+        }
+    },
+    "closing_history": {
+        "title": "Historique des Clôtures",
+        "description": "Consultez et exportez l'historique complet des clôtures de caisse enregistrées.",
+        "filters": {
+            "date_start": "Date début",
+            "date_end": "Date fin",
+            "select_placeholder": "Sélectionner...",
+            "filter_btn": "Filtrer",
+            "reset_btn": "Réinitialiser",
+            "reset_title": "Réinitialiser les filtres"
+        },
+        "performance": {
+            "title": "Performance & Rigueur des Caissiers",
+            "hide": "Masquer",
+            "show": "Afficher",
+            "waiting_ranking": "Classement en attente",
+            "no_closures_desc": "Aucune clôture de caisse n'a été enregistrée pour cette période.",
+            "best_cashier": "Meilleur Caissier",
+            "rigor_score": "Score de Rigueur (Abs)",
+            "avg_trend": "Tendance Moyenne",
+            "total_closures": "Total Clôtures",
+            "ranking_title": "Classement de Rigueur",
+            "table": {
+                "rank": "Rang",
+                "operator": "Opérateur",
+                "closures": "Clôtures",
+                "avg_gap": "Moyenne Écart",
+                "trend": "Tendance"
+            },
+            "badges": {
+                "1st": "1er",
+                "2nd": "2ème",
+                "3rd": "3ème"
+            },
+            "months": {
+                "01": "Janvier",
+                "02": "Février",
+                "03": "Mars",
+                "04": "Avril",
+                "05": "Mai",
+                "06": "Juin",
+                "07": "Juillet",
+                "08": "Août",
+                "09": "Septembre",
+                "10": "Octobre",
+                "11": "Novembre",
+                "12": "Décembre"
+            }
+        },
+        "stats": {
+            "theoretical_total": "Total Théorique",
+            "real_total": "Total Réel",
+            "global_gap": "Écart Global"
+        },
+        "table": {
+            "header_date": "Date Clôture",
+            "header_cashier": "Caissier",
+            "header_done_by": "Effectué par",
+            "header_theoretical": "Théorique",
+            "header_real": "Réel",
+            "header_gap": "Écart",
+            "header_actions": "Actions",
+            "no_cloture": "Aucune clôture trouvée",
+            "no_cloture_desc": "Essayez de modifier vos filtres de recherche.",
+            "period_desc": "Du {{start}} au {{end}}",
+            "view_details": "Voir les détails",
+            "print": "Imprimer",
+            "period_total": "TOTAL PÉRIODE ({{count}} clôtures)"
+        },
+        "pagination": {
+            "showing": "Affichage {{start}} à {{end}} sur {{total}} résultats",
+            "per_page": "/ page",
+            "prev": "« Précédent",
+            "next": "Suivant »",
+            "page": "Page {{current}} / {{total}}"
+        },
+        "modal": {
+            "title": "Détails de la Clôture",
+            "cash_of": "Caisse de {{name}}",
+            "closed_by": " (Clôturée par {{name}})",
+            "date_label": "Date Clôture",
+            "period_label": "Période",
+            "period_from": "Du {{date}}",
+            "period_to": "Au {{date}}",
+            "theoretical_label": "Montant Théorique",
+            "real_label": "Montant Réel",
+            "gap_label": "Écart constaté",
+            "flows_summary": "Résumé des Flux",
+            "ventes": "Ventes",
+            "entries": "+ Entrées",
+            "exits": "- Sorties",
+            "mode_details": "Détails par mode (Ventes)",
+            "observations": "Observations",
+            "print": "Imprimer",
+            "close": "Fermer"
+        }
+    },
     "common": {
-        "print": "Imprimer"
+        "unknown": "Inconnu",
+        "creance": "CRÉANCE",
+        "pieces": "pièces",
+        "piece": "PIÈCE",
+        "cancel": "Annuler",
+        "pagination": {
+            "prev": "Précédent",
+            "next": "Suivant"
+        }
     }
-}
+}

@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 17, in main
+    from django.core.management import execute_from_command_line
+ModuleNotFoundError: No module named 'django'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 28, in <module>
+    main()
+    ~~~~^^
+  File "C:\Projet Fullstack\fullstack_produits\backend\manage.py", line 19, in main
+    raise ImportError(
+    ...<3 lines>...
+    ) from exc
+ImportError: Couldn't import Django. Are you sure it's installed and available on your PYTHONPATH environment variable? Did you forget to activate a virtual environment?
