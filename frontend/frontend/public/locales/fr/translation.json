@@ -18,6 +18,7 @@
         "error": "Erreur",
         "units": "stk",
         "refresh": "Actualiser",
+        "add": "Ajouter",
         "restore": "Restaurer",
         "status": {
             "draft": "Brouillon"
@@ -26,9 +27,16 @@
             "confirm": "Confirmer",
             "cancel": "Annuler"
         },
+        "actions_title": "Actions",
+        "validate": "Valider",
+        "validate_all": "Tout valider",
+        "delete_all": "Tout supprimer",
+        "single_selection": "Sélection",
         "pagination": {
             "prev": "Précédent",
-            "next": "Suivant"
+            "next": "Suivant",
+            "page_info_simple": "Page {{page}}",
+            "page_of": "sur {{count}}"
         },
         "auth_required": "Authentification requise",
         "download": "Télécharger",
@@ -38,6 +46,7 @@
             "created": "Créé avec succès",
             "updated": "Mis à jour",
             "deleted": "Supprimé",
+            "removed": "Retiré",
             "saved": "Enregistré",
             "error_generic": "Une erreur s'est produite",
             "error_loading": "Erreur lors du chargement",
@@ -53,7 +62,26 @@
             "copy_success": "Copié dans le presse-papier",
             "import_success": "Importation terminée avec succès",
             "import_error": "Erreur lors de l'importation"
-        }
+        },
+        "last_7_days": "7 derniers jours",
+        "last_30_days": "30 derniers jours",
+        "last_90_days": "90 derniers jours",
+        "last_4_weeks": "4 dernières semaines",
+        "last_12_weeks": "12 dernières semaines",
+        "last_6_months": "6 derniers mois",
+        "last_12_months": "12 derniers mois",
+        "last_24_months": "24 derniers mois",
+        "error_loading_data": "Erreur lors du chargement des données",
+        "error_occurred": "Une erreur est survenue",
+        "select_tables": "Veuillez sélectionner au moins une table",
+        "select_file": "Veuillez sélectionner un fichier",
+        "sub_table_one": "sous-table",
+        "sub_table_other": "sous-tables",
+        "table": "Table",
+        "rows": "Lignes",
+        "sub_tables": "Sous-tables",
+        "rows_deleted": "Lignes supprimées",
+        "concerned_tables": "Tables concernées"
     },
     "sidebar": {
         "dashboard": "Tableau de bord",
@@ -93,42 +121,117 @@
         "creances": "Créances",
         "stock": {
             "title": "Stock",
-            "inventaire": "Inventaire",
+            "inventaire": {
+                "title": "Inventaire"
+            },
             "journal": "Journal Ajustements",
-            "analyse": "Analyse Stock",
+            "analyse": {
+                "title": "Analyse Stock"
+            },
             "avoirs": "Réclamations",
             "promis": "Promis",
-            "transformations": "Transformations",
-            "perimes": "Périmés",
+            "transformations": {
+                "title": "Transformations"
+            },
+            "perimes": {
+                "title": "Périmés"
+            },
             "formes": "Formes",
             "groupes": "Groupes",
-            "rayons": "Rayons"
+            "rayons": "Rayons",
+            "organisation": {
+                "title": "Organisation"
+            },
+            "etats_inventaire": {
+                "title": "États Inventaires"
+            },
+            "rapport_ug": {
+                "title": "Rapport Unités Gratuites (UG)"
+            }
         },
-        "statistiques": {
-            "title": "Statistiques",
-            "rapports": "Centre de Rapports",
-            "abc": "Analyse ABC",
-            "produits": "Produits",
-            "fournisseurs": "Fournisseurs",
-            "mensuel": "Rapport Mensuel",
-            "finances": "Module Financier",
-            "classement_vendeurs": "Classement Vendeurs",
-            "analyse_temporelle": "Analyse Temporelle"
-        },
-        "parametres": {
-            "title": "Paramètres",
-            "facture": "Configuration Facture",
-            "pharmacie": "Informations Pharmacie",
-            "etiquettes": "Templates d'Étiquettes",
-            "imprimantes": "Configuration Imprimantes"
-        },
+
         "utilisateurs": "Utilisateurs",
-        "audit": "Journal d'Audit",
-        "logout": "Déconnexion",
-        "app_subtitle": "Gestion Professionnelle",
-        "roles": {
-            "pharmacist": "Pharmacien",
-            "user": "Utilisateur"
+            "user_sessions_sidebar": "Suivi des Présences",
+            "audit": "Journal d'Audit",
+            "statistiques": {
+                "title": "Statistiques",
+                "rapports": "Centre de Rapports",
+                "abc": "Analyse ABC",
+                "produits": "Produits",
+                "fournisseurs": "Fournisseurs",
+                "mensuel": "Rapport Mensuel",
+                "finances": "Module Financier",
+                "classement_vendeurs": "Classement Vendeurs",
+                "analyse_temporelle": "Analyse Temporelle",
+                "guide": "Guide Financier 📖"
+            },
+            "parametres": {
+                "title": "Paramètres",
+                "facture": "Configuration Facture",
+                "pharmacie": "Informations Pharmacie",
+                "etiquettes": "Templates d'Étiquettes",
+                "imprimantes": "Configuration Imprimantes"
+            },
+            "maintenance": "Maintenance",
+            "logout": "Déconnexion",
+            "app_subtitle": "Gestion Professionnelle",
+            "roles": {
+                "pharmacist": "Pharmacien",
+                "user": "Utilisateur"
+            }
+        },
+    "audit": {
+        "title": "Journal d'Audit",
+        "subtitle": "Suivez toutes les actions effectuées sur le système",
+        "actions": {
+            "all": "Tous les types d'actions",
+            "PRICE_CHG": "Changement de Prix",
+            "STOCK_ADJ": "Ajustement de Stock",
+            "SALE": "Vente",
+            "SALE_CANCEL": "Annulation de Vente",
+            "PROD_CREATE": "Product Creation",
+            "PROD_UPDATE": "Product Modification",
+            "INV_CREATE": "Invoicing",
+            "INV_DELETE": "Suppression de Facture",
+            "INV_CANCEL": "Annulation de Facture",
+            "INV_DEL": "Suppression de Facture",
+            "INV_VALID": "Validation de Facture",
+            "INV_VAL": "Validation de Facture (Sudo)",
+            "ORD_RECV": "Réception Commande",
+            "ORD_CNCL": "Annulation Commande",
+            "USER_LOGIN": "Connexion Utilisateur",
+            "SUDO_VAL": "Validation Sudo",
+            "CREATE": "Création",
+            "UPDATE": "Modification",
+            "DELETE": "Suppression",
+            "CLOTURE": "Clôture"
+        },
+        "stats": {
+            "total": "Total Logs",
+            "last_24h": "Dernières 24h",
+            "last_7d": "7 derniers jours",
+            "last_30d": "30 derniers jours"
+        },
+        "filters": {
+            "title": "Recherche & Filtres",
+            "action_label": "Action",
+            "user_label": "Utilisateur",
+            "all_users": "Tous les utilisateurs",
+            "date_from": "Période (Début)",
+            "date_to": "Période (Fin)",
+            "search_label": "Recherche texte",
+            "search_placeholder": "Facture, motif, produit...",
+            "hide_stats": "MASQUER STATS",
+            "show_stats": "AFFICHER STATS",
+            "export": "EXPORTER CSV",
+            "reset": "RÉINITIALISER"
+        },
+        "table": {
+            "date": "Date & Heure",
+            "user": "Utilisateur",
+            "action": "Action",
+            "description": "Description",
+            "details": "Détails"
         }
     },
     "manager_dashboard": {
@@ -260,20 +363,86 @@
             "avg_rate": "Taux moyen: {{rate}}%",
             "annual_ca": "CA Annuel",
             "sales_count": "{{count}} ventes"
+        },
+        "guide": {
+            "title": "Guide de l'Analyse Financière",
+            "subtitle": "Comprenez les indicateurs, les calculs et la méthodologie de vos outils financiers.",
+            "summary": "Sommaire",
+            "sections": {
+                "seller_ranking": {
+                    "title": "Classement Vendeurs",
+                    "desc": "Analyse de la performance individuelle de votre équipe commerciale.",
+                    "methodology": "Méthodologie",
+                    "methodology_desc": "Le classement est basé sur le chiffre d'affaires (TTC) réalisé par chaque vendeur sur la période sélectionnée.",
+                    "calculation": "Calculs clés",
+                    "basket_desc": "Panier Moyen = CA Total / Nombre de Ventes",
+                    "evolution_desc": "Évolution = Comparaison avec la période précédente (ex: mois actuel vs mois dernier)."
+                },
+                "supplier_purchases": {
+                    "title": "Achats Fournisseurs",
+                    "desc": "Calcul précis de ce que vous devez réellement à vos partenaires.",
+                    "methodology": "Solde Net",
+                    "methodology_desc": "Le montant affiché correspond aux achats réels après déduction des avoirs.",
+                    "calculation": "Formule :",
+                    "formula": "Total Net = (Somme des Factures d'Achat) - (Somme des Avoirs / Retours)"
+                },
+                "scoring_performance": {
+                    "title": "Scoring & Performance",
+                    "desc": "Système d'évaluation automatique de vos fournisseurs sur 100 points.",
+                    "criteria": "Critères d'évaluation :",
+                    "volume": "Volume (30%)",
+                    "volume_desc": "Basé sur le montant total des achats sur les 12 derniers mois.",
+                    "quality": "Qualité (30%)",
+                    "quality_desc": "Taux d'avoirs et de réclamations (moins vous avez de retours, meilleur est le score).",
+                    "regularity": "Régularité (40%)",
+                    "regularity_desc": "Fréquence et constance de vos commandes sur l'année."
+                },
+                "advanced_analysis": {
+                    "title": "Analyse Avancée",
+                    "desc": "Algorithmes de détection d'opportunités et d'optimisation.",
+                    "low_margin": "Faible Marge",
+                    "low_margin_desc": "Produits avec un fort volume de vente mais une marge < 15%.",
+                    "dormant_stock": "Stock Dormant",
+                    "dormant_stock_desc": "Produits à forte marge (> 40%) sans vente significative depuis 3 mois.",
+                    "price_optimization": "Optimisation Prix",
+                    "price_optimization_desc": "Suggère un ajustement de +5% sur les produits dont la marge est critique (< 10%).",
+                    "empty_table_title": "Pourquoi mes tableaux sont-ils vides ?",
+                    "empty_table_desc": "Si vous ne voyez aucune donnée dans les trois tableaux (Faible Marge, Stock Dormant ou Optimisation Prix), c'est généralement le signe d'une excellente santé financière ou de seuils de détection très stricts :",
+                    "reason_1": "01. Tableau \"Faible Marge\" : Vide car tous vos produits vendus ont des marges supérieures à 15% (pas de \"faible marge\" détectée).",
+                    "reason_2": "02. Tableau \"Optimisation Prix\" : Vide car vous n'avez aucun produit critique ayant une marge inférieure à 10%.",
+                    "reason_3": "03. Tableau \"Stock Dormant\" : Vide car vos articles à forte marge (>40%) se vendent suffisamment bien pour ne pas être considérés comme immobilisés."
+                }
+            }
         }
     },
     "temporal_analysis": {
         "title": "Analyse Temporelle",
         "subtitle": "Analysez vos meilleures heures, jours et saisons.",
-        "peak_hours": "Heures de Pointe",
-        "daily_comparison": "Jours Rentables",
+        "peak_hours": "Heures de pointe",
+        "daily_comparison": "Jours rentables",
         "seasonality": "Saisonnalité",
-        "peak_hour_title": "Pic d'affluence",
-        "peak_hour_summary": "Votre pic est à {{hour}} avec {{revenue}} F de CA moyen.",
-        "best_day_title": "Jour le plus performant",
-        "best_day_summary": "Le {{day}} est votre meilleur jour avec {{revenue}} F de CA moyen.",
+        "peak_hour_title": "Affluence Maximale",
+        "peak_hour_summary": "Pic à {{hour}}:00 avec un CA de {{revenue}}",
+        "best_day_title": "Meilleur Jour de Performance",
+        "best_day_summary": "{{day}} est votre meilleur jour avec {{revenue}} en moyenne",
         "seasonality_title": "Tendances Saisonnières",
-        "seasonality_summary": "Analyse sur les {{months}} derniers mois. {{count}} produits saisonniers identifiés."
+        "seasonality_summary": "Analyse sur {{months}} mois • {{count}} produits saisonniers détectés",
+        "global_revenue_evolution": "Évolution Globale du CA",
+        "top_seasonal_products": "Top Produits Saisonniers",
+        "no_seasonality_detected": "Aucune tendance saisonnière marquée détectée pour le moment.",
+        "no_data": "Pas de données",
+        "columns": {
+            "day": "Jour",
+            "avg_sales": "Ventes Moy.",
+            "avg_basket": "Panier Moy.",
+            "avg_revenue": "CA Moyen",
+            "product": "Produit",
+            "peak_month": "Mois Pic",
+            "peak_volume": "Vol. Pic",
+            "monthly_avg": "Moy. Mensuelle",
+            "variation": "Variation",
+            "avg_basket_short": "Panier M."
+        }
     },
     "users": {
         "title": "Gestion des Utilisateurs",
@@ -2053,10 +2222,636 @@
             "cancel_sale_confirm": "Êtes-vous sûr de vouloir annuler cette vente en cours ? Tout le panier sera perdu."
         }
     },
-    "avoirs": {
-        "title": "Avoirs Fournisseurs (Retours)",
-        "subtitle": "Gérez les retours et avoirs fournisseurs",
-        "create_btn": "+ Nouvel Avoir",
-        "search_placeholder": "🔍 Rechercher un avoir..."
+    "login": {
+        "title": "Connexion",
+        "username": "Nom d'utilisateur",
+        "password": "Mot de passe",
+        "submit": "Se connecter",
+        "loading": "Authentification...",
+        "subtitle": "Écosystème Sécurisé",
+        "workstation_label": "Identification du Poste",
+        "workstation_placeholder": "Nommez ce poste (ex: CAISSE-1)",
+        "workstation_help": "Ce nom sera mémorisé pour identifier cet appareil."
+    },
+    "abc_analysis": {
+        "title": "Analyse ABC",
+        "subtitle": "Classification des produits par contribution au CA (Pareto 80/20)",
+        "loading": "Chargement de l'analyse...",
+        "error_loading": "Erreur lors du chargement des données",
+        "filters": {
+            "months_3": "3 mois",
+            "months_6": "6 mois",
+            "months_12": "12 mois",
+            "all_rayons": "Tous les rayons",
+            "all_suppliers": "Tous les fournisseurs",
+            "copy": "Copier"
+        },
+        "alerts": {
+            "shortage": "{{count}} produit(s) A en rupture !",
+            "shortage_plural": "{{count}} produits A en rupture !"
+        },
+        "stats": {
+            "total_ca": "Chiffre d'Affaires Total",
+            "period_info": "Sur {{count}} mois",
+            "category_a": "Catégorie A",
+            "category_b": "Catégorie B",
+            "category_c": "Catégorie C"
+        },
+        "tabs": {
+            "vital": "A - Vital",
+            "important": "B - Important",
+            "secondary": "C - Secondaire"
+        },
+        "table": {
+            "product": "Produit",
+            "cip": "CIP",
+            "rayon": "Rayon",
+            "stock": "Stock",
+            "qty_sold": "Qté Vendue",
+            "sale_price": "Prix Vente",
+            "ca": "CA",
+            "ca_percent": "% CA",
+            "cumulated_percent": "% Cumulé",
+            "no_products": "Aucun produit dans cette catégorie",
+            "shortage_badge": "Rupture"
+        },
+        "footer": {
+            "analyzed_since": "Données analysées depuis le {{date}}",
+            "total_products": "{{count}} produits au total"
+        },
+        "messages": {
+            "copy_success": "{{count}} lignes copiées ! Collez dans Excel.",
+            "copy_error": "Erreur lors de la copie des données"
+        }
+    },
+    "ordonnancier": {
+        "title": "📋 Ordonnancier",
+        "export_pdf": "Exporter PDF",
+        "stats": {
+            "total_entries": "Total Entrées",
+            "total_entries_desc": "Ordonnances enregistrées",
+            "delivered_meds": "Médicaments délivrés",
+            "delivered_meds_desc": "Total boîtes",
+            "under_surveillance": "Sous Surveillance",
+            "under_surveillance_desc": "Médicaments sensibles"
+        },
+        "filters": {
+            "date_start": "Date Début",
+            "date_end": "Date Fin",
+            "patient": "Patient",
+            "patient_placeholder": "Nom...",
+            "prescriber": "Prescripteur",
+            "prescriber_placeholder": "Docteur...",
+            "product": "Produit",
+            "product_placeholder": "Médicament...",
+            "surveillance": "Surveillance",
+            "surveillance_options": {
+                "none": "Tous",
+                "standard": "Standard",
+                "renforcee": "Renforcée"
+            }
+        },
+        "table": {
+            "order_num": "N° Commande",
+            "date": "Date",
+            "patient": "Patient",
+            "prescriber": "Prescripteur",
+            "meds": "Médicaments",
+            "action": "Action",
+            "empty": "Aucune entrée trouvée",
+            "loading": "Chargement...",
+            "recorded_by": "Enregistré par",
+            "surveillance_badges": {
+                "renf": "RENF.",
+                "std": "STD."
+            }
+        }
+    },
+    "clinical": {
+        "alerts": {
+            "products_label": "Produits :",
+            "to_watch": "À surveiller",
+            "gravities": {
+                "PRECAUTION": "Précaution",
+                "A_PRENDRE_EN_COMPTE": "À prendre en compte",
+                "DECONSEILLE": "Déconseillé",
+                "CONTRE_INDIQUE": "Contre-indiqué"
+            }
+        }
+    },
+    "promotions": {
+        "title": "Promotions",
+        "new_btn": "+ Nouvelle Promotion",
+        "loading": "Chargement...",
+        "error_loading": "Impossible de charger les promotions",
+        "fetch_error": "Erreur lors du chargement des promotions",
+        "delete_confirm": "Êtes-vous sûr de vouloir supprimer cette promotion ?",
+        "delete_error": "Impossible de supprimer la promotion : {{message}}",
+        "list": {
+            "table": {
+                "name": "Nom",
+                "type": "Type",
+                "detail": "Détail",
+                "period": "Période",
+                "status": "Statut",
+                "actions": "Actions"
+            },
+            "types": {
+                "special_offer": "Offre Spéciale",
+                "discount": "Remise"
+            },
+            "discount": {
+                "buy_get": "Achetez {{buy}}, +{{get}} offerts"
+            },
+            "status": {
+                "active": "Active",
+                "inactive": "Inactive"
+            },
+            "actions": {
+                "edit": "Modifier",
+                "delete": "Supprimer"
+            },
+            "period": {
+                "indefinite": "(Indéfini)"
+            }
+        },
+        "form": {
+            "title_new": "Nouvelle Promotion",
+            "title_edit": "Modifier la Promotion",
+            "subtitle": "Configurez vos remises et packs de produits",
+            "general_info": "Informations Générales",
+            "pack_name": "Nom du Pack/Promotion",
+            "pack_placeholder": "Ex: Pack Beauté, Promo Noël...",
+            "start_date": "Date de Début",
+            "end_date": "Date de Fin",
+            "type_value": "Type & Valeur",
+            "promo_type": "Type de Promo",
+            "types": {
+                "percentage": "% Pourcentage",
+                "fixed": "F Montant Fixe",
+                "buy_get": "Achetez X Offert Y",
+                "bundle": "📦 Pack / Bundle"
+            },
+            "labels": {
+                "pack_price": "Prix Total Pack",
+                "discount_value": "Valeur Remise",
+                "buy": "Achetez",
+                "get": "Offert"
+            },
+            "products": {
+                "title": "Produits Inclus dans la Promotion/Pack",
+                "count": "{{count}} produit(s)",
+                "search_placeholder": "Rechercher et ajouter un produit par nom ou CIP...",
+                "stock": "Stock:",
+                "loading_names": "Chargement...",
+                "error_id": "Erreur ID #{{id}}",
+                "table": {
+                    "product": "Nom du Produit",
+                    "stock": "Stock",
+                    "qty": "Qté Requise",
+                    "unit_price": "Prix Unitaire",
+                    "discount_effect": "Effet Remise",
+                    "empty": "Aucun produit sélectionné. Utilisez la barre de recherche ci-dessus.",
+                    "offered": "+{{count}} Offerts"
+                }
+            },
+            "status": {
+                "loading": "En cours...",
+                "ready": "Prêt",
+                "total_fixed": "Prix Total Fixe : {{value}} F"
+            },
+            "save_error": "Erreur lors de l'enregistrement",
+            "actions": {
+                "cancel": "Annuler",
+                "save": "Enregistrer la Promotion"
+            }
+        }
+    },
+    "vitrine": {
+        "title": "Ma Vitrine en Ligne",
+        "subtitle": "Gérez votre présence web et simulez l'expérience patient",
+        "online_count": "Produits en Ligne",
+        "tabs": {
+            "gestion": "Gestion",
+            "simulateur": "Simulateur"
+        },
+        "gestion": {
+            "search_placeholder": "Rechercher un produit à gérer...",
+            "show_public_only": "Visibles uniquement",
+            "selected_count": "{{count}} produit(s) sélectionné(s)",
+            "publish": "Publier en Ligne",
+            "unpublish": "Retirer de la Vitrine",
+            "cancel": "Annuler",
+            "table": {
+                "product": "Produit",
+                "rayon": "Rayon",
+                "stock": "Stock",
+                "pharmacy_price": "Prix Pharma",
+                "public_price": "Prix Public (Web)",
+                "online": "En ligne ?",
+                "empty": "Aucun produit trouvé",
+                "uncategorized": "Non catégorisé"
+            }
+        },
+        "simulateur": {
+            "search_title": "Rechercher un Médicament",
+            "search_placeholder": "Ex: Doliprane, Paracetamol...",
+            "available": "En Stock",
+            "out_of_stock": "Rupture",
+            "available_full": "Disponible",
+            "no_results": "Aucun produit disponible trouvé.",
+            "already_in_list": "Produit déjà dans la liste",
+            "my_list": "Ma Liste",
+            "empty_list": "Votre liste est vide"
+        },
+        "messages": {
+            "visibility_updated": "Visibilité mise à jour",
+            "price_updated": "Prix mis à jour",
+            "update_error": "Erreur lors de la mise à jour",
+            "generic_error": "Erreur",
+            "bulk_published": "Produits publiés en ligne",
+            "bulk_unpublished": "Produits retirés de la vitrine",
+            "bulk_error": "Erreur lors de la mise à jour groupée"
+        }
+    },
+    "monthly_report": {
+        "title": "Synthèse Mensuelle d'Activité",
+        "subtitle": "Rapport complet de votre activité mensuelle",
+        "filters": {
+            "month": "Mois",
+            "generate": "Générer",
+            "loading": "Chargement..."
+        },
+        "kpis": {
+            "ca_ttc": "CA TTC",
+            "ca_ht": "CA HT",
+            "gross_margin": "Marge Brute",
+            "purchase_cost": "Coût d'Achat",
+            "margin_info": "{{pct}}% du CA",
+            "sales_count": "{{count}} ventes"
+        },
+        "suppliers": {
+            "title": "Achats par Fournisseur",
+            "name": "Fournisseur",
+            "orders": "Nb Commandes",
+            "amount": "Montant Total",
+            "no_data": "Aucun achat ce mois-ci",
+            "total": "Total"
+        },
+        "pro_clients": {
+            "title": "Clients Professionnels",
+            "ca_total": "CA Total",
+            "paid": "Payé",
+            "balance": "Reste",
+            "recovery_rate": "Taux de recouvrement",
+            "top_clients": "Top Clients Pro"
+        },
+        "free_units": {
+            "title": "Unités Gratuites (UG)",
+            "value": "Valeur",
+            "quantity": "Quantité",
+            "ca_pct": "% CA",
+            "top_products": "Top Produits Offerts",
+            "product": "Produit",
+            "qty": "Qté"
+        },
+        "encaissements": {
+            "title": "Encaissements du Mois",
+            "mode": "Mode",
+            "amount": "Montant",
+            "no_data": "Aucun encaissement ce mois-ci",
+            "total": "Total"
+        },
+        "caisse_mvts": {
+            "title": "Autres Mouvements de Caisse",
+            "in": "Entrées Diverses",
+            "out": "Sorties Diverses",
+            "balance": "Solde Mouvements",
+            "date": "Date",
+            "type": "Type",
+            "reason": "Motif",
+            "user": "Utilisateur",
+            "no_data": "Aucun mouvement extra-comptable ce mois-ci"
+        },
+        "tva": {
+            "title": "CA par Taux de TVA",
+            "rate": "Taux",
+            "ht": "CA HT",
+            "tax": "TVA",
+            "ttc": "TTC"
+        },
+        "receivables": {
+            "title": "Créances à Percevoir",
+            "total_to_recover": "Montant total à recouvrer",
+            "desc": "Sur toutes les ventes à crédit"
+        },
+        "empty": {
+            "title": "Sélectionnez un mois et cliquez sur \"Générer\"",
+            "subtitle": "Pour visualiser la synthèse mensuelle complète"
+        },
+        "messages": {
+            "load_error": "Erreur lors du chargement du rapport",
+            "download_error": "Erreur lors du téléchargement du PDF"
+        },
+        "pdf": {
+            "download": "PDF",
+            "tooltip": "Télécharger le rapport en PDF"
+        }
+    },
+    "user_sessions": {
+        "title": "Suivi des Présences",
+        "subtitle": "Journal des premières connexions et dernières déconnexions",
+        "tabs": {
+            "daily": "Journal Quotidien",
+            "monthly": "Récapitulatif Mensuel"
+        },
+        "date": "Date",
+        "operator": "Opérateur",
+        "all_operators": "Tous les opérateurs",
+        "filter": "Filtrer",
+        "workstation": "Poste",
+        "first_login": "Début Session",
+        "last_logout": "Fin Session",
+        "duration": "Temps Présence",
+        "status": "Statut",
+        "closed": "Clôturée",
+        "ongoing": "En cours",
+        "not_closed": "non clôturé",
+        "force_logout": "Forcer la déconnexion",
+        "loading": "Chargement des données...",
+        "no_result": "Aucune session trouvée pour cette période",
+        "force_logout_confirm": "Êtes-vous sûr de vouloir déconnecter l'utilisateur @{{username}} ? Cette action supprimera son accès immédiat.",
+        "force_logout_success": "L'utilisateur @{{username}} a été déconnecté.",
+        "force_logout_error": "Erreur lors de la déconnexion forcée.",
+        "recap": {
+            "month": "Mois",
+            "year": "Année",
+            "days_present": "Jours Présents",
+            "total_hours": "Total Heures",
+            "avg_hours": "Moy. Heures",
+            "avg": "Moy :"
+        },
+        "months": {
+            "january": "Janvier",
+            "february": "Février",
+            "march": "Mars",
+            "april": "Avril",
+            "may": "Mai",
+            "june": "Juin",
+            "july": "Juillet",
+            "august": "Août",
+            "september": "Septembre",
+            "october": "Octobre",
+            "november": "Novembre",
+            "december": "Décembre"
+        }
+    },
+    "statistiques_fournisseur": {
+        "title": "Statistiques par Fournisseur",
+        "subtitle": "Analyse détaillée des performances achats et ventes",
+        "filters": {
+            "from": "Du",
+            "to": "Au",
+            "refresh": "Actualiser"
+        },
+        "tabs": {
+            "sales": "Ventes & Marges",
+            "performance": "Performance (Scoring)",
+            "price_comparison": "Comparateur Prix",
+            "concentration": "Concentration Achats"
+        },
+        "sales_tab": {
+            "calculation_method": "Méthode de calcul : Ventes Réalisées",
+            "info_text": "Les statistiques ci-dessous concernent uniquement les produits vendus sur la période sélectionnée (CA encaissé).",
+            "cards": {
+                "total_ca": "CA Total TTC",
+                "purchase_cost": "Coût d'Achat (Vendu)",
+                "gross_margin": "Marge Brute",
+                "margin_percentage": "% du CA",
+                "units_sold": "Unités Vendues"
+            },
+            "chart": {
+                "title": "Répartition du CA par Fournisseur",
+                "ca": "Chiffre d'Affaires",
+                "margin": "Marge Brute"
+            },
+            "table": {
+                "supplier": "Fournisseur",
+                "qty_sold": "Qté Vendue",
+                "purchase_cost": "Coût Achat",
+                "ca_ttc": "CA TTC",
+                "gross_margin": "Marge Brute",
+                "margin_percent": "% Marge",
+                "no_data": "Aucune donnée pour la période sélectionnée"
+            }
+        },
+        "performance_tab": {
+            "alert_title": "Analyse sur 12 mois glissants",
+            "alert_text": "Scores calculés sur l'historique des réceptions.",
+            "score": "Score",
+            "metrics": {
+                "volume": "Volume (30%)",
+                "quality": "Qualité (30%)",
+                "incidents": "Incidents",
+                "consistency": "Régularité (40%)",
+                "deliveries": "Livraisons"
+            }
+        },
+        "prices_tab": {
+            "alert_title": "Opportunités d'économie",
+            "alert_text": "Produits achetés chez plusieurs fournisseurs avec écarts de prix significatifs.",
+            "table": {
+                "product": "Produit",
+                "max_gap": "Écart Max",
+                "offers": "Offres (Prix Moyen)",
+                "best_price": "Meilleur Prix"
+            }
+        },
+        "concentration_tab": {
+            "title": "Concentration des Achats (Volume Financier)",
+            "table": {
+                "color": "Couleur",
+                "supplier": "Fournisseur",
+                "market_share": "Part de Marché",
+                "volume": "Volume Acheté"
+            }
+        }
+    },
+    "maintenance": {
+        "title": "Maintenance & Purge",
+        "subtitle": "Nettoyage sécurisé des données transactionnelles",
+        "irreversible": "Opération irréversible",
+        "warning_msg": "Les données supprimées ne pourront pas être récupérées. Exportez toujours une sauvegarde CSV avant de purger.",
+        "tables_title": "Tables à purger",
+        "select_all": "Tout sélectionner",
+        "deselect_all": "Tout désélectionner",
+        "period_title": "Période",
+        "date_from": "Date de début",
+        "date_to": "Date de fin",
+        "date_warning": "⚠️ Sans date, TOUTES les données seront concernées",
+        "actions": "Actions",
+        "preview_btn": "Prévisualiser",
+        "export_btn": "Exporter CSV (backup)",
+        "purge_btn": "Purger les données",
+        "backup_title": "Sauvegarde de la Base",
+        "backup_desc": "Lancer une sauvegarde complète de la base de données (SQL compressé).",
+        "backup_now": "Sauvegarder maintenant",
+        "backup_success": "Sauvegarde terminée !",
+        "automatic": "Automatique",
+        "enable_auto": "Activer la sauvegarde auto",
+        "scheduled_time": "Heure programmée",
+        "secondary_path": "Clé USB / Chemin externe",
+        "save_settings": "Enregistrer les paramètres",
+        "restore_title": "Restauration de la Base",
+        "restore_desc": "Restaurer la base de données à partir d'un fichier .sql.gz. (Action irréversible)",
+        "restore_now": "Restaurer maintenant",
+        "restoring": "Restauration en cours...",
+        "restore_success": "Restauration terminée !",
+        "restore_restart_msg": "L'application redémarrera automatiquement une fois terminé.",
+        "selection_summary": "{{count}} table(s) sélectionnée(s)",
+        "preview_title": "Prévisualisation — {{count}} lignes à supprimer",
+        "purge_finished": "Purge terminée",
+        "confirm_title": "Confirmation de purge",
+        "confirm_msg": "Cette action va supprimer définitivement les données sélectionnées.",
+        "password_label": "Mot de passe superadmin",
+        "cancel": "Annuler",
+        "confirm_purge": "Confirmer la purge",
+        "code_management": {
+            "title": "Gestion du Code Source",
+            "desc": "Sauvegardez l'intégralité du code source du projet (Frontend & Backend).",
+            "backup_now": "Sauvegarder le Code",
+            "restore_now": "Restaurer le Code",
+            "restore_desc": "Restaurer le projet à partir d'un fichier .zip source.",
+            "backup_success": "Code source sauvegardé avec succès !",
+            "restore_success": "Code source restauré. Le système doit être redémarré."
+        },
+        "categories": {
+            "ventes": "💰 Ventes & Facturation",
+            "achats": "📦 Achats & Fournisseurs",
+            "stock": "📊 Stock",
+            "caisse": "🏦 Caisse",
+            "audit": "📋 Audit & Logs",
+            "objectifs": "🎯 Objectifs"
+        },
+        "tables": {
+            "factures": "Factures (ventes)",
+            "commandes": "Commandes (achats)",
+            "avoirs": "Avoirs fournisseurs",
+            "paiements_fournisseur": "Paiements fournisseurs",
+            "mouvements_stock": "Mouvements de stock",
+            "ajustements_stock": "Ajustements de stock",
+            "caisse": "Paiements en caisse",
+            "clotures_caisse": "Clôtures de caisse",
+            "mouvements_caisse": "Mouvements de caisse (E/S)",
+            "ordonnancier": "Ordonnancier",
+            "objectifs": "Objectifs commerciaux",
+            "promis": "Promis clients",
+            "releves": "Relevés de paiement",
+            "coupons": "Coupons monnaie",
+            "audit_logs": "Journal d'audit",
+            "activity_logs": "Logs d'activité",
+            "sms_logs": "Journal SMS",
+            "children": {
+                "lignes_facture": "Lignes facture",
+                "allocations_lots": "Allocations lots",
+                "paiements_caisse": "Paiements caisse",
+                "lignes_commande": "Lignes commande",
+                "lignes_avoir": "Lignes avoir",
+                "lignes_ordonnancier": "Lignes ordonnancier"
+            }
+        }
+    },
+    "pharmacy_settings": {
+        "title": "Informations Pharmacie",
+        "subtitle": "Configurez les informations qui apparaissent sur vos tickets et documents",
+        "save_btn": "Enregistrer",
+        "saving": "Enregistrement...",
+        "save_changes": "Enregistrer les modifications",
+        "labels": {
+            "pharmacy_name": "Nom de la pharmacie *",
+            "niu": "NIU (Numéro d'Identification Unique)",
+            "rccm": "Registre de Commerce (RCCM)",
+            "address": "Adresse",
+            "city": "Ville",
+            "country": "Pays",
+            "phone": "Téléphone",
+            "email": "Email",
+            "receipt_header": "En-tête du ticket",
+            "ticket_footer": "Pied de page du ticket",
+            "paper_width": "Largeur Ticket (mm)",
+            "currency": "Devise",
+            "low_stock_days": "Seuil Stock Bas (Jours)",
+            "dormant_stock_days": "Seuil Stock Dormant (Jours)",
+            "debt_threshold": "Seuil Alerte Dette Client",
+            "auto_logout": "Déconnexion Automatique (minutes)",
+            "whatsapp_enabled": "WhatsApp Business",
+            "whatsapp_phone_id": "Phone Number ID",
+            "whatsapp_token": "Access Token (Permanent)",
+            "whatsapp_account_id": "WhatsApp Business Account ID",
+            "coeff_direct": "Coefficient Commandes Directes (Euro)",
+            "paper_standard": "80mm (Standard)",
+            "paper_small": "58mm (Petit)"
+        },
+        "placeholders": {
+            "pharmacy_name": "PHARMACIE CENTRALE",
+            "niu": "M012345678901234",
+            "rccm": "RC/DLA/2024/B/12345",
+            "address": "123 Avenue de la République",
+            "city": "Douala",
+            "country": "Cameroun",
+            "phone": "+237 6XX XXX XXX",
+            "email": "contact@pharmacie.com",
+            "receipt_header": "Bienvenue dans notre pharmacie!",
+            "ticket_footer": "Merci de votre visite! À bientôt.",
+            "whatsapp_phone_id": "Ex: 105678901234567",
+            "whatsapp_token": "EAABw...",
+            "whatsapp_account_id": "Ex: 987654321098765",
+            "coeff_direct": "1.35",
+            "currency": "ex: FCFA, €, $",
+            "tva_rate": "19.25",
+            "tva_label": "Ex: Taux Normal"
+        },
+        "hints": {
+            "pharmacy_name": "Ce nom apparaît en haut de tous vos tickets et documents",
+            "niu": "14 à 15 caractères alphanumériques",
+            "rccm": "20 caractères maximum",
+            "receipt_header": "Message personnalisé affiché en haut du ticket",
+            "ticket_footer": "Message de remerciement affiché en bas du ticket",
+            "low_stock": "Alerte si couverture inférieure à ce nombre",
+            "dormant_stock": "Alerte si aucune vente depuis ce nombre de jours",
+            "debt": "Montant de dette à partir duquel une alerte est levée",
+            "auto_logout": "Temps d'inactivité avant déconnexion (Mettre 0 pour désactiver)",
+            "whatsapp_help": "Utilisez un token permanent généré sur le portail Meta Developers.",
+            "coeff_direct": "Ce coefficient sera utilisé par défaut pour convertir le Prix d'achat (Euro) en Prix de Revient (FCFA).",
+            "coeff_formula": "Formule: Prix Revient = (Prix € x Taux Change) x Coefficient"
+        },
+        "sections": {
+            "identity": "Identité de la Pharmacie",
+            "contact": "Coordonnées",
+            "ticket": "Messages Ticket de Caisse",
+            "system": "Paramètres Système & Alertes",
+            "tva": "Gestion de la TVA",
+            "orders": "Configuration Commandes",
+            "whatsapp": "WhatsApp Business (Meta Cloud API)"
+        },
+        "tva": {
+            "rate": "Taux (%)",
+            "label": "Libellé",
+            "status": "Statut",
+            "actions": "Actions",
+            "delete": "Supprimer",
+            "loading": "Chargement...",
+            "empty": "Aucun taux configuré",
+            "add_title": "Ajouter un nouveau taux",
+            "add_btn": "Ajouter",
+            "active": "Actif",
+            "inactive": "Inactif",
+            "success_add": "Taux de TVA ajouté avec succès",
+            "error_add": "Erreur lors de l'ajout de la TVA"
+        },
+        "status": {
+            "enabled": "Activé",
+            "disabled": "Désactivé"
+        }
     }
 }

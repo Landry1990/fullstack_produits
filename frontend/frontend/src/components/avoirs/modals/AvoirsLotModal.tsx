@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import PremiumModal from '../../common/PremiumModal';
 import { formatCurrency } from '../../../utils/formatters';
 import { format } from 'date-fns';
@@ -19,11 +20,12 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
     loadingLots,
     onSelectLot
 }) => {
+    const { t } = useTranslation();
     return (
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Sélectionner un Lot pour le Retour"
+            title={t('avoirs.modals.lot_title', 'Sélectionner un Lot pour le Retour')}
         >
             <div className="space-y-4">
                 {loadingLots ? (
@@ -35,11 +37,11 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                         <table className="table table-zebra table-sm">
                             <thead className="bg-base-200">
                                 <tr>
-                                    <th>Lot</th>
-                                    <th>Expiration</th>
-                                    <th>Stock</th>
-                                    <th>Prix Achat</th>
-                                    <th className="text-right">Action</th>
+                                    <th>{t('avoirs.form.table_lot')}</th>
+                                    <th>{t('avoirs.table.date')}</th>
+                                    <th>{t('stock.table_stock')}</th>
+                                    <th>{t('avoirs.form.table_price')}</th>
+                                    <th className="text-right">{t('common.actions_title')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -59,7 +61,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                                                 className="btn btn-primary btn-sm"
                                                 onClick={() => onSelectLot(lot)}
                                             >
-                                                Sélectionner
+                                                {t('common.select', 'Sélectionner')}
                                             </button>
                                         </td>
                                     </tr>
@@ -69,7 +71,7 @@ export const AvoirsLotModal: React.FC<LotModalProps> = ({
                     </div>
                 ) : (
                     <div className="text-center p-8 bg-base-200/50 rounded-xl text-base-content/60">
-                        Aucun lot disponible en stock pour ce produit.
+                        {t('avoirs.modals.no_lots', 'Aucun lot disponible en stock pour ce produit.')}
                     </div>
                 )}
             </div>

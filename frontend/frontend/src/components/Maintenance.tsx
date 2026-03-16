@@ -6,6 +6,7 @@ import {
   Wrench, ChevronDown, ChevronUp, Database, Clock, Save, Upload
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { formatNumber } from '../utils/formatters';
 
 interface PurgeTable {
@@ -28,40 +29,42 @@ interface PurgeResult {
 }
 
 // Group tables by category for display
-const TABLE_CATEGORIES: Record<string, { label: string; icon: string; keys: string[] }> = {
+const getTableCategories = (t: any) => ({
   ventes: {
-    label: '💰 Ventes & Facturation',
+    label: t('maintenance.categories.ventes'),
     icon: '💰',
     keys: ['factures', 'caisse', 'releves', 'coupons', 'promis'],
   },
   achats: {
-    label: '📦 Achats & Fournisseurs',
+    label: t('maintenance.categories.achats'),
     icon: '📦',
     keys: ['commandes', 'avoirs', 'paiements_fournisseur'],
   },
   stock: {
-    label: '📊 Stock',
+    label: t('maintenance.categories.stock'),
     icon: '📊',
     keys: ['mouvements_stock', 'ajustements_stock'],
   },
   caisse: {
-    label: '🏦 Caisse',
+    label: t('maintenance.categories.caisse'),
     icon: '🏦',
     keys: ['clotures_caisse', 'mouvements_caisse'],
   },
   audit: {
-    label: '📋 Audit & Logs',
+    label: t('maintenance.categories.audit'),
     icon: '📋',
     keys: ['ordonnancier', 'audit_logs', 'activity_logs', 'sms_logs'],
   },
   objectifs: {
-    label: '🎯 Objectifs',
+    label: t('maintenance.categories.objectifs'),
     icon: '🎯',
     keys: ['objectifs'],
   },
-};
+});
 
 export default function Maintenance() {
+  const { t } = useTranslation();
+  const TABLE_CATEGORIES = getTableCategories(t);
   const [tables, setTables] = useState<PurgeTable[]>([]);
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set());
   const [dateFrom, setDateFrom] = useState('');
@@ -85,16 +88,21 @@ export default function Maintenance() {
   const [restoreProgress, setRestoreProgress] = useState(0);
   const [restoreStep, setRestoreStep] = useState('');
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  
+  // Code Source States
+  const [codeBackupLoading, setCodeBackupLoading] = useState(false);
+  const [codeRestoreFile, setCodeRestoreFile] = useState<File | null>(null);
+  const [codeRestoring, setCodeRestoring] = useState(false);
 
   // Fetch available tables and pharmacy settings
   useEffect(() => {
     axios.get('/api/maintenance/tables/')
       .then(res => setTables(res.data))
-      .catch(() => toast.error('Erreur chargement des tables'));
+      .catch(() => toast.error(t('common.error_loading_data')));
 
     axios.get('/api/pharmacy-settings/')
       .then(res => setPharmacySettings(res.data))
-      .catch(() => console.error('Erreur chargement paramètres pharmacie'));
+      .catch(() => console.error('Error loading pharmacy settings'));
   }, []);
 
   const toggleTable = (key: string) => {
@@ -340,6 +348,47 @@ export default function Maintenance() {
     }
   };
 
+  const handleCodeBackup = async () => {
+    setCodeBackupLoading(true);
+    try {
+      const res = await axios.get('/api/code-backup/backup/', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `source_code_backup_${new Date().toISOString().slice(0, 10)}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(t('maintenance.code_management.backup_success'));
+    } catch {
+      toast.error(t('common.error_occurred'));
+    } finally {
+      setCodeBackupLoading(false);
+    }
+  };
+
+  const handleCodeRestore = async () => {
+    if (!codeRestoreFile) {
+      toast.error(t('common.select_file'));
+      return;
+    }
+    setCodeRestoring(true);
+    const formData = new FormData();
+    formData.append('file', codeRestoreFile);
+    try {
+      await axios.post('/api/code-backup/restore/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(t('maintenance.code_management.restore_success'));
+      setCodeRestoreFile(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || t('common.error_occurred'));
+    } finally {
+      setCodeRestoring(false);
+    }
+  };
+
   const totalPreviewCount = preview?.reduce((sum, p) => {
     const childTotal = p.children.reduce((cs, c) => cs + c.count, 0);
     return sum + p.count + childTotal;
@@ -355,8 +404,8 @@ export default function Maintenance() {
           <Wrench className="w-7 h-7 text-red-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Maintenance &amp; Purge</h1>
-          <p className="text-sm text-base-content/60">Nettoyage sécurisé des données transactionnelles</p>
+          <h1 className="text-2xl font-bold">{t('maintenance.title')}</h1>
+          <p className="text-sm text-base-content/60">{t('maintenance.subtitle')}</p>
         </div>
       </div>
 
@@ -364,8 +413,8 @@ export default function Maintenance() {
       <div className="alert alert-warning mb-6 shadow-lg">
         <AlertTriangle className="w-5 h-5" />
         <div>
-          <h3 className="font-bold">Opération irréversible</h3>
-          <p className="text-sm">Les données supprimées ne pourront pas être récupérées. Exportez toujours une sauvegarde CSV avant de purger.</p>
+          <h3 className="font-bold">{t('maintenance.irreversible')}</h3>
+          <p className="text-sm">{t('maintenance.warning_msg')}</p>
         </div>
       </div>
 
@@ -377,11 +426,11 @@ export default function Maintenance() {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-lg">
                   <CheckSquare className="w-5 h-5 text-primary" />
-                  Tables à purger
+                  {t('maintenance.tables_title')}
                 </h2>
                 <div className="flex gap-2">
-                  <button className="btn btn-xs btn-ghost" onClick={selectAll}>Tout sélectionner</button>
-                  <button className="btn btn-xs btn-ghost" onClick={deselectAll}>Tout désélectionner</button>
+                  <button className="btn btn-xs btn-ghost" onClick={selectAll}>{t('maintenance.select_all')}</button>
+                  <button className="btn btn-xs btn-ghost" onClick={deselectAll}>{t('maintenance.deselect_all')}</button>
                 </div>
               </div>
 
@@ -436,10 +485,10 @@ export default function Maintenance() {
                                   checked={isSelected}
                                   onChange={() => toggleTable(key)}
                                 />
-                                <span className="text-sm flex-1">{table.label}</span>
+                                  <span className="text-sm flex-1">{t('maintenance.tables.' + table.key, table.label)}</span>
                                 {table.children.length > 0 && (
                                   <span className="text-xs text-base-content/50">
-                                    +{table.children.length} sous-table{table.children.length > 1 ? 's' : ''}
+                                    +{table.children.length} {t('common.sub_table', { count: table.children.length })}
                                   </span>
                                 )}
                               </label>
@@ -462,10 +511,10 @@ export default function Maintenance() {
             <div className="card-body">
               <h2 className="card-title text-lg mb-2">
                 <Calendar className="w-5 h-5 text-secondary" />
-                Période
+                {t('maintenance.period_title')}
               </h2>
               <div className="form-control mb-2">
-                <label className="label"><span className="label-text text-xs">Date de début</span></label>
+                <label className="label"><span className="label-text text-xs">{t('maintenance.date_from')}</span></label>
                 <input
                   type="date"
                   className="input input-bordered input-sm"
@@ -474,7 +523,7 @@ export default function Maintenance() {
                 />
               </div>
               <div className="form-control">
-                <label className="label"><span className="label-text text-xs">Date de fin</span></label>
+                <label className="label"><span className="label-text text-xs">{t('maintenance.date_to')}</span></label>
                 <input
                   type="date"
                   className="input input-bordered input-sm"
@@ -483,7 +532,7 @@ export default function Maintenance() {
                 />
               </div>
               {!dateFrom && !dateTo && (
-                <p className="text-xs text-warning mt-2">⚠️ Sans date, TOUTES les données seront concernées</p>
+                <p className="text-xs text-warning mt-2">{t('maintenance.date_warning')}</p>
               )}
             </div>
           </div>
@@ -491,7 +540,7 @@ export default function Maintenance() {
           {/* Action Buttons */}
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body gap-3">
-              <h2 className="card-title text-lg">Actions</h2>
+              <h2 className="card-title text-lg">{t('maintenance.actions')}</h2>
 
               <button
                 className="btn btn-primary btn-sm w-full gap-2"
@@ -499,7 +548,7 @@ export default function Maintenance() {
                 disabled={loading || selectedTables.size === 0}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-                Prévisualiser
+                {t('maintenance.preview_btn')}
               </button>
 
               <button
@@ -508,18 +557,18 @@ export default function Maintenance() {
                 disabled={exporting || selectedTables.size === 0}
               >
                 {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                Exporter CSV (backup)
+                {t('maintenance.export_btn')}
               </button>
 
               <div className="divider my-0"></div>
 
               <button
                 className="btn btn-error btn-sm w-full gap-2"
-                onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error('Sélectionnez des tables'); }}
+                onClick={() => { if (selectedTables.size > 0) setShowConfirmModal(true); else toast.error(t('common.select_tables')); }}
                 disabled={selectedTables.size === 0}
               >
                 <Trash2 className="w-4 h-4" />
-                Purger les données
+                {t('maintenance.purge_btn')}
               </button>
             </div>
           </div>
@@ -529,20 +578,20 @@ export default function Maintenance() {
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
                 <Database className="w-5 h-5 text-primary" />
-                Sauvegarde
+                {t('maintenance.backup_title')}
               </h2>
 
               <div className="space-y-4">
                 {/* Manual Backup */}
                 <div>
-                  <p className="text-xs text-base-content/60 mb-2">Lancer une sauvegarde complète de la base de données (SQL compressé).</p>
+                  <p className="text-xs text-base-content/60 mb-2">{t('maintenance.backup_desc')}</p>
                   <button
                     className="btn btn-primary btn-sm w-full gap-2"
                     onClick={handleManualBackup}
                     disabled={backupLoading}
                   >
                     {backupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                    Sauvegarder maintenant
+                    {t('maintenance.backup_now')}
                   </button>
 
                   {backupLoading && (
@@ -566,7 +615,7 @@ export default function Maintenance() {
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-base-content/50 flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    Automatique
+                    {t('maintenance.automatic')}
                   </h3>
                   
                   <div className="form-control">
@@ -577,13 +626,13 @@ export default function Maintenance() {
                         checked={pharmacySettings?.backup_enabled || false}
                         onChange={e => setPharmacySettings({...pharmacySettings, backup_enabled: e.target.checked})}
                       />
-                      <span className="label-text">Activer la sauvegarde auto</span>
+                      <span className="label-text">{t('maintenance.enable_auto')}</span>
                     </label>
                   </div>
 
                   <div className="form-control">
                     <label className="label p-0 py-1">
-                      <span className="label-text text-xs">Heure programmée</span>
+                      <span className="label-text text-xs">{t('maintenance.scheduled_time')}</span>
                     </label>
                     <input 
                       type="time" 
@@ -595,7 +644,7 @@ export default function Maintenance() {
 
                   <div className="form-control">
                     <label className="label p-0 py-1">
-                      <span className="label-text text-xs">Clé USB / Chemin externe</span>
+                      <span className="label-text text-xs">{t('maintenance.secondary_path')}</span>
                     </label>
                     <input 
                       type="text" 
@@ -612,7 +661,7 @@ export default function Maintenance() {
                     disabled={savingSettings || !pharmacySettings}
                   >
                     {savingSettings ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                    Enregistrer les paramètres
+                    {t('maintenance.save_settings')}
                   </button>
                 </div>
               </div>
@@ -625,11 +674,11 @@ export default function Maintenance() {
             <div className="card-body gap-4">
               <h2 className="card-title text-lg flex items-center gap-2">
                 <Upload className="w-5 h-5 text-error" />
-                Restauration
+                {t('maintenance.restore_title')}
               </h2>
 
               <div className="space-y-4">
-                <p className="text-xs text-base-content/60">Restaurer la base de données à partir d'un fichier .sql.gz. (Action irréversible)</p>
+                <p className="text-xs text-base-content/60">{t('maintenance.restore_desc')}</p>
                 
                 <div className="form-control w-full">
                   <input 
@@ -642,13 +691,13 @@ export default function Maintenance() {
 
                 <button
                   className="btn btn-error btn-outline btn-sm w-full gap-2"
-                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error('Sélectionnez un fichier'); }}
+                  onClick={() => { if (restoreFile) setShowRestoreConfirm(true); else toast.error(t('common.select_file')); }}
                   disabled={restoring || !restoreFile}
                 >
                   {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldAlert className="w-4 h-4" />}
-                  Restaurer maintenant
+                  {t('maintenance.restore_now')}
                 </button>
-
+                
                 {restoring && (
                   <div className="mt-4 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-error">
@@ -660,9 +709,58 @@ export default function Maintenance() {
                       value={restoreProgress} 
                       max="100"
                     ></progress>
-                    <p className="text-[10px] text-center text-error/60 italic">L'application redémarrera automatiquement une fois terminé.</p>
+                    <p className="text-[10px] text-center text-error/60 italic">{t('maintenance.restore_restart_msg')}</p>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+
+
+          {/* Source Code Management Section */}
+          <div className="card bg-base-100 shadow-xl border border-secondary/20">
+            <div className="card-body gap-4">
+              <h2 className="card-title text-lg flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-secondary" />
+                {t('maintenance.code_management.title')}
+              </h2>
+
+              <div className="space-y-4">
+                {/* Code Backup */}
+                <div>
+                  <p className="text-xs text-base-content/60 mb-2">{t('maintenance.code_management.desc')}</p>
+                  <button
+                    className="btn btn-secondary btn-sm w-full gap-2"
+                    onClick={handleCodeBackup}
+                    disabled={codeBackupLoading}
+                  >
+                    {codeBackupLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    {t('maintenance.code_management.backup_now')}
+                  </button>
+                </div>
+
+                <div className="divider my-0"></div>
+
+                {/* Code Restore */}
+                <div>
+                  <p className="text-xs text-base-content/60 mb-2">{t('maintenance.code_management.restore_desc')}</p>
+                  <div className="form-control w-full mb-2">
+                    <input 
+                      type="file" 
+                      accept=".zip"
+                      className="file-input file-input-bordered file-input-sm w-full" 
+                      onChange={e => setCodeRestoreFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                  <button
+                    className="btn btn-outline btn-secondary btn-sm w-full gap-2"
+                    onClick={handleCodeRestore}
+                    disabled={codeRestoring || !codeRestoreFile}
+                  >
+                    {codeRestoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                    {t('maintenance.code_management.restore_now')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -672,7 +770,7 @@ export default function Maintenance() {
           <div className="card bg-base-200/50">
             <div className="card-body py-3">
               <p className="text-sm">
-                <span className="font-bold text-primary">{selectedTables.size}</span> table{selectedTables.size !== 1 ? 's' : ''} sélectionnée{selectedTables.size !== 1 ? 's' : ''}
+                <span className="font-bold text-primary">{selectedTables.size}</span> {t('maintenance.selection_summary', { count: selectedTables.size })}
               </p>
               {dateFrom && <p className="text-xs text-base-content/60">Du: {dateFrom}</p>}
               {dateTo && <p className="text-xs text-base-content/60">Au: {dateTo}</p>}
@@ -687,21 +785,21 @@ export default function Maintenance() {
           <div className="card-body">
             <h2 className="card-title text-lg mb-4">
               <Eye className="w-5 h-5 text-info" />
-              Prévisualisation — <span className="text-error">{formatNumber(totalPreviewCount)}</span> lignes à supprimer
+              {t('maintenance.preview_title', { count: totalPreviewCount })}
             </h2>
             <div className="overflow-x-auto">
               <table className="table table-sm table-zebra">
                 <thead>
                   <tr>
-                    <th>Table</th>
-                    <th className="text-right">Lignes</th>
-                    <th>Sous-tables</th>
+                    <th>{t('common.table')}</th>
+                    <th className="text-right">{t('common.rows')}</th>
+                    <th>{t('common.sub_tables')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {preview.map(p => (
-                    <tr key={p.key}>
-                      <td className="font-medium">{p.label}</td>
+                   {preview.map(p => (
+                     <tr key={p.key}>
+                       <td className="font-medium">{t('maintenance.tables.' + p.key, p.label)}</td>
                       <td className="text-right">
                         <span className={`badge ${p.count > 0 ? 'badge-error' : 'badge-ghost'} badge-sm`}>
                           {formatNumber(p.count)}
@@ -710,11 +808,11 @@ export default function Maintenance() {
                       <td>
                         {p.children.length > 0 ? (
                           <div className="flex gap-2 flex-wrap">
-                            {p.children.map((c, i) => (
-                              <span key={i} className="badge badge-sm badge-outline">
-                                {c.label}: {formatNumber(c.count)}
-                              </span>
-                            ))}
+                             {p.children.map((c, i) => (
+                               <span key={i} className="badge badge-sm badge-outline">
+                                 {t('maintenance.tables.children.' + c.label.toLowerCase().replace(/ /g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, ""), c.label)}: {formatNumber(c.count)}
+                               </span>
+                             ))}
                           </div>
                         ) : (
                           <span className="text-base-content/30 text-xs">—</span>
@@ -735,20 +833,20 @@ export default function Maintenance() {
           <div className="card-body">
             <h2 className="card-title text-lg text-success mb-4">
               <Trash2 className="w-5 h-5" />
-              Purge terminée
+              {t('maintenance.purge_finished')}
             </h2>
             <div className="overflow-x-auto">
               <table className="table table-sm">
                 <thead>
                   <tr>
-                    <th>Table</th>
-                    <th className="text-right">Lignes supprimées</th>
+                    <th>{t('common.table')}</th>
+                    <th className="text-right">{t('common.rows_deleted')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {purgeResults.map(r => (
-                    <tr key={r.key}>
-                      <td>{r.label}</td>
+                   {purgeResults.map(r => (
+                     <tr key={r.key}>
+                       <td>{t('maintenance.tables.' + r.key, r.label)}</td>
                       <td className="text-right font-bold text-success">{formatNumber(r.deleted)}</td>
                     </tr>
                   ))}
@@ -767,24 +865,23 @@ export default function Maintenance() {
               <div className="p-2 rounded-full bg-error/20">
                 <ShieldAlert className="w-6 h-6 text-error" />
               </div>
-              <h3 className="font-bold text-lg">Confirmation de purge</h3>
+              <h3 className="font-bold text-lg">{t('maintenance.confirm_title')}</h3>
             </div>
 
             <div className="alert alert-error mb-4">
               <AlertTriangle className="w-5 h-5" />
               <span className="text-sm">
-                Cette action va <strong>supprimer définitivement</strong> les données sélectionnées.
-                Pensez à exporter une sauvegarde CSV avant de continuer.
+                {t('maintenance.confirm_msg')}
               </span>
             </div>
 
             <div className="bg-base-200 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
-              <p className="text-xs font-semibold mb-1">Tables concernées :</p>
+              <p className="text-xs font-semibold mb-1">{t('common.concerned_tables')} :</p>
               <ul className="text-xs space-y-0.5">
-                {Array.from(selectedTables).map(key => {
-                  const t = tableMap.get(key);
-                  return <li key={key}>• {t?.label || key}</li>;
-                })}
+                 {Array.from(selectedTables).map(key => {
+                   const tbl = tableMap.get(key);
+                   return <li key={key}>• {t('maintenance.tables.' + key, tbl?.label || key)}</li>;
+                 })}
               </ul>
               {(dateFrom || dateTo) && (
                 <p className="text-xs mt-2 text-base-content/60">
@@ -795,7 +892,7 @@ export default function Maintenance() {
 
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text text-sm font-semibold">Mot de passe superadmin</span>
+                <span className="label-text text-sm font-semibold">{t('maintenance.password_label')}</span>
               </label>
               <input
                 type="password"
@@ -810,7 +907,7 @@ export default function Maintenance() {
 
             <div className="modal-action">
               <button className="btn btn-ghost" onClick={() => { setShowConfirmModal(false); setPassword(''); }}>
-                Annuler
+                {t('maintenance.cancel')}
               </button>
               <button
                 className="btn btn-error gap-2"
@@ -818,7 +915,7 @@ export default function Maintenance() {
                 disabled={purging || !password}
               >
                 {purging ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                Confirmer la purge
+                {t('maintenance.confirm_purge')}
               </button>
             </div>
           </div>
@@ -834,20 +931,20 @@ export default function Maintenance() {
               <div className="p-2 rounded-full bg-error/20">
                 <AlertTriangle className="w-6 h-6 text-error" />
               </div>
-              <h3 className="font-bold text-lg text-error">DANGER : Restauration de la base</h3>
+              <h3 className="font-bold text-lg text-error">{t('maintenance.restore_title')}</h3>
             </div>
 
             <div className="alert alert-error mb-4 shadow-sm">
               <ShieldAlert className="w-5 h-5" />
               <span className="text-sm">
-                Vous allez ÉCRASER TOUTES les données actuelles par celles du fichier : 
+                {t('maintenance.confirm_msg')}
                 <div className="font-mono mt-1 font-bold text-xs">{restoreFile?.name}</div>
               </span>
             </div>
 
             <div className="form-control mb-4">
               <label className="label">
-                <span className="label-text text-sm font-semibold">Confirmation Superadmin</span>
+                <span className="label-text text-sm font-semibold">{t('maintenance.password_label')}</span>
               </label>
               <input
                 type="password"
@@ -862,7 +959,7 @@ export default function Maintenance() {
 
             <div className="modal-action">
               <button className="btn btn-ghost" onClick={() => { setShowRestoreConfirm(false); setRestorePassword(''); }}>
-                Annuler
+                {t('maintenance.cancel')}
               </button>
               <button
                 className="btn btn-error gap-2 px-8"
@@ -870,7 +967,7 @@ export default function Maintenance() {
                 disabled={restoring || !restorePassword}
               >
                 {restoring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-                CONFIRMER LA RESTAURATION
+                {t('maintenance.restore_now')}
               </button>
             </div>
           </div>

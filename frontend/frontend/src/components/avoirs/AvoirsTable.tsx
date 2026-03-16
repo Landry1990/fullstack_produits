@@ -52,11 +52,25 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
 
     const getTypeAvoirLabel = (type: string) => {
         switch (type) {
-            case 'PERIME': return t('avoirs.types.perime', 'Périmé');
+            case 'PERIME':
+            case 'Périmé': return t('avoirs.types.perime', 'Périmé');
             case 'CASSE': return t('avoirs.types.casse', 'Cassé');
             case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison', 'Erreur Livraison');
+            case 'AVARIE': return t('avoirs.types.avarie', 'Avarie');
+            case 'NON_FACTURE': return t('avoirs.types.non_facture', 'Non Facturé');
             case 'AUTRE': return t('avoirs.types.autre', 'Autre');
             default: return type;
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status?.toUpperCase()) {
+            case 'BROUILLON': return t('avoirs.statuses.brouillon', 'Brouillon');
+            case 'VAL':
+            case 'VALIDÉ':
+            case 'VALIDEE':
+            case 'VALIDE': return t('avoirs.statuses.valide', 'Validé');
+            default: return status;
         }
     };
 
@@ -175,7 +189,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.fournisseur')}</th>
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right">{t('avoirs.table.montant')}</th>
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('avoirs.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common.actions')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common.actions_title')}</th>
                             </>
                         )}
                     </tr>
@@ -221,7 +235,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             </td>
                             <td className="text-center">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(avoir.status_display || avoir.status)}`}>
-                                    {avoir.status_display || avoir.status}
+                                    {getStatusLabel(avoir.status_display || avoir.status)}
                                 </span>
                             </td>
                             <td className="text-right" onClick={(e) => e.stopPropagation()}>

@@ -319,7 +319,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             type="button"
                                                             className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10"
                                                             onClick={() => removeLine(index)}
-                                                            title="Retirer"
+                                                            title={t('common.remove', 'Retirer')}
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>

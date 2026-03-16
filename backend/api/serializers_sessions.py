@@ -12,7 +12,7 @@ class UserDailySessionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'user', 'username', 'full_name', 
             'date', 'first_login', 'last_logout', 
-            'duration_display'
+            'duration_display', 'workstation'
         ]
 
     def get_full_name(self, obj):
@@ -29,4 +29,4 @@ class UserDailySessionSerializer(serializers.ModelSerializer):
             if hours > 0:
                 return f"{hours}h {minutes}min"
             return f"{minutes} min"
-        return "Non clôturé"
+        return None

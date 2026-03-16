@@ -130,7 +130,7 @@ def get_pharma_styles():
 # EN-TÊTE ET FOOTER
 # ============================================================================
 
-def draw_pharma_header(canvas, doc, title="DOCUMENT", subtitle=None):
+def draw_pharma_header(canvas, doc, title="DOCUMENT", subtitle=None, lang='fr'):
     """
     Dessine un en-tête professionnel avec logo croix et informations.
     
@@ -139,6 +139,7 @@ def draw_pharma_header(canvas, doc, title="DOCUMENT", subtitle=None):
         doc: Document ReportLab
         title: Titre principal du document (ex: "FACTURE")
         subtitle: Sous-titre optionnel (ex: numéro de facture)
+        lang: Langue ('fr' ou 'en')
     """
     canvas.saveState()
     
@@ -175,9 +176,8 @@ def draw_pharma_header(canvas, doc, title="DOCUMENT", subtitle=None):
     canvas.setFont('Helvetica-Bold', 18)
     canvas.drawString(doc.leftMargin + 90, doc.height + doc.topMargin - 40, "PharmaStock")
     
-    canvas.setFont('Helvetica', 9)
-    canvas.setFillColor(PharmaColors.TEXT_LIGHT)
-    canvas.drawString(doc.leftMargin + 90, doc.height + doc.topMargin - 55, "Gestion Pharmaceutique Professionnelle")
+    desc = "Pharmacy Management" if lang == 'en' else "Gestion Pharmaceutique Professionnelle"
+    canvas.drawString(doc.leftMargin + 90, doc.height + doc.topMargin - 55, desc)
     
     # Titre du document (centré, vert)
     canvas.setFillColor(PharmaColors.GREEN)
@@ -197,7 +197,7 @@ def draw_pharma_header(canvas, doc, title="DOCUMENT", subtitle=None):
     canvas.restoreState()
 
 
-def draw_pharma_footer(canvas, doc, additional_info=None):
+def draw_pharma_footer(canvas, doc, additional_info=None, lang='fr'):
     """
     Dessine un footer professionnel avec pagination et date.
     
@@ -205,6 +205,7 @@ def draw_pharma_footer(canvas, doc, additional_info=None):
         canvas: Canvas ReportLab
         doc: Document ReportLab
         additional_info: Information additionnelle à afficher (ex: nom utilisateur)
+        lang: Langue ('fr' ou 'en')
     """
     canvas.saveState()
     
@@ -219,10 +220,13 @@ def draw_pharma_footer(canvas, doc, additional_info=None):
     
     # Page number (gauche)
     page_num = canvas.getPageNumber()
-    canvas.drawString(doc.leftMargin, 45, f"Page {page_num}")
+    page_label = "Page" if lang == 'fr' else "Page" # Same for both? No, wait.
+    canvas.drawString(doc.leftMargin, 45, f"{page_label} {page_num}")
     
     # Date et heure (centre)
-    date_text = datetime.now().strftime("%d/%m/%Y à %H:%M")
+    at_label = "à" if lang == 'fr' else "at"
+    fmt = "%d/%m/%Y" + f" {at_label} " + "%H:%M"
+    date_text = datetime.now().strftime(fmt)
     text_width = canvas.stringWidth(date_text, 'Helvetica', 8)
     x_center = (doc.width + 2*doc.leftMargin - text_width) / 2
     canvas.drawString(x_center, 45, date_text)

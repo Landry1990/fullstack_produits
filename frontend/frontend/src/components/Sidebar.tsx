@@ -108,7 +108,8 @@ export default function Sidebar() {
         { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques_mensuels' },
         { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques_finances' },
         { path: '/app/classement-vendeurs', label: t('sidebar.statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques_vendeurs' },
-        { path: '/app/analyse-temporelle', label: t('sidebar.statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques_temporelle' }
+        { path: '/app/analyse-temporelle', label: t('sidebar.statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques_temporelle' },
+        { path: '/app/guide-financier', label: t('sidebar.statistiques.guide', 'Guide Financier 📖'), key: 'statistiques_guide' }
       ]
     },
     {
@@ -176,7 +177,7 @@ export default function Sidebar() {
     });
     menuItems.push({
       path: '/app/user-sessions',
-      label: t('sidebar.user_sessions'),
+      label: t('sidebar.user_sessions_sidebar'),
       key: 'user_sessions',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>

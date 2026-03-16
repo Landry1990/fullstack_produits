@@ -699,9 +699,10 @@ class RapportViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'])
     def rapport_mensuel_pdf(self, request):
         """
-        Génère le PDF du rapport mensuel.
+        Génère le PDF du rapport mensuel avec support multi-langue.
         """
         mois = request.query_params.get('mois')
+        lang = request.query_params.get('lang', 'fr')
         if not mois: return Response({'detail': 'Mois requis'}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
@@ -715,7 +716,75 @@ class RapportViewSet(viewsets.ViewSet):
         # 1. Calculer les données
         data = self._get_rapport_data(date_debut, date_fin, mois)
         
-        # 2. Générer le PDF COMPACT (une seule page)
+        # 2. Traductions
+        trans = {
+            'fr': {
+                'title': "RAPPORT MENSUEL",
+                'encaissements': "Encaissements",
+                'mode': "Mode",
+                'montant': "Montant",
+                'total': "TOTAL",
+                'total_expl': "TOTAL EXPLIQUÉ",
+                'credit': "Ventes à Crédit",
+                'coupons': "Coupons",
+                'recouvrements': "Recouvrements",
+                'mouvements': "Mouvements Caisse",
+                'entrees': "Entrées",
+                'sorties': "Sorties",
+                'solde': "Solde",
+                'tva_anal': "Analyse TVA",
+                'taux': "Taux",
+                'ht': "HT",
+                'tva': "TVA",
+                'ttc': "TTC",
+                'top_fourn': "Top 3 Fournisseurs",
+                'fourn': "Fournisseur",
+                'cmd': "Cmd",
+                'clients_pro': "Clients Professionnels",
+                'ca_pro': "CA Pro",
+                'paye': "Payé",
+                'reste': "Reste",
+                'taux_rec': "Taux",
+                'months': ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+            },
+            'en': {
+                'title': "MONTHLY REPORT",
+                'encaissements': "Cash In",
+                'mode': "Method",
+                'montant': "Amount",
+                'total': "TOTAL",
+                'total_expl': "TOTAL EXPLAINED",
+                'credit': "Credit Sales",
+                'coupons': "Coupons",
+                'recouvrements': "Recoveries",
+                'mouvements': "Cash Movements",
+                'entrees': "Cash In",
+                'sorties': "Cash Out",
+                'solde': "Balance",
+                'tva_anal': "VAT Analysis",
+                'taux': "Rate",
+                'ht': "EX-VAT",
+                'tva': "VAT",
+                'ttc': "INC-VAT",
+                'top_fourn': "Top 3 Suppliers",
+                'fourn': "Supplier",
+                'cmd': "Ord",
+                'clients_pro': "Professional Clients",
+                'ca_pro': "Pro Revenue",
+                'paye': "Paid",
+                'reste': "Balance",
+                'taux_rec': "Rate",
+                'months': ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+            }
+        }
+        t = trans.get(lang, trans['fr'])
+        
+        # Nom du mois localisé
+        mois_dt = datetime.strptime(mois, '%Y-%m')
+        nom_mois = t['months'][mois_dt.month - 1]
+        titre_periode = f"{nom_mois} {mois_dt.year}".upper()
+
+        # 3. Générer le PDF
         from django.http import HttpResponse
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
         from reportlab.lib.pagesizes import A4
@@ -734,23 +803,16 @@ class RapportViewSet(viewsets.ViewSet):
             buffer,
             pagesize=A4,
             rightMargin=15, leftMargin=15,
-            topMargin=80, bottomMargin=40  # Marges réduites
+            topMargin=80, bottomMargin=40
         )
         
         story = []
         styles = get_pharma_styles()
-        
-        # Style compact pour les titres de section
         compact_title = ParagraphStyle(
-            'CompactTitle',
-            fontSize=9,
-            fontName='Helvetica-Bold',
-            textColor=PharmaColors.GREEN,
-            spaceAfter=3,
-            spaceBefore=6,
+            'CompactTitle', fontSize=9, fontName='Helvetica-Bold',
+            textColor=PharmaColors.GREEN, spaceAfter=3, spaceBefore=6,
         )
         
-        # Style de tableau compact
         def compact_table_style():
             return [
                 ('BACKGROUND', (0, 0), (-1, 0), PharmaColors.GREEN),
@@ -770,18 +832,24 @@ class RapportViewSet(viewsets.ViewSet):
         
         # Titre principal
         story.append(Paragraph(
-            f"<b>RAPPORT MENSUEL - {datetime.strptime(mois, '%Y-%m').strftime('%B %Y').upper()}</b>",
+            f"<b>{t['title']} - {titre_periode}</b>",
             ParagraphStyle('MainTitle', fontSize=12, fontName='Helvetica-Bold', 
                           textColor=PharmaColors.GREEN, alignment=TA_CENTER, spaceAfter=8)
         ))
         
-        # === SECTION 1: KPIs PRINCIPAUX (Ligne horizontale) ===
+        # === SECTION 1: KPIs PRINCIPAUX ===
+        ca_ttc_label = "CA TTC" if lang == 'fr' else "TOTAL REV"
+        ca_ht_label = "CA HT" if lang == 'fr' else "NET REV"
+        marge_label = "Marge" if lang == 'fr' else "Margin"
+        ventes_label = "Ventes" if lang == 'fr' else "Sales"
+        creances_label = "Créances" if lang == 'fr' else "Receivables"
+        
         kpi_data = [[
-            f"CA TTC\n{format_currency(data['ca']['ca_ttc'])}",
-            f"CA HT\n{format_currency(data['ca']['ca_ht'])}",
-            f"Marge ({data['marge']['marge_pct']}%)\n{format_currency(data['marge']['marge_brute'])}",
-            f"Ventes\n{data['ca']['nb_ventes']}",
-            f"Créances\n{format_currency(data['creances']['total'])}"
+            f"{ca_ttc_label}\n{format_currency(data['ca']['ca_ttc'])}",
+            f"{ca_ht_label}\n{format_currency(data['ca']['ca_ht'])}",
+            f"{marge_label} ({data['marge']['marge_pct']}%)\n{format_currency(data['marge']['marge_brute'])}",
+            f"{ventes_label}\n{data['ca']['nb_ventes']}",
+            f"{creances_label}\n{format_currency(data['creances']['total'])}"
         ]]
         t_kpi = Table(kpi_data, colWidths=[3.5*cm, 3.5*cm, 3.5*cm, 2.5*cm, 3.5*cm])
         t_kpi.setStyle([
@@ -798,52 +866,43 @@ class RapportViewSet(viewsets.ViewSet):
         story.append(t_kpi)
         story.append(Spacer(1, 6))
         
-        # === LAYOUT 2 COLONNES ===
-        # Colonne gauche: Encaissements + Mouvements
-        # Colonne droite: TVA + Fournisseurs
-        
         # Encaissements
-        story.append(Paragraph("Encaissements", compact_title))
-        enc_rows = [['Mode', 'Montant']]
-        for enc in data['encaissements'][:4]:  # Limiter à 4 lignes max
+        story.append(Paragraph(t['encaissements'], compact_title))
+        enc_rows = [[t['mode'], t['montant']]]
+        for enc in data['encaissements'][:4]:
             enc_rows.append([enc['mode_label'], format_currency(enc['montant'])])
         total_enc = sum(e['montant'] for e in data['encaissements'])
-        enc_rows.append(['TOTAL', format_currency(total_enc)])
-        t_enc = Table(enc_rows, colWidths=[5*cm, 3*cm])
-        t_enc.setStyle(compact_table_style())
+        enc_rows.append([t['total'], format_currency(total_enc)])
         t_enc = Table(enc_rows, colWidths=[5*cm, 3*cm])
         t_enc.setStyle(compact_table_style())
         story.append(t_enc)
         
-        # Ajout section Crédits et Coupons pour équilibrer le CA
         if data.get('ventes_credit', 0) > 0 or data.get('coupons_total', 0) > 0 or data.get('recouvrements_total', 0) > 0:
             extra_rows = []
             if data.get('ventes_credit', 0) > 0:
-                extra_rows.append(['Ventes à Crédit', format_currency(data['ventes_credit'])])
+                extra_rows.append([t['credit'], format_currency(data['ventes_credit'])])
             if data.get('coupons_total', 0) > 0:
-                extra_rows.append(['Coupons', format_currency(data['coupons_total'])])
+                extra_rows.append([t['coupons'], format_currency(data['coupons_total'])])
             if data.get('recouvrements_total', 0) > 0:
-                extra_rows.append(['Recouvrements', format_currency(data['recouvrements_total'])])
+                extra_rows.append([t['recouvrements'], format_currency(data['recouvrements_total'])])
             
-            # Total explicatif (Enc + Credit + Coupons should match CA approx)
             total_expl = sum(e['montant'] for e in data['encaissements']) + data.get('ventes_credit', 0) + data.get('coupons_total', 0) + data.get('recouvrements_total', 0)
-            extra_rows.append(['TOTAL EXPLIQUÉ', format_currency(total_expl)])
+            extra_rows.append([t['total_expl'], format_currency(total_expl)])
             
             t_extra = Table(extra_rows, colWidths=[5*cm, 3*cm])
             t_extra.setStyle(compact_table_style())
-            # Petit espacement avant d'ajouter
             story.append(Spacer(1, 2))
             story.append(t_extra)
 
         story.append(Spacer(1, 4))
         
-        # Mouvements Caisse (si existants)
+        # Mouvements Caisse
         if data['mouvements_caisse']['total_entrees'] > 0 or data['mouvements_caisse']['total_sorties'] > 0:
-            story.append(Paragraph("Mouvements Caisse", compact_title))
+            story.append(Paragraph(t['mouvements'], compact_title))
             mvt_data = [
-                ['Entrées', format_currency(data['mouvements_caisse']['total_entrees'])],
-                ['Sorties', format_currency(data['mouvements_caisse']['total_sorties'])],
-                ['Solde', format_currency(data['mouvements_caisse']['solde'])]
+                [t['entrees'], format_currency(data['mouvements_caisse']['total_entrees'])],
+                [t['sorties'], format_currency(data['mouvements_caisse']['total_sorties'])],
+                [t['solde'], format_currency(data['mouvements_caisse']['solde'])]
             ]
             t_mvt = Table(mvt_data, colWidths=[5*cm, 3*cm])
             t_mvt.setStyle(compact_table_style())
@@ -851,27 +910,27 @@ class RapportViewSet(viewsets.ViewSet):
             story.append(Spacer(1, 4))
         
         # TVA
-        story.append(Paragraph("Analyse TVA", compact_title))
-        tva_rows = [['Taux', 'HT', 'TVA', 'TTC']]
-        for t in data['ca_par_tva']:
+        story.append(Paragraph(t['tva_anal'], compact_title))
+        tva_rows = [[t['taux'], t['ht'], t['tva'], t['ttc']]]
+        for tt in data['ca_par_tva']:
             tva_rows.append([
-                f"{t['taux']}%",
-                format_currency(t['ca_ht']),
-                format_currency(t['montant_tva']),
-                format_currency(t['ca_ttc'])
+                f"{tt['taux']}%",
+                format_currency(tt['ca_ht']),
+                format_currency(tt['montant_tva']),
+                format_currency(tt['ca_ttc'])
             ])
         t_tva = Table(tva_rows, colWidths=[2*cm, 4*cm, 3*cm, 4*cm])
         t_tva.setStyle(compact_table_style())
         story.append(t_tva)
         story.append(Spacer(1, 4))
         
-        # Fournisseurs (Top 3)
+        # Fournisseurs
         if data['achats_par_fournisseur']:
-            story.append(Paragraph("Top 3 Fournisseurs", compact_title))
-            achats_rows = [['Fournisseur', 'Cmd', 'Montant']]
+            story.append(Paragraph(t['top_fourn'], compact_title))
+            achats_rows = [[t['fourn'], t['cmd'], t['montant']]]
             for a in data['achats_par_fournisseur'][:3]:
                 achats_rows.append([
-                    a['fournisseur_nom'][:20],  # Tronquer le nom
+                    a['fournisseur_nom'][:20],
                     str(a['nb_commandes']),
                     format_currency(a['montant_total'])
                 ])
@@ -880,13 +939,13 @@ class RapportViewSet(viewsets.ViewSet):
             story.append(t_achats)
             story.append(Spacer(1, 4))
         
-        # Clients Pro (résumé compact)
+        # Clients Pro
         pro_data = data['clients_professionnels']
         if pro_data['ca_total'] > 0:
-            story.append(Paragraph("Clients Professionnels", compact_title))
+            story.append(Paragraph(t['clients_pro'], compact_title))
             p_rows = [
-                ['CA Pro', format_currency(pro_data['ca_total']), 'Payé', format_currency(pro_data['montant_paye'])],
-                ['Reste', format_currency(pro_data['reste_a_payer']), 'Taux', f"{pro_data['taux_recouvrement_pct']}%"]
+                [t['ca_pro'], format_currency(pro_data['ca_total']), t['paye'], format_currency(pro_data['montant_paye'])],
+                [t['reste'], format_currency(pro_data['reste_a_payer']), t['taux_rec'], f"{pro_data['taux_recouvrement_pct']}%"]
             ]
             t_pro = Table(p_rows, colWidths=[2.5*cm, 4*cm, 2.5*cm, 4*cm])
             t_pro.setStyle(compact_table_style())
@@ -895,8 +954,8 @@ class RapportViewSet(viewsets.ViewSet):
         # Build PDF
         doc.build(
             story,
-            onFirstPage=lambda c, d: [draw_pharma_header(c, d, title="RAPPORT"), draw_pharma_footer(c, d)],
-            onLaterPages=lambda c, d: [draw_pharma_header(c, d, title="RAPPORT"), draw_pharma_footer(c, d)]
+            onFirstPage=lambda c, d: [draw_pharma_header(c, d, title="RAPPORT", lang=lang), draw_pharma_footer(c, d, lang=lang)],
+            onLaterPages=lambda c, d: [draw_pharma_header(c, d, title="RAPPORT", lang=lang), draw_pharma_footer(c, d, lang=lang)]
         )
         
         pdf = buffer.getvalue()

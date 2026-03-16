@@ -20,16 +20,24 @@
         "error": "Error",
         "units": "stk",
         "refresh": "Refresh",
+        "remove": "Remove",
         "restore": "Restore",
         "actions": {
             "confirm": "Confirm",
             "cancel": "Cancel",
             "delete": "Delete"
         },
+        "actions_title": "Actions",
+        "validate": "Validate",
+        "validate_all": "Validate All",
+        "delete_all": "Delete All",
+        "single_selection": "Selection",
         "pagination": {
             "prev": "Prev",
             "next": "Next",
-            "page_info": "Page {{current}} - Total: {{total}} {{label}}"
+            "page_info": "Page {{current}} - Total: {{total}} {{label}}",
+            "page_info_simple": "Page {{page}}",
+            "page_of": "of {{count}}"
         },
         "selection_count": "{{count}} selected",
         "import": "Import",
@@ -38,8 +46,6 @@
             "asc": "Ascending",
             "desc": "Descending"
         },
-        "remove": "Remove",
-        "actions_title": "Actions",
         "bulk_actions": "Bulk Actions",
         "date": "Date",
         "supplier": "Supplier",
@@ -88,7 +94,26 @@
         "cip": "CIP",
         "date_format_short": "MM/dd/yyyy",
         "date_locale": "en-US",
-        "search_product_placeholder": "Search for a product..."
+        "search_product_placeholder": "Search for a product...",
+        "last_7_days": "Last 7 days",
+        "last_30_days": "Last 30 days",
+        "last_90_days": "Last 90 days",
+        "last_4_weeks": "Last 4 weeks",
+        "last_12_weeks": "Last 12 weeks",
+        "last_6_months": "Last 6 months",
+        "last_12_months": "Last 12 months",
+        "last_24_months": "Last 24 months",
+        "error_loading_data": "Error loading data",
+        "error_occurred": "An error occurred",
+        "select_tables": "Please select at least one table",
+        "select_file": "Please select a file",
+        "sub_table_one": "sub-table",
+        "sub_table_other": "sub-tables",
+        "table": "Table",
+        "rows": "Rows",
+        "sub_tables": "Sub-tables",
+        "rows_deleted": "Rows deleted",
+        "concerned_tables": "Concerned tables"
     },
     "manager_dashboard": {
         "title": "Manager Dashboard",
@@ -165,111 +190,27 @@
             "new_current": "New / In Progress",
             "history": "Purchase History"
         },
-        "fournisseurs": "Suppliers",
+        "fournisseurs": {
+            "title": "Suppliers",
+            "list": "List & Contacts",
+            "finance": "Finance & Payments"
+        },
         "clients": "Customers",
         "creances": "Receivables",
-        "avoirs": {
-            "title": "Returns Management",
-            "subtitle": "Manage supplier returns and stock re-entries",
-            "search_placeholder": "Search supplier or number...",
-            "create_btn": "New Return",
-            "empty": "No returns found",
-            "loading": "Loading returns...",
-            "types": {
-                "perime": "Expired",
-                "casse": "Broken",
-                "erreur_livraison": "Delivery Error",
-                "autre": "Other"
-            },
-            "table": {
-                "date": "Date",
-                "numero": "Number",
-                "fournisseur": "Supplier",
-                "montant": "Tax-Excl. Amount",
-                "status": "Status"
-            },
-            "form": {
-                "title_new": "New Return",
-                "title_edit": "Edit Return #{{id}}",
-                "subtitle": "Save the return as a draft before validating.",
-                "cancel": "Cancel",
-                "save_draft": "Save Draft",
-                "saving": "Saving...",
-                "general_info": "General Information",
-                "fournisseur": "Supplier",
-                "fournisseur_placeholder": "Search supplier...",
-                "no_fournisseur": "No supplier found",
-                "type_label": "Reason / Type",
-                "observations_label": "Observations (Optional)",
-                "observations_placeholder": "Additional details...",
-                "search_product_placeholder": "Search for a product to add...",
-                "empty_lines": "Search for a product to start",
-                "table_product": "Product",
-                "table_lot": "Batch & Exp.",
-                "table_qty": "Qty",
-                "table_price": "Unit Price",
-                "table_total": "Total",
-                "no_lot": "No Batch",
-                "no_date": "No date",
-                "select_lot": "Select Batch",
-                "total_amount": "Total Amount:",
-                "items_count": "{{count}} item(s) • {{units}} unit(s)"
-            },
-            "details": {
-                "back": "Back to list",
-                "title": "Return {{numero}}",
-                "created_at": "Created on {{date}}",
-                "created_by": "By {{name}}",
-                "print": "Print",
-                "delete": "Delete",
-                "validate": "Validate",
-                "fournisseur_info": "Supplier Information",
-                "fournisseur_name": "Name / Company Name",
-                "type_label": "Type of return",
-                "observations_label": "Observations",
-                "financial_summary": "Financial Summary",
-                "items_count": "Number of items",
-                "total_qty": "Total quantity",
-                "total_ht": "Total Tax-Excl. Amount",
-                "lines_title": "Return lines",
-                "lines_subtitle": "Detail of products returned to the supplier",
-                "close_all": "Close all",
-                "reopen_all": "Reopen all",
-                "no_lines": "No lines in this return"
-            }
-        },
         "stock": {
             "title": "Stock",
             "inventaire": {
-                "title": "Inventory",
-                "subtitle": "Manage and validate your physical stock",
-                "new_btn": "New Inventory",
-                "audit_btn": "Audit & Losses",
-                "filters": {
-                    "search": "Search...",
-                    "search_placeholder": "Search for an inventory...",
-                    "rayon": "All shelves",
-                    "status": "All statuses",
-                    "status_all": "All statuses",
-                    "creators_all": "All Creators",
-                    "delete_drafts": "Delete Drafts",
-                    "types": {
-                        "total": "Total",
-                        "tournant": "Rolling",
-                        "complet": "Complete",
-                        "ciblé": "Targeted"
-                    }
-                },
-                "status": {
-                    "draft": "Draft",
-                    "validated": "Validated"
-                },
+                "title": "Inventory Management",
+                "subtitle": "Manage and validate your physical stock.",
                 "stats": {
-                    "en_cours": "Inventories In Progress",
-                    "to_validate": "To validate",
-                    "val_phys": "Physical Value (All)",
-                    "ecart_global": "Global Gap",
-                    "all_inventories": "On all inventories"
+                    "en_cours": "Inventories in Progress",
+                    "to_validate": "waiting for validation",
+                    "val_phys": "Total Physical Value",
+                    "ecart_global": "Global Variance",
+                    "all_inventories": "across all displayed inventories",
+                    "val_phys_all": "Physical Value (All)",
+                    "ecart_global_all": "Global Gap",
+                    "all_inventories_all": "On all inventories"
                 },
                 "table": {
                     "date": "Date",
@@ -282,27 +223,29 @@
                     "actions": "Actions"
                 },
                 "list": {
-                    "title_short": "inventories",
+                    "title_short": "Inventories",
                     "empty": "No inventory found",
                     "date": "Date",
                     "desc": "Description",
-                    "val_theo": "Theo Val",
-                    "val_phys": "Phys Val",
-                    "ecart": "Gap",
+                    "val_theo": "Theo. Val.",
+                    "val_phys": "Phys. Val.",
+                    "ecart": "Variance",
                     "status": "Status",
-                    "actions": "Actions"
+                    "actions": "Actions",
+                    "no_description": "No description",
+                    "created_by_prefix": "By"
                 },
                 "detail": {
                     "title_new": "New Inventory",
                     "title_edit": "Inventory #{{id}}",
-                    "validated": "Validated",
+                    "validated": "Validated and Closed",
                     "tab_entry": "Entry",
                     "tab_analysis": "Analysis",
-                    "print": "Print",
+                    "print": "Print Report",
                     "validate": "Validate Inventory",
                     "date": "Inventory Date",
-                    "description": "Description / Comment",
-                    "placeholder_desc": "Ex: Year-end inventory, Shelf A...",
+                    "description": "Description / Notes",
+                    "placeholder_desc": "e.g. Annual Inventory, Shelf A Control...",
                     "import_csv_title": "Import CSV file (Cip, Quantity)",
                     "empty_list_title": "No products",
                     "empty_list": "Search and add products to start inventory.",
@@ -325,7 +268,7 @@
                     "lot_label": "Batch:",
                     "items_count": "Items",
                     "total_gap_value": "Total Gap Amount",
-                    "search_placeholder": "Search for a product...",
+                    "search_placeholder": "Scan or search for a product...",
                     "no_result": "No product found"
                 },
                 "types": {
@@ -340,9 +283,9 @@
                     "desc_global": "Stock will be adjusted without batch distinction",
                     "btn_new": "New Batch (Manual)",
                     "desc_new": "For a batch not listed above",
-                    "title": "Available batches for {{name}}",
-                    "subtitle": "Select the physical batch you are currently counting",
-                    "loading": "Retrieving batches..."
+                    "title": "Lot Selection: {{name}}",
+                    "subtitle": "This product is managed by lots. Please choose the relevant lot or create a new one.",
+                    "loading": "Loading lots..."
                 },
                 "analysis": {
                     "no_data": "No data",
@@ -351,7 +294,23 @@
                     "print_report": "Print gap report"
                 },
                 "create_btn": "Create",
-                "merge_btn": "Merge"
+                "merge_btn": "Merge",
+                "create": {
+                    "title": "New Inventory",
+                    "action_title": "Operation Type",
+                    "action_verify": "Verify Stock",
+                    "action_verify_desc": "Scan products to compare physical stock with system stock.",
+                    "action_entry": "Initial Entry",
+                    "action_entry_desc": "Force physical stocks without comparison (direct update).",
+                    "stock_type_title": "Stock Location",
+                    "stock_global": "Global Stock",
+                    "stock_rayon": "Shelf Stock",
+                    "stock_reserve": "Reserve Stock",
+                    "perimeter_title": "Inventory Scope",
+                    "rayon_all": "All Shelves",
+                    "groupe_all": "All Groups",
+                    "forme_all": "All Forms"
+                }
             },
             "perimes": {
                 "title": "Expired Management",
@@ -495,87 +454,6 @@
                     "message": "Please confirm your credentials or ask an administrator to validate this stock transfer."
                 }
             },
-            "inventaire": {
-                "title": "Inventory Management",
-                "subtitle": "Manage and validate your stock inventories.",
-                "stats": {
-                    "en_cours": "Inventories in Progress",
-                    "to_validate": "waiting for validation",
-                    "val_phys": "Total Physical Value",
-                    "ecart_global": "Global Variance",
-                    "all_inventories": "across all displayed inventories"
-                },
-                "filters": {
-                    "search_placeholder": "Search for an inventory...",
-                    "status_all": "All Statuses",
-                    "creators_all": "All Creators",
-                    "delete_drafts": "Delete Drafts"
-                },
-                "status": {
-                    "draft": "Draft",
-                    "validated": "Validated"
-                },
-                "list": {
-                    "empty": "No inventory found",
-                    "date": "Date",
-                    "desc": "Description",
-                    "val_theo": "Theo. Val.",
-                    "val_phys": "Phys. Val.",
-                    "ecart": "Variance",
-                    "status": "Status",
-                    "actions": "Actions",
-                    "no_description": "No description",
-                    "title_short": "Inventories",
-                    "created_by_prefix": "By"
-                },
-                "create": {
-                    "title": "New Inventory",
-                    "action_title": "Operation Type",
-                    "action_verify": "Verify Stock",
-                    "action_verify_desc": "Scan products to compare physical stock with system stock.",
-                    "action_entry": "Initial Entry",
-                    "action_entry_desc": "Force physical stocks without comparison (direct update).",
-                    "stock_type_title": "Stock Location",
-                    "stock_global": "Global Stock",
-                    "stock_rayon": "Shelf Stock",
-                    "stock_reserve": "Reserve Stock",
-                    "perimeter_title": "Inventory Scope",
-                    "rayon_all": "All Shelves",
-                    "groupe_all": "All Groups",
-                    "forme_all": "All Forms"
-                },
-                "detail": {
-                    "title_new": "New Inventory",
-                    "title_edit": "Inventory #{{id}}",
-                    "tab_entry": "Entry",
-                    "tab_analysis": "Analysis",
-                    "print": "Print Report",
-                    "validate": "Validate Inventory",
-                    "date": "Inventory Date",
-                    "description": "Description / Notes",
-                    "placeholder_desc": "e.g. Annual Inventory, Shelf A Control...",
-                    "validated": "Validated and Closed",
-                    "import_csv_title": "Import CSV file (Cip, Quantity)",
-                    "search_placeholder": "Scan or search for a product...",
-                    "no_result": "No product found"
-                },
-                "types": {
-                    "reserve": "RESERVE STOCK",
-                    "rayon": "SHELF STOCK",
-                    "global": "GLOBAL STOCK"
-                },
-                "lot_modal": {
-                    "title": "Lot Selection: {{name}}",
-                    "subtitle": "This product is managed by lots. Please choose the relevant lot or create a new one.",
-                    "loading": "Loading lots...",
-                    "no_lots_title": "No lots available",
-                    "no_lots_desc": "There are currently no lots in stock for this product.",
-                    "btn_global": "Global Stock (No Lot)",
-                    "desc_global": "Inventory without specifying a precise lot",
-                    "btn_new": "New Lot",
-                    "desc_new": "Create a new lot entry"
-                }
-            },
             "etats_inventaire": {
                 "title": "Inventory States",
                 "generate_title": "Generate an inventory state",
@@ -599,7 +477,9 @@
                     "recap": "Summary:",
                     "title": "Inventory state",
                     "all": "All",
-                    "with": "with"
+                    "with": "with",
+                    "total_items": "Items:",
+                    "val_ht": "Valorization:"
                 },
                 "help": {
                     "title": "How to use?",
@@ -724,100 +604,73 @@
                     "never_sold": "Never"
                 }
             },
-            "etats_inventaire": {
-                "title": "Inventory States",
-                "generate_title": "Generate an inventory state",
-                "grouping_title": "Grouping",
-                "groups": {
-                    "rayon": "By Shelf",
-                    "forme": "By Form",
-                    "groupe": "By Group"
-                },
-                "stock_display_title": "Stock Display",
-                "stock_options": {
-                    "machine": "Machine Stock (current values)",
-                    "zero": "Zero Stock (for entry)"
-                },
-                "to_print_label": "{{type}} to print",
-                "all_entities": "All {{type}}s",
-                "loading_entities": "Loading...",
-                "summary": {
-                    "recap": "Summary:",
-                    "title": "Inventory state",
-                    "all": "All",
-                    "with": "with"
-                },
-                "download_btn": "Download PDF",
-                "generating": "Generating...",
-                "messages": {
-                    "success": "PDF downloaded successfully",
-                    "error": "Error during PDF download"
-                },
-                "help": {
-                    "title": "How to use?",
-                    "step1": "1. Choose the grouping type",
-                    "step2": "2. Select a specific {{type}} or leave \"All\"",
-                    "step3": "3. Choose the stock display",
-                    "step4": "4. Click on \"Download PDF\""
-                }
+            "messages": {
+                "success": "PDF downloaded successfully",
+                "error": "Error during PDF download"
             },
-            "journal": "Adjustment Journal",
-            "analyse_menu": "Stock Analysis",
-            "organisation": {
-                "title": "Organization Management",
-                "subtitle": "Manage your shelves, dosage forms, and product groupings",
-                "tabs": {
-                    "rayons": "Shelves",
-                    "formes": "Dosage Forms",
-                    "groupes": "Product Groups"
-                },
-                "category_manager": {
-                    "load_error": "Error loading {{type}}s",
-                    "success_save": "{{type}} saved successfully",
-                    "success_delete": "{{type}} deleted successfully",
-                    "delete_confirm_title": "Delete this item?",
-                    "delete_confirm_msg": "This action is irreversible and will affect associated products.",
-                    "product_added": "{{name}} added to {{type}}",
-                    "product_removed": "Product removed from {{type}}",
-                    "remove_product_title": "Remove product?",
-                    "remove_product_msg": "Do you want to remove {{name}} from this {{type}}?",
-                    "search": "Search for a {{type}}...",
-                    "no_items": "No {{type}} found",
-                    "details_title": "{{type}} Details",
-                    "parent_label": "Parent",
-                    "add_products_btn": "Add products",
-                    "select_item": "Select a {{type}}",
-                    "select_item_hint": "Choose a category from the list to see its products.",
-                    "edit_title": "Edit {{type}}",
-                    "new_title": "New {{type}}",
-                    "edit_subtitle": "Update information",
-                    "new_subtitle": "Create a new entry in {{type}}s",
-                    "assoc_products_title": "Associate products",
-                    "assoc_products_subtitle": "Search and bulk add products for : {{name}}",
-                    "print_stock_title": "Print stock status",
-                    "name_label": "{{type}} Name",
-                    "description_label": "Description",
-                    "parent_select_none": "None (Parent category)",
-                    "cancel": "Cancel",
-                    "save": "Save",
-                    "finish": "Finish",
-                    "search_products_placeholder": "Search by name or CIP...",
-                    "searching": "Searching...",
-                    "search_min_chars": "Enter at least 2 characters",
-                    "search_no_results": "No results found",
-                    "print_help": "Generate a PDF report of the current stock status for this category.",
-                    "exclude_zero_stock": "Exclude products out of stock",
-                    "print_btn": "Start Printing",
-                    "name_labels": "names"
-                }
-            },
-            "avoirs": "Claims",
-            "promis": "Promised Items",
-            "perimes_menu": "Expired Items",
-            "formes": "Forms",
-            "groupes": "Groups",
-            "rayons": "Shelves"
+            "help": {
+                "title": "How to use?",
+                "step1": "1. Choose the grouping type",
+                "step2": "2. Select a specific {{type}} or leave \"All\"",
+                "step3": "3. Choose the stock display",
+                "step4": "4. Click on \"Download PDF\""
+            }
         },
+        "journal": "Adjustment Journal",
+        "analyse_menu": "Stock Analysis",
+        "organisation": {
+            "title": "Organization Management",
+            "subtitle": "Manage your shelves, dosage forms, and product groupings",
+            "tabs": {
+                "rayons": "Shelves",
+                "formes": "Dosage Forms",
+                "groupes": "Product Groups"
+            },
+            "category_manager": {
+                "load_error": "Error loading {{type}}s",
+                "success_save": "{{type}} saved successfully",
+                "success_delete": "{{type}} deleted successfully",
+                "delete_confirm_title": "Delete this item?",
+                "delete_confirm_msg": "This action is irreversible and will affect associated products.",
+                "product_added": "{{name}} added to {{type}}",
+                "product_removed": "Product removed from {{type}}",
+                "remove_product_title": "Remove product?",
+                "remove_product_msg": "Do you want to remove {{name}} from this {{type}}?",
+                "search": "Search for a {{type}}...",
+                "no_items": "No {{type}} found",
+                "details_title": "{{type}} Details",
+                "parent_label": "Parent",
+                "add_products_btn": "Add products",
+                "select_item": "Select a {{type}}",
+                "select_item_hint": "Choose a category from the list to see its products.",
+                "edit_title": "Edit {{type}}",
+                "new_title": "New {{type}}",
+                "edit_subtitle": "Update information",
+                "new_subtitle": "Create a new entry in {{type}}s",
+                "assoc_products_title": "Associate products",
+                "assoc_products_subtitle": "Search and bulk add products for : {{name}}",
+                "print_stock_title": "Print stock status",
+                "name_label": "{{type}} Name",
+                "description_label": "Description",
+                "parent_select_none": "None (Parent category)",
+                "cancel": "Cancel",
+                "save": "Save",
+                "finish": "Finish",
+                "search_products_placeholder": "Search by name or CIP...",
+                "searching": "Searching...",
+                "search_min_chars": "Enter at least 2 characters",
+                "search_no_results": "No results found",
+                "print_help": "Generate a PDF report of the current stock status for this category.",
+                "exclude_zero_stock": "Exclude products out of stock",
+                "print_btn": "Start Printing",
+                "name_labels": "names"
+            }
+        },
+        "promis": "Promised Items",
+        "perimes_menu": "Expired Items",
+        "formes": "Forms",
+        "groupes": "Groups",
+        "rayons": "Shelves",
         "statistiques": {
             "title": "Statistics",
             "rapports": "Report Center",
@@ -826,7 +679,9 @@
             "fournisseurs": "Suppliers",
             "mensuel": "Monthly Report",
             "finances": "Financial Module",
-            "classement_vendeurs": "Seller Ranking"
+            "classement_vendeurs": "Seller Ranking",
+            "analyse_temporelle": "Temporal Analysis",
+            "guide": "Financial Guide 📖"
         },
         "parametres": {
             "title": "Settings",
@@ -836,14 +691,97 @@
             "imprimantes": "Printer Config"
         },
         "utilisateurs": "Users",
-        "user_sessions": "Attendance Tracking",
+        "user_sessions_sidebar": "Attendance Tracking",
         "audit": "Audit Log",
-        "logout": "Logout",
-        "app_subtitle": "Professional Management",
-        "roles": {
-            "pharmacist": "Pharmacist",
-            "user": "User"
+        "maintenance": "Maintenance"
+    },
+
+    "audit": {
+        "title": "Audit Log",
+        "subtitle": "Track all actions performed on the system",
+        "actions": {
+            "all": "All action types",
+            "PRICE_CHG": "Price Change",
+            "STOCK_ADJ": "Stock Adjustment",
+            "SALE": "Sale",
+            "SALE_CANCEL": "Sale Cancellation",
+            "PROD_CREATE": "Product Creation",
+            "PROD_UPDATE": "Product Modification",
+            "INV_CREATE": "Invoicing",
+            "INV_DELETE": "Invoice Deletion",
+            "INV_CANCEL": "Invoice Cancellation",
+            "INV_DEL": "Invoice Deletion",
+            "INV_VALID": "Invoice Validation",
+            "INV_VAL": "Invoice Validation (Sudo)",
+            "ORD_RECV": "Order Reception",
+            "ORD_CNCL": "Order Cancellation",
+            "USER_LOGIN": "User Login",
+            "SUDO_VAL": "Sudo Validation",
+            "CREATE": "Creation",
+            "UPDATE": "Modification",
+            "DELETE": "Deletion",
+            "CLOTURE": "Closing"
+        },
+        "stats": {
+            "total": "Total Logs",
+            "last_24h": "Last 24h",
+            "last_7d": "Last 7 days",
+            "last_30d": "Last 30 days"
+        },
+        "filters": {
+            "title": "Search & Filters",
+            "action_label": "Action",
+            "user_label": "User",
+            "all_users": "All users",
+            "date_from": "Period (Start)",
+            "date_to": "Period (End)",
+            "search_label": "Text search",
+            "search_placeholder": "Invoice, reason, product...",
+            "hide_stats": "HIDE STATS",
+            "show_stats": "SHOW STATS",
+            "export": "EXPORT CSV",
+            "reset": "RESET"
+        },
+        "view": {
+            "flux": "Activity Stream",
+            "items": "items",
+            "cards_btn": "🗂️ CARDS",
+            "table_btn": "📄 TABLE",
+            "loading": "Syncing audit log...",
+            "empty_title": "No activity found",
+            "empty_subtitle": "Adjust your filters or check the selected period.",
+            "sudo_badge": "SUDO VALIDATION",
+            "system_user": "SYSTEM",
+            "json_btn": "JSON",
+            "raw_data": "RAW TRANSACTION DATA"
+        },
+        "details": {
+            "price_change": "Price: {{old}} F ➔ {{new}} F",
+            "stock_adj": "Stock: {{old}} ➔ {{new}} ({{reason}})",
+            "sudo_val": "Validated by {{user}} for {{permission}}",
+            "amount": "Amount: {{amount}} F",
+            "quantity": "Quantity: {{quantity}}",
+            "ecart": "Variance: {{ecart}}"
+        },
+        "table": {
+            "timestamp": "Timestamp",
+            "user": "User",
+            "operation": "Operation",
+            "description": "Description & Changes",
+            "status": "Status",
+            "sudo": "SUDO"
+        },
+        "messages": {
+            "export_success": "Audit log exported successfully.",
+            "export_error": "Error exporting audit log.",
+            "load_error": "Error loading audit logs."
         }
+    },
+    "logout": "Logout",
+    "app_subtitle": "Professional Management",
+    "roles": {
+        "pharmacist": "Pharmacist",
+        "user": "User"
     },
     "finance": {
         "title": "Financial Module",
@@ -924,6 +862,83 @@
             "avg_rate": "Avg Rate: {{rate}}%",
             "annual_ca": "Annual Revenue",
             "sales_count": "{{count}} sales"
+        },
+        "guide": {
+            "title": "Financial Analysis Guide",
+            "subtitle": "Understand the metrics, calculations, and methodology of your financial tools.",
+            "summary": "Summary",
+            "sections": {
+                "seller_ranking": {
+                    "title": "Seller Ranking",
+                    "desc": "Analysis of individual performance of your sales team.",
+                    "methodology": "Methodology",
+                    "methodology_desc": "Ranking is based on Total Revenue (Tax Included) generated by each seller over the selected period.",
+                    "calculation": "Key Calculations",
+                    "basket_desc": "Avg Basket = Total Revenue / Number of Sales",
+                    "evolution_desc": "Trend = Comparison with the previous period (e.g., current month vs. last month)."
+                },
+                "supplier_purchases": {
+                    "title": "Supplier Purchases",
+                    "desc": "Precise calculation of what you actually owe your partners.",
+                    "methodology": "Net Balance",
+                    "methodology_desc": "The displayed amount corresponds to actual purchases after deducting credit notes.",
+                    "calculation": "Formula:",
+                    "formula": "Total Net = (Sum of Purchase Invoices) - (Sum of Credit Notes / Returns)"
+                },
+                "scoring_performance": {
+                    "title": "Scoring & Performance",
+                    "desc": "Automatic 100-point supplier evaluation system.",
+                    "criteria": "Evaluation Criteria:",
+                    "volume": "Volume (30%)",
+                    "volume_desc": "Based on total purchase amount over the last 12 months.",
+                    "quality": "Quality (30%)",
+                    "quality_desc": "Credit note and claim rate (fewer returns lead to a better score).",
+                    "regularity": "Consistency (40%)",
+                    "regularity_desc": "Frequency and constancy of your orders throughout the year."
+                },
+                "advanced_analysis": {
+                    "title": "Advanced Analysis",
+                    "desc": "Opportunity detection and optimization algorithms.",
+                    "low_margin": "Low Margin",
+                    "low_margin_desc": "Products with high sales volume but margin < 15%.",
+                    "dormant_stock": "Dormant Stock",
+                    "dormant_stock_desc": "High-margin products (> 40%) without significant sales for 3 months.",
+                    "price_optimization": "Price Optimization",
+                    "price_optimization_desc": "Suggests a +5% adjustment on products with critical margins (< 10%).",
+                    "empty_table_title": "Why are my tables empty?",
+                    "empty_table_desc": "If you see no data in the three tables above (Low Margin, Dormant Stock, or Price Optimization), it's usually a sign of excellent financial health or very strict detection thresholds:",
+                    "reason_1": "01. \"Low Margin\" Table: Empty because all your sold products have margins above 15% (no \"low margin\" detected).",
+                    "reason_2": "02. \"Price Optimization\" Table: Empty because you have no critical products with a margin below 10%.",
+                    "reason_3": "03. \"Dormant Stock\" Table: Empty because your high-margin items (>40%) are selling well enough to not be considered tied up capital."
+                }
+            }
+        }
+    },
+    "temporal_analysis": {
+        "title": "Temporal Analysis",
+        "subtitle": "Analyze your best hours, days, and seasons.",
+        "peak_hours": "Peak Hours",
+        "daily_comparison": "Profitable Days",
+        "seasonality": "Seasonality",
+        "peak_hour_title": "Peak Traffic",
+        "peak_hour_summary": "Peak at {{hour}}:00 with revenue of {{revenue}}",
+        "best_day_title": "Top Performing Day",
+        "best_day_summary": "{{day}} is your best day with {{revenue}} on average",
+        "seasonality_title": "Seasonal Trends",
+        "seasonality_summary": "Analysis over {{months}} months • {{count}} seasonal products detected",
+        "global_revenue_evolution": "Global Revenue Evolution",
+        "top_seasonal_products": "Top Seasonal Products",
+        "no_seasonality_detected": "No marked seasonal trends detected at moment.",
+        "columns": {
+            "day": "Day",
+            "avg_sales": "Avg Sales",
+            "avg_basket": "Avg Basket",
+            "avg_revenue": "Avg Revenue",
+            "product": "Product",
+            "peak_month": "Peak Month",
+            "peak_volume": "Peak Vol.",
+            "monthly_avg": "Monthly Avg",
+            "variation": "Variation"
         }
     },
     "users": {
@@ -1371,43 +1386,43 @@
             "title": "Stock Adjustments",
             "subtitle": "Complete history of manual movements",
             "stats": {
-                    "total": "Total Adjustments",
-                    "positive": "Total In (+)",
-                    "negative": "Total Out (-)"
+                "total": "Total Adjustments",
+                "positive": "Total In (+)",
+                "negative": "Total Out (-)"
+            },
+            "filters": {
+                "search_label": "Search",
+                "search_placeholder": "Product, CIP, user...",
+                "date_start": "Start date",
+                "date_end": "End date",
+                "reason_label": "Reason",
+                "all_reasons": "All reasons",
+                "reasons": {
+                    "INVENTAIRE": "Inventory adjustment",
+                    "CASSE": "Broken",
+                    "VOL": "Theft",
+                    "CONFUSION": "Confusion",
+                    "ERR_ENTREE": "Entry error",
+                    "AVARIE": "Damaged",
+                    "USAGE_INT": "Internal use",
+                    "PERIME": "Expired"
                 },
-                "filters": {
-                    "search_label": "Search",
-                    "search_placeholder": "Product, CIP, user...",
-                    "date_start": "Start date",
-                    "date_end": "End date",
-                    "reason_label": "Reason",
-                    "all_reasons": "All reasons",
-                    "reasons": {
-                        "INVENTAIRE": "Inventory adjustment",
-                        "CASSE": "Broken",
-                        "VOL": "Theft",
-                        "CONFUSION": "Confusion",
-                        "ERR_ENTREE": "Entry error",
-                        "AVARIE": "Damaged",
-                        "USAGE_INT": "Internal use",
-                        "PERIME": "Expired"
-                    },
-                    "refresh": "Refresh",
-                    "export": "Export",
-                    "reset": "Reset"
-                },
-                "table": {
-                    "loading": "Loading adjustments...",
-                    "empty": "No adjustments found",
-                    "date_header": "Date/Time",
-                    "product_header": "Product",
-                    "cip_header": "CIP",
-                    "user_header": "User",
-                    "before_header": "Before",
-                    "after_header": "After",
-                    "diff_header": "Diff",
-                    "reason_header": "Reason",
-                    "pagination": "Page {{current}} of {{total}} ({{count}} items)"
+                "refresh": "Refresh",
+                "export": "Export",
+                "reset": "Reset"
+            },
+            "table": {
+                "loading": "Loading adjustments...",
+                "empty": "No adjustments found",
+                "date_header": "Date/Time",
+                "product_header": "Product",
+                "cip_header": "CIP",
+                "user_header": "User",
+                "before_header": "Before",
+                "after_header": "After",
+                "diff_header": "Diff",
+                "reason_header": "Reason",
+                "pagination": "Page {{current}} of {{total}} ({{count}} items)"
             }
         },
         "etats_inventaire": {
@@ -3112,119 +3127,134 @@
     "user_sessions": {
         "title": "Attendance Tracking",
         "subtitle": "Log of first logins and last logouts",
-        "filters": {
-            "start_date": "Start Date",
-            "end_date": "End Date",
-            "operator": "Operator",
-            "all_operators": "All Operators"
+        "tabs": {
+            "daily": "Daily Log",
+            "monthly": "Monthly Recap"
         },
-        "table": {
-            "operator": "Operator",
-            "date": "Date",
-            "first_login": "First Login",
-            "last_logout": "Last Logout",
-            "duration": "Presence Duration",
-            "status": "Status",
-            "active": "Active Session",
-            "completed": "Completed Session"
+        "date": "Date",
+        "operator": "Operator",
+        "all_operators": "All Operators",
+        "filter": "Filter",
+        "workstation": "Station",
+        "first_login": "First Login",
+        "last_logout": "Last Logout",
+        "duration": "Presence Duration",
+        "status": "Status",
+        "closed": "Closed",
+        "ongoing": "Ongoing",
+        "not_closed": "Not Closed",
+        "force_logout": "Force Logout",
+        "loading": "Loading data...",
+        "no_result": "No session data found for this period",
+        "force_logout_confirm": "Are you sure you want to log out user @{{username}}? This will remove their immediate access.",
+        "force_logout_success": "User @{{username}} has been logged out.",
+        "force_logout_error": "Error during force logout.",
+        "recap": {
+            "month": "Month",
+            "year": "Year",
+            "days_present": "Days Present",
+            "total_hours": "Total Hours",
+            "avg_hours": "Avg Hours",
+            "avg": "Avg:"
         },
-        "no_data": "No session data found for this period"
-    },
-    "audit": {
-        "title": "Audit Log",
-        "subtitle": "Track all actions performed on the system",
-        "stats": {
-            "total": "Total Logs",
-            "last_24h": "Last 24h",
-            "last_7d": "Last 7 days",
-            "last_30d": "Last 30 days"
-        },
-        "filters": {
-            "title": "Search Tool & Filters",
-            "show_stats": "SHOW STATS",
-            "hide_stats": "HIDE STATS",
-            "export": "EXPORT CSV",
-            "reset": "RESET",
-            "action_label": "Action",
-            "user_label": "User",
-            "date_from": "Period (Start)",
-            "date_to": "Period (End)",
-            "search_label": "Text Search",
-            "search_placeholder": "Invoice, reason, product...",
-            "all_users": "All users"
-        },
-        "actions": {
-            "all": "All",
-            "STOCK_ADJ": "Stock adjustment",
-            "PRICE_CHG": "Price change",
-            "CLOTURE": "Cash closing",
-            "INV_CANCEL": "Invoice cancellation",
-            "INV_DEL": "Invoice deletion",
-            "INV_VALID": "Invoice validation",
-            "INV_CRE": "Inventory creation",
-            "INV_VAL": "Inventory validation",
-            "ORD_RECV": "Order reception",
-            "ORD_CNCL": "Reception cancellation",
-            "CREATE": "Creation",
-            "UPDATE": "Modification",
-            "DELETE": "Deletion"
-        },
-        "view": {
-            "flux": "Activity Stream",
-            "items": "items",
-            "cards_btn": "🗂️ CARDS",
-            "table_btn": "📄 TABLE",
-            "loading": "Journal synchronization...",
-            "empty_title": "No activity found",
-            "empty_subtitle": "Adjust your filters or check the selected period.",
-            "sudo_badge": "SUDO VALIDATION",
-            "system_user": "SYSTEM",
-            "raw_data": "RAW TRANSACTION DATA",
-            "json_btn": "JSON"
-        },
-        "table": {
-            "timestamp": "Timestamp",
-            "user": "User",
-            "operation": "Operation",
-            "description": "Description & Changes",
-            "status": "Status",
-            "sudo": "SUDO"
-        },
-        "details": {
-            "price_change": "Price: {{old}} F ➔ {{new}} F",
-            "stock_adj": "Stock: {{old}} ➔ {{new}} ({{reason}})",
-            "sudo_val": "Validated by {{user}} for {{permission}}",
-            "amount": "Amount: {{amount}} F",
-            "quantity": "Quantity: {{quantity}}",
-            "ecart": "Difference: {{ecart}}"
-        },
-        "messages": {
-            "load_error": "Error loading logs.",
-            "export_error": "Error during CSV export"
+        "months": {
+            "january": "January",
+            "february": "February",
+            "march": "March",
+            "april": "April",
+            "may": "May",
+            "june": "June",
+            "july": "July",
+            "august": "August",
+            "september": "September",
+            "october": "October",
+            "november": "November",
+            "december": "December"
         }
     },
     "avoirs": {
-        "title": "Supplier Credits (Returns)",
-        "subtitle": "Manage supplier returns and credits",
+        "title": "Avoirs Management",
+        "subtitle": "Manage supplier returns and stock reintegrations",
+        "search_placeholder": "Search supplier or number...",
+        "create_btn": "New Avoir",
+        "loading": "Loading avoirs...",
+        "empty": "No avoir found.",
         "types": {
             "perime": "Expired",
             "casse": "Broken",
             "erreur_livraison": "Delivery Error",
             "autre": "Other"
         },
-        "create_btn": "+ New Credit",
-        "search_placeholder": "🔍 Search credits...",
+        "statuses": {
+            "brouillon": "Draft",
+            "valide": "Validated"
+        },
         "table": {
             "date": "Date",
-            "numero": "Credit #",
+            "numero": "Avoir No.",
             "fournisseur": "Supplier",
-            "montant": "Amount",
+            "montant": "Amount (Ex-Tax)",
             "status": "Status"
         },
+        "form": {
+            "title_new": "New Avoir",
+            "title_edit": "Edit Avoir #{{id}}",
+            "subtitle": "Enter supplier return information",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "save_draft": "Save Draft",
+            "general_info": "General Information",
+            "fournisseur": "Supplier",
+            "fournisseur_placeholder": "Search for a supplier...",
+            "no_fournisseur": "No supplier found",
+            "type_label": "Return Reason",
+            "observations_label": "Observations / Notes",
+            "observations_placeholder": "Additional details...",
+            "search_product_placeholder": "Search for a product to add...",
+            "empty_lines": "No products added to the avoir",
+            "table_product": "Product",
+            "table_lot": "Lot",
+            "table_qty": "Qty",
+            "table_price": "Unit Price",
+            "table_total": "Total",
+            "no_lot": "No lot",
+            "no_date": "No date",
+            "select_lot": "Choose lot",
+            "items_count": "{{count}} line(s) | {{units}} unit(s)",
+            "total_amount": "Total Avoir"
+        },
+        "details": {
+            "back": "Back",
+            "title": "Avoir #{{numero}}",
+            "created_at": "Created on {{date}}",
+            "created_by": "by {{name}}",
+            "print": "Print",
+            "delete": "Delete",
+            "validate": "Validate & Reintegrate",
+            "fournisseur_info": "Supplier Information",
+            "financial_summary": "Financial Summary",
+            "items_count": "Number of products",
+            "total_qty": "Total quantity",
+            "total_ht": "Total Avoir (Ex-Tax)",
+            "lines_title": "Avoir Lines",
+            "lines_subtitle": "Details of returned products",
+            "reopen_all": "Reopen All",
+            "close_all": "Conclude All",
+            "no_lines": "No lines in this avoir",
+            "reopen_line": "Reopen line",
+            "close_line": "Conclude line (refunded or replaced)",
+            "type_label": "Return Reason",
+            "observations_label": "Observations"
+        },
         "stats": {
-            "total": "Total Claims",
+            "total": "Total Avoirs",
             "valides": "Validated",
             "brouillons": "Drafts"
+        },
+        "modals": {
+            "lot_selection_title": "Select a Lot for Return",
+            "no_lot_stock": "No lot available in stock for this product.",
+            "select": "Select"
         }
     },
     "login": {
@@ -3233,7 +3263,10 @@
         "password": "Password",
         "submit": "Log In",
         "loading": "Authenticating...",
-        "subtitle": "Secure Ecosystem"
+        "subtitle": "Secure Ecosystem",
+        "workstation_label": "Workstation ID",
+        "workstation_placeholder": "Name this station (e.g. TILL-1)",
+        "workstation_help": "This name will be saved to identify this device."
     },
     "abc_analysis": {
         "title": "ABC Analysis",
@@ -3474,6 +3507,338 @@
             "bulk_published": "Products published online",
             "bulk_unpublished": "Products removed from storefront",
             "bulk_error": "Error during bulk update"
+        }
+    },
+    "monthly_report": {
+        "title": "Monthly Activity Summary",
+        "subtitle": "Complete report of your monthly activity",
+        "filters": {
+            "month": "Month",
+            "generate": "Generate",
+            "loading": "Loading..."
+        },
+        "kpis": {
+            "ca_ttc": "Total Revenue (Inc-VAT)",
+            "ca_ht": "Net Revenue (Ex-VAT)",
+            "gross_margin": "Gross Margin",
+            "purchase_cost": "Purchase Cost",
+            "margin_info": "{{pct}}% of Revenue",
+            "sales_count": "{{count}} sales"
+        },
+        "suppliers": {
+            "title": "Purchases by Supplier",
+            "name": "Supplier",
+            "orders": "Nb Orders",
+            "amount": "Total Amount",
+            "no_data": "No purchases this month",
+            "total": "Total"
+        },
+        "pro_clients": {
+            "title": "Professional Clients",
+            "ca_total": "Total Revenue",
+            "paid": "Paid",
+            "balance": "Balance",
+            "recovery_rate": "Recovery Rate",
+            "top_clients": "Top Pro Clients"
+        },
+        "free_units": {
+            "title": "Free Units (UG)",
+            "value": "Value",
+            "quantity": "Quantity",
+            "ca_pct": "% Revenue",
+            "top_products": "Top Offered Products",
+            "product": "Product",
+            "qty": "Qty"
+        },
+        "encaissements": {
+            "title": "Monthly Cash In",
+            "mode": "Mode",
+            "amount": "Amount",
+            "no_data": "No cash in this month",
+            "total": "Total"
+        },
+        "caisse_mvts": {
+            "title": "Other Cash Movements",
+            "in": "Misc. In",
+            "out": "Misc. Out",
+            "balance": "Movement Balance",
+            "date": "Date",
+            "type": "Type",
+            "reason": "Reason",
+            "user": "User",
+            "no_data": "No extra-accounting movements this month"
+        },
+        "tva": {
+            "title": "Revenue by VAT Rate",
+            "rate": "Rate",
+            "ht": "EX-VAT",
+            "tax": "VAT",
+            "ttc": "INC-VAT"
+        },
+        "receivables": {
+            "title": "Receivables to Collect",
+            "total_to_recover": "Total amount to recover",
+            "desc": "On all credit sales"
+        },
+        "empty": {
+            "title": "Select a month and click \"Generate\"",
+            "subtitle": "To view the complete monthly summary"
+        },
+        "messages": {
+            "load_error": "Error loading report",
+            "download_error": "Error downloading PDF"
+        },
+        "pdf": {
+            "download": "PDF",
+            "tooltip": "Download report as PDF"
+        }
+    },
+    "statistiques_fournisseur": {
+        "title": "Supplier Statistics",
+        "subtitle": "Detailed analysis of purchase and sales performance",
+        "filters": {
+            "from": "From",
+            "to": "To",
+            "refresh": "Refresh"
+        },
+        "tabs": {
+            "sales": "Sales & Margins",
+            "performance": "Performance (Scoring)",
+            "price_comparison": "Price Comparator",
+            "concentration": "Purchase Concentration"
+        },
+        "sales_tab": {
+            "calculation_method": "Calculation Method: Sales Realized",
+            "info_text": "The statistics below concern only products sold during the selected period (collected turnover).",
+            "cards": {
+                "total_ca": "Total Revenue (incl. Tax)",
+                "purchase_cost": "Purchase Cost (Sold)",
+                "gross_margin": "Gross Margin",
+                "margin_percentage": "% of Revenue",
+                "units_sold": "Units Sold"
+            },
+            "chart": {
+                "title": "Revenue Distribution by Supplier",
+                "ca": "Revenue",
+                "margin": "Gross Margin"
+            },
+            "table": {
+                "supplier": "Supplier",
+                "qty_sold": "Qty Sold",
+                "purchase_cost": "Purchase Cost",
+                "ca_ttc": "Total Revenue",
+                "gross_margin": "Gross Margin",
+                "margin_percent": "% Margin",
+                "no_data": "No data for the selected period"
+            }
+        },
+        "performance_tab": {
+            "alert_title": "Rolling 12-month Analysis",
+            "alert_text": "Scores calculated based on receipt history.",
+            "score": "Score",
+            "metrics": {
+                "volume": "Volume (30%)",
+                "quality": "Quality (30%)",
+                "incidents": "Incidents",
+                "consistency": "Consistency (40%)",
+                "deliveries": "Deliveries"
+            }
+        },
+        "prices_tab": {
+            "alert_title": "Savings Opportunities",
+            "alert_text": "Products purchased from multiple suppliers with significant price gaps.",
+            "table": {
+                "product": "Product",
+                "max_gap": "Max Gap",
+                "offers": "Offers (Average Price)",
+                "best_price": "Best Price"
+            }
+        },
+        "concentration_tab": {
+            "title": "Purchase Concentration (Financial Volume)",
+            "table": {
+                "color": "Color",
+                "supplier": "Supplier",
+                "market_share": "Market Share",
+                "volume": "Purchased Volume"
+            }
+        }
+    },
+    "maintenance": {
+        "title": "Maintenance & Purge",
+        "subtitle": "Secure cleaning of transactional data",
+        "irreversible": "Irreversible operation",
+        "warning_msg": "Deleted data cannot be recovered. Always export a CSV backup before purging.",
+        "tables_title": "Tables to purge",
+        "select_all": "Select all",
+        "deselect_all": "Deselect all",
+        "period_title": "Period",
+        "date_from": "Start date",
+        "date_to": "End date",
+        "date_warning": "⚠️ Without dates, ALL data will be affected",
+        "actions": "Actions",
+        "preview_btn": "Preview",
+        "export_btn": "Export CSV (backup)",
+        "purge_btn": "Purge data",
+        "backup_title": "Database Backup",
+        "backup_desc": "Run a full database backup (compressed SQL).",
+        "backup_now": "Backup now",
+        "backup_success": "Backup completed!",
+        "automatic": "Automatic",
+        "enable_auto": "Enable auto backup",
+        "scheduled_time": "Scheduled time",
+        "secondary_path": "USB Key / External path",
+        "save_settings": "Save settings",
+        "restore_title": "Database Restoration",
+        "restore_desc": "Restore the database from a .sql.gz file. (Irreversible action)",
+        "restore_now": "Restore now",
+        "restoring": "Restoration in progress...",
+        "restore_success": "Restoration completed!",
+        "restore_restart_msg": "The application will automatically restart once finished.",
+        "selection_summary": "{{count}} table(s) selected",
+        "preview_title": "Preview — {{count}} rows to delete",
+        "purge_finished": "Purge finished",
+        "confirm_title": "Purge confirmation",
+        "confirm_msg": "This action will permanently delete the selected data.",
+        "password_label": "Superadmin password",
+        "cancel": "Cancel",
+        "confirm_purge": "Confirm purge",
+        "code_management": {
+            "title": "Source Code Management",
+            "desc": "Backup the entire project source code (Frontend & Backend).",
+            "backup_now": "Backup Code",
+            "restore_now": "Restore Code",
+            "restore_desc": "Restore the project from a source .zip file.",
+            "backup_success": "Source code backed up successfully!",
+            "restore_success": "Source code restored. System must be restarted."
+        },
+        "categories": {
+            "ventes": "💰 Sales & Invoicing",
+            "achats": "📦 Purchases & Suppliers",
+            "stock": "📊 Stock",
+            "caisse": "🏦 Cash Register",
+            "audit": "📋 Audit & Logs",
+            "objectifs": "🎯 Objectives"
+        },
+        "tables": {
+            "factures": "Invoices (sales)",
+            "commandes": "Orders (purchases)",
+            "avoirs": "Supplier Returns",
+            "paiements_fournisseur": "Supplier Payments",
+            "mouvements_stock": "Stock Movements",
+            "ajustements_stock": "Stock Adjustments",
+            "caisse": "Till Payments",
+            "clotures_caisse": "Till Closures",
+            "mouvements_caisse": "Till Movements (In/Out)",
+            "ordonnancier": "Prescription Log",
+            "objectifs": "Business Goals",
+            "promis": "Customer Promises",
+            "releves": "Payment Statements",
+            "coupons": "Vouchers",
+            "audit_logs": "Audit Log",
+            "activity_logs": "Activity Logs",
+            "sms_logs": "SMS Log",
+            "children": {
+                "lignes_facture": "Invoice lines",
+                "allocations_lots": "Batch allocations",
+                "paiements_caisse": "Till payments",
+                "lignes_commande": "Order lines",
+                "lignes_avoir": "Return lines",
+                "lignes_ordonnancier": "Prescription lines"
+            }
+        }
+    },
+    "pharmacy_settings": {
+        "title": "Pharmacy Information",
+        "subtitle": "Configure the information that appears on your tickets and documents",
+        "save_btn": "Save",
+        "saving": "Saving...",
+        "save_changes": "Save Changes",
+        "labels": {
+            "pharmacy_name": "Pharmacy Name *",
+            "niu": "NIU (Unique Identification Number)",
+            "rccm": "Trade Register (RCCM)",
+            "address": "Address",
+            "city": "City",
+            "country": "Country",
+            "phone": "Phone",
+            "email": "Email",
+            "receipt_header": "Receipt Header",
+            "ticket_footer": "Receipt Footer",
+            "paper_width": "Ticket Width (mm)",
+            "currency": "Currency",
+            "low_stock_days": "Low Stock Threshold (Days)",
+            "dormant_stock_days": "Dormant Stock Threshold (Days)",
+            "debt_threshold": "Client Debt Alert Threshold",
+            "auto_logout": "Auto Logout (minutes)",
+            "whatsapp_enabled": "WhatsApp Business",
+            "whatsapp_phone_id": "Phone Number ID",
+            "whatsapp_token": "Access Token (Permanent)",
+            "whatsapp_account_id": "WhatsApp Business Account ID",
+            "coeff_direct": "Direct Order Coefficient (Euro)",
+            "paper_standard": "80mm (Standard)",
+            "paper_small": "58mm (Small)"
+        },
+        "placeholders": {
+            "pharmacy_name": "CENTRAL PHARMACY",
+            "niu": "M012345678901234",
+            "rccm": "RC/DLA/2024/B/12345",
+            "address": "123 Republic Avenue",
+            "city": "Douala",
+            "country": "Cameroon",
+            "phone": "+237 6XX XXX XXX",
+            "email": "contact@pharmacy.com",
+            "receipt_header": "Welcome to our pharmacy!",
+            "ticket_footer": "Thank you for your visit! See you soon.",
+            "whatsapp_phone_id": "Ex: 105678901234567",
+            "whatsapp_token": "EAABw...",
+            "whatsapp_account_id": "Ex: 987654321098765",
+            "coeff_direct": "1.35",
+            "currency": "ex: FCFA, €, $",
+            "tva_rate": "19.25",
+            "tva_label": "Ex: Standard Rate"
+        },
+        "hints": {
+            "pharmacy_name": "This name appears at the top of all your tickets and documents",
+            "niu": "14 to 15 alphanumeric characters",
+            "rccm": "Maximum 20 characters",
+            "receipt_header": "Personalized message displayed at the top of the ticket",
+            "ticket_footer": "Thank you message displayed at the bottom of the ticket",
+            "low_stock": "Alert if coverage is below this number",
+            "dormant_stock": "Alert if no sales for this number of days",
+            "debt": "Debt amount from which an alert is raised",
+            "auto_logout": "Inactivity time before logout (Set 0 to disable)",
+            "whatsapp_help": "Use a permanent token generated on the Meta Developers portal.",
+            "coeff_direct": "This coefficient will be used by default to convert the Purchase Price (Euro) to Cost Price (FCFA).",
+            "coeff_formula": "Formula: Cost Price = (Price € x Exchange Rate) x Coefficient"
+        },
+        "sections": {
+            "identity": "Pharmacy Identity",
+            "contact": "Contact Details",
+            "ticket": "Receipt Messages",
+            "system": "System Settings & Alerts",
+            "tva": "VAT Management",
+            "orders": "Order Configuration",
+            "whatsapp": "WhatsApp Business (Meta Cloud API)"
+        },
+        "tva": {
+            "rate": "Rate (%)",
+            "label": "Label",
+            "status": "Status",
+            "actions": "Actions",
+            "delete": "Delete",
+            "loading": "Loading...",
+            "empty": "No rate configured",
+            "add_title": "Add a new rate",
+            "add_btn": "Add",
+            "active": "Active",
+            "inactive": "Inactive",
+            "success_add": "VAT rate added successfully",
+            "error_add": "Error adding VAT rate"
+        },
+        "status": {
+            "enabled": "Enabled",
+            "disabled": "Disabled"
         }
     }
 }

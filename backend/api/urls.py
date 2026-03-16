@@ -28,6 +28,7 @@ from .views.objectifs import ObjectifViewSet
 from .views.configuration_objectifs import ConfigurationObjectifsViewSet
 from .views.temporal_analysis import TemporalAnalysisViewSet
 from .views.purge import PurgeViewSet
+from .views.code_backup import CodeBackupViewSet
 
 
 # Create a router and register our viewsets with it.
@@ -81,6 +82,7 @@ router.register(r'configuration-objectifs', ConfigurationObjectifsViewSet, basen
 router.register(r'temporal-analysis', TemporalAnalysisViewSet, basename='temporal-analysis')
 router.register(r'tva', TVAViewSet, basename='tva')
 router.register(r'maintenance', PurgeViewSet, basename='maintenance')
+router.register(r'code-backup', CodeBackupViewSet, basename='code-backup')
 router.register(r'user-sessions', UserDailySessionViewSet, basename='user-session')
 
 
