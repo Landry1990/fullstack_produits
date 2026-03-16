@@ -43,6 +43,7 @@ import ClassementVendeurs from './components/ClassementVendeurs';
 import AnalyseTemporelle from './components/AnalyseTemporelle';
 import StockUGReport from './components/StockUGReport';
 import UserSessions from './components/UserSessions';
+import GuideFinancier from './components/GuideFinancier';
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ConfirmProvider } from './hooks/useConfirm'
 import { PharmacySettingsProvider } from './context/PharmacySettingsContext'
@@ -163,6 +164,7 @@ const router = createBrowserRouter([
           { path: 'classement-vendeurs', element: <ClassementVendeurs /> },
           { path: 'analyse-temporelle', element: <AnalyseTemporelle /> },
           { path: 'promotions', element: <PromotionList /> },
+          { path: 'guide-financier', element: <GuideFinancier /> },
           { path: 'historique-ventes', element: <HistoriqueVentes /> },
           { path: 'ordonnancier', element: <OrdonnancierPage /> },
           { path: 'whatsapp-history', element: <WhatsAppHistory /> },

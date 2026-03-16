@@ -26,17 +26,35 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
 
     const getStatusStyle = (status: string) => {
         switch (status) {
+            case 'BROUILLON':
             case 'BRO': return 'bg-warning/10 text-warning border-warning/20';
-            case 'VAL': return 'bg-success/10 text-success border-success/20';
+            case 'VAL':
+            case 'VALIDÉ':
+            case 'VALIDEE':
+            case 'VALIDE': return 'bg-success/10 text-success border-success/20';
             default: return 'bg-base-200 text-base-content/60 border-base-300';
+        }
+    };
+
+    const getStatusLabel = (status: string) => {
+        switch (status?.toUpperCase()) {
+            case 'BROUILLON': return t('avoirs.statuses.brouillon', 'Brouillon');
+            case 'VAL':
+            case 'VALIDÉ':
+            case 'VALIDEE':
+            case 'VALIDE': return t('avoirs.statuses.valide', 'Validé');
+            default: return status;
         }
     };
 
     const getTypeAvoirLabel = (type: string) => {
         switch (type) {
-            case 'PERIME': return t('avoirs.types.perime', 'Périmé');
+            case 'PERIME':
+            case 'Périmé': return t('avoirs.types.perime', 'Périmé');
             case 'CASSE': return t('avoirs.types.casse', 'Cassé');
             case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison', 'Erreur Livraison');
+            case 'AVARIE': return t('avoirs.types.avarie', 'Avarie');
+            case 'NON_FACTURE': return t('avoirs.types.non_facture', 'Non Facturé');
             case 'AUTRE': return t('avoirs.types.autre', 'Autre');
             default: return type;
         }
@@ -61,7 +79,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                 {t('avoirs.details.title', { numero: selectedAvoir.numero })}
                             </h1>
                             <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase tracking-wider ${getStatusStyle(selectedAvoir.status)}`}>
-                                {selectedAvoir.status_display}
+                                {getStatusLabel(selectedAvoir.status)}
                             </span>
                         </div>
                         <p className="text-sm text-base-content/60 mt-0.5 flex items-center gap-2">
@@ -118,7 +136,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                         </h2>
                         <div className="space-y-4">
                             <div>
-                                <p className="text-sm text-base-content/60 mb-1">Nom / Raison Sociale</p>
+                                <p className="text-sm text-base-content/60 mb-1">{t('avoirs.form.fournisseur')}</p>
                                 <p className="font-bold text-lg">{selectedAvoir.fournisseur_name}</p>
                             </div>
                             <div>
@@ -203,12 +221,12 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                             <table className="table w-full text-sm">
                                 <thead className="bg-base-200/50">
                                     <tr>
-                                        <th className="w-12 text-center">Statut</th>
-                                        <th>Produit</th>
-                                        <th>Lot & Exp.</th>
-                                        <th className="text-center">Quantité</th>
-                                        <th className="text-right">Prix Unitaire</th>
-                                        <th className="text-right">Total</th>
+                                        <th className="w-12 text-center">{t('avoirs.table.status')}</th>
+                                        <th>{t('avoirs.form.table_product')}</th>
+                                        <th>{t('avoirs.form.table_lot')}</th>
+                                        <th className="text-center">{t('avoirs.form.table_qty')}</th>
+                                        <th className="text-right">{t('avoirs.form.table_price')}</th>
+                                        <th className="text-right">{t('avoirs.form.table_total')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -218,7 +236,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
                                                 <button 
                                                     onClick={() => handleToggleCloture(ligne.id, ligne.est_cloture)}
                                                     className={`btn btn-ghost btn-circle btn-sm ${ligne.est_cloture ? 'text-success hover:bg-success/10' : 'text-base-content/30 hover:bg-base-content/10'}`}
-                                                    title={ligne.est_cloture ? "Réouvrir la ligne" : "Conclure la ligne (remboursée ou remplacée)"}
+                                                    title={ligne.est_cloture ? t('avoirs.details.reopen_line') : t('avoirs.details.close_line')}
                                                 >
                                                     {ligne.est_cloture ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                                                 </button>

@@ -124,7 +124,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = useCallback(async () => {
     // 1. On tente d'informer le serveur de la déconnexion pour le suivi
     try {
-      await axios.post('/api/auth/logout/');
+      const workstation = localStorage.getItem('zenith_workstation');
+      await axios.post('/api/auth/logout/', { workstation });
     } catch (err) {
       console.warn('Erreur lors de l\'enregistrement de la déconnexion au serveur:', err);
     }

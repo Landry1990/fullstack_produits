@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import ZenithLogo from './ZenithLogo';
-import { User, Lock, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, AlertCircle, Monitor } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Login() {
@@ -15,6 +15,22 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Workstation naming logic
+  const getDeviceType = () => {
+    const ua = navigator.userAgent;
+    if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) return "TABLET";
+    if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|NetFront|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) return "MOBILE";
+    return "PC";
+  };
+
+  const [workstationName, setWorkstationName] = useState(() => {
+    const saved = localStorage.getItem('zenith_workstation');
+    if (saved) return saved;
+    const type = getDeviceType();
+    const randomId = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${type}-${randomId}`;
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -25,9 +41,13 @@ export default function Login() {
         ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api-token-auth/`
         : '/api-token-auth/';
 
+      // Persist the current workstation name
+      localStorage.setItem('zenith_workstation', workstationName);
+
       const response = await axios.post(apiBaseUrl, {
         username,
-        password
+        password,
+        workstation: workstationName
       });
 
       const { token, is_superuser, allowed_menus, can_cash_out, can_do_returns, can_sell_negative_stock } = response.data;
@@ -37,13 +57,10 @@ export default function Login() {
       console.error('Login error:', err);
       if (axios.isAxiosError(err)) {
         if (!err.response) {
-          // Network error or server completely down
           setError(t('common.messages.server_unreachable'));
         } else if (err.response.status === 400 || err.response.status === 401) {
-          // Credential issues (DRF returns 400 or 401 for bad login)
           setError(t('common.messages.login_invalid'));
         } else if (err.response.status >= 500) {
-          // Server crashed
           setError(t('common.messages.server_error'));
         } else {
           setError(t('common.messages.error_generic'));
@@ -67,13 +84,13 @@ export default function Login() {
       </div>
 
       {/* Main Glassmorphic Container */}
-      <div className="relative z-10 w-full max-w-md p-6 group">
+      <div className="relative z-10 w-full max-w-[min(448px,90%)] p-4 sm:p-6 group">
         
         {/* Decorative elements outside the card */}
         <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-500/10 blur-xl rounded-full group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
         <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-blue-500/10 blur-xl rounded-full group-hover:bg-blue-500/20 transition-colors duration-500"></div>
 
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-[2.5rem] p-10 transition-all duration-300 hover:border-white/20">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 transition-all duration-300 hover:border-white/20">
           
           {/* Header & Identity */}
           <div className="text-center mb-10">
@@ -84,7 +101,7 @@ export default function Login() {
               </div>
             </div>
             
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase mb-2">
+            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-2">
               Zenith
             </h1>
             <div className="flex items-center justify-center gap-2">
@@ -141,6 +158,32 @@ export default function Login() {
                    />
                 </div>
               </div>
+
+              {/* Workstation Identification */}
+              <div className="group/input bg-white/[0.02] border border-white/5 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
+                    {t('login.workstation_label')}
+                  </label>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500/60 transition-colors group-hover/input:text-emerald-500">
+                    <Monitor className="w-3 h-3" />
+                    <span>{getDeviceType()}</span>
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="block w-full px-4 py-3 rounded-xl bg-slate-950/50 border border-white/5 text-white text-xs focus:outline-none focus:border-emerald-500/30 transition-all duration-300 placeholder-white/20"
+                    placeholder={t('login.workstation_placeholder')}
+                    value={workstationName}
+                    onChange={(e) => setWorkstationName(e.target.value)}
+                  />
+                </div>
+                <p className="text-[9px] text-white/20 ml-1 italic leading-relaxed">
+                  {t('login.workstation_help')}
+                </p>
+              </div>
             </div>
 
             {/* Submit Button */}
@@ -148,7 +191,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group relative w-full h-14 overflow-hidden rounded-2xl bg-emerald-500 font-black text-white text-xs uppercase tracking-widest transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.5)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full h-12 sm:h-14 overflow-hidden rounded-xl sm:rounded-2xl bg-emerald-500 font-black text-white text-xs uppercase tracking-widest transition-all duration-300 hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.5)] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {/* Button Glow Effect */}
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-teal-500 transition-opacity opacity-0 group-hover:opacity-100 duration-300"></div>

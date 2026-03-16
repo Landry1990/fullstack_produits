@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { LogOut } from 'lucide-react';
+import { 
+    LogOut, Monitor 
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 interface UserSession {
@@ -16,6 +18,7 @@ interface UserSession {
     first_login: string;
     last_logout: string | null;
     duration_display: string;
+    workstation: string | null;
 }
 
 interface RecapStats {
@@ -30,7 +33,7 @@ interface RecapStats {
 }
 
 const UserSessions: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user, getServerDate } = useAuth();
     const [sessions, setSessions] = useState<UserSession[]>([]);
     const [recapData, setRecapData] = useState<RecapStats[]>([]);
@@ -112,18 +115,18 @@ const UserSessions: React.FC = () => {
     };
 
     const handleForceLogout = async (sessionId: number, username: string) => {
-        if (!window.confirm(`Êtes-vous sûr de vouloir déconnecter l'utilisateur @${username} ? Cette action supprimera son accès immédiat.`)) {
+        if (!window.confirm(t('user_sessions.force_logout_confirm', { username }))) {
             return;
         }
 
         setDisconnectingId(sessionId);
         try {
             await axios.post(`/api/user-sessions/${sessionId}/force_logout/`);
-            toast.success(`L'utilisateur @${username} a été déconnecté.`);
+            toast.success(t('user_sessions.force_logout_success', { username }));
             fetchSessions();
         } catch (err) {
             console.error("Error during force logout:", err);
-            toast.error("Erreur lors de la déconnexion forcée.");
+            toast.error(t('user_sessions.force_logout_error'));
         } finally {
             setDisconnectingId(null);
         }
@@ -135,7 +138,17 @@ const UserSessions: React.FC = () => {
     };
 
     const formatDate = (dateStr: string) => {
-        return format(new Date(dateStr), 'dd MMMM yyyy', { locale: fr });
+        return format(new Date(dateStr), 'dd MMMM yyyy', { 
+            locale: i18n.language === 'en' ? undefined : fr 
+        });
+    };
+
+    const getMonthName = (monthValue: string) => {
+        const monthKey = [
+            'january', 'february', 'march', 'april', 'may', 'june',
+            'july', 'august', 'september', 'october', 'november', 'december'
+        ][parseInt(monthValue) - 1];
+        return t(`user_sessions.months.${monthKey}`);
     };
 
     return (
@@ -217,18 +230,9 @@ const UserSessions: React.FC = () => {
                                     value={recapMonth}
                                     onChange={(e) => setRecapMonth(e.target.value)}
                                 >
-                                    <option value="01">Janvier</option>
-                                    <option value="02">Février</option>
-                                    <option value="03">Mars</option>
-                                    <option value="04">Avril</option>
-                                    <option value="05">Mai</option>
-                                    <option value="06">Juin</option>
-                                    <option value="07">Juillet</option>
-                                    <option value="08">Août</option>
-                                    <option value="09">Septembre</option>
-                                    <option value="10">Octobre</option>
-                                    <option value="11">Novembre</option>
-                                    <option value="12">Décembre</option>
+                                    {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => (
+                                        <option key={m} value={m}>{getMonthName(m)}</option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -264,6 +268,7 @@ const UserSessions: React.FC = () => {
                                 <tr className="bg-base-200/50">
                                     <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('user_sessions.operator')}</th>
                                     <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('user_sessions.date')}</th>
+                                    <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('user_sessions.workstation')}</th>
                                     <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('user_sessions.first_login')}</th>
                                     <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('user_sessions.last_logout')}</th>
                                     <th className="text-xs uppercase font-bold text-base-content/50 py-4 px-6">{t('user_sessions.duration')}</th>
@@ -273,14 +278,14 @@ const UserSessions: React.FC = () => {
                             <tbody className="divide-y divide-base-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={6} className="text-center py-20">
+                                        <td colSpan={7} className="text-center py-20">
                                             <span className="loading loading-spinner loading-lg text-primary"></span>
                                             <p className="mt-4 text-base-content/40 font-medium">{t('user_sessions.loading')}</p>
                                         </td>
                                     </tr>
                                 ) : sessions.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="text-center py-20 text-base-content/40 italic">
+                                        <td colSpan={7} className="text-center py-20 text-base-content/40 italic">
                                             {t('user_sessions.no_result')}
                                         </td>
                                     </tr>
@@ -301,9 +306,21 @@ const UserSessions: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="py-4 px-6 text-base-content/70 font-medium">{formatDate(session.date)}</td>
+                                            <td className="py-4 px-6">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-8 h-8 rounded-lg bg-base-content/5 flex items-center justify-center text-base-content/40">
+                                                        <Monitor size={14} />
+                                                    </div>
+                                                    <span className="text-sm font-medium text-base-content/60">
+                                                        {session.workstation || '---'}
+                                                    </span>
+                                                </div>
+                                            </td>
                                             <td className="py-4 px-6 font-mono font-bold text-success">{formatTime(session.first_login)}</td>
                                             <td className="py-4 px-6 font-mono font-bold text-warning">{formatTime(session.last_logout)}</td>
-                                            <td className="py-4 px-6 font-semibold text-primary">{session.duration_display}</td>
+                                            <td className="py-4 px-6 font-semibold text-primary">
+                                                {session.duration_display ? session.duration_display : t('user_sessions.not_closed')}
+                                            </td>
                                             <td className="py-4 px-6 text-right">
                                                 <div className="flex items-center justify-end gap-2">
                                                     {session.last_logout ? (
@@ -328,7 +345,7 @@ const UserSessions: React.FC = () => {
                                                             {user?.is_superuser && (
                                                                 <button 
                                                                     className={`btn btn-circle btn-ghost btn-xs text-error hover:bg-error/10 ${disconnectingId === session.id ? 'loading' : ''}`}
-                                                                    title="Forcer la déconnexion"
+                                                                    title={t('user_sessions.force_logout')}
                                                                     onClick={() => handleForceLogout(session.id, session.username)}
                                                                     disabled={!!disconnectingId}
                                                                 >
@@ -385,7 +402,7 @@ const UserSessions: React.FC = () => {
                                             </td>
                                             <td className="py-5 px-6 text-center">
                                                 <div className="badge badge-lg bg-base-200 text-base-content font-bold border-none h-10 px-6">
-                                                    {stat.days_count} jours
+                                                    {stat.days_count} {t('user_sessions.recap.days_present')}
                                                 </div>
                                             </td>
                                             <td className="py-5 px-6 text-right">
@@ -395,7 +412,7 @@ const UserSessions: React.FC = () => {
                                             </td>
                                             <td className="py-5 px-6 text-right">
                                                 <div className="text-sm font-medium text-base-content/60">
-                                                    <span className="text-xs uppercase opacity-40 mr-1">Moy:</span> {stat.avg_duration_display}
+                                                    <span className="text-xs uppercase opacity-40 mr-1">{t('user_sessions.recap.avg')}</span> {stat.avg_duration_display}
                                                 </div>
                                             </td>
                                         </tr>

@@ -101,15 +101,17 @@ class CustomAuthToken(ObtainAuthToken):
 
         # 2. Get or create today's session
         # get_or_create handles the "first login of the day" logic naturally
-        # since it will create on first login and return existing on subsequent ones
-        # Reset last_logout if user reconnects the same day
+        workstation = request.data.get('workstation')
         session, created = UserDailySession.objects.get_or_create(
             user=user, 
             date=today
         )
+        
+        # Update workstation and reset last_logout if user reconnects the same day
+        session.workstation = workstation
         if not created and session.last_logout:
             session.last_logout = None
-            session.save()
+        session.save()
             
         return Response({
             'token': token.key,
@@ -277,11 +279,21 @@ class UserViewSet(viewsets.ModelViewSet):
         try:
             session = UserDailySession.objects.get(user=request.user, date=today)
             session.last_logout = timezone.now()
+            # If workstation identifier is sent during logout, update it
+            workstation = request.data.get('workstation')
+            if workstation:
+                session.workstation = workstation
             session.save()
             return Response({'status': 'Déconnexion enregistrée'})
         except UserDailySession.DoesNotExist:
-            # If session doesn't exist (e.g. login wasn't tracked), create it with first_login=now
-            UserDailySession.objects.create(user=request.user, date=today, last_logout=timezone.now())
+            # If session doesn't exist, create it with last_logout=now
+            workstation = request.data.get('workstation')
+            UserDailySession.objects.create(
+                user=request.user, 
+                date=today, 
+                last_logout=timezone.now(),
+                workstation=workstation
+            )
             return Response({'status': 'Déconnexion enregistrée (nouvelle session)'})
 
 class UserDailySessionViewSet(viewsets.ReadOnlyModelViewSet):

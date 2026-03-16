@@ -28,10 +28,10 @@ export default function AnalyseTemporelle() {
         <div>
           <h1 className="text-2xl font-bold text-base-content flex items-center gap-2">
             <span>⏱️</span>
-            {t('temporal_analysis.title', 'Analyse Temporelle')}
+            {t('temporal_analysis.title')}
           </h1>
           <p className="text-sm text-base-content/70">
-            {t('temporal_analysis.subtitle', 'Analysez vos meilleures heures, jours et saisons.')}
+            {t('temporal_analysis.subtitle')}
           </p>
         </div>
         
@@ -41,19 +41,19 @@ export default function AnalyseTemporelle() {
             className={`tab ${activeTab === 'hours' ? 'tab-active bg-primary text-primary-content' : ''}`}
             onClick={() => setActiveTab('hours')}
           >
-            {t('temporal_analysis.peak_hours', 'Heures de Pointe')}
+            {t('temporal_analysis.peak_hours')}
           </a>
           <a 
             className={`tab ${activeTab === 'days' ? 'tab-active bg-primary text-primary-content' : ''}`}
             onClick={() => setActiveTab('days')}
           >
-            {t('temporal_analysis.daily_comparison', 'Jours Rentables')}
+            {t('temporal_analysis.daily_comparison')}
           </a>
           <a 
             className={`tab ${activeTab === 'seasons' ? 'tab-active bg-primary text-primary-content' : ''}`}
             onClick={() => setActiveTab('seasons')}
           >
-            {t('temporal_analysis.seasonality', 'Saisonnalité')}
+            {t('temporal_analysis.seasonality')}
           </a>
         </div>
       </div>
@@ -71,15 +71,15 @@ export default function AnalyseTemporelle() {
                     ⚡
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{t('temporal_analysis.peak_hour_title', 'Pic d\'affluence')}</h3>
+                    <h3 className="font-bold text-lg">{t('temporal_analysis.peak_hour_title')}</h3>
                     <p className="text-sm opacity-70">
-                      {loadingHours ? 'Chargement...' : 
+                      {loadingHours ? t('common.loading') : 
                        peakHoursData?.peak_hour ? 
                        t('temporal_analysis.peak_hour_summary', { 
                           hour: peakHoursData.peak_hour, 
                           revenue: formatCurrency(Math.round(peakHoursData.peak_revenue)) 
                        }) : 
-                       'Pas assez de données'}
+                       t('finance.supplier.no_data')}
                     </p>
                   </div>
                 </div>
@@ -116,7 +116,7 @@ export default function AnalyseTemporelle() {
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                         formatter={(value: number, name: string) => [
                           name === 'revenue' || name === 'avg_basket' ? `${formatCurrency(Math.round(value))} F` : formatNumber(value),
-                          name === 'revenue' ? 'Chiffre d\'Affaires' : name === 'sales_count' ? 'Nombre de ventes' : 'Panier Moyen'
+                          name === 'revenue' ? t('temporal_analysis.columns.avg_revenue') : name === 'sales_count' ? t('temporal_analysis.columns.avg_sales') : t('temporal_analysis.columns.avg_basket')
                         ]}
                       />
                       <Legend />
@@ -154,15 +154,15 @@ export default function AnalyseTemporelle() {
                     📅
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{t('temporal_analysis.best_day_title', 'Jour le plus performant')}</h3>
+                    <h3 className="font-bold text-lg">{t('temporal_analysis.best_day_title')}</h3>
                     <p className="text-sm opacity-70">
-                      {loadingDays ? 'Chargement...' : 
+                      {loadingDays ? t('common.loading') : 
                        dailyData?.best_day ? 
                        t('temporal_analysis.best_day_summary', {
                           day: dailyData.best_day,
                           revenue: formatCurrency(Math.round(dailyData.best_revenue))
                        }) : 
-                       'Pas assez de données'}
+                       t('finance.supplier.no_data')}
                     </p>
                   </div>
                 </div>
@@ -192,7 +192,7 @@ export default function AnalyseTemporelle() {
                         <Tooltip 
                           cursor={{fill: 'transparent'}}
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                        formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, 'Chiffre d\'Affaires']}
+                        formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, t('temporal_analysis.columns.avg_revenue')]}
                         />
                         <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -204,10 +204,10 @@ export default function AnalyseTemporelle() {
                     <table className="table table-sm w-full">
                       <thead>
                         <tr>
-                          <th>Jour</th>
-                          <th className="text-right">Ventes Moy.</th>
-                          <th className="text-right">Panier Moy.</th>
-                          <th className="text-right">CA Moyen</th>
+                          <th>{t('temporal_analysis.columns.day')}</th>
+                          <th className="text-right">{t('temporal_analysis.columns.avg_sales')}</th>
+                          <th className="text-right">{t('temporal_analysis.columns.avg_basket')}</th>
+                          <th className="text-right">{t('temporal_analysis.columns.avg_revenue')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -239,9 +239,9 @@ export default function AnalyseTemporelle() {
                     🍂
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">{t('temporal_analysis.seasonality_title', 'Tendances Saisonnières')}</h3>
+                    <h3 className="font-bold text-lg">{t('temporal_analysis.seasonality_title')}</h3>
                     <p className="text-sm opacity-70">
-                      {loadingSeasons ? 'Chargement...' : 
+                      {loadingSeasons ? t('common.loading') : 
                        t('temporal_analysis.seasonality_summary', {
                           months: seasonsMonths,
                           count: seasonalityData?.seasonal_products?.length || 0
@@ -267,7 +267,7 @@ export default function AnalyseTemporelle() {
                 <div className="space-y-8">
                   {/* Monthly Trend Chart */}
                   <div className="h-72 w-full">
-                    <h4 className="text-sm font-bold uppercase text-base-content/50 mb-2">Évolution Globale du CA</h4>
+                    <h4 className="text-sm font-bold uppercase text-base-content/50 mb-2">{t('temporal_analysis.global_revenue_evolution')}</h4>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={seasonalityData?.monthly_trends || []}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -275,7 +275,7 @@ export default function AnalyseTemporelle() {
                         <YAxis tick={{ fontSize: 12 }} tickFormatter={(val) => `${val/1000000}M`} />
                         <Tooltip 
                           contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                          formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, 'Chiffre d\'Affaires']}
+                          formatter={(value: number) => [`${formatCurrency(Math.round(value))} F`, t('finance.guide.sections.seller_ranking.basket_desc').split('=')[0].trim()]}
                         />
                         <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} />
                       </LineChart>
@@ -284,16 +284,16 @@ export default function AnalyseTemporelle() {
 
                   {/* Seasonal Products Table */}
                   <div>
-                    <h4 className="text-sm font-bold uppercase text-base-content/50 mb-2">Top Produits Saisonniers</h4>
+                    <h4 className="text-sm font-bold uppercase text-base-content/50 mb-2">{t('temporal_analysis.top_seasonal_products')}</h4>
                     <div className="overflow-x-auto border rounded-lg">
                       <table className="table w-full">
                         <thead className="bg-base-200">
                           <tr>
-                            <th>Produit</th>
-                            <th>Mois de Pic</th>
-                            <th className="text-right">Vol. Pic</th>
-                            <th className="text-right">Moy. Mensuelle</th>
-                            <th className="text-right">Variation</th>
+                            <th>{t('temporal_analysis.columns.product')}</th>
+                            <th>{t('temporal_analysis.columns.peak_month')}</th>
+                            <th className="text-right">{t('temporal_analysis.columns.peak_volume')}</th>
+                            <th className="text-right">{t('temporal_analysis.columns.monthly_avg')}</th>
+                            <th className="text-right">{t('temporal_analysis.columns.variation')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -315,7 +315,7 @@ export default function AnalyseTemporelle() {
                           {seasonalityData?.seasonal_products?.length === 0 && (
                             <tr>
                               <td colSpan={5} className="text-center py-8 text-base-content/50">
-                                Aucune tendance saisonnière marquée détectée pour le moment.
+                                {t('temporal_analysis.no_seasonality_detected')}
                               </td>
                             </tr>
                           )}

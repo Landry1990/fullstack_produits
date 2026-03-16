@@ -10,6 +10,7 @@ class UserDailySession(models.Model):
     date = models.DateField(default=timezone.now)
     first_login = models.DateTimeField(auto_now_add=True)
     last_logout = models.DateTimeField(null=True, blank=True)
+    workstation = models.CharField(max_length=100, null=True, blank=True)
     
     class Meta:
         unique_together = ('user', 'date')
