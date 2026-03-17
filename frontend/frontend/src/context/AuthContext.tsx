@@ -2,6 +2,8 @@ import { createContext, useState, useContext, useEffect, useCallback, type React
 import axios from 'axios';
 import type { User } from '../types';
 import { safeStorage } from '../utils/storage';
+import { LAST_ACTIVITY_KEY } from '../hooks/useAutoLogout';
+import { resetExpiredFlag } from '../config/axios';
 
 // Définition du type pour le contexte d'authentification
 // Ce sont les données et fonctions qui seront accessibles partout dans l'application via useAuth()
@@ -97,6 +99,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (userData.server_time) {
       syncTime(userData.server_time);
     }
+    
+    // Reset activity timer and session flags
+    safeStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString(), 'local');
+    resetExpiredFlag();
 
     // 1. On sauvegarde tout dans le stockage sécurisé
     safeStorage.setItem('authToken', userData.token || '');
@@ -132,6 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // 2. On nettoie le stockage
     safeStorage.clear('session');
+    safeStorage.removeItem(LAST_ACTIVITY_KEY, 'local');
     
     // 3. On remet l'utilisateur à null
     setUser(null);

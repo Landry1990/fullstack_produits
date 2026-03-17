@@ -6,7 +6,7 @@ import { AjustementsFilters } from './adjustments/AjustementsFilters';
 import { AjustementsTable } from './adjustments/AjustementsTable';
 
 export default function JournalAjustements() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const {
         adjustments,
         loading,
@@ -34,10 +34,10 @@ export default function JournalAjustements() {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-base-content">
-                                    {t('stock.ajustements.title')}
+                                    {t('ajustements.title')}
                                 </h1>
                                 <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest">
-                                    {t('stock.ajustements.subtitle')}
+                                    {t('ajustements.subtitle')}
                                 </p>
                             </div>
                         </div>

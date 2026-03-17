@@ -1,0 +1,66 @@
+{
+    "title": "Prescription Registry",
+    "export_pdf": "Export as PDF",
+    "stats": {
+        "total_entries": "Total Entries",
+        "total_entries_desc": "Total number of prescriptions recorded",
+        "delivered_meds": "Delivered Meds",
+        "delivered_meds_desc": "Total volume of products",
+        "under_surveillance": "Under Surveillance",
+        "under_surveillance_desc": "Products requiring specific tracking"
+    },
+    "filters": {
+        "date_start": "Start date",
+        "date_end": "End date",
+        "patient": "Patient",
+        "patient_placeholder": "Patient name...",
+        "prescriber": "Prescriber",
+        "prescriber_placeholder": "Doctor name...",
+        "product": "Product",
+        "product_placeholder": "Filter by product...",
+        "surveillance": "Surveillance",
+        "surveillance_options": {
+            "none": "All",
+            "standard": "Standard",
+            "renforcee": "Reinforced"
+        }
+    },
+    "table": {
+        "order_num": "Order #",
+        "date": "Date & Time",
+        "patient": "Patient",
+        "prescriber": "Prescriber",
+        "meds": "Medications",
+        "action": "Action",
+        "empty": "No prescriptions found.",
+        "surveillance_badges": {
+            "std": "STD",
+            "renf": "REIN"
+        },
+        "recorded_by": "Recorded by"
+    },
+    "modal": {
+        "title": "Prescription Details",
+        "description": "Information related to the prescription and products",
+        "patient_name": "Patient Name",
+        "patient_placeholder": "Ex: John Doe",
+        "prescriber_name": "Prescriber Name",
+        "prescriber_placeholder": "Dr. Smith...",
+        "order_number": "Order number (Optional)",
+        "order_placeholder": "Ex: 12345",
+        "prescription_date": "Prescription date",
+        "affected_products": "Affected Products",
+        "product_col": "Product",
+        "qty_col": "Qty",
+        "surveillance_col": "Tracking",
+        "surveillance_renforcee": "REINFORCED SURVEILLANCE",
+        "surveillance_standard": "Standard Surveillance",
+        "surveillance_ordonnance": "Simple Prescription",
+        "ignore_btn": "IGNORE",
+        "save_btn": "SAVE PRESCRIPTION"
+    },
+    "messages": {
+        "save_success": "Saved in prescription registry",
+        "save_error": "Error while saving prescription"
+    }
+}

@@ -21,7 +21,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
     produits,
     onSuccess
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     
     const [formData, setFormData] = useState({
         client: null as number | null,
@@ -61,11 +61,11 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
         e.preventDefault();
         
         if (!formData.produit) {
-            toast(t('promis.validation.product_required', 'Veuillez sélectionner un produit'), { icon: '⚠️' });
+            toast(t('promis.validation.product_required'), { icon: '⚠️' });
             return;
         }
         if (!formData.client && !formData.client_name.trim()) {
-            toast(t('promis.validation.client_required', 'Veuillez renseigner le client'), { icon: '⚠️' });
+            toast(t('promis.validation.client_required'), { icon: '⚠️' });
             return;
         }
 
@@ -75,11 +75,11 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 ...formData,
                 client: formData.client || null
             });
-            toast.success(t('promis.validation.create_success', 'Promis enregistré avec succès'));
+            toast.success(t('common:messages.created'));
             onSuccess();
             handleClose();
         } catch (err: any) {
-            toast.error(err.response?.data?.detail || t('promis.validation.create_error', 'Erreur lors de la création'));
+            toast.error(err.response?.data?.detail || t('promis.validation.create_error'));
             console.error(err);
         } finally {
             setSaving(false);
@@ -105,20 +105,20 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
         <PremiumModal
             isOpen={isOpen}
             onClose={handleClose}
-            title={t('promis.modal.title_new', 'Nouveau Promis')}
+            title={t('promis.modal.title_new')}
         >
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Client Search */}
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.client_label', 'Client')}
+                        {t('promis.modal.client_label')}
                     </label>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
                         <input
                             type="text"
                             className="input input-bordered w-full pl-9 focus:border-primary transition-colors"
-                            placeholder={t('promis.modal.client_placeholder', 'Rechercher ou saisir un nom...')}
+                            placeholder={t('promis.modal.client_placeholder')}
                             value={clientSearch}
                             onChange={(e) => {
                                 setClientSearch(e.target.value);
@@ -161,12 +161,12 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 {/* Phone */}
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.phone_label', 'Téléphone')}
+                        {t('promis.modal.phone_label')}
                     </label>
                     <input
                         type="text"
                         className="input input-bordered w-full focus:border-primary transition-colors font-mono"
-                        placeholder={t('promis.modal.phone_placeholder', 'Ex: 0102030405')}
+                        placeholder={t('promis.modal.phone_placeholder')}
                         value={formData.client_phone}
                         onChange={(e) => setFormData(prev => ({ ...prev, client_phone: e.target.value }))}
                     />
@@ -175,14 +175,14 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 {/* Product Search */}
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.product_label', 'Produit')}
+                        {t('promis.modal.product_label')}
                     </label>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
                         <input
                             type="text"
                             className="input input-bordered w-full pl-9 focus:border-primary transition-colors"
-                            placeholder={t('promis.modal.product_placeholder', 'Rechercher un produit...')}
+                            placeholder={t('promis.modal.product_placeholder')}
                             value={productSearch}
                             onChange={(e) => {
                                 setProductSearch(e.target.value);
@@ -232,7 +232,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 {/* Quantity */}
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.qty_label', 'Quantité')}
+                        {t('promis.modal.qty_label')}
                     </label>
                     <input
                         type="number"
@@ -247,11 +247,11 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                 {/* Notes */}
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.notes_label', 'Notes / Commentaire')}
+                        {t('promis.modal.notes_label')}
                     </label>
                     <textarea
                         className="textarea textarea-bordered h-24 focus:border-primary transition-colors"
-                        placeholder={t('promis.modal.notes_placeholder', 'Informations complémentaires...')}
+                        placeholder={t('promis.modal.notes_placeholder')}
                         value={formData.notes}
                         onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                     />
@@ -265,7 +265,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         onClick={handleClose}
                         disabled={saving}
                     >
-                        {t('common.cancel', 'Annuler')}
+                        {t('common:cancel')}
                     </button>
                     <button 
                         type="submit" 
@@ -273,7 +273,7 @@ export const PromisFormModal: React.FC<PromisFormModalProps> = ({
                         disabled={saving}
                     >
                         {saving && <span className="loading loading-spinner loading-sm" />}
-                        {t('common.save', 'Enregistrer')}
+                        {t('common:save')}
                     </button>
                 </div>
             </form>

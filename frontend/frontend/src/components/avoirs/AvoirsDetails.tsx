@@ -18,7 +18,7 @@ export const AvoirsDetails: React.FC<AvoirsDetailsProps> = ({ data }) => {
         handleToggleAllCloture,
         savingValidation
     } = data;
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     if (!selectedAvoir) return null;
 

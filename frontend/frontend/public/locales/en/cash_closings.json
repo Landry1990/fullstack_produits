@@ -1,0 +1,93 @@
+{
+  "title": "Closing History",
+  "description": "Tracking and audits of daily cash register closings",
+  "filters": {
+    "date_start": "Start Date",
+    "date_end": "End Date",
+    "select_placeholder": "Select...",
+    "filter_btn": "Filter",
+    "reset_btn": "Reset",
+    "reset_title": "Reset filters"
+  },
+  "performance": {
+    "title": "Cashier Performance",
+    "hide": "Hide ranking",
+    "show": "Show ranking",
+    "months": {
+      "01": "January",
+      "02": "February",
+      "03": "March",
+      "04": "April",
+      "05": "May",
+      "06": "June",
+      "07": "July",
+      "08": "August",
+      "09": "September",
+      "10": "October",
+      "11": "November",
+      "12": "December"
+    },
+    "best_cashier": "Best Cashier",
+    "rigor_score": "Rigor Score",
+    "avg_trend": "Average Trend",
+    "total_closures": "Total Closures",
+    "ranking_title": "Performance Ranking",
+    "badges": {
+      "1st": "1st",
+      "2nd": "2nd",
+      "3rd": "3rd"
+    }
+  },
+  "stats": {
+    "theoretical_total": "Theoretical Total",
+    "real_total": "Real Total (Cash)",
+    "global_gap": "Global Gap"
+  },
+  "table": {
+    "header_date": "Date & Time",
+    "header_cashier": "Cashier",
+    "header_done_by": "Closed by",
+    "header_theoretical": "Theoretical",
+    "header_real": "Real",
+    "header_gap": "Gap",
+    "header_actions": "Actions",
+    "no_cloture": "No closing found",
+    "no_cloture_desc": "No cash register closing has been recorded for this period.",
+    "period_desc": "Period from {{start}} to {{end}}",
+    "view_details": "View details",
+    "print": "Print ticket",
+    "period_total": "Totals on {{count}} closings",
+    "rank": "Rank",
+    "operator": "Operator",
+    "closures": "Closures",
+    "avg_gap": "Avg Gap",
+    "trend": "Trend"
+  },
+  "pagination": {
+    "showing": "Showing {{start}} to {{end}} of {{total}}",
+    "per_page": "/ page",
+    "prev": "Previous",
+    "page": "Page {{current}} of {{total}}",
+    "next": "Next"
+  },
+  "modal": {
+    "title": "Closing Details",
+    "cash_of": "{{name}}'s cash register",
+    "closed_by": " - Closed by {{name}}",
+    "date_label": "Closing date",
+    "period_label": "Activity period",
+    "period_from": "From: {{date}}",
+    "period_to": "To: {{date}}",
+    "theoretical_label": "Theoretical Amount",
+    "real_label": "Entered Real Amount",
+    "gap_label": "Cash Gap",
+    "flows_summary": "Flows Summary",
+    "ventes": "Net sales",
+    "entries": "Entries (Mov.)",
+    "exits": "Exits (Mov.)",
+    "mode_details": "Details by payment mode",
+    "observations": "Observations / Notes",
+    "print": "Reprint ticket",
+    "close": "Close"
+  }
+}

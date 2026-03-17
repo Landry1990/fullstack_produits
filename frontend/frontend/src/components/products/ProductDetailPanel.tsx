@@ -10,8 +10,10 @@ interface ProductDetailPanelProps {
   setActiveTab: (tab: any) => void;
   lots: StockLot[];
   monthlyStats: any[];
+  achats: any[];
   stockHistory: any[];
   loadingHistory: boolean;
+  loadingAchats: boolean;
   transferLoading: boolean;
   onMovementClick: (item: any) => void;
   onOpenAdjustment: () => void;
@@ -23,7 +25,7 @@ interface ProductDetailPanelProps {
 }
 
 export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['products', 'common']);
   const { selectedProduit, detailsLoading, transferLoading } = props;
 
   if (detailsLoading) {
@@ -40,8 +42,8 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
         <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
           <span className="text-3xl">📦</span>
         </div>
-        <p className="font-bold text-slate-400">{t('products.detail.none_selected')}</p>
-        <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('products.detail.select_hint')}</p>
+        <p className="font-bold text-slate-400">{t('products:detail.none_selected')}</p>
+        <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('products:detail.select_hint')}</p>
       </div>
     );
   }
@@ -60,22 +62,22 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'badge-warning' :
                   'badge-success'
                 }`}>
-                  {t('products.detail.rayon_label')}: {selectedProduit.stock ?? 0}
+                  {t('products:detail.rayon_label')}: {selectedProduit.stock ?? 0}
                   {selectedProduit.has_reserve_storage && (
-                    <> / {t('products.detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
+                    <> / {t('products:detail.reserve_label')}: {selectedProduit.stock_reserve ?? 0}</>
                   )}
                 </span>
               </div>
               <h2 className="text-2xl font-black text-slate-800 uppercase">{selectedProduit.name}</h2>
               <p className="text-sm text-slate-500 font-mono mt-1">
-                {t('products.detail.cip')}: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
+                {t('products:detail.cip')}: {selectedProduit.cip1 || '-'} / {selectedProduit.cip2 || '-'} / {selectedProduit.cip3 || '-'}
               </p>
             </div>
             <div className="flex gap-1">
               <button 
                 className="btn btn-sm btn-ghost text-slate-400 hover:text-warning" 
                 onClick={props.onOpenAdjustment}
-                title={t('products.actions.adjust_stock')}
+                title={t('products:actions.adjust_stock')}
               >
                 📊
               </button>
@@ -83,7 +85,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
                 <button 
                   className={`btn btn-sm btn-ghost text-primary hover:bg-primary/10 ${transferLoading ? 'loading' : ''}`}
                   onClick={() => props.onTransferToRayon(selectedProduit)}
-                  title={t('products.actions.refill_rayon')}
+                  title={t('products:actions.refill_rayon')}
                 >
                   📦 ⬇️
                 </button>
@@ -91,28 +93,28 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
               <button 
                 className="btn btn-sm btn-ghost text-slate-400 hover:text-primary" 
                 onClick={() => props.onOpenEdit(selectedProduit)}
-                title={t('products.actions.edit')}
+                title={t('products:actions.edit')}
               >
                 ✏️
               </button>
               <button 
                 className="btn btn-sm btn-ghost text-slate-400 hover:text-secondary" 
                 onClick={() => props.onGenerateLabels(selectedProduit)}
-                title={t('products.actions.labels')}
+                title={t('products:actions.labels')}
               >
                 🏷️
               </button>
               <button 
                 className="btn btn-sm btn-ghost text-slate-400 hover:text-error" 
                 onClick={() => props.onDelete(selectedProduit)}
-                title={t('products.actions.delete')}
+                title={t('products:actions.delete')}
               >
                 🗑️
               </button>
               <button 
                 className={`btn btn-sm btn-ghost ${selectedProduit.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
                 onClick={() => props.onToggleActive(selectedProduit)}
-                title={selectedProduit.is_active === false ? t('products.actions.reactivate') : t('products.actions.deactivate')}
+                title={selectedProduit.is_active === false ? t('products:actions.reactivate') : t('products:actions.deactivate')}
               >
                 {selectedProduit.is_active === false ? '👁️' : '🙈'}
               </button>
@@ -126,6 +128,7 @@ export const ProductDetailPanel: React.FC<ProductDetailPanelProps> = (props) => 
           setActiveTab={props.setActiveTab}
           lots={props.lots}
           monthlyStats={props.monthlyStats}
+          achats={props.achats}
           stockHistory={props.stockHistory}
           loadingHistory={props.loadingHistory}
           onMovementClick={props.onMovementClick}

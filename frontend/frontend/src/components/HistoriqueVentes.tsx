@@ -24,7 +24,7 @@ interface DailySale {
 
 const HistoriqueVentes = () => {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t } = useTranslation(['sales_history', 'common']);
   const [data, setData] = useState<DailySale[]>([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -60,7 +60,7 @@ const HistoriqueVentes = () => {
       setGlobalTotals(totals || null);
     } catch (error) {
       console.error('Error fetching sales history:', error);
-      toast.error(t('salesHistory.messages.error_loading'));
+      toast.error(t('messages.error_loading'));
     } finally {
       setLoading(false);
     }
@@ -91,10 +91,10 @@ const HistoriqueVentes = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success(t('salesHistory.messages.export_success'));
+      toast.success(t('messages.export_success'));
     } catch (error) {
       console.error('Export Error:', error);
-      toast.error(t('salesHistory.messages.export_error'));
+      toast.error(t('messages.export_error'));
     } finally {
       setExporting(false);
     }
@@ -114,10 +114,10 @@ const HistoriqueVentes = () => {
         <div className="flex justify-between items-start mb-6">
             <div>
                 <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                    {t('salesHistory.title') || "Historique des Ventes"}
+                    {t('title')}
                 </h1>
                 <p className="text-base-content/60 text-sm mt-1">
-                    {t('salesHistory.subtitle')}
+                    {t('subtitle')}
                 </p>
             </div>
             <button 
@@ -130,14 +130,14 @@ const HistoriqueVentes = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 )}
-                {t('salesHistory.export_excel')}
+                {t('export_excel')}
             </button>
         </div>
 
         <div className="flex flex-wrap items-end gap-4 bg-base-200/50 p-4 rounded-xl border border-base-200">
             <div className="form-control">
                 <label className="label py-1">
-                    <span className="label-text text-xs font-semibold uppercase opacity-60">{t('salesHistory.start_date')}</span>
+                    <span className="label-text text-xs font-semibold uppercase opacity-60">{t('start_date')}</span>
                 </label>
                 <input 
                     type="date" 
@@ -148,7 +148,7 @@ const HistoriqueVentes = () => {
             </div>
             <div className="form-control">
                 <label className="label py-1">
-                    <span className="label-text text-xs font-semibold uppercase opacity-60">{t('salesHistory.end_date')}</span>
+                    <span className="label-text text-xs font-semibold uppercase opacity-60">{t('end_date')}</span>
                 </label>
                 <input 
                     type="date" 
@@ -158,7 +158,7 @@ const HistoriqueVentes = () => {
                 />
             </div>
             <button className="btn btn-primary btn-sm h-10 px-6" onClick={() => { setCurrentPage(1); fetchHistory(); }}>
-                {t('common.refresh')}
+                {t('common:refresh')}
             </button>
         </div>
       </div>
@@ -168,7 +168,7 @@ const HistoriqueVentes = () => {
         {loading ? (
             <div className="flex flex-col items-center justify-center p-20 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-base-content/60 animate-pulse font-medium">{t('salesHistory.loading')}</p>
+                <p className="text-base-content/60 animate-pulse font-medium">{t('common:loading')}</p>
             </div>
         ) : (
             <>
@@ -176,17 +176,17 @@ const HistoriqueVentes = () => {
                     <table className="table table-pin-rows table-zebra w-full shadow-inner">
                         <thead>
                             <tr className="bg-base-200 text-base-content/70 border-b border-base-300 text-[10px] uppercase tracking-widest font-bold">
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300">{t('salesHistory.columns.date')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.ca_ttc')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.cash')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.card')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.check')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.virement')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.mobiles')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.coupons')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.en_compte')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-center">{t('salesHistory.columns.nb_ventes')}</th>
-                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('salesHistory.columns.panier_moyen') || "Panier M."}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300">{t('columns.date')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.ca_ttc')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.cash')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.card')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.check')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.virement')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.mobiles')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.coupons')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.en_compte')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-center">{t('columns.nb_ventes')}</th>
+                                <th className="bg-base-200 sticky top-0 z-30 opacity-100 border-b border-base-300 text-right">{t('columns.avg_basket')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-base-200">
@@ -223,7 +223,7 @@ const HistoriqueVentes = () => {
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
-                                            <p className="text-lg font-medium">{t('salesHistory.no_data')}</p>
+                                            <p className="text-lg font-medium">{t('no_data')}</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -233,7 +233,7 @@ const HistoriqueVentes = () => {
                             <tfoot className="bg-base-200/40 border-t-2 border-base-300">
                                 <tr className="text-base-content font-bold">
                                     <td className="py-4 whitespace-nowrap">
-                                        <span className="uppercase text-[10px] tracking-tight">{t('salesHistory.total_period')}</span>
+                                        <span className="uppercase text-[10px] tracking-tight">{t('total_period')}</span>
                                     </td>
                                     <td className="text-right py-4 text-primary text-lg">{formatMoney(globalTotals.ca_ttc)}</td>
                                     <td className="text-right py-4">{formatMoney(globalTotals.especes)}</td>
@@ -256,7 +256,7 @@ const HistoriqueVentes = () => {
                 {/* Pagination Controls */}
                 <div className="p-6 border-t border-base-200 flex flex-col sm:flex-row items-center justify-between bg-base-100 gap-4">
                     <div className="text-sm font-medium text-base-content/60">
-                        {t('salesHistory.pagination.showing')} <span className="text-base-content font-bold">{data.length}</span> {t('salesHistory.pagination.days_of')} <span className="text-base-content font-bold">{totalItems}</span> {t('salesHistory.pagination.total')}
+                        {t('pagination.showing')} <span className="text-base-content font-bold">{data.length}</span> {t('pagination.days_of')} <span className="text-base-content font-bold">{totalItems}</span> {t('pagination.total')}
                     </div>
                     
                     <div className="join shadow-sm">
@@ -268,17 +268,17 @@ const HistoriqueVentes = () => {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
-                            Précédent
+                            {t('pagination.prev')}
                         </button>
                         <div className="join-item btn btn-sm btn-ghost no-animation h-10 px-6 font-bold bg-base-200">
-                            {t('salesHistory.pagination.page')} {currentPage} / {totalPages || 1}
+                            {t('pagination.page')} {currentPage} / {totalPages || 1}
                         </div>
                         <button 
                             className="join-item btn btn-sm btn-outline h-10 px-4"
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages || totalPages === 0 || loading}
                         >
-                            {t('salesHistory.pagination.next')}
+                            {t('pagination.next')}
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>

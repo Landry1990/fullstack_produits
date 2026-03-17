@@ -20,7 +20,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
     onRefresh,
     onNew
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     return (
         <div className="p-4 bg-base-100 border-b border-base-200">
@@ -30,7 +30,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
                         <input
                             type="text"
-                            placeholder={t('common.search', 'Rechercher...')}
+                            placeholder={t('common:search')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
@@ -44,10 +44,10 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value as any)}
                         >
-                            <option value="ALL">{t('promis.status_all', 'Tous')}</option>
-                            <option value="ATT">{t('promis.status_att', 'En Attente')}</option>
-                            <option value="DEL">{t('promis.status_del', 'Délivrés')}</option>
-                            <option value="ANN">{t('promis.status_ann', 'Annulés')}</option>
+                            <option value="ALL">{t('promis.status_all')}</option>
+                            <option value="ATT">{t('promis.status_att')}</option>
+                            <option value="DEL">{t('promis.status_del')}</option>
+                            <option value="ANN">{t('promis.status_ann')}</option>
                         </select>
                     </div>
                 </div>
@@ -56,7 +56,7 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                     <button 
                         className="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
                         onClick={onRefresh}
-                        title={t('common.refresh', 'Actualiser')}
+                        title={t('common:refresh')}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
@@ -65,8 +65,8 @@ export const PromisFilters: React.FC<PromisFiltersProps> = ({
                         onClick={onNew}
                     >
                         <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t('promis.new_btn', 'Nouveau Promis')}</span>
-                        <span className="sm:hidden">{t('common.add', 'Ajouter')}</span>
+                        <span className="hidden sm:inline">{t('promis.new_btn')}</span>
+                        <span className="sm:hidden">{t('common:add')}</span>
                     </button>
                 </div>
             </div>

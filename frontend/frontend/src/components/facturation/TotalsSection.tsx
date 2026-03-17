@@ -31,7 +31,7 @@ export default function TotalsSection({
   partAssurance = 0,
   partPatient = 0
 }: TotalsSectionProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
 
   return (
     <div className="bg-white border-t border-base-200 p-3 md:p-4 shadow-sm">
@@ -41,13 +41,13 @@ export default function TotalsSection({
           
           {/* Total HT */}
           <div className="flex flex-col items-end gap-0.5 sm:gap-1">
-            <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation.totals.subtotal')}</span>
+            <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation:totals.subtotal')}</span>
             <span className="font-medium text-base sm:text-lg">{formatCurrency(Math.round(totalHT))} F</span>
           </div>
 
           {/* Remise Globale */}
           <div className="flex flex-col items-end gap-0.5 sm:gap-1">
-            <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation.totals.discount')}</span>
+            <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation:totals.discount')}</span>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <select
                 value={remiseMode}
@@ -72,7 +72,7 @@ export default function TotalsSection({
 
           {/* TVA */}
           <div className="flex flex-col items-end gap-0.5 sm:gap-1 hidden xs:flex">
-            <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation.totals.tva')}</span>
+            <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{t('facturation:totals.tva')}</span>
             <span className={`font-medium text-base sm:text-lg ${tvaAmount > 0 ? 'text-base-content' : 'text-base-content/30'}`}>
               {formatCurrency(Math.round(tvaAmount))} F
             </span>
@@ -83,7 +83,7 @@ export default function TotalsSection({
              <div className="flex flex-col items-end gap-0.5 sm:gap-1 px-3 sm:px-4 border-l border-r border-base-200 bg-base-50/50 rounded py-1">
                 <div className="flex items-center gap-2">
                     <span className="badge badge-xs sm:badge-sm badge-info">{tauxCouverture}%</span>
-                    <span className="text-[10px] uppercase font-bold text-base-content/50">Assurance</span>
+                    <span className="text-[10px] uppercase font-bold text-base-content/50">{t('facturation:totals.assurance_label')}</span>
                 </div>
                 <span className="font-bold text-sm sm:text-base text-info">{formatCurrency(Math.round(partAssurance))} F</span>
              </div>
@@ -92,7 +92,7 @@ export default function TotalsSection({
           {/* Total TTC & Net à Payer */}
           <div className="flex flex-col items-end gap-0.5 sm:gap-1 pl-4 sm:pl-8 border-l border-base-200">
             <span className="text-base-content/50 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                {tauxCouverture > 0 ? t('facturation.totals.part_patient') : t('facturation.totals.total_ttc')}
+                {tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:totals.total_ttc')}
             </span>
             <span className="font-bold text-2xl sm:text-3xl text-primary">
                 {formatCurrency(Math.round(tauxCouverture > 0 ? partPatient : totalTTC))} F
@@ -100,7 +100,7 @@ export default function TotalsSection({
             
             {tauxCouverture > 0 && (
                 <span className="text-[10px] text-base-content/40 mt-1">
-                    {t('facturation.totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))} F
+                    {t('facturation:totals.total_ttc')}: {formatCurrency(Math.round(totalTTC))} F
                 </span>
             )}
           </div>

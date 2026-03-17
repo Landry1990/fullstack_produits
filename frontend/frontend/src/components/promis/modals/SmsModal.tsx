@@ -17,7 +17,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
     onClose,
     promis
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     
     const [message, setMessage] = useState('');
     const [sendingSms, setSendingSms] = useState(false);
@@ -44,10 +44,10 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 context_type: 'PROMIS',
                 context_id: promis.id
             });
-            toast.success(t('promis.messages.sms_success', 'SMS envoyé avec succès !'));
+            toast.success(t('promis.messages.sms_success'));
             onClose();
         } catch (err: any) {
-            toast.error(t('promis.messages.sms_error', 'Erreur lors de l\'envoi du SMS.'));
+            toast.error(t('promis.messages.sms_error'));
             console.error(err);
         } finally {
             setSendingSms(false);
@@ -58,14 +58,14 @@ export const SmsModal: React.FC<SmsModalProps> = ({
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title={t('promis.modal.title_sms', { name: promis?.client_display, defaultValue: 'Envoyer un SMS' })}
+            title={t('promis.modal.title_sms', { name: promis?.client_display })}
         >
             <form onSubmit={handleSendSms} className="space-y-5">
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
                         <span className="flex items-center gap-2">
                             <Phone className="w-4 h-4" />
-                            {t('promis.modal.sms_number', 'Numéro de destination')}
+                            {t('promis.modal.sms_number')}
                         </span>
                     </label>
                     <input 
@@ -78,7 +78,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                 
                 <div className="form-control">
                     <label className="label font-medium text-sm text-base-content/70">
-                        {t('promis.modal.sms_message', 'Message')}
+                        {t('promis.modal.sms_message')}
                     </label>
                     <textarea 
                         className="textarea textarea-bordered h-32 focus:border-primary transition-colors text-base"
@@ -95,7 +95,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                         onClick={onClose}
                         disabled={sendingSms}
                     >
-                        {t('common.cancel', 'Annuler')}
+                        {t('common:cancel')}
                     </button>
                     <button 
                         type="submit" 
@@ -103,7 +103,7 @@ export const SmsModal: React.FC<SmsModalProps> = ({
                         disabled={sendingSms}
                     >
                         {sendingSms ? <span className="loading loading-spinner loading-sm"/> : <Send className="w-4 h-4" />}
-                        {t('promis.actions.sms_send', 'Envoyer')}
+                        {t('promis.actions.sms_send')}
                     </button>
                 </div>
             </form>

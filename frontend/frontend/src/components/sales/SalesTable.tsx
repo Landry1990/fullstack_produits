@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Eye, Printer, Trash2, RotateCcw, User, Calendar, SearchX, Receipt, Clock, Copy, FileDigit } from 'lucide-react';
+import { Eye, Printer, Trash2, RotateCcw, User, Calendar, Receipt, Clock, Copy, FileDigit } from 'lucide-react';
 import type { Facture } from '../../types';
 import { formatCurrency, normalizeNumberInput } from '../../utils/formatters';
 import ActionIcon from '../ui/ActionIcon';
@@ -31,7 +31,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     onBulkDelete,
     loading
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
     const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
 
     // Helper functions
@@ -84,11 +84,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({
     if (factures.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white/50 m-4 rounded-2xl border border-dashed border-gray-200">
-                <div className="bg-gray-50 p-4 rounded-full mb-4">
-                    <SearchX className="w-10 h-10 text-gray-300" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('sales.no_sales_found')}</h3>
-                <p className="text-sm">{t('sales.try_different_filters')}</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('no_sales_found')}</h3>
+                <p className="text-sm">{t('try_different_filters')}</p>
             </div>
         );
     }
@@ -156,7 +153,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                 <li>
                     <a onClick={handleBulkDelete} className="gap-3 py-3 text-error hover:bg-error/10 font-bold">
                         <Trash2 className="w-4 h-4" />
-                        {t('sales.bulk_delete_btn', { count: selectedIds.length })}
+                        {t('confirm_bulk_delete', { count: selectedIds.length })}
                     </a>
                 </li>
             </>
@@ -188,15 +185,15 @@ export const SalesTable: React.FC<SalesTableProps> = ({
                             </SelectionHeader>
                         ) : (
                             <>
-                                <th className="px-6 py-4">{t('sales.table.invoice_number')}</th>
-                                <th className="px-6 py-4">{t('sales.table.client')}</th>
-                                <th className="px-6 py-4 hidden xl:table-cell">{t('sales.table.operator')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales.table.amount')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales.table.amount_settled')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales.table.amount_on_account')}</th>
-                                <th className="px-6 py-4 text-center">{t('sales.table.discount')}</th>
-                                <th className="px-6 py-4 text-center hidden md:table-cell">{t('sales.table.status')}</th>
-                                <th className="px-6 py-4 text-right pr-6">{t('sales.table.actions')}</th>
+                                <th className="px-6 py-4">{t('table.invoice_number')}</th>
+                                <th className="px-6 py-4">{t('table.client')}</th>
+                                <th className="px-6 py-4 hidden xl:table-cell">{t('table.operator')}</th>
+                                <th className="px-6 py-4 text-center">{t('table.amount')}</th>
+                                <th className="px-6 py-4 text-center">{t('table.amount_settled')}</th>
+                                <th className="px-6 py-4 text-center">{t('table.amount_on_account')}</th>
+                                <th className="px-6 py-4 text-center">{t('table.discount')}</th>
+                                <th className="px-6 py-4 text-center hidden md:table-cell">{t('table.status')}</th>
+                                <th className="px-6 py-4 text-right pr-6">{t('table.actions')}</th>
                             </>
                         )}
                     </tr>

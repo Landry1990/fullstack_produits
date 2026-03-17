@@ -1,0 +1,121 @@
+{
+    "title": "Reports Center",
+    "subtitle": "Select a query, configure parameters and view results",
+    "queries_title": "Query List",
+    "execute": "Execute query",
+    "copy": "Copy (Excel)",
+    "params_title": "Parameters",
+    "no_query_selected": "No query selected",
+    "select_query_prompt": "Select a query from the list on the left to start.",
+    "queries": {
+        "rapport_mensuel": {
+            "name": "Monthly Report",
+            "description": "Revenue, margins, receivables for a given month"
+        },
+        "historique_client": {
+            "name": "Customer History",
+            "description": "All products purchased by a client with dates and quantities"
+        },
+        "ca_periode": {
+            "name": "Revenue by Period",
+            "description": "Revenue over a specific period"
+        },
+        "alertes_stock": {
+            "name": "Stock Alerts",
+            "description": "Stock < Avg Rotation OR Stock <= Min Threshold"
+        },
+        "produits_perimes": {
+            "name": "Expired / Near Expiry Products",
+            "description": "Products expired or close to expiration date"
+        },
+        "creances": {
+            "name": "Current Receivables",
+            "description": "Invoices with a remaining balance"
+        },
+        "historique_ventes": {
+            "name": "Sales by Time Range",
+            "description": "Products sold over a given period"
+        },
+        "produits_non_vendus": {
+            "name": "Unsold Products",
+            "description": "Products without any sale for X days"
+        },
+        "stock_negatif": {
+            "name": "Negative Stock",
+            "description": "Products with negative or low stock, sorted by quantity"
+        },
+        "valeur_stock_journalier": {
+            "name": "Daily Stock Value",
+            "description": "Historical reconstruction of stock value, purchases and sales"
+        },
+        "produits_tva": {
+            "name": "Products with VAT",
+            "description": "List of products subject to VAT (> 0%)"
+        },
+        "stocks_morts": {
+            "name": "Dead Stock",
+            "description": "High value products (sleeping money) with no sales"
+        },
+        "alertes_annulations": {
+            "name": "Suspicious Cancellation Alerts",
+            "description": "Users with a high cancellation rate (> threshold)"
+        },
+        "stats_vendeurs": {
+            "name": "Seller Stats",
+            "description": "Seller ranking by revenue (excluding cashiers)"
+        },
+        "produits_vendus_tva": {
+            "name": "Sold Products (VAT)",
+            "description": "Products with VAT > 0 sold during the period"
+        },
+        "meilleurs_clients": {
+            "name": "Best Customers",
+            "description": "Customer ranking by revenue and visit count"
+        },
+        "recap_paiements_fournisseurs": {
+            "name": "Supplier Payments Summary",
+            "description": "Sum of payments by date and supplier"
+        },
+        "produits_annules": {
+            "name": "Cancelled Products",
+            "description": "List of products from cancelled invoices with quantities and lots"
+        }
+    },
+    "params": {
+        "mois": "Month",
+        "facture__client": "Customer",
+        "date_debut": "Start date",
+        "date_fin": "End date",
+        "expiring_within_days": "Days before expiry",
+        "jours_sans_vente": "Days without sale",
+        "stock_lt": "Stock less than",
+        "ordering": "Sort",
+        "tva_gt": "VAT greater than (%)",
+        "min_value": "Min Value (F)",
+        "months": "Months without sale",
+        "threshold": "Cancellation threshold",
+        "days": "Over last (days)",
+        "client_id": "Customer",
+        "seuil": "Threshold (%)",
+        "nb_jours": "Number of days",
+        "exclude_zero": "Exclude zero stocks"
+    },
+    "results": {
+        "title": "Results",
+        "execute_prompt": "Click \"Execute\" to view results",
+        "empty": "No results found",
+        "copy_success": "{{count}} items copied! Paste them into Excel.",
+        "copy_error": "Error during copy",
+        "copy_no_result": "Nothing to copy",
+        "execute_success": "Query \"{{name}}\" executed",
+        "error_execution": "Error during query execution",
+        "export_no_result": "Nothing to export",
+        "export_unsupported": "Unsupported format for export",
+        "export_success": "Export downloaded: {{filename}}",
+        "sources": {
+            "CAISSE_CENTRALE": "Central Cashier",
+            "VENTES": "Sales",
+            "VENTES_MODIF": "Sales (Modif)"
+        }
+    }
+}

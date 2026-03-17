@@ -7,7 +7,7 @@ import { User, Lock, ArrowRight, Loader2, AlertCircle, Monitor } from 'lucide-re
 import { useTranslation } from 'react-i18next';
 
 export default function Login() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['auth', 'common']);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -57,16 +57,18 @@ export default function Login() {
       console.error('Login error:', err);
       if (axios.isAxiosError(err)) {
         if (!err.response) {
-          setError(t('common.messages.server_unreachable'));
+          setError(t('common:messages.server_unreachable'));
         } else if (err.response.status === 400 || err.response.status === 401) {
-          setError(t('common.messages.login_invalid'));
+          setError(t('common:messages.login_invalid'));
+        } else if (err.response.status === 403) {
+           setError(t('common:messages.forbidden'));
         } else if (err.response.status >= 500) {
-          setError(t('common.messages.server_error'));
+          setError(t('common:messages.server_error'));
         } else {
-          setError(t('common.messages.error_generic'));
+          setError(t('common:messages.error_generic'));
         }
       } else {
-        setError(t('common.messages.error_generic'));
+        setError(t('common:messages.error_generic'));
       }
     } finally {
       setLoading(false);
@@ -84,36 +86,37 @@ export default function Login() {
       </div>
 
       {/* Main Glassmorphic Container */}
-      <div className="relative z-10 w-full max-w-[min(448px,90%)] p-4 sm:p-6 group">
+      <div className="relative z-10 w-full max-w-[min(420px,92%)] p-2 sm:p-4 group">
         
         {/* Decorative elements outside the card */}
-        <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-500/10 blur-xl rounded-full group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
-        <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-blue-500/10 blur-xl rounded-full group-hover:bg-blue-500/20 transition-colors duration-500"></div>
+        <div className="absolute -top-4 -right-4 w-24 h-24 bg-emerald-500/10 blur-xl rounded-full group-hover:bg-emerald-500/20 transition-colors duration-500 hidden sm:block"></div>
+        <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-blue-500/10 blur-xl rounded-full group-hover:bg-blue-500/20 transition-colors duration-500 hidden sm:block"></div>
 
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-10 transition-all duration-300 hover:border-white/20">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 shadow-2xl rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-10 transition-all duration-300 hover:border-white/20">
           
           {/* Header & Identity */}
-          <div className="text-center mb-10">
-            <div className="relative inline-block mb-6">
+          <div className="text-center mb-6 sm:mb-10">
+            <div className="relative inline-block mb-4 sm:mb-6">
               <div className="absolute inset-0 bg-emerald-500/20 blur-2xl rounded-full animate-pulse"></div>
-              <div className="relative w-24 h-24 flex items-center justify-center rounded-3xl bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-inner transform rotate-6 transition-transform hover:rotate-12 duration-500">
-                <ZenithLogo variant={1} size={56} />
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-2xl sm:rounded-3xl bg-slate-900/50 backdrop-blur-md border border-white/10 shadow-inner transform rotate-6 transition-transform hover:rotate-12 duration-500">
+                <ZenithLogo variant={1} size={48} className="sm:hidden" />
+                <ZenithLogo variant={1} size={56} className="hidden sm:block" />
               </div>
             </div>
             
-            <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-2">
+            <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tighter uppercase mb-1 sm:mb-2">
               Zenith
             </h1>
             <div className="flex items-center justify-center gap-2">
               <div className="h-px w-8 bg-gradient-to-r from-transparent to-white/20"></div>
               <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">
-                {t('login.subtitle')}
+                {t('subtitle')}
               </p>
               <div className="h-px w-8 bg-gradient-to-l from-transparent to-white/20"></div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             
             {/* Error Message */}
             {error && (
@@ -126,7 +129,7 @@ export default function Login() {
             {/* Inputs Container */}
             <div className="space-y-4">
               <div className="group/input">
-                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">{t('login.username')}</label>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">{t('username')}</label>
                 <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
                      <User className="h-4 w-4" />
@@ -134,7 +137,7 @@ export default function Login() {
                    <input
                     type="text"
                     required
-                    className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10"
+                    className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10"
                     placeholder="ADMIN"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -143,7 +146,7 @@ export default function Login() {
               </div>
 
               <div className="group/input">
-                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">{t('login.password')}</label>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2 ml-1">{t('password')}</label>
                 <div className="relative">
                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-white/20 group-focus-within/input:text-emerald-500 transition-colors duration-200">
                      <Lock className="h-4 w-4" />
@@ -151,7 +154,7 @@ export default function Login() {
                    <input
                     type="password"
                     required
-                    className="block w-full pl-12 pr-4 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10 shadow-inner"
+                    className="block w-full pl-11 sm:pl-12 pr-4 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/5 text-white text-sm focus:outline-none focus:bg-white/[0.05] focus:border-emerald-500/50 focus:ring-4 focus:ring-emerald-500/10 transition-all duration-300 placeholder-white/10 shadow-inner"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -160,10 +163,10 @@ export default function Login() {
               </div>
 
               {/* Workstation Identification */}
-              <div className="group/input bg-white/[0.02] border border-white/5 p-4 rounded-2xl space-y-3">
+              <div className="group/input bg-white/[0.02] border border-white/5 p-3 sm:p-4 rounded-xl sm:rounded-2xl space-y-2 sm:space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] ml-1">
-                    {t('login.workstation_label')}
+                    {t('workstation_label')}
                   </label>
                   <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500/60 transition-colors group-hover/input:text-emerald-500">
                     <Monitor className="w-3 h-3" />
@@ -175,13 +178,13 @@ export default function Login() {
                   <input
                     type="text"
                     className="block w-full px-4 py-3 rounded-xl bg-slate-950/50 border border-white/5 text-white text-xs focus:outline-none focus:border-emerald-500/30 transition-all duration-300 placeholder-white/20"
-                    placeholder={t('login.workstation_placeholder')}
+                    placeholder={t('workstation_placeholder')}
                     value={workstationName}
                     onChange={(e) => setWorkstationName(e.target.value)}
                   />
                 </div>
-                <p className="text-[9px] text-white/20 ml-1 italic leading-relaxed">
-                  {t('login.workstation_help')}
+                <p className="text-[9px] text-white/20 ml-1 italic leading-relaxed hidden sm:block">
+                  {t('workstation_help')}
                 </p>
               </div>
             </div>
@@ -200,11 +203,11 @@ export default function Login() {
                   {loading ? (
                     <>
                       <Loader2 className="animate-spin w-4 h-4" />
-                      <span>{t('login.loading')}</span>
+                      <span>{t('loading')}</span>
                     </>
                   ) : (
                     <>
-                      <span>{t('login.submit')}</span>
+                      <span>{t('submit')}</span>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </>
                   )}

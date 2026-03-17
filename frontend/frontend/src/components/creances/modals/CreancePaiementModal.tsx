@@ -1,5 +1,5 @@
-import React from 'react';
 import { DollarSign, CreditCard, Hash, Info, UserCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency, normalizeNumberInput } from '../../../utils/formatters';
 import type { Creance } from '../../../types';
 import PremiumModal from '../../common/PremiumModal';
@@ -26,6 +26,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
     form,
     onConfirm
 }) => {
+    const { t } = useTranslation(['creances', 'common']);
     if (!creance) return null;
 
     const remainingAmount = normalizeNumberInput(creance.reste_a_payer);
@@ -34,7 +35,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title="💰 Nouveau Règlement"
+            title={t('creances:payment_modal.title')}
             maxWidth="max-w-md"
         >
             <div className="space-y-6">
@@ -44,10 +45,10 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                         <Info className="w-4 h-4 text-blue-500" />
                     </div>
                     <div className="text-sm">
-                        <div className="font-bold text-blue-900 tracking-tight">Facture {creance.numero_facture}</div>
-                        <div className="text-blue-700/70 font-medium">Par {creance.client_name}</div>
+                        <div className="font-bold text-blue-900 tracking-tight">{t('creances:payment_modal.invoice_prefix')} {creance.numero_facture}</div>
+                        <div className="text-blue-700/70 font-medium">{t('creances:payment_modal.by_client')} {creance.client_name}</div>
                         <div className="mt-2 flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase text-blue-400">Solde restant:</span>
+                            <span className="text-[10px] font-black uppercase text-blue-400">{t('creances:payment_modal.remaining_balance')}</span>
                             <span className="text-blue-900 font-black">{formatCurrency(remainingAmount)} F</span>
                         </div>
                     </div>
@@ -57,27 +58,27 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                     {/* Payment Mode */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <CreditCard className="w-3 h-3" /> Mode de Paiement
+                            <CreditCard className="w-3 h-3" /> {t('creances:payment_modal.payment_mode')}
                         </label>
                         <select
                             value={form.modePaiement}
                             onChange={(e) => form.setModePaiement(e.target.value)}
                             className="select select-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                         >
-                            <option value="especes">💵 Espèces</option>
-                            <option value="om">🟧 Orange Money</option>
-                            <option value="momo">📱 Mobile Money</option>
-                            <option value="cheque">📝 Chèque</option>
-                            <option value="carte">💳 Carte</option>
-                            <option value="virement">🏦 Virement</option>
-                            <option value="recouvrement">💸 Tiers Payeur</option>
+                            <option value="especes">{t('creances:payment_modal.modes.cash')}</option>
+                            <option value="om">{t('creances:payment_modal.modes.om')}</option>
+                            <option value="momo">{t('creances:payment_modal.modes.momo')}</option>
+                            <option value="cheque">{t('creances:payment_modal.modes.check')}</option>
+                            <option value="carte">{t('creances:payment_modal.modes.card')}</option>
+                            <option value="virement">{t('creances:payment_modal.modes.transfer')}</option>
+                            <option value="recouvrement">{t('creances:payment_modal.modes.recouvrement')}</option>
                         </select>
                     </div>
 
                     {/* Amount */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <DollarSign className="w-3 h-3" /> Montant à verser (F)
+                            <DollarSign className="w-3 h-3" /> {t('creances:payment_modal.amount_to_pay')}
                         </label>
                         <div className="relative group">
                             <input
@@ -94,7 +95,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                                 onClick={() => form.setMontantPaiement(remainingAmount.toString())}
                                 className="link link-primary text-[10px] font-black uppercase"
                             >
-                                Régler la totalité
+                                {t('creances:payment_modal.pay_full')}
                             </button>
                         </div>
                     </div>
@@ -102,11 +103,11 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                     {/* Reference */}
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <Hash className="w-3 h-3" /> Référence (optionnelle)
+                            <Hash className="w-3 h-3" /> {t('creances:payment_modal.reference')}
                         </label>
                         <input
                             type="text"
-                            placeholder="N° chèque, transaction, ID..."
+                            placeholder={t('creances:payment_modal.reference_placeholder')}
                             value={form.referencePaiement}
                             onChange={(e) => form.setReferencePaiement(e.target.value)}
                             className="input input-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all font-mono text-sm"
@@ -116,7 +117,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
 
                 <div className="pt-4 flex gap-3">
                     <button onClick={onClose} className="btn btn-ghost flex-1 font-bold uppercase tracking-widest text-xs">
-                        Annuler
+                        {t('creances:payment_modal.cancel')}
                     </button>
                     <button 
                         onClick={onConfirm} 
@@ -124,7 +125,7 @@ export const CreancePaiementModal: React.FC<CreancePaiementModalProps> = ({
                         disabled={!form.montantPaiement || normalizeNumberInput(form.montantPaiement) <= 0}
                     >
                         <UserCheck className="w-4 h-4" />
-                        Valider & Payer
+                        {t('creances:payment_modal.validate_pay')}
                     </button>
                 </div>
             </div>

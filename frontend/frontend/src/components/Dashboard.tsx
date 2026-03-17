@@ -44,7 +44,7 @@ import { formatCurrency } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['dashboard', 'common']);
   const { getServerDate } = useAuth();
   const [expirationMonths, setExpirationMonths] = useState(1); 
   const navigate = useNavigate();
@@ -58,8 +58,11 @@ export default function Dashboard() {
   const { data: supplierDebts, refetch: refetchSupplierDebts, isRefetching: isRefetchingSupplierDebts } = useSupplierDebts();
   const { data: hourlyTraffic } = useHourlyTraffic();
 
+  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+  const formatCurrencyLocal = (val: number) => formatCurrency(val, 0, currentLocale);
+
   const loading = statsLoading || chartLoading;
-  const error = statsError ? t('dashboard.error_loading') : null;
+  const error = statsError ? t('error_loading') : null;
 
   const handleRefreshAll = async () => {
     await Promise.all([
@@ -68,7 +71,7 @@ export default function Dashboard() {
       refetchLowStock(),
       refetchExpiring()
     ]);
-    toast.success(t('dashboard.refresh_success'), { icon: '🔄' });
+    toast.success(t('refresh_success'), { icon: '🔄' });
   };
 
   const chartData = useMemo(() => {
@@ -89,7 +92,7 @@ export default function Dashboard() {
     });
     if (criticalLots.length > 0) {
       toast.error(
-        t('dashboard.alerts.critical_lots_toast', { count: criticalLots.length }),
+        t('alerts.critical_lots_toast', { count: criticalLots.length }),
         { duration: 5000, id: 'critical-expiration-dashboard' }
       );
     }
@@ -98,7 +101,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (promisDisponibles.length > 0) {
       toast.success(
-        t('dashboard.alerts.promis_toast', { count: promisDisponibles.length }),
+        t('alerts.promis_toast', { count: promisDisponibles.length }),
         { duration: 5000, id: 'promis-dispo-dashboard' }
       );
     }
@@ -132,19 +135,19 @@ export default function Dashboard() {
             <LayoutDashboard className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-base-content tracking-tight">{t('dashboard.title')}</h1>
-            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest mt-0.5">{t('dashboard.subtitle')}</p>
+            <h1 className="text-2xl font-black text-base-content tracking-tight">{t('title')}</h1>
+            <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest mt-0.5">{t('subtitle')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 bg-base-100 px-4 py-2.5 rounded-xl shadow-sm border border-base-300">
           <CalendarDays className="w-4 h-4 text-primary" />
           <span className="text-xs font-black uppercase tracking-widest text-base-content/60">
-            {getServerDate().toLocaleDateString(t('common.locale', { defaultValue: 'fr-FR' }), { day: 'numeric', month: 'short', year: 'numeric' })}
+            {getServerDate().toLocaleDateString(t('common:locale', { defaultValue: 'fr-FR' }), { day: 'numeric', month: 'short', year: 'numeric' })}
           </span>
           <button 
             className={`btn btn-xs btn-ghost btn-circle ${statsLoading || chartLoading ? 'loading' : 'hover:bg-primary/10 hover:text-primary'}`}
             onClick={handleRefreshAll}
-            title={t('dashboard.refresh_tooltip')}
+            title={t('refresh_tooltip')}
           >
             {!(statsLoading || chartLoading) && <RefreshCw className="w-3.5 h-3.5" />}
           </button>
@@ -155,20 +158,20 @@ export default function Dashboard() {
       <div className={`grid grid-cols-1 md:grid-cols-2 ${stats?.role === 'VENDEUR' || stats?.role === 'CAISSIER' ? 'xl:grid-cols-2' : 'xl:grid-cols-4'} gap-4`}>
         {(stats ? (stats.role === 'VENDEUR' || stats.role === 'CAISSIER' ? [
           {
-            title: t('dashboard.stats.my_sales'),
-            value: formatCurrency(stats.user_stats?.sales ?? 0),
-            change: t('dashboard.stats.sales_count', { count: stats.user_stats?.count || 0 }),
+            title: t('stats.my_sales'),
+            value: formatCurrencyLocal(stats.user_stats?.sales ?? 0),
+            change: t('stats.sales_count', { count: stats.user_stats?.count || 0 }),
             icon: TrendingUp,
             color: "text-indigo-600",
             bgColor: "bg-indigo-100/50",
             borderColor: "border-indigo-200/50",
             isPositive: true,
-            details: t('dashboard.stats.personal_cash')
+            details: t('stats.personal_cash')
           },
           {
-            title: t('dashboard.stats.my_avg_basket'),
-            value: formatCurrency(stats.user_stats?.avg_basket ?? 0),
-            change: t('dashboard.stats.avg_per_client'),
+            title: t('stats.my_avg_basket'),
+            value: formatCurrencyLocal(stats.user_stats?.avg_basket ?? 0),
+            change: t('stats.avg_per_client'),
             icon: ShoppingBag,
             color: "text-fuchsia-600",
             bgColor: "bg-fuchsia-100/50",
@@ -178,30 +181,30 @@ export default function Dashboard() {
         ] : [
           ...(stats.user_stats ? [
             {
-              title: t('dashboard.stats.my_sales'),
+              title: t('stats.my_sales'),
               value: formatCurrency(stats.user_stats.sales ?? 0),
-              change: t('dashboard.stats.sales_count', { count: stats.user_stats.count ?? 0 }),
+              change: t('stats.sales_count', { count: stats.user_stats.count ?? 0 }),
               icon: TrendingUp,
               color: "text-indigo-600",
               bgColor: "bg-indigo-100/50",
               borderColor: "border-indigo-200/50",
               isPositive: true,
-              details: t('dashboard.stats.personal_cash')
+              details: t('stats.personal_cash')
             }
           ] : []),
           { 
-            title: t('dashboard.stats.revenue'), 
-            value: formatCurrency(stats.revenue?.value ?? 0), 
+            title: t('stats.revenue'), 
+            value: formatCurrencyLocal(stats.revenue?.value ?? 0), 
             change: `${(stats.revenue?.change || 0) > 0 ? '+' : ''}${stats.revenue?.change || 0}%`, 
             icon: Wallet, 
             color: "text-emerald-600", 
             bgColor: "bg-emerald-100/50", 
             borderColor: "border-emerald-200/50",
             isPositive: (stats.revenue?.change || 0) >= 0,
-            details: t('dashboard.stats.revenue_details', { amount: formatCurrency(stats.discount?.value ?? 0) })
+            details: t('stats.revenue_details', { amount: formatCurrency(stats.discount?.value ?? 0) })
           },
-          { title: t('dashboard.stats.receivables'), value: formatCurrency(stats.receivables?.value ?? 0), change: t('dashboard.stats.invoices_count', { count: stats.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/creances' },
-          { title: t('dashboard.stats.stock_value'), value: formatCurrency(stats.stock_value?.value ?? 0), change: t('dashboard.stats.products_count', { count: stats.stock_value?.count ?? 0 }), icon: Package, color: "text-amber-600", bgColor: "bg-amber-100/50", borderColor: "border-amber-200/50", isPositive: true }
+          { title: t('stats.receivables'), value: formatCurrency(stats.receivables?.value ?? 0), change: t('stats.invoices_count', { count: stats.receivables?.count || 0 }), icon: Users, color: "text-orange-600", bgColor: "bg-orange-100/50", borderColor: "border-orange-200/50", isPositive: false, link: '/creances' },
+          { title: t('stats.stock_value'), value: formatCurrencyLocal(stats.stock_value?.value ?? 0), change: t('stats.products_count', { count: stats.stock_value?.count ?? 0 }), icon: Package, color: "text-amber-600", bgColor: "bg-amber-100/50", borderColor: "border-amber-200/50", isPositive: true }
         ]) : []).map((stat: any, index) => {
           const Icon = stat.icon;
           const content = (
@@ -211,7 +214,7 @@ export default function Dashboard() {
                 <h3 className="text-2xl font-black text-base-content tracking-tight truncate">{stat.value}</h3>
                 <div className="flex items-center gap-1.5 mt-1.5">
                   <span className={`text-[10px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 ${
-                    [t('dashboard.stats.stock_alerts'), t('dashboard.stats.stock_value')].includes(stat.title) 
+                    [t('stats.stock_alerts'), t('stats.stock_value')].includes(stat.title) 
                       ? 'bg-base-200 text-base-content/60' 
                       : (stat.isPositive ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700')
                   }`}>
@@ -219,7 +222,7 @@ export default function Dashboard() {
                     {stat.change}
                   </span>
                   <span className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">
-                    {stat.details ? stat.details : t('dashboard.stats.vs_yesterday')}
+                    {stat.details ? stat.details : t('stats.vs_yesterday')}
                   </span>
                 </div>
               </div>
@@ -253,8 +256,8 @@ export default function Dashboard() {
                   <ShoppingBag className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.ug.title')}</h2>
-                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.ug.subtitle')}</p>
+                  <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('ug.title')}</h2>
+                  <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('ug.subtitle')}</p>
                 </div>
               </div>
               <div className="badge bg-purple-100 text-purple-700 border-none font-black text-[10px] uppercase tracking-widest h-6 px-3">
@@ -266,10 +269,10 @@ export default function Dashboard() {
               <table className="table w-full border-separate border-spacing-0">
                 <thead>
                   <tr>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl">{t('dashboard.ug.provider')}</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('dashboard.ug.acquired')}</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('dashboard.ug.sold')}</th>
-                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4 pr-6 rounded-r-2xl">{t('dashboard.ug.remaining')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl">{t('ug.provider')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('ug.acquired')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('ug.sold')}</th>
+                    <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4 pr-6 rounded-r-2xl">{t('ug.remaining')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-100">
@@ -277,14 +280,14 @@ export default function Dashboard() {
                     <tr key={index} className="hover:bg-base-200/30 transition-all group">
                       <td className="py-4 pl-6 font-bold text-sm text-base-content group-hover:text-primary transition-colors">{stat.fournisseur_nom}</td>
                       <td className="text-right py-4 font-mono font-bold text-sm text-purple-600">
-                        {formatCurrency(stat.valeur_acquise)}
+                        {formatCurrencyLocal(stat.valeur_acquise)}
                       </td>
                       <td className="text-right py-4 font-mono font-bold text-sm text-emerald-600">
-                        {formatCurrency(stat.valeur_vendue)}
+                        {formatCurrencyLocal(stat.valeur_vendue)}
                       </td>
                       <td className="text-right py-4 pr-6">
                         <span className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg font-mono font-bold text-sm border border-blue-100 group-hover:bg-blue-100 transition-colors">
-                          {formatCurrency(stat.valeur_restante)}
+                          {formatCurrencyLocal(stat.valeur_restante)}
                         </span>
                       </td>
                     </tr>
@@ -292,7 +295,7 @@ export default function Dashboard() {
                    {/* Total Row */}
                   {(ugStats as any).results.length > 0 && (
                       <tr className="bg-base-200/20 font-bold border-t border-base-200">
-                        <td className="py-4 pl-6 uppercase tracking-wider text-[10px] text-base-content/40">{t('dashboard.ug.total')}</td>
+                        <td className="py-4 pl-6 uppercase tracking-wider text-[10px] text-base-content/40">{t('ug.total')}</td>
                         <td className="text-right py-4 text-purple-700 font-mono text-sm pr-2">
                           {formatCurrency((ugStats as any).results.reduce((sum: number, r: any) => sum + r.valeur_acquise, 0))}
                         </td>
@@ -323,8 +326,8 @@ export default function Dashboard() {
                     <TrendingUp className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.charts.revenue_evolution')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.charts.last_7_days')}</p>
+                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('charts.revenue_evolution')}</h2>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('charts.last_7_days')}</p>
                   </div>
                 </div>
               </div>
@@ -354,7 +357,7 @@ export default function Dashboard() {
                         domain={[0, (dataMax: number) => Math.ceil(dataMax * 1.5)]}
                       />
                        <Tooltip 
-                         formatter={(value: number) => [formatCurrency(value), t('dashboard.charts.amount')]}
+                         formatter={(value: number) => [formatCurrencyLocal(value), t('charts.amount')]}
                          contentStyle={{ 
                           backgroundColor: '#fff',
                           border: 'none',
@@ -390,8 +393,8 @@ export default function Dashboard() {
                     <History className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.hourly_traffic_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.hourly_traffic_desc')}</p>
+                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('hourly_traffic_title')}</h2>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('hourly_traffic_desc')}</p>
                   </div>
                 </div>
               </div>
@@ -455,14 +458,14 @@ export default function Dashboard() {
                     <AlertTriangle className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('dashboard.debts.supplier_debts_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.debts.supplier_debts_desc')}</p>
+                    <h2 className="text-sm font-black text-base-content tracking-tight uppercase">{t('debts.supplier_debts_title')}</h2>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('debts.supplier_debts_desc')}</p>
                   </div>
                 </div>
                  <div className="flex items-center gap-3">
                       {supplierDebts && supplierDebts.total_debt > 0 && (
                          <div className="bg-red-50 text-red-700 px-4 py-1.5 rounded-xl font-black text-xs border border-red-100 shadow-sm animate-pulse">
-                             {formatCurrency(supplierDebts.total_debt)}
+                             {formatCurrencyLocal(supplierDebts.total_debt)}
                          </div>
                       )}
                      <button 
@@ -479,9 +482,9 @@ export default function Dashboard() {
                     <table className="w-full">
                         <thead>
                             <tr>
-                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl text-left">{t('dashboard.debts.supplier')}</th>
-                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('dashboard.debts.debt')}</th>
-                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-center py-4 pr-6 rounded-r-2xl">{t('dashboard.debts.action')}</th>
+                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 py-4 pl-6 rounded-l-2xl text-left">{t('debts.supplier')}</th>
+                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-right py-4">{t('debts.debt')}</th>
+                                <th className="bg-base-200/80 text-xs font-semibold uppercase tracking-wider text-base-content/60 text-center py-4 pr-6 rounded-r-2xl">{t('debts.action')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-base-100">
@@ -489,7 +492,7 @@ export default function Dashboard() {
                                 <tr key={supplier.id} className="hover:bg-red-50/50 transition-all group">
                                     <td className="py-4 pl-6 font-bold text-sm text-base-content group-hover:text-red-700 transition-colors uppercase tracking-tight">{supplier.name}</td>
                                      <td className="text-right py-4 font-mono font-bold text-sm text-red-600">
-                                         {formatCurrency(supplier.debt)}
+                                         {formatCurrencyLocal(supplier.debt)}
                                      </td>
                                     <td className="text-center py-4 pr-6">
                                         <Link 
@@ -510,7 +513,7 @@ export default function Dashboard() {
                       <div className="p-4 bg-white shadow-sm rounded-2xl mb-4">
                         <ShoppingBag className="w-8 h-8 text-base-content/10" />
                       </div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('dashboard.debts.no_supplier_debts')}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-base-content/30">{t('debts.no_supplier_debts')}</p>
                   </div>
               )}
             </div>
@@ -525,14 +528,14 @@ export default function Dashboard() {
           {/* Quick Actions */}
           <div className="card bg-white shadow-sm border border-base-300 rounded-2xl overflow-hidden">
             <div className="card-body p-6">
-              <h2 className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-4">{t('dashboard.actions.title')}</h2>
+              <h2 className="text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-4">{t('actions.title')}</h2>
               <div className="grid grid-cols-1 gap-3">
                 <Link to="/facturation" className="btn btn-primary h-14 w-full justify-between gap-3 text-white shadow-md hover:shadow-lg transition-all rounded-xl border-none group">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-lg group-hover:scale-110 transition-transform">
                       <Plus className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-[11px] font-black uppercase tracking-widest">{t('dashboard.actions.new_invoice')}</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest">{t('actions.new_invoice')}</span>
                   </div>
                   <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
                 </Link>
@@ -541,7 +544,7 @@ export default function Dashboard() {
                     <div className="p-2 bg-base-200 rounded-lg group-hover:bg-primary/10 group-hover:text-primary transition-all">
                       <Package className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.actions.manage_products')}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t('actions.manage_products')}</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-base-content/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </Link>
@@ -550,7 +553,7 @@ export default function Dashboard() {
                     <div className="p-2 bg-base-200 rounded-lg group-hover:bg-primary/10 group-hover:text-primary transition-all">
                       <Users className="w-4 h-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">{t('dashboard.actions.new_client')}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t('actions.new_client')}</span>
                   </div>
                   <ArrowRight className="w-4 h-4 text-base-content/30 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                 </Link>
@@ -568,7 +571,7 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center gap-2">
                     <ShoppingBag className="w-5 h-5 text-emerald-600" />
-                    <h2 className="text-sm font-black text-emerald-800 tracking-tight uppercase">{t('dashboard.alerts.promis_title')}</h2>
+                    <h2 className="text-sm font-black text-emerald-800 tracking-tight uppercase">{t('alerts.promis_title')}</h2>
                   </div>
                   <span className="bg-emerald-600 text-white px-2 py-0.5 rounded-lg text-[10px] font-black">{promisDisponibles.length}</span>
                 </div>
@@ -580,17 +583,17 @@ export default function Dashboard() {
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">{p.client.length > 15 ? p.client.substring(0, 15) + '...' : p.client}</span>
                           <span className="text-[10px] text-base-content/30">•</span>
-                          <span className="text-[10px] font-black text-base-content/50">{p.quantite} {t('dashboard.alerts.units')}</span>
+                          <span className="text-[10px] font-black text-base-content/50">{p.quantite} {t('alerts.units')}</span>
                         </div>
                       </div>
                       <div className="bg-emerald-50 text-emerald-700 font-black text-[9px] px-2 py-1 rounded-lg uppercase tracking-widest">
-                        {t('dashboard.alerts.days_left', { count: p.jours_attente })}
+                        {t('alerts.days_left', { count: p.jours_attente })}
                       </div>
                     </div>
                   ))}
                 </div>
                 <Link to="/app/promis" className="btn btn-sm btn-ghost w-full mt-4 text-emerald-700 bg-emerald-100 hover:bg-emerald-200 border-none font-black text-[10px] uppercase tracking-widest">
-                  {t('dashboard.alerts.deliver_promis')}
+                  {t('alerts.deliver_promis')}
                 </Link>
               </div>
             </div>
@@ -608,8 +611,8 @@ export default function Dashboard() {
                     <Package className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('dashboard.alerts.stock_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.alerts.stock_subtitle')}</p>
+                    <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('alerts.stock_title')}</h2>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('alerts.stock_subtitle')}</p>
                   </div>
                 </div>
                 {stats && (stats.low_stock?.value || 0) > 0 && (
@@ -618,7 +621,7 @@ export default function Dashboard() {
               </div>
               <div className="space-y-3">
                 {lowStockItems.length === 0 ? (
-                  <div className="text-[10px] font-black uppercase tracking-widest text-base-content/30 text-center py-6 border-2 border-dashed border-base-200 rounded-xl">{t('dashboard.alerts.no_stock_alerts')}</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-base-content/30 text-center py-6 border-2 border-dashed border-base-200 rounded-xl">{t('alerts.no_stock_alerts')}</div>
                 ) : (
                   lowStockItems.slice(0, 4).map((item, i) => (
                     <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${item.stock <= 0 ? 'bg-red-50 border-red-100 shadow-sm' : 'bg-amber-50 border-amber-100'}`}>
@@ -626,7 +629,7 @@ export default function Dashboard() {
                         <div className={`w-1.5 h-1.5 rounded-full ${item.stock <= 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`}></div>
                         <div className="flex flex-col min-w-0">
                             <span className="text-xs font-black text-base-content truncate">{item.name}</span>
-                            {(item as any).status && (item as any).status !== 'Rupture' && (item as any).status !== t('dashboard.alerts.rupture') && (
+                            {(item as any).status && (item as any).status !== 'Rupture' && (item as any).status !== t('alerts.rupture') && (
                                 <span className="text-[9px] text-base-content/40 font-black uppercase tracking-widest">
                                     {(item as any).status}
                                 </span>
@@ -635,11 +638,11 @@ export default function Dashboard() {
                       </div>
                       <div className="flex flex-col items-end shrink-0 ml-3">
                             <span className={`text-[10px] font-black uppercase tracking-widest ${item.stock <= 0 ? 'text-red-700' : 'text-amber-700'}`}>
-                                {item.stock <= 0 ? t('dashboard.alerts.rupture') : t('dashboard.alerts.remaining_stock', { count: item.stock })}
+                                {item.stock <= 0 ? t('alerts.rupture') : t('alerts.remaining_stock', { count: item.stock })}
                             </span>
                             {(item as any).days_remaining > 0 && item.stock > 0 && (
                                 <span className="text-[9px] font-bold text-base-content/20 uppercase tracking-widest">
-                                    {Math.round((item as any).days_remaining)} {t('dashboard.alerts.remaining_days')}
+                                    {Math.round((item as any).days_remaining)} {t('alerts.remaining_days')}
                                 </span>
                             )}
                       </div>
@@ -666,7 +669,7 @@ export default function Dashboard() {
                       });
                     }}
                   >
-                    {t('dashboard.alerts.order')}
+                    {t('alerts.order')}
                   </button>
                 )}
                 <Link 
@@ -674,7 +677,7 @@ export default function Dashboard() {
                   className="btn btn-ghost bg-base-100 hover:bg-base-200 btn-sm flex-1 text-base-content/60 text-[9px] font-black uppercase tracking-widest rounded-lg border border-base-300"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {t('dashboard.alerts.view_all')}
+                  {t('alerts.view_all')}
                 </Link>
               </div>
             </div>
@@ -692,8 +695,8 @@ export default function Dashboard() {
                     <CalendarDays className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('dashboard.alerts.expiry_title')}</h2>
-                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('dashboard.alerts.expiry_subtitle')}</p>
+                    <h2 className="text-xs font-black text-base-content tracking-tight uppercase">{t('alerts.expiry_title')}</h2>
+                    <p className="text-[10px] font-bold text-base-content/30 uppercase tracking-widest">{t('alerts.expiry_subtitle')}</p>
                   </div>
                 </div>
               </div>
@@ -704,17 +707,17 @@ export default function Dashboard() {
                   value={expirationMonths}
                   onChange={(e) => setExpirationMonths(Number(e.target.value))}
                 >
-                  <option value={1}>1 MOIS (URGENT)</option>
-                  <option value={2}>2 MOIS</option>
-                  <option value={3}>3 MOIS</option>
-                  <option value={6}>6 MOIS</option>
-                  <option value={12}>1 AN</option>
+                  <option value={1}>{t('manager_dashboard.expiry_periods.month_1')}</option>
+                  <option value={2}>{t('manager_dashboard.expiry_periods.months_2')}</option>
+                  <option value={3}>{t('manager_dashboard.expiry_periods.months_3')}</option>
+                  <option value={6}>{t('manager_dashboard.expiry_periods.months_6')}</option>
+                  <option value={12}>{t('manager_dashboard.expiry_periods.year_1')}</option>
                 </select>
               </div>
 
               <div className="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar">
                 {expiringLots.length === 0 ? (
-                  <div className="text-[10px] font-black uppercase tracking-widest text-base-content/30 text-center py-6 border-2 border-dashed border-base-200 rounded-xl">{t('dashboard.alerts.no_expiry_alerts')}</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-base-content/30 text-center py-6 border-2 border-dashed border-base-200 rounded-xl">{t('alerts.no_expiry_alerts')}</div>
                 ) : (
                   expiringLots.slice(0, 5).map((lot) => {
                     const today = getServerDate();
@@ -748,7 +751,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className="bg-white/50 text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-widest ml-3 shrink-0 whitespace-nowrap border border-current opacity-70">
-                          {daysUntilExpiry <= 0 ? t('dashboard.alerts.expired') : t('dashboard.alerts.days_left', { count: daysUntilExpiry })}
+                          {daysUntilExpiry <= 0 ? t('alerts.expired') : t('alerts.days_left', { count: daysUntilExpiry })}
                         </div>
                       </div>
                     );
@@ -756,7 +759,7 @@ export default function Dashboard() {
                 )}
               </div>
               <Link to="/app/perimes" className="btn btn-ghost bg-base-100 hover:bg-base-200 btn-sm w-full mt-4 text-base-content/60 text-[9px] font-black uppercase tracking-widest rounded-lg border border-base-300">
-                Gérer les périmés
+                {t('alerts.manage_perimes')}
               </Link>
             </div>
           </div>

@@ -27,7 +27,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
             <div className="dropdown">
               <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2">
                 <MoreVertical className="w-4 h-4" />
-                {t('common.actions_title', { defaultValue: 'Actions' })}
+                {t('common:actions_title', { defaultValue: 'Actions' })}
                 <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedCount}</span>
               </div>
               <ul tabIndex={0} className="dropdown-content z-[50] menu p-2 shadow-2xl bg-base-100 rounded-box w-60 border border-base-200 mt-2">
@@ -39,7 +39,7 @@ const SelectionHeader: React.FC<SelectionHeaderProps> = ({
               className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content"
             >
               <X className="w-4 h-4" />
-              {t('common.actions.cancel', { defaultValue: 'Annuler' })}
+              {t('common:actions.cancel', { defaultValue: 'Annuler' })}
             </button>
           </div>
         ) : (

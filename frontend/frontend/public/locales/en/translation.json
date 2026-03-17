@@ -2035,13 +2035,12 @@
             "new_client": "New Customer",
             "generate_order": "Generate Order"
         },
+        "hourly_traffic_title": "Traffic per Hour",
+        "hourly_traffic_desc": "Hourly traffic",
         "charts": {
             "revenue_evolution": "Revenue Evolution (Last 7 Days)",
             "last_7_days": "Last 7 days",
             "sales_trend": "Sales Trend (Last 7 Days)",
-            "hourly_traffic": "Average Hourly Traffic (30 days)",
-            "hourly_traffic_title": "Traffic per Hour",
-            "hourly_traffic_desc": "Hourly traffic",
             "sales_label": "Sales"
         },
         "debts": {
@@ -2776,7 +2775,7 @@
             "en_compte": "On Account",
             "nb_ventes": "Sales",
             "nb_invoices": "Invoice Count",
-            "panier_moyen": "Avg. Basket"
+            "avg_basket": "Avg. Basket"
         },
         "pagination": {
             "showing": "Showing",

@@ -29,7 +29,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
     setShowInactive
   } = props;
 
-  const { t } = useTranslation();
+  const { t } = useTranslation(['products', 'common']);
 
 
   const resetFilters = () => {
@@ -46,7 +46,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
         <div className="join w-full shadow-sm">
           <input
             type="text"
-            placeholder={t('products.filters.search_placeholder') || "Rechercher par Nom, CIP, ou mot-clé..."}
+            placeholder={t('products:filters.search_placeholder')}
             className="input input-bordered join-item w-full input-md focus:input-primary transition-all text-base"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -61,13 +61,13 @@ export const ProductFilters: React.FC<ProductFiltersProps> = (props) => {
         {(filterRayon || filterFournisseur || filterExclusive || showInactive) && (
           <div className="mt-2 flex items-center gap-2">
             <button className="btn btn-ghost btn-xs text-error" onClick={resetFilters}>
-              {t('products.filters.reset') || "❌ Effacer les filtres actifs"}
+              {t('products:filters.reset')}
             </button>
             <div className="flex gap-1 flex-wrap">
-              {filterRayon && <span className="badge badge-info badge-outline badge-xs px-2">{t('products.filters.rayon_active')}</span>}
-              {filterFournisseur && <span className="badge badge-warning badge-outline badge-xs px-2">{t('products.filters.provider_active')}</span>}
-              {filterExclusive && <span className="badge badge-primary badge-outline badge-xs px-2">{t('products.filters.exclusive_only')}</span>}
-              {showInactive && <span className="badge badge-secondary badge-outline badge-xs px-2">{t('products.filters.inactive_only')}</span>}
+              {filterRayon && <span className="badge badge-info badge-outline badge-xs px-2">{t('products:filters.rayon_active')}</span>}
+              {filterFournisseur && <span className="badge badge-warning badge-outline badge-xs px-2">{t('products:filters.provider_active')}</span>}
+              {filterExclusive && <span className="badge badge-primary badge-outline badge-xs px-2">{t('products:filters.exclusive_only')}</span>}
+              {showInactive && <span className="badge badge-secondary badge-outline badge-xs px-2">{t('products:filters.inactive_only')}</span>}
             </div>
           </div>
         )}

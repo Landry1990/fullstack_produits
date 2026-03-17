@@ -16,18 +16,68 @@ interface InventaireAuditProps {
 }
 
 export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
-    const { t } = useTranslation();
-    const [sortConfig, setSortConfig] = React.useState<{ key: string, direction: 'asc' | 'desc' }>({
-        key: 'total_valeur',
-        direction: 'asc' // Car les pertes sont négatives, on veut les plus petites d'abord
-    });
+    const { t } = useTranslation(['stock', 'common']);
+    
     const {
         data, loading,
         startDate, setStartDate,
         endDate, setEndDate
     } = useInventaireAudit();
+
+    const [sortConfig, setSortConfig] = React.useState<{ key: string, direction: 'asc' | 'desc' }>({
+        key: 'total_valeur',
+        direction: 'asc' // Car les pertes sont négatives, on veut les plus petites d'abord
+    });
     const [groupBy, setGroupBy] = React.useState<'RAYON' | 'GROUPE'>('RAYON');
     const [metric, setMetric] = React.useState<'VALEUR' | 'OCCURRENCE'>('VALEUR');
+
+    const renderList = (title: string, data: any[], type: 'negative' | 'positive') => {
+        const Icon = type === 'negative' ? AlertTriangle : TrendingUp;
+        const colorClass = type === 'negative' ? 'text-error' : 'text-success';
+        const bgColorClass = type === 'negative' ? 'bg-error/10' : 'bg-success/10';
+
+        return (
+            <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden flex flex-col">
+                <div className="p-5 border-b border-base-200 bg-base-50/50 flex items-center justify-between">
+                    <h3 className="font-bold text-base-content flex items-center gap-3">
+                        <div className={`p-2 ${bgColorClass} rounded-xl`}>
+                            <Icon className={`h-5 w-5 ${colorClass}`} />
+                        </div>
+                        {title}
+                    </h3>
+                </div>
+                <div className="p-0 flex-1 overflow-y-auto max-h-[500px]">
+                    {!data || data.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full py-12 gap-3 opacity-20">
+                            <Package className="h-10 w-10" />
+                            <p className="text-sm font-medium">{t('inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
+                        </div>
+                    ) : (
+                        data.map((p, i) => (
+                            <div key={i} className="group flex items-center justify-between p-4 border-b border-base-100 hover:bg-base-200/50 transition-colors last:border-0">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-8 h-8 rounded-lg bg-base-200 flex items-center justify-center text-xs font-bold text-base-content/40 group-hover:${bgColorClass} group-hover:${colorClass} transition-colors`}>
+                                        {i + 1}
+                                    </div>
+                                    <div className="max-w-[150px] md:max-w-xs">
+                                        <div className="font-bold text-sm text-base-content group-hover:text-primary transition-colors truncate">{p.produit_nom}</div>
+                                        <div className={`text-[10px] font-bold ${colorClass}/60 uppercase tracking-tight mt-0.5`}>
+                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short', 'unités')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className={`font-mono font-bold ${colorClass}`}>
+                                        {p.valeur > 0 ? '+' : ''}{formatPrice(p.valeur)} F
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        );
+    };
 
     // Logic for dynamic sorting
     const sortedProducts = React.useMemo(() => {
@@ -65,7 +115,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-base-content/60 font-medium tracking-tight">Analyse du stock en cours...</p>
+                <p className="text-base-content/60 font-medium tracking-tight">{t('inventaire.audit.loading')}</p>
             </div>
         );
     }
@@ -77,16 +127,16 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                     <AlertTriangle className="h-12 w-12 text-error" />
                 </div>
                 <div>
-                    <h2 className="text-xl font-black">Erreur de chargement</h2>
+                    <h2 className="text-xl font-black">{t('inventaire.audit.error_title')}</h2>
                     <p className="text-base-content/60 max-w-sm mt-1">
-                        Nous n'avons pas pu charger les données d'audit. Cela peut être dû à une erreur serveur ou à l'absence d'inventaires validés.
+                        {t('inventaire.audit.error_msg')}
                     </p>
                 </div>
                 <button className="btn btn-primary btn-sm rounded-xl px-8" onClick={() => window.location.reload()}>
-                    Réessayer
+                    {t('inventaire.audit.retry')}
                 </button>
                 <button className="btn btn-ghost btn-sm" onClick={onBack}>
-                    Retourner
+                    {t('inventaire.audit.back')}
                 </button>
             </div>
         );
@@ -106,8 +156,8 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                         <ArrowLeft className="h-6 w-6" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-black text-base-content tracking-tight">{t('stock.inventaire.audit.title', { defaultValue: 'Audit des Pertes et Écarts' })}</h1>
-                        <p className="text-sm text-base-content/50">Analyse approfondie de l'intégrité du stock</p>
+                        <h1 className="text-2xl font-black text-base-content tracking-tight">{t('inventaire.audit.title')}</h1>
+                        <p className="text-sm text-base-content/50">{t('inventaire.audit.subtitle')}</p>
                     </div>
                 </div>
 
@@ -117,13 +167,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${groupBy === 'RAYON' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setGroupBy('RAYON')}
                         >
-                            PAR RAYON
+                            {t('inventaire.audit.filter_by_rayon')}
                         </button>
                         <button
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${groupBy === 'GROUPE' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setGroupBy('GROUPE')}
                         >
-                            PAR GROUPE
+                            {t('inventaire.audit.filter_by_groupe')}
                         </button>
                     </div>
 
@@ -132,13 +182,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${metric === 'VALEUR' ? 'bg-info text-white shadow-lg shadow-info/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setMetric('VALEUR')}
                         >
-                            VALEUR
+                            {t('inventaire.audit.metric_value')}
                         </button>
                         <button
                             className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${metric === 'OCCURRENCE' ? 'bg-info text-white shadow-lg shadow-info/20' : 'text-base-content/40 hover:text-base-content'}`}
                             onClick={() => setMetric('OCCURRENCE')}
                         >
-                            FRÉQUENCE
+                            {t('inventaire.audit.metric_freq')}
                         </button>
                     </div>
 
@@ -167,7 +217,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Total Pertes</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('inventaire.audit.stats.total_loss')}</span>
                         <TrendingDown className="h-4 w-4 text-error" />
                     </div>
                     <div className="text-2xl font-black text-error font-mono">
@@ -177,7 +227,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Total Gains</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('inventaire.audit.stats.total_gain')}</span>
                         <TrendingUp className="h-4 w-4 text-success" />
                     </div>
                     <div className="text-2xl font-black text-success font-mono">
@@ -187,7 +237,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Résultat Net</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('inventaire.audit.stats.net_result')}</span>
                         <LayoutDashboard className="h-4 w-4 text-primary" />
                     </div>
                     <div className={`text-2xl font-black font-mono ${(stats?.net || 0) < 0 ? 'text-error' : 'text-success'}`}>
@@ -197,13 +247,13 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
 
                 <div className="bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Inventaires Analysés</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('inventaire.audit.stats.analyzed_count')}</span>
                         <Package className="h-4 w-4 text-info" />
                     </div>
                     <div className="text-2xl font-black text-info font-mono">
                         {stats?.nombre_inventaires || 0}
                     </div>
-                    <div className="text-[10px] text-base-content/30 italic">sur {stats?.nombre_lignes || 0} lignes de produits</div>
+                    <div className="text-[10px] text-base-content/30 italic">{t('inventaire.audit.stats.lines_info', { count: stats?.nombre_lignes || 0 })}</div>
                 </div>
             </div>
 
@@ -213,7 +263,9 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                     <h3 className="font-bold text-lg flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5 text-warning" />
-                            {metric === 'VALEUR' ? `Pertes nettes par ${groupBy === 'RAYON' ? 'Rayon' : 'Groupe'}` : `Occurrences d'écarts par ${groupBy === 'RAYON' ? 'Rayon' : 'Groupe'}`}
+                            {metric === 'VALEUR' 
+                                ? t('inventaire.audit.chart.title_value', { type: groupBy === 'RAYON' ? 'Rayon' : 'Groupe' }) 
+                                : t('inventaire.audit.chart.title_freq', { type: groupBy === 'RAYON' ? 'Rayon' : 'Groupe' })}
                         </div>
                         <span className="text-[10px] font-black opacity-30 uppercase tracking-widest">{metric} / {groupBy}</span>
                     </h3>
@@ -236,7 +288,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                 <Tooltip 
                                     formatter={(value: any) => [
                                         metric === 'VALEUR' ? `${formatPrice(Math.abs(value))} F` : `${value} fois`, 
-                                        metric === 'VALEUR' ? 'Écart Net' : 'Nb. Écarts'
+                                        metric === 'VALEUR' ? t('inventaire.detail.col_gap') : t('inventaire.audit.table.col_occurrences')
                                     ]}
                                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -10px rgb(0 0 0 / 0.1)' }}
                                 />
@@ -263,22 +315,22 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                 {/* Top Products Table */}
                 <div className="bg-base-100 p-6 rounded-2xl border border-base-300 shadow-sm flex flex-col gap-6">
                     <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-lg text-error">Top Produits à Problèmes (Pertes/Fréquence)</h3>
-                        <div className="badge badge-error badge-outline text-[10px] font-black">CRITIQUE</div>
+                        <h3 className="font-bold text-lg text-error">{t('inventaire.audit.table.title')}</h3>
+                        <div className="badge badge-error badge-outline text-[10px] font-black">{t('inventaire.audit.table.critical_badge')}</div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="table table-xs w-full">
                             <thead className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
                                 <tr className="border-b border-base-200">
-                                    <th className="py-3">Produit</th>
+                                    <th className="py-3">{t('inventaire.audit.table.col_product')}</th>
                                     <th className="text-right py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('total_quantite')}>
-                                        Écart Qty <SortIcon column="total_quantite" />
+                                        {t('inventaire.audit.table.col_gap_qty')} <SortIcon column="total_quantite" />
                                     </th>
                                     <th className="text-right py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('total_valeur')}>
-                                        Valeur Totale <SortIcon column="total_valeur" />
+                                        {t('inventaire.audit.table.col_total_val')} <SortIcon column="total_valeur" />
                                     </th>
                                     <th className="text-center py-3 cursor-pointer hover:text-primary transition-colors" onClick={() => handleSort('occurrence')}>
-                                        Occurrences <SortIcon column="occurrence" />
+                                        {t('inventaire.audit.table.col_occurrences')} <SortIcon column="occurrence" />
                                     </th>
                                 </tr>
                             </thead>
@@ -303,7 +355,7 @@ export const InventaireAudit: React.FC<InventaireAuditProps> = ({ onBack }) => {
                                         <td colSpan={4} className="text-center py-12">
                                             <div className="flex flex-col items-center opacity-30 gap-2">
                                                 <Package className="h-12 w-12" />
-                                                <p className="text-sm font-bold uppercase tracking-widest">Aucune donnée critique</p>
+                                                <p className="text-sm font-bold uppercase tracking-widest">{t('inventaire.audit.table.empty')}</p>
                                             </div>
                                         </td>
                                     </tr>

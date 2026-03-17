@@ -73,7 +73,7 @@ export const ObjectiveModal: React.FC<ObjectiveModalProps> = ({
                         </label>
                         <input 
                             type="number" 
-                            placeholder="Ex: 500000" 
+                            placeholder={t('manager_dashboard.ca_target_placeholder', 'Ex: 500000')} 
                             className="input input-bordered rounded-xl font-black text-2xl bg-base-200/50 h-16"
                             value={objective.ca_objectif}
                             onChange={(e) => onChange({...objective, ca_objectif: e.target.value})}

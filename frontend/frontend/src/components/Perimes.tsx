@@ -54,7 +54,7 @@ interface PerimesStats {
 }
 
 export default function Perimes() {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['stock', 'common'])
   const [lots, setLots] = useState<StockLot[]>([])
   const [stats, setStats] = useState<PerimesStats | null>(null)
   const [loading, setLoading] = useState(false)
@@ -105,6 +105,7 @@ export default function Perimes() {
       setStats(response.data)
     } catch (err) {
       console.error('Erreur chargement stats:', err)
+      toast.error(t('perimes.messages.error_stats'))
     } finally {
       setLoadingStats(false)
     }
@@ -125,6 +126,7 @@ export default function Perimes() {
       setAdjustments(Array.isArray(data) ? data : (data.results || []))
     } catch (err) {
       console.error('Erreur chargement historiques:', err)
+      toast.error(t('perimes.messages.error_history'))
     } finally {
       setLoadingAdjustments(false)
     }
@@ -159,20 +161,20 @@ export default function Perimes() {
       setLots(fetchedLots)
     } catch (err) {
       console.error('Erreur chargement lots:', err)
-      setError('Impossible de charger les lots')
+      setError(t('perimes.messages.error_loading'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleSortirStock = async (lot: StockLot) => {
-    const quantity = prompt(`Combien d'unités voulez-vous sortir du stock pour le lot ${lot.lot} ? (Max: ${lot.quantity_remaining})`, String(lot.quantity_remaining))
+    const quantity = prompt(t('perimes.prompt.qty', { lot: lot.lot, max: lot.quantity_remaining }), String(lot.quantity_remaining))
     
     if (!quantity) return
     
     const qty = parseInt(quantity, 10)
     if (isNaN(qty) || qty <= 0 || qty > lot.quantity_remaining) {
-      toast.error('Quantité invalide.')
+      toast.error(t('perimes.messages.invalid_qty'))
       return
     }
 
@@ -185,18 +187,18 @@ export default function Perimes() {
           validated_by_id: validatorId,
           sudo_password: password
         })
-        toast.success('Sortie de stock effectuée.')
+        toast.success(t('perimes.messages.success_exit'))
         fetchLots()
         fetchStats() 
       } catch (err: any) {
         console.error('Erreur sortie stock:', err)
-        toast.error('Erreur: ' + (err.response?.data?.detail || err.response?.data?.error || err.message || 'Erreur inconnue'))
+        toast.error(t('perimes.messages.error_exit') + ': ' + (err.response?.data?.detail || err.response?.data?.error || err.message || 'Erreur inconnue'))
       } finally {
         setProcessing(false)
       }
     }, {
-      title: `Sortie de stock - Périmés`,
-      message: `Confirmer la sortie de <strong>${qty} unités</strong> du produit <strong>${lot.produit_nom}</strong> (Lot ${lot.lot}) ?<br/><br/>Cette action est irréversible.`
+      title: t('perimes.confirm.exit_title'),
+      message: t('perimes.confirm.exit_message', { qty, product: lot.produit_nom, lot: lot.lot })
     });
   }
 
@@ -212,18 +214,18 @@ export default function Perimes() {
                   validated_by_id: validatorId,
                   sudo_password: password
               })
-              toast.success(`${selectedLotIds.length} lots sortis avec succès.`)
+              toast.success(t('perimes.messages.success_bulk_exit', { count: selectedLotIds.length }))
               fetchLots()
               fetchStats()
           } catch (err: any) {
               console.error('Erreur sortie groupée:', err)
-              toast.error('Erreur lors de la sortie groupée.')
+              toast.error(t('perimes.messages.error_bulk_exit'))
           } finally {
               setProcessing(false)
           }
       }, {
-          title: 'Sortie Groupée - Périmés',
-          message: `Voulez-vous sortir <strong>${selectedLotIds.length} lots</strong> du stock ?<br/>Leur stock passera à 0.`
+          title: t('perimes.confirm.bulk_exit_title'),
+          message: t('perimes.confirm.bulk_exit_message', { count: selectedLotIds.length })
       })
   }
 
@@ -250,7 +252,7 @@ export default function Perimes() {
 
     const content = `
       <div style="font-family: Arial, sans-serif; color: #333;">
-        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">Journal des Sorties - Produits Périmés</h3>
+        <h3 style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px;">${t('perimes.history.title')}</h3>
         <p style="text-align: center; font-size: 0.9em; margin-bottom: 20px;">
           Période: ${new Date(dateDebut).toLocaleDateString()} au ${new Date(dateFin).toLocaleDateString()}
         </p>
@@ -258,11 +260,11 @@ export default function Perimes() {
         <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85em;">
           <thead>
             <tr style="background-color: #f3f4f6;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Date</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Produit</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Lot</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Qté</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Valorisation</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('perimes.history.table.date')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('perimes.history.table.product')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">${t('perimes.history.table.lot')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('perimes.history.table.qty')}</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('perimes.history.table.value')}</th>
             </tr>
           </thead>
           <tbody>
@@ -278,7 +280,7 @@ export default function Perimes() {
           </tbody>
           <tfoot>
             <tr style="background-color: #f9fafb; font-weight: bold;">
-              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">TOTAL VALORISATION</td>
+              <td colspan="4" style="border: 1px solid #ddd; padding: 8px; text-align: right;">${t('perimes.history.total_valorization').toUpperCase()}</td>
               <td style="border: 1px solid #ddd; padding: 8px; text-align: right; color: #dc2626;">${formatCurrency(totalVal)} F</td>
             </tr>
           </tfoot>
@@ -290,7 +292,7 @@ export default function Perimes() {
       </div>
     `
 
-    printWithTemplate(content, { title: 'Journal des Sorties Périmés', width: 800 })
+    printWithTemplate(content, { title: t('perimes.history.title'), width: 800 })
   }
 
   const handleExportExcel = () => {
@@ -311,8 +313,6 @@ export default function Perimes() {
     return new Date(dateString) < new Date()
   }
 
-
-
   // Calcul urgence pour couleur de la carte de prévision
   const getUrgencyClass = (valeur: number) => {
     if (valeur > 500000) return 'border-error bg-error/10'
@@ -329,8 +329,8 @@ export default function Perimes() {
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-base-content">{t('perimes.title', 'Gestion des Périmés')}</h1>
-            <p className="text-[11px] font-medium text-base-content/40 uppercase tracking-widest">{t('perimes.subtitle', 'Analyse des pertes et prévisions')}</p>
+            <h1 className="text-xl font-bold tracking-tight text-base-content">{t('perimes.title')}</h1>
+            <p className="text-[11px] font-medium text-base-content/40 uppercase tracking-widest">{t('perimes.subtitle')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -340,21 +340,21 @@ export default function Perimes() {
               onClick={() => setActiveTab('dashboard')}
             >
               <BarChart2 className="w-3.5 h-3.5" />
-              <span className="font-semibold">{t('perimes.tabs.dashboard', 'Dashboard')}</span>
+              <span className="font-semibold">{t('perimes.tabs.dashboard')}</span>
             </button>
             <button 
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'list' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('list')}
             >
               <List className="w-3.5 h-3.5" />
-              <span className="font-semibold">{t('perimes.tabs.list', 'Liste')}</span>
+              <span className="font-semibold">{t('perimes.tabs.list')}</span>
             </button>
             <button 
               className={`tab tab-sm gap-2 h-8 rounded-lg transition-all duration-200 ${activeTab === 'history' ? 'tab-active bg-primary text-primary-content shadow-md' : 'hover:bg-base-300'}`}
               onClick={() => setActiveTab('history')}
             >
               <History className="w-3.5 h-3.5" />
-              <span className="font-semibold">{t('perimes.tabs.history', 'Historique')}</span>
+              <span className="font-semibold">{t('perimes.tabs.history')}</span>
             </button>
           </div>
           <button 
@@ -363,7 +363,7 @@ export default function Perimes() {
             disabled={loading || loadingStats}
           >
             {(loading || loadingStats) ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            <span className="font-semibold">{t('common.refresh', 'Actualiser')}</span>
+            <span className="font-semibold">{t('common:refresh')}</span>
           </button>
         </div>
       </div>
@@ -401,9 +401,9 @@ export default function Perimes() {
                           💸
                         </div>
                         <div>
-                          <p className="text-sm text-base-content/60">{t('perimes.stats.valeur_perimes', 'Pertes (Coût)')}</p>
+                          <p className="text-sm text-base-content/60">{t('perimes.stats.valeur_perimes')}</p>
                           <p className="text-2xl font-bold text-error">{formatCurrency(stats.perimes.valeur_cout)} F</p>
-                          <p className="text-xs text-base-content/50">{t('perimes.stats.lots_count', { defaultValue: '{{count}} lots périmés', count: stats.perimes.count_lots })}</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.lots_count', { count: stats.perimes.count_lots })}</p>
                         </div>
                       </div>
                     </div>
@@ -417,9 +417,9 @@ export default function Perimes() {
                           📉
                         </div>
                         <div>
-                          <p className="text-sm text-base-content/60">{t('perimes.stats.manque_gagner', 'Manque à Gagner')}</p>
+                          <p className="text-sm text-base-content/60">{t('perimes.stats.manque_gagner')}</p>
                           <p className="text-2xl font-bold text-warning">{formatCurrency(stats.perimes.valeur_vente_perdue)} F</p>
-                          <p className="text-xs text-base-content/50">{t('perimes.stats.at_sale_price', 'Au prix de vente')}</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.at_sale_price')}</p>
                         </div>
                       </div>
                     </div>
@@ -433,9 +433,9 @@ export default function Perimes() {
                           📊
                         </div>
                         <div>
-                          <p className="text-sm text-base-content/60">{t('perimes.stats.taux_perte', 'Taux de Perte')}</p>
+                          <p className="text-sm text-base-content/60">{t('perimes.stats.taux_perte')}</p>
                           <p className="text-2xl font-bold text-info">{stats.indicateurs.taux_perte_pct}%</p>
-                          <p className="text-xs text-base-content/50">{t('perimes.stats.vs_ca', 'vs CA')} ({formatCurrency(stats.indicateurs.ca_periode)} F)</p>
+                          <p className="text-xs text-base-content/50">{t('perimes.stats.vs_ca')} ({formatCurrency(stats.indicateurs.ca_periode)} F)</p>
                         </div>
                       </div>
                     </div>
@@ -446,37 +446,37 @@ export default function Perimes() {
                 <div className="card bg-base-100 border border-base-200 shadow-sm">
                   <div className="card-body">
                     <h2 className="card-title text-lg mb-4">
-                      ⏰ {t('perimes.prevision.title', 'Prévisions d\'Expiration')}
+                      ⏰ {t('perimes.prevision.title')}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* 30 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['30j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">30 {t('common.days', 'jours')}</span>
-                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { defaultValue: '{{count}} lots', count: stats.previsions['30j'].count_lots })}</span>
+                          <span className="font-bold text-base-content">30 {t('common:days')}</span>
+                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['30j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['30j'].valeur_vente)} F</p>
-                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk', 'Valeur vente potentielle à risque')}</p>
+                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk')}</p>
                      </div>
 
                       {/* 60 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['60j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">60 {t('common.days', 'jours')}</span>
-                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { defaultValue: '{{count}} lots', count: stats.previsions['60j'].count_lots })}</span>
+                          <span className="font-bold text-base-content">60 {t('common:days')}</span>
+                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['60j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['60j'].valeur_vente)} F</p>
-                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk', 'Valeur vente potentielle à risque')}</p>
+                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk')}</p>
                       </div>
 
                       {/* 90 jours */}
                       <div className={`border-2 rounded-xl p-4 ${getUrgencyClass(stats.previsions['90j'].valeur_vente)}`}>
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-bold text-base-content">90 {t('common.days', 'jours')}</span>
-                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { defaultValue: '{{count}} lots', count: stats.previsions['90j'].count_lots })}</span>
+                          <span className="font-bold text-base-content">90 {t('common:days')}</span>
+                          <span className="badge badge-sm">{t('perimes.prevision.lots_count', { count: stats.previsions['90j'].count_lots })}</span>
                         </div>
                         <p className="text-xl font-bold">{formatCurrency(stats.previsions['90j'].valeur_vente)} F</p>
-                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk', 'Valeur vente potentielle à risque')}</p>
+                        <p className="text-xs text-base-content/60 mt-1">{t('perimes.prevision.potential_risk')}</p>
                       </div>
                     </div>
                   </div>
@@ -487,18 +487,18 @@ export default function Perimes() {
                   <div className="card bg-base-100 border border-base-200 shadow-sm">
                     <div className="card-body">
                       <h2 className="card-title text-lg mb-4">
-                        🚨 {t('perimes.top_perimes', 'Produits Périmés en Stock')}
+                        🚨 {t('perimes.top_perimes')}
                       </h2>
                       <div className="overflow-x-auto">
                         <table className="table table-sm">
                           <thead>
                             <tr>
-                              <th>Produit</th>
-                              <th>Lot</th>
-                              <th>Expiration</th>
-                              <th className="text-right">Qté</th>
-                              <th className="text-right">Valeur Coût</th>
-                              <th className="text-right">Valeur Vente</th>
+                              <th>{t('perimes.table.product')}</th>
+                              <th>{t('perimes.table.lot')}</th>
+                              <th>{t('perimes.table.expiration')}</th>
+                              <th className="text-right">{t('perimes.table.qty')}</th>
+                              <th className="text-right">{t('perimes.table.value')} Coût</th>
+                              <th className="text-right">{t('perimes.table.value')} Vente</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -551,16 +551,16 @@ export default function Perimes() {
                           <div className="dropdown dropdown-bottom">
                             <div tabIndex={0} role="button" className="btn btn-sm btn-primary gap-2 h-9">
                               <MoreVertical className="w-4 h-4" />
-                              {t('common.actions_title', { defaultValue: 'Actions' })}
+                              {t('common:actions_title')}
                               <span className="badge badge-sm bg-primary-focus border-none text-white">{selectedLotIds.length}</span>
                             </div>
                             <ul tabIndex={0} className="dropdown-content z-[100] menu p-2 shadow-2xl bg-base-100 rounded-box w-56 border border-base-200 mt-2">
                               <li className="menu-title px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-base-content/40">
-                                {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                                {t('common:bulk_actions')}
                               </li>
                               <li>
                                 <a onClick={handleBulkSortir} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                  <Trash2 className="w-4 h-4" /> {t('common.delete', 'Sortir du stock')}
+                                  <Trash2 className="w-4 h-4" /> {t('perimes.table.exit_btn')}
                                 </a>
                               </li>
                             </ul>
@@ -570,7 +570,7 @@ export default function Perimes() {
                             className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-base-content h-9"
                           >
                             <X className="w-4 h-4" />
-                            {t('common.actions.cancel', { defaultValue: 'Annuler' })}
+                            {t('common:cancel')}
                           </button>
                         </div>
                      ) : (
@@ -579,12 +579,12 @@ export default function Perimes() {
                               <div className="p-2 bg-error/10 text-error rounded-lg">
                                 <AlertTriangle className="w-5 h-5" />
                               </div>
-                              <h2 className="font-bold text-lg tracking-tight">{t('perimes.risk_lots', 'Lots à Risque')}</h2>
+                              <h2 className="font-bold text-lg tracking-tight">{t('perimes.risk_lots')}</h2>
                               <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{lots.length}</span>
                            </div>
                            <div className="flex gap-3 items-center">
                               <div className="flex items-center gap-2 bg-base-200/50 p-1 px-3 rounded-xl border border-base-300/50">
-                                <span className="text-[10px] font-bold text-base-content/40 uppercase">{t('common.filters', 'Filtres')}</span>
+                                <span className="text-[10px] font-bold text-base-content/40 uppercase">Filtres</span>
                                 <div className="h-4 w-[1px] bg-base-300 mx-1"></div>
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                   <input 
@@ -602,10 +602,10 @@ export default function Perimes() {
                                         value={filterDays} 
                                         onChange={(e) => setFilterDays(parseInt(e.target.value))}
                                     >
-                                        <option value={30}>30 {t('common.days', 'jours')}</option>
-                                        <option value={60}>60 {t('common.days', 'jours')}</option>
-                                        <option value={90}>90 {t('common.days', 'jours')}</option>
-                                        <option value={180}>180 {t('common.days', 'jours')}</option>
+                                        <option value={30}>30 {t('common:days')}</option>
+                                        <option value={60}>60 {t('common:days')}</option>
+                                        <option value={90}>90 {t('common:days')}</option>
+                                        <option value={180}>180 {t('common:days')}</option>
                                     </select>
                                 )}
                               </div>
@@ -625,7 +625,7 @@ export default function Perimes() {
               ) : lots.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-base-content/20 gap-4">
                   <PieChart className="w-16 h-16 opacity-10" />
-                  <p className="text-sm font-bold uppercase tracking-widest">{t('perimes.no_result', 'Aucun lot à risque trouvé')}</p>
+                  <p className="text-sm font-bold uppercase tracking-widest">{t('perimes.no_result')}</p>
                 </div>
               ) : (
                 <table className="table table-xs table-pin-rows w-full border-separate border-spacing-0">
@@ -639,13 +639,13 @@ export default function Perimes() {
                             onChange={toggleAllSelection}
                           />
                       </th>
-                      <th className="py-3 px-4 bg-transparent">{t('perimes.table.product', 'Produit')}</th>
-                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.lot', 'Lot')}</th>
-                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.expiration', 'Expiration')}</th>
-                      <th className="py-3 px-4 bg-transparent">{t('perimes.table.provider', 'Fournisseur')}</th>
-                      <th className="py-3 px-4 bg-transparent text-right">{t('perimes.table.stock', 'Stock')}</th>
-                      <th className="py-3 px-4 bg-transparent text-right">{t('perimes.table.value', 'Valeur')}</th>
-                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.actions', 'Actions')}</th>
+                      <th className="py-3 px-4 bg-transparent">{t('perimes.table.product')}</th>
+                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.lot')}</th>
+                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.expiration')}</th>
+                      <th className="py-3 px-4 bg-transparent">{t('perimes.table.provider')}</th>
+                      <th className="py-3 px-4 bg-transparent text-right">{t('perimes.table.stock')}</th>
+                      <th className="py-3 px-4 bg-transparent text-right">{t('perimes.table.value')}</th>
+                      <th className="py-3 px-4 bg-transparent text-center">{t('perimes.table.actions')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-base-200">
@@ -692,12 +692,12 @@ export default function Perimes() {
                                 disabled={processing}
                             >
                                 <Trash2 className="w-3.5 h-3.5 mr-1" />
-                                {t('common.exit', 'Sortir')}
+                                {t('perimes.table.exit_btn')}
                             </button>
                           ) : (
                             <span className="text-[10px] font-black text-base-content/20 uppercase tracking-widest flex items-center justify-center gap-1">
                                 <Check className="w-3 h-3" />
-                                Sorti
+                                {t('perimes.table.sorti')}
                             </span>
                           )}
                         </td>
@@ -740,29 +740,29 @@ export default function Perimes() {
                         onClick={handlePrintHistory}
                         disabled={adjustments.length === 0}
                     >
-                         {t('perimes.history.print', 'Imprimer')}
+                         {t('perimes.history.print')}
                     </button>
                     <button 
                         className="btn btn-sm btn-success text-white gap-2 rounded-lg"
                         onClick={handleExportExcel}
                         disabled={adjustments.length === 0}
                     >
-                         {t('perimes.history.excel', 'Excel')}
+                         {t('perimes.history.excel')}
                     </button>
                 </div>
              </div>
 
              {/* Total Valorisation Summary Card */}
              {adjustments.length > 0 && (
-                 <div className="stats shadow-sm border border-base-200 w-full mb-4">
+                  <div className="stats shadow-sm border border-base-200 w-full mb-4">
                     <div className="stat">
-                        <div className="stat-title text-xs font-bold uppercase text-base-content/50">Valorisation Totale des Sorties</div>
+                        <div className="stat-title text-xs font-bold uppercase text-base-content/50">{t('perimes.history.total_valorization')}</div>
                         <div className="stat-value text-error text-2xl">
                             {formatCurrency(adjustments.reduce((sum, a) => sum + (a.valorisation || 0), 0))} F
                         </div>
-                        <div className="stat-desc font-medium text-base-content/40">{adjustments.length} opérations sur la période</div>
+                        <div className="stat-desc font-medium text-base-content/40">{t('perimes.history.operations_count', { count: adjustments.length })}</div>
                     </div>
-                 </div>
+                  </div>
              )}
 
              {/* Adjustments Table */}
@@ -772,57 +772,60 @@ export default function Perimes() {
                 </div>
              ) : adjustments.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-64 text-base-content/30 border-2 border-dashed border-base-200 rounded-2xl">
-                    <p className="text-lg font-bold">Aucune sortie trouvée sur cette période</p>
+                    <p className="text-lg font-bold">{t('perimes.history.no_result')}</p>
                 </div>
              ) : (
                 <div className="bg-white rounded-2xl shadow-sm border border-base-200 overflow-hidden">
-                    <table className="table table-sm w-full">
-                        <thead>
-                            <tr className="bg-base-100">
-                                <th>Date</th>
-                                <th>Produit</th>
-                                <th>Lot</th>
-                                <th className="text-right">Qté Sortie</th>
-                                <th className="text-right">Valorisation</th>
-                                <th>Utilisateur</th>
-                                <th>Détails</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {adjustments.map((adj) => (
-                                <tr key={adj.id} className="hover:bg-base-50/50 transition-colors">
-                                    <td className="text-xs">{new Date(adj.created_at).toLocaleDateString()}</td>
-                                    <td>
-                                        <div className="font-bold text-xs">{adj.produit_name}</div>
-                                        <div className="text-[10px] opacity-40 font-mono">{adj.produit_cip}</div>
-                                    </td>
-                                    <td className="font-mono text-[11px]">{adj.lot_number || '-'}</td>
-                                    <td className="text-right font-bold text-error">
-                                        {Math.abs(adj.quantity_change)}
-                                    </td>
-                                    <td className="text-right text-error font-mono font-bold text-xs">
-                                        {formatCurrency(adj.valorisation)}
-                                    </td>
-                                    <td className="text-xs text-base-content/60">{adj.user_name || adj.username}</td>
-                                    <td className="text-[10px] italic text-base-content/50">{adj.reason_detail}</td>
+                    <div className="overflow-x-auto">
+                        <table className="table table-sm w-full">
+                            <thead>
+                                <tr className="bg-base-100">
+                                    <th>{t('perimes.history.table.date')}</th>
+                                    <th>{t('perimes.history.table.product')}</th>
+                                    <th>{t('perimes.history.table.lot')}</th>
+                                    <th className="text-right">{t('perimes.history.table.qty')}</th>
+                                    <th className="text-right">{t('perimes.history.table.value')}</th>
+                                    <th>{t('perimes.history.table.user')}</th>
+                                    <th>{t('perimes.history.table.details')}</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {adjustments.map((adj) => (
+                                    <tr key={adj.id} className="hover:bg-base-50/50 transition-colors">
+                                        <td className="text-xs">{new Date(adj.created_at).toLocaleDateString()}</td>
+                                        <td>
+                                            <div className="font-bold text-xs">{adj.produit_name}</div>
+                                            <div className="text-[10px] opacity-40 font-mono">{adj.produit_cip}</div>
+                                        </td>
+                                        <td className="font-mono text-[11px]">{adj.lot_number || '-'}</td>
+                                        <td className="text-right font-bold text-error">
+                                            {adj.quantity_change}
+                                        </td>
+                                        <td className="text-right font-bold">
+                                            {formatCurrency(adj.valorisation)} F
+                                        </td>
+                                        <td className="text-xs">{adj.user_name}</td>
+                                        <td className="text-xs truncate max-w-[150px]" title={adj.reason_detail}>
+                                            {adj.reason_type_display} {adj.reason_detail ? `- ${adj.reason_detail}` : ''}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
              )}
           </div>
         )}
       </div>
 
-      {/* Sudo Validation Modal */}
       <SudoValidationModal
         isOpen={sudoState.isOpen}
         onClose={closeSudo}
         onValidate={sudoState.onValidate}
+        title={sudoState.title}
+        message={sudoState.message}
         saving={processing}
-        title={sudoState.title || `Sortie de stock - Périmés`}
-        message={sudoState.message || ''}
       />
     </div>
   )

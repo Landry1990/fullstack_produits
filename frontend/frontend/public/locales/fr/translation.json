@@ -81,7 +81,11 @@
         "rows": "Lignes",
         "sub_tables": "Sous-tables",
         "rows_deleted": "Lignes supprimées",
-        "concerned_tables": "Tables concernées"
+        "concerned_tables": "Tables concernées",
+        "items": "éléments",
+        "pagination_info": "Page {{page}} sur {{total}} ({{count}} {{label}})",
+        "previous": "Précédent",
+        "next": "Suivant"
     },
     "sidebar": {
         "dashboard": "Tableau de bord",
@@ -285,7 +289,7 @@
         }
     },
     "finance": {
-        "title": "Module Financier",
+        "title": "Analyse Financière",
         "subtitle": "Analyse et prédictions du chiffre d'affaires",
         "periode": {
             "mois": "Ce mois",
@@ -1149,16 +1153,18 @@
             "new_client": "Nouveau Client",
             "generate_order": "Générer Commande"
         },
+        "hourly_traffic_title": "Affluence par Heure",
+        "hourly_traffic_desc": "Fréquentation moyenne par tranche horaire",
         "charts": {
             "revenue_evolution": "Évolution du Chiffre d'Affaires (7 derniers jours)",
+            "last_7_days": "7 derniers jours",
             "amount": "Montant",
             "sales_trend": "Tendance des Ventes (7 derniers jours)",
-            "hourly_traffic": "Moyenne Fréquentation Horaire (30 jours)",
-            "hourly_traffic_title": "Affluence par Heure",
             "sales_label": "Ventes"
         },
         "debts": {
             "supplier_debts_title": "Dettes Fournisseurs",
+            "supplier_debts_desc": "Dettes envers les fournisseurs",
             "total_debt": "Total",
             "supplier": "Fournisseur",
             "debt": "Dette",
@@ -1194,6 +1200,7 @@
             "promis_title": "Promis Disponibles",
             "deliver_promis": "Livrer les Promis",
             "stock_title": "Alertes Stock",
+            "stock_subtitle": "Alertes de rupture",
             "no_stock_alerts": "Aucune alerte de stock",
             "view_all_stock": "Voir tout le stock",
             "expiry_title": "Péremption Proche",
@@ -1568,6 +1575,9 @@
             "cancellation_reason": "Motif Annulation",
             "discount": "Remise",
             "amount_ttc": "Montant TTC",
+            "amount_settled": "Réglé",
+            "amount_on_account": "En compte",
+            "operator": "Opérateur",
             "actions": "Actions"
         },
         "fields": {
@@ -1793,22 +1803,43 @@
         }
     },
     "salesHistory": {
-        "title": "Historique des Ventes par Jour",
+        "title": "Historique par Jour",
+        "subtitle": "Consultez et exportez vos statistiques de ventes quotidiennes",
+        "export_excel": "Exporter Excel",
+        "loading": "Chargement de l'historique...",
         "start_date": "Date début",
         "end_date": "Date fin",
         "no_data": "Aucune vente trouvée pour cette période",
         "total": "TOTAL",
+        "total_period": "TOTAL PÉRIODE",
         "columns": {
             "date": "Date",
-            "ca_ttc": "CA TTC",
-            "ca_ht": "CA HT",
+            "ca_ttc": "Chiffre d'Affaires TTC",
+            "ca_ht": "CA Hors Taxe",
             "tva": "TVA",
             "cash": "Espèces",
-            "card": "Carte",
-            "check": "Chèque",
-            "mobile_money": "Mobile Money",
+            "card": "Cartes",
+            "check": "Chèques",
+            "virement": "Virements",
+            "mobiles": "Mobiles",
+            "coupons": "Coupons",
+            "en_compte": "En Compte",
+            "nb_ventes": "Ventes",
             "nb_invoices": "Nb Factures",
             "avg_basket": "Panier Moyen"
+        },
+        "pagination": {
+            "showing": "Affichage de",
+            "days_of": "jours sur",
+            "total": "total",
+            "prev": "Précédent",
+            "next": "Suivant",
+            "page": "Page"
+        },
+        "messages": {
+            "error_loading": "Erreur lors du chargement de l'historique",
+            "export_success": "Export Excel réussi",
+            "export_error": "Erreur lors de l'export Excel"
         }
     },
     "stockAnalysis": {

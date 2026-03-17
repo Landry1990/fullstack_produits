@@ -11,7 +11,7 @@ import { SmsModal } from './promis/modals/SmsModal';
 import PasswordConfirmModal from './PasswordConfirmModal';
 
 const Promis: React.FC = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     
     // UI State for Modals
     const [showForm, setShowForm] = useState(false);

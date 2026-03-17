@@ -129,7 +129,7 @@ export default function TransferCommandeModal({
 
     const handleTransfer = async () => {
         if (!transferTargetFournisseur) {
-            toast.error(t('orders.transfer_modal.select_supplier_error'));
+            toast.error(t('orders:transfer_modal.select_supplier_error'));
             return;
         }
 
@@ -174,7 +174,7 @@ export default function TransferCommandeModal({
 
         } catch (err) {
             console.error('Erreur lors du transfert:', err);
-            toast.error(t('orders.transfer_modal.transfer_error'));
+            toast.error(t('orders:transfer_modal.transfer_error'));
         }
     };
 
@@ -184,24 +184,24 @@ export default function TransferCommandeModal({
         <div className="modal modal-open">
             <div className="modal-box max-w-2xl">
                 <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    {t('orders.transfer_modal.title')}
+                    {t('orders:transfer_modal.title')}
                 </h3>
 
                 <p className="text-sm text-base-content/70 mb-4"
-                   dangerouslySetInnerHTML={{ __html: t('orders.transfer_modal.description') }}
+                   dangerouslySetInnerHTML={{ __html: t('orders:transfer_modal.description') }}
                 />
 
                 {/* Sélection du fournisseur */}
                 <div className="form-control mb-4">
                     <label className="label">
-                        <span className="label-text font-semibold">{t('orders.transfer_modal.supplier_label')}</span>
+                        <span className="label-text font-semibold">{t('orders:transfer_modal.supplier_label')}</span>
                     </label>
                     <select
                         className="select select-bordered w-full"
                         value={transferTargetFournisseur}
                         onChange={handleSupplierChange}
                     >
-                        <option value="">{t('orders.transfer_modal.select_supplier')}</option>
+                        <option value="">{t('orders:transfer_modal.select_supplier')}</option>
                         {fournisseurs
                             .filter(f => f.id !== parseInt(currentSupplierId || '0'))
                             .map(f => (
@@ -213,7 +213,7 @@ export default function TransferCommandeModal({
 
                 {/* Liste des produits à transférer */}
                 <div className="bg-base-200 rounded-lg p-4 mb-4 max-h-60 overflow-y-auto">
-                    <h4 className="font-semibold text-sm mb-2">{t('orders.transfer_modal.products_title', { count: selectedProducts.length })}</h4>
+                    <h4 className="font-semibold text-sm mb-2">{t('orders:transfer_modal.products_title', { count: selectedProducts.length })}</h4>
                     <div className="space-y-2">
                         {selectedProducts.map((p, i) => {
                             const produitId = (p.produit && typeof p.produit === 'object') ? p.produit.id : p.produit;
@@ -239,25 +239,25 @@ export default function TransferCommandeModal({
                                         <span className={`font-medium ${isDeleted ? 'italic text-base-content/50' : ''}`}>
                                             {produitName}
                                         </span>
-                                        <span className="text-base-content/50 ml-2">({t('orders.transfer_modal.qty_label', { qty: quantity })})</span>
+                                        <span className="text-base-content/50 ml-2">({t('orders:transfer_modal.qty_label', { qty: quantity })})</span>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-base-content/60">{formatCurrency(currentPrice)} F</span>
+                                        <span className="text-base-content/60">{formatCurrency(currentPrice)} {t('common:currency_symbol', 'F')}</span>
                                         {hasPriceInfo && (
                                             <>
                                                 <span className="text-base-content/40">→</span>
                                                 <span className={newPrice < currentPrice ? 'text-success font-semibold' : newPrice > currentPrice ? 'text-error font-semibold' : ''}>
-                                                    {formatCurrency(newPrice)} F
+                                                    {formatCurrency(newPrice)} {t('common:currency_symbol', 'F')}
                                                 </span>
                                                 {priceDiff !== 0 && (
                                                     <span className={`badge badge-xs ${priceDiff > 0 ? 'badge-success' : 'badge-error'}`}>
-                                                        {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)} F
+                                                        {priceDiff > 0 ? '+' : ''}{formatCurrency(priceDiff * quantity)} {t('common:currency_symbol', 'F')}
                                                     </span>
                                                 )}
                                             </>
                                         )}
                                         {!hasPriceInfo && transferTargetFournisseur && !loadingCatalogue && (
-                                            <span className="badge badge-ghost badge-xs">{t('orders.transfer_modal.unknown_price')}</span>
+                                            <span className="badge badge-ghost badge-xs">{t('orders:transfer_modal.unknown_price')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -271,25 +271,25 @@ export default function TransferCommandeModal({
                     <div className="bg-base-100 border border-base-300 rounded-lg p-4 mb-4">
                         <div className="grid grid-cols-3 gap-4 text-center">
                             <div>
-                                <div className="text-xs text-base-content/50 uppercase">{t('orders.transfer_modal.current_cost')}</div>
-                                <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)} F</div>
+                                <div className="text-xs text-base-content/50 uppercase">{t('orders:transfer_modal.current_cost')}</div>
+                                <div className="font-bold">{formatCurrency(transferCalc.totalCurrentCost)} {t('common:currency_symbol', 'F')}</div>
                             </div>
                             <div>
-                                <div className="text-xs text-base-content/50 uppercase">{t('orders.transfer_modal.new_cost')}</div>
-                                <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)} F</div>
+                                <div className="text-xs text-base-content/50 uppercase">{t('orders:transfer_modal.new_cost')}</div>
+                                <div className="font-bold">{formatCurrency(transferCalc.totalNewCost)} {t('common:currency_symbol', 'F')}</div>
                             </div>
                             <div>
                                 <div className="text-xs text-base-content/50 uppercase">
-                                    {transferCalc.isGain ? t('orders.transfer_modal.savings') : t('orders.transfer_modal.overspend')}
+                                    {transferCalc.isGain ? t('orders:transfer_modal.savings') : t('orders:transfer_modal.overspend')}
                                 </div>
                                 <div className={`font-bold text-lg ${transferCalc.isGain ? 'text-success' : transferCalc.difference < 0 ? 'text-error' : ''}`}>
-                                    {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)} F
+                                    {transferCalc.isGain ? '+' : ''}{formatCurrency(transferCalc.difference)} {t('common:currency_symbol', 'F')}
                                 </div>
                             </div>
                         </div>
                         {transferCalc.productsWithoutPricing > 0 && (
                             <div className="mt-2 text-xs text-warning text-center">
-                                {t('orders.transfer_modal.no_price_warning', { count: transferCalc.productsWithoutPricing })}
+                                {t('orders:transfer_modal.no_price_warning', { count: transferCalc.productsWithoutPricing })}
                             </div>
                         )}
                     </div>
@@ -298,7 +298,7 @@ export default function TransferCommandeModal({
                 {loadingCatalogue && (
                     <div className="flex items-center justify-center py-4">
                         <span className="loading loading-spinner loading-sm mr-2"></span>
-                        {t('orders.transfer_modal.loading_prices')}
+                        {t('orders:transfer_modal.loading_prices')}
                     </div>
                 )}
 
@@ -308,7 +308,7 @@ export default function TransferCommandeModal({
                         className="btn btn-ghost"
                         onClick={onClose}
                     >
-                        {t('orders.transfer_modal.cancel')}
+                        {t('orders:transfer_modal.cancel')}
                     </button>
                     <button
                         type="button"
@@ -316,7 +316,7 @@ export default function TransferCommandeModal({
                         onClick={handleTransfer}
                         disabled={!transferTargetFournisseur || loadingCatalogue}
                     >
-                        {t('orders.transfer_modal.transfer_btn', { count: selectedProducts.length })}
+                        {t('orders:transfer_modal.transfer_btn', { count: selectedProducts.length })}
                     </button>
                 </div>
             </div>

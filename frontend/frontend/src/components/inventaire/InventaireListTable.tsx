@@ -25,7 +25,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
     onDelete,
     deleting = false
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     if (loading) {
         return (
@@ -42,7 +42,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                 <div className="bg-gray-50 p-4 rounded-full mb-4">
                     <Package className="w-10 h-10 text-gray-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('stock.inventaire.list.empty', { defaultValue: 'Aucun inventaire trouvé' })}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('inventaire.list.empty', { defaultValue: 'Aucun inventaire trouvé' })}</h3>
             </div>
         );
     }
@@ -63,16 +63,16 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                         <th className="px-6 py-4 rounded-tl-2xl">
                             {selectedIds.size > 0 ? (
                                 <span className="text-primary font-bold normal-case text-sm">
-                                    {t('common.selection_count', { count: selectedIds.size, defaultValue: '{{count}} sélectionné(s)' })}
+                                    {t('common:selection_count', { count: selectedIds.size, defaultValue: '{{count}} sélectionné(s)' })}
                                 </span>
-                            ) : t('stock.inventaire.list.date')}
+                            ) : t('inventaire.list.date')}
                         </th>
-                        <th className="px-6 py-4">{t('stock.inventaire.list.desc')}</th>
-                        <th className="px-6 py-4 text-right">{t('stock.inventaire.list.val_theo')}</th>
-                        <th className="px-6 py-4 text-right">{t('stock.inventaire.list.val_phys')}</th>
-                        <th className="px-6 py-4 text-right">{t('stock.inventaire.list.ecart')}</th>
-                        <th className="px-6 py-4 text-center">{t('stock.inventaire.list.status')}</th>
-                        <th className="px-6 py-4 text-right rounded-tr-2xl">{t('stock.inventaire.list.actions')}</th>
+                        <th className="px-6 py-4">{t('inventaire.list.desc')}</th>
+                        <th className="px-6 py-4 text-right">{t('inventaire.list.val_theo')}</th>
+                        <th className="px-6 py-4 text-right">{t('inventaire.list.val_phys')}</th>
+                        <th className="px-6 py-4 text-right">{t('inventaire.list.ecart')}</th>
+                        <th className="px-6 py-4 text-center">{t('inventaire.list.status')}</th>
+                        <th className="px-6 py-4 text-right rounded-tr-2xl">{t('inventaire.list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200">
@@ -97,15 +97,15 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     </span>
                                     <span className="text-xs text-base-content/60 flex items-center gap-1.5 mt-0.5">
                                         <Calendar className="w-3 h-3" />
-                                        {new Date(inv.date).toLocaleDateString(t('common.date_locale', 'fr-FR'))}
+                                        {new Date(inv.date).toLocaleDateString(t('common:date_locale', 'fr-FR'))}
                                     </span>
                                 </div>
                             </td>
                             <td className="px-6 py-4 max-w-xs truncate font-medium">
-                                {inv.description || t('stock.inventaire.list.no_description', '-')}
+                                {inv.description || t('inventaire.list.no_description', '-')}
                                 <div className="text-[10px] text-base-content/40 mt-1 flex items-center gap-1">
                                     <History className="h-3 w-3" />
-                                    {t('stock.inventaire.list.created_by_prefix', 'Par')} {inv.created_by_name || '-'}
+                                    {t('inventaire.list.created_by_prefix', 'Par')} {inv.created_by_name || '-'}
                                 </div>
                             </td>
                             <td className="px-6 py-4 text-right font-bold text-base-content">
@@ -128,7 +128,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                     ${inv.status === 'VALIDEE' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
                                 >
                                     {inv.status === 'VALIDEE' ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                                    {inv.status === 'VALIDEE' ? t('stock.inventaire.status.validated') : t('stock.inventaire.status.draft')}
+                                    {inv.status === 'VALIDEE' ? t('inventaire.status.validated') : t('inventaire.status.draft')}
                                 </span>
                             </td>
                             <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
@@ -144,7 +144,7 @@ export const InventaireListTable: React.FC<InventaireListTableProps> = ({
                                         className="p-2 text-base-content/60 hover:text-error hover:bg-error/10 rounded-lg transition-all" 
                                         onClick={() => onDelete(inv.id)} 
                                         disabled={inv.status === 'VALIDEE' || deleting}
-                                        title={t('common.delete')}
+                                        title={t('common:delete')}
                                     >
                                         {deleting ? <span className="loading loading-spinner loading-xs"></span> : <Trash2 className="h-4 w-4" />}
                                     </button>

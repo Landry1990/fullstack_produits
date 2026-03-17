@@ -23,7 +23,7 @@ interface BestCashierMetricProps {
 }
 
 const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) => {
-    const { t } = useTranslation('caisse');
+    const { t } = useTranslation(['cash_closings', 'common']);
     const [performances, setPerformances] = useState<CashierPerformance[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -58,9 +58,9 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-base-content/20"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                 </div>
                 <div>
-                    <h4 className="font-bold text-base-content/40 uppercase tracking-widest text-xs mb-1">{t('closing_history.performance.waiting_ranking')}</h4>
+                    <h4 className="font-bold text-base-content/40 uppercase tracking-widest text-xs mb-1">{t('performance.waiting_ranking')}</h4>
                     <p className="text-sm text-base-content/30 italic max-w-xs mx-auto">
-                        {t('closing_history.performance.no_closures_desc')}
+                        {t('performance.no_closures_desc')}
                     </p>
                 </div>
             </div>
@@ -83,7 +83,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                         <div className="bg-white/20 p-2 rounded-xl border border-white/30 backdrop-blur-sm">
                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-300"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                         </div>
-                        <h3 className="font-black text-lg uppercase tracking-widest">{t('closing_history.performance.best_cashier')}</h3>
+                        <h3 className="font-black text-lg uppercase tracking-widest">{t('performance.best_cashier')}</h3>
                     </div>
 
                     <div className="flex items-center gap-5 mb-6 pt-2">
@@ -102,17 +102,17 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
 
                     <div className="space-y-4 pt-5 border-t border-white/20">
                         <div className="flex justify-between items-end">
-                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('closing_history.performance.rigor_score')}</span>
+                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('performance.rigor_score')}</span>
                             <span className="text-2xl font-black text-yellow-300 drop-shadow-md">{formatCurrency(winner.moyenne_ecart_absolu)} F</span>
                         </div>
                         <div className="flex justify-between items-center bg-white/10 p-2 px-3 rounded-lg border border-white/5">
-                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{t('closing_history.performance.avg_trend')}</span>
+                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{t('performance.avg_trend')}</span>
                             <span className="font-black text-xs">
                                 {winner.moyenne_ecart_algebrique > 0 ? '+' : ''}{formatCurrency(winner.moyenne_ecart_algebrique)} F
                             </span>
                         </div>
                         <div className="flex justify-between items-center bg-white/10 p-3 rounded-xl border border-white/5">
-                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('closing_history.performance.total_closures')}</span>
+                            <span className="text-white/80 text-xs font-bold uppercase tracking-wider">{t('performance.total_closures')}</span>
                             <span className="font-black text-lg">{winner.nombre_clotures}</span>
                         </div>
                     </div>
@@ -126,7 +126,7 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                          <div className="bg-primary/10 p-2 rounded-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                          </div>
-                        {t('closing_history.performance.ranking_title')}
+                        {t('performance.ranking_title')}
                     </h3>
                     <div className="text-xs font-bold uppercase opacity-40 bg-base-200 px-3 py-1.5 rounded-full border border-base-300">
                         Top {performances.length}
@@ -136,11 +136,11 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                     <table className="table table-zebra w-full border-separate border-spacing-0">
                         <thead>
                             <tr className="bg-base-200/50 border-b border-base-300">
-                                <th className="text-[10px] uppercase font-black text-base-content/40 px-6 py-4 tracking-widest">{t('closing_history.performance.table.rank')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 px-6 py-4 tracking-widest">{t('closing_history.performance.table.operator')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-center px-6 py-4 tracking-widest">{t('closing_history.performance.table.closures')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-6 py-4 tracking-widest">{t('closing_history.performance.table.avg_gap')}</th>
-                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-6 py-4 tracking-widest">{t('closing_history.performance.table.trend')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 px-6 py-4 tracking-widest">{t('table.rank')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 px-6 py-4 tracking-widest">{t('table.operator')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 text-center px-6 py-4 tracking-widest">{t('table.closures')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-6 py-4 tracking-widest">{t('table.avg_gap')}</th>
+                                <th className="text-[10px] uppercase font-black text-base-content/40 text-right px-6 py-4 tracking-widest">{t('table.trend')}</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-base-200">
@@ -148,11 +148,11 @@ const BestCashierMetric: React.FC<BestCashierMetricProps> = ({ month, year }) =>
                                 <tr key={perf.user_id} className="hover:bg-primary/5 transition-all duration-200 group">
                                     <td className="px-6 py-4">
                                         {index === 0 ? (
-                                            <div className="badge bg-yellow-400 border-none text-yellow-900 font-black px-3 h-7 italic shadow-sm">{t('closing_history.performance.badges.1st')}</div>
+                                            <div className="badge bg-yellow-400 border-none text-yellow-900 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.1st')}</div>
                                         ) : index === 1 ? (
-                                            <div className="badge bg-slate-300 border-none text-slate-700 font-black px-3 h-7 italic shadow-sm">{t('closing_history.performance.badges.2nd')}</div>
+                                            <div className="badge bg-slate-300 border-none text-slate-700 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.2nd')}</div>
                                         ) : index === 2 ? (
-                                             <div className="badge bg-amber-600 border-none text-amber-50 font-black px-3 h-7 italic shadow-sm">{t('closing_history.performance.badges.3rd')}</div>
+                                             <div className="badge bg-amber-600 border-none text-amber-50 font-black px-3 h-7 italic shadow-sm">{t('performance.badges.3rd')}</div>
                                         ) : (
                                             <span className="text-base-content/30 font-black pl-2 font-mono">{index + 1}</span>
                                         )}

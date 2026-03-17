@@ -32,7 +32,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
     onPrintStatement,
     loading
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['creances', 'common']);
 
     return (
         <div className="p-6 bg-base-100">
@@ -42,7 +42,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     {/* Client Selector */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <Users className="w-3.5 h-3.5" /> {t('creances.filters.client_label')}
+                            <Users className="w-3.5 h-3.5" /> {t('creances:filters.client_label')}
                         </label>
                         {selectedClient ? (
                             <button 
@@ -50,7 +50,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                 className="btn btn-sm btn-outline btn-block border-base-200 hover:bg-base-200 hover:text-base-content gap-2 rounded-xl transition-all font-bold text-xs"
                             >
                                 <RotateCcw className="w-3.5 h-3.5" />
-                                {t('creances.filters.back_to_list')}
+                                {t('creances:filters.back_to_list')}
                             </button>
                         ) : (
                             <div className="relative group">
@@ -59,7 +59,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                                     onChange={(e) => onClientChange(e.target.value)}
                                     className="select select-sm select-bordered w-full pl-10 h-10 rounded-xl focus:ring-2 focus:ring-primary/20 transition-all border-base-200 font-bold text-xs"
                                 >
-                                    <option value="">{t('creances.filters.client_placeholder')}</option>
+                                    <option value="">{t('creances:filters.client_placeholder')}</option>
                                     {clients.map((client) => (
                                         <option key={client.id} value={client.id}>
                                             {client.name}
@@ -74,7 +74,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     {/* Date Ranges */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <Calendar className="w-3.5 h-3.5" /> {t('creances.filters.start_date')}
+                            <Calendar className="w-3.5 h-3.5" /> {t('creances:filters.start_date')}
                         </label>
                         <input
                             type="date"
@@ -86,7 +86,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
 
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <Calendar className="w-3.5 h-3.5" /> {t('creances.filters.end_date')}
+                            <Calendar className="w-3.5 h-3.5" /> {t('creances:filters.end_date')}
                         </label>
                         <input
                             type="date"
@@ -99,17 +99,17 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                     {/* Status Toggle */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-2 ml-1">
-                            <History className="w-3.5 h-3.5" /> {t('creances.history_toggle')}
+                            <History className="w-3.5 h-3.5" /> {t('creances:history_toggle')}
                         </label>
                         <div 
                             className={`flex items-center gap-1 p-1 bg-base-200/50 rounded-xl cursor-pointer transition-all h-10 ${showHistory ? 'ring-2 ring-primary/20' : ''}`}
                             onClick={() => onHistoryToggle(!showHistory)}
                         >
                             <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!showHistory ? 'bg-white shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}>
-                                En cours
+                                {t('creances:invoice_list.pending_badge')}
                             </div>
                             <div className={`flex-1 text-center py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${showHistory ? 'bg-white shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content/60'}`}>
-                                Historique
+                                {t('creances:history_toggle')}
                             </div>
                         </div>
                     </div>
@@ -122,7 +122,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                         className={`btn btn-sm h-10 px-6 rounded-xl ${loading ? 'btn-disabled' : 'btn-primary'} gap-2 shadow-md shadow-primary/10 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px]`}
                     >
                         {loading ? <span className="loading loading-spinner loading-xs"></span> : <Search className="w-4 h-4" />}
-                        {t('creances.filters.search')}
+                        {t('creances:filters.search')}
                     </button>
                     {selectedClient && (
                         <button 
@@ -130,7 +130,7 @@ export const CreancesFilters: React.FC<CreancesFiltersProps> = ({
                             className="btn btn-sm h-10 px-6 rounded-xl btn-accent gap-2 shadow-md shadow-accent/10 transition-all hover:scale-105 active:scale-95 font-black uppercase tracking-widest text-[10px]"
                         >
                             <Printer className="w-4 h-4" />
-                            {t('creances.print_statement')}
+                            {t('creances:print_statement')}
                         </button>
                     )}
                 </div>

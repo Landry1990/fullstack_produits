@@ -22,7 +22,7 @@ interface InventaireFiltersProps {
 }
 
 export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, onDeleteDrafts, onRefresh }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const { 
         startDate, setStartDate, 
         endDate, setEndDate, 
@@ -60,7 +60,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                     </div>
                     <input
                         type="text"
-                        placeholder={t('stock.inventaire.filters.search_placeholder')}
+                        placeholder={t('inventaire.filters.search_placeholder')}
                         className="input input-bordered pl-10 w-full bg-base-100 focus:border-primary focus:ring-1 focus:ring-primary"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -99,9 +99,9 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="">{t('stock.inventaire.filters.status_all')}</option>
-                            <option value="EN_COURS">{t('stock.inventaire.status.draft', { defaultValue: 'En cours' })}</option>
-                            <option value="VALIDEE">{t('stock.inventaire.status.validated', { defaultValue: 'Validée' })}</option>
+                            <option value="">{t('inventaire.filters.status_all')}</option>
+                            <option value="EN_COURS">{t('inventaire.status.draft', { defaultValue: 'En cours' })}</option>
+                            <option value="VALIDEE">{t('inventaire.status.validated', { defaultValue: 'Validée' })}</option>
                         </select>
                     </div>
 
@@ -115,7 +115,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                             onChange={(e) => setCreatorFilter(e.target.value)}
                             className="select select-bordered w-full pl-10 select-sm"
                         >
-                            <option value="">{t('stock.inventaire.filters.creators_all')}</option>
+                            <option value="">{t('inventaire.filters.creators_all')}</option>
                             {users.map(u => (
                                 <option key={u.id} value={u.id}>
                                     {u.first_name} {u.last_name} ({u.username})
@@ -132,7 +132,7 @@ export const InventaireFilters: React.FC<InventaireFiltersProps> = ({ filters, o
                         <button
                             onClick={onDeleteDrafts}
                             className="btn btn-ghost btn-sm text-error hover:bg-error/10"
-                            title={t('stock.inventaire.filters.delete_drafts', { defaultValue: 'Supprimer les brouillons' })}
+                            title={t('inventaire.filters.delete_drafts', { defaultValue: 'Supprimer les brouillons' })}
                         >
                             <Trash2 className="w-5 h-5" />
                         </button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -47,8 +47,8 @@ interface ProductAutocompleteProps {
 const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
   label, icon, selected, onSelect, onClear, placeholder
 }) => {
-  const { t } = useTranslation();
-  const placeholderText = placeholder || t('stock.transformations.modal_relation.search_placeholder', {defaultValue: 'Rechercher un produit...'});
+  const { t } = useTranslation(['stock', 'common']);
+  const placeholderText = placeholder || t('stock:transformations.modal_relation.source_placeholder');
   const { produits, loading, searchQuery, setSearchQuery } = useProductSearch({
     minSearchLength: 2,
     debounceMs: 250,
@@ -150,7 +150,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
           <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
             {produits.length === 0 && !loading && (
               <div className="p-4 text-center text-gray-400 italic text-sm">
-                {t('common.no_results_found', {defaultValue: 'Aucun produit trouvé'})}
+                {t('common:no_results_found')}
               </div>
             )}
             {produits.map((p, idx) => {
@@ -191,7 +191,7 @@ const ProductAutocomplete: React.FC<ProductAutocompleteProps> = ({
 
 // --- Composant Principal ---
 const Transformations: React.FC = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['stock', 'common']);
   const confirm = useConfirm();
   const [activeTab, setActiveTab] = useState<'relations' | 'historique'>('relations');
   const [relations, setRelations] = useState<RelationTransformation[]>([]);
@@ -216,9 +216,10 @@ const Transformations: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // URL de base API dynamique
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL 
-    ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '')}/api`
-    : '/api';
+  const apiBaseUrl = useMemo(() => {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+    return baseUrl ? `${String(baseUrl).replace(/\/$/, '')}/api` : '/api'
+  }, [])
 
   useEffect(() => {
     fetchData();
@@ -239,7 +240,7 @@ const Transformations: React.FC = () => {
       setLoading(false);
     } catch (error) {
       console.error("Erreur fetch:", error);
-      toast.error(t('stock.transformations.messages.load_error'));
+      toast.error(t('transformations.messages.load_error'));
       setLoading(false);
     }
   };
@@ -254,7 +255,7 @@ const Transformations: React.FC = () => {
         produit_destination: selectedDestination.id,
         ratio: normalizeNumberInput(ratioValue)
       });
-      toast.success(t('stock.transformations.messages.create_success'));
+      toast.success(t('transformations.messages.create_success'));
       setIsRelationModalOpen(false);
       resetRelationForm();
       fetchData();
@@ -263,7 +264,7 @@ const Transformations: React.FC = () => {
       const errorMsg = error.response?.data?.non_field_errors?.[0] 
         || error.response?.data?.error 
         || error.response?.data?.detail
-        || t('stock.transformations.messages.create_error');
+        || t('transformations.messages.create_error');
       
       if (typeof error.response?.data === 'object') {
          const firstError = Object.values(error.response.data)[0];
@@ -285,18 +286,18 @@ const Transformations: React.FC = () => {
 
   const handleDeleteRelation = async (id: number) => {
     const confirmed = await confirm({
-      title: t('stock.transformations.messages.delete_confirm_title'),
-      message: t('stock.transformations.messages.delete_confirm_message'),
+      title: t('transformations.messages.delete_confirm_title'),
+      message: t('transformations.messages.delete_confirm_message'),
       variant: 'danger',
-      confirmText: t('stock.transformations.messages.delete_confirm_btn')
+      confirmText: t('transformations.messages.delete_confirm_btn')
     })
     if (!confirmed) return;
     try {
       await axios.delete(`${apiBaseUrl}/relations-transformation/${id}/`);
-      toast.success(t('stock.transformations.messages.delete_success'));
+      toast.success(t('transformations.messages.delete_success'));
       fetchData();
     } catch (error) {
-      toast.error(t('stock.transformations.messages.delete_error'));
+      toast.error(t('transformations.messages.delete_error'));
     }
   };
 
@@ -322,12 +323,12 @@ const Transformations: React.FC = () => {
       });
       
       if (res.data.success) {
-        toast.success(res.data.message || t('stock.transformations.messages.transform_success'));
+        toast.success(res.data.message || t('transformations.messages.transform_success'));
         setIsTransformerModalOpen(false);
         fetchData(); 
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.error || t('stock.transformations.messages.transform_error'));
+      toast.error(error.response?.data?.error || t('transformations.messages.transform_error'));
       setSubmitting(false);
     }
   };
@@ -338,95 +339,93 @@ const Transformations: React.FC = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-base-200 p-6 space-y-6 font-sans">
-      {/* Header Section (Style Ventes.tsx) */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
-        <div className="p-6 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-              </div>
-              {t('stock.transformations.title')}
-            </h1>
-            <p className="text-base-content/60 text-sm mt-1">
-              {t('stock.transformations.subtitle')}
-            </p>
+    <div className="h-full flex flex-col bg-base-200 overflow-hidden font-sans">
+      {/* Header Section */}
+      <div className="bg-base-100 border-b border-base-200 sticky top-0 z-30 opacity-100 flex flex-col shrink-0">
+        <div className="px-6 py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-primary/10 rounded-xl text-primary shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-base-content tracking-tight">{t('transformations.title')}</h1>
+              <p className="text-[11px] font-medium text-base-content/40 uppercase tracking-widest mt-0.5">{t('transformations.subtitle')}</p>
+            </div>
           </div>
           <button 
             onClick={() => { resetRelationForm(); setIsRelationModalOpen(true); }}
-            className="btn btn-primary rounded-xl shadow-lg shadow-primary/20 gap-2"
+            className="btn btn-primary btn-sm h-10 px-5 rounded-xl shadow-lg shadow-primary/20 gap-2 font-bold"
           >
-            <Plus size={20} />
-            {t('stock.transformations.new_relation_btn')}
+            <Plus size={18} />
+            {t('transformations.new_relation_btn')}
           </button>
         </div>
 
-        {/* Tab Navigation (Style Ventes.tsx) */}
-        <div className="px-6 py-4 bg-base-50/50 flex gap-2">
+        {/* Tab Navigation */}
+        <div className="px-6 py-2 bg-base-100/50 flex gap-1 border-t border-base-200/50">
           <button 
-            className={`btn btn-sm rounded-xl px-6 transition-all ${activeTab === 'relations' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
+            className={`btn btn-xs h-8 rounded-lg px-4 transition-all duration-200 font-bold ${activeTab === 'relations' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
             onClick={() => setActiveTab('relations')}
           >
-            {t('stock.transformations.tabs.configured_relations')}
+            {t('transformations.tabs.configured_relations')}
           </button>
           <button 
-            className={`btn btn-sm rounded-xl px-6 transition-all ${activeTab === 'historique' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
+            className={`btn btn-xs h-8 rounded-lg px-4 transition-all duration-200 font-bold ${activeTab === 'historique' ? 'btn-primary shadow-md' : 'btn-ghost opacity-60'}`}
             onClick={() => setActiveTab('historique')}
           >
-            {t('stock.transformations.tabs.history')}
+            {t('transformations.tabs.history')}
           </button>
         </div>
       </div>
 
-      {/* Main Content Section (Style Ventes.tsx) */}
-      <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 overflow-hidden min-h-[400px]">
+      {/* Main Content Section */}
+      <div className="flex-1 overflow-auto p-6">
         {loading ? (
           <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <span className="loading loading-spinner loading-lg text-primary"></span>
-            <p className="text-sm font-medium opacity-50">{t('common.loading', {defaultValue: 'Chargement des données...'})}</p>
+            <span className="loading loading-spinner loading-lg text-primary opacity-20"></span>
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-30">{t('common:loading')}</p>
           </div>
         ) : (
-          <div className="p-6">
+          <div className="h-full">
             {activeTab === 'relations' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
                 {relations.map(relation => (
-                  <div key={relation.id} className="group relative bg-base-200/30 border border-base-200 rounded-2xl p-5 hover:bg-base-200/50 transition-all hover:shadow-md">
-                    <div className="flex items-center justify-between mb-4">
+                  <div key={relation.id} className="group relative bg-base-100 border border-base-200 rounded-2xl p-5 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col">
+                    <div className="flex items-center justify-between mb-5">
                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary font-bold">
-                             {relation.produit_source_nom.charAt(0)}
+                          <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-primary font-black shadow-inner">
+                             {relation.produit_source_nom.charAt(0).toUpperCase()}
                           </div>
-                          <div className="max-w-[150px]">
-                             <div className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">{t('common.source', {defaultValue: 'Source'})}</div>
-                             <div className="font-bold text-sm truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
+                          <div className="max-w-[120px]">
+                             <div className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">{t('common:source')}</div>
+                             <div className="font-bold text-xs truncate" title={relation.produit_source_nom}>{relation.produit_source_nom}</div>
                           </div>
                        </div>
-                       <div className="text-primary/30 group-hover:text-primary/60 transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                       <div className="text-primary/20 group-hover:text-primary transition-colors flex flex-col items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                        </div>
                        <div className="flex items-center gap-3 text-right">
-                          <div className="max-w-[150px]">
-                             <div className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">Dest.</div>
-                             <div className="font-bold text-sm truncate text-success" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
+                          <div className="max-w-[120px]">
+                             <div className="text-[9px] font-black opacity-30 uppercase tracking-widest mb-0.5">Dest.</div>
+                             <div className="font-bold text-xs truncate text-success" title={relation.produit_destination_nom}>{relation.produit_destination_nom}</div>
                           </div>
                        </div>
                     </div>
 
-                    <div className="bg-white/50 rounded-xl p-3 border border-base-200 flex justify-between items-center mb-6">
-                       <div className="text-xs font-medium opacity-60">{t('stock.transformations.modal_relation.ratio_label')}</div>
-                       <div className="badge badge-primary font-mono font-bold">1 : {formatNumber(relation.ratio)}</div>
+                    <div className="bg-base-200/50 rounded-xl p-3 flex justify-between items-center mb-6 border border-base-300/30">
+                       <div className="text-[10px] font-bold opacity-40 uppercase tracking-wider">{t('transformations.modal_relation.ratio_label')}</div>
+                       <div className="badge border-none bg-primary text-white font-mono font-black text-[11px] h-6">1 : {formatNumber(relation.ratio)}</div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="mt-auto flex gap-2 pt-2 border-t border-base-200/50">
                        <button 
-                         className="btn btn-primary btn-sm flex-1 rounded-xl shadow-sm"
+                         className="btn btn-primary btn-sm flex-1 rounded-lg h-9 font-bold"
                          onClick={() => openTransformerModal(relation)}
                        >
                          Transformer
                        </button>
                        <button 
-                         className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10"
+                         className="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10 rounded-lg h-9"
                          onClick={() => handleDeleteRelation(relation.id)}
                        >
                          <Trash2 size={16} />
@@ -435,62 +434,62 @@ const Transformations: React.FC = () => {
                   </div>
                 ))}
                 {relations.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-30 italic">
+                  <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-20 italic">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                    <p>Aucune relation configurée</p>
+                    <p className="font-bold uppercase tracking-widest text-xs">Aucune relation configurée</p>
                   </div>
                 )}
               </div>
             )}
 
             {activeTab === 'historique' && (
-              <div className="overflow-x-auto -mx-6">
-                <table className="table table-zebra w-full whitespace-nowrap">
-                  <thead className="bg-base-200/50">
-                    <tr>
-                      <th className="bg-transparent pl-6">{t('transformations.table_history.date')}</th>
-                      <th className="bg-transparent">{t('transformations.table_history.user')}</th>
-                      <th className="bg-transparent">{t('transformations.table_history.transformation')}</th>
-                      <th className="bg-transparent">{t('transformations.table_history.quantities')}</th>
-                      <th className="bg-transparent pr-6">{t('transformations.table_history.notes')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {historique.map(hist => (
-                      <tr key={hist.id} className="hover:bg-base-200/30 transition-colors group">
-                        <td className="pl-6 py-4">
-                           <div className="font-medium text-sm">{new Date(hist.date_transformation).toLocaleDateString()}</div>
-                           <div className="text-[10px] opacity-40 font-mono uppercase">{new Date(hist.date_transformation).toLocaleTimeString()}</div>
-                        </td>
-                        <td className="font-bold text-sm text-primary/70">{hist.user_nom}</td>
-                        <td className="max-w-xs">
-                           <div className="flex items-center gap-2 text-sm font-semibold truncate">
-                              <span className="opacity-60">{hist.produit_source_nom}</span>
-                              <ChevronRight size={14} className="opacity-30" />
-                              <span className="text-success">{hist.produit_destination_nom}</span>
-                           </div>
-                        </td>
-                        <td>
-<td className="pr-6 italic text-gray-400 text-xs max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
-                          <div className="flex items-center gap-3">
-                             <div className="bg-error/10 text-error px-2 py-1 rounded text-xs font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
-                             <ChevronRight size={12} className="opacity-20" />
-                             <div className="bg-success/10 text-success px-2 py-1 rounded text-xs font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
-                          </div>
-                        </td>
-                        </td>
-                        <td className="pr-6 italic text-gray-400 text-xs max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
-                           {hist.notes || '-'}
-                        </td>
+              <div className="bg-base-100 rounded-2xl border border-base-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto whitespace-nowrap">
+                  <table className="table table-sm w-full border-separate border-spacing-0">
+                    <thead className="bg-base-200 sticky top-0 z-10 opacity-100 border-b border-base-300">
+                      <tr className="text-base-content/50 uppercase text-[10px] tracking-widest font-black h-12">
+                        <th className="pl-6 bg-transparent">{t('transformations.table_history.date')}</th>
+                        <th className="bg-transparent">{t('transformations.table_history.user')}</th>
+                        <th className="bg-transparent">{t('transformations.table_history.transformation')}</th>
+                        <th className="bg-transparent">{t('transformations.table_history.quantities')}</th>
+                        <th className="bg-transparent pr-6">{t('transformations.table_history.notes')}</th>
                       </tr>
-                    ))}
-                    {historique.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="text-center py-20 opacity-30 italic">Aucun historique disponible</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-base-200">
+                      {historique.map(hist => (
+                        <tr key={hist.id} className="hover:bg-base-200/30 transition-colors group">
+                          <td className="pl-6 py-4">
+                             <div className="font-bold text-xs">{new Date(hist.date_transformation).toLocaleDateString()}</div>
+                             <div className="text-[10px] opacity-40 font-mono uppercase tracking-tighter">{new Date(hist.date_transformation).toLocaleTimeString()}</div>
+                          </td>
+                          <td className="font-black text-xs text-primary/70">{hist.user_nom}</td>
+                          <td className="max-w-xs">
+                             <div className="flex items-center gap-2 text-xs font-bold truncate">
+                                <span className="opacity-40">{hist.produit_source_nom}</span>
+                                <ChevronRight size={12} className="opacity-20" />
+                                <span className="text-success">{hist.produit_destination_nom}</span>
+                             </div>
+                          </td>
+                          <td>
+                             <div className="flex items-center gap-3">
+                                <div className="bg-error/10 text-error px-2 py-0.5 rounded text-[10px] font-black font-mono">-{formatNumber(hist.quantite_source)}</div>
+                                <ChevronRight size={12} className="opacity-10" />
+                                <div className="bg-success/10 text-success px-2 py-0.5 rounded text-[10px] font-black font-mono">+{formatNumber(hist.quantite_destination)}</div>
+                             </div>
+                          </td>
+                          <td className="pr-6 italic text-base-content/40 text-[11px] max-w-sm truncate group-hover:whitespace-normal group-hover:overflow-visible transition-all">
+                             {hist.notes || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                      {historique.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="text-center py-20 opacity-20 italic font-bold uppercase tracking-widest text-xs">Aucun historique disponible</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -502,7 +501,7 @@ const Transformations: React.FC = () => {
         isOpen={isRelationModalOpen}
         onClose={() => setIsRelationModalOpen(false)}
         title={t('transformations.modal_relation.title')}
-        subtitle={t('stock.transformations.modal_relation.subtitle', {defaultValue: 'Configurez une nouvelle règle de transformation'})}
+        subtitle={t('transformations.modal_relation.subtitle')}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -512,7 +511,7 @@ const Transformations: React.FC = () => {
         <form onSubmit={handleCreateRelation} className="p-6 space-y-5">
           {/* Produit Source */}
           <ProductAutocomplete
-            label={t('stock.transformations.modal_relation.source')}
+            label={t('transformations.modal_relation.source')}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -521,25 +520,25 @@ const Transformations: React.FC = () => {
             selected={selectedSource}
             onSelect={setSelectedSource}
             onClear={() => setSelectedSource(null)}
-            placeholder={t('stock.transformations.modal_relation.source_placeholder', {defaultValue: 'Rechercher le produit source...'})}
+            placeholder={t('transformations.modal_relation.source_placeholder')}
           />
 
-          {/* Flèche séparatrice */}
+          {/* Separation Arrow */}
           <div className="flex items-center justify-center py-1">
-            <div className="flex items-center gap-2 text-gray-300">
-              <div className="h-px w-12 bg-gray-200"></div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-b from-primary/10 to-secondary/10 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center gap-2 text-base-200">
+              <div className="h-px w-12 bg-base-300"></div>
+              <div className="w-8 h-8 rounded-full bg-primary/5 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-primary opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
               </div>
-              <div className="h-px w-12 bg-gray-200"></div>
+              <div className="h-px w-12 bg-base-300"></div>
             </div>
           </div>
 
           {/* Produit Destination */}
           <ProductAutocomplete
-            label={t('stock.transformations.modal_relation.destination')}
+            label={t('transformations.modal_relation.destination')}
             icon={
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -548,67 +547,65 @@ const Transformations: React.FC = () => {
             selected={selectedDestination}
             onSelect={setSelectedDestination}
             onClear={() => setSelectedDestination(null)}
-            placeholder={t('stock.transformations.modal_relation.destination_placeholder', {defaultValue: 'Rechercher le produit destination...'})}
+            placeholder={t('transformations.modal_relation.destination_placeholder')}
           />
 
           {/* Ratio */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-2">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
               </svg>
-              {t('stock.transformations.modal_relation.ratio_label')}
+              {t('transformations.modal_relation.ratio_label')}
             </label>
             <input 
               type="number" 
               step="0.01"
-              className="input input-bordered w-full h-12 rounded-xl text-lg font-semibold text-center focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
+              className="input input-bordered w-full h-12 rounded-xl text-lg font-black text-center focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all border-2" 
               placeholder="Ex: 20"
               value={ratioValue}
               onChange={e => setRatioValue(e.target.value)}
               required
             />
-            <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-              {t('stock.transformations.modal_relation.ratio_help')}
+            <p className="text-[11px] font-medium text-base-content/40 mt-1.5 text-center px-4">
+              {t('transformations.modal_relation.ratio_help')}
             </p>
           </div>
 
           {/* Preview */}
           {selectedSource && selectedDestination && ratioValue && (
-            <div className="bg-gradient-to-r from-success/5 to-info/5 border border-success/20 rounded-xl p-4">
+            <div className="bg-gradient-to-br from-success/5 to-primary/5 border border-success/20 rounded-xl p-4 shadow-inner">
               <div className="flex items-center justify-between text-sm">
                 <div className="text-center flex-1">
-                  <div className="font-bold text-gray-700 truncate">{selectedSource.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">×1</div>
+                  <div className="font-bold text-base-content truncate text-xs">{selectedSource.name}</div>
+                  <div className="text-[10px] font-black opacity-30 mt-0.5">× 1 UNITE</div>
                 </div>
-                <div className="px-3 text-gray-400 flex flex-col items-center">
+                <div className="px-4 text-primary/40 flex flex-col items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
-                  <span className="text-[10px] font-mono">×{ratioValue}</span>
+                  <span className="text-[10px] font-black mt-1 bg-primary/10 px-2 py-0.5 rounded-full">× {ratioValue}</span>
                 </div>
                 <div className="text-center flex-1">
-                  <div className="font-bold text-success truncate">{selectedDestination.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">×{Math.floor(normalizeNumberInput(ratioValue))}</div>
+                  <div className="font-bold text-success truncate text-xs">{selectedDestination.name}</div>
+                  <div className="text-[10px] font-black text-success/40 mt-0.5">× {Math.floor(normalizeNumberInput(ratioValue))} UNITES</div>
                 </div>
               </div>
             </div>
           )}
 
           {/* Footer Actions */}
-          <div className="flex justify-end gap-3 pt-2">
-            <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={() => setIsRelationModalOpen(false)}>
-              {t('stock.transformations.modal_relation.cancel')}
+          <div className="flex justify-end gap-3 pt-4 border-t border-base-200">
+            <button type="button" className="btn btn-ghost px-6 rounded-xl font-bold" onClick={() => setIsRelationModalOpen(false)}>
+              {t('transformations.modal_relation.cancel')}
             </button>
             <button 
               type="submit" 
-              className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20"
+              className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20 font-bold"
               disabled={!selectedSource || !selectedDestination || !ratioValue}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-              </svg>
-              {t('stock.transformations.modal_relation.create')}
+              <Plus size={18} />
+              {t('transformations.modal_relation.create')}
             </button>
           </div>
         </form>
@@ -618,8 +615,8 @@ const Transformations: React.FC = () => {
       <PremiumModal
         isOpen={isTransformerModalOpen && !!transformationData.relation}
         onClose={() => setIsTransformerModalOpen(false)}
-        title={t('stock.transformations.modal_transform.title')}
-        subtitle={t('stock.transformations.modal_transform.subtitle', {defaultValue: 'Exécuter une transformation de stock'})}
+        title={t('transformations.modal_transform.title')}
+        subtitle={t('transformations.modal_transform.subtitle')}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -636,91 +633,91 @@ const Transformations: React.FC = () => {
             {/* Source → Destination cards */}
             <div className="flex items-stretch gap-3">
               {/* Source */}
-              <div className="flex-1 bg-gradient-to-b from-error/5 to-transparent border border-error/20 rounded-xl p-4 text-center">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-error/60 mb-2 flex items-center justify-center gap-1">
+              <div className="flex-1 bg-gradient-to-b from-error/5 to-transparent border border-error/20 rounded-2xl p-4 text-center">
+                <div className="text-[9px] font-black uppercase tracking-widest text-error/40 mb-3 flex items-center justify-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M20 12H4" />
                   </svg>
-                  {t('common.source', {defaultValue: 'Source'})}
+                  {t('common:source')}
                 </div>
-                <div className="font-bold text-gray-800 text-sm mb-3 truncate">{transformationData.relation.produit_source_nom}</div>
+                <div className="font-bold text-base-content text-xs mb-4 h-8 flex items-center justify-center line-clamp-2" title={transformationData.relation.produit_source_nom}>{transformationData.relation.produit_source_nom}</div>
                 <input 
                   type="number" 
-                  className="input input-bordered w-full text-center text-2xl font-black h-14 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  className="input input-bordered w-full text-center text-2xl font-black h-14 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all border-2"
                   min="1"
                   value={transformationData.quantite}
                   onChange={e => setTransformationData({...transformationData, quantite: normalizeNumberInput(e.target.value)})}
                   required
                   autoFocus
                 />
-                <div className="text-[10px] text-gray-400 mt-2">{t('stock.transformations.modal_transform.qty_to_transform')}</div>
+                <div className="text-[10px] uppercase font-black opacity-30 mt-3">{t('transformations.modal_transform.qty_to_transform')}</div>
               </div>
 
               {/* Arrow */}
-              <div className="flex flex-col items-center justify-center gap-1 px-1 pt-6">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-error/10 to-success/10 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              <div className="flex flex-col items-center justify-center gap-2 px-1 pt-6">
+                <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </div>
-                <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">×{transformationData.relation.ratio}</span>
+                <span className="text-[9px] font-black text-primary/60 bg-primary/5 px-2.5 py-1 rounded-full border border-primary/10">× {transformationData.relation.ratio}</span>
               </div>
 
               {/* Destination */}
-              <div className="flex-1 bg-gradient-to-b from-success/5 to-transparent border border-success/20 rounded-xl p-4 text-center">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-success/60 mb-2 flex items-center justify-center gap-1">
+              <div className="flex-1 bg-gradient-to-b from-success/5 to-transparent border border-success/20 rounded-2xl p-4 text-center">
+                <div className="text-[9px] font-black uppercase tracking-widest text-success/40 mb-3 flex items-center justify-center gap-1">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
                   </svg>
-                  {t('common.destination', {defaultValue: 'Destination'})}
+                  {t('common:destination')}
                 </div>
-                <div className="font-bold text-gray-800 text-sm mb-3 truncate">{transformationData.relation.produit_destination_nom}</div>
-                <div className="w-full h-14 rounded-xl bg-success/10 border-2 border-success/20 flex items-center justify-center font-black text-2xl text-success">
+                <div className="font-bold text-base-content text-xs mb-4 h-8 flex items-center justify-center line-clamp-2" title={transformationData.relation.produit_destination_nom}>{transformationData.relation.produit_destination_nom}</div>
+                <div className="w-full h-14 rounded-xl bg-success/10 border-2 border-success/20 flex items-center justify-center font-black text-2xl text-success shadow-inner">
                   {formatNumber(quantiteDestinationCalculee)}
                 </div>
-                <div className="text-[10px] text-gray-400 mt-2">{t('stock.transformations.modal_transform.qty_obtained')}</div>
+                <div className="text-[10px] uppercase font-black text-success/40 mt-3">{t('transformations.modal_transform.qty_obtained')}</div>
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-2">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-base-content/40 mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
-                {t('stock.transformations.modal_transform.notes_label')}
+                {t('transformations.modal_transform.notes_label')}
               </label>
               <textarea 
-                className="textarea textarea-bordered w-full h-20 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none" 
-                placeholder={t('stock.transformations.modal_transform.notes_placeholder')}
+                className="textarea textarea-bordered w-full h-20 rounded-xl focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all resize-none border-2 p-4 text-sm font-medium" 
+                placeholder={t('transformations.modal_transform.notes_placeholder')}
                 value={transformationData.notes}
                 onChange={e => setTransformationData({...transformationData, notes: e.target.value})}
               ></textarea>
             </div>
 
             {/* Footer Actions */}
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-3 pt-4 border-t border-base-200">
               <button 
                 type="button" 
-                className="btn btn-ghost px-6 rounded-xl" 
+                className="btn btn-ghost px-6 rounded-xl font-bold" 
                 onClick={() => setIsTransformerModalOpen(false)} 
                 disabled={submitting}
               >
-                {t('stock.transformations.modal_relation.cancel')}
+                {t('transformations.modal_relation.cancel')}
               </button>
               <button 
                 type="submit" 
-                className="btn btn-accent px-8 rounded-xl shadow-lg shadow-accent/20"
+                className="btn btn-accent px-8 rounded-xl shadow-lg shadow-accent/20 font-bold"
                 disabled={submitting}
               >
                 {submitting ? (
                   <span className="loading loading-spinner text-white"></span>
                 ) : (
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    {t('stock.transformations.modal_transform.confirm_btn')}
+                    {t('transformations.modal_transform.confirm_btn')}
                   </>
                 )}
               </button>

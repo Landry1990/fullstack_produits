@@ -41,7 +41,7 @@ export interface OrdonnanceData {
 }
 
 const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSave, facture, lignes, loading }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['prescriptions', 'common']);
   const [formData, setFormData] = useState<OrdonnanceData>({
     patient_nom: '',
     prescripteur_nom: '',
@@ -106,8 +106,8 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('facturation.ordonnance.title')}
-      subtitle={t('facturation.ordonnance.description')}
+      title={t('modal.title')}
+      subtitle={t('modal.description')}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -123,42 +123,42 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.ordonnance.patient_name')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.patient_name')}</label>
             <input 
               type="text" 
               required
               className="input input-bordered w-full h-12 rounded-xl" 
               value={formData.patient_nom}
               onChange={e => setFormData({...formData, patient_nom: e.target.value})}
-              placeholder={t('facturation.ordonnance.patient_placeholder')}
+              placeholder={t('modal.patient_placeholder')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.ordonnance.prescriber_name')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.prescriber_name')}</label>
             <input 
               type="text" 
               required
               className="input input-bordered w-full h-12 rounded-xl" 
               value={formData.prescripteur_nom}
               onChange={e => setFormData({...formData, prescripteur_nom: e.target.value})}
-              placeholder={t('facturation.ordonnance.prescriber_placeholder')}
+              placeholder={t('modal.prescriber_placeholder')}
             />
           </div>
 
            <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.ordonnance.order_number')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.order_number')}</label>
             <input 
               type="text" 
               className="input input-bordered w-full h-12 rounded-xl" 
               value={formData.numero_ordre || ''}
               onChange={e => setFormData({...formData, numero_ordre: e.target.value})}
-              placeholder={t('facturation.ordonnance.order_placeholder')}
+              placeholder={t('modal.order_placeholder')}
             />
           </div>
 
            <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('facturation.ordonnance.prescription_date')}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('modal.prescription_date')}</label>
             <input 
               type="date" 
               className="input input-bordered w-full h-12 rounded-xl" 
@@ -168,15 +168,15 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
           </div>
         </div>
 
-        <div className="divider text-xs uppercase tracking-wider">{t('facturation.ordonnance.affected_products')}</div>
+        <div className="divider text-xs uppercase tracking-wider">{t('modal.affected_products')}</div>
 
         <div className="bg-base-200 rounded-xl p-2 max-h-40 overflow-y-auto">
            <table className="table table-xs w-full">
               <thead>
                   <tr>
-                      <th>{t('facturation.ordonnance.product_col')}</th>
-                      <th className="text-right">{t('facturation.ordonnance.qty_col')}</th>
-                      <th>{t('facturation.ordonnance.surveillance_col')}</th>
+                      <th>{t('modal.product_col')}</th>
+                      <th className="text-right">{t('modal.qty_col')}</th>
+                      <th>{t('modal.surveillance_col')}</th>
                   </tr>
               </thead>
               <tbody>
@@ -185,9 +185,9 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
                           <td className="font-medium">{ligne.produit_nom}</td>
                           <td className="text-right">{ligne.quantite}</td>
                           <td>
-                              {ligne.surveillance_category === 'RENFORCEE' && <span className="badge badge-error badge-xs">{t('facturation.ordonnance.surveillance_renforcee')}</span>}
-                              {ligne.surveillance_category === 'STANDARD' && <span className="badge badge-warning badge-xs">{t('facturation.ordonnance.surveillance_standard')}</span>}
-                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <span className="badge badge-ghost badge-xs">{t('facturation.ordonnance.surveillance_ordonnance')}</span>}
+                              {ligne.surveillance_category === 'RENFORCEE' && <span className="badge badge-error badge-xs">{t('modal.surveillance_renforcee')}</span>}
+                              {ligne.surveillance_category === 'STANDARD' && <span className="badge badge-warning badge-xs">{t('modal.surveillance_standard')}</span>}
+                              {(!ligne.surveillance_category || ligne.surveillance_category === 'NONE') && <span className="badge badge-ghost badge-xs">{t('modal.surveillance_ordonnance')}</span>}
                           </td>
                       </tr>
                   ))}
@@ -196,9 +196,9 @@ const OrdonnanceModal: React.FC<OrdonnanceModalProps> = ({ isOpen, onClose, onSa
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button type="button" className="btn btn-ghost px-6 rounded-xl text-xs" onClick={onClose}>{t('facturation.ordonnance.ignore_btn')}</button>
+          <button type="button" className="btn btn-ghost px-6 rounded-xl text-xs" onClick={onClose}>{t('modal.ignore_btn')}</button>
           <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={loading}>
-            {loading ? <span className="loading loading-spinner"></span> : t('facturation.ordonnance.save_btn')}
+            {loading ? <span className="loading loading-spinner"></span> : t('modal.save_btn')}
           </button>
         </div>
       </form>

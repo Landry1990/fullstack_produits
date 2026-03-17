@@ -8,7 +8,7 @@ import { StockAnalysisFilters } from './stock/StockAnalysisFilters';
 import { StockAnalysisTable } from './stock/StockAnalysisTable';
 
 const StockAnalysis = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const {
         activeTab,
         setActiveTab,
@@ -40,10 +40,10 @@ const StockAnalysis = () => {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-black tracking-tight text-base-content">
-                                    {t('stock.analyse.title')} <span className="text-primary italic">Stock</span>
+                                    {t('analyse.title')} <span className="text-primary italic">Stock</span>
                                 </h1>
                                 <p className="text-sm font-semibold text-base-content/40 uppercase tracking-widest mt-1">
-                                    {t('stock.analyse.subtitle')}
+                                    {t('analyse.subtitle')}
                                 </p>
                             </div>
                         </div>
@@ -99,7 +99,7 @@ const StockAnalysis = () => {
                     {!loading && data && data.total_pages && data.total_pages > 1 && (
                         <div className="p-6 border-t border-base-200 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="text-sm font-medium text-base-content/50 uppercase tracking-wider">
-                                {t('common.pagination.page', { defaultValue: 'Page' })} <span className="font-black text-base-content">{data.current_page}</span> {t('common.pagination.of', { defaultValue: 'sur' })} <span className="font-black text-base-content">{data.total_pages}</span>
+                                {t('common:pagination.page', { defaultValue: 'Page' })} <span className="font-black text-base-content">{data.current_page}</span> {t('common:pagination.of', { defaultValue: 'sur' })} <span className="font-black text-base-content">{data.total_pages}</span>
                             </div>
                             
                             <div className="join join-horizontal shadow-sm">
@@ -135,7 +135,7 @@ const StockAnalysis = () => {
                                         {selectedItems.size}
                                     </div>
                                     <span className="font-bold text-sm uppercase tracking-tighter">
-                                        {t('stock.analyse.shortage.selected')}
+                                        {t('analyse.shortage.selected')}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ const StockAnalysis = () => {
                                         onClick={actions.handleGenerateOrder}
                                     >
                                         <ShoppingBag className="w-4 h-4" />
-                                        {t('stock.analyse.shortage.generate_order')}
+                                        {t('analyse.shortage.generate_order')}
                                     </button>
                                     <button
                                         className="btn btn-sm btn-ghost btn-circle text-primary-content/60 hover:text-white"

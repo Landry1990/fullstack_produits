@@ -1,0 +1,106 @@
+{
+    "title": "Customer Management",
+    "actions": {
+        "create": "New Customer",
+        "edit": "Edit Customer",
+        "delete": "Delete Customer",
+        "bulk_delete": "Delete {{count}} customer(s)"
+    },
+    "filters": {
+        "search_placeholder": "Search by name, phone, ID...",
+        "show_inactive": "Show inactive",
+        "hide_inactive": "Hide inactive"
+    },
+    "fields": {
+        "name": "Full Name",
+        "phone": "Phone",
+        "email": "Email",
+        "type": "Customer Type",
+        "address": "Address",
+        "status": "Status"
+    },
+    "types": {
+        "individual": "Individual",
+        "professional": "Professional",
+        "pro_short": "Pro",
+        "part_short": "Ind"
+    },
+    "sections": {
+        "general_info": "General Information",
+        "contact": "Contact Details",
+        "finance": "Financial Conditions",
+        "programs": "Programs & Benefits",
+        "purchase_history": "Purchase History"
+    },
+    "finance": {
+        "auto_discount": "Automatic Discount",
+        "credit_limit": "Credit Limit",
+        "coverage": "Coverage Rate",
+        "current_debt": "Current Debt",
+        "debt_usage": "Current Debt / Limit"
+    },
+    "beneficiaries": {
+        "title": "Beneficiaries",
+        "empty": "No beneficiaries registered",
+        "name_placeholder": "Beneficiary name",
+        "id_placeholder": "ID / Registration No",
+        "col_name": "Full Name",
+        "col_id": "ID No"
+    },
+    "history": {
+        "total_visits": "Total Visits",
+        "loyalty": "Loyalty Points",
+        "empty_title": "No purchases",
+        "empty_desc": "This customer has not made any purchases yet.",
+        "invoice_no": "Invoice #{{no}}",
+        "visit_date": "Visit date",
+        "quantity_short": "Qty",
+        "status_validee": "VALIDATED"
+    },
+    "loyalty": {
+        "title": "Loyalty Configuration",
+        "subtitle": "Setup loyalty program",
+        "amount_per_point": "Purchase amount for 1 point",
+        "amount_per_point_hint": "E.g.: 1000 = 1 point per 1000 F spent",
+        "manual_usage": "Manual Usage",
+        "point_value": "Point value",
+        "point_value_hint": "If used as currency. E.g.: 10 F",
+        "auto_reward": "Automatic Reward",
+        "threshold": "Threshold (Points)",
+        "threshold_hint": "0 = Disabled",
+        "discount": "Discount (%)",
+        "discount_hint": "E.g.: 5.00 for 5%"
+    },
+    "messages": {
+        "create_success": "Customer created successfully",
+        "update_success": "Customer updated successfully",
+        "delete_success": "Customer deleted successfully",
+        "bulk_delete_success": "{{count}} customers deleted",
+        "error_fetch": "Error loading customers",
+        "error_save": "Error during saving",
+        "error_delete": "Error during deletion",
+        "error_bulk_delete": "Error during bulk deletion",
+        "error_status": "Error changing status",
+        "status_active": "Customer reactivated",
+        "status_inactive": "Customer hidden"
+    },
+    "modals": {
+        "delete_confirm": "Are you sure you want to delete customer \"{{name}}\"?",
+        "bulk_delete_confirm": "Delete {{count}} customers?",
+        "select_client_hint": "Select a customer to view details.",
+        "select_client_empty": "Select a customer",
+        "select_client_empty_desc": "View financial details, purchase history, and manage beneficiaries in one click."
+    },
+    "status": {
+        "inactive": "INACTIVE"
+    },
+    "sales_modal": {
+        "print_placeholder": "Enter name for printing...",
+        "print_hint": "This name will only appear on the printed invoice"
+    },
+    "units": {
+        "pts": "pts",
+        "percent": "%",
+        "per_unit": "/ unit"
+    }
+}

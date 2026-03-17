@@ -56,7 +56,7 @@ const emptyForm: Omit<Fournisseur, 'id'> = {
 };
 
 export default function Fournisseurs() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['providers', 'common']);
   const location = useLocation();
   const confirm = useConfirm()
   const { user } = useAuth();
@@ -190,7 +190,7 @@ export default function Fournisseurs() {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.message ?? err.message ?? 'Erreur réseau');
       } else {
-        setError(t('providers.messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
+        setError(t('providers:messages.load_error') || 'Erreur inconnue lors du chargement des fournisseurs');
       }
     } finally {
       // setLoading deleted
@@ -315,7 +315,7 @@ export default function Fournisseurs() {
         const detail = err.response?.data ?? err.message
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail))
       } else {
-        setError(t('providers.messages.save_error') || "Erreur inconnue lors de l'ajout du fournisseur")
+        setError(t('providers:messages.save_error') || "Erreur inconnue lors de l'ajout du fournisseur")
       }
       console.error('Erreur lors de l\'ajout du fournisseur:', err);
     } finally {
@@ -341,7 +341,7 @@ export default function Fournisseurs() {
         const detail = err.response?.data ?? err.message
         setError(typeof detail === 'string' ? detail : formatBackendErrors(detail))
       } else {
-        setError(t('providers.messages.save_error') || "Erreur inconnue lors de la modification du fournisseur")
+        setError(t('providers:messages.save_error') || "Erreur inconnue lors de la modification du fournisseur")
       }
       console.error('Erreur lors de la modification du fournisseur:', err);
     }
@@ -352,18 +352,18 @@ export default function Fournisseurs() {
       await axios.delete(`${fournisseursEndpoint}${id}/`);
       setFournisseurs(prev => prev.filter(f => f.id !== id));
       setSelectedFournisseur(null);
-      toast.success(t('providers.messages.delete_success'));
+      toast.success(t('providers:messages.delete_success'));
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         // Handle FK protect errors explicitly
         if (err.response?.status === 500 || (err.response?.data?.detail && String(err.response.data.detail).includes('protected'))) {
-             toast.error(t('providers.messages.delete_protected'));
+             toast.error(t('providers:messages.delete_protected'));
         } else {
              const msg = err.response?.data?.message ?? err.message ?? t('common.network_error');
              toast.error(`${t('common.error')}: ${msg}`);
         }
       } else {
-        toast.error(t('providers.messages.delete_error'));
+        toast.error(t('providers:messages.delete_error'));
       }
       console.error('Erreur lors de la suppression du fournisseur:', err);
     }
@@ -377,9 +377,9 @@ export default function Fournisseurs() {
       if (selectedFournisseur && selectedIds.includes(selectedFournisseur.id!)) {
         setSelectedFournisseur(null);
       }
-      toast.success(t('providers.messages.bulk_delete_success', { count: selectedIds.length }));
+      toast.success(t('providers:messages.bulk_delete_success', { count: selectedIds.length }));
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || err.response?.data?.error || t('providers.messages.bulk_delete_error'));
+      toast.error(err.response?.data?.detail || err.response?.data?.error || t('providers:messages.bulk_delete_error'));
       console.error(err);
     }
   }
@@ -389,27 +389,27 @@ export default function Fournisseurs() {
 
     // Permission Check
     if (!user?.is_superuser && !user?.can_delete_fournisseur) {
-        toast.error(t('providers.messages.access_denied_delete'))
+        toast.error(t('providers:messages.access_denied_delete'))
         return
     }
 
     const confirmMessage = selectedIds.length === 1 
-      ? t('providers.messages.delete_confirm_message', { name: fournisseurs.find(f => f.id === selectedIds[0])?.name })
+      ? t('providers:messages.delete_confirm_message', { name: fournisseurs.find(f => f.id === selectedIds[0])?.name })
       : `Êtes-vous sûr de vouloir supprimer ${selectedIds.length} fournisseurs ?`;
 
     const confirmed = await confirm({
-      title: t('providers.messages.delete_confirm_title'),
+      title: t('providers:messages.delete_confirm_title'),
       message: confirmMessage,
       variant: 'danger',
-      confirmText: t('providers.messages.delete_btn')
+      confirmText: t('providers:messages.delete_btn')
     })
     
     if (confirmed) {
         requireSudo(async () => {
             await executeBulkDeleteFournisseurs();
         }, {
-            title: t('providers.messages.sudo_title'),
-            message: t('providers.messages.sudo_message'),
+            title: t('providers:messages.sudo_title'),
+            message: t('providers:messages.sudo_message'),
             permission: 'can_delete_fournisseur'
         });
     }
@@ -434,23 +434,23 @@ export default function Fournisseurs() {
     
     // Permission Check
     if (!user?.is_superuser && !user?.can_delete_fournisseur) {
-        toast.error(t('providers.messages.access_denied_delete'))
+        toast.error(t('providers:messages.access_denied_delete'))
         return
     }
     
     const confirmed = await confirm({
-      title: t('providers.messages.delete_confirm_title'),
-      message: t('providers.messages.delete_confirm_message', { name: selectedFournisseur.name }),
+      title: t('providers:messages.delete_confirm_title'),
+      message: t('providers:messages.delete_confirm_message', { name: selectedFournisseur.name }),
       variant: 'danger',
-      confirmText: t('providers.messages.delete_btn')
+      confirmText: t('providers:messages.delete_btn')
     })
     
     if (confirmed) {
         requireSudo(async () => {
             await executeDeleteFournisseur(selectedFournisseur.id);
         }, {
-            title: t('providers.messages.sudo_title'),
-            message: t('providers.messages.sudo_message'),
+            title: t('providers:messages.sudo_title'),
+            message: t('providers:messages.sudo_message'),
             permission: 'can_delete_fournisseur'
         });
     }
@@ -461,11 +461,11 @@ export default function Fournisseurs() {
     try {
       const response = await axios.post(`${fournisseursEndpoint}${selectedFournisseur.id}/toggle_active/`);
       const isActive = response.data.is_active;
-      toast.success(isActive ? t('providers.messages.reactivated') : t('providers.messages.hidden'));
+      toast.success(isActive ? t('providers:messages.reactivated') : t('providers:messages.hidden'));
       setSelectedFournisseur(prev => prev ? ({ ...prev, is_active: isActive }) : null);
       fetchFournisseurs();
     } catch (err) {
-      toast.error(t('providers.messages.status_change_error'));
+      toast.error(t('providers:messages.status_change_error'));
       console.error(err);
     }
   }
@@ -519,26 +519,26 @@ export default function Fournisseurs() {
                               <div className="p-2 bg-primary/10 text-primary rounded-lg">
                                 <Truck className="w-5 h-5" />
                               </div>
-                              <h2 className="font-bold text-lg tracking-tight">{t('providers.title')}</h2>
+                              <h2 className="font-bold text-lg tracking-tight">{t('providers:title')}</h2>
                               <span className="bg-base-200 text-base-content/60 px-2.5 py-0.5 rounded-full text-[10px] font-black">{fournisseurs.length}</span>
                            </div>
                            <div className="flex gap-1 items-center">
                               <button 
                                  className={`btn btn-sm btn-ghost btn-square ${showInactive ? 'bg-base-200 text-base-content' : 'text-base-content/40'}`} 
                                  onClick={() => setShowInactive(!showInactive)}
-                                 title={showInactive ? t('providers.hide_inactive') : t('providers.show_inactive')}
+                                 title={showInactive ? t('providers:hide_inactive') : t('providers:show_inactive')}
                               >
                                  {showInactive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                               </button>
-                              <button className="btn btn-sm btn-ghost btn-square text-secondary/60 hover:text-secondary hover:bg-secondary/10" onClick={() => setIsEcheancierModalOpen(true)} title={t('providers.schedule')}>
+                              <button className="btn btn-sm btn-ghost btn-square text-secondary/60 hover:text-secondary hover:bg-secondary/10" onClick={() => setIsEcheancierModalOpen(true)} title={t('providers:schedule_btn')}>
                                 <Calendar className="w-4 h-4" />
                               </button>
-                              <button className="btn btn-sm btn-ghost btn-square text-neutral/60 hover:text-neutral hover:bg-neutral/10" onClick={() => setIsPointageModalOpen(true)} title={t('providers.pointage')}>
+                              <button className="btn btn-sm btn-ghost btn-square text-neutral/60 hover:text-neutral hover:bg-neutral/10" onClick={() => setIsPointageModalOpen(true)} title={t('providers:pointage_btn')}>
                                 <CheckSquare className="w-4 h-4" />
                               </button>
                               <button className="btn btn-sm btn-primary gap-2 h-9 px-4 shadow-sm" onClick={openAddModal}>
                                 <UserPlus className="w-4 h-4" />
-                                <span className="hidden xl:inline">{t('providers.new_provider')}</span>
+                                <span className="hidden xl:inline">{t('providers:new_provider')}</span>
                               </button>
                            </div>
                         </>
@@ -552,7 +552,7 @@ export default function Fournisseurs() {
                     <input 
                        ref={searchInputRef}
                        type="text" 
-                       placeholder={t('providers.search_placeholder')}
+                       placeholder={t('providers:search_placeholder')}
                        className="input input-sm input-bordered w-full pl-10 h-10 bg-base-200/50 border-transparent focus:border-primary focus:bg-base-100 transition-all rounded-xl shadow-none" 
                        value={searchTerm}
                        onChange={(e) => {
@@ -578,8 +578,8 @@ export default function Fournisseurs() {
                             onChange={toggleSelectAll}
                          />
                       </th>
-                      <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-left">{t('providers.table.provider')}</th>
-                      <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-center">{t('providers.table.phone')}</th>
+                      <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-left">{t('providers:table.provider')}</th>
+                      <th className="py-2 px-2 font-semibold uppercase text-xs tracking-wider text-center">{t('providers:table.phone')}</th>
                     </tr>
                  </thead>
                  <tbody>
@@ -616,7 +616,7 @@ export default function Fournisseurs() {
                         <td colSpan={3} className="text-center py-6 opacity-50">
                            <div className="flex flex-col items-center gap-1">
                              <span className="text-xl">📭</span>
-                             <span className="text-xs">{searchTerm ? t('providers.no_result') : t('providers.empty_list')}</span>
+                             <span className="text-xs">{searchTerm ? t('providers:no_result') : t('providers:empty_list')}</span>
                            </div>
                         </td>
                       </tr>
@@ -667,17 +667,17 @@ export default function Fournisseurs() {
                   <div className="p-6 border-b bg-gradient-to-r from-slate-50 to-white shrink-0 flex justify-between items-start sticky-header">
                      <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">{t('providers.table.provider')}</span>
+                          <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">{t('providers:table.provider')}</span>
                         </div>
                         <h2 className="text-2xl font-black text-slate-800 leading-tight">{selectedFournisseur.name}</h2>
                      </div>
                      <div className="flex gap-2">
-                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-primary transition-colors" onClick={openEditModal} title={t('providers.details.edit')}>
+                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-primary transition-colors" onClick={openEditModal} title={t('providers:details.edit')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5M16.5 3.5a2.121 2.121 0 113 3L12 15l-4 1 1-4 9.5-9.5z" />
                           </svg>
                         </button>
-                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-error transition-colors" onClick={handleDeleteFournisseur} title={t('providers.details.delete')}>
+                        <button className="btn btn-sm btn-circle btn-ghost text-slate-400 hover:text-error transition-colors" onClick={handleDeleteFournisseur} title={t('providers:details.delete')}>
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -685,7 +685,7 @@ export default function Fournisseurs() {
                         <button 
                           className={`btn btn-sm btn-circle btn-ghost transition-colors ${selectedFournisseur.is_active === false ? 'text-warning' : 'text-slate-400 hover:text-warning'}`}
                           onClick={handleToggleActive}
-                          title={selectedFournisseur.is_active === false ? t('providers.details.reactivate') : t('providers.details.hide')}
+                          title={selectedFournisseur.is_active === false ? t('providers:details.reactivate') : t('providers:details.hide')}
                         >
                           {selectedFournisseur.is_active === false ? '👁️' : '🙈'}
                         </button>
@@ -702,9 +702,9 @@ export default function Fournisseurs() {
                                 </svg>
                               </div>
                               <div className="flex-1">
-                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers.details.contact_address')}</div>
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers:details.contact_address')}</div>
                                   <div className="text-slate-700 font-medium whitespace-pre-wrap leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
-                                    {selectedFournisseur.address || t('providers.details.not_provided')}
+                                    {selectedFournisseur.address || t('providers:details.not_provided')}
                                   </div>
                               </div>
                           </div>
@@ -717,7 +717,7 @@ export default function Fournisseurs() {
                                   </svg>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers.details.direct_line')}</div>
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers:details.direct_line')}</div>
                                     <div className="text-lg font-black text-slate-700 font-mono tracking-tight">{selectedFournisseur.phone || '-'}</div>
                                 </div>
                             </div>
@@ -729,7 +729,7 @@ export default function Fournisseurs() {
                                   </svg>
                                 </div>
                                 <div className="flex-1">
-                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers.details.email')}</div>
+                                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t('providers:details.email')}</div>
                                     <div className="text-slate-600 font-semibold break-all selection:bg-blue-100 underline decoration-blue-200 decoration-2 underline-offset-4">{selectedFournisseur.email || '-'}</div>
                                 </div>
                             </div>
@@ -740,7 +740,7 @@ export default function Fournisseurs() {
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="font-bold text-slate-800 flex items-center gap-2">
                              <span className="w-8 h-8 rounded-lg bg-emerald-100/50 text-emerald-600 flex items-center justify-center text-sm">💰</span>
-                             {t('providers.details.financial_situation')}
+                             {t('providers:details.financial_situation')}
                           </h3>
                           <button 
                             className="btn btn-ghost btn-sm text-primary hover:bg-primary/10 rounded-lg px-3 flex-1"
@@ -750,26 +750,26 @@ export default function Fournisseurs() {
                               setFinanceModalState({ isOpen: true });
                             }}
                           >
-                            {t('providers.details.manage_payments')}
+                            {t('providers:details.manage_payments')}
                           </button>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('providers.details.debt_balance')}</div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{t('providers:details.debt_balance')}</div>
                               <div className={`text-2xl font-black font-mono ${Number(selectedFournisseur.solde_dette) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                                  {formatCurrency(Number(selectedFournisseur.solde_dette || 0))} F
                               </div>
                            </div>
                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 text-xs italic">
-                              {t('providers.details.history_available')}
+                              {t('providers:details.history_available')}
                            </div>
                         </div>
                       </div>
 
                       <div className="pt-8 mt-4 border-t border-slate-100">
                         <div className="bg-slate-50 rounded-2xl p-4 flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('providers.details.internal_ref')}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t('providers:details.internal_ref')}</span>
                           <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-1 rounded-lg border border-slate-200">#{selectedFournisseur.id}</span>
                         </div>
                       </div>
@@ -787,9 +787,9 @@ export default function Fournisseurs() {
                               </svg>
                             </div>
                             <div>
-                              <h3 className="text-sm font-bold text-slate-800">{t('providers.details.product_catalogue')}</h3>
+                              <h3 className="text-sm font-bold text-slate-800">{t('providers:details.product_catalogue')}</h3>
                               <p className="text-[11px] text-slate-400">
-                                {catalogueLoading ? t('providers.details.loading') : t('providers.details.products_ordered_plural', { count: catalogue.length })}
+                                {catalogueLoading ? t('providers:details.loading') : t('providers:details.products_ordered_plural', { count: catalogue.length })}
                               </p>
                             </div>
                           </div>
@@ -816,7 +816,7 @@ export default function Fournisseurs() {
                                 </div>
                                 <input 
                                   type="text" 
-                                  placeholder={t('providers.catalogue.search_placeholder')}
+                                  placeholder={t('providers:catalogue.search_placeholder')}
                                   className="input input-sm input-bordered w-full pl-9 bg-white text-xs h-8" 
                                   value={catalogueSearch}
                                   onChange={(e) => setCatalogueSearch(e.target.value)}
@@ -834,7 +834,7 @@ export default function Fournisseurs() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                 </svg>
                                 <p className="text-xs font-medium">
-                                  {catalogueSearch ? t('providers.catalogue.no_result') : t('providers.catalogue.empty')}
+                                  {catalogueSearch ? t('providers:catalogue.no_result') : t('providers:catalogue.empty')}
                                 </p>
                               </div>
                             ) : (
@@ -842,13 +842,13 @@ export default function Fournisseurs() {
                                 <table className="table table-xs w-full">
                                   <thead className="bg-slate-50">
                                     <tr>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase">{t('providers.catalogue.headers.cip')}</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase">{t('providers.catalogue.headers.product')}</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">{t('providers.catalogue.headers.last_price')}</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers.catalogue.headers.last_order')}</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">{t('providers.catalogue.headers.margin')}</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers.catalogue.headers.total_qty')}</th>
-                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers.catalogue.headers.stock')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase">{t('providers:catalogue.headers.cip')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase">{t('providers:catalogue.headers.product')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">{t('providers:catalogue.headers.last_price')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers:catalogue.headers.last_order')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-right">{t('providers:catalogue.headers.margin')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers:catalogue.headers.total_qty')}</th>
+                                      <th className="text-[10px] font-bold text-slate-500 uppercase text-center">{t('providers:catalogue.headers.stock')}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
@@ -919,8 +919,8 @@ export default function Fournisseurs() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                       </svg>
                     </div>
-                    <p className="font-bold text-slate-400">{t('providers.details.no_provider_selected')}</p>
-                    <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('providers.details.select_instruction')}</p>
+                    <p className="font-bold text-slate-400">{t('providers:details.no_provider_selected')}</p>
+                    <p className="text-sm text-slate-300 mt-1 max-w-[200px]">{t('providers:details.select_instruction')}</p>
                 </div>
              )}
          </div>
@@ -930,8 +930,8 @@ export default function Fournisseurs() {
       <PremiumModal
         isOpen={isAddModalOpen}
         onClose={closeAddModal}
-        title={t('providers.form.add_title')}
-        subtitle="Enregistrer un nouveau fournisseur"
+        title={t('providers:form.add_title')}
+        subtitle={t('providers:form.company_info')}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -944,15 +944,15 @@ export default function Fournisseurs() {
           {/* Informations de l'entreprise */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-              {t('providers.form.company_info')}
+              {t('providers:form.company_info')}
             </h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.name')} *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.name')} *</label>
                 <input 
                   type="text" 
-                  placeholder={t('providers.form.name_placeholder')}
+                  placeholder={t('providers:form.name_placeholder')}
                   value={newFournisseur.name} 
                   onChange={e => setNewFournisseur(f => ({...f, name: e.target.value}))} 
                   className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -963,10 +963,10 @@ export default function Fournisseurs() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.phone')} *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.phone')} *</label>
                 <input 
                   type="tel" 
-                  placeholder={t('providers.form.phone_placeholder')}
+                  placeholder={t('providers:form.phone_placeholder')}
                   value={newFournisseur.phone} 
                   onChange={e => setNewFournisseur(f => ({...f, phone: e.target.value}))} 
                   className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -977,10 +977,10 @@ export default function Fournisseurs() {
             </div>
             
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.email')} *</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.email')} *</label>
               <input 
                 type="email" 
-                placeholder={t('providers.form.email_placeholder')}
+                placeholder={t('providers:form.email_placeholder')}
                 value={newFournisseur.email} 
                 onChange={e => setNewFournisseur(f => ({...f, email: e.target.value}))} 
                 className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -993,29 +993,29 @@ export default function Fournisseurs() {
           {/* Conditions Paiement */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-              Conditions de paiement
+              {t('providers:form.payment_conditions')}
             </h4>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Type de règlement</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.payment_type')}</label>
                 <select 
                   value={newFournisseur.type_reglement} 
                   onChange={e => setNewFournisseur(f => ({...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'}))} 
                   className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                   disabled={isSubmitting}
                 >
-                  <option value="FACTURE">À la facture</option>
-                  <option value="RELEVE">Sur relevé (ex: Ubipharm, Laborex)</option>
+                  <option value="FACTURE">{t('providers:form.payment_type_invoice')}</option>
+                  <option value="RELEVE">{t('providers:form.payment_type_statement')}</option>
                 </select>
               </div>
               
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Délai (jours)</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.delay')}</label>
                 <input 
                   type="number" 
                   min="0"
-                  placeholder="0 (au comptant)"
+                  placeholder={t('providers:form.delay_hint')}
                   value={newFournisseur.delai_paiement_jours} 
                   onChange={e => setNewFournisseur(f => ({...f, delai_paiement_jours: parseInt(e.target.value) || 0}))} 
                   className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -1028,40 +1028,40 @@ export default function Fournisseurs() {
           {/* Adresse */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-              {t('providers.form.address_section')}
+              {t('providers:form.address_section')}
             </h4>
             
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.address')} *</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.address')} *</label>
               <textarea 
-                placeholder={t('providers.form.address_placeholder')}
+                placeholder={t('providers:form.address_placeholder')}
                 value={newFournisseur.address} 
                 onChange={e => setNewFournisseur(f => ({...f, address: e.target.value}))} 
                 className="textarea textarea-bordered w-full h-24 rounded-xl resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                 required 
                 disabled={isSubmitting}
               />
-              <p className="text-[11px] text-gray-400 mt-1">{t('providers.form.address_hint')}</p>
+              <p className="text-[11px] text-gray-400 mt-1">{t('providers:form.address_hint')}</p>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={closeAddModal} disabled={isSubmitting}>
-              {t('providers.form.cancel')}
+              {t('providers:form.cancel')}
             </button>
             <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <span className="loading loading-spinner loading-sm"></span>
-                  {t('providers.form.saving')}
+                  {t('providers:form.saving')}
                 </>
               ) : (
                 <>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  {t('providers.form.add_btn')}
+                  {t('providers:form.add_btn')}
                 </>
               )}
             </button>
@@ -1073,7 +1073,7 @@ export default function Fournisseurs() {
       <PremiumModal
         isOpen={isEditModalOpen}
         onClose={closeEditModal}
-        title={t('providers.form.edit_title')}
+        title={t('providers:form.edit_title')}
         subtitle={editingFournisseur?.name || ''}
         icon={
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1090,15 +1090,15 @@ export default function Fournisseurs() {
             {/* Informations de l'entreprise */}
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-                {t('providers.form.company_info')}
+                {t('providers:form.company_info')}
               </h4>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.name')} *</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.name')} *</label>
                   <input 
                     type="text" 
-                    placeholder={t('providers.form.name_placeholder')}
+                    placeholder={t('providers:form.name_placeholder')}
                     value={editingFournisseur.name} 
                     onChange={e => setEditingFournisseur(f => f ? {...f, name: e.target.value} : null)} 
                     className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -1107,10 +1107,10 @@ export default function Fournisseurs() {
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.phone')} *</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.phone')} *</label>
                   <input 
                     type="tel" 
-                    placeholder={t('providers.form.phone_placeholder')}
+                    placeholder={t('providers:form.phone_placeholder')}
                     value={editingFournisseur.phone} 
                     onChange={e => setEditingFournisseur(f => f ? {...f, phone: e.target.value} : null)} 
                     className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -1120,10 +1120,10 @@ export default function Fournisseurs() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.email')} *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.email')} *</label>
                 <input 
                   type="email" 
-                  placeholder={t('providers.form.email_placeholder')}
+                  placeholder={t('providers:form.email_placeholder')}
                   value={editingFournisseur.email} 
                   onChange={e => setEditingFournisseur(f => f ? {...f, email: e.target.value} : null)} 
                   className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -1135,28 +1135,28 @@ export default function Fournisseurs() {
             {/* Conditions Paiement */}
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-                Conditions de paiement
+                {t('providers:form.payment_conditions')}
               </h4>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Type de règlement</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.payment_type')}</label>
                   <select 
                     value={editingFournisseur.type_reglement || 'FACTURE'} 
                     onChange={e => setEditingFournisseur(f => f ? {...f, type_reglement: e.target.value as 'FACTURE'|'RELEVE'} : null)} 
                     className="select select-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                   >
-                    <option value="FACTURE">À la facture</option>
-                    <option value="RELEVE">Sur relevé (ex: Ubipharm, Laborex)</option>
+                    <option value="FACTURE">{t('providers:form.payment_type_invoice')}</option>
+                    <option value="RELEVE">{t('providers:form.payment_type_statement')}</option>
                   </select>
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Délai (jours)</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.delay')}</label>
                   <input 
                     type="number" 
                     min="0"
-                    placeholder="0 (au comptant)"
+                    placeholder={t('providers:form.delay_hint')}
                     value={editingFournisseur.delai_paiement_jours ?? 0} 
                     onChange={e => setEditingFournisseur(f => f ? {...f, delai_paiement_jours: parseInt(e.target.value) || 0} : null)} 
                     className="input input-bordered w-full h-12 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
@@ -1168,29 +1168,29 @@ export default function Fournisseurs() {
             {/* Adresse */}
             <div className="space-y-4">
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-100 pb-2">
-                {t('providers.form.address_section')}
+                {t('providers:form.address_section')}
               </h4>
               
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.form.address')} *</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:form.address')} *</label>
                 <textarea 
-                  placeholder={t('providers.form.address_placeholder')}
+                  placeholder={t('providers:form.address_placeholder')}
                   value={editingFournisseur.address} 
                   onChange={e => setEditingFournisseur(f => f ? {...f, address: e.target.value} : null)} 
                   className="textarea textarea-bordered w-full h-24 rounded-xl resize-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all" 
                   required 
                 />
-                <p className="text-[11px] text-gray-400 mt-1">{t('providers.form.address_hint')}</p>
+                <p className="text-[11px] text-gray-400 mt-1">{t('providers:form.address_hint')}</p>
               </div>
             </div>
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-2">
               <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={closeEditModal}>
-                {t('providers.form.cancel')}
+                {t('providers:form.cancel')}
               </button>
               <button type="submit" className="btn btn-secondary px-8 rounded-xl shadow-lg shadow-secondary/20">
-                {t('providers.form.save_btn')}
+                {t('providers:form.save_btn')}
               </button>
             </div>
           </form>
@@ -1224,7 +1224,7 @@ export default function Fournisseurs() {
       <EcheancierFournisseursModal 
         isOpen={isEcheancierModalOpen}
         onClose={() => setIsEcheancierModalOpen(false)}
-        onRegler={(fournisseurId) => {
+        onRegler={(fournisseurId: number) => {
           setIsEcheancierModalOpen(false);
           const f = fournisseurs.find(x => x.id === fournisseurId);
           if (f) {
@@ -1232,7 +1232,7 @@ export default function Fournisseurs() {
             setFinanceModalState({ isOpen: true });
           }
         }}
-        onPointer={(id) => {
+        onPointer={(id: number) => {
           setIsEcheancierModalOpen(false);
           setIsPointageModalOpen(true);
           const f = fournisseurs.find(x => x.id === id);

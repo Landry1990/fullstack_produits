@@ -48,7 +48,7 @@ export default function PurchaseHistoryDrawer({
   data, 
   loading 
 }: PurchaseHistoryDrawerProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['clients', 'common']);
   const [expandedInvoice, setExpandedInvoice] = useState<number | null>(null);
 
   if (!isOpen) return null;
@@ -65,7 +65,7 @@ export default function PurchaseHistoryDrawer({
                <HistoryIcon className="w-6 h-6" />
              </div>
              <div>
-               <h3 className="text-xl font-black tracking-tight">{t('clients.sections.purchase_history')}</h3>
+               <h3 className="text-xl font-black tracking-tight">{t('clients:sections.purchase_history')}</h3>
                <p className="text-xs font-semibold text-base-content/40 uppercase tracking-widest">{data?.client_name}</p>
              </div>
           </div>
@@ -79,24 +79,24 @@ export default function PurchaseHistoryDrawer({
            {loading ? (
              <div className="flex flex-col items-center justify-center h-full gap-4 opacity-40">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="text-xs font-black uppercase tracking-widest">{t('common.loading')}</p>
+                <p className="text-xs font-black uppercase tracking-widest">{t('common:loading')}</p>
              </div>
            ) : data && data.factures.length > 0 ? (
              <>
                {/* Stats Summary */}
                <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-                  <div className="bg-primary/5 p-4 rounded-3xl border border-primary/10 flex flex-col gap-1">
-                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/40">
-                        <ShoppingBag className="w-3 h-3" /> {t('clients.history.total_visits')}
-                     </div>
-                     <div className="text-2xl font-black text-primary">{data.total_factures}</div>
-                  </div>
-                  <div className="bg-secondary/5 p-4 rounded-3xl border border-secondary/10 flex flex-col gap-1">
-                     <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary/40">
-                        <TrendingUp className="w-3 h-3" /> {t('clients.history.loyalty')}
-                     </div>
-                     <div className="text-2xl font-black text-secondary">{Math.floor(data.total_factures * 1.5)} pts</div>
-                  </div>
+                   <div className="bg-primary/5 p-4 rounded-3xl border border-primary/10 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary/40">
+                         <ShoppingBag className="w-3 h-3" /> {t('clients:history.total_visits')}
+                      </div>
+                      <div className="text-2xl font-black text-primary">{data.total_factures}</div>
+                   </div>
+                   <div className="bg-secondary/5 p-4 rounded-3xl border border-secondary/10 flex flex-col gap-1">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-secondary/40">
+                         <TrendingUp className="w-3 h-3" /> {t('clients:history.loyalty')}
+                      </div>
+                      <div className="text-2xl font-black text-secondary">{Math.floor(data.total_factures * 1.5)} {t('clients:units.pts')}</div>
+                   </div>
                </div>
 
                {/* Invoice List */}
@@ -115,7 +115,7 @@ export default function PurchaseHistoryDrawer({
                                 <PackageCheck className="w-5 h-5" />
                              </div>
                              <div>
-                                <div className="text-sm font-black text-base-content">#{facture.numero_facture}</div>
+                                <div className="text-sm font-black text-base-content">{t('clients:history.invoice_no', { no: facture.numero_facture })}</div>
                                 <div className="text-[10px] font-bold text-base-content/40 flex items-center gap-1">
                                    <CalendarDays className="w-3 h-3" /> {formatDateFr(facture.date)}
                                 </div>
@@ -125,7 +125,7 @@ export default function PurchaseHistoryDrawer({
                              <div className="text-right">
                                 <div className="text-sm font-black text-base-content">{formatCurrency(facture.total_ttc)}</div>
                                 <div className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded leading-none mt-0.5 ${facture.status === 'VALIDEE' ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
-                                   {facture.status}
+                                   {facture.status === 'VALIDEE' ? t('clients:history.status_validee') : facture.status}
                                 </div>
                              </div>
                              <ChevronRight className={`w-4 h-4 text-base-content/20 transition-transform duration-300 ${expandedInvoice === facture.id ? 'rotate-90 text-primary' : ''}`} />
@@ -139,9 +139,9 @@ export default function PurchaseHistoryDrawer({
                                 <table className="table table-xs w-full">
                                    <thead className="bg-base-50">
                                       <tr>
-                                         <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40">{t('common.product')}</th>
-                                         <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40 text-center">Qté</th>
-                                         <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40 text-right pr-4">{t('common.total')}</th>
+                                         <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40">{t('common:product')}</th>
+                                         <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40 text-center">{t('clients:history.quantity_short')}</th>
+                                         <th className="py-2 text-[9px] uppercase font-black tracking-widest text-base-content/40 text-right pr-4">{t('common:total')}</th>
                                       </tr>
                                    </thead>
                                    <tbody>
@@ -149,7 +149,7 @@ export default function PurchaseHistoryDrawer({
                                          <tr key={idx} className="border-b border-base-200/30 last:border-0 hover:bg-base-50/50">
                                             <td className="py-2.5 px-3">
                                                <div className="text-xs font-bold leading-tight line-clamp-1">{prod.nom}</div>
-                                               <div className="text-[9px] opacity-40 font-mono tracking-tighter">{prod.prix_unitaire} / unité</div>
+                                               <div className="text-[9px] opacity-40 font-mono tracking-tighter">{prod.prix_unitaire} {t('clients:units.per_unit')}</div>
                                             </td>
                                             <td className="py-2 px-3 text-center text-xs font-black">× {prod.quantite}</td>
                                             <td className="py-2 px-3 text-right text-xs font-black pr-4">{formatCurrency(prod.total)}</td>
@@ -170,8 +170,8 @@ export default function PurchaseHistoryDrawer({
                   <ShoppingBag className="w-10 h-10" />
                 </div>
                 <div>
-                   <h4 className="font-black text-lg">{t('clients.history.empty_title')}</h4>
-                   <p className="text-xs font-bold">{t('clients.history.empty_desc')}</p>
+                   <h4 className="font-black text-lg">{t('clients:history.empty_title')}</h4>
+                   <p className="text-xs font-bold">{t('clients:history.empty_desc')}</p>
                 </div>
              </div>
            )}

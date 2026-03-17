@@ -8,7 +8,7 @@ import PromotionForm from './PromotionForm';
 import { safeStorage } from '../../utils/storage';
 
 const PromotionList: React.FC = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['promotions', 'common']);
     const [promotions, setPromotions] = useState<Promotion[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -26,12 +26,12 @@ const PromotionList: React.FC = () => {
                     'Content-Type': 'application/json'
                 }
             });
-            if (!response.ok) throw new Error(t('promotions.fetch_error'));
+            if (!response.ok) throw new Error(t('promotions:fetch_error'));
             const data = await response.json();
             // Handle pagination (Django Rest Framework default)
             setPromotions(Array.isArray(data) ? data : data.results || []);
         } catch (err) {
-            setError(t('promotions.error_loading'));
+            setError(t('promotions:error_loading'));
         } finally {
             setLoading(false);
         }
@@ -48,14 +48,14 @@ const PromotionList: React.FC = () => {
             case DiscountType.FIXED_AMOUNT:
                 return `-${promo.value} ${t('common.currency')}`;
             case DiscountType.BUY_X_GET_Y:
-                return t('promotions.list.discount.buy_get', { buy: promo.buy_quantity, get: promo.get_quantity });
+                return t('promotions:list.discount.buy_get', { buy: promo.buy_quantity, get: promo.get_quantity });
             default:
                 return '';
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm(t('promotions.delete_confirm'))) return;
+        if (!window.confirm(t('promotions:delete_confirm'))) return;
         
         try {
             const token = safeStorage.getItem('authToken');
@@ -68,12 +68,12 @@ const PromotionList: React.FC = () => {
             });
             if (!response.ok) {
                 const text = await response.text();
-                throw new Error(t('promotions.delete_error', { message: text }));
+                throw new Error(t('promotions:delete_error', { message: text }));
             }
             setPromotions(promotions.filter(p => p.id !== id));
         } catch (error: any) {
             console.error("Delete failed", error);
-            alert(t('promotions.delete_error', { message: error.message || error }));
+            alert(t('promotions:delete_error', { message: error.message || error }));
         }
     };
 
@@ -87,18 +87,18 @@ const PromotionList: React.FC = () => {
         setShowForm(true);
     };
 
-    if (loading) return <div>{t('promotions.loading')}</div>;
-    if (error) return <div className="text-red-500">{error}</div>;
+    if (loading) return <div className="p-6 text-center">{t('promotions:loading')}</div>;
+    if (error) return <div className="p-6 text-center text-red-500 font-bold">{error}</div>;
 
     return (
         <div className="p-6 bg-white rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">{t('promotions.title')}</h2>
+                <h2 className="text-2xl font-bold text-gray-800">{t('promotions:title')}</h2>
                 <button 
                     className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
                     onClick={handleCreate}
                 >
-                    {t('promotions.new_btn')}
+                    {t('promotions:new_btn')}
                 </button>
             </div>
 
@@ -121,12 +121,12 @@ const PromotionList: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions.list.table.name')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions.list.table.type')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions.list.table.detail')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions.list.table.period')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions.list.table.status')}</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions.list.table.actions')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.name')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.type')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.detail')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.period')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.status')}</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t('promotions:list.table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -136,19 +136,19 @@ const PromotionList: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                         ${promo.discount_type === DiscountType.BUY_X_GET_Y ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
-                                        {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions.list.types.special_offer') : t('promotions.list.types.discount')}
+                                        {promo.discount_type === DiscountType.BUY_X_GET_Y ? t('promotions:list.types.special_offer') : t('promotions:list.types.discount')}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-bold">
                                     {getDiscountLabel(promo)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {format(new Date(promo.start_date), t('common.date_format_short'))} 
-                                    {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common.date_format_short'))}` : ` ${t('promotions.list.period.indefinite')}`}
+                                    {format(new Date(promo.start_date), t('common.date_format_short', 'dd/MM/yyyy'))} 
+                                    {promo.end_date ? ` - ${format(new Date(promo.end_date), t('common.date_format_short', 'dd/MM/yyyy'))}` : ` ${t('promotions:list.period.indefinite')}`}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${promo.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                        {promo.active ? t('promotions.list.status.active') : t('promotions.list.status.inactive')}
+                                        {promo.active ? t('promotions:list.status.active') : t('promotions:list.status.inactive')}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -156,13 +156,13 @@ const PromotionList: React.FC = () => {
                                         onClick={() => handleEdit(promo)}
                                         className="text-indigo-600 hover:text-indigo-900 mr-4"
                                     >
-                                        {t('promotions.list.actions.edit')}
+                                        {t('promotions:list.actions.edit')}
                                     </button>
                                     <button 
                                         onClick={() => handleDelete(promo.id)}
                                         className="text-red-600 hover:text-red-900"
                                     >
-                                        {t('promotions.list.actions.delete')}
+                                        {t('promotions:list.actions.delete')}
                                     </button>
                                 </td>
                             </tr>

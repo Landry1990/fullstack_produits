@@ -1,0 +1,36 @@
+{
+    "title": "Historique des Ventes",
+    "subtitle": "Consultez le récapitulatif quotidien de vos ventes",
+    "export_excel": "Exporter Excel",
+    "start_date": "Date Début",
+    "end_date": "Date Fin",
+    "loading": "Chargement de l'historique...",
+    "no_data": "Aucune donnée trouvée pour cette période",
+    "total_period": "Totaux sur la période",
+    "columns": {
+        "date": "Date",
+        "ca_ttc": "CA TTC",
+        "cash": "Espèces",
+        "card": "Carte",
+        "check": "Chèque",
+        "virement": "Virement",
+        "mobiles": "Mobiles",
+        "coupons": "Coupons",
+        "en_compte": "En Compte",
+        "nb_ventes": "Nb Ventes",
+        "avg_basket": "Panier Moyen"
+    },
+    "pagination": {
+        "showing": "Affichage de",
+        "days_of": "jours sur",
+        "total": "au total",
+        "prev": "Précédent",
+        "next": "Suivant",
+        "page": "Page"
+    },
+    "messages": {
+        "error_loading": "Erreur lors du chargement de l'historique des ventes",
+        "export_success": "Export Excel réussi",
+        "export_error": "Erreur lors de l'export Excel"
+    }
+}

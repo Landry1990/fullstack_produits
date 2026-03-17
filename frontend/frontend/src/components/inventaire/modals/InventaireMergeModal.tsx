@@ -29,7 +29,7 @@ export function InventaireMergeModal({
     selectedInventaireIds,
     inventaires
 }: InventaireMergeModalProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     return (
         <dialog className={`modal ${showMergeModal ? 'modal-open' : ''}`}>
@@ -39,11 +39,11 @@ export function InventaireMergeModal({
                         <ArrowUpDown className="h-6 w-6 text-info" />
                      </div>
                      <div>
-                        <h3 className="font-bold text-lg text-base-content">{t('stock.inventaire.merge.modal_title')}</h3>
+                        <h3 className="font-bold text-lg text-base-content">{t('inventaire.merge.modal_title')}</h3>
                         <p className="text-sm text-base-content/60 mt-1">
                             {viewMode === 'LIST' 
-                                ? t('stock.inventaire.modals.merge_list_desc') 
-                                : t('stock.inventaire.merge.modal_desc')}
+                                ? t('inventaire.modals.merge_list_desc') 
+                                : t('inventaire.merge.modal_desc')}
                         </p>
                      </div>
                 </div>
@@ -54,8 +54,8 @@ export function InventaireMergeModal({
                         <div className="alert alert-warning shadow-sm rounded-xl py-3 border border-warning/20">
                             <AlertCircle className="h-5 w-5" />
                             <div className="text-sm">
-                                <span className="font-bold">{t('stock.inventaire.modals.merge_warning')}</span><br/>
-                                {t('stock.inventaire.modals.merge_warning_desc')}
+                                <span className="font-bold">{t('inventaire.modals.merge_warning')}</span><br/>
+                                {t('inventaire.modals.merge_warning_desc')}
                             </div>
                         </div>
                     )}
@@ -64,8 +64,8 @@ export function InventaireMergeModal({
                         <label className="text-sm font-bold text-base-content/70 flex items-center gap-2">
                             <Database className="h-4 w-4" />
                             {viewMode === 'LIST' 
-                                ? t('stock.inventaire.modals.target_inventory') 
-                                : t('stock.inventaire.merge.select_source')}
+                                ? t('inventaire.modals.target_inventory') 
+                                : t('inventaire.merge.select_source')}
                         </label>
                         
                         {viewMode === 'LIST' ? (
@@ -74,7 +74,7 @@ export function InventaireMergeModal({
                                 value={selectedMergeSource || ''}
                                 onChange={(e) => setSelectedMergeSource(Number(e.target.value))}
                             >
-                                <option value="" disabled>{t('stock.inventaire.modals.choose_target')}</option>
+                                <option value="" disabled>{t('inventaire.modals.choose_target')}</option>
                                 {Array.from(selectedInventaireIds).map(id => {
                                     const inv = inventaires.find(i => i.id === id);
                                     return (
@@ -91,7 +91,7 @@ export function InventaireMergeModal({
                                 onChange={(e) => setSelectedMergeSource(Number(e.target.value))}
                                 disabled={loadingMergeCandidates}
                             >
-                                <option value="" disabled>-- {t('stock.inventaire.merge.choose_placeholder')} --</option>
+                                <option value="" disabled>-- {t('inventaire.merge.choose_placeholder')} --</option>
                                 {loadingMergeCandidates ? (
                                     <option disabled>{t('common.loading')}</option>
                                 ) : (
@@ -123,7 +123,7 @@ export function InventaireMergeModal({
                         disabled={!selectedMergeSource || merging}
                     >
                         {merging ? <span className="loading loading-spinner"></span> : <ArrowUpDown className="h-5 w-5" />}
-                        {t('stock.inventaire.merge.btn')}
+                        {t('inventaire.merge.btn')}
                     </button>
                 </div>
             </div>

@@ -31,7 +31,7 @@ export default function DashboardManager() {
             <div className="min-h-screen bg-base-200 flex flex-col items-center justify-center gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
                 <p className="text-sm font-bold text-base-content/40 uppercase tracking-widest animate-pulse">
-                    Chargement du tableau de bord...
+                    {t('manager_dashboard.loading', 'Chargement du tableau de bord...')}
                 </p>
             </div>
         );
@@ -65,7 +65,7 @@ export default function DashboardManager() {
                             <button 
                                 onClick={() => setIsSettingsModalOpen(true)}
                                 className="btn btn-ghost btn-circle btn-md hover:bg-base-200"
-                                title="Configurer les objectifs"
+                                title={t('manager_dashboard.settings_tooltip')}
                             >
                                 <Settings className="w-5 h-5 text-base-content/70" />
                             </button>

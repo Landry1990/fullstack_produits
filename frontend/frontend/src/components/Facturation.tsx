@@ -44,7 +44,7 @@ import { useFacturationUI } from '../hooks/useFacturationUI'
 
 
 export default function Facturation() {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['prescriptions', 'common', 'facturation', 'sales'])
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { settings: pharmacySettings } = usePharmacySettings()
@@ -99,7 +99,7 @@ export default function Facturation() {
           setActiveSudoCreds({ validatorId, password });
           updateQuantite(produitId, newQty);
       }, {
-          title: `Validation Quantité Négative`,
+          title: t('facturation:payment.sudo_mode.validate_by'),
           message: `Confirmer la quantité <strong>${newQty}</strong> pour le produit <strong>${currentLine?.produit.name}</strong> ?`
       });
     } else {
@@ -115,7 +115,7 @@ export default function Facturation() {
           setActiveSudoCreds({ validatorId, password });
           updatePrix(produitId, newPrice);
       }, {
-          title: `Modification de Prix`,
+          title: t('facturation:payment.sudo_mode.validate_by'),
           message: `Confirmer le changement de prix de <strong>${currentLine.prix_unitaire}</strong> à <strong>${newPrice}</strong> pour <strong>${currentLine.produit.name}</strong> ?`
       });
     } else {
@@ -131,7 +131,7 @@ export default function Facturation() {
           setActiveSudoCreds({ validatorId, password });
           updateRemiseProduit(produitId, newRemise);
       }, {
-          title: `Validation Remise`,
+          title: t('facturation:payment.sudo_mode.validate_by'),
           message: `Confirmer une remise de <strong>${newRemise}%</strong> sur le produit <strong>${currentLine.produit.name}</strong> ?`
       });
     } else {
@@ -150,7 +150,7 @@ export default function Facturation() {
       // Auto-add scanned product to cart via ref
       if (addProductRef.current) {
         addProductRef.current(product, { isRetrocession, preventFocus: true })
-        toast.success(t('facturation.messages.scan_added', { name: product.name }), { duration: 1500 })
+        toast.success(t('facturation:messages.scan_added', { name: product.name }), { duration: 1500 })
       }
   }, [isRetrocession])
 
@@ -169,11 +169,11 @@ export default function Facturation() {
   // Pack Addition Logic
   const addPackToFacture = useCallback(async (pack: any) => {
       if (!pack.pack_items || pack.pack_items.length === 0) {
-          toast.error(t('facturation.messages.pack_empty'))
+          toast.error(t('facturation:messages.pack_empty'))
           return
       }
 
-      const toastId = toast.loading(t('facturation.messages.adding_pack'))
+      const toastId = toast.loading(t('facturation:messages.adding_pack'))
       try {
           // Fetch all products details concurrently
           const apiBase = import.meta.env.VITE_API_BASE_URL ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, '') : ''
@@ -193,7 +193,7 @@ export default function Facturation() {
           const items = results.filter(i => i !== null) as { product: ProduitModel, quantity: number }[]
 
           if (items.length === 0) {
-              toast.error(t('facturation.messages.pack_items_error'), { id: toastId })
+              toast.error(t('facturation:messages.pack_items_error'), { id: toastId })
               return
           }
           
@@ -1006,8 +1006,7 @@ export default function Facturation() {
         
         await axios.post(endpoint, payload);
 
-        
-        toast.success("Enregistré dans l'ordonnancier");
+        toast.success(t('prescriptions:messages.save_success'));
         setShowOrdonnanceModal(false);
         setPendingOrdonnanceFacture(null);
         // Ne pas reset les données de vente ici, juste fermer le modal
@@ -1016,7 +1015,7 @@ export default function Facturation() {
         console.error("Error object:", err);
         console.error("Response status:", err.response?.status);
         console.error("Response data:", err.response?.data);
-        toast.error("Erreur lors de l'enregistrement de l'ordonnance: " + (err.response?.data?.detail || err.message));
+        toast.error(t('prescriptions:messages.save_error') + ": " + (err.response?.data?.detail || err.message));
     } finally {
         setLoading(false);
     }
@@ -1304,7 +1303,7 @@ export default function Facturation() {
 
       deletePendingSale(id)
       setShowPendingSales(false)
-      toast.success('Vente restaurée')
+      toast.success(t('facturation:messages.save_success'))
   }
 
   const supprimerVenteEnAttente = (id: number) => {
@@ -1326,7 +1325,7 @@ export default function Facturation() {
       {/* Header Minimaliste */}
       <div className="flex items-center justify-between px-3 sm:px-6 py-2 sm:py-3 border-b border-base-200 bg-white dark:bg-slate-900 shrink-0 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-2 sm:gap-4">
-          <h1 className="text-lg sm:text-2xl font-bold text-base-content uppercase tracking-tight truncate max-w-[120px] sm:max-w-none">{t('facturation.title')}</h1>
+          <h1 className="text-lg sm:text-2xl font-bold text-base-content uppercase tracking-tight truncate max-w-[120px] sm:max-w-none">{t('facturation:title')}</h1>
           
           <div className="flex items-center gap-1 sm:gap-2 border-l border-base-200 dark:border-slate-700 pl-2 sm:pl-4 ml-1 sm:ml-2">
             {/* Zenith Mode Toggle */}
@@ -1353,8 +1352,8 @@ export default function Facturation() {
             {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
           </div>
           <div className="flex gap-2 sm:gap-4 text-[8px] sm:text-[10px] text-base-content/40 mt-1 uppercase font-bold tracking-tight">
-            <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">/</kbd> <span className="hidden xs:inline">{t('facturation.shortcuts.search')}</span></span>
-            <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">F9</kbd> <span className="hidden xs:inline">{t('facturation.shortcuts.pay')}</span></span>
+            <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">/</kbd> <span className="hidden xs:inline">{t('facturation:shortcuts.search')}</span></span>
+            <span className="flex items-center gap-0.5 sm:gap-1"><kbd className="kbd kbd-xs py-0 h-3 sm:h-4 font-sans">F9</kbd> <span className="hidden xs:inline">{t('facturation:shortcuts.pay')}</span></span>
           </div>
         </div>
       </div>
@@ -1366,14 +1365,14 @@ export default function Facturation() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <div className="flex-1">
-            <h3 className="font-bold">{t('facturation.modification_mode.title')}</h3>
+            <h3 className="font-bold">{t('facturation:modification_mode.title')}</h3>
             <div className="text-xs flex flex-wrap gap-4">
-              <span>{t('facturation.modification_mode.original_total')}: <strong>{formatCurrency(Math.round(originalTotalTtc))} F</strong></span>
-              <span>{t('facturation.modification_mode.new_total')}: <strong>{formatCurrency(Math.round(totals.totalTtc))} F</strong></span>
+              <span>{t('facturation:modification_mode.original_total')}: <strong>{formatCurrency(Math.round(originalTotalTtc))} F</strong></span>
+              <span>{t('facturation:modification_mode.new_total')}: <strong>{formatCurrency(Math.round(totals.totalTtc))} F</strong></span>
               {totals.totalTtc !== originalTotalTtc && (
                 <span className={totals.totalTtc > originalTotalTtc ? 'text-success font-bold' : 'text-error font-bold'}>
-                  {t('facturation.modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(totals.totalTtc - originalTotalTtc))} F
-                  {totals.totalTtc > originalTotalTtc ? ` (${t('facturation.modification_mode.to_collect')})` : ` (${t('facturation.modification_mode.to_refund')})`}
+                  {t('facturation:modification_mode.difference')}: {totals.totalTtc > originalTotalTtc ? '+' : ''}{formatCurrency(Math.round(totals.totalTtc - originalTotalTtc))} F
+                  {totals.totalTtc > originalTotalTtc ? ` (${t('facturation:modification_mode.to_collect')})` : ` (${t('facturation:modification_mode.to_refund')})`}
                 </span>
               )}
             </div>
@@ -1385,10 +1384,10 @@ export default function Facturation() {
               setModificationInvoiceId(null)
               setOriginalTotalTtc(0)
               setLignesFacture([])
-              toast(t('facturation.modification_mode.cancelled'), { icon: '✖️' })
+              toast(t('facturation:modification_mode.cancelled'), { icon: '✖️' })
             }}
           >
-            {t('common.cancel')}
+            {t('common:cancel')}
           </button>
         </div>
       )}
@@ -1451,7 +1450,7 @@ export default function Facturation() {
             addProduitToFacture={(p) => addProduitToFacture(p, { isRetrocession })}
             addPackToFacture={addPackToFacture}
             searchInputRef={searchInputRef}
-            placeholder={t('facturation.search_placeholder')}
+            placeholder={t('facturation:search.placeholder')}
             onQuantityShortcut={handleQuantityShortcut}
             onCsvImport={handleCsvImport}
           />
@@ -1465,8 +1464,8 @@ export default function Facturation() {
 
           <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-4">
-              <h2 className="font-bold text-lg text-base-content">{t('facturation.cart_title')}</h2>
-              <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation.items_count', { count: lignesFacture.length })}</div>
+              <h2 className="font-bold text-lg text-base-content">{t('facturation:cart.title')}</h2>
+              <div className="badge badge-ghost font-mono">{lignesFacture.length} {t('facturation:cart.items_count', { count: lignesFacture.length })}</div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-base-content/60 font-medium">Trier par:</span>
@@ -1616,14 +1615,14 @@ export default function Facturation() {
       <PremiumModal
         isOpen={!!confirmModal?.isOpen}
         onClose={() => setConfirmModal(null)}
-        title={t('common.confirmation', { defaultValue: 'Confirmation' })}
+        title={t('common:confirmation', { defaultValue: 'Confirmation' })}
         icon={<span className="text-warning text-xl">⚠️</span>}
         gradientFrom="warning/10"
         gradientTo="warning/5"
         footer={
           <div className="flex justify-end gap-2 w-full">
             <button className="btn" onClick={() => setConfirmModal(null)}>
-              {t('common.cancel', { defaultValue: 'Annuler' })}
+              {t('common:cancel', { defaultValue: 'Annuler' })}
             </button>
             <button
               className="btn btn-error"
@@ -1632,7 +1631,7 @@ export default function Facturation() {
                 setConfirmModal(null);
               }}
             >
-              {t('common.confirm', { defaultValue: 'Confirmer' })}
+              {t('common:confirm', { defaultValue: 'Confirmer' })}
             </button>
           </div>
         }

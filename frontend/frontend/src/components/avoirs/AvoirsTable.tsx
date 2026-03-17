@@ -39,7 +39,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     onClearSelection,
     bulkLoading
 }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation(['stock', 'common']);
 
     const getStatusStyle = (status: string) => {
         switch (status) {
@@ -53,23 +53,23 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
     const getTypeAvoirLabel = (type: string) => {
         switch (type) {
             case 'PERIME':
-            case 'Périmé': return t('avoirs.types.perime', 'Périmé');
-            case 'CASSE': return t('avoirs.types.casse', 'Cassé');
-            case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison', 'Erreur Livraison');
-            case 'AVARIE': return t('avoirs.types.avarie', 'Avarie');
-            case 'NON_FACTURE': return t('avoirs.types.non_facture', 'Non Facturé');
-            case 'AUTRE': return t('avoirs.types.autre', 'Autre');
+            case 'Périmé': return t('avoirs.types.perime');
+            case 'CASSE': return t('avoirs.types.casse');
+            case 'ERREUR_LIVRAISON': return t('avoirs.types.erreur_livraison');
+            case 'AVARIE': return t('avoirs.types.avarie');
+            case 'NON_FACTURE': return t('avoirs.types.non_facture');
+            case 'AUTRE': return t('avoirs.types.autre');
             default: return type;
         }
     };
 
     const getStatusLabel = (status: string) => {
         switch (status?.toUpperCase()) {
-            case 'BROUILLON': return t('avoirs.statuses.brouillon', 'Brouillon');
+            case 'BROUILLON': return t('avoirs.statuses.brouillon');
             case 'VAL':
             case 'VALIDÉ':
             case 'VALIDEE':
-            case 'VALIDE': return t('avoirs.statuses.valide', 'Validé');
+            case 'VALIDE': return t('avoirs.statuses.valide');
             default: return status;
         }
     };
@@ -78,7 +78,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
         return (
             <div className="flex flex-col items-center justify-center p-12 text-base-content/60 gap-4">
                 <span className="loading loading-spinner loading-md text-primary" />
-                <p>{t('avoirs.loading', 'Chargement des avoirs...')}</p>
+                <p>{t('avoirs.loading')}</p>
             </div>
         );
     }
@@ -107,28 +107,28 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
             return (
                 <>
                     <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                        {t('common.single_selection')}
+                        {t('common:single_selection')}
                     </li>
                     <li>
                         <a onClick={() => onView(avoir)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                            <Eye className="w-4 h-4" /> {t('common.view')}
+                            <Eye className="w-4 h-4" /> {t('common:view')}
                         </a>
                     </li>
                     {avoir.status === 'BROUILLON' && (
                         <>
                             <li>
                                 <a onClick={() => onEdit(avoir)} className="flex items-center gap-3 py-3 hover:bg-warning/10 text-warning font-medium">
-                                    <Edit className="w-4 h-4" /> {t('common.edit')}
+                                    <Edit className="w-4 h-4" /> {t('common:edit')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onValidate(avoir)} className="flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium">
-                                    <CheckCircle2 className="w-4 h-4" /> {t('common.validate')}
+                                    <CheckCircle2 className="w-4 h-4" /> {t('common:validate')}
                                 </a>
                             </li>
                             <li>
                                 <a onClick={() => onDelete(avoir)} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                    <Trash2 className="w-4 h-4" /> {t('common.delete')}
+                                    <Trash2 className="w-4 h-4" /> {t('common:delete')}
                                 </a>
                             </li>
                         </>
@@ -139,18 +139,18 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
         return (
             <>
                 <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                    {t('common.bulk_actions')}
+                    {t('common:bulk_actions')}
                 </li>
                 <li>
                     <a onClick={onBulkValidate} className={`flex items-center gap-3 py-3 hover:bg-success/10 text-success font-medium ${bulkLoading ? 'disabled' : ''}`}>
                         {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Check className="w-4 h-4" />}
-                        {t('common.validate_all')}
+                        {t('common:validate_all')}
                     </a>
                 </li>
                 <li>
                     <a onClick={onBulkDelete} className={`flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium ${bulkLoading ? 'disabled' : ''}`}>
                         {bulkLoading ? <span className="loading loading-spinner loading-xs" /> : <Trash2 className="w-4 h-4" />}
-                        {t('common.delete_all')}
+                        {t('common:delete_all')}
                     </a>
                 </li>
             </>
@@ -189,7 +189,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">{t('avoirs.table.fournisseur')}</th>
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right">{t('avoirs.table.montant')}</th>
                                 <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-center">{t('avoirs.table.status')}</th>
-                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common.actions_title')}</th>
+                                <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4 text-right pr-6">{t('common:actions_title')}</th>
                             </>
                         )}
                     </tr>
@@ -216,10 +216,10 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                             <td>
                                 <div className="flex flex-col">
                                     <span className="font-semibold text-base-content">
-                                        {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: fr })}
+                                        {format(new Date(avoir.created_at || avoir.date), 'dd/MM/yyyy', { locale: i18n.language === 'fr' ? fr : undefined })}
                                     </span>
                                     <span className="text-xs text-base-content/60">
-                                        {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: fr })}
+                                        {format(new Date(avoir.created_at || avoir.date), 'HH:mm', { locale: i18n.language === 'fr' ? fr : undefined })}
                                     </span>
                                 </div>
                             </td>
@@ -244,7 +244,7 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                         <ActionIcon 
                                             icon={Eye}
                                             onClick={() => onView(avoir)}
-                                            title={t('common.view')}
+                                            title={t('common:view')}
                                             variant="info"
                                         />
                                         
@@ -253,19 +253,19 @@ export const AvoirsTable: React.FC<AvoirsTableProps> = ({
                                                 <ActionIcon 
                                                     icon={Edit}
                                                     onClick={() => onEdit(avoir)}
-                                                    title={t('common.edit')}
+                                                    title={t('common:edit')}
                                                     variant="warning"
                                                 />
                                                 <ActionIcon 
                                                     icon={CheckCircle2}
                                                     onClick={() => onValidate(avoir)}
-                                                    title={t('common.validate')}
+                                                    title={t('common:validate')}
                                                     variant="success"
                                                 />
                                                 <ActionIcon 
                                                     icon={Trash2}
                                                     onClick={() => onDelete(avoir)}
-                                                    title={t('common.delete')}
+                                                    title={t('common:delete')}
                                                     variant="error"
                                                 />
                                             </>

@@ -99,8 +99,8 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 if mode in modes:
                     modes[mode] = float(p['total'] or 0)
             
-            # CA TTC = sum of all payments (ensures visual consistency with columns)
-            ca_ttc = sum(modes.values())
+            # Use invoice aggregation for the main ca_ttc to stay consistent with Dashboard
+            ca_ttc = float(day['ca_ttc'] or 0)
             
             # Calculate average basket
             panier_moyen = ca_ttc / nb_ventes if nb_ventes > 0 else 0
@@ -112,6 +112,7 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
                 'ca_ht': float(day['ca_ht'] or 0),
                 'tva': float(day['tva'] or 0),
                 'ca_ttc': ca_ttc,
+                'total_paiements': sum(modes.values()), # For internal auditing if needed
                 **modes
             })
         
@@ -119,10 +120,11 @@ class HistoriqueVentesViewSet(viewsets.ViewSet):
             'count': total_count,
             'results': results,
             'totals': {
-                'ca_ttc': sum(global_paiements_dict.values()),
+                'ca_ttc': float(global_totals_agg['total_ttc'] or 0),
                 'ca_ht': float(global_totals_agg['total_ht'] or 0),
                 'tva': float(global_totals_agg['total_tva'] or 0),
                 'nb_ventes': global_totals_agg['total_ventes'] or 0,
+                'total_paiements': sum(global_paiements_dict.values()),
                 **global_paiements_dict
             }
         })

@@ -29,7 +29,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
     handleBulkDelete,
     onQtyEnter
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const [sortBy, setSortBy] = useState<'nom' | 'chronologie' | 'ecart' | 'prix'>('chronologie');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -81,8 +81,8 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                     <PackageX className="h-8 w-8" />
                 </div>
                 <div>
-                   <h3 className="text-lg font-bold text-base-content mb-1">{t('stock.inventaire.detail.empty_list_title')}</h3>
-                   <p className="text-sm max-w-sm mx-auto">{t('stock.inventaire.detail.empty_list')}</p>
+                   <h3 className="text-lg font-bold text-base-content mb-1">{t('inventaire.detail.empty_list_title')}</h3>
+                   <p className="text-sm max-w-sm mx-auto">{t('inventaire.detail.empty_list')}</p>
                 </div>
             </div>
         );
@@ -95,7 +95,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                 <div className="bg-warning/10 p-4 border-b border-warning/20 flex items-center justify-between sticky top-0 z-10 backdrop-blur-md">
                     <div className="flex items-center gap-3">
                         <span className="badge badge-warning font-bold">{selectedLines.size}</span>
-                        <span className="text-sm font-medium text-warning-content">{t('stock.inventaire.detail.selected')}</span>
+                        <span className="text-sm font-medium text-warning-content">{t('inventaire.detail.selected')}</span>
                     </div>
                     <button 
                         className="btn btn-error btn-sm rounded-lg shadow-sm gap-2 text-white" 
@@ -103,7 +103,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                         disabled={saving}
                     >
                         <Trash2 className="h-4 w-4" />
-                        {t('stock.inventaire.detail.delete_selected')}
+                        {t('inventaire.detail.delete_selected')}
                     </button>
                 </div>
             )}
@@ -111,22 +111,22 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             {/* Sort Controls */}
             <div className="px-4 py-2 border-b border-base-200 bg-base-50/30 flex justify-end items-center gap-2">
                 <div className="text-sm font-medium text-base-content/60">
-                    {t('stock.inventaire.detail.sort.title')}
+                    {t('inventaire.detail.sort.title')}
                 </div>
                 <select 
                     className="select select-bordered select-sm rounded-lg"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
                 >
-                    <option value="chronologie">{t('stock.inventaire.detail.sort.chronologie')}</option>
-                    <option value="nom">{t('stock.inventaire.detail.sort.nom')}</option>
-                    <option value="ecart">{t('stock.inventaire.detail.sort.ecart')}</option>
-                    <option value="prix">{t('stock.inventaire.detail.sort.prix')}</option>
+                    <option value="chronologie">{t('inventaire.detail.sort.chronologie')}</option>
+                    <option value="nom">{t('inventaire.detail.sort.nom')}</option>
+                    <option value="ecart">{t('inventaire.detail.sort.ecart')}</option>
+                    <option value="prix">{t('inventaire.detail.sort.prix')}</option>
                 </select>
                 <button 
                     className="btn btn-ghost btn-sm btn-square rounded-lg"
                     onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                    title={sortOrder === 'asc' ? t('common.sort.asc', 'Croissant') : t('common.sort.desc', 'Décroissant')}
+                    title={sortOrder === 'asc' ? t('common:sort.asc', 'Croissant') : t('common:sort.desc', 'Décroissant')}
                 >
                     {sortOrder === 'asc' ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                 </button>
@@ -146,13 +146,13 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                 />
                             </div>
                         )}
-                        <div className={!isReadOnly ? "col-span-3" : "col-span-4"}>{t('stock.inventaire.detail.col_product')}</div>
-                        <div className="col-span-2">{t('stock.inventaire.detail.col_rayon')}</div>
-                        <div className="col-span-1 text-right">{t('stock.inventaire.detail.col_cmp')}</div>
-                        <div className="col-span-1.5 text-center">{t('stock.inventaire.detail.col_theo')}</div>
-                        <div className="col-span-1.5 text-center">{t('stock.inventaire.detail.col_phys')}</div>
-                        <div className="col-span-1 text-center">{t('stock.inventaire.detail.col_gap')}</div>
-                        {!isReadOnly && <div className="col-span-1 text-right">{t('stock.inventaire.detail.col_actions')}</div>}
+                        <div className={!isReadOnly ? "col-span-3" : "col-span-4"}>{t('inventaire.detail.col_product')}</div>
+                        <div className="col-span-2">{t('inventaire.detail.col_rayon')}</div>
+                        <div className="col-span-1 text-right">{t('inventaire.detail.col_cmp')}</div>
+                        <div className="col-span-1.5 text-center">{t('inventaire.detail.col_theo')}</div>
+                        <div className="col-span-1.5 text-center">{t('inventaire.detail.col_phys')}</div>
+                        <div className="col-span-1 text-center">{t('inventaire.detail.col_gap')}</div>
+                        {!isReadOnly && <div className="col-span-1 text-right">{t('inventaire.detail.col_actions')}</div>}
                     </div>
 
                     {/* Grouped Table Body */}
@@ -185,7 +185,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                         <div className="text-xs font-mono opacity-50 flex gap-2 items-center leading-none mt-1">
                                             <span>{l.produit_cip || (l.produit as any).cip1}</span>
                                             {(l as any).lot_numero && (
-                                                <span className="text-primary font-bold">{t('stock.inventaire.detail.lot_label')} {(l as any).lot_numero}</span>
+                                                <span className="text-primary font-bold">{t('inventaire.detail.lot_label')} {(l as any).lot_numero}</span>
                                             )}
                                         </div>
                                     </div>
@@ -284,7 +284,7 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
                                                 className="btn btn-ghost btn-sm btn-circle text-error/30 hover:text-error hover:bg-error/10 transition-colors"
                                                 onClick={() => handleDeleteLine(l.id)}
                                                 disabled={saving}
-                                                title={t('common.remove', 'Retirer')}
+                                                title={t('common:remove', 'Retirer')}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </button>
@@ -301,14 +301,14 @@ export const InventaireDataTab: React.FC<InventaireDataTabProps> = ({
             <div className="bg-base-200/80 backdrop-blur-md p-3 px-6 border-t border-base-300 flex justify-between items-center sticky bottom-0 z-10">
                 <div className="flex gap-6">
                     <div className="flex flex-col">
-                        <span className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('stock.inventaire.detail.items_count')}</span>
+                        <span className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.items_count')}</span>
                         <span className="font-bold text-sm">{lignes.length}</span>
                     </div>
                 </div>
                 
                 <div className="flex items-center gap-4">
                     <div className="text-right">
-                        <div className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('stock.inventaire.detail.total_gap_value')}</div>
+                        <div className="text-[10px] uppercase font-bold opacity-40 leading-none mb-1">{t('inventaire.detail.total_gap_value')}</div>
                         <div className={`text-lg font-black font-mono ${totalEcartValeur > 0 ? "text-success" : totalEcartValeur < 0 ? "text-error" : "text-base-content/40"}`}>
                             {totalEcartValeur > 0 ? '+' : ''}{formatCurrency(totalEcartValeur)} F
                         </div>

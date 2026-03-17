@@ -1,0 +1,21 @@
+{
+    "title": "Supplier Management",
+    "subtitle": "Manage your partners and track your debts",
+    "actions": {
+        "create": "New Supplier",
+        "edit": "Edit",
+        "delete": "Delete"
+    },
+    "table": {
+        "name": "Supplier",
+        "phone": "Phone",
+        "email": "Email",
+        "debt_total": "Total Debt"
+    },
+    "form": {
+        "name": "Supplier Name *",
+        "phone": "Phone",
+        "email": "Email",
+        "address": "Address"
+    }
+}

@@ -1,0 +1,146 @@
+{
+    "title": "Gestion des Utilisateurs",
+    "subtitle": "Gérez les accès et les permissions de votre équipe",
+    "new_user": "Nouvel Utilisateur",
+    "actions": {
+        "create": "Nouvel Utilisateur",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+    },
+    "table": {
+        "user": "Utilisateur",
+        "role_access": "Rôle & Accès",
+        "special_permissions": "Permissions Spéciales",
+        "actions": "Actions",
+        "username": "Nom d'utilisateur",
+        "role": "Rôle",
+        "status": "Statut",
+        "last_login": "Dernière connexion"
+    },
+    "roles": {
+        "ADMIN": "Administrateur",
+        "PHARMACIEN": "Pharmacien / Manager",
+        "pharmacist": "Pharmacien (Admin Complet)",
+        "CASHIER": "Caissier",
+        "cashier": "Caissier (Facturation + Encaissement)",
+        "SELLER": "Vendeur",
+        "seller": "Vendeur (Vente uniquement)"
+    },
+    "badges": {
+        "pharmacist": "Pharmacien",
+        "full_access": "Accès Total"
+    },
+    "status": {
+        "active": "Actif",
+        "inactive": "Inactif"
+    },
+    "form": {
+        "username": "Nom d'utilisateur *",
+        "password": "Mot de passe",
+        "password_hint": "(laisser vide pour ne pas modifier)",
+        "role": "Rôle *",
+        "firstname": "Prénom",
+        "lastname": "Nom",
+        "email": "Email",
+        "max_discount": "Taux de remise max (%)"
+    },
+    "modal": {
+        "new_title": "Nouvel Utilisateur",
+        "edit_title": "Modifier l'Utilisateur",
+        "basic_info": "Informations de Base",
+        "authorized_menus": "Menus Autorisés",
+        "admin_note": "Un administrateur a accès à tous les menus par défaut.",
+        "special_permissions": "Permissions Spéciales & Ventes",
+        "security_sudo": "Sécurité & Sudo"
+    },
+    "permissions": {
+        "cash_out": "Peut Encaisser",
+        "cash_out_desc": "Autorise l'accès complet au module d'encaissement",
+        "returns": "Peut faire des retours",
+        "negative_stock": "Stock Négatif autorisé",
+        "modify_price": "Peut modifier le prix",
+        "generate_coupon": "Peut générer des coupons",
+        "modify_invoice": "Peut modifier les factures",
+        "cancel_invoice": "Annuler Factures",
+        "cancel_promis": "Annuler Promis",
+        "delete_product": "Supprimer Produits",
+        "delete_fournisseur": "Supprimer Fournisseurs",
+        "adjust_stock": "Ajuster Stock",
+        "delete_commande": "Supprimer Commande",
+        "close_commande": "Clôturer Commande",
+        "manage_perimes": "Gérer Périmés",
+        "manage_avoirs": "Gérer Avoirs"
+    },
+    "messages": {
+        "load_error": "Erreur lors du chargement des utilisateurs",
+        "created": "Utilisateur créé avec succès",
+        "updated": "Utilisateur mis à jour avec succès",
+        "deleted": "Utilisateur {{username}} supprimé",
+        "delete_error": "Erreur lors de la suppression de l'utilisateur",
+        "save_error": "Erreur lors de l'enregistrement de l'utilisateur",
+        "delete_confirm_title": "Supprimer l'utilisateur ?",
+        "delete_confirm": "Êtes-vous sûr de vouloir supprimer {{username}} ? Cette action est irréversible.",
+        "delete_btn": "Supprimer l'utilisateur",
+        "sudo_title": "Confirmation requise",
+        "sudo_message": "Veuillez confirmer votre mot de passe administrateur pour effectuer cette action critique.",
+        "access_denied": "Accès réservé aux administrateurs"
+    },
+    "sessions": {
+        "title": "Sessions Utilisateurs",
+        "subtitle": "Historique des connexions et durées de travail",
+        "tabs": {
+            "daily": "Journalier",
+            "monthly": "Récap Mensuel"
+        },
+        "date": "Date",
+        "operator": "Opérateur",
+        "all_operators": "Tous les opérateurs",
+        "workstation": "Poste",
+        "first_login": "Début",
+        "last_logout": "Fin",
+        "duration": "Durée",
+        "status": "Statut",
+        "filter": "Filtrer",
+        "loading": "Chargement des sessions...",
+        "no_result": "Aucune session trouvée pour cette période",
+        "not_closed": "Non clôturée",
+        "closed": "Clôturée",
+        "ongoing": "En cours",
+        "force_logout": "Déconnecter de force",
+        "force_logout_confirm": "Voulez-vous vraiment déconnecter de force {{username}} ?",
+        "force_logout_success": "Utilisateur {{username}} déconnecté",
+        "force_logout_error": "Erreur lors de la déconnexion forcée",
+        "recap": {
+            "month": "Mois",
+            "year": "Année",
+            "days_present": "Jours de présence",
+            "total_hours": "Heures Totales",
+            "avg_hours": "Moyenne / Jour",
+            "avg": "Moy."
+        },
+        "months": {
+            "january": "Janvier",
+            "february": "Février",
+            "march": "Mars",
+            "april": "Avril",
+            "may": "Mai",
+            "june": "Juin",
+            "july": "Juillet",
+            "august": "Août",
+            "september": "Septembre",
+            "october": "Octobre",
+            "november": "Novembre",
+            "december": "Décembre"
+        }
+    },
+    "password_confirm": {
+        "title": "Confirmation de sécurité",
+        "message": "Veuillez confirmer votre mot de passe pour continuer.",
+        "label": "Confirmez votre mot de passe pour continuer :",
+        "placeholder": "Votre mot de passe...",
+        "cancel": "Annuler",
+        "confirm": "Confirmer",
+        "incorrect": "Mot de passe incorrect.",
+        "tech_error": "Erreur technique lors de la vérification."
+    }
+}

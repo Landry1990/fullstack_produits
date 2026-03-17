@@ -8,7 +8,7 @@ interface AvoirsQuickStatsProps {
 }
 
 export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const stats = useMemo(() => {
         return {
@@ -20,21 +20,21 @@ export const AvoirsQuickStats: React.FC<AvoirsQuickStatsProps> = ({ avoirs }) =>
 
     const statItems = [
         {
-            title: t('avoirs.stats.total', 'Total Avoirs'),
+            title: t('avoirs.stats.total'),
             value: stats.total,
             icon: <FileText className="w-5 h-5" />,
             colorClass: "text-primary",
             bgClass: "bg-primary/10",
         },
         {
-            title: t('avoirs.stats.valides', 'Validés'),
+            title: t('avoirs.stats.valides'),
             value: stats.valides,
             icon: <CheckCircle2 className="w-5 h-5" />,
             colorClass: "text-success",
             bgClass: "bg-success/10",
         },
         {
-            title: t('avoirs.stats.brouillons', 'Brouillons'),
+            title: t('avoirs.stats.brouillons'),
             value: stats.brouillons,
             icon: <AlertCircle className="w-5 h-5" />,
             colorClass: "text-warning",

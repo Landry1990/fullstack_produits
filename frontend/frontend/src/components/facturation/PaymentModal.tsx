@@ -56,7 +56,7 @@ export default function PaymentModal({
     useManualClient: _useManualClient,
     paymentInputRef
 }: PaymentModalProps) {
-    const { t } = useTranslation()
+    const { t } = useTranslation(['facturation', 'common'])
 
     // Refs for keyboard-driven flow
     const submitBtnRef = useRef<HTMLButtonElement>(null);
@@ -75,7 +75,7 @@ export default function PaymentModal({
         <PremiumModal
           isOpen={isOpen}
           onClose={onClose}
-          title={t('facturation.payment.modal_title')}
+          title={t('facturation:payment.modal_title')}
           icon={<span className="text-primary text-xl">💰</span>}
           maxWidth="max-w-md"
         >
@@ -91,7 +91,7 @@ export default function PaymentModal({
               
               <div className="text-center mb-6">
                 <div className="text-sm text-base-content/60 uppercase tracking-wide mb-1">
-                    {isNewSale && totals.tauxCouverture > 0 ? t('facturation.totals.part_patient') : t('facturation.payment.amount_due')}
+                    {isNewSale && totals.tauxCouverture > 0 ? t('facturation:totals.part_patient') : t('facturation:payment.amount_due')}
                 </div>
                 <div className="text-4xl font-light text-primary">
                     {isNewSale 
@@ -102,7 +102,7 @@ export default function PaymentModal({
                 </div>
                 {(totals.couponMontant && totals.couponMontant > 0) && (
                     <div className="text-sm text-success font-medium mt-1">
-                        Dont coupon : -{Math.round(totals.couponMontant)} F
+                        {t('common:coupon')} : -{Math.round(totals.couponMontant)} F
                     </div>
                 )}
               </div>
@@ -112,16 +112,16 @@ export default function PaymentModal({
                 <div className="space-y-4">
                   <div className="alert alert-info py-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span className="text-sm">{t('facturation.payment.tiers_payant_active', { rate: totals.tauxCouverture })}</span>
+                    <span className="text-sm">{t('facturation:payment.tiers_payant_active', { rate: totals.tauxCouverture })}</span>
                   </div>
                   
                   <div className="bg-base-50 rounded-lg p-4 space-y-3">
-                    <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">{t('facturation.payment.detail_title')}</h4>
+                    <h4 className="text-xs uppercase font-bold text-base-content/50 mb-3">{t('facturation:payment.detail_title')}</h4>
                     
                     {/* Part Patient */}
                     <div className="bg-white rounded-lg p-3 border border-success/20">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-success">{t('facturation.totals.part_patient')} ({100 - totals.tauxCouverture}%)</span>
+                        <span className="text-sm font-medium text-success">{t('facturation:totals.part_patient')} ({100 - totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-success">{Math.round(totals.partPatient)} F</span>
                       </div>
                       <div className="form-control w-full space-y-2">
@@ -142,20 +142,20 @@ export default function PaymentModal({
                                         </div>
                                     ))}
                                     <div className="text-right text-xs text-base-content/60 pt-1 border-t border-base-200">
-                                        {t('facturation.payment.remaining_to_allocate')} <span className="font-bold text-error">{totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0)} F</span>
+                                        {t('facturation:payment.remaining_to_allocate')} <span className="font-bold text-error">{totals.partPatient - paiements.reduce((acc, p) => acc + p.montant, 0) - (Number(montantPaye) || 0)} F</span>
                                     </div>
                                 </div>
                             )}
 
                         <div className="flex gap-2 items-end">
                             <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation.payment.mode_label')}</span> </label>
+                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation:payment.mode_label')}</span> </label>
                                 <div className="text-sm font-medium py-1.5 px-2 bg-base-100 border border-base-200 rounded text-base-content/70">
-                                    {t('facturation.payment.caisse_centrale')}
+                                    {t('facturation:payment.caisse_centrale')}
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation.payment.amount_label')}</span> </label>
+                                <label className="label py-0"> <span className="label-text text-xs">{t('facturation:payment.amount_label')}</span> </label>
                                 <input 
                                     type="number" 
                                     className="input input-sm input-bordered w-full" 
@@ -188,7 +188,7 @@ export default function PaymentModal({
                                         setMontantPaye(reste !== 0 ? reste.toString() : '')
                                     }
                                 }}
-                                title="Ajouter ce paiement"
+                                title={t('facturation:payment.add_btn')}
                             >
                                 ＋
                             </button>
@@ -198,11 +198,11 @@ export default function PaymentModal({
                     
                     <div className="bg-white rounded-lg p-3 border border-info/20">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-info">{t('facturation.totals.part_assurance')} ({totals.tauxCouverture}%)</span>
+                        <span className="text-sm font-medium text-info">{t('facturation:totals.part_assurance')} ({totals.tauxCouverture}%)</span>
                         <span className="text-lg font-bold text-info">{Math.round(totals.partAssurance)} F</span>
                       </div>
                       <div className="text-xs text-base-content/60 mt-1">
-                        <span className="badge badge-ghost badge-xs">{t('facturation.payment.en_compte_auto')}</span>
+                        <span className="badge badge-ghost badge-xs">{t('facturation:payment.en_compte_auto')}</span>
                       </div>
                     </div>
                   </div>
@@ -210,10 +210,10 @@ export default function PaymentModal({
               ) : (
                 <>
                   <div className="form-control w-full">
-                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.payment_mode_label')}</span></label>
+                    <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation:payment.payment_mode_label')}</span></label>
                     <div className="p-3 bg-base-100 border border-base-300 rounded-lg text-sm font-medium flex items-center gap-2">
                         <span className="badge badge-primary badge-xs"></span>
-                        {t('facturation.payment.caisse_centrale')}
+                        {t('facturation:payment.caisse_centrale')}
                     </div>
                     {/* Hidden input to maintain logic if needed, but we just use state 'especes' */}
                   </div>
@@ -223,7 +223,7 @@ export default function PaymentModal({
                     <div className="bg-base-50 rounded-lg p-2 space-y-1">
                         {paiements.map((p, idx) => (
                             <div key={idx} className="flex justify-between items-center text-sm p-1 px-2 bg-white rounded border border-base-200">
-                                <span>{t('facturation.payment.caisse_centrale')}</span>
+                                <span>{t('facturation:payment.caisse_centrale')}</span>
                                 <div className="flex items-center gap-2">
                                     <span className="font-mono">{p.montant} F</span>
                                     <button 
@@ -239,7 +239,7 @@ export default function PaymentModal({
 
                   <div className="flex items-end gap-2">
                       <div className="form-control flex-1">
-                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation.payment.amount_label')}</span></label>
+                        <label className="label py-1"><span className="label-text text-xs uppercase font-bold text-base-content/50">{t('facturation:payment.amount_label')}</span></label>
                         <input
                           ref={paymentInputRef}
                           type="number"
@@ -265,7 +265,7 @@ export default function PaymentModal({
                               }
                           }}
                           className="input input-bordered w-full font-light text-2xl text-center focus:border-primary focus:ring-2 focus:ring-primary/20"
-                          placeholder="Saisir montant..."
+                          placeholder={t('facturation:payment.amount_label')}
                         />
                       </div>
                       <button
@@ -287,7 +287,7 @@ export default function PaymentModal({
                             }
                         }}
                       >
-                        {t('facturation.payment.add_btn')}
+                        {t('facturation:payment.add_btn')}
                       </button>
                   </div>
                 </>
@@ -308,12 +308,12 @@ export default function PaymentModal({
                     <div className="flex justify-between items-center mb-4">
                         <div className="text-sm">
                             {rendu >= 0 
-                                ? <span className="text-success font-bold">Rendu monnaie: {Math.round(rendu)} F</span>
-                                : <span className="text-error font-bold">Reste à payer: {Math.round(Math.abs(rendu))} F</span>
+                                ? <span className="text-success font-bold">{t('facturation:payment.change_due_label')} {Math.round(rendu)} F</span>
+                                : <span className="text-error font-bold">{t('facturation:payment.remaining_due_label')} {Math.round(Math.abs(rendu))} F</span>
                             }
                         </div>
                         <div className="text-xl font-bold">
-                            Total: {Math.round(totalVerse)} / {Math.round(totalAPayer)} F
+                            {t('facturation:payment.total_label')} {Math.round(totalVerse)} / {Math.round(totalAPayer)} F
                         </div>
                     </div>
                     
@@ -323,7 +323,7 @@ export default function PaymentModal({
                         disabled={loading || (isNewSale && rendu < -1 && !selectedClient)}
                         className={`btn btn-primary w-full gap-2 ${loading ? 'loading' : ''}`}
                     >
-                        {loading ? 'Traitement...' : isNewSale ? t('facturation.payment.validate_sale') : t('facturation.payment.register_payment')}
+                        {loading ? t('facturation:payment.status.processing') : isNewSale ? t('facturation:payment.validate_sale') : t('facturation:payment.register_payment')}
                     </button>
                   </div>
                 )
@@ -331,7 +331,7 @@ export default function PaymentModal({
             </form>
           ) : (
             <div className="p-8 text-center text-base-content/50">
-                Aucune facture sélectionnée.
+                {t('facturation:payment.no_invoice')}
             </div>
           )}
         </PremiumModal>
