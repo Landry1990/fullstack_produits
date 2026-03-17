@@ -87,7 +87,7 @@ export default function ClientCreateModal({
               value={newClientForm.phone}
               onChange={e => setNewClientForm((prev: any) => ({ ...prev, phone: e.target.value }))}
               className="input input-bordered input-sm w-full rounded-xl"
-              placeholder="0612345678"
+              placeholder={t('facturation.create_client.phone')}
               required
             />
           </div>
@@ -100,7 +100,7 @@ export default function ClientCreateModal({
             value={newClientForm.email}
             onChange={e => setNewClientForm((prev: any) => ({ ...prev, email: e.target.value }))}
             className="input input-bordered input-sm w-full rounded-xl"
-            placeholder="email@exemple.com"
+            placeholder={t('facturation.create_client.email')}
             required
           />
         </div>

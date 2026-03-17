@@ -1,0 +1,36 @@
+{
+    "title": "Sales History",
+    "subtitle": "View the daily summary of your sales",
+    "export_excel": "Export Excel",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "loading": "Loading history...",
+    "no_data": "No data found for this period",
+    "total_period": "Totals for the period",
+    "columns": {
+        "date": "Date",
+        "ca_ttc": "Total TTC",
+        "cash": "Cash",
+        "card": "Card",
+        "check": "Check",
+        "virement": "Transfer",
+        "mobiles": "Mobiles",
+        "coupons": "Coupons",
+        "en_compte": "On Account",
+        "nb_ventes": "Sales Count",
+        "avg_basket": "Avg Basket"
+    },
+    "pagination": {
+        "showing": "Showing",
+        "days_of": "days of",
+        "total": "total",
+        "prev": "Previous",
+        "next": "Next",
+        "page": "Page"
+    },
+    "messages": {
+        "error_loading": "Error loading sales history",
+        "export_success": "Excel export successful",
+        "export_error": "Error during Excel export"
+    }
+}

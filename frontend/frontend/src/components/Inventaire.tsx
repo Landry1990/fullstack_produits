@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { useConfirm } from '../hooks/useConfirm';
 import { useSudo } from '../hooks/useSudo';
@@ -15,6 +16,7 @@ import InventaireCreateModal from './inventaire/modals/InventaireCreateModal';
 import { InventaireAudit } from './inventaire/audit/InventaireAudit';
 
 export default function InventaireComponent() {
+    const { t } = useTranslation(['stock', 'common']);
 
     const [viewMode, setViewMode] = useState<'LIST' | 'CREATE' | 'EDIT' | 'AUDIT'>('LIST');
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -97,8 +99,8 @@ export default function InventaireComponent() {
                 onClose={closeSudo}
                 onValidate={sudoState.onValidate}
                 saving={false}
-                title={sudoState.title || "Validation Requiée"}
-                message={sudoState.message || "Veuillez confirmer cette action."}
+                title={sudoState.title || t('common:sudo.title', "Validation Requise")}
+                message={sudoState.message || t('common:sudo.message', "Veuillez confirmer cette action.")}
             />}
         </div>
     );

@@ -20,12 +20,12 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ rate, colorClass = 'bg-primar
     );
 };
 
-const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
+const formatCurrency = (amount: number, locale = 'fr-FR', symbol = 'F') => {
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency: 'XOF',
         maximumFractionDigits: 0
-    }).format(amount).replace('XOF', 'F');
+    }).format(amount).replace('XOF', symbol);
 };
 
 interface KPIData {
@@ -65,7 +65,11 @@ const getPalierInfo = (actual: number, target: number) => {
 };
 
 export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['dashboard', 'common']);
+    const currentLocale = t('common:locale', { defaultValue: 'fr-FR' });
+    const currencySymbol = t('common.currency_symbol', 'F');
+
+    const formatCurrencyLocal = (amount: number) => formatCurrency(amount, currentLocale, currencySymbol);
 
     const items = [
         { 
@@ -156,7 +160,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                 {data.margin !== undefined && (
                                     <div className="text-xs font-bold opacity-70 mt-1 flex items-center gap-1">
                                         <TrendingUp size={12} className="text-success" />
-                                        <span>Marge : {formatCurrency(data.margin)}</span>
+                                        <span>{t('manager_dashboard.margin_label')} : {formatCurrency(data.margin)}</span>
                                     </div>
                                 )}
                             </div>
@@ -181,7 +185,7 @@ export const ManagerKPIs: React.FC<ManagerKPIsProps> = ({ kpis }) => {
                                         return (
                                             <>
                                                 <div className="flex justify-between text-xs font-bold uppercase tracking-tight text-warning">
-                                                    <span className="flex items-center gap-1"><Zap size={12} className="fill-warning" /> Objectif Palier {palier.level}</span>
+                                                    <span className="flex items-center gap-1"><Zap size={12} className="fill-warning" /> {t('manager_dashboard.palier_label', { level: palier.level })}</span>
                                                     <span>{formatCurrency(palier.target)}</span>
                                                 </div>
                                                 <ProgressBar 

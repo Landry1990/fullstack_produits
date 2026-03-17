@@ -16,32 +16,32 @@ export const CreancesQuickStats: React.FC<CreancesQuickStatsProps> = ({
     totalRemaining,
     debtorsCount
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['creances', 'common']);
 
     const stats = [
         {
-            label: t('creances.stats.total_invoices'),
+            label: t('creances:stats.total_invoices'),
             value: `${formatCurrency(Math.round(totalDue))} F`,
             icon: <CreditCard className="w-5 h-5 text-blue-500" />,
             bgColor: 'bg-blue-50',
             borderColor: 'border-blue-100'
         },
         {
-            label: t('creances.stats.total_paid'),
+            label: t('creances:stats.total_paid'),
             value: `${formatCurrency(Math.round(totalPaid))} F`,
             icon: <CheckCircle className="w-5 h-5 text-success" />,
             bgColor: 'bg-success/10',
             borderColor: 'border-success/20'
         },
         {
-            label: t('creances.stats.remaining'),
+            label: t('creances:stats.remaining'),
             value: `${formatCurrency(Math.round(totalRemaining))} F`,
             icon: <Clock className="w-5 h-5 text-warning" />,
             bgColor: 'bg-warning/10',
             borderColor: 'border-warning/20'
         },
         {
-            label: t('creances.stats.debtors'),
+            label: t('creances:stats.debtors'),
             value: debtorsCount,
             icon: <Users className="w-5 h-5 text-purple-500" />,
             bgColor: 'bg-purple-50',

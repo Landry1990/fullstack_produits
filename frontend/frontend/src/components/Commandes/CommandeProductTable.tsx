@@ -82,14 +82,14 @@ export default function CommandeProductTable({
             <div className="p-4 border-b border-base-100 flex justify-between items-center shrink-0 flex-wrap gap-2">
             <div className="flex items-center gap-4 flex-wrap">
                 <h2 className="font-bold text-sm md:text-base text-base-content whitespace-nowrap">
-                {t('orders.product_table.title', { count: commandeProduits.length })}
+                {t('orders:product_table.title', { count: commandeProduits.length })}
                 </h2>
                 {/* SEARCH INPUT */}
                 {commandeProduits.length > 0 && (
                     <div className="relative">
                         <input
                             type="text"
-                            placeholder={t('orders.product_table.search_placeholder', 'Rechercher un produit...')}
+                            placeholder={t('orders:product_table.search_placeholder', 'Rechercher un produit...')}
                             className="input input-sm input-bordered w-full sm:w-64 pl-8"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -109,22 +109,22 @@ export default function CommandeProductTable({
                 )}
                 {commandeProduits.length > 0 && onSortProduits && (
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">{t('common.sort.title', 'Trier par:')}</span>
+                        <span className="text-xs text-base-content/60 font-medium whitespace-nowrap">{t('common:sort.title', 'Trier par:')}</span>
                         <select 
                             className="select select-bordered select-sm text-xs" 
                             value={commandeSortBy || 'chrono'} 
                             onChange={(e) => onSortProduits(e.target.value as any)}
                         >
-                            <option value="chrono">{t('orders.product_table.sort_options.chrono', 'Chronologie')}</option>
-                            <option value="stock">{t('orders.product_table.sort_options.stock', 'Qté en stock')}</option>
-                            <option value="name">{t('orders.product_table.sort_options.name', 'Nom')}</option>
-                            <option value="qty">{t('orders.product_table.sort_options.qty', 'Qté saisie')}</option>
+                            <option value="chrono">{t('orders:product_table.sort_options.chrono', 'Chronologie')}</option>
+                            <option value="stock">{t('orders:product_table.sort_options.stock', 'Qté en stock')}</option>
+                            <option value="name">{t('orders:product_table.sort_options.name', 'Nom')}</option>
+                            <option value="qty">{t('orders:product_table.sort_options.qty', 'Qté saisie')}</option>
                         </select>
                     </div>
                 )}
                 <div className="flex items-center gap-2 md:gap-4 overflow-x-auto">
-                    {saving && <span className="text-sm text-warning animate-pulse">{t('orders.form.saving')}</span>}
-                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders.product_table.saved_at', { time: lastSaved.toLocaleTimeString() })}</span>}
+                    {saving && <span className="text-sm text-warning animate-pulse">{t('orders:form.saving')}</span>}
+                    {!saving && lastSaved && <span className="text-xs text-success hidden md:inline">{t('orders:product_table.saved_at', { time: lastSaved.toLocaleTimeString() })}</span>}
                     
                     {(() => {
                         const stats = commandeProduits.reduce((acc, p) => {
@@ -146,16 +146,16 @@ export default function CommandeProductTable({
                         return (
                             <div className="flex gap-2 text-xs md:text-sm">
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
-                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_ht')}</span>
-                                    <span className="font-bold">{formatCurrency(stats.ht)} F</span>
+                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders:product_table.total_ht')}</span>
+                                    <span className="font-bold">{formatCurrency(stats.ht)} {t('common:currency_symbol', 'F')}</span>
                                 </div>
                                 <div className="bg-base-200 px-2 py-1 rounded flex flex-col items-end">
-                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders.product_table.total_tva')}</span>
-                                    <span className="font-bold">{formatCurrency(stats.tva)} F</span>
+                                    <span className="text-[10px] text-base-content/60 uppercase">{t('orders:product_table.total_tva')}</span>
+                                    <span className="font-bold">{formatCurrency(stats.tva)} {t('common:currency_symbol', 'F')}</span>
                                 </div>
                                 <div className="bg-primary/10 px-3 py-1 rounded-lg flex flex-col items-end border border-primary/20">
-                                    <span className="text-[10px] text-primary/70 uppercase">{t('orders.product_table.total_ttc')}</span>
-                                    <span className="font-bold text-primary">{formatCurrency(totalTTC)} F</span>
+                                    <span className="text-[10px] text-primary/70 uppercase">{t('orders:product_table.total_ttc')}</span>
+                                    <span className="font-bold text-primary">{formatCurrency(totalTTC)} {t('common:currency_symbol', 'F')}</span>
                                 </div>
                             </div>
                         );
@@ -164,13 +164,13 @@ export default function CommandeProductTable({
             </div>
             {selectedRows.size > 0 && (
                 <div className="flex items-center gap-2">
-                <span className="text-sm text-base-content/70">{t('orders.product_table.selected_count', { count: selectedRows.size })}</span>
+                <span className="text-sm text-base-content/70">{t('orders:product_table.selected_count', { count: selectedRows.size })}</span>
                 <button
                     type="button"
                     className="btn btn-error btn-xs"
                     onClick={() => setIsDeletingMultiple(true)}
                 >
-                    {t('orders.product_table.delete_btn')}
+                    {t('orders:product_table.delete_btn')}
                 </button>
                 {/* Bouton Transférer - visible uniquement en mode EDIT sur commande PREP */}
                 {viewMode === 'EDIT' && selectedCommande?.status === 'PREP' && (
@@ -179,7 +179,7 @@ export default function CommandeProductTable({
                     className="btn btn-info btn-xs gap-1"
                     onClick={openTransferModal}
                     >
-                    ➡️ {t('orders.product_table.transfer_btn')}
+                    ➡️ {t('orders:product_table.transfer_btn')}
                     </button>
                 )}
                 </div>
@@ -192,7 +192,7 @@ export default function CommandeProductTable({
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <p className="font-light">{t('orders.product_table.empty_state')}</p>
+                <p className="font-light">{t('orders:product_table.empty_state')}</p>
                 </div>
             ) : (
                 <table className="table table-pin-rows w-full">
@@ -206,20 +206,20 @@ export default function CommandeProductTable({
                         onChange={toggleAllRows}
                         />
                     </th>
-                    <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">{t('orders.product_table.headers.product')}</th>
-                    <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">{t('orders.product_table.headers.cip')}</th>
-                    <th className="bg-base-200 text-center w-24 font-semibold text-xs uppercase text-orange-600 bg-orange-50">{t('orders.product_table.info_row.stock', 'Stock')}</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.qty')}</th>
-                    <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">{t('orders.product_table.headers.ug')}</th>
+                    <th className="bg-base-200 pl-4 font-semibold text-xs uppercase">{t('orders:product_table.headers.product')}</th>
+                    <th className="bg-base-200 pl-2 font-semibold text-xs uppercase w-28">{t('orders:product_table.headers.cip')}</th>
+                    <th className="bg-base-200 text-center w-24 font-semibold text-xs uppercase text-orange-600 bg-orange-50">{t('orders:product_table.info_row.stock', 'Stock')}</th>
+                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders:product_table.headers.qty')}</th>
+                    <th className="bg-base-200 text-center w-20 bg-success/10 font-semibold text-xs uppercase text-success">{t('orders:product_table.headers.ug')}</th>
                     {commandeType === 'DIR' && (
-                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">{t('orders.product_table.headers.dev_price')}</th>
+                        <th className="bg-base-200 text-right w-28 font-semibold text-xs uppercase text-blue-600 bg-blue-50">{t('orders:product_table.headers.dev_price')}</th>
                     )}
-                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders.product_table.headers.buy_price_ht')}</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.tva')}</th>
-                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders.product_table.headers.margin')}</th>
-                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders.product_table.headers.sell_price')}</th>
-                    <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">{t('orders.product_table.headers.lot')}</th>
-                    <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">{t('orders.product_table.headers.exp_date')}</th>
+                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders:product_table.headers.buy_price_ht')}</th>
+                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders:product_table.headers.tva')}</th>
+                    <th className="bg-base-200 text-right w-24 font-semibold text-xs uppercase">{t('orders:product_table.headers.margin')}</th>
+                    <th className="bg-base-200 text-right w-32 font-semibold text-xs uppercase">{t('orders:product_table.headers.sell_price')}</th>
+                    <th className="bg-base-200 text-left w-32 font-semibold text-xs uppercase">{t('orders:product_table.headers.lot')}</th>
+                    <th className="bg-base-200 text-left w-36 font-semibold text-xs uppercase">{t('orders:product_table.headers.exp_date')}</th>
                     <th className="bg-base-200 w-10"></th>
                     </tr>
                 </thead>
@@ -252,9 +252,9 @@ export default function CommandeProductTable({
                                  produitName = (p as any).produit_nom;
                                  cip = (p as any).produit_cip || (p as any).produit_ref || '';
                             } else if (p.produit === null) {
-                                produitName = t('common.unknown_product_deleted', { defaultValue: 'Produit inconnu (supprimé)' });
+                                produitName = t('common:unknown_product_deleted', { defaultValue: 'Produit inconnu (supprimé)' });
                             } else {
-                                produitName = `Produit #${produitId}`;
+                                produitName = t('orders:product_table.unknown_product_id', { id: produitId, defaultValue: `Produit #${produitId}` });
                             }
                         }
 
@@ -292,7 +292,7 @@ export default function CommandeProductTable({
                                     {isExclusive && (
                                         <div 
                                             className="tooltip tooltip-right z-50 ml-1 inline-flex shrink-0" 
-                                            data-tip={t('orders.product_table.exclusivity_tooltip', { provider: supplierName || t('orders.product_table.specific_provider') })}
+                                            data-tip={t('orders:product_table.exclusivity_tooltip', { provider: supplierName || t('orders:product_table.specific_provider') })}
                                         >
                                             <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
                                               E
@@ -478,7 +478,7 @@ export default function CommandeProductTable({
                             onKeyDown={(e) => handleTableFieldKeyDown(e, index, 6)}
                             onFocus={handleSelectAll}
                             className={`input input-ghost input-sm text-xs w-full focus:bg-base-100 focus:text-primary ${!fieldsConfig[6].editable ? 'bg-base-200 cursor-not-allowed' : ''}`}
-                            placeholder={t('orders.product_table.headers.lot', 'N° Lot')}
+                            placeholder={t('orders:product_table.headers.lot', 'N° Lot')}
                             autoFocus={focusedField?.row === index && focusedField?.field === 6}
                             readOnly={!fieldsConfig[6].editable}
                             tabIndex={!fieldsConfig[6].editable ? -1 : 0}
@@ -507,7 +507,7 @@ export default function CommandeProductTable({
                                 <button
                                     type="button"
                                     className="btn btn-ghost btn-xs text-info"
-                                    title={t('common.info_help', "Infos d'aide à la décision")}
+                                    title={t('common:info_help', "Infos d'aide à la décision")}
                                     onClick={() => setExpandedRow(expandedRow === index ? null : index)}
                                 >
                                     ℹ️
@@ -546,43 +546,43 @@ export default function CommandeProductTable({
                                         stock: pObj?.stock ?? pAny.produit_stock ?? 0,
                                     };
                                     
-                                    const formatAchat = stats.dernier_achat ? new Date(stats.dernier_achat).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnu';
-                                    const formatVente = stats.dernier_vente ? new Date(stats.dernier_vente).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais';
+                                    const formatAchat = stats.dernier_achat ? new Date(stats.dernier_achat).toLocaleDateString(t('common:locale', 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' }) : 'Inconnu';
+                                    const formatVente = stats.dernier_vente ? new Date(stats.dernier_vente).toLocaleDateString(t('common:locale', 'fr-FR'), { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais';
                                     
                                     return (
                                         <div className="p-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-sm">
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.purchase_history', "Historique d'Achat")}</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.purchase_history', "Historique d'Achat")}</div>
                                                 <div className="font-medium text-base-content">{formatAchat}</div>
-                                                <div className="text-xs text-base-content/60 mt-0.5">{t('orders.product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) + ' F' : '-'}</div>
+                                                <div className="text-xs text-base-content/60 mt-0.5">{t('orders:product_table.info_row.last_buy_price', "Dernier prix d'achat")}: {stats.cost_price ? formatCurrency(Number(stats.cost_price)) + ' ' + t('common:currency_symbol', 'F') : '-'}</div>
                                             </div>
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.sales_history', "Historique de Vente")}</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.sales_history', "Historique de Vente")}</div>
                                                 <div className="font-medium text-base-content">{formatVente}</div>
                                                 {stats.rotation_moyenne && (
-                                                    <div className="text-xs text-info mt-0.5 font-medium">{t('orders.product_table.info_row.rotation', 'Rotation')}: {Number(stats.rotation_moyenne).toFixed(2)} / jour</div>
+                                                    <div className="text-xs text-info mt-0.5 font-medium">{t('orders:product_table.info_row.rotation', 'Rotation')}: {Number(stats.rotation_moyenne).toFixed(2)} / jour</div>
                                                 )}
                                             </div>
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.stock_alerts', 'Alertes Stock')}</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.stock_alerts', 'Alertes Stock')}</div>
                                                 <div className="font-medium">
                                                     Min: <span className="text-warning">{stats.stock_minimum}</span> / Max: <span className="text-success">{stats.stock_maximum}</span>
                                                 </div>
                                                 {stats.stock_alert > 0 && (
-                                                    <div className="text-xs text-error mt-0.5">{t('orders.product_table.info_row.alert_threshold', "Seuil d'alerte")}: {stats.stock_alert}</div>
+                                                    <div className="text-xs text-error mt-0.5">{t('orders:product_table.info_row.alert_threshold', "Seuil d'alerte")}: {stats.stock_alert}</div>
                                                 )}
                                             </div>
                                             <div>
-                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders.product_table.info_row.indicators', 'Indicateurs')}</div>
+                                                <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('orders:product_table.info_row.indicators', 'Indicateurs')}</div>
                                                 <div className="flex flex-col gap-1">
                                                     {stats.stock <= 0 ? (
-                                                        <div className="text-xs text-error font-medium">⚠️ {t('orders.product_table.info_row.stock_out', 'Stock en rupture')}</div>
+                                                        <div className="text-xs text-error font-medium">⚠️ {t('orders:product_table.info_row.stock_out', 'Stock en rupture')}</div>
                                                     ) : stats.rotation_moyenne && Number(stats.rotation_moyenne) > 0 ? (
                                                         <div className="text-xs">
-                                                            {t('orders.product_table.info_row.stock_life', "Durée de vie stock actuel")}: <span className="font-bold">~{Math.round(stats.stock / Number(stats.rotation_moyenne))} j</span>
+                                                            {t('orders:product_table.info_row.stock_life', "Durée de vie stock actuel")}: <span className="font-bold">~{Math.round(stats.stock / Number(stats.rotation_moyenne))} j</span>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-xs text-base-content/50">{t('orders.product_table.info_row.rotation_unknown', 'Rotation inconnue')}</div>
+                                                        <div className="text-xs text-base-content/50">{t('orders:product_table.info_row.rotation_unknown', 'Rotation inconnue')}</div>
                                                     )}
                                                 </div>
                                             </div>
@@ -604,14 +604,14 @@ export default function CommandeProductTable({
             {productToDelete !== null && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg text-error">{t('common.confirm_deletion', 'Confirmer la suppression')}</h3>
-                        <p className="py-4">{t('orders.messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</p>
+                        <h3 className="font-bold text-lg text-error">{t('common:confirm_deletion', 'Confirmer la suppression')}</h3>
+                        <p className="py-4">{t('orders:messages.remove_product_confirm', 'Êtes-vous sûr de vouloir retirer ce produit de la commande ?')}</p>
                         <div className="modal-action">
-                            <button className="btn btn-ghost" onClick={() => setProductToDelete(null)}>{t('common.cancel', 'Annuler')}</button>
+                            <button className="btn btn-ghost" onClick={() => setProductToDelete(null)}>{t('common:cancel', 'Annuler')}</button>
                             <button className="btn btn-error text-white" onClick={() => {
                                 onRemoveProduct(productToDelete);
                                 setProductToDelete(null);
-                            }}>{t('common.confirm', 'Confirmer')}</button>
+                            }}>{t('common:confirm', 'Confirmer')}</button>
                         </div>
                     </div>
                 </div>
@@ -620,14 +620,14 @@ export default function CommandeProductTable({
             {isDeletingMultiple && (
                 <div className="modal modal-open">
                     <div className="modal-box">
-                        <h3 className="font-bold text-lg text-error">{t('orders.bulk_delete_title', 'Confirmer la suppression multiple')}</h3>
-                        <p className="py-4">{t('orders.bulk_delete_confirm_minimal', { count: selectedRows.size, defaultValue: `Êtes-vous sûr de vouloir supprimer les ${selectedRows.size} produits sélectionnés ?` })}</p>
+                        <h3 className="font-bold text-lg text-error">{t('orders:bulk_delete_title', 'Confirmer la suppression multiple')}</h3>
+                        <p className="py-4">{t('orders:bulk_delete_confirm_minimal', { count: selectedRows.size, defaultValue: `Êtes-vous sûr de vouloir supprimer les ${selectedRows.size} produits sélectionnés ?` })}</p>
                         <div className="modal-action">
-                            <button className="btn btn-ghost" onClick={() => setIsDeletingMultiple(false)}>{t('common.cancel', 'Annuler')}</button>
+                            <button className="btn btn-ghost" onClick={() => setIsDeletingMultiple(false)}>{t('common:cancel', 'Annuler')}</button>
                             <button className="btn btn-error text-white" onClick={() => {
                                 deleteSelectedRows();
                                 setIsDeletingMultiple(false);
-                            }}>{t('common.confirm', 'Confirmer')}</button>
+                            }}>{t('common:confirm', 'Confirmer')}</button>
                         </div>
                     </div>
                 </div>

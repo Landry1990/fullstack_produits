@@ -15,7 +15,7 @@ interface FinanceFournisseurModalProps {
 }
 
 export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, onSuccess, prefilledMontant, commandeIds }: FinanceFournisseurModalProps) {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['providers', 'common']);
     const { 
         paiements, 
         loading, 
@@ -37,7 +37,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
             setMontant(prefilledMontant ? prefilledMontant.toString() : '');
             setModePaiement('ESP');
             setReference('');
-            setNotes(commandeIds && commandeIds.length > 0 ? t('providers.finance.pointage_note', { count: commandeIds.length }) : '');
+            setNotes(commandeIds && commandeIds.length > 0 ? t('providers:finance.pointage_note', { count: commandeIds.length }) : '');
         }
     }, [isOpen, fournisseur, fetchPaiements, prefilledMontant, commandeIds]);
 
@@ -73,7 +73,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
     };
 
     const handleDelete = async (id: number) => {
-        if (window.confirm(t('providers.finance.delete_confirm'))) {
+        if (window.confirm(t('providers:finance.delete_confirm'))) {
              await deletePaiement(id);
              if (onSuccess) onSuccess();
         }
@@ -83,7 +83,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title={t('providers.finance.title')}
+            title={t('providers:finance.title')}
             subtitle={fournisseur.name}
             icon={
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -99,7 +99,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
             {/* Debt Balance Banner */}
             <div className="px-6 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex justify-end">
                 <div className="text-right">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t('providers.details.debt_balance')}</p>
+                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">{t('providers:details.debt_balance')}</p>
                     <p className={`text-xl font-black font-mono ${ normalizeNumberInput(fournisseur.solde_dette || 0) > 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                         {formatCurrency(normalizeNumberInput(fournisseur.solde_dette || 0))} F
                     </p>
@@ -111,11 +111,11 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 <div className="w-1/3 border-r bg-white p-6 overflow-y-auto">
                     <h4 className="font-bold text-lg mb-6 flex items-center gap-2">
                          <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">₹</span>
-                         {t('providers.finance.new_payment')}
+                         {t('providers:finance.new_payment')}
                     </h4>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.finance.amount')}</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:finance.amount')}</label>
                             <div className="relative">
                                 <input 
                                 type="number" 
@@ -131,36 +131,36 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.finance.payment_mode')}</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:finance.payment_mode')}</label>
                             <select 
                                 className="select select-bordered w-full h-12 rounded-xl"
                                 value={modePaiement}
                                 onChange={(e) => setModePaiement(e.target.value)}
                             >
-                                <option value="ESP">{t('providers.finance.modes.cash')}</option>
-                                <option value="CHQ">{t('providers.finance.modes.check')}</option>
-                                <option value="VIR">{t('providers.finance.modes.transfer')}</option>
-                                <option value="AVOIR">{t('providers.finance.modes.credit')}</option>
-                                <option value="AUTRE">{t('providers.finance.modes.other')}</option>
+                                <option value="ESP">{t('providers:finance.modes.cash')}</option>
+                                <option value="CHQ">{t('providers:finance.modes.check')}</option>
+                                <option value="VIR">{t('providers:finance.modes.transfer')}</option>
+                                <option value="AVOIR">{t('providers:finance.modes.credit')}</option>
+                                <option value="AUTRE">{t('providers:finance.modes.other')}</option>
                             </select>
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.finance.reference')}</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:finance.reference')}</label>
                             <input 
                                 type="text" 
                                 className="input input-bordered w-full h-12 rounded-xl" 
-                                placeholder={t('providers.finance.reference_placeholder')}
+                                placeholder={t('providers:finance.reference_placeholder')}
                                 value={reference}
                                 onChange={(e) => setReference(e.target.value)}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers.finance.notes')}</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('providers:finance.notes')}</label>
                             <textarea 
                                 className="textarea textarea-bordered w-full h-24 rounded-xl resize-none"
-                                placeholder={t('providers.finance.notes_placeholder')}
+                                placeholder={t('providers:finance.notes_placeholder')}
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                             ></textarea>
@@ -171,7 +171,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                             className="btn btn-primary w-full mt-4 rounded-xl shadow-lg shadow-primary/20"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? <span className="loading loading-spinner"></span> : t('providers.finance.save_payment')}
+                            {isSubmitting ? <span className="loading loading-spinner"></span> : t('providers:finance.save_payment')}
                         </button>
                     </form>
                 </div>
@@ -179,7 +179,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                 {/* Right Panel: History */}
                 <div className="flex-1 bg-slate-50/50 flex flex-col overflow-hidden">
                     <div className="p-4 border-b bg-white/50 backdrop-blur shrink-0">
-                        <h4 className="font-bold text-slate-700">{t('providers.finance.history')}</h4>
+                        <h4 className="font-bold text-slate-700">{t('providers:finance.history')}</h4>
                     </div>
                     <div className="flex-1 overflow-y-auto p-0 min-h-0">
                         {loading ? (
@@ -191,17 +191,17 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                <p>{t('providers.finance.no_payments')}</p>
+                                <p>{t('providers:finance.no_payments')}</p>
                             </div>
                         ) : (
                             <table className="table table-pin-rows">
                                 <thead className="text-xs uppercase bg-slate-100 text-slate-500">
                                     <tr>
-                                        <th>{t('providers.finance.table.date')}</th>
-                                        <th>{t('providers.finance.table.mode')}</th>
-                                        <th>{t('providers.finance.table.reference')}</th>
-                                        <th className="text-right">{t('providers.finance.table.amount')}</th>
-                                        <th className="text-center">{t('providers.finance.table.action')}</th>
+                                        <th>{t('providers:finance.table.date')}</th>
+                                        <th>{t('providers:finance.table.mode')}</th>
+                                        <th>{t('providers:finance.table.reference')}</th>
+                                        <th className="text-right">{t('providers:finance.table.amount')}</th>
+                                        <th className="text-center">{t('providers:finance.table.action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -216,9 +216,9 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                                     paiement.mode_paiement === 'CHQ' ? 'badge-info bg-blue-100 text-blue-800 border-none' :
                                                     'badge-ghost'
                                                 }`}>
-                                                    {paiement.mode_paiement === 'ESP' ? t('providers.finance.modes.cash') :
-                                                     paiement.mode_paiement === 'CHQ' ? t('providers.finance.modes.check') :
-                                                     paiement.mode_paiement === 'VIR' ? t('providers.finance.modes.transfer') : 
+                                                    {paiement.mode_paiement === 'ESP' ? t('providers:finance.modes.cash') :
+                                                     paiement.mode_paiement === 'CHQ' ? t('providers:finance.modes.check') :
+                                                     paiement.mode_paiement === 'VIR' ? t('providers:finance.modes.transfer') : 
                                                      paiement.mode_paiement}
                                                 </span>
                                             </td>
@@ -243,7 +243,7 @@ export default function FinanceFournisseurModal({ isOpen, onClose, fournisseur, 
                                             <td className="text-center">
                                                 <button 
                                                     className="btn btn-ghost btn-xs text-error tooltip tooltip-left" 
-                                                    data-tip={t('providers.finance.delete_tooltip')}
+                                                    data-tip={t('providers:finance.delete_tooltip')}
                                                     onClick={() => handleDelete(paiement.id)}
                                                 >
                                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

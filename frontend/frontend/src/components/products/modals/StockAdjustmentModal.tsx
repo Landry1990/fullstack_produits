@@ -20,13 +20,13 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
   form,
   setForm
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['products', 'common']);
  
   return (
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('products.adjustment.title')}
+      title={t('products:adjustment.title')}
       subtitle={selectedProduit?.name}
       maxWidth="max-w-md"
       icon={<span>📊</span>}
@@ -35,13 +35,13 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
     >
       <form className="p-6 space-y-6" onSubmit={onSubmit}>
         <div className="bg-info/10 p-4 rounded-xl border border-info/20 text-center">
-          <span className="text-sm opacity-70">{t('products.adjustment.current_stock')}</span>
+          <span className="text-sm opacity-70">{t('products:adjustment.current_stock')}</span>
           <div className="text-2xl font-black text-info">{selectedProduit?.stock ?? 0}</div>
         </div>
         
         <div className="space-y-4">
           <label className="form-control w-full">
-            <div className="label"><span className="label-text font-bold">{t('products.adjustment.new_quantity')}</span></div>
+            <div className="label"><span className="label-text font-bold">{t('products:adjustment.new_quantity')}</span></div>
             <input
               type="number"
               className="input input-bordered w-full text-center text-xl font-bold focus:input-primary"
@@ -56,7 +56,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
                   parseInt(form.new_quantity) > selectedProduit.stock ? 'badge-success' : 
                   parseInt(form.new_quantity) < selectedProduit.stock ? 'badge-error' : 'badge-ghost'
                 }`}>
-                  {t('products.adjustment.difference')} {parseInt(form.new_quantity) - (selectedProduit.stock || 0) > 0 ? '+' : ''}
+                  {t('products:adjustment.difference')} {parseInt(form.new_quantity) - (selectedProduit.stock || 0) > 0 ? '+' : ''}
                   {parseInt(form.new_quantity) - (selectedProduit.stock || 0)}
                 </span>
               </div>
@@ -64,7 +64,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
           </label>
           
           <label className="form-control w-full">
-            <div className="label"><span className="label-text font-bold">{t('products.adjustment.reason_type')}</span></div>
+            <div className="label"><span className="label-text font-bold">{t('products:adjustment.reason_type')}</span></div>
             <select
               className="select select-bordered w-full"
               value={form.reason_type}
@@ -73,7 +73,7 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
             >
               {STOCK_ADJUSTMENT_REASONS.map(reason => (
                 <option key={reason.value} value={reason.value}>
-                  {t(`products.adjustment.reasons.${reason.value}`) || reason.label}
+                  {t(`products:adjustment.reasons.${reason.value}`) || reason.label}
                 </option>
               ))}
             </select>
@@ -81,9 +81,9 @@ export const StockAdjustmentModal: React.FC<StockAdjustmentModalProps> = ({
         </div>
         
         <div className="flex justify-end gap-3 pt-6 border-t border-base-200">
-          <button type="button" className="btn btn-ghost px-8" onClick={onClose}>{t('common.actions.cancel')}</button>
+          <button type="button" className="btn btn-ghost px-8" onClick={onClose}>{t('common:actions.cancel')}</button>
           <button type="submit" className="btn btn-warning px-10 shadow-lg shadow-warning/20 font-bold" disabled={!form.new_quantity}>
-            ✓ {t('common.actions.confirm')}
+            ✓ {t('common:actions.confirm')}
           </button>
         </div>
       </form>

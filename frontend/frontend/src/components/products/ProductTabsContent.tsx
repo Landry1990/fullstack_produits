@@ -8,6 +8,7 @@ interface ProductTabsContentProps {
   setActiveTab: (tab: any) => void;
   lots: StockLot[];
   monthlyStats: any[];
+  achats: any[];
   stockHistory: any[];
   loadingHistory: boolean;
   onMovementClick: (item: any) => void;
@@ -19,22 +20,24 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
   setActiveTab,
   lots,
   monthlyStats,
+  achats,
   stockHistory,
   loadingHistory,
   onMovementClick
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(['products', 'common']);
 
   return (
     <div className="flex flex-col h-full">
       {/* Onglets */}
       <div role="tablist" className="tabs tabs-boxed bg-slate-100 rounded-none px-4 pt-2 shrink-0">
         {[
-          { id: 'general', label: t('products.detail.tabs.general') },
-          { id: 'prix', label: t('products.detail.tabs.price') },
-          { id: 'lots', label: t('products.detail.tabs.lots') },
-          { id: 'stats', label: t('products.detail.tabs.stats') },
-          { id: 'mvmts', label: t('products.detail.tabs.movements') }
+          { id: 'general', label: t('products:detail.tabs.general') },
+          { id: 'prix', label: t('products:detail.tabs.price') },
+          { id: 'achats', label: t('products:detail.tabs.purchases') },
+          { id: 'lots', label: t('products:detail.tabs.lots') },
+          { id: 'stats', label: t('products:detail.tabs.stats') },
+          { id: 'mvmts', label: t('products:detail.tabs.movements') }
         ].map((tab) => (
           <a 
             key={tab.id}
@@ -54,50 +57,50 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
             <table className="table table-sm">
               <tbody>
                 <tr>
-                  <td className="font-semibold w-1/3">{t('products.detail.general.description')}</td>
+                  <td className="font-semibold w-1/3">{t('products:detail.general.description')}</td>
                   <td className="uppercase">{selectedProduit.description || '-'}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.rayon')}</td>
+                   <td className="font-semibold">{t('products:detail.general.rayon')}</td>
                   <td><span className="badge badge-outline badge-sm">{selectedProduit.rayon_name || '-'}</span></td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.provider')}</td>
+                   <td className="font-semibold">{t('products:detail.general.provider')}</td>
                   <td><span className="badge badge-ghost badge-sm">{selectedProduit.fournisseur_name || '-'}</span></td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.min_max')}</td>
+                   <td className="font-semibold">{t('products:detail.general.min_max')}</td>
                   <td>{selectedProduit.stock_minimum ?? 0} / {selectedProduit.stock_maximum ?? 0}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.alert_threshold')}</td>
+                   <td className="font-semibold">{t('products:detail.general.alert_threshold')}</td>
                   <td><span className="badge badge-warning badge-sm">{selectedProduit.stock_alert ?? 0}</span></td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.expiration')}</td>
+                   <td className="font-semibold">{t('products:detail.general.expiration')}</td>
                   <td>{selectedProduit.expire_date ? (() => {
                     const d = new Date(selectedProduit.expire_date);
                     return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear().toString().slice(-2)}`;
                   })() : '-'}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.last_purchase')}</td>
-                  <td>{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString('fr-FR') : '-'}</td>
+                   <td className="font-semibold">{t('products:detail.general.last_purchase')}</td>
+                  <td>{selectedProduit.dernier_achat ? new Date(selectedProduit.dernier_achat).toLocaleDateString(i18n.language) : '-'}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.last_sale')}</td>
-                  <td>{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString('fr-FR') : '-'}</td>
+                   <td className="font-semibold">{t('products:detail.general.last_sale')}</td>
+                  <td>{selectedProduit.dernier_vente ? new Date(selectedProduit.dernier_vente).toLocaleDateString(i18n.language) : '-'}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.lot_management')}</td>
-                  <td>{selectedProduit.use_lot_management ? `✅ ${t('products.detail.general.enabled')}` : `❌ ${t('products.detail.general.disabled')}`}</td>
+                   <td className="font-semibold">{t('products:detail.general.lot_management')}</td>
+                   <td>{selectedProduit.use_lot_management ? `✅ ${t('products:detail.general.enabled')}` : `❌ ${t('products:detail.general.disabled')}`}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.prescription')}</td>
-                  <td>{selectedProduit.requires_prescription ? `✅ ${t('products.detail.general.yes')}` : `❌ ${t('products.detail.general.no')}`}</td>
+                   <td className="font-semibold">{t('products:detail.general.prescription')}</td>
+                   <td>{selectedProduit.requires_prescription ? `✅ ${t('products:detail.general.yes')}` : `❌ ${t('products:detail.general.no')}`}</td>
                 </tr>
                 <tr>
-                  <td className="font-semibold">{t('products.detail.general.surveillance')}</td>
+                   <td className="font-semibold">{t('products:detail.general.surveillance')}</td>
                   <td>{selectedProduit.surveillance_category === 'NONE' ? '-' : selectedProduit.surveillance_category}</td>
                 </tr>
               </tbody>
@@ -108,37 +111,39 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
         {activeTab === 'prix' && (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-              <div className="stat-title text-sm">{t('products.detail.price.cost')}</div>
+               <div className="stat-title text-sm">{t('products:detail.price.cost')}</div>
               <div className="stat-value text-blue-600 text-xl">{formatCurrency(Math.round(Number(selectedProduit.cost_price || 0)))} F</div>
             </div>
             <div className="stat bg-primary text-primary-content rounded-xl p-4">
-              <div className="stat-title text-primary-content/80 text-sm">{t('products.detail.price.selling')}</div>
+               <div className="stat-title text-primary-content/80 text-sm">{t('products:detail.price.selling')}</div>
               <div className="stat-value text-xl">{formatCurrency(Math.round(Number(selectedProduit.selling_price || 0)))} F</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-              <div className="stat-title text-sm">{t('products.detail.price.vat')}</div>
+               <div className="stat-title text-sm">{t('products:detail.price.vat')}</div>
               <div className="stat-value text-lg">{selectedProduit.tva || '19.25'}%</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-              <div className="stat-title text-sm">{t('products.detail.price.margin_percent')}</div>
+               <div className="stat-title text-sm">{t('products:detail.price.margin_percent')}</div>
               <div className="stat-value text-lg">{Number(selectedProduit.pourcentage_marge || 0).toFixed(0)}%</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-              <div className="stat-title text-sm">{t('products.detail.price.margin_coeff')}</div>
+               <div className="stat-title text-sm">{t('products:detail.price.margin_coeff')}</div>
               <div className="stat-value text-lg">{Number(selectedProduit.taux_marge || 0).toFixed(0)}</div>
             </div>
             <div className="stat bg-base-200/30 rounded-xl border border-base-200 p-4">
-              <div className="stat-title text-sm">{t('products.detail.price.rotation')}</div>
-              <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(0)}<span className="text-sm"> {t('products.detail.price.per_month')}</span></div>
+               <div className="stat-title text-sm">{t('products:detail.price.rotation')}</div>
+               <div className="stat-value text-lg">{Number(selectedProduit.rotation_moyenne || 0).toFixed(0)}<span className="text-sm"> {t('products:detail.price.per_month')}</span></div>
             </div>
           </div>
         )}
 
-        {activeTab === 'lots' && propsTabsContentLots(lots, t)}
+        { activeTab === 'achats' && propsTabsContentPurchases(achats, t, i18n.language) }
+        
+        {activeTab === 'lots' && propsTabsContentLots(lots, t, i18n.language)}
 
         {activeTab === 'stats' && propsTabsContentStats(monthlyStats, t)}
 
-        {activeTab === 'mvmts' && propsTabsContentMovements(stockHistory, loadingHistory, onMovementClick, t)}
+        {activeTab === 'mvmts' && propsTabsContentMovements(stockHistory, loadingHistory, onMovementClick, t, i18n.language)}
       </div>
     </div>
   );
@@ -146,20 +151,59 @@ export const ProductTabsContent: React.FC<ProductTabsContentProps> = ({
 
 // Helper components to keep the main one cleaner
 
-const propsTabsContentLots = (lots: StockLot[], t: any) => {
-    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products.detail.lots.empty')}</p>;
+const propsTabsContentPurchases = (achats: any[], t: any, lng: string) => {
+    if (!achats || achats.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.purchases.empty')}</p>;
 
     return (
         <div className="overflow-x-auto">
             <table className="table table-sm">
                 <thead className="bg-base-200 sticky top-0">
                     <tr>
-                        <th className="text-xs">{t('products.detail.lots.date_reception')}</th>
-                        <th className="text-xs">{t('products.detail.lots.lot_number')}</th>
-                        <th className="text-xs">{t('products.detail.lots.expiration')}</th>
-                        <th className="text-xs">{t('products.detail.lots.provider')}</th>
-                        <th className="text-xs text-right">{t('products.detail.lots.initial_qty')}</th>
-                        <th className="text-xs text-right">{t('products.detail.lots.remaining_qty')}</th>
+                        <th className="text-xs">{t('products:detail.purchases.date')}</th>
+                        <th className="text-xs">{t('products:detail.purchases.provider')}</th>
+                        <th className="text-xs text-right">{t('products:detail.purchases.qty')}</th>
+                        <th className="text-xs text-right">{t('products:detail.purchases.price')}</th>
+                        <th className="text-xs">{t('products:detail.purchases.lot')}</th>
+                        <th className="text-xs">{t('products:detail.purchases.exp')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {achats.map((achat) => (
+                        <tr key={achat.id} className="hover:bg-base-200/50 transition-colors">
+                            <td className="text-xs font-mono">{new Date(achat.commande_date).toLocaleDateString(lng)}</td>
+                            <td className="text-xs truncate max-w-[150px]" title={achat.fournisseur_name}>{achat.fournisseur_name}</td>
+                            <td className="text-right text-xs font-bold">{achat.quantity}</td>
+                            <td className="text-right text-xs">
+                                {formatCurrency(Math.round(Number(achat.price_cost)))} {t('common:currency_symbol', 'F')}
+                            </td>
+                            <td>
+                                <span className="badge badge-outline badge-xs font-mono">{achat.lot || '-'}</span>
+                            </td>
+                            <td className="text-xs">
+                                {achat.date_expiration ? new Date(achat.date_expiration).toLocaleDateString(lng) : '-'}
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+const propsTabsContentLots = (lots: StockLot[], t: any, lng: string) => {
+    if (!lots || lots.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.lots.empty')}</p>;
+
+    return (
+        <div className="overflow-x-auto">
+            <table className="table table-sm">
+                <thead className="bg-base-200 sticky top-0">
+                    <tr>
+                        <th className="text-xs">{t('products:detail.lots.date_reception')}</th>
+                        <th className="text-xs">{t('products:detail.lots.lot_number')}</th>
+                        <th className="text-xs">{t('products:detail.lots.expiration')}</th>
+                        <th className="text-xs">{t('products:detail.lots.provider')}</th>
+                        <th className="text-xs text-right">{t('products:detail.lots.initial_qty')}</th>
+                        <th className="text-xs text-right">{t('products:detail.lots.remaining_qty')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -167,13 +211,13 @@ const propsTabsContentLots = (lots: StockLot[], t: any) => {
                         const isExpired = lot.date_expiration ? new Date(lot.date_expiration) < new Date() : false;
                         return (
                             <tr key={lot.id} className="hover:bg-base-200/50 transition-colors">
-                                <td className="text-xs font-mono">{new Date(lot.date_reception).toLocaleDateString('fr-FR')}</td>
+                                <td className="text-xs font-mono">{new Date(lot.date_reception).toLocaleDateString(lng)}</td>
                                 <td>
                                     <span className="badge badge-outline badge-xs font-mono">{lot.lot || '-'}</span>
                                 </td>
                                 <td>
                                     <span className={`text-xs font-bold ${isExpired ? 'text-error' : ''}`}>
-                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString('fr-FR') : '-'}
+                                        {lot.date_expiration ? new Date(lot.date_expiration).toLocaleDateString(lng) : '-'}
                                     </span>
                                 </td>
                                 <td className="text-xs truncate max-w-[120px]" title={lot.fournisseur_nom}>{lot.fournisseur_nom}</td>
@@ -192,7 +236,7 @@ const propsTabsContentLots = (lots: StockLot[], t: any) => {
     );
 };
 const propsTabsContentStats = (monthlyStats: any[], t: any) => {
-    if (monthlyStats.length === 0) return <p className="text-center text-base-content/50 py-4">{t('products.detail.stats.empty')}</p>;
+    if (monthlyStats.length === 0) return <p className="text-center text-base-content/50 py-4">{t('products:detail.stats.empty')}</p>;
 
     let currentYear: number | null = null;
     return (
@@ -201,10 +245,10 @@ const propsTabsContentStats = (monthlyStats: any[], t: any) => {
                 <thead className="bg-base-200 sticky top-0">
                     <tr>
                     <th className="text-xs uppercase whitespace-nowrap"></th>
-                    <th className="text-xs uppercase whitespace-nowrap">{t('products.detail.stats.month')}</th>
-                    <th className="text-xs uppercase text-right text-primary whitespace-nowrap">{t('products.detail.stats.qty_sold')}</th>
-                    <th className="text-xs uppercase text-right text-warning whitespace-nowrap">{t('products.detail.stats.qty_ordered')}</th>
-                    <th className="text-xs uppercase text-right text-info whitespace-nowrap">{t('products.detail.stats.nb_clients')}</th>
+                    <th className="text-xs uppercase whitespace-nowrap">{t('products:detail.stats.month')}</th>
+                    <th className="text-xs uppercase text-right text-primary whitespace-nowrap">{t('products:detail.stats.qty_sold')}</th>
+                    <th className="text-xs uppercase text-right text-warning whitespace-nowrap">{t('products:detail.stats.qty_ordered')}</th>
+                    <th className="text-xs uppercase text-right text-info whitespace-nowrap">{t('products:detail.stats.nb_clients')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -226,35 +270,35 @@ const propsTabsContentStats = (monthlyStats: any[], t: any) => {
                 </tbody>
             </table>
             <div className="mt-2 text-[10px] text-base-content/50 flex justify-around">
-                <span>{t('products.detail.stats.legend_sold')}</span>
-                <span>{t('products.detail.stats.legend_ordered')}</span>
-                <span>{t('products.detail.stats.legend_count')}</span>
+                <span>{t('products:detail.stats.legend_sold')}</span>
+                <span>{t('products:detail.stats.legend_ordered')}</span>
+                <span>{t('products:detail.stats.legend_count')}</span>
             </div>
         </div>
     );
 };
 
-const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean, onMovementClick: (item: any) => void, t: any) => {
+const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean, onMovementClick: (item: any) => void, t: any, lng: string) => {
     if (loadingHistory) return (
         <div className="flex justify-center py-12">
             <span className="loading loading-spinner loading-lg"></span>
         </div>
     );
 
-    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products.detail.movements.empty')}</p>;
+    if (!stockHistory || stockHistory.length === 0) return <p className="text-center text-base-content/50 py-8">{t('products:detail.movements.empty')}</p>;
 
     return (
         <div className="overflow-x-auto">
             <table className="table table-sm">
                 <thead className="bg-base-200 sticky top-0">
                     <tr>
-                        <th className="text-xs">{t('products.detail.movements.date')}</th>
-                        <th className="text-xs">{t('products.detail.movements.type')}</th>
-                        <th className="text-xs">{t('products.detail.movements.label')}</th>
-                        <th className="text-xs">{t('products.detail.movements.operator')}</th>
-                        <th className="text-xs text-right">{t('products.detail.movements.before')}</th>
-                        <th className="text-xs text-right">{t('products.detail.movements.qty')}</th>
-                        <th className="text-xs text-right">{t('products.detail.movements.after')}</th>
+                        <th className="text-xs">{t('products:detail.movements.date')}</th>
+                        <th className="text-xs">{t('products:detail.movements.type')}</th>
+                        <th className="text-xs">{t('products:detail.movements.label')}</th>
+                        <th className="text-xs">{t('products:detail.movements.operator')}</th>
+                        <th className="text-xs text-right">{t('products:detail.movements.before')}</th>
+                        <th className="text-xs text-right">{t('products:detail.movements.qty')}</th>
+                        <th className="text-xs text-right">{t('products:detail.movements.after')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -269,7 +313,7 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                 onClick={() => onMovementClick(item)}
                             >
                                 <td className="whitespace-nowrap text-xs font-mono">
-                                    {new Date(item.date).toLocaleDateString('fr-FR')}
+                                    {new Date(item.date).toLocaleDateString(lng)}
                                 </td>
                                 <td>
                                     <span className={`badge badge-xs font-medium ${
@@ -283,7 +327,7 @@ const propsTabsContentMovements = (stockHistory: any[], loadingHistory: boolean,
                                 <td className="max-w-[200px] truncate text-xs" title={item.libelle}>
                                     <div className="flex items-center gap-1">
                                         {(item.facture || item.commande) && (
-                                            <span className="text-primary" title={item.facture ? t('products.detail.movements.view_invoice') : t('products.detail.movements.view_order')}>🔍</span>
+                                            <span className="text-primary" title={item.facture ? t('products:detail.movements.view_invoice') : t('products:detail.movements.view_order')}>🔍</span>
                                         )}
                                         {item.libelle}
                                         {item.commande_numero && (

@@ -1,0 +1,89 @@
+{
+    "title": "Gestion des Promotions",
+    "subtitle": "Configurez vos remises, packs et offres spéciales",
+    "new_btn": "Nouvelle Promotion",
+    "loading": "Chargement des promotions...",
+    "error_loading": "Erreur lors du chargement des promotions",
+    "fetch_error": "Impossible de récupérer les promotions",
+    "delete_confirm": "Voulez-vous vraiment supprimer cette promotion ?",
+    "delete_error": "Erreur lors de la suppression : {{message}}",
+    "list": {
+        "table": {
+            "name": "Nom",
+            "type": "Type",
+            "detail": "Détail",
+            "period": "Période",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "types": {
+            "discount": "Remise",
+            "special_offer": "Offre Spéciale"
+        },
+        "discount": {
+            "buy_get": "Achetez {{buy}}, Recevez {{get}} Offert(s)"
+        },
+        "period": {
+            "indefinite": "Indéfinie"
+        },
+        "status": {
+            "active": "Active",
+            "inactive": "Inactive"
+        },
+        "actions": {
+            "edit": "Modifier",
+            "delete": "Supprimer"
+        }
+    },
+    "form": {
+        "title_new": "Nouvelle Promotion",
+        "title_edit": "Modifier la Promotion",
+        "subtitle": "Définissez les règles et les produits concernés",
+        "general_info": "Informations Générales",
+        "pack_name": "Nom de l'offre / Pack",
+        "pack_placeholder": "Ex: Promo Été, Pack Santé...",
+        "start_date": "Date de début",
+        "end_date": "Date de fin (Optionnel)",
+        "type_value": "Type et Valeur",
+        "promo_type": "Type de promotion",
+        "types": {
+            "percentage": "Pourcentage (%)",
+            "fixed": "Montant Fixe",
+            "buy_get": "Acheté/Offert (X+Y)",
+            "bundle": "Prix Fixe du Pack (Bundle)"
+        },
+        "labels": {
+            "discount_value": "Valeur de la remise",
+            "pack_price": "Prix total du pack",
+            "buy": "Quantité à acheter (X)",
+            "get": "Quantité offerte (Y)"
+        },
+        "products": {
+            "title": "Produits Concernés",
+            "count": "{{count}} produit(s) sélectionné(s)",
+            "search_placeholder": "Rechercher un produit à ajouter (Nom, CIP, Code-barres...)",
+            "stock": "Stock:",
+            "loading_names": "Chargement des noms...",
+            "error_id": "Erreur ID: {{id}}",
+            "table": {
+                "product": "Produit",
+                "stock": "Stock",
+                "qty": "Qté",
+                "unit_price": "Prix Unitaire",
+                "discount_effect": "Effet Remise",
+                "empty": "Aucun produit sélectionné",
+                "offered": "{{count}} Offert(s)"
+            }
+        },
+        "status": {
+            "loading": "Enregistrement...",
+            "ready": "Prêt",
+            "total_fixed": "Total fixe: {{value}} F"
+        },
+        "actions": {
+            "cancel": "Annuler",
+            "save": "Enregistrer l'offre"
+        },
+        "save_error": "Erreur lors de l'enregistrement de la promotion"
+    }
+}

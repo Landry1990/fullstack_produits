@@ -1,0 +1,131 @@
+{
+    "title": "Analyse Financière",
+    "subtitle": "Analyse et prédictions du chiffre d'affaires",
+    "periode": {
+        "mois": "Ce mois",
+        "trimestre": "Ce trimestre",
+        "annee": "Cette année"
+    },
+    "kpis": {
+        "avg_basket": "Panier Moyen",
+        "margin_rate": "Taux de Marge",
+        "dsi": "Jours Stock (DSI)",
+        "growth": "Croissance Mensuelle"
+    },
+    "charts": {
+        "ca_evolution": "Évolution CA",
+        "margins": "Marges",
+        "predictions": "Prédictions",
+        "ca_12_months": "Chiffre d'Affaires (12 derniers mois)",
+        "margin_evolution": "Évolution des Marges",
+        "predictions_3m": "Prédictions CA (3 prochains mois)",
+        "repartition": "Répartition CA"
+    },
+    "by_category": "Par Catégorie",
+    "by_supplier": "Par Fournisseur",
+    "by_revenue": "Par CA",
+    "by_margin": "Par Marge",
+    "top_products": "Top Produits",
+    "product": "Produit",
+    "margin": "Marge",
+    "summary": "Résumé Annuel",
+    "trend": {
+        "up": "En hausse",
+        "down": "En baisse",
+        "stable": "Stable"
+    },
+    "category_analysis": "Analyse par Catégorie",
+    "category": {
+        "rayon": "Rayon",
+        "groupe": "Groupe",
+        "forme": "Forme",
+        "total_ca": "CA Total",
+        "total_margin": "Marge Totale",
+        "global_rate": "Taux Marge Global",
+        "no_data": "Aucune donnée pour cette catégorie"
+    },
+    "margin_analysis": "Analyse Avancée et Opportunités",
+    "analysis": {
+        "opportunities": "Faible Marge / Fort Volume",
+        "negotiation": "Opportunités de négociation fournisseur",
+        "dormant": "Forte Marge / Faible Rotation",
+        "dormant_risk": "Risque de stock dormant (Argent immobilisé)",
+        "price_opt": "Optimisation Prix (+5%)",
+        "low_margin_impact": "Produits à marge très faible (Impact estimé)",
+        "gain": "Gain Pot.",
+        "current_price": "Actuel",
+        "suggested_price": "Suggéré",
+        "price": "Prix",
+        "no_opportunity": "Aucune opportunité détectée",
+        "no_dormant": "Aucun produit dormant détecté",
+        "optimized": "Prix optimisés"
+    },
+    "supplier_analysis": "Analyse Fournisseurs",
+    "supplier": {
+        "name": "Fournisseur",
+        "score": "Score Global",
+        "volume": "Volume (30%)",
+        "quality": "Qualité (30%)",
+        "regularity": "Régularité (40%)",
+        "no_data": "Aucune donnée disponible",
+        "no_data_12m": "Aucune donnée fournisseur disponible sur 12 mois"
+    },
+    "summary_stats": {
+        "total_ca_12m": "CA Total (12 mois)",
+        "vs_n1": "vs {{amount}} N-1",
+        "total_margin": "Marge Totale",
+        "avg_rate": "Taux moyen: {{rate}}%",
+        "annual_ca": "CA Annuel",
+        "sales_count": "{{count}} ventes"
+    },
+    "guide": {
+        "title": "Guide de l'Analyse Financière",
+        "subtitle": "Comprenez les indicateurs, les calculs et la méthodologie de vos outils financiers.",
+        "summary": "Sommaire",
+        "sections": {
+            "seller_ranking": {
+                "title": "Classement Vendeurs",
+                "desc": "Analyse de la performance individuelle de votre équipe commerciale.",
+                "methodology": "Méthodologie",
+                "methodology_desc": "Le classement est basé sur le chiffre d'affaires (TTC) réalisé par chaque vendeur sur la période sélectionnée.",
+                "calculation": "Calculs clés",
+                "basket_desc": "Panier Moyen = CA Total / Nombre de Ventes",
+                "evolution_desc": "Évolution = Comparaison avec la période précédente (ex: mois actuel vs mois dernier)."
+            },
+            "supplier_purchases": {
+                "title": "Achats Fournisseurs",
+                "desc": "Calcul précis de ce que vous devez réellement à vos partenaires.",
+                "methodology": "Solde Net",
+                "methodology_desc": "Le montant affiché correspond aux achats réels après déduction des avoirs.",
+                "calculation": "Formule :",
+                "formula": "Total Net = (Somme des Factures d'Achat) - (Somme des Avoirs / Retours)"
+            },
+            "scoring_performance": {
+                "title": "Scoring & Performance",
+                "desc": "Système d'évaluation automatique de vos fournisseurs sur 100 points.",
+                "criteria": "Critères d'évaluation :",
+                "volume": "Volume (30%)",
+                "volume_desc": "Basé sur le montant total des achats sur les 12 derniers mois.",
+                "quality": "Qualité (30%)",
+                "quality_desc": "Taux d'avoirs et de réclamations (moins vous avez de retours, meilleur est le score).",
+                "regularity": "Régularité (40%)",
+                "regularity_desc": "Fréquence et constance de vos commandes sur l'année."
+            },
+            "advanced_analysis": {
+                "title": "Analyse Avancée",
+                "desc": "Algorithmes de détection d'opportunités et d'optimisation.",
+                "low_margin": "Faible Marge",
+                "low_margin_desc": "Produits avec un fort volume de vente mais une marge < 15%.",
+                "dormant_stock": "Stock Dormant",
+                "dormant_stock_desc": "Produits à forte marge (> 40%) sans vente significative depuis 3 mois.",
+                "price_optimization": "Optimisation Prix",
+                "price_optimization_desc": "Suggère un ajustement de +5% sur les produits dont la marge est critique (< 10%).",
+                "empty_table_title": "Pourquoi mes tableaux sont-ils vides ?",
+                "empty_table_desc": "Si vous ne voyez aucune donnée dans les trois tableaux (Faible Marge, Stock Dormant ou Optimisation Prix), c'est généralement le signe d'une excellente santé financière ou de seuils de détection très stricts :",
+                "reason_1": "01. Tableau \"Faible Marge\" : Vide car tous vos produits vendus ont des marges supérieures à 15% (pas de \"faible marge\" détectée).",
+                "reason_2": "02. Tableau \"Optimisation Prix\" : Vide car vous n'avez aucun produit critique ayant une marge inférieure à 10%.",
+                "reason_3": "03. Tableau \"Stock Dormant\" : Vide car vos articles à forte marge (>40%) se vendent suffisamment bien pour ne pas être considérés comme immobilisés."
+            }
+        }
+    }
+}

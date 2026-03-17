@@ -1,0 +1,54 @@
+{
+    "title": "Audit Log",
+    "subtitle": "Track all actions performed on the system",
+    "actions": {
+        "all": "All types of actions",
+        "PRICE_CHG": "Price Change",
+        "STOCK_ADJ": "Stock Adjustment",
+        "SALE": "Sale",
+        "SALE_CANCEL": "Sale Cancellation",
+        "PROD_CREATE": "Product Creation",
+        "PROD_UPDATE": "Product Modification",
+        "INV_CREATE": "Invoicing",
+        "INV_DELETE": "Invoice Deletion",
+        "INV_CANCEL": "Invoice Cancellation",
+        "INV_DEL": "Invoice Deletion",
+        "INV_VALID": "Invoice Validation",
+        "INV_VAL": "Invoice Validation (Sudo)",
+        "ORD_RECV": "Order Reception",
+        "ORD_CNCL": "Order Cancellation",
+        "USER_LOGIN": "User Login",
+        "SUDO_VAL": "Sudo Validation",
+        "CREATE": "Creation",
+        "UPDATE": "Modification",
+        "DELETE": "Deletion",
+        "CLOTURE": "Closing"
+    },
+    "stats": {
+        "total": "Total Logs",
+        "last_24h": "Last 24h",
+        "last_7d": "Last 7 days",
+        "last_30d": "Last 30 days"
+    },
+    "filters": {
+        "title": "Search & Filters",
+        "action_label": "Action",
+        "user_label": "User",
+        "all_users": "All users",
+        "date_from": "Period (Start)",
+        "date_to": "Period (End)",
+        "search_label": "Text search",
+        "search_placeholder": "Invoice, reason, product...",
+        "hide_stats": "HIDE STATS",
+        "show_stats": "SHOW STATS",
+        "export": "EXPORT CSV",
+        "reset": "RESET"
+    },
+    "table": {
+        "date": "Date & Time",
+        "user": "User",
+        "action": "Action",
+        "description": "Description",
+        "details": "Details"
+    }
+}

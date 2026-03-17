@@ -27,7 +27,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
     activeInventaire,
     editorLogic
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     
     const [activeTab, setActiveTab] = React.useState<'ENTRY' | 'ANALYSIS'>('ENTRY');
@@ -75,12 +75,12 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                        {viewMode === 'CREATE' ? (
                           <>
                             <Plus className="h-6 w-6 text-primary" />
-                            {t('stock.inventaire.detail.title_new')}
+                            {t('inventaire.detail.title_new')}
                           </>
                        ) : (
                           <>
                             <FileText className="h-6 w-6 text-primary" />
-                            {t('stock.inventaire.detail.title_edit', { id: activeInventaire?.id })}
+                            {t('inventaire.detail.title_edit', { id: activeInventaire?.id })}
                           </>
                        )}
                     </h1>
@@ -88,18 +88,18 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         {isReadOnly ? (
                             <span className="badge badge-success rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none">
                                 <CheckCircle2 className="h-3 w-3" />
-                                {t('stock.inventaire.detail.validated')}
+                                {t('inventaire.detail.validated')}
                             </span>
                         ) : (
                             <span className="badge badge-warning rounded-full text-[10px] font-bold uppercase tracking-wider gap-1 px-3 border-none">
                                 <History className="h-3 w-3" />
-                                {t('common.status.draft', { defaultValue: 'Brouillon' })}
+                                {t('common:status.draft', { defaultValue: 'Brouillon' })}
                             </span>
                         )}
                         {activeInventaire?.inventory_type && (
                             <span className="badge badge-info rounded-full text-[10px] font-bold uppercase tracking-wider px-3 border-none text-white">
-                                {activeInventaire.inventory_type === 'RESERVE' ? t('stock.inventaire.types.reserve', 'STOCK RÉSERVE') : 
-                                 activeInventaire.inventory_type === 'RAYON' ? t('stock.inventaire.types.rayon', 'STOCK RAYON') : t('stock.inventaire.types.global', 'STOCK GLOBAL')}
+                                {activeInventaire.inventory_type === 'RESERVE' ? t('inventaire.types.reserve', 'STOCK RÉSERVE') : 
+                                 activeInventaire.inventory_type === 'RAYON' ? t('inventaire.types.rayon', 'STOCK RAYON') : t('inventaire.types.global', 'STOCK GLOBAL')}
                             </span>
                         )}
                     </div>
@@ -112,13 +112,13 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ENTRY' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content'}`}
                         onClick={() => setActiveTab('ENTRY')}
                       >
-                        {t('stock.inventaire.detail.tab_entry', { defaultValue: 'Saisie' })}
+                        {t('inventaire.detail.tab_entry', { defaultValue: 'Saisie' })}
                       </button>
                       <button 
                         className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'ANALYSIS' ? 'bg-base-100 shadow-sm text-primary' : 'text-base-content/40 hover:text-base-content'}`}
                         onClick={() => setActiveTab('ANALYSIS')}
                       >
-                        {t('stock.inventaire.detail.tab_analysis', { defaultValue: 'Analyse' })}
+                        {t('inventaire.detail.tab_analysis', { defaultValue: 'Analyse' })}
                       </button>
                   </div>
 
@@ -128,7 +128,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     disabled={!activeInventaire?.id}
                   >
                     <Download className="h-5 w-5" />
-                    {t('stock.inventaire.detail.print')}
+                    {t('inventaire.detail.print')}
                   </button>
 
                   {!isReadOnly && activeInventaire && (
@@ -150,10 +150,10 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             className="btn btn-secondary rounded-xl px-4 gap-2 shadow-lg shadow-secondary/20" 
                             onClick={() => fileInputRef.current?.click()}
                             disabled={importing || saving}
-                            title={t('stock.inventaire.detail.import_csv_title', 'Importer un fichier CSV (Cip, Quantite)')}
+                            title={t('inventaire.detail.import_csv_title', 'Importer un fichier CSV (Cip, Quantite)')}
                         >
                             {importing ? <span className="loading loading-spinner loading-sm"></span> : <Upload className="h-5 w-5" />}
-                            <span className="hidden sm:inline">{t('common.import', 'Importer')}</span>
+                            <span className="hidden sm:inline">{t('common:import', 'Importer')}</span>
                         </button>
 
                         <button 
@@ -162,7 +162,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             disabled={saving || importing}
                         >
                             {saving ? <span className="loading loading-spinner loading-sm"></span> : <Save className="h-5 w-5" />}
-                            {t('common.save')}
+                            {t('common:save')}
                         </button>
 
                         <button 
@@ -175,7 +175,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                             ) : (
                                 <CheckCircle2 className="h-5 w-5" />
                             )}
-                            {t('stock.inventaire.detail.validate')}
+                            {t('inventaire.detail.validate')}
                         </button>
                     </div>
                   )}
@@ -186,7 +186,7 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
             {/* Header Form Area */}
             <div className="p-6 bg-base-50/50 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">{t('stock.inventaire.detail.date')}</label>
+                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">{t('inventaire.detail.date')}</label>
                     <input 
                         type="date" 
                         className="input input-bordered w-full rounded-xl border-base-300 focus:border-primary" 
@@ -197,11 +197,11 @@ export const InventaireEditor: React.FC<InventaireEditorProps> = ({
                     />
                 </div>
                 <div className="md:col-span-2 space-y-2">
-                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">{t('stock.inventaire.detail.description')}</label>
+                    <label className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">{t('inventaire.detail.description')}</label>
                     <input 
                         type="text" 
                         className="input input-bordered w-full rounded-xl border-base-300 focus:border-primary" 
-                        placeholder={t('stock.inventaire.detail.placeholder_desc')}
+                        placeholder={t('inventaire.detail.placeholder_desc')}
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                         disabled={isReadOnly}

@@ -1,0 +1,131 @@
+{
+    "title": "Financial Analysis",
+    "subtitle": "Analysis and predictions of turnover",
+    "periode": {
+        "mois": "This month",
+        "trimestre": "This quarter",
+        "annee": "This year"
+    },
+    "kpis": {
+        "avg_basket": "Average Basket",
+        "margin_rate": "Margin Rate",
+        "dsi": "Stock Days (DSI)",
+        "growth": "Monthly Growth"
+    },
+    "charts": {
+        "ca_evolution": "Revenue Evolution",
+        "margins": "Margins",
+        "predictions": "Predictions",
+        "ca_12_months": "Turnover (Last 12 months)",
+        "margin_evolution": "Margin Evolution",
+        "predictions_3m": "CA Predictions (Next 3 months)",
+        "repartition": "Revenue Breakdown"
+    },
+    "by_category": "By Category",
+    "by_supplier": "By Supplier",
+    "by_revenue": "By Revenue",
+    "by_margin": "By Margin",
+    "top_products": "Top Products",
+    "product": "Product",
+    "margin": "Margin",
+    "summary": "Annual Summary",
+    "trend": {
+        "up": "Rising",
+        "down": "Falling",
+        "stable": "Stable"
+    },
+    "category_analysis": "Analysis by Category",
+    "category": {
+        "rayon": "Shelf",
+        "groupe": "Group",
+        "forme": "Form",
+        "total_ca": "Total CA",
+        "total_margin": "Total Margin",
+        "global_rate": "Global Margin Rate",
+        "no_data": "No data for this category"
+    },
+    "margin_analysis": "Advanced Analysis and Opportunities",
+    "analysis": {
+        "opportunities": "Low Margin / High Volume",
+        "negotiation": "Supplier negotiation opportunities",
+        "dormant": "High Margin / Low Rotation",
+        "dormant_risk": "Dormant stock risk (Immobilized capital)",
+        "price_opt": "Price Optimization (+5%)",
+        "low_margin_impact": "Very low margin products (Estimated impact)",
+        "gain": "Pot. Gain",
+        "current_price": "Current",
+        "suggested_price": "Suggested",
+        "price": "Price",
+        "no_opportunity": "No opportunity detected",
+        "no_dormant": "No dormant product detected",
+        "optimized": "Optimized prices"
+    },
+    "supplier_analysis": "Supplier Analysis",
+    "supplier": {
+        "name": "Supplier",
+        "score": "Global Score",
+        "volume": "Volume (30%)",
+        "quality": "Quality (30%)",
+        "regularity": "Regularity (40%)",
+        "no_data": "No data available",
+        "no_data_12m": "No supplier data available over 12 months"
+    },
+    "summary_stats": {
+        "total_ca_12m": "Total CA (12 months)",
+        "vs_n1": "vs {{amount}} N-1",
+        "total_margin": "Total Margin",
+        "avg_rate": "Average rate: {{rate}}%",
+        "annual_ca": "Annual CA",
+        "sales_count": "{{count}} sales"
+    },
+    "guide": {
+        "title": "Financial Analysis Guide",
+        "subtitle": "Understand indicators, calculations, and the methodology of your financial tools.",
+        "summary": "Summary",
+        "sections": {
+            "seller_ranking": {
+                "title": "Seller Ranking",
+                "desc": "Analysis of the individual performance of your commercial team.",
+                "methodology": "Methodology",
+                "methodology_desc": "The ranking is based on the turnover (TTC) achieved by each seller over the selected period.",
+                "calculation": "Key calculations",
+                "basket_desc": "Average Basket = Total CA / Number of Sales",
+                "evolution_desc": "Evolution = Comparison with the previous period (e.g., current month vs last month)."
+            },
+            "supplier_purchases": {
+                "title": "Supplier Purchases",
+                "desc": "Precise calculation of what you actually owe your partners.",
+                "methodology": "Net Balance",
+                "methodology_desc": "The amount shown corresponds to actual purchases after deduction of returns/credit notes.",
+                "calculation": "Formula:",
+                "formula": "Total Net = (Sum of Purchase Invoices) - (Sum of Credit Notes / Returns)"
+            },
+            "scoring_performance": {
+                "title": "Scoring & Performance",
+                "desc": "Automatic evaluation system for your suppliers on 100 points.",
+                "criteria": "Evaluation criteria:",
+                "volume": "Volume (30%)",
+                "volume_desc": "Based on the total amount of purchases over the last 12 months.",
+                "quality": "Quality (30%)",
+                "quality_desc": "Rate of returns and complaints (the fewer returns you have, the better the score).",
+                "regularity": "Regularity (40%)",
+                "regularity_desc": "Frequency and constancy of your orders throughout the year."
+            },
+            "advanced_analysis": {
+                "title": "Advanced Analysis",
+                "desc": "Opportunity detection and optimization algorithms.",
+                "low_margin": "Low Margin",
+                "low_margin_desc": "Products with a high sales volume but a margin < 15%.",
+                "dormant_stock": "Dormant Stock",
+                "dormant_stock_desc": "High margin products (> 40%) without significant sales for 3 months.",
+                "price_optimization": "Price Optimization",
+                "price_optimization_desc": "Suggests a +5% adjustment on products with critical margins (< 10%).",
+                "empty_table_title": "Why are my tables empty?",
+                "empty_table_desc": "If you don't see any data in the three tables (Low Margin, Dormant Stock, or Price Optimization), it's usually a sign of excellent financial health or very strict detection thresholds:",
+                "reason_1": "01. \"Low Margin\" Table: Empty because all your sold products have margins above 15% (no \"low margin\" detected).",
+                "reason_2": "02. \"Price Optimization\" Table: Empty because you have no critical products with a margin below 10%.",
+                "reason_3": "03. \"Dormant Stock\" Table: Empty because your high margin items (>40%) are selling well enough not to be considered immobilized."
+            }
+        }
+    }
+}

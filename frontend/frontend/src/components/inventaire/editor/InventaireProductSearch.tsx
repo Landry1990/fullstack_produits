@@ -12,7 +12,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
     searchLogic,
     isReadOnly
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const {
         searchQuery, setSearchQuery,
         searchResults, loadingSearch,
@@ -64,7 +64,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     ref={searchInputRef}
                     type="text" 
                     className="input input-ghost w-full h-16 pl-14 pr-16 text-lg focus:bg-base-200/50 rounded-2xl focus:outline-none" 
-                    placeholder={t('stock.inventaire.detail.search_placeholder')}
+                    placeholder={t('inventaire.detail.search_placeholder')}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     onKeyDown={handleSearchKeyDown}
@@ -87,7 +87,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                     ) : (
                         <div className="flex flex-col items-center gap-1">
                             <Search className="h-6 w-6 opacity-20" />
-                            <p className="text-sm">{t('stock.inventaire.detail.no_result')}</p>
+                            <p className="text-sm">{t('inventaire.detail.no_result')}</p>
                         </div>
                     )}
                   </div>
@@ -114,7 +114,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                           </div>
                           <div className="flex items-center gap-3">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${idx === selectedItemIndex ? 'bg-white/20 border-white/20' : (p.stock ?? 0) > 0 ? 'bg-success/10 text-success border-success/20' : 'bg-error/10 text-error border-error/20'}`}>
-                                {p.stock ?? 0} {t('common.units_short')}
+                                {p.stock ?? 0} {t('common:units_short')}
                             </span>
                           </div>
                         </div>
@@ -135,10 +135,10 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         </div>
                         <div>
                             <h3 className="font-bold text-lg text-base-content">
-                                {t('stock.inventaire.lot_modal.title', { name: selectedProductForLot.name })}
+                                {t('inventaire.lot_modal.title', { name: selectedProductForLot.name })}
                             </h3>
                             <p className="text-sm text-base-content/60 mt-1">
-                                {t('stock.inventaire.lot_modal.subtitle')}
+                                {t('inventaire.lot_modal.subtitle')}
                             </p>
                         </div>
                     </div>
@@ -152,16 +152,16 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         {loadingLots ? (
                             <div className="flex flex-col items-center justify-center py-12 gap-4">
                                 <span className="loading loading-spinner loading-lg text-primary"></span>
-                                <p className="text-sm text-base-content/60 font-medium animate-pulse">{t('stock.inventaire.lot_modal.loading')}</p>
+                                <p className="text-sm text-base-content/60 font-medium animate-pulse">{t('inventaire.lot_modal.loading')}</p>
                             </div>
                         ) : availableLots.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
                                 <div className="w-16 h-16 rounded-full bg-base-100 flex items-center justify-center mb-2 shadow-sm border border-base-300">
                                     <Database className="h-8 w-8 text-base-content/20" />
                                 </div>
-                                <h4 className="font-bold text-base-content text-lg">{t('stock.inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>
+                                <h4 className="font-bold text-base-content text-lg">{t('inventaire.lot_modal.no_lots_title', 'Aucun lot disponible')}</h4>
                                 <p className="text-sm text-base-content/60 max-w-sm">
-                                    {t('stock.inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit. Vous pouvez soit créer un nouveau lot spécifiquement pour cet inventaire, soit inventorier le produit globalement.")}
+                                    {t('inventaire.lot_modal.no_lots_desc', "Il n'y a actuellement aucun lot en stock pour ce produit. Vous pouvez soit créer un nouveau lot spécifiquement pour cet inventaire, soit inventorier le produit globalement.")}
                                 </p>
                             </div>
                         ) : (
@@ -186,7 +186,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-sm font-bold">
-                                                    {lot.quantity_remaining} {t('common.units_short', 'unités')}
+                                                    {lot.quantity_remaining} {t('common:units_short', 'unités')}
                                                 </div>
                                             </div>
                                         </div>
@@ -206,12 +206,12 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                         : 'bg-base-100 hover:bg-base-50 border-base-300 hover:border-secondary/30'}
                                 `}
                             >
-                                <div className="font-bold">{t('stock.inventaire.lot_modal.btn_global')}</div>
+                                <div className="font-bold">{t('inventaire.lot_modal.btn_global')}</div>
                                 <div className={`text-xs mt-1 ${availableLots.length === selectedLotIndex ? 'text-secondary-content/70' : 'text-base-content/60'}`}>
-                                   {t('stock.inventaire.lot_modal.desc_global')}
+                                   {t('inventaire.lot_modal.desc_global')}
                                 </div>
                             </button>
-                             <button
+                              <button
                                 id={`lot-option-${availableLots.length + 1}`}
                                 onClick={() => handleLotSelection('NEW')}
                                 className={`w-full text-left p-4 rounded-xl transition-all border
@@ -220,9 +220,9 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                         : 'bg-base-100 hover:bg-base-50 border-base-300 hover:border-accent/30'}
                                 `}
                             >
-                                <div className="font-bold">{t('stock.inventaire.lot_modal.btn_new')}</div>
+                                <div className="font-bold">{t('inventaire.lot_modal.btn_new')}</div>
                                 <div className={`text-xs mt-1 ${availableLots.length + 1 === selectedLotIndex ? 'text-accent-content/70' : 'text-base-content/60'}`}>
-                                    {t('stock.inventaire.lot_modal.desc_new')}
+                                    {t('inventaire.lot_modal.desc_new')}
                                 </div>
                             </button>
                         </div>
@@ -237,7 +237,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                                 focusInput();
                             }}
                         >
-                            {t('common.cancel')} (Esc)
+                            {t('common:cancel')} (Esc)
                         </button>
                     </div>
                 </div>
@@ -246,7 +246,7 @@ export const InventaireProductSearch: React.FC<InventaireProductSearchProps> = (
                         setShowLotModal(false);
                         setSelectedProductForLot(null);
                         focusInput();
-                    }}>{t('common.actions.close', 'close')}</button>
+                    }}>{t('common:actions.close', 'close')}</button>
                 </form>
             </dialog>
             )}

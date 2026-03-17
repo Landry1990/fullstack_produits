@@ -40,7 +40,9 @@ interface ClotureCaisse {
 }
 
 export default function HistoriqueClotures() {
-  const { t } = useTranslation('caisse')
+  const { t } = useTranslation(['cash_closings', 'common'])
+  const currentLocale = t('common:locale', { defaultValue: 'fr-FR' })
+  const currencySymbol = t('common.currency_symbol', 'F')
   const [clotures, setClotures] = useState<ClotureCaisse[]>([])
   const [loading, setLoading] = useState(false)
   
@@ -98,7 +100,7 @@ export default function HistoriqueClotures() {
       setGlobalTotals(totals || null)
     } catch (err) {
       console.error('Erreur chargement clôtures:', err)
-      toast.error(t('journal.table.loading_error') || 'Erreur lors du chargement des clôtures')
+      toast.error(t('table.loading_error') || 'Erreur lors du chargement des clôtures')
     } finally {
       setLoading(false)
     }
@@ -123,7 +125,7 @@ export default function HistoriqueClotures() {
   const totalPages = Math.ceil(totalItems / pageSize)
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString(import.meta.env.VITE_LOCALE || 'fr-FR', {
+    return new Date(dateString).toLocaleString(currentLocale, {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -133,11 +135,11 @@ export default function HistoriqueClotures() {
   }
 
   const formatMoney = (value: string | number) => {
-    return formatCurrency(normalizeNumberInput(value))
+    return formatCurrency(normalizeNumberInput(value), currentLocale, currencySymbol)
   }
 
   const getModeLabel = (mode: string) => {
-    return t(`journal.modes.${mode}`, { defaultValue: mode })
+    return t(`common:payment_modes.${mode}`, { defaultValue: mode })
   }
 
   const handlePrint = (cloture: ClotureCaisse) => {
@@ -196,23 +198,23 @@ export default function HistoriqueClotures() {
               <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <Banknote className="w-6 h-6" />
               </div>
-              {t('closing_history.title')}
+              {t('title')}
             </h1>
             <p className="text-base-content/60 mt-1 pl-12 text-sm">
-              {t('closing_history.description')}
+              {t('description')}
             </p>
           </div>
 
           <div className="flex flex-wrap lg:flex-nowrap gap-3 items-end w-full lg:w-auto">
             <div className="form-control flex-1 lg:w-48">
               <label className="label py-1">
-                <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/70">{t('closing_history.filters.date_start')}</span>
+                <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/70">{t('filters.date_start')}</span>
               </label>
               <DatePicker
                 selected={dateDebut}
                 onChange={(date: Date | null) => setDateDebut(date)}
                 dateFormat="dd/MM/yyyy"
-                placeholderText={t('closing_history.filters.select_placeholder')}
+                placeholderText={t('filters.select_placeholder')}
                 locale="fr"
                 className="input input-bordered input-sm w-full bg-base-50"
                 isClearable
@@ -221,13 +223,13 @@ export default function HistoriqueClotures() {
 
             <div className="form-control flex-1 lg:w-48">
               <label className="label py-1">
-                <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/70">{t('closing_history.filters.date_end')}</span>
+                <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/70">{t('filters.date_end')}</span>
               </label>
               <DatePicker
                 selected={dateFin}
                 onChange={(date: Date | null) => setDateFin(date)}
                 dateFormat="dd/MM/yyyy"
-                placeholderText={t('closing_history.filters.select_placeholder')}
+                placeholderText={t('filters.select_placeholder')}
                 locale="fr"
                 className="input input-bordered input-sm w-full bg-base-50"
                 isClearable
@@ -241,17 +243,17 @@ export default function HistoriqueClotures() {
                 className="btn btn-sm btn-primary lg:px-6"
                 disabled={loading}
               >
-                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('closing_history.filters.filter_btn')}
+                {loading ? <span className="loading loading-spinner loading-xs"></span> : t('filters.filter_btn')}
               </button>
 
               {(dateDebut || dateFin) && (
                 <button 
                   onClick={resetFilters}
                   className="btn btn-sm btn-ghost"
-                  title={t('closing_history.filters.reset_title')}
+                  title={t('filters.reset_title')}
                   disabled={loading}
                 >
-                  ✕ {t('closing_history.filters.reset_btn')}
+                  ✕ {t('filters.reset_btn')}
                 </button>
               )}
 {/* 
@@ -274,7 +276,7 @@ export default function HistoriqueClotures() {
           <div className="p-4 border-b border-base-200 flex justify-between items-center bg-base-100/50">
             <h2 className="font-black text-sm uppercase tracking-widest text-base-content/60 flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-              {t('closing_history.performance.title')}
+              {t('performance.title')}
             </h2>
             <div className="flex gap-2 items-center">
               <select 
@@ -282,18 +284,18 @@ export default function HistoriqueClotures() {
                 value={metricMonth}
                 onChange={(e) => setMetricMonth(e.target.value)}
               >
-                <option value="01">{t('closing_history.performance.months.01')}</option>
-                <option value="02">{t('closing_history.performance.months.02')}</option>
-                <option value="03">{t('closing_history.performance.months.03')}</option>
-                <option value="04">{t('closing_history.performance.months.04')}</option>
-                <option value="05">{t('closing_history.performance.months.05')}</option>
-                <option value="06">{t('closing_history.performance.months.06')}</option>
-                <option value="07">{t('closing_history.performance.months.07')}</option>
-                <option value="08">{t('closing_history.performance.months.08')}</option>
-                <option value="09">{t('closing_history.performance.months.09')}</option>
-                <option value="10">{t('closing_history.performance.months.10')}</option>
-                <option value="11">{t('closing_history.performance.months.11')}</option>
-                <option value="12">{t('closing_history.performance.months.12')}</option>
+                <option value="01">{t('performance.months.01')}</option>
+                <option value="02">{t('performance.months.02')}</option>
+                <option value="03">{t('performance.months.03')}</option>
+                <option value="04">{t('performance.months.04')}</option>
+                <option value="05">{t('performance.months.05')}</option>
+                <option value="06">{t('performance.months.06')}</option>
+                <option value="07">{t('performance.months.07')}</option>
+                <option value="08">{t('performance.months.08')}</option>
+                <option value="09">{t('performance.months.09')}</option>
+                <option value="10">{t('performance.months.10')}</option>
+                <option value="11">{t('performance.months.11')}</option>
+                <option value="12">{t('performance.months.12')}</option>
               </select>
               <select 
                 className="select select-bordered select-xs h-8 font-bold"
@@ -308,7 +310,7 @@ export default function HistoriqueClotures() {
                 onClick={() => setShowMetric(!showMetric)}
                 className="btn btn-ghost btn-xs h-8 px-3 font-bold"
               >
-                {showMetric ? t('closing_history.performance.hide') : t('closing_history.performance.show')}
+                {showMetric ? t('performance.hide') : t('performance.show')}
               </button>
             </div>
           </div>
@@ -326,7 +328,7 @@ export default function HistoriqueClotures() {
           <div className="bg-base-100 rounded-xl p-5 border border-base-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
-                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('closing_history.stats.theoretical_total')}</h3>
+                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('stats.theoretical_total')}</h3>
                   <p className="text-2xl font-bold mt-1">{formatMoney(globalTotals.montant_theorique)} <span className="text-base font-normal text-base-content/50">F</span></p>
                </div>
                <div className="p-3 bg-base-200/50 rounded-lg text-base-content">
@@ -338,7 +340,7 @@ export default function HistoriqueClotures() {
           <div className="bg-base-100 rounded-xl p-5 border border-base-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
-                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('closing_history.stats.real_total')}</h3>
+                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('stats.real_total')}</h3>
                   <p className="text-2xl font-bold mt-1 text-primary">{formatMoney(globalTotals.montant_reel)} <span className="text-base font-normal text-primary/50">F</span></p>
                </div>
                <div className="p-3 bg-primary/10 rounded-lg text-primary">
@@ -350,9 +352,9 @@ export default function HistoriqueClotures() {
           <div className="bg-base-100 rounded-xl p-5 border border-base-200 shadow-sm flex flex-col justify-center">
              <div className="flex justify-between items-start">
                <div>
-                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('closing_history.stats.global_gap')}</h3>
+                  <h3 className="text-base-content/60 text-xs font-bold uppercase tracking-wider">{t('stats.global_gap')}</h3>
                   <p className={`text-2xl font-bold mt-1 ${normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'text-error' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'text-success' : 'text-base-content/50'}`}>
-                    {normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)} <span className="text-base font-normal opacity-50">F</span>
+                    {normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? '+' : ''}{formatMoney(globalTotals.ecart_caisse)}
                   </p>
                </div>
                 <div className={`p-3 rounded-lg ${normalizeNumberInput(globalTotals.ecart_caisse) < 0 ? 'bg-error/10 text-error' : normalizeNumberInput(globalTotals.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-base-200/50 text-base-content'}`}>
@@ -370,13 +372,13 @@ export default function HistoriqueClotures() {
             <table className="table table-sm w-full">
               <thead className="bg-base-200 sticky top-0 z-10 opacity-100">
                 <tr>
-                  <th className="py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_date')}</th>
-                  <th className="py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_cashier')}</th>
-                  <th className="py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_done_by')}</th>
-                  <th className="text-right py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_theoretical')}</th>
-                  <th className="text-right py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_real')}</th>
-                  <th className="text-right py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_gap')}</th>
-                  <th className="text-center py-4 text-xs tracking-wider uppercase">{t('closing_history.table.header_actions')}</th>
+                  <th className="py-4 text-xs tracking-wider uppercase">{t('table.header_date')}</th>
+                  <th className="py-4 text-xs tracking-wider uppercase">{t('table.header_cashier')}</th>
+                  <th className="py-4 text-xs tracking-wider uppercase">{t('table.header_done_by')}</th>
+                  <th className="text-right py-4 text-xs tracking-wider uppercase">{t('table.header_theoretical')}</th>
+                  <th className="text-right py-4 text-xs tracking-wider uppercase">{t('table.header_real')}</th>
+                  <th className="text-right py-4 text-xs tracking-wider uppercase">{t('table.header_gap')}</th>
+                  <th className="text-center py-4 text-xs tracking-wider uppercase">{t('table.header_actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -391,8 +393,8 @@ export default function HistoriqueClotures() {
                     <td colSpan={6} className="h-64 text-center text-base-content/50">
                       <div className="flex flex-col items-center justify-center gap-3">
                         <Banknote className="w-12 h-12 opacity-20" />
-                        <p className="text-lg">{t('closing_history.table.no_cloture')}</p>
-                        <p className="text-sm">{t('closing_history.table.no_cloture_desc')}</p>
+                        <p className="text-lg">{t('table.no_cloture')}</p>
+                        <p className="text-sm">{t('table.no_cloture_desc')}</p>
                       </div>
                     </td>
                   </tr>
@@ -402,7 +404,7 @@ export default function HistoriqueClotures() {
                       <td className="py-3">
                         <div className="font-semibold text-sm">{formatDate(cloture.date)}</div>
                         <div className="text-xs text-base-content/50 mt-0.5">
-                          {t('closing_history.table.period_desc', { 
+                          {t('table.period_desc', { 
                             start: cloture.date_debut ? formatDate(cloture.date_debut) : '...', 
                             end: cloture.date_fin ? formatDate(cloture.date_fin) : '...' 
                           })}
@@ -422,7 +424,7 @@ export default function HistoriqueClotures() {
                       </td>
                       <td className="text-right py-3">
                         <div className={`badge badge-sm ${normalizeNumberInput(cloture.ecart_caisse) < 0 ? 'badge-error' : normalizeNumberInput(cloture.ecart_caisse) > 0 ? 'badge-success' : 'badge-ghost'} font-bold px-3 py-3`}>
-                          {normalizeNumberInput(cloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(cloture.ecart_caisse)} F
+                          {normalizeNumberInput(cloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(cloture.ecart_caisse)}
                         </div>
                       </td>
                       <td className="text-center py-3">
@@ -430,14 +432,14 @@ export default function HistoriqueClotures() {
                           <button 
                             onClick={() => setSelectedCloture(cloture)}
                             className="btn btn-sm btn-ghost btn-square text-primary"
-                            title={t('closing_history.table.view_details')}
+                            title={t('table.view_details')}
                           >
                             <Eye className="w-5 h-5" />
                           </button>
                           <button 
                             onClick={() => handlePrint(cloture)}
                             className="btn btn-sm btn-ghost btn-square text-base-content/70"
-                            title={t('closing_history.table.print')}
+                            title={t('table.print')}
                           >
                             <Printer className="w-5 h-5" />
                           </button>
@@ -453,7 +455,7 @@ export default function HistoriqueClotures() {
                 <tfoot className="bg-base-200/40 border-t-2 border-base-300">
                   <tr className="text-base-content font-bold">
                     <td className="py-4 whitespace-nowrap" colSpan={2}>
-                      <span className="uppercase text-[10px] tracking-tight">{t('closing_history.table.period_total', { count: totalItems })}</span>
+                      <span className="uppercase text-[10px] tracking-tight">{t('table.period_total', { count: totalItems })}</span>
                     </td>
                     <td className="text-right py-4 text-base-content/80 text-lg">{formatMoney(globalTotals.montant_theorique)}</td>
                     <td className="text-right py-4 text-primary text-lg">{formatMoney(globalTotals.montant_reel)}</td>
@@ -470,12 +472,12 @@ export default function HistoriqueClotures() {
           {/* Pagination Controls */}
           <div className="bg-base-100 border-t border-base-200 p-4 flex items-center justify-between shrink-0">
             <span className="text-sm text-base-content/60">
-              {t('closing_history.pagination.showing', { 
+              {t('pagination.showing', { 
                 start: totalItems > 0 ? (currentPage - 1) * pageSize + 1 : 0, 
                 end: Math.min(currentPage * pageSize, totalItems), 
                 total: totalItems 
               })}
-              <span className="badge badge-sm badge-ghost ml-2">{pageSize} {t('closing_history.pagination.per_page')}</span>
+              <span className="badge badge-sm badge-ghost ml-2">{pageSize} {t('pagination.per_page')}</span>
             </span>
             <div className="join">
               <button 
@@ -483,17 +485,17 @@ export default function HistoriqueClotures() {
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1 || loading}
               >
-                {t('closing_history.pagination.prev')}
+                {t('pagination.prev')}
               </button>
               <button className="join-item btn btn-sm bg-base-200 no-animation pointer-events-none w-24">
-                {totalPages > 0 ? t('closing_history.pagination.page', { current: currentPage, total: totalPages }) : '-'}
+                {totalPages > 0 ? t('pagination.page', { current: currentPage, total: totalPages }) : '-'}
               </button>
               <button 
                 className="join-item btn btn-sm" 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages || totalPages === 0 || loading}
               >
-                {t('closing_history.pagination.next')}
+                {t('pagination.next')}
               </button>
             </div>
           </div>
@@ -507,11 +509,11 @@ export default function HistoriqueClotures() {
             <div className="bg-primary p-6 text-primary-content">
               <h3 className="font-bold text-xl flex items-center gap-3">
                 <Banknote className="w-6 h-6" />
-                {t('closing_history.modal.title')}
+                {t('modal.title')}
               </h3>
               <p className="opacity-80 text-sm mt-1 pb-1">
-                {t('closing_history.modal.cash_of', { name: selectedCloture.user_name || selectedCloture.username || t('common.unknown') })}
-                {selectedCloture.cloture_par_name && t('closing_history.modal.closed_by', { name: selectedCloture.cloture_par_name })}
+                {t('modal.cash_of', { name: selectedCloture.user_name || selectedCloture.username || t('common.unknown') })}
+                {selectedCloture.cloture_par_name && t('modal.closed_by', { name: selectedCloture.cloture_par_name })}
               </p>
             </div>
 
@@ -519,32 +521,32 @@ export default function HistoriqueClotures() {
               {/* En-tête Date / Période */}
               <div className="bg-base-100 rounded-xl border border-base-200 p-4 shadow-sm flex items-center gap-4">
                  <div className="flex-1">
-                   <p className="text-xs uppercase font-bold text-base-content/50">{t('closing_history.modal.date_label')}</p>
+                   <p className="text-xs uppercase font-bold text-base-content/50">{t('modal.date_label')}</p>
                    <p className="font-mono text-lg">{formatDate(selectedCloture.date)}</p>
                  </div>
                  <div className="w-px h-10 bg-base-200"></div>
                  <div className="flex-1 text-right">
-                   <p className="text-xs uppercase font-bold text-base-content/50">{t('closing_history.modal.period_label')}</p>
-                   <p className="text-sm">{t('closing_history.modal.period_from', { date: selectedCloture.date_debut ? formatDate(selectedCloture.date_debut) : '...' })}</p>
-                   <p className="text-sm">{t('closing_history.modal.period_to', { date: selectedCloture.date_fin ? formatDate(selectedCloture.date_fin) : '...' })}</p>
+                   <p className="text-xs uppercase font-bold text-base-content/50">{t('modal.period_label')}</p>
+                   <p className="text-sm">{t('modal.period_from', { date: selectedCloture.date_debut ? formatDate(selectedCloture.date_debut) : '...' })}</p>
+                   <p className="text-sm">{t('modal.period_to', { date: selectedCloture.date_fin ? formatDate(selectedCloture.date_fin) : '...' })}</p>
                  </div>
               </div>
 
               {/* Stats principales */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-base-100 p-4 rounded-xl border border-base-200">
-                  <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('closing_history.modal.theoretical_label')}</div>
+                  <div className="text-xs uppercase font-bold text-base-content/50 mb-1">{t('modal.theoretical_label')}</div>
                   <div className="text-2xl font-bold">{formatMoney(selectedCloture.montant_theorique)} F</div>
                 </div>
                 <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
-                  <div className="text-xs uppercase font-bold text-primary mb-1">{t('closing_history.modal.real_label')}</div>
+                  <div className="text-xs uppercase font-bold text-primary mb-1">{t('modal.real_label')}</div>
                   <div className="text-2xl font-bold text-primary">{formatMoney(selectedCloture.montant_reel)} F</div>
                 </div>
               </div>
 
               {/* Écart */}
               <div className={`p-4 rounded-xl flex items-center justify-between ${normalizeNumberInput(selectedCloture.ecart_caisse) === 0 ? 'bg-success/10 text-success' : normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
-                <div className="font-bold uppercase tracking-wider text-sm">{t('closing_history.modal.gap_label')}</div>
+                <div className="font-bold uppercase tracking-wider text-sm">{t('modal.gap_label')}</div>
                 <div className="font-bold text-xl">
                   {normalizeNumberInput(selectedCloture.ecart_caisse) > 0 ? '+' : ''}{formatMoney(selectedCloture.ecart_caisse)} F
                 </div>
@@ -552,18 +554,18 @@ export default function HistoriqueClotures() {
 
               {/* Flux financiers */}
               <div className="space-y-3">
-                <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('closing_history.modal.flows_summary')}</h4>
+                <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('modal.flows_summary')}</h4>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-base-100 border border-base-200 p-3 rounded-lg text-center">
-                    <div className="text-xs opacity-60">{t('closing_history.modal.ventes')}</div>
+                    <div className="text-xs opacity-60">{t('modal.ventes')}</div>
                     <div className="font-bold">{formatMoney(selectedCloture.total_ventes)}</div>
                   </div>
                   <div className="bg-success/5 border border-success/20 p-3 rounded-lg text-center">
-                    <div className="text-xs opacity-60 text-success uppercase">{t('closing_history.modal.entries')}</div>
+                    <div className="text-xs opacity-60 text-success uppercase">{t('modal.entries')}</div>
                     <div className="font-bold text-success">{formatMoney(selectedCloture.total_entrees)}</div>
                   </div>
                   <div className="bg-error/5 border border-error/20 p-3 rounded-lg text-center">
-                    <div className="text-xs opacity-60 text-error uppercase">{t('closing_history.modal.exits')}</div>
+                    <div className="text-xs opacity-60 text-error uppercase">{t('modal.exits')}</div>
                     <div className="font-bold text-error">{formatMoney(selectedCloture.total_sorties)}</div>
                   </div>
                 </div>
@@ -572,7 +574,7 @@ export default function HistoriqueClotures() {
               {/* Détails Paiement */}
               {selectedCloture.details_paiement && Object.keys(selectedCloture.details_paiement).length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('closing_history.modal.mode_details')}</h4>
+                  <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50 border-b border-base-200 pb-2">{t('modal.mode_details')}</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(selectedCloture.details_paiement).map(([mode, montant]) => (
                       <div key={mode} className="flex justify-between p-2 bg-base-50 rounded text-sm">
@@ -594,7 +596,7 @@ export default function HistoriqueClotures() {
 
               {selectedCloture.observation && (
                 <div className="space-y-2">
-                  <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50">{t('closing_history.modal.observations')}</h4>
+                  <h4 className="font-bold uppercase tracking-wider text-xs text-base-content/50">{t('modal.observations')}</h4>
                   <p className="text-sm bg-base-50 p-3 rounded-lg border border-base-200 italic">"{selectedCloture.observation}"</p>
                 </div>
               )}
@@ -603,13 +605,13 @@ export default function HistoriqueClotures() {
             <div className="modal-action border-t border-base-200 p-4 bg-base-50 m-0">
               <button onClick={() => handlePrint(selectedCloture)} className="btn btn-primary btn-outline gap-2 mr-auto">
                 <Printer className="w-5 h-5" />
-                {t('closing_history.modal.print')}
+                {t('modal.print')}
               </button>
               <button 
                 onClick={() => setSelectedCloture(null)} 
                 className="btn btn-ghost"
               >
-                {t('closing_history.modal.close')}
+                {t('modal.close')}
               </button>
             </div>
           </div>

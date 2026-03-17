@@ -107,14 +107,14 @@ const CartRow = React.memo(({
       <td className="pl-2 md:pl-4 py-1">
         <div className={`font-medium ${ligne.produit.is_deleted ? 'italic' : ''}`}>
           {ligne.produit.name}
-          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75">(Supprimé)</span>}
+          {ligne.produit.is_deleted && <span className="text-xs ml-2 opacity-75">{t('facturation:cart.product_status.deleted')}</span>}
           {ligne.produit.is_chronic && (
             <div className="flex items-center gap-2 mt-1">
               <span className="badge badge-success badge-xs gap-1 py-1.5 px-2">
-                 <span className="text-[10px]">Chronique</span>
+               <span className="text-[10px]">{t('facturation:cart.product_status.chronic')}</span>
               </span>
               <div className="flex items-center gap-1 border rounded px-1.5 bg-success/5 border-success/20">
-                <span className="text-[10px] opacity-60">Traitement:</span>
+                <span className="text-[10px] opacity-60">{t('facturation:cart.product_status.treatment')}</span>
                 <input 
                    type="number"
                    className="w-8 bg-transparent text-[10px] font-bold outline-none"
@@ -122,7 +122,7 @@ const CartRow = React.memo(({
                     onChange={(e) => updateTreatmentDuration?.(ligne.produit.id, normalizeNumberInput(e.target.value) || 0)}
                     min={1}
                 />
-                <span className="text-[10px] opacity-60">j</span>
+                <span className="text-[10px] opacity-60">{t('facturation:cart.product_status.days_unit')}</span>
               </div>
             </div>
           )}
@@ -160,7 +160,7 @@ const CartRow = React.memo(({
           }}
           className={`input input-ghost input-xs sm:input-sm w-full text-right focus:bg-base-100 focus:text-primary min-h-[32px] sm:min-h-0 ${!canModifyPrice ? 'opacity-70 cursor-not-allowed' : ''}`}
           disabled={!canModifyPrice}
-          title={!canModifyPrice ? t('facturation.messages.price_modification_forbidden') : ""}
+          title={!canModifyPrice ? t('facturation:messages.price_modification_forbidden') : ""}
         />
       </td>
       <td className="text-right py-1 hidden lg:table-cell">
@@ -191,9 +191,9 @@ const CartRow = React.memo(({
         <button
           className={`btn btn-xs ${ligne.lotId ? 'btn-primary' : 'btn-ghost text-base-content/50'} w-full max-w-[80px] truncate`}
           onClick={() => onOpenLotModal(ligne.produit, ligne.lotId || null)}
-          title={ligne.lotId ? `Lot: ${ligne.lotText}` : "Lot: Automatique (FEFO)"}
+          title={ligne.lotId ? `${t('facturation:cart.headers.lot')}: ${ligne.lotText}` : `${t('facturation:cart.headers.lot')}: ${t('facturation:cart.product_status.auto_lot')} (FEFO)`}
         >
-          {ligne.lotId ? ligne.lotText : 'Auto'}
+          {ligne.lotId ? ligne.lotText : t('facturation:cart.product_status.auto_lot')}
         </button>
       </td>
       <td className="text-right font-medium text-base-content pr-2 md:pr-4 py-1">
@@ -204,7 +204,7 @@ const CartRow = React.memo(({
           onClick={() => removeLigne(ligne.produit.id)}
           className="btn btn-ghost btn-xs text-error/50 hover:text-error btn-square sm:opacity-0 group-hover:opacity-100 transition-opacity"
         >
-          <span className="sr-only">{t('facturation.cart.actions.remove')}</span>
+          <span className="sr-only">{t('facturation:cart.actions.remove')}</span>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
         </button>
       </td>
@@ -226,7 +226,7 @@ export default function CartTable({
   onSelectLine
 }: CartTableProps) {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
 
   // Permission Checks
   const canModifyPrice = user?.is_superuser || user?.profile?.can_modify_price
@@ -247,13 +247,13 @@ export default function CartTable({
     <table className="table table-pin-rows table-sm w-full">
       <thead className="sticky top-0 z-30 bg-base-200 opacity-100">
         <tr className="bg-base-200 uppercase tracking-wider text-base-content/60 font-semibold border-b border-base-200">
-          <th className="bg-base-200 pl-2 md:pl-4 min-w-[120px]">{t('facturation.cart.headers.product')}</th>
-          <th className="bg-base-200 text-right w-12 sm:w-20">{t('facturation.cart.headers.qty')}</th>
-          <th className="bg-base-200 text-right w-16 sm:w-24">{t('facturation.cart.headers.price')}</th>
-          <th className="bg-base-200 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation.cart.headers.discount')}</th>
-          <th className="bg-base-200 text-center w-24 hidden md:table-cell">{t('facturation.cart.headers.stock')}</th>
-          <th className="bg-base-200 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation.cart.headers.lot')}</th>
-          <th className="bg-base-200 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation.cart.headers.total')}</th>
+          <th className="bg-base-200 pl-2 md:pl-4 min-w-[120px]">{t('facturation:cart.headers.product')}</th>
+          <th className="bg-base-200 text-right w-12 sm:w-20">{t('facturation:cart.headers.qty')}</th>
+          <th className="bg-base-200 text-right w-16 sm:w-24">{t('facturation:cart.headers.price')}</th>
+          <th className="bg-base-200 text-right w-14 md:w-16 hidden lg:table-cell">{t('facturation:cart.headers.discount')}</th>
+          <th className="bg-base-200 text-center w-24 hidden md:table-cell">{t('facturation:cart.headers.stock')}</th>
+          <th className="bg-base-200 text-center w-16 sm:w-20 hidden md:table-cell">{t('facturation:cart.headers.lot')}</th>
+          <th className="bg-base-200 text-right w-18 sm:w-28 pr-2 md:pr-4">{t('facturation:cart.headers.total')}</th>
           <th className="bg-base-200 w-8"></th>
         </tr>
       </thead>

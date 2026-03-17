@@ -83,7 +83,7 @@ export default function CommandeList({
     <div className="flex flex-col h-full p-4 space-y-4">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4 shrink-0">
-        <h1 className="text-xl font-bold text-base-content">{t('orders.list.title')}</h1>
+        <h1 className="text-xl font-bold text-base-content">{t('orders:list.title')}</h1>
         <div className="flex gap-2 w-full md:w-auto">
             <button 
                 className="btn btn-secondary btn-sm gap-2" 
@@ -91,7 +91,7 @@ export default function CommandeList({
                 disabled={loading}
             >
                 {loading ? <span className="loading loading-spinner loading-xs" /> : <span>✨</span>} 
-                {t('orders.list.suggestions_btn')}
+                {t('orders:list.suggestions_btn')}
             </button>
             <button 
                 className="btn btn-primary btn-sm gap-2 text-white" 
@@ -99,7 +99,7 @@ export default function CommandeList({
                 disabled={loading}
             >
                 {loading ? <span className="loading loading-spinner loading-xs" /> : <span>+</span>} 
-                {t('orders.list.create_btn')}
+                {t('orders:list.create_btn')}
             </button>
         </div>
       </div>
@@ -107,25 +107,25 @@ export default function CommandeList({
       {/* Unified Filter/Sort Bar */}
       <div className="flex flex-wrap items-center gap-3 p-3 bg-base-100 rounded-xl border border-base-200 shadow-sm shrink-0">
         <div className="flex items-center gap-2 mr-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('orders.list.sort_by')}:</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('orders:list.sort_by')}:</span>
             <div className="flex bg-base-200 p-1 rounded-lg">
                 <button 
                 className={`btn btn-xs px-3 border-none ${sortKey === 'date' ? 'bg-white text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onSortChange('date')}
                 >
-                {t('orders.list.table.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                {t('orders:list.table.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </button>
                 <button 
                 className={`btn btn-xs px-3 border-none ${sortKey === 'numero' ? 'bg-white text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onSortChange('numero')}
                 >
-                {t('orders.list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
+                {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </button>
                 <button 
                 className={`btn btn-xs px-3 border-none ${sortKey === 'status' ? 'bg-white text-primary shadow-sm' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onSortChange('status')}
                 >
-                {t('orders.list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                {t('orders:list.table.status')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                 </button>
             </div>
         </div>
@@ -133,31 +133,31 @@ export default function CommandeList({
         <div className="h-6 w-px bg-base-200 mx-1"></div>
         
         <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('orders.list.filter_by')}:</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('orders:list.filter_by')}:</span>
             <div className="flex gap-1">
                 <button 
                 className={`btn btn-xs rounded-full px-4 ${filterStatus === 'ALL' ? 'btn-neutral' : 'btn-ghost text-base-content/60'}`}
                 onClick={() => onFilterStatusChange('ALL')}
                 >
-                {t('orders.list.filters.all')}
+                {t('orders:list.filters.all')}
                 </button>
                 <button 
                 className={`btn btn-xs rounded-full px-4 border ${filterStatus === 'PREP' ? 'bg-info/20 border-info/30 text-info' : 'btn-ghost border-transparent text-base-content/60'}`}
                 onClick={() => onFilterStatusChange('PREP')}
                 >
-                {t('orders.list.filters.prep')}
+                {t('orders:list.filters.prep')}
                 </button>
                 <button 
                 className={`btn btn-xs rounded-full px-4 border ${filterStatus === 'ATT' ? 'bg-warning/20 border-warning/30 text-warning' : 'btn-ghost border-transparent text-base-content/60'}`}
                 onClick={() => onFilterStatusChange('ATT')}
                 >
-                {t('orders.list.filters.pending')}
+                {t('orders:list.filters.pending')}
                 </button>
                 <button 
                 className={`btn btn-xs rounded-full px-4 border ${filterStatus === 'CLOT' ? 'bg-success/20 border-success/30 text-success' : 'btn-ghost border-transparent text-base-content/60'}`}
                 onClick={() => onFilterStatusChange('CLOT')}
                 >
-                {t('orders.list.filters.closed')}
+                {t('orders:list.filters.closed')}
                 </button>
             </div>
         </div>
@@ -187,7 +187,7 @@ export default function CommandeList({
                       selectedOrderIds.size === 1 ? (
                         <>
                           <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                            {t('common.single_selection', { defaultValue: 'Sélection' })}
+                            {t('common:single_selection', { defaultValue: 'Sélection' })}
                           </li>
                           {(() => {
                             const id = Array.from(selectedOrderIds)[0];
@@ -197,20 +197,20 @@ export default function CommandeList({
                               <>
                                 <li>
                                   <a onClick={() => onViewDetails(commande)} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                                    <Eye className="w-4 h-4" /> {t('orders.list.table.view_details')}
+                                    <Eye className="w-4 h-4" /> {t('orders:list.table.view_details')}
                                   </a>
                                 </li>
                                 {commande.status === 'ATT' && (
                                     <li>
                                         <a onClick={() => {/* Handle print if available */}} className="flex items-center gap-3 py-3 hover:bg-neutral/10 text-neutral font-medium">
-                                            <Printer className="w-4 h-4" /> {t('common.print', 'Imprimer')}
+                                            <Printer className="w-4 h-4" /> {t('common:print', 'Imprimer')}
                                         </a>
                                     </li>
                                 )}
                                 {commande.status === 'PREP' && (
                                      <li>
                                         <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                                            <Trash2 className="w-4 h-4" /> {t('common.actions.delete')}
+                                            <Trash2 className="w-4 h-4" /> {t('common:actions.delete')}
                                         </a>
                                      </li>
                                 )}
@@ -221,18 +221,18 @@ export default function CommandeList({
                       ) : (
                         <>
                           <li className="menu-title px-4 py-2 text-xs font-bold uppercase tracking-widest text-base-content/40">
-                            {t('common.bulk_actions', { defaultValue: 'Actions Groupées' })}
+                            {t('common:bulk_actions', { defaultValue: 'Actions Groupées' })}
                           </li>
                           {canMerge && (
                             <li>
                                 <a onClick={onOpenMergeModal} className="flex items-center gap-3 py-3 hover:bg-info/10 text-info font-medium">
-                                    <GitMerge className="w-4 h-4" /> {t('orders.list.selection.merge')}
+                                    <GitMerge className="w-4 h-4" /> {t('orders:list.selection.merge')}
                                 </a>
                             </li>
                           )}
                           <li>
                             <a onClick={onBulkDelete} className="flex items-center gap-3 py-3 hover:bg-error/10 text-error font-medium">
-                              <Trash2 className="w-4 h-4" /> {t('orders.bulk_delete_btn')}
+                              <Trash2 className="w-4 h-4" /> {t('orders:bulk_delete_btn')}
                             </a>
                           </li>
                         </>
@@ -245,35 +245,35 @@ export default function CommandeList({
                   <>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('numero')}>
                       <div className="flex items-center gap-2">
-                        {t('orders.list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        {t('orders:list.table.id')} {sortKey === 'numero' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
-                      {t('orders.list.table.invoice_number')}
+                      {t('orders:list.table.invoice_number')}
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('date')}>
                       <div className="flex items-center gap-2">
-                        {t('common.date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        {t('common:date')} {sortKey === 'date' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('fournisseur')}>
                       <div className="flex items-center gap-2">
-                        {t('common.supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        {t('common:supplier')} {sortKey === 'fournisseur' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 text-center sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
-                      {t('orders.list.table.items')}
+                      {t('orders:list.table.items')}
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 text-right sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
-                      {t('common.total')}
+                      {t('common:total')}
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 cursor-pointer hover:text-primary transition-colors sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300" onClick={() => onSortChange('status')}>
                       <div className="flex items-center gap-2 justify-center">
-                        {t('common.status_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
+                        {t('common:status_title')} {sortKey === 'status' && (sortOrder === 'asc' ? '↑' : '↓')}
                       </div>
                     </th>
                     <th className="text-[10px] uppercase font-black tracking-widest text-base-content/40 py-3 px-4 text-right pr-4 sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300">
-                      {t('common.actions_title')}
+                      {t('common:actions_title')}
                     </th>
                   </>
                 )}
@@ -304,14 +304,14 @@ export default function CommandeList({
                 </td>
                 <td>
                     <span className="text-sm font-semibold text-base-content/80">
-                        {new Date(commande.date).toLocaleDateString(t('common.locale', 'fr-FR'))}
+                        {new Date(commande.date).toLocaleDateString(t('common:locale', 'fr-FR'))}
                     </span>
                 </td>
                 <td>
                     {(() => {
                         const fournisseur = fournisseurs.find(f => f.id === commande.fournisseur);
                         const isDeleted = !fournisseur && !!commande.fournisseur_nom;
-                        const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common.id', { defaultValue: 'ID' })}: ${commande.fournisseur}`);
+                        const nom = fournisseur?.name ?? (commande.fournisseur_nom || `${t('common:id', { defaultValue: 'ID' })}: ${commande.fournisseur}`);
                         
                         return (
                             <div className="flex flex-col">
@@ -328,13 +328,13 @@ export default function CommandeList({
                     </span>
                 </td>
                 <td className="font-bold text-right text-primary">
-                    {formatCurrency(Number(commande.total))} F
+                    {formatCurrency(Number(commande.total))} {t('common:currency_symbol', 'F')}
                 </td>
                 <td className="text-center">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border uppercase tracking-wider ${getStatusStyle(commande.status)}`}>
-                        {commande.status === 'PREP' ? t('orders.status.prep') : 
-                         commande.status === 'ATT' ? t('orders.status.pending') : 
-                         t('orders.status.closed')}
+                        {commande.status === 'PREP' ? t('orders:status.prep') : 
+                         commande.status === 'ATT' ? t('orders:status.pending') : 
+                         t('orders:status.closed')}
                     </span>
                 </td>
                 <td className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
@@ -342,7 +342,7 @@ export default function CommandeList({
                         <button 
                             className="btn btn-ghost btn-sm btn-square hover:bg-info/10 hover:text-info transition-colors"
                             onClick={(e) => { e.stopPropagation(); onViewDetails(commande); }}
-                            title={t('orders.list.table.view_details')}
+                            title={t('orders:list.table.view_details')}
                         >
                             <Eye className="w-4 h-4" />
                         </button>
@@ -355,7 +355,7 @@ export default function CommandeList({
                     <td colSpan={9} className="text-center py-12 text-base-content/40 italic">
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center not-italic">📦</div>
-                            {t('orders.list.table.empty')}
+                            {t('orders:list.table.empty')}
                         </div>
                     </td>
                 </tr>
@@ -367,7 +367,7 @@ export default function CommandeList({
       {/* Pagination Footer */}
       <div className="flex items-center justify-between px-4 py-3 bg-base-100 rounded-2xl border border-base-200 shadow-sm shrink-0">
           <div className="text-xs font-medium text-base-content/50">
-            {t('orders.list.pagination.showing', { count: sortedCommandes.length, total: totalCount })}
+            {t('orders:list.pagination.showing', { count: sortedCommandes.length, total: totalCount })}
           </div>
           
           <div className="join">

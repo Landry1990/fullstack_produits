@@ -12,7 +12,7 @@ import { AvoirsLotModal } from './avoirs/modals/AvoirsLotModal';
 import SudoValidationModal from './common/SudoValidationModal';
 
 export default function Avoirs() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const avoirsData = useAvoirsData();
 
     // Sudo Hook extracted values for Modal rendering
@@ -62,10 +62,10 @@ export default function Avoirs() {
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
                         <div className="p-6 border-b border-base-200">
                             <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                                {t('avoirs.title', 'Gestion des Avoirs')}
+                                {t('avoirs.title')}
                             </h1>
                             <p className="text-base-content/60 text-sm mt-1">
-                                {t('avoirs.subtitle', 'Gérez les retours fournisseurs et les réintégrations de stock')}
+                                {t('avoirs.subtitle')}
                             </p>
                         </div>
                         

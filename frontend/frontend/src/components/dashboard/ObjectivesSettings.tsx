@@ -111,7 +111,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                             {/* Mode Selection */}
                             <div className="space-y-4">
                                 <label className="text-sm font-bold text-base-content/70 uppercase tracking-wider block">
-                                    {t('manager_dashboard.settings.mode_label', 'Mode de calcul')}
+                                    {t('manager_dashboard.settings.mode_label')}
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <button
@@ -124,8 +124,8 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         }`}
                                     >
                                         <Hand className={`w-6 h-6 mb-3 ${config.mode === 'MANUEL' ? 'text-primary' : 'text-base-content/50'}`} />
-                                        <h3 className={`font-bold ${config.mode === 'MANUEL' ? 'text-primary text-base-content' : ''}`}>Manuel</h3>
-                                        <p className="text-xs mt-1 leading-relaxed opacity-80">Saisie quotidienne depuis le tableau de bord.</p>
+                                        <h3 className={`font-bold ${config.mode === 'MANUEL' ? 'text-primary' : ''}`}>{t('manager_dashboard.settings.modes.manual_title')}</h3>
+                                        <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.manual_desc')}</p>
                                     </button>
 
                                     <button
@@ -138,8 +138,8 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         }`}
                                     >
                                         <Target className={`w-6 h-6 mb-3 ${config.mode === 'FIXE' ? 'text-secondary' : 'text-base-content/50'}`} />
-                                        <h3 className={`font-bold ${config.mode === 'FIXE' ? 'text-secondary text-base-content' : ''}`}>Objectif Fixe</h3>
-                                        <p className="text-xs mt-1 leading-relaxed opacity-80">Cible une Marge Brute mensuelle pour couvrir vos charges fixes.</p>
+                                        <h3 className={`font-bold ${config.mode === 'FIXE' ? 'text-secondary' : ''}`}>{t('manager_dashboard.settings.modes.fixed_title')}</h3>
+                                        <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.fixed_desc')}</p>
                                     </button>
 
                                     <button
@@ -152,8 +152,8 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                         }`}
                                     >
                                         <TrendingUp className={`w-6 h-6 mb-3 ${config.mode === 'DYNAMIQUE' ? 'text-accent' : 'text-base-content/50'}`} />
-                                        <h3 className={`font-bold ${config.mode === 'DYNAMIQUE' ? 'text-accent text-base-content' : ''}`}>Dynamique</h3>
-                                        <p className="text-xs mt-1 leading-relaxed opacity-80">Croissance ciblée par rapport à l'année précédente (N-1).</p>
+                                        <h3 className={`font-bold ${config.mode === 'DYNAMIQUE' ? 'text-accent' : ''}`}>{t('manager_dashboard.settings.modes.dynamic_title')}</h3>
+                                        <p className="text-xs mt-1 leading-relaxed opacity-80">{t('manager_dashboard.settings.modes.dynamic_desc')}</p>
                                     </button>
                                 </div>
                             </div>
@@ -164,7 +164,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                     <div className="grid sm:grid-cols-2 gap-6 animate-in slide-in-from-top-2 fade-in">
                                         <div className="form-control">
                                             <label className="label">
-                                                <span className="label-text font-bold">Charges fixes mensuelles à couvrir</span>
+                                                <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.expenses_label')}</span>
                                             </label>
                                             <div className="join">
                                                 <input 
@@ -173,16 +173,16 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                     value={config.seuil_rentabilite_mensuel}
                                                     onChange={e => setConfig({...config, seuil_rentabilite_mensuel: normalizeNumberInput(e.target.value)})}
                                                 />
-                                                <span className="btn join-item pointer-events-none bg-base-200 border-base-200">FCFA</span>
+                                                <span className="btn join-item pointer-events-none bg-base-200 border-base-200">{t('common.currency_symbol', 'F')}</span>
                                             </div>
                                             <label className="label">
-                                                <span className="label-text-alt text-base-content/60">Servira à déduire l'objectif de Marge Brute quotidien.</span>
+                                                <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.fixed.expenses_help')}</span>
                                             </label>
                                         </div>
 
                                         <div className="form-control">
                                             <label className="label">
-                                                <span className="label-text font-bold">Jours d'ouverture / sem.</span>
+                                                <span className="label-text font-bold">{t('manager_dashboard.settings.fixed.days_per_week')}</span>
                                             </label>
                                             <select 
                                                 className="select select-bordered w-full bg-base-100"
@@ -190,7 +190,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                                 onChange={e => setConfig({...config, jours_ouverts_semaine: normalizeNumberInput(e.target.value)})}
                                             >
                                                 {[1,2,3,4,5,6,7].map(d => (
-                                                    <option key={d} value={d}>{d} jour(s)</option>
+                                                    <option key={d} value={d}>{t('manager_dashboard.settings.fixed.days_count', { count: d })}</option>
                                                 ))}
                                             </select>
                                         </div>
@@ -200,7 +200,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                 {config.mode === 'DYNAMIQUE' && (
                                     <div className="form-control max-w-xs animate-in slide-in-from-top-2 fade-in">
                                         <label className="label">
-                                            <span className="label-text font-bold">Pourcentage de croissance ciblé</span>
+                                            <span className="label-text font-bold">{t('manager_dashboard.settings.dynamic.growth_label')}</span>
                                         </label>
                                         <div className="join">
                                             <input 
@@ -213,7 +213,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                             <span className="btn join-item pointer-events-none bg-base-200 border-base-200">%</span>
                                         </div>
                                         <label className="label">
-                                            <span className="label-text-alt text-base-content/60">Ajouté aux résultats de la période équivalente précédente.</span>
+                                            <span className="label-text-alt text-base-content/60">{t('manager_dashboard.settings.dynamic.growth_help')}</span>
                                         </label>
                                     </div>
                                 )}
@@ -221,7 +221,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                                 {config.mode === 'MANUEL' && (
                                     <div className="p-4 bg-info/10 text-info rounded-xl text-sm leading-relaxed flex items-start gap-3 animate-in slide-in-from-top-2 fade-in">
                                         <Hand className="w-5 h-5 shrink-0 mt-0.5" />
-                                        <p>En mode manuel, le système ne générera aucun objectif automatiquement. Vous devrez continuer à utiliser le bouton "Fixer un Objectif" pour remplir les valeurs.</p>
+                                        <p>{t('manager_dashboard.settings.modes.manual_notice')}</p>
                                     </div>
                                 )}
                             </div>
@@ -236,7 +236,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                         className="btn btn-ghost rounded-xl font-bold"
                         disabled={mutation.isPending}
                     >
-                        Annuler
+                        {t('common.cancel')}
                     </button>
                     <button 
                         onClick={handleSave}
@@ -248,7 +248,7 @@ export function ObjectivesSettings({ isOpen, onClose }: Props) {
                         ) : (
                             <>
                                 <Save className="w-4 h-4" />
-                                Enregistrer
+                                {t('common.save')}
                             </>
                         )}
                     </button>

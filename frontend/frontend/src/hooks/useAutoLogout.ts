@@ -11,7 +11,7 @@ const EVENTS = [
     'pointerdown'
 ];
 
-const LAST_ACTIVITY_KEY = 'lastActivityTime';
+export const LAST_ACTIVITY_KEY = 'lastActivityTime';
 const CHECK_INTERVAL = 30000; // 30 seconds
 
 export function useAutoLogout() {

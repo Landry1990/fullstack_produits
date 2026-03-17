@@ -16,7 +16,7 @@ import { Wallet, DollarSign } from 'lucide-react';
 import { normalizeNumberInput, formatCurrency } from '../utils/formatters';
 
 export default function Creances() {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['creances', 'common']);
     const data = useCreancesData();
     
     const apiBaseUrl = useMemo(() => {
@@ -55,10 +55,10 @@ export default function Creances() {
                                 </div>
                                 <div>
                                     <h1 className="text-2xl font-black text-base-content tracking-tight">
-                                        {t('creances.title')}
+                                        {t('creances:title')}
                                     </h1>
                                     <p className="text-xs font-bold text-base-content/40 uppercase tracking-widest mt-0.5">
-                                        {t('creances.subtitle')}
+                                        {t('creances:subtitle')}
                                     </p>
                                 </div>
                             </div>
@@ -68,12 +68,12 @@ export default function Creances() {
                         {data.filters.selectedClient && data.selectedIds.length > 0 && !data.filters.showHistory && (
                             <div className="flex items-center gap-4 animate-in fade-in zoom-in duration-300">
                                 <div className="flex flex-col items-end">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Sélection</span>
-                                    <span className="text-sm font-black text-primary">{data.selectedIds.length} factures</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('creances:selection')}</span>
+                                    <span className="text-sm font-black text-primary">{t('creances:invoices_count', { count: data.selectedIds.length })}</span>
                                 </div>
                                 <div className="h-8 w-px bg-base-200"></div>
                                 <div className="flex flex-col items-end mr-2">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Total dû</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('creances:total_due')}</span>
                                     <span className="text-sm font-black text-base-content">{formatCurrency(Math.round(bulkTotalAmount))} F</span>
                                 </div>
                                 <button 
@@ -81,7 +81,7 @@ export default function Creances() {
                                     className="btn btn-primary btn-sm px-6 font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
                                 >
                                     <DollarSign className="w-4 h-4 mr-2" />
-                                    Payer la sélection
+                                    {t('creances:pay_selection')}
                                 </button>
                             </div>
                         )}

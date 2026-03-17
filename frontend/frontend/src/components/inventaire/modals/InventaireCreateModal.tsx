@@ -22,7 +22,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
     onConfirm,
     isSaving 
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common', 'sidebar']);
     const [action, setAction] = useState<'VERIFY' | 'ENTRY'>('VERIFY');
     const [stockType, setStockType] = useState<'GLOBAL' | 'RAYON' | 'RESERVE'>('RAYON');
     
@@ -56,8 +56,8 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                         <ClipboardIcon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                        <h3 className="font-bold text-xl text-base-content">{t('stock.inventaire.create.title')}</h3>
-                        <p className="text-sm text-base-content/60 mt-0.5">{t('stock.inventaire.subtitle')}</p>
+                        <h3 className="font-bold text-xl text-base-content">{t('inventaire.create.title')}</h3>
+                        <p className="text-sm text-base-content/60 mt-0.5">{t('inventaire.subtitle')}</p>
                     </div>
                 </div>
                 
@@ -65,7 +65,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                     {/* Action Selection */}
                     <div className="space-y-3">
                         <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">
-                            {t('stock.inventaire.create.action_title')}
+                            {t('inventaire.create.action_title')}
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <label className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group ${action === 'VERIFY' ? 'border-primary bg-primary/5 shadow-inner' : 'border-base-200 hover:border-base-300 bg-base-50'}`}>
@@ -78,8 +78,8 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <div className={`font-bold text-sm ${action === 'VERIFY' ? 'text-primary' : 'text-base-content'}`}>{t('stock.inventaire.create.action_verify')}</div>
-                                    <div className="text-[11px] opacity-60 leading-tight mt-1">{t('stock.inventaire.create.action_verify_desc')}</div>
+                                    <div className={`font-bold text-sm ${action === 'VERIFY' ? 'text-primary' : 'text-base-content'}`}>{t('inventaire.create.action_verify')}</div>
+                                    <div className="text-[11px] opacity-60 leading-tight mt-1">{t('inventaire.create.action_verify_desc')}</div>
                                 </div>
                                 <Settings2 className={`h-5 w-5 ml-auto opacity-10 group-hover:opacity-20 transition-opacity ${action === 'VERIFY' ? 'text-primary opacity-20' : ''}`} />
                             </label>
@@ -94,8 +94,8 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <div className={`font-bold text-sm ${action === 'ENTRY' ? 'text-primary' : 'text-base-content'}`}>{t('stock.inventaire.create.action_entry')}</div>
-                                    <div className="text-[11px] opacity-60 leading-tight mt-1">{t('stock.inventaire.create.action_entry_desc')}</div>
+                                    <div className={`font-bold text-sm ${action === 'ENTRY' ? 'text-primary' : 'text-base-content'}`}>{t('inventaire.create.action_entry')}</div>
+                                    <div className="text-[11px] opacity-60 leading-tight mt-1">{t('inventaire.create.action_entry_desc')}</div>
                                 </div>
                                 <Edit3 className={`h-5 w-5 ml-auto opacity-10 group-hover:opacity-20 transition-opacity ${action === 'ENTRY' ? 'text-primary opacity-20' : ''}`} />
                             </label>
@@ -105,25 +105,25 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                     {/* Stock Type Selection */}
                     <div className="space-y-3">
                         <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest pl-1">
-                            {t('stock.inventaire.create.stock_type_title')}
+                            {t('inventaire.create.stock_type_title')}
                         </span>
                         <div className="grid grid-cols-3 gap-3">
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'GLOBAL' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 opacity-70 hover:opacity-100'}`}>
                                 <Archive className={`h-5 w-5 mb-2 ${stockType === 'GLOBAL' ? 'text-primary' : 'text-base-content/40'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'GLOBAL'} onChange={() => setStockType('GLOBAL')} />
-                                <span className="text-xs font-bold text-center">{t('stock.inventaire.create.stock_global')}</span>
+                                <span className="text-xs font-bold text-center">{t('inventaire.create.stock_global')}</span>
                             </label>
                             
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RAYON' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 opacity-70 hover:opacity-100'}`}>
                                 <Store className={`h-5 w-5 mb-2 ${stockType === 'RAYON' ? 'text-primary' : 'text-base-content/40'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'RAYON'} onChange={() => setStockType('RAYON')} />
-                                <span className="text-xs font-bold text-center">{t('stock.inventaire.create.stock_rayon')}</span>
+                                <span className="text-xs font-bold text-center">{t('inventaire.create.stock_rayon')}</span>
                             </label>
                             
                             <label className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${stockType === 'RESERVE' ? 'border-primary bg-primary/5' : 'border-base-200 bg-base-50 opacity-70 hover:opacity-100'}`}>
                                 <Warehouse className={`h-5 w-5 mb-2 ${stockType === 'RESERVE' ? 'text-primary' : 'text-base-content/40'}`} />
                                 <input type="radio" className="hidden" checked={stockType === 'RESERVE'} onChange={() => setStockType('RESERVE')} />
-                                <span className="text-xs font-bold text-center">{t('stock.inventaire.create.stock_reserve')}</span>
+                                <span className="text-xs font-bold text-center">{t('inventaire.create.stock_reserve')}</span>
                             </label>
                         </div>
                     </div>
@@ -132,7 +132,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                     {action === 'VERIFY' && (
                         <div className="space-y-3 bg-base-50 p-4 rounded-xl border border-base-200 animate-in slide-in-from-top-2 duration-300">
                              <span className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest block">
-                                {t('stock.inventaire.create.perimeter_title')}
+                                {t('inventaire.create.perimeter_title')}
                              </span>
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                                 <div className="form-control w-full">
@@ -142,7 +142,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         value={rayonId || ''}
                                         onChange={(e) => setRayonId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
-                                        <option value="">{t('stock.inventaire.create.rayon_all')}</option>
+                                        <option value="">{t('inventaire.create.rayon_all')}</option>
                                         {rayons?.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                                     </select>
                                 </div>
@@ -153,7 +153,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         value={groupeId || ''}
                                         onChange={(e) => setGroupeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
-                                        <option value="">{t('stock.inventaire.create.groupe_all')}</option>
+                                        <option value="">{t('inventaire.create.groupe_all')}</option>
                                         {groupes?.map((g: any) => <option key={g.id} value={g.id}>{g.nom}</option>)}
                                     </select>
                                 </div>
@@ -164,7 +164,7 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
                                         value={formeId || ''}
                                         onChange={(e) => setFormeId(e.target.value ? parseInt(e.target.value) : undefined)}
                                     >
-                                        <option value="">{t('stock.inventaire.create.forme_all')}</option>
+                                        <option value="">{t('inventaire.create.forme_all')}</option>
                                         {formes?.map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
                                     </select>
                                 </div>
@@ -174,11 +174,11 @@ const InventaireCreateModal: React.FC<InventaireCreateModalProps> = ({
 
                     <div className="flex gap-3 pt-4 border-t border-base-200">
                         <button type="button" className="btn btn-ghost rounded-xl flex-1" onClick={onClose} disabled={isSaving}>
-                            {t('common.cancel')}
+                            {t('common:cancel')}
                         </button>
                         <button type="submit" className="btn btn-primary rounded-xl flex-[2] shadow-lg shadow-primary/20 gap-2" disabled={isSaving}>
                             {isSaving ? <span className="loading loading-spinner loading-sm"></span> : <CheckCircle2 className="h-5 w-5" />}
-                            {t('common.confirm')}
+                            {t('common:confirm')}
                         </button>
                     </div>
                 </form>

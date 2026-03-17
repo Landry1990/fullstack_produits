@@ -1,0 +1,106 @@
+{
+    "title": "Gestion des Clients",
+    "actions": {
+        "create": "Nouveau Client",
+        "edit": "Modifier Client",
+        "delete": "Supprimer Client",
+        "bulk_delete": "Supprimer {{count}} client(s)"
+    },
+    "filters": {
+        "search_placeholder": "Rechercher par nom, téléphone, matricule...",
+        "show_inactive": "Afficher inactifs",
+        "hide_inactive": "Masquer inactifs"
+    },
+    "fields": {
+        "name": "Nom Complet",
+        "phone": "Téléphone",
+        "email": "Email",
+        "type": "Type de Client",
+        "address": "Adresse",
+        "status": "Statut"
+    },
+    "types": {
+        "individual": "Particulier",
+        "professional": "Professionnel",
+        "pro_short": "Pro",
+        "part_short": "Part"
+    },
+    "sections": {
+        "general_info": "Informations Générales",
+        "contact": "Coordonnées",
+        "finance": "Conditions Financières",
+        "programs": "Programmes & Avantages",
+        "purchase_history": "Historique d'Achats"
+    },
+    "finance": {
+        "auto_discount": "Remise Automatique",
+        "credit_limit": "Plafond de Crédit",
+        "coverage": "Taux de Couverture",
+        "current_debt": "Dette Actuelle",
+        "debt_usage": "Dette Actuelle / Plafond"
+    },
+    "beneficiaries": {
+        "title": "Bénéficiaires (Ayants Droit)",
+        "empty": "Aucun bénéficiaire enregistré",
+        "name_placeholder": "Nom du bénéficiaire",
+        "id_placeholder": "ID / Matricule",
+        "col_name": "Nom Complet",
+        "col_id": "Matricule"
+    },
+    "history": {
+        "total_visits": "Visites Totales",
+        "loyalty": "Points Fidélité",
+        "empty_title": "Aucun achat",
+        "empty_desc": "Ce client n'a pas encore effectué d'achats.",
+        "invoice_no": "Facture #{{no}}",
+        "visit_date": "Date de visite",
+        "quantity_short": "Qté",
+        "status_validee": "VALIDÉE"
+    },
+    "loyalty": {
+        "title": "Configuration Fidélité",
+        "subtitle": "Paramétrer le programme de fidélité",
+        "amount_per_point": "Montant d'achat pour 1 point (FCFA)",
+        "amount_per_point_hint": "Ex: 1000 = 1 point par tranche de 1000 F",
+        "manual_usage": "Usage Manuel",
+        "point_value": "Valeur d'un point (FCFA)",
+        "point_value_hint": "Si utilisé comme monnaie. Ex: 10 F",
+        "auto_reward": "Récompense Automatique",
+        "threshold": "Seuil (Points)",
+        "threshold_hint": "0 = Désactivé",
+        "discount": "Remise (%)",
+        "discount_hint": "Ex: 5.00 pour 5%"
+    },
+    "messages": {
+        "create_success": "Client créé avec succès",
+        "update_success": "Client mis à jour avec succès",
+        "delete_success": "Client supprimé avec succès",
+        "bulk_delete_success": "{{count}} clients supprimés",
+        "error_fetch": "Erreur lors du chargement des clients",
+        "error_save": "Erreur lors de l'enregistrement",
+        "error_delete": "Erreur lors de la suppression",
+        "error_bulk_delete": "Erreur lors de la suppression groupée",
+        "error_status": "Erreur lors du changement de statut",
+        "status_active": "Client réactivé",
+        "status_inactive": "Client masqué"
+    },
+    "modals": {
+        "delete_confirm": "Voulez-vous vraiment supprimer le client \"{{name}}\" ?",
+        "bulk_delete_confirm": "Supprimer {{count}} clients ?",
+        "select_client_hint": "Sélectionnez un client pour voir ses détails.",
+        "select_client_empty": "Sélectionnez un client",
+        "select_client_empty_desc": "Consultez les détails financiers, l'historique d'achat et gérez les bénéficiaires en un clic."
+    },
+    "status": {
+        "inactive": "INACTIF"
+    },
+    "sales_modal": {
+        "print_placeholder": "Entrez le nom pour l'impression...",
+        "print_hint": "Ce nom apparaîtra uniquement sur la facture imprimée"
+    },
+    "units": {
+        "pts": "pts",
+        "percent": "%",
+        "per_unit": "/ unité"
+    }
+}

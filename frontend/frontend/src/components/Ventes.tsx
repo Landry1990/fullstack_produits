@@ -18,7 +18,7 @@ import Pagination from './ui/Pagination';
 // Styles (if any specific, otherwise rely on tailwind)
 
 const Ventes: React.FC = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
     const { settings } = usePharmacySettings();
     
     // Hooks
@@ -60,10 +60,10 @@ const Ventes: React.FC = () => {
                     <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
                         <div className="p-6 border-b border-base-200">
                             <h1 className="text-2xl font-bold text-base-content tracking-tight">
-                                {t('sales.title')}
+                                {t('title')}
                             </h1>
                             <p className="text-base-content/60 text-sm mt-1">
-                                {t('sales.subtitle', {defaultValue: "Gérez vos ventes, factures et règlements"})}
+                                {t('subtitle')}
                             </p>
                         </div>
                         

@@ -1,0 +1,96 @@
+{
+    "dashboard": "Tableau de bord",
+    "manager_sidebar": "Tableau de Bord Manager",
+    "ventes": {
+        "title": "Ventes",
+        "consultation": "Consultation",
+        "historique": "Historique par Jour",
+        "journal": "Journal de Caisse",
+        "clotures": "Historique Clôtures",
+        "ordonnancier": "Ordonnancier",
+        "promotions": "Promotions",
+        "caisse_centralisee": "Caisse Centralisée"
+    },
+    "facturation": "Facturation",
+    "produits": "Produits",
+    "vitrine": "Ma Vitrine (Web)",
+    "commandes": {
+        "title": "Commandes",
+        "local_title": "Commandes Grossistes (Locales)",
+        "direct_title": "Commandes Directes (Etranger)",
+        "new_current": "Nouvelle / En cours",
+        "history": "Historique Achats"
+    },
+    "commande": {
+        "local_title": "Commandes Grossistes (Locales)",
+        "direct_title": "Commandes Directes (Etranger)",
+        "new_current": "Nouvelle / En cours",
+        "history": "Historique Achats"
+    },
+    "fournisseurs": {
+        "title": "Fournisseurs",
+        "list": "Liste & Contacts",
+        "finance": "Finance & Paiements"
+    },
+    "clients": "Clients",
+    "creances": "Créances",
+    "stock": {
+        "title": "Stock",
+        "inventaire": {
+            "title": "Inventaire"
+        },
+        "journal": "Journal Ajustements",
+        "analyse": {
+            "title": "Analyse Stock"
+        },
+        "avoirs": "Réclamations",
+        "promis": "Promis",
+        "transformations": {
+            "title": "Transformations"
+        },
+        "perimes": {
+            "title": "Périmés"
+        },
+        "formes": "Formes",
+        "groupes": "Groupes",
+        "rayons": "Rayons",
+        "organisation": {
+            "title": "Organisation"
+        },
+        "etats_inventaire": {
+            "title": "États Inventaires"
+        },
+        "rapport_ug": {
+            "title": "Rapport Unités Gratuites (UG)"
+        }
+    },
+    "utilisateurs": "Utilisateurs",
+    "user_sessions_sidebar": "Suivi des Présences",
+    "audit": "Journal d'Audit",
+    "statistiques": {
+        "title": "Statistiques",
+        "rapports": "Centre de Rapports",
+        "abc": "Analyse ABC",
+        "produits": "Produits",
+        "fournisseurs": "Fournisseurs",
+        "mensuel": "Rapport Mensuel",
+        "finances": "Module Financier",
+        "classement_vendeurs": "Classement Vendeurs",
+        "analyse_temporelle": "Analyse Temporelle",
+        "guide": "Guide Financier 📖"
+    },
+    "parametres": {
+        "title": "Paramètres",
+        "facture": "Configuration Facture",
+        "pharmacie": "Informations Pharmacie",
+        "etiquettes": "Templates d'Étiquettes",
+        "imprimantes": "Configuration Imprimantes"
+    },
+    "maintenance": "Maintenance",
+    "logout": "Déconnexion",
+    "app_subtitle": "Gestion Professionnelle",
+    "roles": {
+        "pharmacist": "Pharmacien",
+        "user": "Utilisateur"
+    }
+}

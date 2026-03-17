@@ -20,7 +20,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
     facture,
     loading
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
     const { user } = useAuth();
     const [sendingReminder, setSendingReminder] = useState<number | null>(null);
 
@@ -70,7 +70,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     <div>
                         <div className="flex items-center gap-3 mb-1">
                             <h2 className="text-xl font-bold text-gray-900">
-                                {t('sales.invoice_details')}
+                                {t('invoice_details')}
                             </h2>
                             <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                                 facture.status === 'PAY'
@@ -97,9 +97,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                                 {facture.client_name || facture.client_name_override || t('common.passerby_client')}
                             </span>
                             <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                            <span className="flex items-center gap-1.5" title="Vendeur">
+                            <span className="flex items-center gap-1.5" title={t('table.operator')}>
                                 <User className="w-3.5 h-3.5 text-blue-500" />
-                                <span className="text-gray-500 text-xs">Vendeur :</span>
+                                <span className="text-gray-500 text-xs">{t('table.operator')} :</span>
                                 <span className="text-gray-600 font-medium">{facture.created_by_name || '-'}</span>
                             </span>
                             {facture.paiements && facture.paiements.length > 0 && facture.paiements[0].user_details ? (
@@ -164,17 +164,17 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     {loading ? (
                         <div className="flex justify-center items-center h-48 text-gray-500">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                            Chargement des détails...
+                            {t('common:loading')}
                         </div>
                     ) : (
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-gray-50 sticky top-0 z-10 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                                 <tr>
-                                    <th className="px-6 py-4 border-b border-gray-100">Produit</th>
-                                    <th className="px-6 py-4 text-center border-b border-gray-100">Qté</th>
-                                    <th className="px-6 py-4 text-right border-b border-gray-100">P.U. (Net)</th>
-                                    <th className="px-6 py-4 text-right border-b border-gray-100">Total</th>
-                                    <th className="px-6 py-4 text-center border-b border-gray-100">Actions</th>
+                                    <th className="px-6 py-4 border-b border-gray-100">{t('fields.product')}</th>
+                                    <th className="px-6 py-4 text-center border-b border-gray-100">{t('fields.quantity')}</th>
+                                    <th className="px-6 py-4 text-right border-b border-gray-100">{t('fields.unit_price')} (Net)</th>
+                                    <th className="px-6 py-4 text-right border-b border-gray-100">{t('fields.total')}</th>
+                                    <th className="px-6 py-4 text-center border-b border-gray-100">{t('table.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50 text-sm">
@@ -257,21 +257,21 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                     <div className="flex justify-end">
                         <div className="w-72 space-y-2">
                              <div className="flex justify-between text-sm text-gray-600">
-                                <span>Total Brut HT</span>
+                                <span>{t('fields.subtotal_ht')}</span>
                                 <span className="font-mono">{formatCurrency(totals.totalHt)} F</span>
                             </div>
                              <div className="flex justify-between text-sm text-gray-600">
-                                <span>Total TVA</span>
+                                <span>{t('fields.vat')}</span>
                                 <span className="font-mono">{formatCurrency(totals.totalTva)} F</span>
                             </div>
                             {totals.remise > 0 && (
                                  <div className="flex justify-between text-sm text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded border border-orange-100">
-                                    <span>Remise Facture</span>
+                                    <span>{t('table.discount')}</span>
                                     <span className="font-mono">-{formatCurrency(totals.remise)} F</span>
                                 </div>
                             )}
                              <div className="flex justify-between text-lg font-bold text-gray-900 border-t border-gray-200 pt-2 mt-2">
-                                <span>Total TTC</span>
+                                <span>{t('fields.total_ttc')}</span>
                                 <span className="font-mono text-blue-600">{formatCurrency(totals.totalTtc)} F</span>
                             </div>
                             

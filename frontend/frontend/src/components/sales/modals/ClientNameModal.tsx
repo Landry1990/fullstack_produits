@@ -16,7 +16,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
     onConfirm,
     facture
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common', 'clients']);
     const [clientNameInput, setClientNameInput] = useState('');
 
     useEffect(() => {
@@ -25,12 +25,12 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
             let initialName = '';
             if (facture.client_name_override) {
                 initialName = facture.client_name_override;
-            } else if (facture.client_name && facture.client_name !== 'Client de passage') {
+            } else if (facture.client_name && facture.client_name !== t('common.passerby_client')) {
                 initialName = facture.client_name;
             }
             setClientNameInput(initialName);
         }
-    }, [isOpen, facture]);
+    }, [isOpen, facture, t]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -49,7 +49,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                         </div>
                         <div>
                             <h3 className="font-semibold text-gray-900">
-                                {t('sales.modals.print_invoice')}
+                                {t('modals.print_invoice')}
                             </h3>
                             <div className="text-xs text-gray-500 font-mono">
                                 #{facture.numero_facture || facture.id}
@@ -64,7 +64,7 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                 <form onSubmit={handleSubmit} className="p-6">
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Nom du client (optionnel)
+                            {t('messages.prompt_client_name')}
                         </label>
                         <div className="relative">
                             <input
@@ -72,13 +72,13 @@ export const ClientNameModal: React.FC<ClientNameModalProps> = ({
                                 value={clientNameInput}
                                 onChange={(e) => setClientNameInput(e.target.value)}
                                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none"
-                                placeholder="Entrez le nom pour l'impression..."
+                                placeholder={t('clients:sales_modal.print_placeholder')}
                                 autoFocus
                             />
                         </div>
                         <p className="mt-2 text-xs text-gray-500 flex items-center gap-1">
                             <span className="inline-block w-1 h-1 bg-gray-400 rounded-full"></span>
-                            Ce nom apparaîtra uniquement sur la facture imprimée
+                            {t('clients:sales_modal.print_hint')}
                         </p>
                     </div>
 

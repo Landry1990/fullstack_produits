@@ -32,7 +32,7 @@ export default function ProductSearchSection({
   onQuantityShortcut,
   onCsvImport
 }: ProductSearchSectionProps) {
-  const { t } = useTranslation()
+  const { t } = useTranslation(['facturation', 'common'])
   const [searchMode, setSearchMode] = useState<'products' | 'packs'>('products')
   const [packResults, setPackResults] = useState<any[]>([])
   const [packLoading, setPackLoading] = useState(false)
@@ -88,7 +88,7 @@ export default function ProductSearchSection({
           }
       } catch (e) {
           console.error("Pack search error", e)
-          toast.error(t('facturation.search.error_search_packs'))
+          toast.error(t('facturation:search.error_search_packs'))
       } finally {
           setPackLoading(false)
       }
@@ -123,7 +123,7 @@ export default function ProductSearchSection({
     <div className="bg-white rounded-xl shadow-sm border border-base-200 flex-1 p-3 md:p-4 relative flex flex-col gap-2">
       <div className="flex justify-between items-center">
             <label className="label text-xs font-bold text-base-content/50 uppercase tracking-wider py-0">
-                {searchMode === 'products' ? t('facturation.search_label', { defaultValue: 'Rechercher un produit (F2)' }) : t('facturation.search.label_pack')}
+                {searchMode === 'products' ? t('facturation:search.label') : t('facturation:search.label_pack')}
             </label>
             
             {/* Tabs */}
@@ -132,13 +132,13 @@ export default function ProductSearchSection({
                     className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'products' ? 'bg-white shadow text-primary' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => { setSearchMode('products'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
-                    <Pill size={14} /> {t('facturation.search.tabs_products')}
+                    <Pill size={14} /> {t('facturation:search.tabs_products')}
                 </button>
                 <button 
                     className={`px-3 py-1 text-xs font-bold rounded-md flex items-center gap-1 transition-all ${searchMode === 'packs' ? 'bg-white shadow text-secondary' : 'text-gray-500 hover:text-gray-700'}`}
                     onClick={() => { setSearchMode('packs'); setSearchQuery(''); searchInputRef.current?.focus() }}
                 >
-                    <Package size={14} /> {t('facturation.search.tabs_packs')}
+                    <Package size={14} /> {t('facturation:search.tabs_packs')}
                 </button>
                 
                 {/* File Upload for CSV */}
@@ -161,7 +161,7 @@ export default function ProductSearchSection({
                         <label 
                             htmlFor="csv_import" 
                             className="btn btn-xs btn-ghost text-gray-500 hover:text-primary hover:bg-white rounded-md flex items-center gap-1 cursor-pointer"
-                            title="Importer un fichier CSV (CIP, Quantité)"
+                            title={t('facturation:search.csv_import_tooltip')}
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
                             CSV
@@ -175,7 +175,7 @@ export default function ProductSearchSection({
         <input
           ref={searchInputRef}
           type="text"
-          placeholder={searchMode === 'products' ? (placeholder || t('facturation.search_placeholder')) : t('facturation.search.placeholder_pack')}
+          placeholder={searchMode === 'products' ? (placeholder || t('facturation:search.placeholder')) : t('facturation:search.placeholder_pack')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={onInternalKeyDown}
@@ -192,7 +192,7 @@ export default function ProductSearchSection({
           {searchMode === 'products' && (
              filteredProduits.length === 0 ? (
                 <div className="text-center py-8 text-base-content/40 text-sm">
-                {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation.search_min_chars', { defaultValue: 'Tapez au moins 2 caractères' }) : t('facturation.search_no_results', { defaultValue: 'Aucun produit trouvé' })}
+                {searchLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation:search.min_chars') : t('facturation:search.no_results')}
                 </div>
             ) : (
                 <div className="max-h-96 overflow-y-auto space-y-1 p-1">
@@ -218,7 +218,7 @@ export default function ProductSearchSection({
                         <div className="font-medium truncate text-sm">{produit.name}</div>
                         <div className="text-xs flex gap-3 mt-0.5 opacity-80">
                         <span className={(produit.stock ?? 0) <= 0 ? 'text-error font-bold' : ''}>
-                            Stock: {produit.stock}
+                            {t('facturation:search.stock_label')} {produit.stock}
                         </span>
                         <span>{produit.selling_price} F</span>
                         </div>
@@ -239,7 +239,7 @@ export default function ProductSearchSection({
           {searchMode === 'packs' && (
              packResults.length === 0 ? (
                 <div className="text-center py-8 text-base-content/40 text-sm">
-                {packLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation.search.placeholder_pack') : t('facturation.search.no_results_pack')}
+                {packLoading ? <span className="loading loading-spinner loading-sm"></span> : searchQuery.length < 2 ? t('facturation:search.placeholder_pack') : t('facturation:search.no_results_pack')}
                 </div>
             ) : (
                 <div className="max-h-96 overflow-y-auto space-y-1 p-1">
@@ -259,7 +259,7 @@ export default function ProductSearchSection({
                     <div className="flex-1 min-w-0">
                         <div className="font-bold text-secondary text-sm">{pack.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                            {pack.value} F • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation.search.products_count')}
+                            {pack.value} F • {pack.products_count || pack.pack_items?.length || '?'} {t('facturation:search.products_count')}
                         </div>
                     </div>
                      <button className="btn btn-ghost btn-sm btn-circle opacity-0 group-hover:opacity-100 text-secondary">

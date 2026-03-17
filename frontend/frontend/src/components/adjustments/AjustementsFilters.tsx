@@ -31,7 +31,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
     onExport,
     loading
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const hasFilters = searchQuery || dateStart || dateEnd || filterReasonType;
 
@@ -41,12 +41,12 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                 {/* Search */}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                        <Search className="w-3 h-3" /> {t('stock.ajustements.filters.search_label')}
+                        <Search className="w-3 h-3" /> {t('ajustements.filters.search_label')}
                     </label>
                     <div className="relative group">
-                        <input
+                    <input
                             type="text"
-                            placeholder={t('stock.ajustements.filters.search_placeholder')}
+                            placeholder={t('ajustements.filters.search_placeholder')}
                             value={searchQuery}
                             onChange={(e) => onSearchChange(e.target.value)}
                             className="input input-sm input-bordered w-full pl-9 focus:ring-2 focus:ring-primary/20 transition-all"
@@ -58,7 +58,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                 {/* Dates */}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                        <Calendar className="w-3 h-3" /> {t('stock.ajustements.filters.date_start')}
+                        <Calendar className="w-3 h-3" /> {t('ajustements.filters.date_start')}
                     </label>
                     <input
                         type="date"
@@ -70,7 +70,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
 
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                        <Calendar className="w-3 h-3" /> {t('stock.ajustements.filters.date_end')}
+                        <Calendar className="w-3 h-3" /> {t('ajustements.filters.date_end')}
                     </label>
                     <input
                         type="date"
@@ -83,22 +83,22 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                 {/* Motif */}
                 <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                        <Filter className="w-3 h-3" /> {t('stock.ajustements.filters.reason_label')}
+                        <Filter className="w-3 h-3" /> {t('ajustements.filters.reason_label')}
                     </label>
                     <select
                         value={filterReasonType}
                         onChange={(e) => onReasonTypeChange(e.target.value)}
                         className="select select-sm select-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                     >
-                        <option value="">{t('stock.ajustements.filters.all_reasons')}</option>
-                        <option value="INVENTAIRE">{t('stock.ajustements.filters.reasons.INVENTAIRE')}</option>
-                        <option value="CASSE">{t('stock.ajustements.filters.reasons.CASSE')}</option>
-                        <option value="VOL">{t('stock.ajustements.filters.reasons.VOL')}</option>
-                        <option value="CONFUSION">{t('stock.ajustements.filters.reasons.CONFUSION')}</option>
-                        <option value="ERR_ENTREE">{t('stock.ajustements.filters.reasons.ERR_ENTREE')}</option>
-                        <option value="AVARIE">{t('stock.ajustements.filters.reasons.AVARIE')}</option>
-                        <option value="USAGE_INT">{t('stock.ajustements.filters.reasons.USAGE_INT')}</option>
-                        <option value="PERIME">{t('stock.ajustements.filters.reasons.PERIME')}</option>
+                        <option value="">{t('ajustements.filters.all_reasons')}</option>
+                        <option value="INVENTAIRE">{t('ajustements.filters.reasons.INVENTAIRE')}</option>
+                        <option value="CASSE">{t('ajustements.filters.reasons.CASSE')}</option>
+                        <option value="VOL">{t('ajustements.filters.reasons.VOL')}</option>
+                        <option value="CONFUSION">{t('ajustements.filters.reasons.CONFUSION')}</option>
+                        <option value="ERR_ENTREE">{t('ajustements.filters.reasons.ERR_ENTREE')}</option>
+                        <option value="AVARIE">{t('ajustements.filters.reasons.AVARIE')}</option>
+                        <option value="USAGE_INT">{t('ajustements.filters.reasons.USAGE_INT')}</option>
+                        <option value="PERIME">{t('ajustements.filters.reasons.PERIME')}</option>
                     </select>
                 </div>
             </div>
@@ -109,7 +109,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     className={`btn btn-sm ${loading ? 'btn-disabled' : 'btn-primary'} gap-2 shadow-sm`}
                 >
                     {loading ? <span className="loading loading-spinner loading-xs"></span> : <RotateCcw className="w-4 h-4" />}
-                    {t('stock.ajustements.filters.refresh')}
+                    {t('ajustements.filters.refresh')}
                 </button>
                 <button 
                     onClick={onExport} 
@@ -117,7 +117,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                     disabled={loading}
                 >
                     <Search className="w-4 h-4" />
-                    {t('stock.ajustements.filters.export')}
+                    {t('ajustements.filters.export')}
                 </button>
                 {hasFilters && (
                     <button 
@@ -125,7 +125,7 @@ export const AjustementsFilters: React.FC<AjustementsFiltersProps> = ({
                         className="btn btn-sm btn-ghost text-error gap-2"
                     >
                         <RotateCcw className="w-4 h-4" />
-                        {t('stock.ajustements.filters.reset')}
+                        {t('ajustements.filters.reset')}
                     </button>
                 )}
             </div>

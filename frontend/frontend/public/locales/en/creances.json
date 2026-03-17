@@ -1,0 +1,111 @@
+{
+    "title": "Accounts Receivable Management",
+    "subtitle": "Track on-account sales - Professional clients",
+    "history_toggle": "View History",
+    "refresh": "Refresh",
+    "selection": "Selection",
+    "invoices_count": "{{count}} invoices",
+    "total_due": "Total due",
+    "pay_selection": "Pay selection",
+    "loading": "Loading data...",
+    "filters": {
+        "client_label": "Client",
+        "client_placeholder": "All clients",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "search": "Search",
+        "reset": "Reset",
+        "back_to_list": "Back to list"
+    },
+    "stats": {
+        "total_invoices": "Total Invoices",
+        "total_paid": "Total Paid",
+        "remaining": "Remaining to Pay",
+        "debtors": "Debtors"
+    },
+    "client_list": {
+        "client": "Client",
+        "nb_invoices": "Inv. Count",
+        "total_amount": "Total Amount",
+        "already_paid": "Already Paid",
+        "remaining_due": "Remaining Due",
+        "actions": "Actions",
+        "empty": "No clients with debts in this period"
+    },
+    "invoice_list": {
+        "selected_count": "{{count}} invoice(s) selected",
+        "pay_selection": "Settled selection",
+        "date": "Date",
+        "invoice_number": "Invoice No.",
+        "beneficiary": "Beneficiary",
+        "total": "Total",
+        "paid": "Paid",
+        "remaining": "Rem.",
+        "status": "Status",
+        "actions": "Actions",
+        "empty": "No invoices found for this client",
+        "paid_badge": "PAID",
+        "pending_badge": "PENDING",
+        "view_payments": "View payments",
+        "add_payment": "Add payment"
+    },
+    "print_statement": "Print Statement",
+    "client_label": "Client: {{name}}",
+    "payment_modal": {
+        "title": "💰 New Settlement",
+        "invoice_prefix": "Invoice",
+        "by_client": "By",
+        "remaining_balance": "Remaining balance:",
+        "payment_mode": "Payment Method",
+        "amount_to_pay": "Amount to pay (F)",
+        "pay_full": "Pay total",
+        "reference": "Reference (optional)",
+        "reference_placeholder": "Check No., transaction, ID...",
+        "cancel": "Cancel",
+        "validate_pay": "Validate & Pay",
+        "modes": {
+            "cash": "💵 Cash",
+            "om": "🟧 Orange Money",
+            "momo": "📱 Mobile Money",
+            "check": "📝 Check",
+            "card": "💳 Card",
+            "transfer": "🏦 Transfer",
+            "recouvrement": "💸 Third-Party Payer"
+        }
+    },
+    "details_modal": {
+        "title": "👁️ Payment History",
+        "invoice": "Invoice",
+        "issued_on": "Issued on",
+        "client_beneficiary": "Client / Beneficiary",
+        "no_beneficiary": "No beneficiary",
+        "financial_summary": "Financial Summary",
+        "total": "Total:",
+        "remaining": "Rem.:",
+        "payment_list": "List of payments",
+        "no_payments": "No payments recorded for this invoice.",
+        "headers": {
+            "date": "Date",
+            "mode": "Mode",
+            "reference": "Reference",
+            "amount": "Amount",
+            "actions": "Actions"
+        },
+        "print_receipt": "Print receipt",
+        "total_collected": "Total collected on this invoice",
+        "close": "Close",
+        "print_global_receipt": "Print Global Receipt"
+    },
+    "bulk_modal": {
+        "title": "💰 Bulk Settlement",
+        "selected_invoices": "{{count}} Selected Invoices",
+        "warning_text": "This action will settle the **remaining balance** of all selected invoices.",
+        "warning_subtext": "A cash entry will be created for each processed invoice.",
+        "payment_mode": "Payment Method",
+        "bulk_reference": "Bulk Reference (optional)",
+        "reference_placeholder": "Check No., transfer, lot...",
+        "supervisor_hint": "Supervisor validation will be required in the next step.",
+        "cancel": "Cancel",
+        "confirm_payment": "Confirm Settlement"
+    }
+}

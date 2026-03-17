@@ -23,17 +23,22 @@ export const normalizeNumberInput = (value: string | number, options?: { min?: n
     return parsedValue
 }
 
-export const formatPrice = (price: number, decimals: number = 0) => {
-    return new Intl.NumberFormat('fr-FR', {
+export const formatPrice = (price: number, decimals: number = 0, locale: string = 'fr-FR') => {
+    return new Intl.NumberFormat(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     }).format(price).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');
 }
 
-export const formatCurrency = formatPrice;
+export const formatCurrency = (amount: number, locale: string = 'fr-FR', symbol: string = 'F') => {
+    return new Intl.NumberFormat(locale, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(amount).replace(/\u00a0/g, ' ').replace(/\s/g, ' ') + ' ' + symbol;
+}
 
-export const formatNumber = (value: number, decimals: number = 0) => {
-    return new Intl.NumberFormat('fr-FR', {
+export const formatNumber = (value: number, decimals: number = 0, locale: string = 'fr-FR') => {
+    return new Intl.NumberFormat(locale, {
         minimumFractionDigits: decimals,
         maximumFractionDigits: decimals,
     }).format(value).replace(/\u00a0/g, ' ').replace(/\s/g, ' ');

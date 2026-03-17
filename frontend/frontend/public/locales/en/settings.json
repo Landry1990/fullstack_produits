@@ -1,0 +1,22 @@
+{
+    "title": "Settings",
+    "subtitle": "System and pharmacy configuration",
+    "sections": {
+        "pharmacy": "Pharmacy Info",
+        "system": "System",
+        "backups": "Backups",
+        "printing": "Printing"
+    },
+    "pharmacy": {
+        "name": "Pharmacy Name",
+        "address": "Address",
+        "phone": "Phone",
+        "email": "Email",
+        "logo": "Logo"
+    },
+    "system": {
+        "language": "Language",
+        "currency": "Currency",
+        "timezone": "Timezone"
+    }
+}

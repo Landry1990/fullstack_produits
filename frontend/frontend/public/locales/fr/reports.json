@@ -1,0 +1,121 @@
+{
+    "title": "Centre de Rapports",
+    "subtitle": "Sélectionnez une requête, configurez les paramètres et visualisez les résultats",
+    "queries_title": "Liste des Requêtes",
+    "execute": "Exécuter la requête",
+    "copy": "Copier (Excel)",
+    "params_title": "Paramètres",
+    "no_query_selected": "Aucune requête sélectionnée",
+    "select_query_prompt": "Sélectionnez une requête dans la liste de gauche pour commencer.",
+    "queries": {
+        "rapport_mensuel": {
+            "name": "Rapport Mensuel",
+            "description": "Chiffre d'affaires, marges, créances pour un mois donné"
+        },
+        "historique_client": {
+            "name": "Historique Client",
+            "description": "Tous les produits achetés par un client avec dates et quantités"
+        },
+        "ca_periode": {
+            "name": "CA par Période",
+            "description": "Chiffre d'affaires sur une période précise"
+        },
+        "alertes_stock": {
+            "name": "Alertes Stock",
+            "description": "Stock < Rotation Moyenne OU Stock <= Seuil Min"
+        },
+        "produits_perimes": {
+            "name": "Produits Périmés / Proches Péremption",
+            "description": "Produits périmés ou proches de la date de péremption"
+        },
+        "creances": {
+            "name": "Créances en Cours",
+            "description": "Factures avec un solde restant à payer"
+        },
+        "historique_ventes": {
+            "name": "Ventes par Tranche Horaire",
+            "description": "Produits vendus sur une période donnée"
+        },
+        "produits_non_vendus": {
+            "name": "Produits Non Vendus",
+            "description": "Produits sans aucune vente depuis X jours"
+        },
+        "stock_negatif": {
+            "name": "Stock Négatif",
+            "description": "Produits avec stock négatif ou faible, triés par quantité"
+        },
+        "valeur_stock_journalier": {
+            "name": "Valeur de Stock Journalière",
+            "description": "Reconstitution historique de la valeur de stock, achats et ventes"
+        },
+        "produits_tva": {
+            "name": "Produits sous TVA",
+            "description": "Liste des produits assujettis à la TVA (> 0%)"
+        },
+        "stocks_morts": {
+            "name": "Stocks Morts (Dormants)",
+            "description": "Produits à forte valeur (argent dormant) sans vente"
+        },
+        "alertes_annulations": {
+            "name": "Alertes Annulations Suspectes",
+            "description": "Utilisateurs avec un taux d'annulation élevé (> seuil)"
+        },
+        "stats_vendeurs": {
+            "name": "Stats Vendeurs",
+            "description": "Classement des vendeurs par CA (hors caissiers)"
+        },
+        "produits_vendus_tva": {
+            "name": "Produits vendus (TVA)",
+            "description": "Produits avec TVA > 0 vendus sur la période"
+        },
+        "meilleurs_clients": {
+            "name": "Meilleurs Clients",
+            "description": "Classement des clients par CA et nombre de passages"
+        },
+        "recap_paiements_fournisseurs": {
+            "name": "Récap Paiements Fournisseurs",
+            "description": "Somme des paiements par date et fournisseur"
+        },
+        "produits_annules": {
+            "name": "Produits Annulés",
+            "description": "Liste des produits de factures annulées avec quantités et lots"
+        }
+    },
+    "params": {
+        "mois": "Mois",
+        "facture__client": "Client",
+        "date_debut": "Date de début",
+        "date_fin": "Date de fin",
+        "expiring_within_days": "Jours avant péremption",
+        "jours_sans_vente": "Jours sans vente",
+        "stock_lt": "Stock inférieur à",
+        "ordering": "Tri",
+        "tva_gt": "TVA supérieure à (%)",
+        "min_value": "Valeur Min (F)",
+        "months": "Mois sans vente",
+        "threshold": "Seuil annulation",
+        "days": "Sur les derniers (jours)",
+        "client_id": "Client",
+        "seuil": "Seuil (%)",
+        "nb_jours": "Nombre de jours",
+        "exclude_zero": "Exclure les stocks 0"
+    },
+    "results": {
+        "title": "Résultats",
+        "execute_prompt": "Cliquez sur \"Exécuter\" pour voir les résultats",
+        "empty": "Aucun résultat trouvé",
+        "copy_success": "{{count}} éléments copiés ! Collez-les dans Excel.",
+        "copy_error": "Erreur lors de la copie",
+        "copy_no_result": "Rien à copier",
+        "execute_success": "Requête \"{{name}}\" exécutée",
+        "error_execution": "Erreur lors de l'exécution de la requête",
+        "export_no_result": "Rien à exporter",
+        "export_unsupported": "Format non supporté pour l'export",
+        "export_success": "Export téléchargé : {{filename}}",
+        "sources": {
+            "CAISSE_CENTRALE": "Caisse Centrale",
+            "VENTES": "Ventes",
+            "VENTES_MODIF": "Ventes (Modif)"
+        }
+    }
+}

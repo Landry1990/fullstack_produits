@@ -46,7 +46,7 @@ const emptyForm: Partial<Client> = {
 };
 
 export default function Clients() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['clients', 'common']);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -98,7 +98,7 @@ export default function Clients() {
         setTotalCount(data.length);
       }
     } catch (err) {
-      toast.error(t('clients.messages.error_fetch'));
+      toast.error(t('clients:messages.error_fetch'));
     } finally {
       setLoading(false);
     }
@@ -139,15 +139,15 @@ export default function Clients() {
     try {
         if (formMode === 'create') {
             await clientService.create(formData);
-            toast.success(t('clients.messages.create_success'));
+            toast.success(t('clients:messages.create_success'));
         } else if (formData.id) {
             await clientService.update(formData.id, formData);
-            toast.success(t('clients.messages.update_success'));
+            toast.success(t('clients:messages.update_success'));
         }
         setIsFormModalOpen(false);
         fetchClients();
     } catch (err: any) {
-        toast.error(err.response?.data?.message || t('clients.messages.error_save'));
+        toast.error(err.response?.data?.message || t('clients:messages.error_save'));
     } finally {
         setIsSubmitting(false);
     }
@@ -155,14 +155,14 @@ export default function Clients() {
 
   const handleDelete = async () => {
     if (!selectedClient) return;
-    if (window.confirm(t('clients.modals.delete_confirm', { name: selectedClient.name }))) {
+    if (window.confirm(t('clients:modals.delete_confirm', { name: selectedClient.name }))) {
         try {
             await clientService.delete(selectedClient.id);
-            toast.success(t('clients.messages.delete_success'));
+            toast.success(t('clients:messages.delete_success'));
             setSelectedClient(null);
             fetchClients();
         } catch (err) {
-            toast.error(t('clients.messages.error_delete'));
+            toast.error(t('clients:messages.error_delete'));
         }
     }
   };
@@ -171,24 +171,24 @@ export default function Clients() {
     if (!selectedClient) return;
     try {
         const res = await clientService.toggleActive(selectedClient.id);
-        toast.success(res.is_active ? 'Client réactivé' : 'Client masqué');
+        toast.success(res.is_active ? t('clients:messages.status_active') : t('clients:messages.status_inactive'));
         fetchClients();
         setSelectedClient({...selectedClient, is_active: res.is_active});
     } catch (err) {
-        toast.error('Erreur de statut');
+        toast.error(t('clients:messages.error_status'));
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (window.confirm(`Supprimer ${selectedIds.length} clients ?`)) {
+    if (window.confirm(t('clients:modals.bulk_delete_confirm', { count: selectedIds.length }))) {
         try {
             await clientService.bulkDelete(selectedIds);
-            toast.success(`${selectedIds.length} clients supprimés`);
+            toast.success(t('clients:messages.bulk_delete_success', { count: selectedIds.length }));
             setSelectedIds([]);
             fetchClients();
         } catch (err) {
-            toast.error('Erreur lors de la suppression groupée');
+            toast.error(t('clients:messages.error_bulk_delete'));
         }
     }
   };
@@ -207,7 +207,7 @@ export default function Clients() {
                   <li>
                     <a onClick={handleBulkDelete} className="text-error hover:bg-error/10 font-bold">
                       <Trash2 className="w-4 h-4" />
-                      Supprimer {selectedIds.length} client(s)
+                      {t('clients:actions.bulk_delete', { count: selectedIds.length })}
                     </a>
                   </li>
                 }
@@ -220,14 +220,14 @@ export default function Clients() {
                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
                     <Users className="w-5 h-5" />
                  </div>
-                 <h2 className="font-black text-lg tracking-tight">{t('clients.title')}</h2>
+                 <h2 className="font-black text-lg tracking-tight">{t('clients:title')}</h2>
                </div>
                <div className="flex gap-1">
                  <ActionIcon 
                     icon={showInactive ? Eye : EyeOff}
                     onClick={() => setShowInactive(!showInactive)}
                     variant={showInactive ? "primary" : "ghost"}
-                    title={showInactive ? "Masquer inactifs" : "Afficher inactifs"}
+                    title={showInactive ? t('clients:filters.hide_inactive') : t('clients:filters.show_inactive')}
                  />
                  <ActionIcon 
                     icon={Settings} 
@@ -236,7 +236,7 @@ export default function Clients() {
                  />
                  <button className="btn btn-sm btn-primary gap-2 h-9 px-4 rounded-xl shadow-lg shadow-primary/20" onClick={handleOpenCreate}>
                    <UserPlus className="w-4 h-4" />
-                   <span className="font-bold">{t('clients.actions.create')}</span>
+                   <span className="font-bold">{t('clients:actions.create')}</span>
                  </button>
                </div>
              </div>
@@ -246,7 +246,7 @@ export default function Clients() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/30" />
               <input 
                 className="input input-sm input-bordered w-full pl-10 h-10 rounded-xl bg-base-200/30 border-transparent focus:bg-base-100 transition-all font-bold"
-                placeholder={t('clients.filters.search_placeholder')}
+                placeholder={t('clients:filters.search_placeholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -272,7 +272,7 @@ export default function Clients() {
                           <div className="flex justify-between items-center">
                              <p className={`font-black text-sm truncate ${selectedClient?.id === client.id ? 'text-primary' : ''}`}>{client.name}</p>
                              <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${client.client_type === 'PROFESSIONNEL' ? 'bg-secondary/10 text-secondary' : 'bg-base-200 text-base-content/40'}`}>
-                                {client.client_type === 'PROFESSIONNEL' ? 'Pro' : 'Part'}
+                                {client.client_type === 'PROFESSIONNEL' ? t('clients:types.pro_short') : t('clients:types.part_short')}
                              </span>
                           </div>
                           <div className="flex items-center gap-1.5 text-[10px] text-base-content/40 font-mono font-bold">
@@ -308,7 +308,7 @@ export default function Clients() {
                   <div>
                      <h2 className="text-2xl font-black tracking-tighter flex items-center gap-2">
                        {selectedClient.name}
-                       {selectedClient.is_active === false && <span className="badge badge-warning text-[10px] font-black italic">INACTIF</span>}
+                       {selectedClient.is_active === false && <span className="badge badge-warning text-[10px] font-black italic">{t('clients:status.inactive')}</span>}
                      </h2>
                      <p className="flex items-center gap-3 text-xs font-bold text-base-content/40 mt-0.5">
                         <span className="flex items-center gap-1"><Phone className="w-3 h-3" /> {selectedClient.phone || '--'}</span>
@@ -318,16 +318,16 @@ export default function Clients() {
                </div>
                <div className="flex items-center gap-2">
                   <button className="btn btn-sm btn-ghost gap-2 h-10 px-4 rounded-xl text-secondary font-black hover:bg-secondary/10" onClick={() => handleOpenEdit(selectedClient)}>
-                    <Edit className="w-4 h-4" /> {t('common.edit')}
+                    <Edit className="w-4 h-4" /> {t('common:edit')}
                   </button>
                   <button className="btn btn-sm btn-ghost gap-2 h-10 px-4 rounded-xl text-error font-black hover:bg-error/10" onClick={handleDelete}>
-                    <Trash2 className="w-4 h-4" /> {t('common.delete')}
+                    <Trash2 className="w-4 h-4" /> {t('common:delete')}
                   </button>
                   <ActionIcon 
                     icon={isHistoryOpen ? HistoryIcon : ShoppingBag}
                     onClick={() => setIsHistoryOpen(true)}
                     variant="primary"
-                    title="Historique d'achat"
+                    title={t('clients:sections.purchase_history')}
                   />
                   <ActionIcon 
                     icon={selectedClient.is_active ? EyeOff : Eye}
@@ -343,21 +343,21 @@ export default function Clients() {
                   <div className="card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
                      <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
                         <div className="p-1.5 bg-primary/10 text-primary rounded-lg"><User className="w-4 h-4" /></div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients.sections.contact')}</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.contact')}</h3>
                      </div>
                      <div className="p-6 space-y-6">
                         <div className="flex flex-col gap-1.5">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-base-content/20">{t('clients.fields.address')}</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest text-base-content/20">{t('clients:fields.address')}</span>
                            <div className="flex items-start gap-2.5 text-sm font-black">
                               <MapPin className="w-4 h-4 text-primary mt-0.5" />
-                              <span className="leading-snug">{selectedClient.address || t('common.no_address')}</span>
+                              <span className="leading-snug">{selectedClient.address || t('common:no_address')}</span>
                            </div>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                           <span className="text-[10px] font-black uppercase tracking-widest text-base-content/20">{t('clients.fields.type')}</span>
+                           <span className="text-[10px] font-black uppercase tracking-widest text-base-content/20">{t('clients:fields.type')}</span>
                            <div className="text-sm font-black flex items-center gap-2">
                               <Activity className="w-4 h-4 text-secondary" />
-                              {selectedClient.client_type}
+                              {selectedClient.client_type === 'PROFESSIONNEL' ? t('clients:types.professional') : t('clients:types.individual')}
                            </div>
                         </div>
                      </div>
@@ -367,21 +367,21 @@ export default function Clients() {
                   <div className="card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
                      <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
                         <div className="p-1.5 bg-secondary/10 text-secondary rounded-lg"><ShieldCheck className="w-4 h-4" /></div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients.sections.programs')}</h3>
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:sections.programs')}</h3>
                      </div>
                      <div className="p-6 grid grid-cols-2 gap-4">
                         <div className="p-4 bg-secondary/5 border border-secondary/10 rounded-2xl flex flex-col gap-1">
-                           <span className="text-[9px] font-black uppercase tracking-widest text-secondary/40">Fidélité</span>
-                           <div className="text-xl font-black text-secondary">0 pts</div>
+                           <span className="text-[9px] font-black uppercase tracking-widest text-secondary/40">{t('clients:history.loyalty')}</span>
+                           <div className="text-xl font-black text-secondary">0 {t('clients:units.pts')}</div>
                         </div>
                         <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex flex-col gap-1">
-                           <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">Remise</span>
-                           <div className="text-xl font-black text-primary">{selectedClient.remise_automatique || 0}%</div>
+                           <span className="text-[9px] font-black uppercase tracking-widest text-primary/40">{t('clients:finance.auto_discount')}</span>
+                           <div className="text-xl font-black text-primary">{selectedClient.remise_automatique || 0}{t('clients:units.percent')}</div>
                         </div>
                         {selectedClient.client_type === 'PROFESSIONNEL' && (
                           <div className="col-span-2 p-4 bg-warning/5 border border-warning/10 rounded-2xl flex justify-between items-center">
                              <div>
-                                <span className="text-[9px] font-black uppercase tracking-widest text-warning/40">Dette Actuelle / Plafond</span>
+                                <span className="text-[9px] font-black uppercase tracking-widest text-warning/40">{t('clients:finance.debt_usage')}</span>
                                 <div className="text-lg font-black text-base-content">
                                   {formatCurrency(normalizeNumberInput(selectedClient.current_debt || '0'))} / {formatCurrency(normalizeNumberInput(selectedClient.plafond || '0'))}
                                 </div>
@@ -399,14 +399,14 @@ export default function Clients() {
                     <div className="lg:col-span-2 card bg-base-100 border border-base-200 rounded-3xl shadow-sm overflow-hidden">
                        <div className="p-4 bg-base-50/50 border-b border-base-200 flex items-center gap-2">
                           <Users className="w-4 h-4 text-info" />
-                          <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">Bénéficiaires (Ayants Droit)</h3>
+                          <h3 className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('clients:beneficiaries.title')}</h3>
                        </div>
                        <div className="overflow-x-auto">
                           <table className="table table-xs w-full">
                              <thead className="bg-base-50">
                                 <tr>
-                                   <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest">Nom Complet</th>
-                                   <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest text-right">Matricule</th>
+                                   <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest">{t('clients:beneficiaries.col_name')}</th>
+                                   <th className="py-3 px-6 text-[9px] uppercase font-black tracking-widest text-right">{t('clients:beneficiaries.col_id')}</th>
                                 </tr>
                              </thead>
                              <tbody>
@@ -418,7 +418,7 @@ export default function Clients() {
                                     </tr>
                                   ))
                                 ) : (
-                                  <tr><td colSpan={2} className="py-12 text-center text-xs font-black opacity-30 uppercase tracking-widest">{t('clients.beneficiaries.empty')}</td></tr>
+                                  <tr><td colSpan={2} className="py-12 text-center text-xs font-black opacity-30 uppercase tracking-widest">{t('clients:beneficiaries.empty')}</td></tr>
                                 )}
                              </tbody>
                           </table>
@@ -432,8 +432,8 @@ export default function Clients() {
           <div className="flex-1 flex flex-col items-center justify-center gap-6 opacity-30 grayscale p-12 text-center">
              <Users className="w-32 h-32 stroke-[1px]" />
              <div>
-                <h3 className="text-2xl font-black italic tracking-tighter">Sélectionnez un client</h3>
-                <p className="text-sm font-bold mt-2 max-w-sm mx-auto">Consultez les détails financiers, l'historique d'achat et gérez les bénéficiaires en un clic.</p>
+                <h3 className="text-2xl font-black italic tracking-tighter">{t('clients:modals.select_client_empty')}</h3>
+                <p className="text-sm font-bold mt-2 max-w-sm mx-auto">{t('clients:modals.select_client_empty_desc')}</p>
              </div>
           </div>
         )}
@@ -463,4 +463,4 @@ export default function Clients() {
       />
     </div>
   );
-}
+}

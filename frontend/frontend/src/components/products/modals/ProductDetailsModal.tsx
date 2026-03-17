@@ -12,6 +12,7 @@ interface ProductDetailsModalProps {
   setActiveTab: (tab: any) => void;
   lots: StockLot[];
   monthlyStats: any[];
+  achats: any[];
   stockHistory: any[];
   loadingHistory: boolean;
   onMovementClick: (item: any) => void;
@@ -28,6 +29,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   setActiveTab,
   lots,
   monthlyStats,
+  achats,
   stockHistory,
   loadingHistory,
   onMovementClick,
@@ -35,13 +37,13 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
   onOpenEdit,
   onDelete
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['products', 'common']);
 
   return (
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title={t('products.detail.title')}
+      title={t('products:detail.title')}
       subtitle={selectedProduit?.name}
       maxWidth="max-w-4xl"
       icon={<span>📦</span>}
@@ -58,7 +60,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 <span className="font-mono font-bold text-primary">{selectedProduit.cip1 || '-'}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products.detail.total_stock')}</span>
+                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.total_stock')}</span>
                 <span className={`text-xl font-bold ${
                   (selectedProduit.stock ?? 0) <= 0 ? 'text-error' :
                   (selectedProduit.stock ?? 0) <= (selectedProduit.stock_alert ?? 0) ? 'text-warning' :
@@ -66,7 +68,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                 }`}>{selectedProduit.stock ?? 0}</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products.detail.rayon_label')}</span>
+                <span className="text-[10px] uppercase font-bold text-base-content/50">{t('products:detail.rayon_label')}</span>
                 <span className="font-bold truncate" title={selectedProduit.rayon_name ?? undefined}>{selectedProduit.rayon_name || '-'}</span>
               </div>
             </div>
@@ -77,6 +79,7 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
               setActiveTab={setActiveTab}
               lots={lots}
               monthlyStats={monthlyStats}
+              achats={achats}
               stockHistory={stockHistory}
               loadingHistory={loadingHistory}
               onMovementClick={onMovementClick}
@@ -89,13 +92,13 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                   className="btn btn-warning btn-sm shadow-sm"
                   onClick={onOpenAdjustment}
                 >
-                  📊 {t('products.actions.adjust_stock')}
+                  📊 {t('products:actions.adjust_stock')}
                 </button>
                 <button
                   className="btn btn-primary btn-sm shadow-sm"
                   onClick={() => onOpenEdit(selectedProduit)}
                 >
-                  ✏️ {t('products.actions.edit')}
+                  ✏️ {t('products:actions.edit')}
                 </button>
               </div>
               <div className="flex gap-2">
@@ -103,9 +106,9 @@ export const ProductDetailsModal: React.FC<ProductDetailsModalProps> = ({
                   className="btn btn-ghost btn-sm text-error"
                   onClick={() => onDelete(selectedProduit)}
                 >
-                  🗑️ {t('products.actions.delete')}
+                  🗑️ {t('products:actions.delete')}
                 </button>
-                <button className="btn btn-neutral btn-sm px-8" onClick={onClose}>{t('common.actions.close')}</button>
+                <button className="btn btn-neutral btn-sm px-8" onClick={onClose}>{t('common:actions.close')}</button>
               </div>
             </div>
           </div>

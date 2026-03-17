@@ -1,0 +1,54 @@
+{
+    "title": "Journal d'Audit",
+    "subtitle": "Suivez toutes les actions effectuées sur le système",
+    "actions": {
+        "all": "Tous les types d'actions",
+        "PRICE_CHG": "Changement de Prix",
+        "STOCK_ADJ": "Ajustement de Stock",
+        "SALE": "Vente",
+        "SALE_CANCEL": "Annulation de Vente",
+        "PROD_CREATE": "Création Produit",
+        "PROD_UPDATE": "Modification Produit",
+        "INV_CREATE": "Facturation",
+        "INV_DELETE": "Suppression de Facture",
+        "INV_CANCEL": "Annulation de Facture",
+        "INV_DEL": "Suppression de Facture",
+        "INV_VALID": "Validation de Facture",
+        "INV_VAL": "Validation de Facture (Sudo)",
+        "ORD_RECV": "Réception Commande",
+        "ORD_CNCL": "Annulation Commande",
+        "USER_LOGIN": "Connexion Utilisateur",
+        "SUDO_VAL": "Validation Sudo",
+        "CREATE": "Création",
+        "UPDATE": "Modification",
+        "DELETE": "Suppression",
+        "CLOTURE": "Clôture"
+    },
+    "stats": {
+        "total": "Total Logs",
+        "last_24h": "Dernières 24h",
+        "last_7d": "7 derniers jours",
+        "last_30d": "30 derniers jours"
+    },
+    "filters": {
+        "title": "Recherche & Filtres",
+        "action_label": "Action",
+        "user_label": "Utilisateur",
+        "all_users": "Tous les utilisateurs",
+        "date_from": "Période (Début)",
+        "date_to": "Période (Fin)",
+        "search_label": "Recherche texte",
+        "search_placeholder": "Facture, motif, produit...",
+        "hide_stats": "MASQUER STATS",
+        "show_stats": "AFFICHER STATS",
+        "export": "EXPORTER CSV",
+        "reset": "RÉINITIALISER"
+    },
+    "table": {
+        "date": "Date & Heure",
+        "user": "Utilisateur",
+        "action": "Action",
+        "description": "Description",
+        "details": "Détails"
+    }
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Calendar, RefreshCw, Package, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -21,7 +22,7 @@ interface HistoriqueAchatsProps {
 }
 
 const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation('orders');
   const { user } = useAuth();
   const [data, setData] = useState<DailyPurchase[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -100,7 +101,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
   };
 
   const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount);
+    return new Intl.NumberFormat(i18n.language.startsWith('fr') ? 'fr-FR' : 'en-US', { maximumFractionDigits: 0 }).format(amount);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -117,12 +118,12 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
           <div>
             <h1 className="text-xl font-bold text-base-content flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
-              {t('orders.history.title')}
+              {t('history.title')}
               <span className="text-primary text-sm md:text-xl">
-                {forcedType === 'LOC' ? t('orders.history.subtitle_local') : forcedType === 'DIR' ? t('orders.history.subtitle_direct') : t('orders.history.subtitle_daily')}
+                {forcedType === 'LOC' ? t('history.subtitle_local') : forcedType === 'DIR' ? t('history.subtitle_direct') : t('history.subtitle_daily')}
               </span>
             </h1>
-            <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('orders.history.results_found')}</p>
+            <p className="text-[10px] text-base-content/50 mt-0.5 uppercase tracking-wider font-semibold">{totalCount} {t('history.results_found')}</p>
           </div>
         </div>
 
@@ -150,7 +151,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             value={selectedSupplier}
             onChange={(e) => setSelectedSupplier(e.target.value)}
           >
-            <option value="">{t('orders.history.all_providers')}</option>
+            <option value="">{t('history.all_providers')}</option>
             {suppliers.map(s => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
@@ -160,7 +161,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             onClick={() => fetchHistory(page)}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{t('orders.history.refresh')}</span>
+            <span className="hidden sm:inline">{t('history.refresh')}</span>
           </button>
         </div>
 
@@ -172,7 +173,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 <Package className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('orders.history.columns.nb_orders')}</p>
+                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.nb_orders')}</p>
                 <p className="text-xl font-black text-base-content antialiased leading-none">{totalOrdersPage}</p>
               </div>
             </div>
@@ -183,9 +184,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                 <TrendingUp className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('orders.history.columns.total_purchase')}</p>
+                <p className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest leading-none mb-1">{t('history.columns.total_purchase')}</p>
                 <p className="text-xl font-black text-base-content antialiased leading-none">
-                  {formatMoney(totalAmountPage)} <span className="text-xs font-bold text-base-content/30 ml-0.5">F</span>
+                  {formatMoney(totalAmountPage)} <span className="text-xs font-bold text-base-content/30 ml-0.5">{t('common:currency_symbol')}</span>
                 </p>
               </div>
             </div>
@@ -196,7 +197,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
         {loading && data.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-20 bg-base-100 rounded-3xl border border-base-200">
             <span className="loading loading-spinner loading-lg text-primary/40"></span>
-            <p className="text-sm text-base-content/40 mt-4 font-medium italic">Chargement de l'historique...</p>
+            <p className="text-sm text-base-content/40 mt-4 font-medium italic">{t('history.loading')}</p>
           </div>
         ) : (
           <div className="flex-1 min-h-0 flex flex-col">
@@ -204,9 +205,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
               <table className="table table-sm table-pin-rows w-full border-separate border-spacing-0">
                 <thead>
                   <tr className="bg-base-200/80 text-[11px] font-black text-base-content/50 uppercase tracking-[0.15em]">
-                    <th className="py-4 pl-8 border-b border-base-200/60 bg-base-200/80">{t('orders.history.columns.date')}</th>
-                    <th className="text-center py-4 border-b border-base-200/60 bg-base-200/80">{t('orders.history.columns.nb_orders')}</th>
-                    <th className="text-right py-4 pr-8 border-b border-base-200/60 bg-base-200/80">{t('orders.history.columns.total_purchase')}</th>
+                    <th className="py-4 pl-8 border-b border-base-200/60 bg-base-200/80">{t('history.columns.date')}</th>
+                    <th className="text-center py-4 border-b border-base-200/60 bg-base-200/80">{t('history.columns.nb_orders')}</th>
+                    <th className="text-right py-4 pr-8 border-b border-base-200/60 bg-base-200/80">{t('history.columns.total_purchase')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-base-100">
@@ -216,7 +217,9 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         <div className="flex items-center gap-3">
                           <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-primary shadow-[0_0_8px_rgba(var(--p),0.5)]' : 'bg-base-content/10'}`} />
                           <span className="text-sm font-bold text-base-content/70">
-                            {format(new Date(row.date), 'dd MMMM yyyy', { locale: undefined })}
+                            {format(new Date(row.date), 'dd MMMM yyyy', { 
+                                locale: i18n.language.startsWith('fr') ? fr : undefined 
+                            })}
                           </span>
                         </div>
                       </td>
@@ -229,7 +232,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                         <span className="text-base font-black text-base-content group-hover:text-primary transition-colors">
                           {formatMoney(row.total_achat)}
                         </span>
-                        <span className="text-[10px] font-bold text-base-content/30 ml-1">FCFA</span>
+                        <span className="text-[10px] font-bold text-base-content/30 ml-1">{t('common:currency_symbol')}CFA</span>
                       </td>
                     </tr>
                   ))}
@@ -238,7 +241,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
                       <td colSpan={3} className="text-center py-24">
                         <div className="flex flex-col items-center gap-3 opacity-20">
                           <Package className="w-12 h-12" />
-                          <p className="text-sm font-bold uppercase tracking-widest">{t('orders.history.no_data')}</p>
+                          <p className="text-sm font-bold uppercase tracking-widest">{t('history.no_data')}</p>
                         </div>
                       </td>
                     </tr>
@@ -251,7 +254,7 @@ const HistoriqueAchats = ({ forcedType }: HistoriqueAchatsProps) => {
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-5 px-2 shrink-0">
                 <div className="text-[10px] font-bold text-base-content/40 uppercase tracking-widest">
-                  Page {page} <span className="mx-1 text-base-content/20">/</span> {totalPages}
+                  {t('history.pagination.page')} {page} <span className="mx-1 text-base-content/20">/</span> {totalPages}
                 </div>
                 <div className="flex gap-2">
                   <button 

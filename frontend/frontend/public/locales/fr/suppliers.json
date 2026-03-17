@@ -1,0 +1,21 @@
+{
+    "title": "Gestion des Fournisseurs",
+    "subtitle": "Gérez vos partenaires et suivez vos dettes",
+    "actions": {
+        "create": "Nouveau Fournisseur",
+        "edit": "Modifier",
+        "delete": "Supprimer"
+    },
+    "table": {
+        "name": "Fournisseur",
+        "phone": "Téléphone",
+        "email": "Email",
+        "debt_total": "Dette Totale"
+    },
+    "form": {
+        "name": "Nom du Fournisseur *",
+        "phone": "Téléphone",
+        "email": "Email",
+        "address": "Adresse"
+    }
+}

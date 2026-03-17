@@ -25,7 +25,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
     onZoom,
     loading
   } = props;
-  const { t } = useTranslation();
+  const { t } = useTranslation(['products', 'common']);
 
   return (
     <div className="flex-1 overflow-auto">
@@ -36,7 +36,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
       ) : products.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-slate-400 p-4">
           <span className="text-xl">📭</span>
-          <span className="text-xs mt-1">{t('products.table.empty')}</span>
+          <span className="text-xs mt-1">{t('products:table.empty')}</span>
         </div>
       ) : (
         <table className="table table-xs table-pin-rows w-full">
@@ -48,11 +48,11 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                   className="checkbox checkbox-xs checkbox-primary"
                   checked={selectedProductIds.length === products.length && products.length > 0}
                   onChange={onSelectAll}
-                  title={t('products.table.select_all')}
+                  title={t('products:table.select_all')}
                 />
               </th>
-              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider w-20">{t('products.table.cip')}</th>
-              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider">{t('products.table.product')}</th>
+              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider w-20">{t('products:table.cip')}</th>
+              <th className="py-1.5 px-2 font-semibold uppercase text-[9px] tracking-wider">{t('products:table.product')}</th>
             </tr>
           </thead>
           <tbody>
@@ -102,7 +102,7 @@ export const ProductTable: React.FC<ProductTableProps> = (props) => {
                       {produit.is_supplier_exclusive && (
                         <div 
                           className="tooltip tooltip-right z-50 inline-flex shrink-0" 
-                          data-tip={`${t('products.table.exclusivity')}: ${produit.fournisseur_name || t('products.form.provider_placeholder')}`}
+                          data-tip={`${t('products:table.exclusivity')}: ${produit.fournisseur_name || t('products:form.provider_placeholder')}`}
                         >
                           <span className="badge badge-success badge-sm font-bold text-white w-5 h-5 p-0 flex items-center justify-center text-[10px]">
                             E

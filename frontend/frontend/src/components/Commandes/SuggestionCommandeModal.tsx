@@ -68,7 +68,7 @@ export default function SuggestionCommandeModal({
           
           setStepSuggestion(2);
       } catch (err: any) {
-          const msg = err.response?.data?.message || err.message || t('orders.suggestion_modal.generation_error');
+          const msg = err.response?.data?.message || err.message || t('orders:suggestion_modal.generation_error');
           toast.error(msg);
       } finally {
           setLoadingSuggestions(false);
@@ -80,7 +80,7 @@ export default function SuggestionCommandeModal({
       const selectedItems = suggestions.filter((_, i) => selectedSuggestions.has(i));
       
       if (selectedItems.length === 0) {
-          toast(t('orders.suggestion_modal.no_selection'), { icon: '⚠️' });
+          toast(t('orders:suggestion_modal.no_selection'), { icon: '⚠️' });
           return;
       }
 
@@ -141,11 +141,11 @@ export default function SuggestionCommandeModal({
   }
 
   const periodOptions = [
-      { label: t('orders.suggestion_modal.period_guard'), value: 3 },
-      { label: t('orders.suggestion_modal.period_week'), value: 7 },
-      { label: t('orders.suggestion_modal.period_decade'), value: 10 },
-      { label: t('orders.suggestion_modal.period_fortnight'), value: 15 },
-      { label: t('orders.suggestion_modal.period_month'), value: 30 }
+      { label: t('orders:suggestion_modal.period_guard'), value: 3 },
+      { label: t('orders:suggestion_modal.period_week'), value: 7 },
+      { label: t('orders:suggestion_modal.period_decade'), value: 10 },
+      { label: t('orders:suggestion_modal.period_fortnight'), value: 15 },
+      { label: t('orders:suggestion_modal.period_month'), value: 30 }
   ];
 
   const footer = (
@@ -153,11 +153,11 @@ export default function SuggestionCommandeModal({
         {stepSuggestion === 2 ? (
             <button className="btn btn-ghost hover:bg-gray-100" onClick={() => setStepSuggestion(1)}>
                 <ChevronLeft className="w-4 h-4 mr-2" />
-                {t('orders.suggestion_modal.back_to_params')}
+                {t('orders:suggestion_modal.back_to_params')}
             </button>
         ) : (
             <button className="btn btn-ghost hover:bg-gray-100 text-gray-400" onClick={onClose}>
-                {t('orders.suggestion_modal.close')}
+                {t('orders:suggestion_modal.close')}
             </button>
         )}
         
@@ -172,7 +172,7 @@ export default function SuggestionCommandeModal({
                 ) : (
                     <>
                         <Search className="w-4 h-4 mr-2" />
-                        {t('orders.suggestion_modal.launch_analysis')}
+                        {t('orders:suggestion_modal.launch_analysis')}
                     </>
                 )}
             </button>
@@ -184,7 +184,7 @@ export default function SuggestionCommandeModal({
                     disabled={selectedSuggestions.size === 0}
                 >
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    {t('orders.suggestion_modal.create_order', { count: selectedSuggestions.size })}
+                    {t('orders:suggestion_modal.create_order', { count: selectedSuggestions.size })}
                 </button>
             </div>
         )}
@@ -195,8 +195,8 @@ export default function SuggestionCommandeModal({
     <PremiumModal
         isOpen={true}
         onClose={onClose}
-        title={t('orders.suggestion_modal.title')}
-        subtitle={stepSuggestion === 1 ? t('orders.suggestion_modal.subtitle_config') : t('orders.suggestion_modal.subtitle_results', { count: suggestions.length })}
+        title={t('orders:suggestion_modal.title')}
+        subtitle={stepSuggestion === 1 ? t('orders:suggestion_modal.subtitle_config') : t('orders:suggestion_modal.subtitle_results', { count: suggestions.length })}
         icon={<Brain className="w-6 h-6 text-primary" />}
         maxWidth="max-w-6xl"
         footer={footer}
@@ -224,10 +224,10 @@ export default function SuggestionCommandeModal({
                                 <div className={`p-2 rounded-lg ${suggestionParams.mode === 'simple' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'}`}>
                                     <Package className="w-5 h-5" />
                                 </div>
-                                <span className="font-bold text-gray-800">{t('orders.suggestion_modal.mode_simple_title')}</span>
+                                <span className="font-bold text-gray-800">{t('orders:suggestion_modal.mode_simple_title')}</span>
                             </div>
                             <p className="text-sm text-gray-500">
-                                {t('orders.suggestion_modal.mode_simple_desc')}
+                                {t('orders:suggestion_modal.mode_simple_desc')}
                             </p>
                             {suggestionParams.mode === 'simple' && (
                                 <div className="absolute top-4 right-4 text-primary">
@@ -255,10 +255,10 @@ export default function SuggestionCommandeModal({
                                 <div className={`p-2 rounded-lg ${suggestionParams.mode === 'optimise' ? 'bg-primary text-white' : 'bg-gray-100 text-gray-500'}`}>
                                     <Brain className="w-5 h-5" />
                                 </div>
-                                <span className="font-bold text-gray-800">{t('orders.suggestion_modal.mode_smart_title')}</span>
+                                <span className="font-bold text-gray-800">{t('orders:suggestion_modal.mode_smart_title')}</span>
                             </div>
                             <p className="text-sm text-gray-500">
-                                {t('orders.suggestion_modal.mode_smart_desc')}
+                                {t('orders:suggestion_modal.mode_smart_desc')}
                             </p>
                             {suggestionParams.mode === 'optimise' && (
                                 <div className="absolute top-4 right-4 text-primary">
@@ -275,14 +275,14 @@ export default function SuggestionCommandeModal({
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                                     <Package className="w-3 h-3" />
-                                    {t('orders.suggestion_modal.supplier_label')}
+                                    {t('orders:suggestion_modal.supplier_label')}
                                 </label>
                                 <select 
                                     className="select select-bordered w-full bg-gray-50 border-gray-200 focus:border-primary rounded-xl"
                                     value={suggestionParams.fournisseurId}
                                     onChange={(e) => setSuggestionParams(prev => ({ ...prev, fournisseurId: e.target.value }))}
                                 >
-                                    <option value="">{t('orders.suggestion_modal.all_suppliers')}</option>
+                                    <option value="">{t('orders:suggestion_modal.all_suppliers')}</option>
                                     {fournisseurs.map(f => (
                                         <option key={f.id} value={f.id}>{f.name}</option>
                                     ))}
@@ -292,20 +292,20 @@ export default function SuggestionCommandeModal({
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                                     <DollarSign className="w-3 h-3" />
-                                    {t('orders.suggestion_modal.budget_label')}
-                                    <div className="tooltip" data-tip={t('orders.suggestion_modal.budget_tooltip')}>
+                                    {t('orders:suggestion_modal.budget_label')}
+                                    <div className="tooltip" data-tip={t('orders:suggestion_modal.budget_tooltip')}>
                                         <Info className="w-3 h-3 text-gray-300" />
                                     </div>
                                 </label>
                                 <div className="join w-full">
                                     <input 
                                         type="number" 
-                                        placeholder={t('orders.suggestion_modal.budget_placeholder')}
+                                        placeholder={t('orders:suggestion_modal.budget_placeholder')}
                                         className="input input-bordered join-item w-full bg-gray-50 border-gray-200 focus:border-primary rounded-l-xl"
                                         value={suggestionParams.budgetMax}
                                         onChange={(e) => setSuggestionParams(prev => ({ ...prev, budgetMax: e.target.value }))}
                                     />
-                                    <span className="join-item px-4 bg-gray-100 border border-gray-200 border-l-0 flex items-center font-bold text-gray-400 rounded-r-xl">F</span>
+                                    <span className="join-item px-4 bg-gray-100 border border-gray-200 border-l-0 flex items-center font-bold text-gray-400 rounded-r-xl">{t('common:currency_symbol', 'F')}</span>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +314,7 @@ export default function SuggestionCommandeModal({
                         <div className="space-y-3">
                             <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                                 <Calendar className="w-3 h-3" />
-                                {t('orders.suggestion_modal.period_label')}
+                                {t('orders:suggestion_modal.period_label')}
                             </label>
                             
                             <div className="flex flex-wrap gap-2">
@@ -341,7 +341,7 @@ export default function SuggestionCommandeModal({
                                         max={365}
                                         onChange={(e) => setSuggestionParams(prev => ({ ...prev, periode: parseInt(e.target.value) || 0 }))}
                                     />
-                                    <span className="text-xs text-gray-400 pr-1">{t('orders.suggestion_modal.days_unit')}</span>
+                                    <span className="text-xs text-gray-400 pr-1">{t('orders:suggestion_modal.days_unit')}</span>
                                 </div>
                             </div>
                         </div>
@@ -356,16 +356,16 @@ export default function SuggestionCommandeModal({
                                 <Info className="w-5 h-5" />
                             </div>
                             <div>
-                                <h4 className="font-bold text-gray-800">{t('orders.suggestion_modal.analysis_done')}</h4>
-                                <p className="text-sm text-gray-500">{t('orders.suggestion_modal.results_count', { count: suggestions.length })}</p>
+                                <h4 className="font-bold text-gray-800">{t('orders:suggestion_modal.analysis_done')}</h4>
+                                <p className="text-sm text-gray-500">{t('orders:suggestion_modal.results_count', { count: suggestions.length })}</p>
                             </div>
                         </div>
                         <div className="bg-slate-900 text-white rounded-xl px-4 py-2 text-right">
                             <div className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 justify-end">
                                 <DollarSign className="w-3 h-3" />
-                                {t('orders.suggestion_modal.total_estimated')}
+                                {t('orders:suggestion_modal.total_estimated')}
                             </div>
-                            <div className="text-xl font-mono font-bold">{formatPrice(totalHt)} <span className="text-xs">F</span></div>
+                            <div className="text-xl font-mono font-bold">{formatPrice(totalHt)} <span className="text-xs">{t('common:currency_symbol', 'F')}</span></div>
                         </div>
                     </div>
 
@@ -389,12 +389,12 @@ export default function SuggestionCommandeModal({
                                                 }}
                                             />
                                         </th>
-                                        <th className="bg-transparent">{t('orders.suggestion_modal.table_designation')}</th>
-                                        <th className="text-center bg-transparent">{t('orders.suggestion_modal.table_stock')}</th>
-                                        <th className="text-center bg-transparent">{t('orders.suggestion_modal.table_sales')}</th>
-                                        <th className="text-right bg-transparent">{t('orders.suggestion_modal.table_qty')}</th>
-                                        <th className="text-right bg-transparent">{t('orders.suggestion_modal.table_total_ht')}</th>
-                                        <th className="bg-transparent">{t('orders.suggestion_modal.table_priority')}</th>
+                                        <th className="bg-transparent">{t('orders:suggestion_modal.table_designation')}</th>
+                                        <th className="text-center bg-transparent">{t('orders:suggestion_modal.table_stock')}</th>
+                                        <th className="text-center bg-transparent">{t('orders:suggestion_modal.table_sales')}</th>
+                                        <th className="text-right bg-transparent">{t('orders:suggestion_modal.table_qty')}</th>
+                                        <th className="text-right bg-transparent">{t('orders:suggestion_modal.table_total_ht')}</th>
+                                        <th className="bg-transparent">{t('orders:suggestion_modal.table_priority')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -420,7 +420,7 @@ export default function SuggestionCommandeModal({
                                                     <div className="font-bold text-gray-700 flex items-center gap-2">
                                                         {item.produit_nom}
                                                         {item.is_supplier_exclusive && (
-                                                            <span className="badge badge-sm badge-success text-[8px] font-bold text-white">{t('orders.suggestion_modal.exclusive_badge')}</span>
+                                                            <span className="badge badge-sm badge-success text-[8px] font-bold text-white">{t('orders:suggestion_modal.exclusive_badge')}</span>
                                                         )}
                                                     </div>
                                                     <div className="text-xs text-gray-400 font-mono tracking-tighter">REF: {item.produit_ref}</div>
@@ -437,18 +437,18 @@ export default function SuggestionCommandeModal({
                                             <td className="text-right">
                                                 <div className="flex flex-col items-end">
                                                     <span className="text-lg font-bold text-primary">{item.quantite_suggeree}</span>
-                                                    <span className="text-[10px] text-gray-400">{formatPrice(item.prix_achat)} F / u</span>
+                                                    <span className="text-[10px] text-gray-400">{formatPrice(item.prix_achat)} {t('common:currency_symbol', 'F')} / {t('common:units_short', 'u')}</span>
                                                 </div>
                                             </td>
                                             <td className="text-right font-mono font-bold text-gray-700">
-                                                {formatPrice(item.montant_ht || (item.prix_achat * item.quantite_suggeree))} F
+                                                {formatPrice(item.montant_ht || (item.prix_achat * item.quantite_suggeree))} {t('common:currency_symbol', 'F')}
                                             </td>
                                             <td>
                                                 <div className="flex items-center gap-2">
                                                     {item.score_urgence > 50 ? (
-                                                        <div className="badge badge-error badge-xs animate-pulse">{t('orders.suggestion_modal.critical_badge')}</div>
+                                                        <div className="badge badge-error badge-xs animate-pulse">{t('orders:suggestion_modal.critical_badge')}</div>
                                                     ) : (
-                                                        <div className="badge badge-ghost badge-xs text-gray-400 uppercase font-bold text-[8px]">{t('orders.suggestion_modal.standard_badge')}</div>
+                                                        <div className="badge badge-ghost badge-xs text-gray-400 uppercase font-bold text-[8px]">{t('orders:suggestion_modal.standard_badge')}</div>
                                                     )}
                                                     <div className="tooltip tooltip-left" data-tip={item.raison}>
                                                         <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
@@ -465,12 +465,12 @@ export default function SuggestionCommandeModal({
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <Search className="w-8 h-8 text-gray-300" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">{t('orders.suggestion_modal.no_results_title')}</h3>
+                            <h3 className="text-lg font-bold text-gray-800">{t('orders:suggestion_modal.no_results_title')}</h3>
                             <p className="text-gray-500 max-w-sm mx-auto">
-                                {t('orders.suggestion_modal.no_results_desc')}
+                                {t('orders:suggestion_modal.no_results_desc')}
                             </p>
                             <button className="btn btn-ghost btn-sm mt-4 text-primary" onClick={() => setStepSuggestion(1)}>
-                                {t('orders.suggestion_modal.modify_params')}
+                                {t('orders:suggestion_modal.modify_params')}
                             </button>
                         </div>
                     )}

@@ -1,0 +1,66 @@
+{
+    "title": "Ordonnancier",
+    "export_pdf": "Exporter en PDF",
+    "stats": {
+        "total_entries": "Entrées Totales",
+        "total_entries_desc": "Nombre total d'ordonnances enregistrées",
+        "delivered_meds": "Médicaments Délivrés",
+        "delivered_meds_desc": "Volumes total des produits",
+        "under_surveillance": "Sous Surveillance",
+        "under_surveillance_desc": "Produits nécessitant un suivi particulier"
+    },
+    "filters": {
+        "date_start": "Date début",
+        "date_end": "Date fin",
+        "patient": "Patient",
+        "patient_placeholder": "Nom du patient...",
+        "prescriber": "Prescripteur",
+        "prescriber_placeholder": "Nom du médecin...",
+        "product": "Produit",
+        "product_placeholder": "Filtrer par produit...",
+        "surveillance": "Surveillance",
+        "surveillance_options": {
+            "none": "Toutes",
+            "standard": "Standard",
+            "renforcee": "Renforcée"
+        }
+    },
+    "table": {
+        "order_num": "N° Ordre",
+        "date": "Date & Heure",
+        "patient": "Patient",
+        "prescriber": "Prescripteur",
+        "meds": "Médicaments",
+        "action": "Action",
+        "empty": "Aucune ordonnance trouvée.",
+        "surveillance_badges": {
+            "std": "STD",
+            "renf": "RENF"
+        },
+        "recorded_by": "Enregistré par"
+    },
+    "modal": {
+        "title": "Détails Prescription",
+        "description": "Informations relatives à l'ordonnance et aux produits",
+        "patient_name": "Nom du Patient",
+        "patient_placeholder": "Ex: Jean Dupont",
+        "prescriber_name": "Nom du Prescripteur",
+        "prescriber_placeholder": "Dr. Martin...",
+        "order_number": "Numéro d'ordre (Optionnel)",
+        "order_placeholder": "Ex: 12345",
+        "prescription_date": "Date de prescription",
+        "affected_products": "Produits Concernés",
+        "product_col": "Produit",
+        "qty_col": "Qté",
+        "surveillance_col": "Suivi",
+        "surveillance_renforcee": "SURVEILLANCE RENFORCÉE",
+        "surveillance_standard": "Surveillance Standard",
+        "surveillance_ordonnance": "Simple Ordonnance",
+        "ignore_btn": "IGNORER",
+        "save_btn": "ENREGISTRER L'ORDONNANCE"
+    },
+    "messages": {
+        "save_success": "Enregistré dans l'ordonnancier",
+        "save_error": "Erreur lors de l'enregistrement de l'ordonnance"
+    }
+}

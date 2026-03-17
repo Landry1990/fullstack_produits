@@ -15,6 +15,7 @@ import {
   useFournisseurs,
   useFormes,
   useGroupes,
+  useProduitAchats,
   useProduitLots,
   useProduitStats,
   useProduitHistory,
@@ -41,7 +42,7 @@ export default function Produit() {
   console.log('[Produit] Rendering component...');
   const confirm = useConfirm()
   const navigate = useNavigate()
-  const { t } = useTranslation();
+  const { t } = useTranslation(['products', 'common']);
   const { user } = useAuth();
   const [page, setPage] = useState(1)
   const [searchQuery, setSearchQuery] = useState('')
@@ -60,7 +61,7 @@ export default function Produit() {
   // Selection
   const [selectedProduit, setSelectedProduit] = useState<ProduitModel | null>(null)
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([])
-  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'lots' | 'stats' | 'mvmts'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'prix' | 'achats' | 'lots' | 'stats' | 'mvmts'>('general')
 
   // Sales/Facture Details
   const [showSalesModal, setShowSalesModal] = useState(false);
@@ -113,9 +114,10 @@ export default function Produit() {
 
   const { data: lots = [], isLoading: detailsLoadingLots } = useProduitLots(selectedProduit?.id || null);
   const { data: monthlyStats = [], isLoading: detailsLoadingStats } = useProduitStats(selectedProduit?.id || null);
+  const { data: achats = [], isLoading: loadingAchats } = useProduitAchats(selectedProduit?.id || null);
   const { data: stockHistory = [], isLoading: loadingHistory } = useProduitHistory(selectedProduit?.id || null, activeTab);
 
-  const detailsLoading = detailsLoadingLots || detailsLoadingStats;
+  const detailsLoading = detailsLoadingLots || detailsLoadingStats || loadingAchats;
 
   // Mutations
   const updateProduitMutation = useUpdateProduit();
@@ -157,7 +159,7 @@ export default function Produit() {
     if (!produit.has_reserve_storage || (produit.stock_reserve ?? 0) <= 0) return;
     const needed = Math.max(0, (produit.capacite_rayon ?? 0) - (produit.stock ?? 0));
     const suggest = Math.min(needed, produit.stock_reserve ?? 0);
-    const informMsg = t('products.messages.transfer_prompt', { 
+    const informMsg = t('products:messages.transfer_prompt', { 
       reserve: produit.stock_reserve, 
       capacity: produit.capacite_rayon, 
       needed: needed 
@@ -165,15 +167,15 @@ export default function Produit() {
     const qtyStr = prompt(informMsg, String(suggest));
     if (qtyStr === null) return;
     const qty = parseInt(qtyStr, 10);
-    if (isNaN(qty) || qty <= 0) { toast.error(t('products.messages.invalid_quantity')); return; }
+    if (isNaN(qty) || qty <= 0) { toast.error(t('products:messages.invalid_quantity')); return; }
 
     setTransferLoading(true);
     try {
       await axios.post(`${produitsEndpoint}${produit.id}/transfer_to_shelf/`, { quantity: qty });
-      toast.success(t('products.messages.transfer_success', { count: qty }));
+      toast.success(t('products:messages.transfer_success', { count: qty }));
       refetchProduits();
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || t('products.messages.transfer_error'));
+      toast.error(err.response?.data?.detail || t('products:messages.transfer_error'));
     } finally { setTransferLoading(false); }
   };
 
@@ -185,7 +187,7 @@ export default function Produit() {
         const response = await axios.get(`/api/factures/${item.facture}/`);
         setSelectedFacture(response.data);
       } catch (error) {
-        toast.error(t('products.messages.facture_load_error'));
+        toast.error(t('products:messages.facture_load_error'));
         setShowSalesModal(false);
       } finally { setLoadingFacture(false); }
     } else if (item.commande) {
@@ -197,25 +199,25 @@ export default function Produit() {
     try {
       await deleteProduitMutation.mutateAsync(produitId);
       setSelectedProduit(null)
-      toast.success(t('products.messages.delete_success'))
-    } catch (err) { toast.error(t('products.messages.delete_error')) }
+      toast.success(t('products:messages.delete_success'))
+    } catch (err) { toast.error(t('products:messages.delete_error')) }
   }
 
   const handleDeleteProduit = async (produit: ProduitModel) => {
     if (!user?.is_superuser && !user?.profile?.can_delete_product && !user?.can_delete_product) {
-        toast.error(t('products.messages.access_denied_delete'))
+        toast.error(t('products:messages.access_denied_delete'))
         return
     }
     const confirmed = await confirm({
-      title: t('products.messages.delete_confirm_title'),
-      message: t('products.messages.delete_confirm_body', { name: produit.name }),
+      title: t('products:messages.delete_confirm_title'),
+      message: t('products:messages.delete_confirm_body', { name: produit.name }),
       variant: 'danger',
-      confirmText: t('products.actions.delete')
+      confirmText: t('products:actions.delete')
     })
     if (!confirmed) return
     setPasswordModalConfig({
-        title: t('products.messages.password_confirm_delete_title'),
-        message: t('products.messages.password_confirm_delete_body')
+        title: t('products:messages.password_confirm_delete_title'),
+        message: t('products:messages.password_confirm_delete_body')
     })
     setPendingAction(() => () => executeDeleteProduit(produit.id))
     setIsPasswordModalOpen(true)
@@ -225,10 +227,10 @@ export default function Produit() {
     try {
       const response = await axios.post(`${produitsEndpoint}${produit.id}/toggle_active/`)
       const isActive = response.data.is_active
-      toast.success(isActive ? t('products.messages.status_reactivated') : t('products.messages.status_hidden'))
+      toast.success(isActive ? t('products:messages.status_reactivated') : t('products:messages.status_hidden'))
       setSelectedProduit(prev => prev ? ({ ...prev, is_active: isActive }) : null)
       refetchProduits()
-    } catch (err) { toast.error(t('products.messages.status_error')) }
+    } catch (err) { toast.error(t('products:messages.status_error')) }
   }
 
   const handleOpenEditModal = (produit: ProduitModel) => {
@@ -264,7 +266,7 @@ export default function Produit() {
     if (!selectedProduit) return
     
     if (parseInt(editForm.stock || '0', 10) !== selectedProduit.stock) {
-      toast.error('⚠️ ' + t('products.messages.stock_update_warning'), { duration: 6000 })
+      toast.error('⚠️ ' + t('products:messages.stock_update_warning'), { duration: 6000 })
       setEditForm((prev: any) => ({ ...prev, stock: String(selectedProduit.stock) }))
       return
     }
@@ -289,8 +291,8 @@ export default function Produit() {
       const updatedProduit = await updateProduitMutation.mutateAsync({ id: selectedProduit.id, data: payload })
       setSelectedProduit(updatedProduit)
       setIsEditModalOpen(false)
-      toast.success(t('products.messages.update_success'))
-    } catch (err) { toast.error(t('products.messages.update_error')) }
+      toast.success(t('products:messages.update_success'))
+    } catch (err) { toast.error(t('products:messages.update_error')) }
   }
 
   const executeStockAdjustment = async () => {
@@ -302,7 +304,7 @@ export default function Produit() {
         reason: adjustmentForm.reason_type
       });
       const qtyChangeStr = (data.quantity_change ?? 0) >= 0 ? '+' : '';
-      toast.success(t('products.messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
+      toast.success(t('products:messages.adjust_success', { change: `${qtyChangeStr}${data.quantity_change ?? 0}` }))
       const qtyChange = data.quantity_change ?? 0;
       setSelectedProduit(prev => {
         if (!prev) return null;
@@ -312,19 +314,19 @@ export default function Produit() {
         };
       });
       setIsAdjustmentModalOpen(false)
-    } catch (err: any) { toast.error(err.response?.data?.detail || t('products.messages.adjust_error')) }
+    } catch (err: any) { toast.error(err.response?.data?.detail || t('products:messages.adjust_error')) }
   }
 
   const handleStockAdjustmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedProduit) return
     if (!user?.is_superuser && !user?.profile?.can_adjust_stock && !user?.can_adjust_stock) {
-        toast.error(t('products.messages.access_denied_adjust')); return;
+        toast.error(t('products:messages.access_denied_adjust')); return;
     }
     setIsAdjustmentModalOpen(false)
     setPasswordModalConfig({
-        title: t('products.messages.password_confirm_adjust_title'),
-        message: t('products.messages.password_confirm_adjust_body', { 
+        title: t('products:messages.password_confirm_adjust_title'),
+        message: t('products:messages.password_confirm_adjust_body', { 
           name: selectedProduit.name, oldStock: selectedProduit.stock, newStock: adjustmentForm.new_quantity 
         })
     })
@@ -334,10 +336,10 @@ export default function Produit() {
 
   const handleBulkDelete = async () => {
     const confirmed = await confirm({
-      title: t('products.messages.bulk_delete_title'),
-      message: t('products.messages.bulk_delete_body', { count: selectedProductIds.length }),
+      title: t('products:messages.bulk_delete_title'),
+      message: t('products:messages.bulk_delete_body', { count: selectedProductIds.length }),
       variant: 'danger',
-      confirmText: t('products.actions.bulk_delete')
+      confirmText: t('products:actions.bulk_delete')
     })
     if (!confirmed) return
     setActionLoading(true)
@@ -346,21 +348,21 @@ export default function Produit() {
       for (const id of selectedProductIds) {
         try { await axios.delete(`${produitsEndpoint}${id}/`); successCount++; } catch {}
       }
-      if (successCount > 0) { refetchProduits(); setSelectedProductIds([]); toast.success(`${successCount} ${t('products.messages.delete_success')}`); }
+      if (successCount > 0) { refetchProduits(); setSelectedProductIds([]); toast.success(`${successCount} ${t('products:messages.delete_success')}`); }
     } finally { setActionLoading(false) }
   }
 
   const handleGenerateLabels = async (produit: ProduitModel) => {
-    const qtyStr = prompt(t('products.messages.labels_prompt', { name: produit.name }), "1")
+    const qtyStr = prompt(t('products:messages.labels_prompt', { name: produit.name }), "1")
     if (!qtyStr) return
     const quantity = parseInt(qtyStr, 10)
-    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products.messages.invalid_quantity')); return; }
+    if (isNaN(quantity) || quantity <= 0) { toast.error(t('products:messages.invalid_quantity')); return; }
     try {
       const resp = await axios.post(`${produitsEndpoint}generate_labels/`, { products: [{ id: produit.id, quantity }] }, { responseType: 'blob' })
       const url = window.URL.createObjectURL(new Blob([resp.data]));
       const link = document.createElement('a'); link.href = url; link.setAttribute('download', `etiquettes_${produit.name}.pdf`);
       document.body.appendChild(link); link.click(); link.remove();
-    } catch (err) { toast.error(t('products.messages.generation_error')) }
+    } catch (err) { toast.error(t('products:messages.generation_error')) }
   }
 
   // Keyboard navigation
@@ -393,9 +395,9 @@ export default function Produit() {
     <div className="flex flex-col h-full p-4 space-y-4">
       {/* Header */}
       <div className="flex justify-between items-center shrink-0">
-        <h1 className="text-lg font-bold">📦 {t('products.title')}</h1>
+        <h1 className="text-lg font-bold">📦 {t('products:title')}</h1>
         <div className="flex gap-1">
-          <button onClick={() => recalculateRotationMutation.mutate()} className="btn btn-xs btn-ghost" title={t('products.actions.rotation')}>🔄 {t('products.actions.rotation')}</button>
+          <button onClick={() => recalculateRotationMutation.mutate()} className="btn btn-xs btn-ghost" title={t('products:actions.rotation')}>🔄 {t('products:actions.rotation')}</button>
           <button onClick={() => refetchProduits()} className="btn btn-xs btn-ghost" disabled={loading}>{loading ? <span className="loading loading-spinner loading-xs"></span> : '🔄'}</button>
         </div>
       </div>
@@ -407,10 +409,10 @@ export default function Produit() {
         <div className="md:col-span-1 bg-white rounded-lg shadow flex flex-col overflow-hidden">
           <div className="p-3 border-b bg-white shrink-0 flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-800">{t('products.title')}</h2>
+              <h2 className="text-sm font-bold text-slate-800">{t('products:title')}</h2>
               <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[10px] font-bold">{totalCount}</span>
             </div>
-            <button className="btn btn-sm btn-primary gap-2" onClick={() => setIsCreateModalOpen(true)}>➕ {t('products.actions.create')}</button>
+            <button className="btn btn-sm btn-primary gap-2" onClick={() => setIsCreateModalOpen(true)}>➕ {t('products:actions.create')}</button>
           </div>
           <ProductFilters 
             searchQuery={searchQuery} setSearchQuery={setSearchQuery} 
@@ -432,7 +434,7 @@ export default function Produit() {
           {totalPages > 1 && (
             <div className="flex justify-center p-2 border-t bg-slate-50 gap-2 items-center text-xs">
               <button className="btn btn-xs btn-ghost" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>←</button>
-              <span>Page {page} / {totalPages}</span>
+              <span>{t('common:pagination.page_info_simple', { page })} / {t('common:pagination.page_of', { count: totalPages })}</span>
               <button className="btn btn-xs btn-ghost" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>→</button>
             </div>
           )}
@@ -455,6 +457,7 @@ export default function Produit() {
           selectedProduit={selectedProduit} detailsLoading={detailsLoading} 
           activeTab={activeTab} setActiveTab={setActiveTab}
           lots={lots} monthlyStats={monthlyStats} 
+          achats={achats} loadingAchats={loadingAchats}
           stockHistory={stockHistory} loadingHistory={loadingHistory} transferLoading={transferLoading}
           onMovementClick={handleMovementClick}
           onOpenAdjustment={() => {
@@ -497,6 +500,7 @@ export default function Produit() {
         setActiveTab={setActiveTab}
         lots={lots}
         monthlyStats={monthlyStats}
+        achats={achats}
         stockHistory={stockHistory}
         loadingHistory={loadingHistory}
         onMovementClick={handleMovementClick}

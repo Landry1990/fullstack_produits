@@ -11,7 +11,7 @@ interface AvoirsFormProps {
 }
 
 export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -196,7 +196,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                 <input
                                     ref={searchInputRef}
                                     type="text"
-                                    placeholder={t('avoirs.search_product_placeholder', 'Rechercher un produit à ajouter...')}
+                                    placeholder={t('avoirs.form.search_product_placeholder')}
                                     className="input input-lg w-full pl-12 bg-base-200/50 border-0 focus:bg-base-100 focus:ring-2 focus:ring-primary/20 transition-all text-lg rounded-xl"
                                     value={searchProduitQuery}
                                     onChange={(e) => setSearchProduitQuery(e.target.value)}
@@ -319,7 +319,7 @@ export const AvoirsForm: React.FC<AvoirsFormProps> = ({ data }) => {
                                                             type="button"
                                                             className="btn btn-ghost btn-xs btn-circle text-error hover:bg-error/10"
                                                             onClick={() => removeLine(index)}
-                                                            title={t('common.remove', 'Retirer')}
+                                                            title={t('common:remove')}
                                                         >
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>

@@ -8,32 +8,32 @@ interface PromisQuickStatsProps {
 }
 
 export const PromisQuickStats: React.FC<PromisQuickStatsProps> = ({ stats }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const statItems = [
-        {
-            title: t('promis.status_all', 'Tous les Promis'),
+         {
+            title: t('promis.stats.all_title'),
             value: stats.total,
             icon: <PackageOpen className="w-5 h-5" />,
             colorClass: "text-primary",
             bgClass: "bg-primary/10",
         },
         {
-            title: t('promis.status_att', 'En Attente'),
+            title: t('promis.stats.att_title'),
             value: stats.enAttente,
             icon: <Clock className="w-5 h-5" />,
             colorClass: "text-warning",
             bgClass: "bg-warning/10",
         },
         {
-            title: t('promis.status_del', 'Délivrés'),
+            title: t('promis.stats.del_title'),
             value: stats.delivres,
             icon: <CheckCircle2 className="w-5 h-5" />,
             colorClass: "text-success",
             bgClass: "bg-success/10",
         },
         {
-            title: t('promis.status_ann', 'Annulés'),
+            title: t('promis.stats.ann_title'),
             value: stats.annules,
             icon: <XCircle className="w-5 h-5" />,
             colorClass: "text-error",

@@ -1,0 +1,88 @@
+{
+    "dashboard": "Dashboard",
+    "manager_sidebar": "Manager Dashboard",
+    "ventes": {
+        "title": "Sales",
+        "consultation": "Consultation",
+        "historique": "Daily History",
+        "journal": "Cash Journal",
+        "clotures": "Closing History",
+        "ordonnancier": "Prescriptions",
+        "promotions": "Promotions",
+        "caisse_centralisee": "Centralized Register"
+    },
+    "produits": "Products",
+    "facturation": "Invoicing",
+    "vitrine": "Web Storefront",
+    "commandes": {
+        "title": "Orders",
+        "local_title": "Wholesale Orders (Local)",
+        "direct_title": "Direct Orders (Foreign)",
+        "new_current": "New / In Progress",
+        "history": "Purchase History"
+    },
+    "fournisseurs": {
+        "title": "Suppliers",
+        "list": "List & Contacts",
+        "finance": "Finance & Payments"
+    },
+    "clients": "Customers",
+    "creances": "Debts",
+    "stock": {
+        "title": "Stock",
+        "inventaire": {
+            "title": "Inventory"
+        },
+        "journal": "Adjustment Journal",
+        "analyse": {
+            "title": "Stock Analysis"
+        },
+        "avoirs": "Claims",
+        "promis": "Promised",
+        "transformations": {
+            "title": "Transformations"
+        },
+        "perimes": {
+            "title": "Expired"
+        },
+        "formes": "Forms",
+        "groupes": "Groups",
+        "rayons": "Shelves",
+        "organisation": {
+            "title": "Organization"
+        },
+        "etats_inventaire": {
+            "title": "Inventory States"
+        },
+        "rapport_ug": {
+            "title": "Free Units (UG) Report"
+        }
+    },
+    "utilisateurs": "Users",
+    "user_sessions_sidebar": "Attendance Tracking",
+    "audit": "Audit Log",
+    "statistiques": {
+        "title": "Statistics",
+        "rapports": "Report Center",
+        "abc": "ABC Analysis",
+        "produits": "Products",
+        "fournisseurs": "Suppliers",
+        "mensuel": "Monthly Report",
+        "finances": "Financial Module",
+        "classement_vendeurs": "Seller Ranking",
+        "analyse_temporelle": "Temporal Analysis"
+    },
+    "parametres": {
+        "title": "Settings",
+        "facture": "Invoice Configuration",
+        "pharmacie": "Pharmacy Information",
+        "etiquettes": "Label Templates",
+        "imprimantes": "Printer Configuration"
+    },
+    "logout": "Logout",
+    "app_subtitle": "Professional Management",
+    "roles": {
+        "pharmacist": "Pharmacist",
+        "user": "User"
+    }
+}

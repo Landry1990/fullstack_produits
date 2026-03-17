@@ -29,7 +29,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
     editorLogic,
     onOpenAudit
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
     const {
         inventaires, loading, totalCount, currentPage,
         nextPage, prevPage, fetchInventaires, handleDelete,
@@ -54,10 +54,10 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                             <div>
                                 <h1 className="text-2xl font-bold text-base-content tracking-tight flex items-center gap-2">
                                     <ClipboardList className="h-6 w-6 text-primary" />
-                                    {t('stock.inventaire.title')}
+                                    {t('inventaire.title')}
                                 </h1>
                                 <p className="text-base-content/60 text-sm mt-1">
-                                    {t('stock.inventaire.subtitle')}
+                                    {t('inventaire.subtitle')}
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                     title={canMerge.reason || ''}
                                 >
                                     <Database className="h-4 w-4" />
-                                    {t('stock.inventaire.merge_btn')}
+                                    {t('inventaire.merge_btn')}
                                 </button>
                                 <button 
                                     type="button"
@@ -77,7 +77,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                     onClick={onOpenAudit}
                                 >
                                     <BarChart3 className="h-4 w-4" />
-                                    {t('stock.inventaire.audit_btn')}
+                                    {t('inventaire.audit_btn')}
                                 </button>
                                 <button 
                                     className="btn btn-primary rounded-xl px-6 shadow-lg shadow-primary/20 gap-2" 
@@ -85,7 +85,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                                     disabled={listLogic.loading || isSaving}
                                 >
                                     {isSaving && editorLogic.saving ? <span className="loading loading-spinner loading-sm"></span> : <Plus className="h-5 w-5" />}
-                                    {t('stock.inventaire.create_btn')}
+                                    {t('inventaire.create_btn')}
                                 </button>
                             </div>
                         </div>
@@ -128,7 +128,7 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                 {/* Pagination Controls */}
                 <div className="p-4 border-t border-base-200 flex items-center justify-between">
                     <div className="text-sm text-base-content/60 font-medium">
-                        {t('common.pagination.page_info', { current: currentPage, total: totalCount, label: t('stock.inventaire.list.title_short', 'inventaires') })}
+                        {t('common:pagination.page_info', { current: currentPage, total: totalCount, label: t('inventaire.list.title_short', 'inventaires') })}
                     </div>
                     <div className="flex gap-2">
                         <button 
@@ -136,14 +136,14 @@ export const InventaireList: React.FC<InventaireListProps> = ({
                             onClick={() => prevPage && fetchInventaires(prevPage)}
                         >
                             <ChevronLeft className="h-4 w-4" />
-                            {t('common.pagination.prev', 'Précédent')}
+                            {t('common:pagination.prev', 'Précédent')}
                         </button>
                         <button 
                             className="btn btn-sm btn-outline rounded-xl px-4 gap-1 transform active:scale-95 transition-all" 
                             disabled={!nextPage || loading}
                             onClick={() => nextPage && fetchInventaires(nextPage)}
                         >
-                            {t('common.pagination.next', 'Suivant')}
+                            {t('common:pagination.next', 'Suivant')}
                             <ChevronRight className="h-4 w-4" />
                         </button>
                     </div>

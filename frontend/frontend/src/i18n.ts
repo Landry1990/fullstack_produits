@@ -17,7 +17,30 @@ i18n
     .init({
         fallbackLng: 'fr',
         debug: import.meta.env.DEV,
-
+        ns: [
+            'common',
+            'sidebar',
+            'auth',
+            'dashboard',
+            'audit',
+            'finance',
+            'sales',
+            'sales_history',
+            'cash_journal',
+            'cash_closings',
+            'stock',
+            'products',
+            'orders',
+            'clients',
+            'suppliers',
+            'reports',
+            'users',
+            'settings',
+            'prescriptions',
+            'promotions',
+            'facturation'
+        ],
+        defaultNS: 'common',
         interpolation: {
             escapeValue: false, // not needed for react as it escapes by default
         },

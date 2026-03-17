@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { formatCurrency } from '../utils/formatters';
 
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onReglerSelection, initialFournisseurId }: Props) {
+  const { t } = useTranslation(['providers', 'common']);
   const [data, setData] = useState<ReleveResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +129,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
       });
       setData(data);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Erreur lors du calcul du relevé');
+      setError(err.response?.data?.error || err.message || t('providers:pointage_modal.load_error'));
     } finally {
       setLoading(false);
     }
@@ -163,8 +165,8 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Pointage du Relevé Fournisseur"
-      subtitle="Validez et réglez vos factures groupées"
+      title={t('providers:pointage_modal.title')}
+      subtitle={t('providers:pointage_modal.subtitle')}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -177,13 +179,13 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
         <div className="p-4 bg-slate-50 border-b border-slate-200 shrink-0">
           <div className="flex flex-col md:flex-row gap-4 items-end">
             <div>
-              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Fournisseur</label>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.provider_label')}</label>
               <select 
                 className="select select-sm select-bordered w-full md:w-48 font-bold text-slate-700" 
                 value={selectedFournisseurId} 
                 onChange={e => setSelectedFournisseurId(e.target.value === '' ? '' : Number(e.target.value))}
               >
-                <option value="">-- Choisir --</option>
+                <option value="">{t('providers:pointage_modal.choose_provider')}</option>
                 {fournisseurs.map(f => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
@@ -192,15 +194,15 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
             {selectedFournisseurId && (
               <>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Mois</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.month_label')}</label>
                   <select className="select select-sm select-bordered w-full md:w-32" value={month} onChange={e => setMonth(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                     {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('fr-FR', { month: 'long' })}</option>
+                      <option key={m} value={m}>{new Date(0, m - 1).toLocaleString(t('common.locale', { defaultValue: 'fr-FR' }), { month: 'long' })}</option>
                     ))}
                   </select>
                 </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Année</label>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.year_label')}</label>
               <select className="select select-sm select-bordered w-full md:w-24" value={year} onChange={e => setYear(Number(e.target.value))} disabled={periodeType === 'CUSTOM'}>
                 {[currentYear - 1, currentYear, currentYear + 1].map(y => (
                   <option key={y} value={y}>{y}</option>
@@ -208,30 +210,30 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Période cible</label>
+              <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.target_period')}</label>
               <select className="select select-sm select-bordered w-full md:w-48" value={periodeType} onChange={e => setPeriodeType(e.target.value)}>
-                <option value="MENSUELLER">Mois Complet</option>
+                <option value="MENSUELLER">{t('providers:pointage_modal.period_full')}</option>
                 <optgroup label="Quinzaines">
-                  <option value="QUINZAINE_1">1ère Quinzaine (1-15)</option>
-                  <option value="QUINZAINE_2">2ème Quinzaine (16-fin)</option>
+                  <option value="QUINZAINE_1">{t('providers:pointage_modal.period_q1')}</option>
+                  <option value="QUINZAINE_2">{t('providers:pointage_modal.period_q2')}</option>
                 </optgroup>
                 <optgroup label="Décades">
-                  <option value="DECADE_1">1ère Décade (1-10)</option>
-                  <option value="DECADE_2">2ème Décade (11-20)</option>
-                  <option value="DECADE_3">3ème Décade (21-fin)</option>
+                  <option value="DECADE_1">{t('providers:pointage_modal.period_d1')}</option>
+                  <option value="DECADE_2">{t('providers:pointage_modal.period_d2')}</option>
+                  <option value="DECADE_3">{t('providers:pointage_modal.period_d3')}</option>
                 </optgroup>
-                <option value="CUSTOM">Dates personnalisées</option>
+                <option value="CUSTOM">{t('providers:pointage_modal.period_custom')}</option>
               </select>
             </div>
 
             {periodeType === 'CUSTOM' && (
               <>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Début</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.start_label')}</label>
                   <input type="date" className="input input-sm input-bordered" value={customStart} onChange={e => setCustomStart(e.target.value)} />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">Fin</label>
+                  <label className="block text-[10px] font-bold uppercase text-slate-400 mb-1">{t('providers:pointage_modal.end_label')}</label>
                   <input type="date" className="input input-sm input-bordered" value={customEnd} onChange={e => setCustomEnd(e.target.value)} />
                 </div>
               </>
@@ -244,7 +246,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
 
             {data && (
                <div className="bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm text-right">
-                 <div className="text-[10px] font-bold uppercase text-slate-400">Total Période</div>
+                 <div className="text-[10px] font-bold uppercase text-slate-400">{t('providers:pointage_modal.total_period')}</div>
                  <div className="text-lg font-black text-purple-600 font-mono">
                    {formatCurrency(data.montant_total_periode)} F
                  </div>
@@ -270,28 +272,28 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <h3 className="text-lg font-bold text-slate-600">Sélectionnez un Fournisseur</h3>
+              <h3 className="text-lg font-bold text-slate-600">{t('providers:pointage_modal.select_instruction')}</h3>
             </div>
           ) : !data || data.factures.length === 0 ? (
             <div className="text-center flex-1 flex flex-col justify-center items-center bg-slate-50 rounded-xl border border-slate-100">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="text-lg font-bold text-slate-600">Aucune facture trouvée</h3>
-              <p className="text-sm text-slate-500">Il n'y a aucune commande clôturée sur la période du {dateRange.start} au {dateRange.end}.</p>
+              <h3 className="text-lg font-bold text-slate-600">{t('providers:pointage_modal.empty')}</h3>
+              <p className="text-sm text-slate-500">{t('providers:pointage_modal.empty_subtitle', { start: dateRange.start, end: dateRange.end })}</p>
             </div>
           ) : (
             <div className="flex-1 flex flex-col overflow-hidden bg-white border border-slate-200 rounded-xl shadow-sm">
               {/* Pointage En Tête */}
               <div className="flex items-center justify-between p-3 border-b bg-slate-50">
                 <div className="flex items-center gap-3">
-                   <div className="badge badge-primary badge-sm font-bold">{pointedIds.size} / {data.factures.length} pointées</div>
+                   <div className="badge badge-primary badge-sm font-bold">{t('providers:pointage_modal.pointed_count', { count: pointedIds.size, total: data.factures.length })}</div>
                    <button className="btn btn-xs btn-outline rounded-full" onClick={toggleAll}>
-                     {pointedIds.size === data.factures.length ? 'Tout décocher' : 'Tout cocher'}
+                     {pointedIds.size === data.factures.length ? t('providers:pointage_modal.uncheck_all') : t('providers:pointage_modal.check_all')}
                    </button>
                 </div>
                 <div className="text-sm font-bold text-slate-700">
-                  Somme Pointée : <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)} F</span>
+                  {t('providers:pointage_modal.pointed_sum')} <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-1 rounded ml-1">{formatCurrency(pointageSum)} F</span>
                 </div>
               </div>
 
@@ -301,9 +303,9 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                   <thead className="bg-[#f8fafc] text-[#64748b] text-[10px] uppercase">
                     <tr>
                       <th className="w-10 text-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg></th>
-                      <th>Date Clôture</th>
-                      <th>Référence Facture</th>
-                      <th className="text-right">Montant TTC</th>
+                      <th>{t('providers:pointage_modal.table.date')}</th>
+                      <th>{t('providers:pointage_modal.table.ref')}</th>
+                      <th className="text-right">{t('providers:pointage_modal.table.amount')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -325,7 +327,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                           </td>
                           <td>
                             <div className={`font-medium ${isPointed ? 'text-emerald-700' : 'text-slate-600'}`}>
-                              {new Date(f.date_cloture).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                              {new Date(f.date_cloture).toLocaleDateString(t('common.locale', { defaultValue: 'fr-FR' }), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
                             </div>
                           </td>
                           <td>
@@ -357,7 +359,7 @@ export default function PointageReleveModal({ isOpen, onClose, fournisseurs, onR
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Régler la sélection ({formatCurrency(pointageSum)} F)
+                  {t('providers:pointage_modal.regler_btn', { amount: formatCurrency(pointageSum) })}
                 </button>
               </div>
             </div>

@@ -35,7 +35,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
     sortConfig,
     onSort
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['creances', 'common']);
 
     const SortIcon = ({ column }: { column: string }) => {
         if (sortConfig.key !== column) return null;
@@ -47,7 +47,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
             <div className="flex flex-col items-center justify-center h-64 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
                 <p className="text-sm font-medium text-base-content/40 uppercase tracking-widest animate-pulse">
-                    Chargement des données...
+                    {t('creances:loading')}
                 </p>
             </div>
         );
@@ -60,7 +60,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                     <div className="p-4 bg-base-200 rounded-full mb-4">
                         <Users className="w-8 h-8 text-base-content/20" />
                     </div>
-                    <p className="text-base-content/50 font-medium">{t('creances.client_list.empty')}</p>
+                    <p className="text-base-content/50 font-medium">{t('creances:client_list.empty')}</p>
                 </div>
             );
         }
@@ -70,12 +70,12 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                 <table className="table table-pin-rows table-zebra w-full">
                     <thead>
                         <tr className="bg-base-200 opacity-100">
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 py-4">{t('creances.client_list.client')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.nb_invoices')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.total_amount')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.already_paid')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances.client_list.remaining_due')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center py-4">{t('creances.client_list.actions')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 py-4">{t('creances:client_list.client')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances:client_list.nb_invoices')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances:client_list.total_amount')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances:client_list.already_paid')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right py-4">{t('creances:client_list.remaining_due')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center py-4">{t('creances:client_list.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-base-200/50">
@@ -136,7 +136,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                 <div className="p-5 bg-base-100 shadow-xl shadow-base-200/50 rounded-2xl mb-6">
                     <Hash className="w-10 h-10 text-base-content/10" />
                 </div>
-                <p className="text-base-content/30 font-black uppercase tracking-widest text-xs">{t('creances.invoice_list.empty')}</p>
+                <p className="text-base-content/30 font-black uppercase tracking-widest text-xs">{t('creances:invoice_list.empty')}</p>
             </div>
         );
     }
@@ -157,25 +157,25 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                             </th>
                         )}
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('date')}>
-                            <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> {t('creances.invoice_list.date')} <SortIcon column="date" /></div>
+                            <div className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" /> {t('creances:invoice_list.date')} <SortIcon column="date" /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('numero_facture')}>
-                            <div className="flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> {t('creances.invoice_list.invoice_number')} <SortIcon column="numero_facture" /></div>
+                            <div className="flex items-center gap-2"><Hash className="w-3.5 h-3.5" /> {t('creances:invoice_list.invoice_number')} <SortIcon column="numero_facture" /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('ayant_droit')}>
-                            <div className="flex items-center gap-2"><Users className="w-3.5 h-3.5" /> {t('creances.invoice_list.beneficiary')} <SortIcon column="ayant_droit" /></div>
+                            <div className="flex items-center gap-2"><Users className="w-3.5 h-3.5" /> {t('creances:invoice_list.beneficiary')} <SortIcon column="ayant_droit" /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('total_ttc')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances.invoice_list.total')} <SortIcon column="total_ttc" /></div>
+                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.total')} <SortIcon column="total_ttc" /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('montant_paye')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances.invoice_list.paid')} <SortIcon column="montant_paye" /></div>
+                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.paid')} <SortIcon column="montant_paye" /></div>
                         </th>
                         <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right cursor-pointer hover:text-primary transition-colors p-4" onClick={() => onSort('reste_a_payer')}>
-                            <div className="flex items-center justify-end gap-2">{t('creances.invoice_list.remaining')} <SortIcon column="reste_a_payer" /></div>
+                            <div className="flex items-center justify-end gap-2">{t('creances:invoice_list.remaining')} <SortIcon column="reste_a_payer" /></div>
                         </th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances.invoice_list.status')}</th>
-                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances.invoice_list.actions')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances:invoice_list.status')}</th>
+                        <th className="sticky top-0 z-30 bg-base-200 opacity-100 border-b border-base-300 text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center p-4">{t('creances:invoice_list.actions')}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-base-200/50">
@@ -222,7 +222,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                     <div className={`badge badge-sm h-6 px-3 font-black border-none transition-all ${
                                         isPaid ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning animate-pulse'
                                     }`}>
-                                        {isPaid ? 'PAYÉE' : 'EN ATTENTE'}
+                                        {isPaid ? t('creances:invoice_list.paid_badge') : t('creances:invoice_list.pending_badge')}
                                     </div>
                                 </td>
                                 <td className="p-4">
@@ -230,7 +230,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                         <button
                                             onClick={() => onViewDetails(creance)}
                                             className="btn btn-sm btn-circle btn-ghost hover:bg-primary/10 hover:text-primary transition-all shadow-sm group/btn"
-                                            title="Voir les paiements"
+                                            title={t('creances:invoice_list.view_payments')}
                                         >
                                             <Eye className="w-4 h-4" />
                                         </button>
@@ -238,7 +238,7 @@ export const CreancesTable: React.FC<CreancesTableProps> = ({
                                             <button
                                                 onClick={() => onPay(creance)}
                                                 className="btn btn-sm btn-circle btn-primary shadow-lg shadow-primary/20 hover:scale-110 active:scale-95 transition-all"
-                                                title="Ajouter un paiement"
+                                                title={t('creances:invoice_list.add_payment')}
                                             >
                                                 <DollarSign className="w-4 h-4" />
                                             </button>

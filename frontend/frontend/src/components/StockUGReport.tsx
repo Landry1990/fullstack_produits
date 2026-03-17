@@ -79,7 +79,7 @@ export default function StockUGReport() {
       setData(response.data);
     } catch (error) {
       console.error('Error fetching UG report:', error);
-      toast.error(t('common.messages.error_loading', { defaultValue: 'Erreur lors du chargement des données' }));
+      toast.error(t('common:messages.error_loading', { defaultValue: 'Erreur lors du chargement des données' }));
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export default function StockUGReport() {
     ]);
     
     // Add total row
-    rows.push([t('common.total_general', { defaultValue: 'TOTAL GÉNÉRAL' }), '', data.global_total_ug, data.global_total_valeur]);
+    rows.push([t('common:total_general', { defaultValue: 'TOTAL GÉNÉRAL' }), '', data.global_total_ug, data.global_total_valeur]);
     
     const csvContent = "data:text/csv;charset=utf-8," 
       + headers.join(';') + '\n' 

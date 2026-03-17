@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 
 interface PasswordConfirmModalProps {
@@ -18,6 +19,7 @@ export default function PasswordConfirmModal({
   title,
   message
 }: PasswordConfirmModalProps) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,11 +49,11 @@ export default function PasswordConfirmModal({
       onClose();
     } catch (err: any) {
         if (err.response?.status === 403) {
-             setError("Mot de passe incorrect.");
-             toast.error("Mot de passe incorrect.");
+             setError(t('users.password_confirm.incorrect'));
+             toast.error(t('users.password_confirm.incorrect'));
         } else {
-             setError("Erreur de vérification.");
-             toast.error("Erreur technique lors de la vérification.");
+             setError(t('users.password_confirm.tech_error'));
+             toast.error(t('users.password_confirm.tech_error'));
         }
     } finally {
       setLoading(false);
@@ -77,12 +79,12 @@ export default function PasswordConfirmModal({
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         <div>
           <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-            Confirmez votre mot de passe pour continuer :
+            {t('users.password_confirm.label')}
           </label>
           <input
             ref={inputRef}
             type="password"
-            placeholder="Votre mot de passe..."
+            placeholder={t('users.password_confirm.placeholder')}
             className={`input input-bordered w-full h-12 rounded-xl focus:border-error focus:ring-2 focus:ring-error/20 transition-all ${error ? 'input-error' : ''}`}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -96,10 +98,10 @@ export default function PasswordConfirmModal({
 
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={loading}>
-            Annuler
+            {t('common:cancel')}
           </button>
           <button type="submit" className="btn btn-error px-8 rounded-xl shadow-lg shadow-error/20" disabled={loading || !password}>
-            {loading ? <span className="loading loading-spinner loading-xs"></span> : 'Confirmer'}
+            {loading ? <span className="loading loading-spinner loading-xs"></span> : t('common:confirm')}
           </button>
         </div>
       </form>

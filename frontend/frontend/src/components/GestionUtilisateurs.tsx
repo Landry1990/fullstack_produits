@@ -36,86 +36,80 @@ interface User {
 }
 
 const MENU_HIERARCHY = [
-  { key: 'dashboard', label: 'Tableau de bord', labelKey: 'sidebar.dashboard' },
-  { key: 'manager_sidebar', label: 'Manager Dashboard', labelKey: 'sidebar.manager_sidebar' },
+  { key: 'dashboard', labelKey: 'sidebar.dashboard' },
+  { key: 'manager_sidebar', labelKey: 'sidebar.manager_sidebar' },
   { 
     key: 'ventes', 
-    label: 'Ventes', 
     labelKey: 'sidebar.ventes.title',
     submenus: [
-      { key: 'ventes_consultation', label: 'Consultation', labelKey: 'sidebar.ventes.consultation' },
-      { key: 'ventes_historique', label: 'Historique', labelKey: 'sidebar.ventes.historique' },
-      { key: 'ventes_journal', label: 'Journal de Caisse', labelKey: 'sidebar.ventes.journal' },
-      { key: 'ventes_clotures', label: 'Clôtures', labelKey: 'sidebar.ventes.clotures' },
-      { key: 'ventes_ordonnancier', label: 'Ordonnancier', labelKey: 'sidebar.ventes.ordonnancier' },
-      { key: 'ventes_promotions', label: 'Promotions', labelKey: 'sidebar.ventes.promotions' },
-      { key: 'caisse', label: 'Caisse Centralisée', labelKey: 'sidebar.ventes.caisse_centralisee' }
+      { key: 'ventes_consultation', labelKey: 'sidebar.ventes.consultation' },
+      { key: 'ventes_historique', labelKey: 'sidebar.ventes.historique' },
+      { key: 'ventes_journal', labelKey: 'sidebar.ventes.journal' },
+      { key: 'ventes_clotures', labelKey: 'sidebar.ventes.clotures' },
+      { key: 'ventes_ordonnancier', labelKey: 'sidebar.ventes.ordonnancier' },
+      { key: 'ventes_promotions', labelKey: 'sidebar.ventes.promotions' },
+      { key: 'caisse', labelKey: 'sidebar.ventes.caisse_centralisee' }
     ]
   },
-  { key: 'facturation', label: 'Facturation', labelKey: 'sidebar.facturation' },
-  { key: 'produits', label: 'Produits', labelKey: 'sidebar.produits' },
-  { key: 'vitrine', label: 'Vitrine', labelKey: 'sidebar.vitrine' },
+  { key: 'facturation', labelKey: 'sidebar.facturation' },
+  { key: 'produits', labelKey: 'sidebar.produits' },
+  { key: 'vitrine', labelKey: 'sidebar.vitrine' },
   { 
     key: 'commandes_loc', 
-    label: 'Commandes Locales',
     labelKey: 'sidebar.commandes.local_title',
     submenus: [
-      { key: 'commandes_loc_current', label: 'Nouvelle & En cours', labelKey: 'sidebar.commandes.new_current' },
-      { key: 'commandes_loc_history', label: 'Historique', labelKey: 'sidebar.commandes.history' }
+      { key: 'commandes_loc_current', labelKey: 'sidebar.commandes.new_current' },
+      { key: 'commandes_loc_history', labelKey: 'sidebar.commandes.history' }
     ]
   },
   { 
     key: 'commandes_dir', 
-    label: 'Commandes Directes',
     labelKey: 'sidebar.commandes.direct_title',
     submenus: [
-      { key: 'commandes_dir_current', label: 'Nouvelle & En cours', labelKey: 'sidebar.commandes.new_current' },
-      { key: 'commandes_dir_history', label: 'Historique', labelKey: 'sidebar.commandes.history' }
+      { key: 'commandes_dir_current', labelKey: 'sidebar.commandes.new_current' },
+      { key: 'commandes_dir_history', labelKey: 'sidebar.commandes.history' }
     ]
   },
-  { key: 'fournisseurs', label: 'Fournisseurs', labelKey: 'sidebar.fournisseurs.title' },
-  { key: 'clients', label: 'Clients', labelKey: 'sidebar.clients' },
-  { key: 'creances', label: 'Créances', labelKey: 'sidebar.creances' },
+  { key: 'fournisseurs', labelKey: 'sidebar.fournisseurs.title' },
+  { key: 'clients', labelKey: 'sidebar.clients' },
+  { key: 'creances', labelKey: 'sidebar.creances' },
   { 
     key: 'inventaire', 
-    label: 'Stock', 
     labelKey: 'sidebar.stock.title',
     submenus: [
-      { key: 'inventaire_saisie', label: 'Saisie Inventaire', labelKey: 'sidebar.stock.inventaire.title' },
-      { key: 'inventaire_journal', label: 'Journal Ajustements', labelKey: 'sidebar.stock.journal' },
-      { key: 'inventaire_analyse', label: 'Analyse Stock', labelKey: 'sidebar.stock.analyse.title' },
-      { key: 'inventaire_reappro', label: 'Réappro Rayon', labelKey: 'sidebar.stock.reappro.title' },
-      { key: 'inventaire_avoirs', label: 'Avoirs Fournisseurs', labelKey: 'sidebar.stock.avoirs' },
-      { key: 'inventaire_promis', label: 'Produits Promis', labelKey: 'sidebar.stock.promis' },
-      { key: 'inventaire_transformations', label: 'Transformations', labelKey: 'sidebar.stock.transformations.title' },
-      { key: 'inventaire_perimes', label: 'Périmés / Retours', labelKey: 'sidebar.stock.perimes.title' },
-      { key: 'inventaire_organisation', label: 'Organisation', labelKey: 'sidebar.stock.organisation.title' },
-      { key: 'inventaire_etats', label: 'États Inventaires', labelKey: 'sidebar.stock.etats_inventaire.title' }
+      { key: 'inventaire_saisie', labelKey: 'sidebar.stock.inventaire.title' },
+      { key: 'inventaire_journal', labelKey: 'sidebar.stock.journal' },
+      { key: 'inventaire_analyse', labelKey: 'sidebar.stock.analyse.title' },
+      { key: 'inventaire_reappro', labelKey: 'sidebar.stock.reappro.title' },
+      { key: 'inventaire_avoirs', labelKey: 'sidebar.stock.avoirs' },
+      { key: 'inventaire_promis', labelKey: 'sidebar.stock.promis' },
+      { key: 'inventaire_transformations', labelKey: 'sidebar.stock.transformations.title' },
+      { key: 'inventaire_perimes', labelKey: 'sidebar.stock.perimes.title' },
+      { key: 'inventaire_organisation', labelKey: 'sidebar.stock.organisation.title' },
+      { key: 'inventaire_etats', labelKey: 'sidebar.stock.etats_inventaire.title' }
     ]
   },
   { 
     key: 'statistiques', 
-    label: 'Statistiques', 
     labelKey: 'sidebar.statistiques.title',
     submenus: [
-      { key: 'statistiques_rapports', label: 'Centre de Rapports', labelKey: 'sidebar.statistiques.rapports' },
-      { key: 'statistiques_abc', label: 'Analyse ABC', labelKey: 'sidebar.statistiques.abc' },
-      { key: 'statistiques_fournisseurs', label: 'Stats Fournisseurs', labelKey: 'sidebar.statistiques.fournisseurs' },
-      { key: 'statistiques_mensuels', label: 'Rapports Mensuels', labelKey: 'sidebar.statistiques.mensuel' },
-      { key: 'statistiques_finances', label: 'Module Financier', labelKey: 'sidebar.statistiques.finances' },
-      { key: 'statistiques_vendeurs', label: 'Classement Vendeurs', labelKey: 'sidebar.statistiques.classement_vendeurs' },
-      { key: 'statistiques_temporelle', label: 'Analyse Temporelle', labelKey: 'sidebar.statistiques.analyse_temporelle' }
+      { key: 'statistiques_rapports', labelKey: 'sidebar.statistiques.rapports' },
+      { key: 'statistiques_abc', labelKey: 'sidebar.statistiques.abc' },
+      { key: 'statistiques_fournisseurs', labelKey: 'sidebar.statistiques.fournisseurs' },
+      { key: 'statistiques_mensuels', labelKey: 'sidebar.statistiques.mensuel' },
+      { key: 'statistiques_finances', labelKey: 'sidebar.statistiques.finances' },
+      { key: 'statistiques_vendeurs', labelKey: 'sidebar.statistiques.classement_vendeurs' },
+      { key: 'statistiques_temporelle', labelKey: 'sidebar.statistiques.analyse_temporelle' }
     ]
   },
   {
     key: 'settings',
-    label: 'Paramètres',
     labelKey: 'sidebar.parametres.title',
     submenus: [
-      { key: 'settings_facture', label: 'Facture', labelKey: 'sidebar.parametres.facture' },
-      { key: 'settings_pharmacie', label: 'Pharmacie', labelKey: 'sidebar.parametres.pharmacie' },
-      { key: 'settings_whatsapp', label: 'Historique WhatsApp' },
-      { key: 'settings_etiquettes', label: 'Options d\'Étiquettes', labelKey: 'sidebar.parametres.etiquettes' }
+      { key: 'settings_facture', labelKey: 'sidebar.parametres.facture' },
+      { key: 'settings_pharmacie', labelKey: 'sidebar.parametres.pharmacie' },
+      { key: 'settings_whatsapp', labelKey: 'sidebar.parametres.whatsapp' },
+      { key: 'settings_etiquettes', labelKey: 'sidebar.parametres.etiquettes' }
     ]
   }
 ];
@@ -132,9 +126,9 @@ const getAllMenuKeys = () => {
 };
 
 const ROLES = [
-  { value: 'PHARMACIEN', label: 'Pharmacien (Admin Complet)' },
-  { value: 'CAISSIER', label: 'Caissier (Facturation + Encaissement)' },
-  { value: 'VENDEUR', label: 'Vendeur (Vente uniquement, pas d\'encaissement)' }
+  { value: 'PHARMACIEN', labelKey: 'users.roles.pharmacist' },
+  { value: 'CAISSIER', labelKey: 'users.roles.cashier' },
+  { value: 'VENDEUR', labelKey: 'users.roles.seller' }
 ];
 
 export default function GestionUtilisateurs() {
@@ -186,7 +180,6 @@ export default function GestionUtilisateurs() {
   const fetchUsers = async () => {
     try {
       const response = await axios.get('/api/users/');
-      // Handle paginated response
       const data: any = response.data;
       setUsers(Array.isArray(data) ? data : (data.results || []));
     } catch (error) {
@@ -230,11 +223,11 @@ export default function GestionUtilisateurs() {
       updates.can_delete_commande = false;
       updates.can_close_commande = false;
       updates.can_generate_coupon = false;
-      updates.can_modify_invoice = true; // Caissier can modify sales by default
+      updates.can_modify_invoice = true;
       updates.allowed_menus = ['ventes_consultation', 'ventes_historique', 'ventes_journal', 'caisse', 'facturation', 'clients', 'produits', 'vitrine'];
     } else if (role === 'VENDEUR') {
       updates.is_superuser = false;
-      updates.can_cash_out = false; // RESTRICTION MAJEURE
+      updates.can_cash_out = false;
       updates.can_do_returns = false;
       updates.can_sell_negative_stock = false;
       updates.can_delete_product = false;
@@ -250,7 +243,6 @@ export default function GestionUtilisateurs() {
       updates.can_modify_price = false;
       updates.can_modify_invoice = false;
       updates.max_discount_rate = 0;
-      // Vendeur a accès à la caisse pour les rappels seulement (sera géré dans CaisseCentralisee)
       updates.allowed_menus = ['facturation', 'caisse', 'produits', 'vitrine', 'clients', 'inventaire_organisation'];
     }
 
@@ -263,7 +255,7 @@ export default function GestionUtilisateurs() {
       setFormData({
         username: user.username,
         email: user.email,
-        password: '', // Don't fill password on edit
+        password: '',
         first_name: user.first_name,
         last_name: user.last_name,
         role: user.profile?.role || (user.is_superuser ? 'PHARMACIEN' : 'VENDEUR'),
@@ -314,7 +306,7 @@ export default function GestionUtilisateurs() {
         can_modify_invoice: false,
         max_discount_rate: 0,
       });
-      handleRoleChange('VENDEUR'); // Initialize defaults
+      handleRoleChange('VENDEUR');
     }
     setModalOpen(true);
   };
@@ -322,19 +314,16 @@ export default function GestionUtilisateurs() {
   const handleMenuToggle = (menuKey: string, submenus?: {key: string}[]) => {
     setFormData(prev => {
       let allowed = [...prev.allowed_menus];
-      
       const isParent = !!submenus;
       const isCurrentlySelected = allowed.includes(menuKey);
 
       if (isCurrentlySelected) {
-          // Deselect parent and all its submenus
           allowed = allowed.filter(k => k !== menuKey);
           if (isParent) {
              const subKeys = submenus.map(s => s.key);
              allowed = allowed.filter(k => !subKeys.includes(k));
           }
       } else {
-          // Select parent and all its submenus
           allowed.push(menuKey);
           if (isParent) {
              submenus.forEach(sub => {
@@ -344,7 +333,6 @@ export default function GestionUtilisateurs() {
              });
           }
       }
-
       return { ...prev, allowed_menus: allowed };
     });
   };
@@ -352,26 +340,21 @@ export default function GestionUtilisateurs() {
   const handleSubMenuToggle = (submenuKey: string, parentKey: string, totalSubmenusCount: number) => {
     setFormData(prev => {
         let allowed = [...prev.allowed_menus];
-        
         if (allowed.includes(submenuKey)) {
             allowed = allowed.filter(k => k !== submenuKey);
-            // If we uncheck a submenu, also uncheck the parent to reflect partial state correctly
             allowed = allowed.filter(k => k !== parentKey);
         } else {
             allowed.push(submenuKey);
-            // If all submenus are now checked, check the parent too
-            // Find current parent submenus in allowed list
-            const currentCount = MENU_HIERARCHY.find(m => m.key === parentKey)?.submenus?.filter(s => allowed.includes(s.key)).length || 0;
+            const parent = MENU_HIERARCHY.find(m => m.key === parentKey);
+            const currentCount = parent?.submenus?.filter(s => allowed.includes(s.key)).length || 0;
             if (currentCount === totalSubmenusCount && !allowed.includes(parentKey)) {
                 allowed.push(parentKey);
             }
         }
-        
         return { ...prev, allowed_menus: allowed };
     });
   };
 
-  // Execute user deletion (called after password confirmation)
   const executeDeleteUser = async (userId: number, username: string) => {
     try {
       await axios.delete(`/api/users/${userId}/`);
@@ -383,12 +366,12 @@ export default function GestionUtilisateurs() {
     }
   };
 
-  // Handle password confirmation callback
   const handlePasswordConfirmed = () => {
     if (pendingAction) {
       pendingAction();
       setPendingAction(null);
     }
+    setIsPasswordModalOpen(false);
   };
 
   const handleDeleteUser = async (userId: number, username: string) => {
@@ -400,7 +383,6 @@ export default function GestionUtilisateurs() {
     });
     
     if (confirmed) {
-      // Trigger Password Modal for sudo confirmation
       setPasswordModalConfig({
         title: t('users.messages.sudo_title'),
         message: t('users.messages.sudo_message')
@@ -519,7 +501,6 @@ export default function GestionUtilisateurs() {
                       ) : (
                         user.profile?.allowed_menus.map(menu => (
                           <span key={menu} className="badge badge-outline badge-xs opacity-70">
-                            {/* Simple mapping for now, ideally use t(`sidebar.${menu}`) but structure varies */}
                             {menu}
                           </span>
                         ))
@@ -530,12 +511,12 @@ export default function GestionUtilisateurs() {
                 <td>
                   <div className="flex gap-2">
                     {user.profile?.can_cash_out && (
-                      <div className="badge badge-success badge-outline gap-1" title="Peut encaisser">
+                      <div className="badge badge-success badge-outline gap-1" title={t('users.permissions.cash_out')}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </div>
                     )}
                     {user.profile?.can_sell_negative_stock && (
-                      <div className="badge badge-warning badge-outline gap-1" title="Stock Négatif">
+                      <div className="badge badge-warning badge-outline gap-1" title={t('users.permissions.negative_stock')}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                       </div>
                     )}
@@ -546,14 +527,14 @@ export default function GestionUtilisateurs() {
                     className="btn btn-ghost btn-sm"
                     onClick={() => handleOpenModal(user)}
                   >
-                    {t('clients.actions.edit')}
+                    {t('users.actions.edit')}
                   </button>
                   {currentUser?.username !== user.username && (
                     <button 
                       className="btn btn-ghost btn-sm text-error"
                       onClick={() => handleDeleteUser(user.id, user.username)}
                     >
-                      {t('clients.actions.delete')}
+                      {t('users.actions.delete')}
                     </button>
                   )}
                 </td>
@@ -563,7 +544,6 @@ export default function GestionUtilisateurs() {
         </table>
       </div>
 
-      {/* Modal */}
       {modalOpen && (
         <div className="modal modal-open">
           <div className="modal-box w-11/12 max-w-5xl p-0 overflow-hidden flex flex-col max-h-[90vh]">
@@ -578,8 +558,6 @@ export default function GestionUtilisateurs() {
             </div>
             
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-8">
-              
-              {/* Section 1: Basic Info */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 border-l-4 border-primary pl-3">
                   <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.basic_info')}</h4>
@@ -593,10 +571,9 @@ export default function GestionUtilisateurs() {
                       value={formData.role}
                       onChange={(e) => handleRoleChange(e.target.value)}
                     >
-                      {ROLES.map(role => {
-                           const roleKey = role.value === 'PHARMACIEN' ? 'pharmacist' : role.value === 'CAISSIER' ? 'cashier' : 'seller';
-                           return <option key={role.value} value={role.value}>{t(`users.roles.${roleKey}`)}</option>
-                      })}
+                      {ROLES.map(role => (
+                        <option key={role.value} value={role.value}>{t(role.labelKey)}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -657,7 +634,6 @@ export default function GestionUtilisateurs() {
                 </div>
               </div>
 
-              {/* Section 2: Permissions UI - NOW FULL WIDTH */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2 border-l-4 border-secondary pl-3">
                   <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.authorized_menus')}</h4>
@@ -665,46 +641,46 @@ export default function GestionUtilisateurs() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {MENU_HIERARCHY.map(menu => {
-                     const parentLabel = menu.labelKey ? t(menu.labelKey, menu.label) : menu.label;
-                     const isParentChecked = formData.allowed_menus.includes(menu.key);
-                     const indeterminate = !isParentChecked && menu.submenus?.some(sub => formData.allowed_menus.includes(sub.key));
+                      const parentLabel = t(menu.labelKey);
+                      const isParentChecked = formData.allowed_menus.includes(menu.key);
+                      const indeterminate = !isParentChecked && menu.submenus?.some(sub => formData.allowed_menus.includes(sub.key));
 
-                     return (
-                       <div key={menu.key} className="bg-base-200/30 rounded-xl border border-base-300 overflow-hidden flex flex-col h-full">
-                          <div className="bg-base-200/80 p-3 flex-none border-b border-base-300">
-                            <label className="flex items-center cursor-pointer gap-3">
-                              <input 
-                                type="checkbox" 
-                                className={`checkbox checkbox-sm checkbox-primary shrink-0 ${indeterminate ? 'checkbox-indeterminate' : ''}`}
-                                checked={isParentChecked || indeterminate}
-                                onChange={() => handleMenuToggle(menu.key, menu.submenus)}
-                                disabled={formData.is_superuser}
-                              />
-                              <span className={`font-bold text-sm select-none ${formData.is_superuser ? 'opacity-50' : ''}`}>{parentLabel}</span>
-                            </label>
-                          </div>
-                          
-                          {menu.submenus && menu.submenus.length > 0 && (
-                              <div className="p-3 grid grid-cols-1 gap-1.5 flex-1 bg-base-100/50">
-                                 {menu.submenus.map(sub => {
-                                    const subLabel = sub.labelKey ? t(sub.labelKey, sub.label) : sub.label;
-                                    return (
-                                      <label key={sub.key} className="flex items-start cursor-pointer gap-2 py-0.5 group">
-                                        <input 
-                                          type="checkbox" 
-                                          className="checkbox checkbox-xs checkbox-secondary shrink-0 mt-0.5 group-hover:border-secondary transition-colors"
-                                          checked={formData.allowed_menus.includes(sub.key) || formData.allowed_menus.includes(menu.key)}
-                                          onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
-                                          disabled={formData.is_superuser}
-                                        />
-                                        <span className={`text-xs select-none leading-tight pt-0.5 ${formData.is_superuser ? 'opacity-50' : 'text-base-content/80 group-hover:text-base-content'} transition-colors`}>{subLabel}</span>
-                                      </label>
-                                    );
-                                 })}
-                              </div>
-                          )}
-                       </div>
-                  )})}
+                      return (
+                        <div key={menu.key} className="bg-base-200/30 rounded-xl border border-base-300 overflow-hidden flex flex-col h-full">
+                           <div className="bg-base-200/80 p-3 flex-none border-b border-base-300">
+                             <label className="flex items-center cursor-pointer gap-3">
+                               <input 
+                                 type="checkbox" 
+                                 className={`checkbox checkbox-sm checkbox-primary shrink-0 ${indeterminate ? 'checkbox-indeterminate' : ''}`}
+                                 checked={isParentChecked || indeterminate}
+                                 onChange={() => handleMenuToggle(menu.key, menu.submenus)}
+                                 disabled={formData.is_superuser}
+                               />
+                               <span className={`font-bold text-sm select-none ${formData.is_superuser ? 'opacity-50' : ''}`}>{parentLabel}</span>
+                             </label>
+                           </div>
+                           
+                           {menu.submenus && menu.submenus.length > 0 && (
+                               <div className="p-3 grid grid-cols-1 gap-1.5 flex-1 bg-base-100/50">
+                                  {menu.submenus.map(sub => {
+                                     const subLabel = t(sub.labelKey);
+                                     return (
+                                       <label key={sub.key} className="flex items-start cursor-pointer gap-2 py-0.5 group">
+                                         <input 
+                                           type="checkbox" 
+                                           className="checkbox checkbox-xs checkbox-secondary shrink-0 mt-0.5 group-hover:border-secondary transition-colors"
+                                           checked={formData.allowed_menus.includes(sub.key) || formData.allowed_menus.includes(menu.key)}
+                                           onChange={() => handleSubMenuToggle(sub.key, menu.key, menu.submenus!.length)}
+                                           disabled={formData.is_superuser}
+                                         />
+                                         <span className={`text-xs select-none leading-tight pt-0.5 ${formData.is_superuser ? 'opacity-50' : 'text-base-content/80 group-hover:text-base-content'} transition-colors`}>{subLabel}</span>
+                                       </label>
+                                     );
+                                  })}
+                               </div>
+                           )}
+                        </div>
+                   )})}
                 </div>
                 {formData.is_superuser && (
                   <div className="alert alert-info py-2 shadow-sm italic text-sm">
@@ -714,9 +690,7 @@ export default function GestionUtilisateurs() {
                 )}
               </div>
 
-              {/* Section 3: Specialized & Security */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Left: General & Sales */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 border-l-4 border-success pl-3">
                       <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.special_permissions')}</h4>
@@ -738,7 +712,7 @@ export default function GestionUtilisateurs() {
                       </label>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_do_returns} onChange={e => setFormData({...formData, can_do_returns: e.target.checked})} />
                           <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.returns')}</span>
                         </label>
@@ -748,7 +722,7 @@ export default function GestionUtilisateurs() {
                         </label>
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_modify_price} onChange={e => setFormData({...formData, can_modify_price: e.target.checked})} />
-                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">Peut modifier le prix</span>
+                          <span className="text-xs font-medium opacity-80 group-hover:opacity-100">{t('users.permissions.modify_price')}</span>
                         </label>
                         <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                           <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_generate_coupon} onChange={e => setFormData({...formData, can_generate_coupon: e.target.checked})} />
@@ -762,7 +736,7 @@ export default function GestionUtilisateurs() {
 
                       <div className="form-control px-2 mt-1">
                         <label className="label py-1">
-                          <span className="label-text text-[10px] font-bold opacity-60">Taux de remise max (%)</span>
+                          <span className="label-text text-[10px] font-bold opacity-60">{t('users.form.max_discount')}</span>
                         </label>
                         <input 
                           type="number" 
@@ -774,36 +748,47 @@ export default function GestionUtilisateurs() {
                     </div>
                   </div>
 
-                  {/* Right: Security & Admin */}
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 border-l-4 border-error pl-3">
-                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">Sécurité & Sudo</h4>
+                      <h4 className="font-bold text-sm uppercase tracking-wider text-base-content/70">{t('users.modal.security_sudo')}</h4>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-base-200/50 p-4 rounded-xl border border-base-300">
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_invoice} onChange={e => setFormData({...formData, can_cancel_invoice: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Annuler Factures</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.cancel_invoice')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_cancel_promis} onChange={e => setFormData({...formData, can_cancel_promis: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Annuler Promis</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.cancel_promis')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_product} onChange={e => setFormData({...formData, can_delete_product: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Supprimer Produits</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.delete_product')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-error" checked={formData.can_delete_fournisseur} onChange={e => setFormData({...formData, can_delete_fournisseur: e.target.checked})} />
-                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">Supprimer Fournisseurs</span>
+                        <span className="text-xs font-medium text-error opacity-80 group-hover:opacity-100">{t('users.permissions.delete_fournisseur')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
                         <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_adjust_stock} onChange={e => setFormData({...formData, can_adjust_stock: e.target.checked})} />
-                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">Ajuster Stock</span>
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.adjust_stock')}</span>
                       </label>
                       <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
-                        <input type="checkbox" className="checkbox checkbox-xs" checked={formData.can_manage_perimes} onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})} />
-                        <span className="text-xs font-medium opacity-80 group-hover:opacity-100">Gérer Périmés</span>
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_manage_perimes} onChange={e => setFormData({...formData, can_manage_perimes: e.target.checked})} />
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.manage_perimes')}</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_manage_avoirs} onChange={e => setFormData({...formData, can_manage_avoirs: e.target.checked})} />
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.manage_avoirs')}</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_delete_commande} onChange={e => setFormData({...formData, can_delete_commande: e.target.checked})} />
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.delete_commande')}</span>
+                      </label>
+                      <label className="label cursor-pointer justify-start gap-3 p-2 bg-base-100/50 rounded-lg group">
+                        <input type="checkbox" className="checkbox checkbox-xs checkbox-warning" checked={formData.can_close_commande} onChange={e => setFormData({...formData, can_close_commande: e.target.checked})} />
+                        <span className="text-xs font-medium text-warning opacity-80 group-hover:opacity-100">{t('users.permissions.close_commande')}</span>
                       </label>
                     </div>
                   </div>
@@ -818,7 +803,6 @@ export default function GestionUtilisateurs() {
         </div>
       )}
 
-      {/* Sudo Mode Password Modal */}
       <PasswordConfirmModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}

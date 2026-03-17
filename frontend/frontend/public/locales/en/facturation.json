@@ -1,0 +1,161 @@
+{
+    "title": "Sales & Invoicing",
+    "shortcuts": {
+        "search": "Search (F2)",
+        "pay": "Checkout (F9)"
+    },
+    "cart": {
+        "title": "Sales Cart",
+        "items_count": "item(s)",
+        "empty": "Your cart is empty.",
+        "headers": {
+            "product": "Product",
+            "qty": "Qty",
+            "price": "Price",
+            "discount": "Disc.",
+            "stock": "Stock",
+            "lot": "Batch",
+            "total": "Total"
+        },
+        "actions": {
+            "remove": "Remove from cart"
+        },
+        "product_status": {
+            "deleted": "(Deleted)",
+            "chronic": "Chronic",
+            "treatment": "Treatment:",
+            "days_unit": "d",
+            "auto_lot": "Auto"
+        }
+    },
+    "totals": {
+        "subtotal": "Subtotal (Excl. Tax)",
+        "discount": "Global Discount",
+        "tva": "VAT / Tax",
+        "total_ttc": "Total (Incl. Tax)",
+        "part_patient": "Net to Pay (Patient)",
+        "part_assurance": "Insurance Part",
+        "assurance_label": "Insurance"
+    },
+    "actions": {
+        "cancel": "Cancel Sale",
+        "reset_tooltip": "Reset entire cart (F4)",
+        "suspend_short": "On Hold",
+        "suspend_tooltip": "Put sale on hold (F9)",
+        "pending": "Pending",
+        "view_pending_tooltip": "View pending sales (F8)",
+        "proforma": "Proforma",
+        "proforma_tooltip": "Generate proforma invoice / Quote (F10)",
+        "pay": "Pay / Checkout",
+        "pay_tooltip": "Proceed to payment (Ctrl+Enter)",
+        "retrocession_mode": "Retrocession",
+        "facture_a4": "A4 Invoice",
+        "facture_a4_tooltip": "Print directly an A4 Invoice (disables ticket)"
+    },
+    "search": {
+        "label": "Search Product (F2)",
+        "placeholder": "Enter name or ID...",
+        "min_chars": "Type at least 2 characters",
+        "no_results": "No product found",
+        "label_pack": "Search PACK",
+        "placeholder_pack": "Type pack name...",
+        "no_results_pack": "No pack found",
+        "tabs_products": "Products",
+        "tabs_packs": "Promo Packs",
+        "products_count": "products",
+        "error_search_packs": "Error searching packs",
+        "csv_import_tooltip": "Import CSV file (CIP, Quantity)",
+        "stock_label": "Stock:"
+    },
+    "client": {
+        "label": "Client",
+        "search_label": "Search Client",
+        "search_placeholder": "Name, Phone, ID...",
+        "manual_button": "Manual Entry",
+        "manual_input_tooltip": "Enter client name manually",
+        "list_button": "Client List",
+        "select_list_tooltip": "Select a client from database",
+        "manual_placeholder": "Client name for printing...",
+        "clear_tooltip": "Remove client",
+        "no_results": "No client matches your search.",
+        "create_button": "Create",
+        "results_count": "{{count}} results out of {{total}}",
+        "ayant_droit": {
+            "label": "Beneficiary / Dependant",
+            "select_placeholder": "-- Select a beneficiary --",
+            "name_placeholder": "Beneficiary Name",
+            "matricule_placeholder": "ID / Registration No",
+            "societe_placeholder": "Company / Employer",
+            "new_button": "New",
+            "existing_button": "Select",
+            "new_tooltip": "Enter new beneficiary",
+            "select_existing_tooltip": "Select existing beneficiary"
+        }
+    },
+    "payment": {
+        "modal_title": "Payment",
+        "amount_due": "Balance Due",
+        "amount_paid": "Amount Paid",
+        "change_due": "Change Due",
+        "part_patient": "Patient Part (Active Tiers Payant)",
+        "detail_title": "Payment Detail",
+        "part_assurance": "Insurance Part",
+        "tiers_payant_active": "Tiers Payant {{rate}}% active - Payment automatically split",
+        "remaining_to_allocate": "To be allocated:",
+        "mode_label": "Mode",
+        "amount_label": "Amount",
+        "caisse_centrale": "Main Cash",
+        "en_compte_auto": "On account (automatic)",
+        "payment_mode_label": "Payment mode",
+        "add_btn": "Add",
+        "sudo_mode": {
+            "validate_by": "Validated by",
+            "password": "Password (Sudo)"
+        },
+        "sudo_self": "(Myself)",
+        "password_placeholder": "Validator password...",
+        "change_due_label": "Change:",
+        "remaining_due_label": "Balance:",
+        "total_label": "Total:",
+        "no_invoice": "No invoice selected.",
+        "modes": {
+            "especes": "Cash",
+            "cheque": "Check",
+            "carte": "Bank Card",
+            "virement": "Transfer",
+            "mobile": "Mobile Money",
+            "momo": "Mobile Money",
+            "other": "Other",
+            "credit": "Client Credit"
+        },
+        "validate": "Validate Payment",
+        "validate_sale": "Validate Sale",
+        "register_payment": "Register Payment",
+        "status": {
+            "processing": "Processing..."
+        }
+    },
+    "pending_sales": {
+        "title": "Pending Sales",
+        "items_count": "{{count}} item(s)"
+    },
+    "messages": {
+        "discount_limit_error": "Discount limited to {{rate}}% for your profile.",
+        "price_modification_forbidden": "You are not authorized to modify the price.",
+        "save_success": "Sale registered successfully",
+        "save_error": "Error registering sale",
+        "scan_added": "Product added: {{name}}",
+        "pack_empty": "This pack contains no items.",
+        "adding_pack": "Adding pack items...",
+        "pack_items_error": "Failed to retrieve some items from the pack."
+    },
+    "modification_mode": {
+        "title": "Invoice Modification Mode",
+        "original_total": "Initial Total",
+        "new_total": "New Total",
+        "difference": "Difference",
+        "to_collect": "to collect",
+        "to_refund": "to refund",
+        "cancelled": "Modification cancelled"
+    }
+}

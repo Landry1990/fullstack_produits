@@ -13,7 +13,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
     inventoryStats,
     handlePrintEcartsFrontend
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     const renderList = (title: string, data: any[], type: 'negative' | 'positive') => {
         const Icon = type === 'negative' ? AlertTriangle : TrendingUp;
@@ -34,7 +34,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                     {!data || data.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full py-12 gap-3 opacity-20">
                             <PieChart className="h-10 w-10" />
-                            <p className="text-sm font-medium">{t('stock.inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
+                            <p className="text-sm font-medium">{t('inventaire.analysis.no_data', { defaultValue: 'Aucune donnée' })}</p>
                         </div>
                     ) : (
                         data.map((p, i) => (
@@ -46,7 +46,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                                     <div className="max-w-[150px] md:max-w-xs">
                                         <div className="font-bold text-sm text-base-content group-hover:text-primary transition-colors truncate">{p.produit_nom}</div>
                                         <div className={`text-[10px] font-bold ${colorClass}/60 uppercase tracking-tight mt-0.5`}>
-                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common.units_short', 'unités')}
+                                            {p.ecart > 0 ? '+' : ''}{p.ecart} {t('common:units_short', 'unités')}
                                         </div>
                                     </div>
                                 </div>
@@ -67,12 +67,12 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
         <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {renderList(
-                    t('stock.inventaire.analysis.top_losses'), 
+                    t('inventaire.analysis.top_losses'), 
                     inventoryStats?.top_pertes || [], 
                     'negative'
                 )}
                 {renderList(
-                    t('stock.inventaire.analysis.top_surplus'), 
+                    t('inventaire.analysis.top_surplus'), 
                     inventoryStats?.top_surplus || [], 
                     'positive'
                 )}
@@ -86,7 +86,7 @@ export const InventaireAnalysisTab: React.FC<InventaireAnalysisTabProps> = ({
                         onClick={handlePrintEcartsFrontend}
                     >
                         <Download className="h-5 w-5" />
-                        {t('stock.inventaire.analysis.print_report')}
+                        {t('inventaire.analysis.print_report')}
                     </button>
                 </div>
             )}

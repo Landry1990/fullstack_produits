@@ -1,0 +1,205 @@
+{
+    "title_local": "Local Orders Management",
+    "title_direct": "Direct Orders Management (Import)",
+    "subtitle": "Plan your purchases and track your deliveries",
+    "all_suppliers": "All suppliers",
+    "bulk_delete_btn": "Delete selection",
+    "bulk_delete_title": "Bulk Deletion",
+    "bulk_delete_confirm_minimal": "Are you sure you want to delete the {{count}} selected products?",
+    "tabs": {
+        "orders_list": "Orders List",
+        "order_details": "Order Details",
+        "delivery": "Reception / Delivery",
+        "local": "Local Wholesalers",
+        "direct": "Direct Orders"
+    },
+    "status": {
+        "prep": "Prep.",
+        "pending": "Pending",
+        "closed": "Closed"
+    },
+    "list": {
+        "title": "Purchase History",
+        "suggestions_btn": "Suggestions",
+        "create_btn": "New Order",
+        "sort_by": "Sort by",
+        "filter_by": "Filter by",
+        "filters": {
+            "all": "All",
+            "prep": "Preparation",
+            "pending": "Pending",
+            "closed": "Closed"
+        },
+        "table": {
+            "id": "ID",
+            "date": "Date",
+            "status": "Status",
+            "invoice_number": "Invoice No.",
+            "items": "Items",
+            "view_details": "View Details",
+            "empty": "No orders found for now"
+        },
+        "selection": {
+            "merge": "Merge"
+        },
+        "pagination": {
+            "showing": "Showing {{count}} of {{total}} orders"
+        }
+    },
+    "details": {
+        "title": "Order #{{id}}",
+        "edit": "Edit",
+        "resume": "Resume",
+        "suspend": "Wait / Suspend",
+        "close": "Close / Validate",
+        "labels": "Labels",
+        "delete": "Delete",
+        "print_receipt": "Print Receipt",
+        "cancel_reception": "Cancel Reception",
+        "return": "Return / Credit Note",
+        "id": "Order ID",
+        "invoice": "Invoice No.",
+        "provider": "Supplier",
+        "date": "Issue Date",
+        "status": "Current Status",
+        "closed_by": "Closed by",
+        "financial_summary": "Financial Summary",
+        "ug_title": "Free Units (UG)",
+        "ug_message": "This order contains {{count}} free units offered by the supplier.",
+        "products_list": "Ordered Products List",
+        "empty_products": "No products in this order",
+        "price_unit": "Buy Price U."
+    },
+    "form": {
+        "back_to_list": "Back to list",
+        "new_title": "New Order",
+        "edit_title": "Edit Order #{{id}}",
+        "shortcuts": {
+            "search": "Search",
+            "provider": "Supplier",
+            "select_all": "Select all"
+        },
+        "provider_label": "Supplier",
+        "provider_placeholder": "Select a supplier",
+        "invoice_label": "Invoice Number",
+        "invoice_placeholder": "e.g., FACT-2024-001",
+        "export_btn": "Export",
+        "export_options": {
+            "ubipharm": "Ubipharm (CIP1)",
+            "laborex": "Laborex (CIP2)"
+        },
+        "import_btn": "Import CSV",
+        "new_product_btn": "New Product",
+        "direct_order_badge": "Direct Order",
+        "exchange_rate": "Exchange Rate (FCFA/EUR)",
+        "coefficient": "Cost Coeff.",
+        "cost_price_formula": "C.P = (P. Euro * Rate) * Coeff.",
+        "search_label": "Add a product (CIP1/2, Internal Code or Name)",
+        "search_placeholder": "Scan a CIP or type name...",
+        "no_product_found": "No product found",
+        "search_results": {
+            "stock": "Stock",
+            "price": "Price",
+            "cip": "CIP"
+        },
+        "nav_help": "F2: Search | TAB/ENTER: Navigate | F9: Save",
+        "saving": "Saving...",
+        "save_btn": "Save Order"
+    },
+    "product_table": {
+        "title": "Products ({{count}})",
+        "search_placeholder": "Search for a product...",
+        "sort_options": {
+            "chrono": "Chronological",
+            "stock": "Stock Quantity",
+            "name": "Name",
+            "qty": "Input Qty"
+        },
+        "saved_at": "Saved at {{time}}",
+        "total_ht": "Net HT",
+        "total_tva": "VAT",
+        "total_ttc": "Total TTC",
+        "selected_count": "{{count}} product(s) selected",
+        "delete_btn": "Remove",
+        "transfer_btn": "Transfer",
+        "empty_state": "The order is empty. Use the search bar to add products.",
+        "headers": {
+            "product": "Product / Description",
+            "cip": "CIP / Code",
+            "qty": "Quantity",
+            "ug": "F.U",
+            "dev_price": "Dev. Price",
+            "buy_price_ht": "B.P HT",
+            "tva": "VAT %",
+            "margin": "Margin %",
+            "sell_price": "S.P TTC",
+            "lot": "Lot",
+            "exp_date": "Expiration",
+            "rotation": "Rot."
+        },
+        "exclusivity_tooltip": "Exclusive product for supplier: {{provider}}",
+        "specific_provider": "specific supplier",
+        "info_row": {
+            "stock": "Stock",
+            "purchase_history": "Purchase History",
+            "last_buy_price": "Last buy price",
+            "sales_history": "Sales History",
+            "rotation": "Rotation",
+            "stock_alerts": "Stock Alerts",
+            "alert_threshold": "Alert threshold",
+            "indicators": "Indicators",
+            "stock_out": "Out of stock",
+            "stock_life": "Current stock lifespan",
+            "rotation_unknown": "Unknown rotation"
+        }
+    },
+    "messages": {
+        "create_success": "Order created successfully",
+        "update_success": "Order updated",
+        "delete_success": "Order deleted",
+        "receive_success": "Products successfully added to stock",
+        "no_orders": "No orders found",
+        "details_load_error": "Error loading order details",
+        "add_at_least_one": "Please add at least one product to the order",
+        "close_confirm": "Are you sure you want to close this order?",
+        "exclusive_product_title": "Exclusive Product",
+        "exclusive_product_message": "This product is usually exclusive to supplier: {{supplier}}. Do you still want to add it?",
+        "exclusive_product_confirm": "Yes, add it",
+        "products_added_from_alerts": "{{count}} products added from stock alerts",
+        "lots_merged": "Lines merged for {{product}} (same lot)",
+        "import_load_error": "Could not load product list for CSV import",
+        "csv_partial_import": "Partial import: {{found}} recognized, {{notFound}} unrecognized (report download in progress)",
+        "csv_import_success": "Successfully imported {{count}} products",
+        "csv_empty_order": "The order is empty, nothing to export",
+        "csv_no_code": "No products with a valid CIP code for {{wholesaler}}",
+        "csv_export_skipped": "Export finished: {{exported}} products exported. {{skipped}} ignored because they have no {{wholesaler}} CIP code.",
+        "create_credit_note_help": "Create a return / credit note from this order",
+        "remove_product_confirm": "Are you sure you want to remove this product from the order?",
+        "confirm_delete_title": "Confirm Deletion",
+        "confirm_sudo_title": "Admin Validation Required",
+        "confirm_sudo_message": "Do you want to validate this action as an administrator?",
+        "confirm_sudo_me": "Myself",
+        "confirm_sudo_admin": "Other Admin",
+        "confirm_sudo_cancel": "Cancel"
+    },
+    "history": {
+        "title": "Purchase History",
+        "subtitle_local": "(Local)",
+        "subtitle_direct": "(Direct)",
+        "subtitle_daily": "(Daily History)",
+        "results_found": "results found",
+        "all_providers": "All suppliers",
+        "refresh": "Refresh",
+        "columns": {
+            "nb_orders": "Number of orders",
+            "total_purchase": "Total Purchase",
+            "date": "Date"
+        },
+        "no_data": "No data found for the selected period",
+        "loading": "Loading history...",
+        "pagination": {
+            "page": "Page"
+        }
+    }
+}
+

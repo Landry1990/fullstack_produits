@@ -49,7 +49,7 @@ interface CommandesProps {
 
 export default function Commandes({ forcedType }: CommandesProps) {
   const confirm = useConfirm()
-  const { t } = useTranslation();
+  const { t } = useTranslation(['orders', 'common', 'products']);
   const { user } = useAuth();
   const navigate = useNavigate(); // For navigation to Avoirs
   const location = useLocation(); // For receiving state from Dashboard
@@ -78,7 +78,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
           setViewMode('DETAILS');
         } catch (err) {
           console.error("Erreur lors du chargement de la commande via navigation:", err);
-          toast.error(t('orders.messages.details_load_error'));
+          toast.error(t('orders:messages.details_load_error'));
         } finally {
           // Nettoyer l'état dans tous les cas pour éviter de réouvrir ou boucler au refresh/navigation
           navigate(location.pathname, { replace: true, state: {} });
@@ -227,7 +227,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   const onSave = (e: FormEvent) => {
       e.preventDefault();
       if (commandeProduits.length === 0) {
-          toast.error(t('orders.messages.add_at_least_one'));
+          toast.error(t('orders:messages.add_at_least_one'));
           return;
       }
       const cleanCommande: Partial<Commande> = {
@@ -246,9 +246,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
       if (!selectedCommande) return;
 
       const confirmed = await confirm({
-          title: t('orders.details.close'),
-          message: t('orders.messages.close_confirm'),
-          confirmText: t('common.actions.confirm')
+          title: t('orders:details.close'),
+          message: t('orders:messages.close_confirm', { defaultValue: 'Voulez-vous vraiment clôturer cette commande ?' }),
+          confirmText: t('common:confirm')
       });
 
       if (confirmed) {
@@ -259,8 +259,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
               }),
               { 
                   permission: 'can_close_commande',
-                  title: t('orders.messages.password_confirm_close_title'),
-                  message: t('orders.messages.password_confirm_close_body')
+                  title: t('orders:messages.confirm_sudo_title'),
+                  message: t('orders:messages.confirm_sudo_message')
               }
           );
       }
@@ -276,8 +276,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
           }),
           { 
               permission: 'can_delete_commande',
-              title: t('orders.messages.password_confirm_delete_title'),
-              message: t('orders.messages.password_confirm_delete_body', { id: selectedCommande.id })
+              title: t('orders:messages.confirm_sudo_title'),
+              message: t('orders:messages.confirm_sudo_message')
           }
       );
   };
@@ -295,8 +295,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
           }),
           { 
               permission: 'can_close_commande',
-              title: t('orders.messages.password_confirm_cancel_title'),
-              message: t('orders.messages.password_confirm_cancel_body')
+              title: t('orders:messages.confirm_sudo_title'),
+              message: t('orders:messages.confirm_sudo_message')
           }
       );
   }
@@ -318,8 +318,8 @@ export default function Commandes({ forcedType }: CommandesProps) {
         },
         {
             permission: 'can_delete_commande',
-            title: t('orders.messages.bulk_delete_confirm_title'),
-            message: t('orders.messages.bulk_delete_confirm_body', { count: selectedOrderIds.size })
+            title: t('orders:messages.confirm_sudo_title'),
+            message: t('orders:messages.confirm_sudo_message')
         }
     );
   };
@@ -534,7 +534,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         }
         
         setCommandeProduits(newLines);
-        toast.success(t('orders.messages.products_added_from_alerts', { count: newLines.length }), { icon: '📦' });
+        toast.success(t('orders:messages.products_added_from_alerts', { count: newLines.length }), { icon: '📦' });
       };
       
       loadProducts();
@@ -738,10 +738,10 @@ export default function Commandes({ forcedType }: CommandesProps) {
 
         if (currentSupplierId && product.fournisseur && currentSupplierId !== product.fournisseur) {
              const confirmed = await confirm({
-                 title: t('orders.messages.exclusive_product_title'),
-                 message: t('orders.messages.exclusive_product_message', { supplier: product.fournisseur_name }),
-                 confirmText: t('orders.messages.exclusive_product_confirm'),
-                 cancelText: t('orders.merge_modal.cancel'),
+                 title: t('orders:messages.exclusive_product_title'),
+                 message: t('orders:messages.exclusive_product_message', { supplier: product.fournisseur_name }),
+                 confirmText: t('orders:messages.exclusive_product_confirm'),
+                 cancelText: t('common:cancel'),
                  variant: 'warning'
              });
 
@@ -862,7 +862,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   // Ouvrir le modal de transfert
   function openTransferModal() {
     if (selectedRows.size === 0) {
-      toast.error(t('orders.messages.transfer_select_products'));
+      toast.error(t('orders:messages.transfer_select_products'));
       return;
     }
     setIsTransferModalOpen(true);
@@ -909,19 +909,19 @@ export default function Commandes({ forcedType }: CommandesProps) {
   // Vérifier si la fusion est possible (même statut et au moins 2 sélectionnées)
   function canMergeSelectedOrders(): { canMerge: boolean; reason?: string; status?: string } {
     if (selectedOrderIds.size < 2) {
-      return { canMerge: false, reason: t('orders.messages.merge_select_two') };
+      return { canMerge: false, reason: t('orders:messages.merge_select_two') };
     }
     
     const selectedOrders = commandes.filter(c => selectedOrderIds.has(c.id));
     const statuses = new Set(selectedOrders.map(c => c.status));
     
     if (statuses.size > 1) {
-      return { canMerge: false, reason: t('orders.messages.merge_same_status') };
+      return { canMerge: false, reason: t('orders:messages.merge_same_status') };
     }
     
     const status = selectedOrders[0]?.status;
     if (status === 'CLOT') {
-      return { canMerge: false, reason: t('orders.messages.merge_not_closed') };
+      return { canMerge: false, reason: t('orders:messages.merge_not_closed') };
     }
     
     return { canMerge: true, status };
@@ -931,7 +931,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   function openMergeModal() {
     const { canMerge, reason } = canMergeSelectedOrders();
     if (!canMerge) {
-      toast.error(reason || t('orders.messages.merge_impossible'));
+      toast.error(reason || t('orders:messages.merge_impossible'));
       return;
     }
     setIsMergeModalOpen(true);
@@ -941,7 +941,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
   function handleMergeSuccess(mergedCount: number, targetOrderId: number) {
       setIsMergeModalOpen(false);
       setSelectedOrderIds(new Set());
-      toast.success(t('orders.messages.merge_success_detailed', { count: mergedCount, id: targetOrderId }));
+      toast.success(t('orders:messages.merge_success_detailed', { count: mergedCount, id: targetOrderId }), { icon: '🤝' });
       refetchCommandes();
   }
 
@@ -1046,7 +1046,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
                   unites_gratuites: mergedUG
               };
 
-              toast.success(t('orders.messages.lots_merged', { product: typeof currentItem.produit === 'object' ? currentItem.produit.name : 'produit' }), { icon: '🔄' });
+              toast.success(t('orders:messages.lots_merged', { product: typeof currentItem.produit === 'object' ? currentItem.produit.name : 'produit' }), { icon: '🔄' });
               
               // Déplacer le focus vers la ligne fusionnée
               setTimeout(() => {
@@ -1092,7 +1092,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       allProducts = response.data;
     } catch (err) {
       console.error("Failed to load products for import:", err);
-      toast.error(t('orders.messages.import_load_error'));
+      toast.error(t('orders:messages.import_load_error'));
       setIsImporting(false);
       return;
     }
@@ -1210,9 +1210,9 @@ export default function Commandes({ forcedType }: CommandesProps) {
         link.click();
         document.body.removeChild(link);
         
-        toast.error(t('orders.messages.csv_partial_import', { found: productsFound, notFound: productsNotFound }));
+        toast.error(t('orders:messages.csv_partial_import', { found: productsFound, notFound: productsNotFound }));
       } else {
-        toast.success(t('orders.messages.csv_import_success', { count: productsFound }));
+        toast.success(t('orders:messages.csv_import_success', { count: productsFound }));
       }
       
       // Reset input
@@ -1239,7 +1239,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
    */
   const handleCsvExport = (wholesaler: 'UBIPHARM' | 'LABOREX') => {
     if (commandeProduits.length === 0) {
-      toast(t('orders.messages.csv_empty_order'), { icon: '⚠️' });
+      toast(t('orders:messages.csv_empty_order'), { icon: '⚠️' });
       return;
     }
 
@@ -1272,7 +1272,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     });
 
     if (exportedCount === 0) {
-        toast.error(t('orders.messages.csv_no_code', { wholesaler }));
+        toast.error(t('orders:messages.csv_no_code', { wholesaler }));
         return;
     }
 
@@ -1291,7 +1291,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     }
 
     if (skippedCount > 0) {
-        alert(t('orders.messages.csv_export_skipped', { exported: exportedCount, skipped: skippedCount, wholesaler }));
+        alert(t('orders:messages.csv_export_skipped', { exported: exportedCount, skipped: skippedCount, wholesaler }));
     }
   };
 
@@ -1473,7 +1473,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
       setSelectedCommande(data);
       setViewMode('DETAILS');
     } catch (err) {
-      toast.error(t('orders.messages.details_load_error'));
+      toast.error(t('orders:messages.details_load_error'));
     }
   }
 
@@ -1487,7 +1487,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
     <div className="h-full flex flex-col overflow-hidden bg-base-100">
       <div className="flex flex-col items-center pt-4 mb-4 shrink-0">
           <h1 className="text-xl md:text-2xl font-bold text-center mb-4">
-              {activeTab === 'DIR' ? t('orders.title_direct') : t('orders.title')}
+              {activeTab === 'DIR' ? t('orders:title_direct') : t('orders:title_local')}
           </h1>
           
           {!forcedType && (
@@ -1496,13 +1496,13 @@ export default function Commandes({ forcedType }: CommandesProps) {
                 className={`tab ${activeTab === 'LOC' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('LOC')}
                 >
-                {t('orders.tabs.local')}
+                {t('orders:tabs.local')}
                 </a> 
                 <a 
                 className={`tab ${activeTab === 'DIR' ? 'tab-active' : ''}`}
                 onClick={() => setActiveTab('DIR')}
                 >
-                {t('orders.tabs.direct')}
+                {t('orders:tabs.direct')}
                 </a>
             </div>
           )}
@@ -1642,7 +1642,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         rayons={rayons}
         fournisseurs={fournisseurs}
         formes={formes}
-        title={t('orders.messages.create_new_product')}
+        title={t('orders:messages.create_new_product')}
       />
 
       {/* Print Labels Modal */}
@@ -1660,7 +1660,7 @@ export default function Commandes({ forcedType }: CommandesProps) {
         onClose={closeSudo}
         onValidate={sudoState.onValidate}
         saving={false}
-        title={sudoState.title || t('orders.messages.validation_required')}
+        title={sudoState.title || t('orders:messages.validation_required')}
         message={sudoState.message || ""}
       />
 

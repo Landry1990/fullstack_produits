@@ -1,0 +1,205 @@
+{
+    "title_local": "Gestion des Commandes Locales",
+    "title_direct": "Gestion des Commandes Directes (Import)",
+    "subtitle": "Planifiez vos achats et suivez vos livraisons",
+    "all_suppliers": "Tous les fournisseurs",
+    "bulk_delete_btn": "Supprimer la sélection",
+    "bulk_delete_title": "Suppression Groupée",
+    "bulk_delete_confirm_minimal": "Êtes-vous sûr de vouloir supprimer les {{count}} produits sélectionnés ?",
+    "tabs": {
+        "orders_list": "Liste des Commandes",
+        "order_details": "Détails Commande",
+        "delivery": "Réception / Livraison",
+        "local": "Grossistes Locaux",
+        "direct": "Commandes Directes"
+    },
+    "status": {
+        "prep": "Prép.",
+        "pending": "En attente",
+        "closed": "Clôturée"
+    },
+    "list": {
+        "title": "Historique des Commandes",
+        "suggestions_btn": "Suggestions",
+        "create_btn": "Nouvelle Commande",
+        "sort_by": "Trier par",
+        "filter_by": "Filtrer par",
+        "filters": {
+            "all": "Tous",
+            "prep": "Préparation",
+            "pending": "En attente",
+            "closed": "Clôturées"
+        },
+        "table": {
+            "id": "ID",
+            "date": "Date",
+            "status": "Statut",
+            "invoice_number": "N° Facture",
+            "items": "Items",
+            "view_details": "Voir Détails",
+            "empty": "Aucune commande pour le moment"
+        },
+        "selection": {
+            "merge": "Fusionner"
+        },
+        "pagination": {
+            "showing": "Affichage de {{count}} sur {{total}} commandes"
+        }
+    },
+    "details": {
+        "title": "Commande #{{id}}",
+        "edit": "Modifier",
+        "resume": "Reprendre",
+        "suspend": "Mettre en attente",
+        "close": "Clôturer",
+        "labels": "Étiquettes",
+        "delete": "Supprimer",
+        "print_receipt": "Imprimer Reçu",
+        "cancel_reception": "Annuler Réception",
+        "return": "Retour / Avoir",
+        "id": "ID Commande",
+        "invoice": "N° Facture",
+        "provider": "Fournisseur",
+        "date": "Date d'émission",
+        "status": "Statut actuel",
+        "closed_by": "Clôturée par",
+        "financial_summary": "Résumé Financier",
+        "ug_title": "Unités Gratuites (UG)",
+        "ug_message": "Cette commande contient {{count}} unités gratuites offertes par le fournisseur.",
+        "products_list": "Liste des produits commandés",
+        "empty_products": "Aucun produit dans cette commande",
+        "price_unit": "P.U Achat"
+    },
+    "form": {
+        "back_to_list": "Retour à la liste",
+        "new_title": "Nouvelle Commande",
+        "edit_title": "Édition Commande #{{id}}",
+        "shortcuts": {
+            "search": "Rechercher",
+            "provider": "Fournisseur",
+            "select_all": "Tout sél."
+        },
+        "provider_label": "Fournisseur",
+        "provider_placeholder": "Sélectionner un fournisseur",
+        "invoice_label": "N° de Facture",
+        "invoice_placeholder": "Ex: FACT-2024-001",
+        "export_btn": "Exporter",
+        "export_options": {
+            "ubipharm": "Ubipharm (CIP1)",
+            "laborex": "Laborex (CIP2)"
+        },
+        "import_btn": "Importer CSV",
+        "new_product_btn": "Nouveau Produit",
+        "direct_order_badge": "Commande Directe",
+        "exchange_rate": "Taux de change (FCFA/EUR)",
+        "coefficient": "Frais / Coef.",
+        "cost_price_formula": "P.R = (P. Euro * Taux) * Coef.",
+        "search_label": "Ajouter un produit (CIP1/2, Code Interne ou Nom)",
+        "search_placeholder": "Scanner un CIP ou saisir le nom...",
+        "no_product_found": "Aucun produit trouvé",
+        "search_results": {
+            "stock": "Stock",
+            "price": "Prix",
+            "cip": "CIP"
+        },
+        "nav_help": "F2: Recherche | TAB/ENTRÉE: Naviguer | F9: Sauvegarder",
+        "saving": "Sauvegarde...",
+        "save_btn": "Enregistrer la Commande"
+    },
+    "product_table": {
+        "title": "Produits ({{count}})",
+        "search_placeholder": "Rechercher un produit...",
+        "sort_options": {
+            "chrono": "Chronologie",
+            "stock": "Qté en stock",
+            "name": "Nom",
+            "qty": "Qté saisie"
+        },
+        "saved_at": "Enregistré à {{time}}",
+        "total_ht": "Net HT",
+        "total_tva": "TVA",
+        "total_ttc": "Total TTC",
+        "selected_count": "{{count}} produit(s) sélectionné(s)",
+        "delete_btn": "Retirer",
+        "transfer_btn": "Transférer",
+        "empty_state": "La commande est vide. Utilisez la barre de recherche pour ajouter des produits.",
+        "headers": {
+            "product": "Produit / Désignation",
+            "cip": "CIP / Code",
+            "qty": "Quantité",
+            "ug": "U.G",
+            "dev_price": "Prix Dev.",
+            "buy_price_ht": "P.A HT",
+            "tva": "TVA %",
+            "margin": "Marge %",
+            "sell_price": "P.V TTC",
+            "lot": "Lot",
+            "exp_date": "Expiration",
+            "rotation": "Rot."
+        },
+        "exclusivity_tooltip": "Produit exclusif au fournisseur: {{provider}}",
+        "specific_provider": "fournisseur spécifique",
+        "info_row": {
+            "stock": "Stock",
+            "purchase_history": "Historique d'Achat",
+            "last_buy_price": "Dernier prix d'achat",
+            "sales_history": "Historique de Vente",
+            "rotation": "Rotation",
+            "stock_alerts": "Alertes Stock",
+            "alert_threshold": "Seuil d'alerte",
+            "indicators": "Indicateurs",
+            "stock_out": "Stock en rupture",
+            "stock_life": "Durée de vie stock actuel",
+            "rotation_unknown": "Rotation inconnue"
+        }
+    },
+    "messages": {
+        "create_success": "Commande créée avec succès",
+        "update_success": "Commande mise à jour",
+        "delete_success": "Commande supprimée",
+        "receive_success": "Produits intégrés au stock avec succès",
+        "no_orders": "Aucune commande trouvée",
+        "details_load_error": "Erreur lors du chargement des détails de la commande",
+        "add_at_least_one": "Veuillez ajouter au moins un produit à la commande",
+        "close_confirm": "Voulez-vous vraiment clôturer cette commande ?",
+        "exclusive_product_title": "Produit Exclusif",
+        "exclusive_product_message": "Ce produit est normalement exclusif au fournisseur : {{supplier}}. Voulez-vous quand même l'ajouter ?",
+        "exclusive_product_confirm": "Oui, ajouter",
+        "products_added_from_alerts": "{{count}} produits ajoutés à partir des alertes de stock",
+        "lots_merged": "Lignes fusionnées pour {{product}} (même lot)",
+        "import_load_error": "Impossible de charger la liste des produits pour l'import CSV",
+        "csv_partial_import": "Importation partielle : {{found}} reconnus, {{notFound}} non reconnus (téléchargement du rapport en cours)",
+        "csv_import_success": "Importation réussie de {{count}} produits",
+        "csv_empty_order": "La commande est vide, rien à exporter",
+        "csv_no_code": "Aucun produit avec un code CIP valide pour {{wholesaler}}",
+        "csv_export_skipped": "Export terminé : {{exported}} produits exportés. {{skipped}} ignorés car sans code CIP {{wholesaler}}.",
+        "create_credit_note_help": "Créer un avoir / retour fournisseur à partir de cette commande",
+        "remove_product_confirm": "Êtes-vous sûr de vouloir retirer ce produit de la commande ?",
+        "confirm_delete_title": "Confirmer la suppression",
+        "confirm_sudo_title": "Validation Administrative Requise",
+        "confirm_sudo_message": "Voulez-vous valider cette action en tant qu'administrateur ?",
+        "confirm_sudo_me": "Moi-même",
+        "confirm_sudo_admin": "Autre Administrateur",
+        "confirm_sudo_cancel": "Annuler"
+    },
+    "history": {
+        "title": "Historique des Achats",
+        "subtitle_local": "(Grossistes Locaux)",
+        "subtitle_direct": "(Commandes Directes)",
+        "subtitle_daily": "(Historique Quotidien)",
+        "results_found": "résultats trouvés",
+        "all_providers": "Tous les fournisseurs",
+        "refresh": "Actualiser",
+        "columns": {
+            "nb_orders": "Nombre de commandes",
+            "total_purchase": "Total Achats",
+            "date": "Date"
+        },
+        "no_data": "Aucune donnée trouvée pour la période sélectionnée",
+        "loading": "Chargement de l'historique...",
+        "pagination": {
+            "page": "Page"
+        }
+    }
+}
+

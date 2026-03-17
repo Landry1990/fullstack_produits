@@ -21,26 +21,26 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
     onToggleSelect,
     onToggleSelectAll
 }) => {
-    const { t, i18n } = useTranslation();
+    const { t, i18n } = useTranslation(['stock', 'common']);
 
     const getUrgencyBadge = (urgency: string) => {
         switch (urgency) {
             case 'critical':
                 return (
                     <div className="badge border-none bg-error/20 text-error gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
-                        <AlertTriangle className="w-3 h-3" /> {t('stock.analyse.shortage.urgency.critical')}
+                        <AlertTriangle className="w-3 h-3" /> {t('analyse.shortage.urgency.critical')}
                     </div>
                 );
             case 'warning':
                 return (
                     <div className="badge border-none bg-warning/20 text-warning gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
-                        <AlertTriangle className="w-3 h-3" /> {t('stock.analyse.shortage.urgency.warning')}
+                        <AlertTriangle className="w-3 h-3" /> {t('analyse.shortage.urgency.warning')}
                     </div>
                 );
             case 'caution':
                 return (
                     <div className="badge border-none bg-info/20 text-info gap-1.5 font-black uppercase text-[10px] tracking-widest px-3 py-2">
-                        <AlertTriangle className="w-3 h-3" /> {t('stock.analyse.shortage.urgency.caution')}
+                        <AlertTriangle className="w-3 h-3" /> {t('analyse.shortage.urgency.caution')}
                     </div>
                 );
             default:
@@ -53,7 +53,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
             <div className="flex flex-col items-center justify-center h-96 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
                 <p className="text-sm font-medium text-base-content/40 uppercase tracking-widest animate-pulse">
-                    {t('stock.analyse.messages.loading')}
+                    {t('analyse.messages.loading')}
                 </p>
             </div>
         );
@@ -71,9 +71,9 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
 
         const getEmptyText = () => {
             switch (activeTab) {
-                case 'unsold': return t('stock.analyse.empty.unsold');
-                case 'overstock': return t('stock.analyse.empty.overstock');
-                case 'shortage': return t('stock.analyse.empty.shortage');
+                case 'unsold': return t('analyse.empty.unsold');
+                case 'overstock': return t('analyse.empty.overstock');
+                case 'shortage': return t('analyse.empty.shortage');
                 default: return '-';
             }
         };
@@ -84,7 +84,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                     {getEmptyIcon()}
                 </div>
                 <h3 className="text-xl font-black text-base-content/60">{getEmptyText()}</h3>
-                <p className="text-sm font-semibold text-base-content/30 mt-2">{t('stock.analyse.empty.all_good')}</p>
+                <p className="text-sm font-semibold text-base-content/30 mt-2">{t('analyse.empty.all_good')}</p>
             </div>
         );
     }
@@ -105,33 +105,33 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                             </th>
                         )}
                         <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6 py-4">
-                            <div className="flex items-center gap-1.5"><Package className="w-3 h-3" /> {t('stock.analyse.columns.product')}</div>
+                            <div className="flex items-center gap-1.5"><Package className="w-3 h-3" /> {t('analyse.columns.product')}</div>
                         </th>
                         <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">
-                            {t('stock.analyse.columns.current_stock')}
+                            {t('analyse.columns.current_stock')}
                         </th>
 
                         {activeTab === 'unsold' ? (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock.analyse.columns.last_purchase')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('stock.analyse.columns.last_sale')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.inactive_since')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('stock.analyse.columns.cost_price')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stock.analyse.columns.stock_value')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('analyse.columns.last_purchase')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">{t('analyse.columns.last_sale')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.inactive_since')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('analyse.columns.cost_price')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('analyse.columns.stock_value')}</th>
                             </>
                         ) : activeTab === 'overstock' ? (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.avg_rotation')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.threshold')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.excess_qty')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stock.analyse.columns.excess_value')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.avg_rotation')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.threshold')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.excess_qty')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('analyse.columns.excess_value')}</th>
                             </>
                         ) : (
                             <>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.avg_daily_sales')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.days_until_stockout')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('stock.analyse.columns.urgency')}</th>
-                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('stock.analyse.columns.value_at_risk')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.avg_daily_sales')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.days_until_stockout')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">{t('analyse.columns.urgency')}</th>
+                                <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right px-6">{t('analyse.columns.value_at_risk')}</th>
                             </>
                         )}
                     </tr>
@@ -169,10 +169,10 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                 {activeTab === 'unsold' ? (
                                     <>
                                         <td className="font-mono text-xs text-base-content/60">
-                                            {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US') : '-'}
+                                            {item.dernier_achat ? new Date(item.dernier_achat).toLocaleDateString(i18n.language) : '-'}
                                         </td>
                                         <td className="font-mono text-xs text-base-content/60">
-                                            {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US') : <span className="text-error font-black italic">{t('stock.analyse.messages.never_sold')}</span>}
+                                            {item.derniere_vente ? new Date(item.derniere_vente).toLocaleDateString(i18n.language) : <span className="text-error font-black italic">{t('analyse.messages.never_sold')}</span>}
                                         </td>
                                         <td className="text-center">
                                             <div className="badge border-none bg-warning/20 text-warning font-black italic">
@@ -211,7 +211,7 @@ export const StockAnalysisTable: React.FC<StockAnalysisTableProps> = ({
                                                 (item.days_until_stockout || 0) < 7 ? 'text-error' :
                                                 (item.days_until_stockout || 0) < 14 ? 'text-warning' : 'text-info'
                                             }`}>
-                                                {item.days_until_stockout} {t('stock.analyse.days')}
+                                                {item.days_until_stockout} {t('analyse.days')}
                                             </div>
                                         </td>
                                         <td className="text-center">

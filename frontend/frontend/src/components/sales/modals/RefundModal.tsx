@@ -16,7 +16,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
     onConfirm,
     facture
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['sales', 'common']);
     const [refundReason, setRefundReason] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -36,7 +36,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                             <AlertTriangle className="w-5 h-5 text-red-600" />
                         </div>
                         <h3 className="font-bold text-gray-900">
-                            {t('sales.modals.refund_confirm_title')}
+                            {t('refund_title')}
                         </h3>
                     </div>
                     <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
@@ -51,7 +51,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                         </div>
 
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {t('sales.modals.refund_reason')} <span className="text-red-500">*</span>
+                            {t('refund.refund_reason')} <span className="text-red-500">*</span>
                         </label>
                         <textarea
                             value={refundReason}

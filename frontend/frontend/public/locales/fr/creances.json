@@ -1,0 +1,111 @@
+{
+    "title": "Gestion des Créances",
+    "subtitle": "Suivi des ventes en compte - Clients professionnels",
+    "history_toggle": "Voir Historique",
+    "refresh": "Actualiser",
+    "selection": "Sélection",
+    "invoices_count": "{{count}} factures",
+    "total_due": "Total dû",
+    "pay_selection": "Payer la sélection",
+    "loading": "Chargement des données...",
+    "filters": {
+        "client_label": "Client",
+        "client_placeholder": "Tous les clients",
+        "start_date": "Date Début",
+        "end_date": "Date Fin",
+        "search": "Rechercher",
+        "reset": "Réinitialiser",
+        "back_to_list": "Retour à la liste"
+    },
+    "stats": {
+        "total_invoices": "Total Factures",
+        "total_paid": "Total Payé",
+        "remaining": "Reste à Payer",
+        "debtors": "Clients Débiteurs"
+    },
+    "client_list": {
+        "client": "Client",
+        "nb_invoices": "Nb Factures",
+        "total_amount": "Montant Total",
+        "already_paid": "Déjà Payé",
+        "remaining_due": "Reste à Payer",
+        "actions": "Actions",
+        "empty": "Aucun client avec des créances sur cette période"
+    },
+    "invoice_list": {
+        "selected_count": "{{count}} facture(s) sélectionnée(s)",
+        "pay_selection": "Régler la sélection",
+        "date": "Date",
+        "invoice_number": "N° Facture",
+        "beneficiary": "Ayant Droit",
+        "total": "Total",
+        "paid": "Payé",
+        "remaining": "Reste",
+        "status": "Statut",
+        "actions": "Actions",
+        "empty": "Aucune facture trouvée pour ce client",
+        "paid_badge": "PAYÉE",
+        "pending_badge": "EN ATTENTE",
+        "view_payments": "Voir les paiements",
+        "add_payment": "Ajouter un paiement"
+    },
+    "print_statement": "Imprimer le Relevé",
+    "client_label": "Client : {{name}}",
+    "payment_modal": {
+        "title": "💰 Nouveau Règlement",
+        "invoice_prefix": "Facture",
+        "by_client": "Par",
+        "remaining_balance": "Solde restant:",
+        "payment_mode": "Mode de Paiement",
+        "amount_to_pay": "Montant à verser (F)",
+        "pay_full": "Régler la totalité",
+        "reference": "Référence (optionnelle)",
+        "reference_placeholder": "N° chèque, transaction, ID...",
+        "cancel": "Annuler",
+        "validate_pay": "Valider & Payer",
+        "modes": {
+            "cash": "💵 Espèces",
+            "om": "🟧 Orange Money",
+            "momo": "📱 Mobile Money",
+            "check": "📝 Chèque",
+            "card": "💳 Carte",
+            "transfer": "🏦 Virement",
+            "recouvrement": "💸 Tiers Payeur"
+        }
+    },
+    "details_modal": {
+        "title": "👁️ Historique des Paiements",
+        "invoice": "Facture",
+        "issued_on": "Émise le",
+        "client_beneficiary": "Client / Bénéficiaire",
+        "no_beneficiary": "Pas d'ayant droit",
+        "financial_summary": "Résumé Financier",
+        "total": "Total:",
+        "remaining": "Reste:",
+        "payment_list": "Liste des encaissements",
+        "no_payments": "Aucun paiement enregistré pour cette facture.",
+        "headers": {
+            "date": "Date",
+            "mode": "Mode",
+            "reference": "Référence",
+            "amount": "Montant",
+            "actions": "Actions"
+        },
+        "print_receipt": "Imprimer le reçu",
+        "total_collected": "Total encaissé sur cette facture",
+        "close": "Fermer",
+        "print_global_receipt": "Imprimer Reçu Global"
+    },
+    "bulk_modal": {
+        "title": "💰 Règlement Groupé",
+        "selected_invoices": "{{count}} Factures sélectionnées",
+        "warning_text": "Cette action soldera le **montant restant** de toutes les factures sélectionnées.",
+        "warning_subtext": "Une entrée sera créée dans le journal de caisse pour chaque facture traitée.",
+        "payment_mode": "Mode de Règlement",
+        "bulk_reference": "Référence Groupée (optionnelle)",
+        "reference_placeholder": "N° chèque, virement, lot...",
+        "supervisor_hint": "La validation d'un superviseur sera requise à l'étape suivante.",
+        "cancel": "Annuler",
+        "confirm_payment": "Confirmer le Règlement"
+    }
+}

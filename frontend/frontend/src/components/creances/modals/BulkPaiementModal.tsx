@@ -1,5 +1,6 @@
 import React from 'react';
 import { Layers, CreditCard, Hash, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import PremiumModal from '../../common/PremiumModal';
 import { formatCurrency } from '../../../utils/formatters';
 
@@ -25,12 +26,13 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
     form,
     onConfirm
 }) => {
+    const { t } = useTranslation(['creances', 'common']);
 
     return (
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title="💰 Règlement Groupé"
+            title={t('creances:bulk_modal.title')}
             maxWidth="max-w-md"
         >
             <div className="space-y-6">
@@ -41,7 +43,7 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                     </div>
                     <div>
                         <div className="text-sm font-bold text-primary uppercase tracking-widest mb-1">
-                            {count} Factures sélectionnées
+                            {t('creances:bulk_modal.selected_invoices', { count })}
                         </div>
                         <div className="text-3xl font-black text-base-content italic tracking-tight">
                             {formatCurrency(Math.round(totalAmount))} F
@@ -53,8 +55,9 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 <div className="alert alert-warning bg-warning/10 border-warning/20 p-4 rounded-xl flex items-start gap-3 shadow-sm">
                     <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                     <div className="text-[11px] font-medium leading-relaxed">
-                        Cette action soldera le <strong>montant restant</strong> de toutes les factures sélectionnées.
-                        Une entrée sera créée dans le journal de caisse pour chaque facture traitée.
+                        {t('creances:bulk_modal.warning_text')}
+                        <br />
+                        {t('creances:bulk_modal.warning_subtext')}
                     </div>
                 </div>
 
@@ -62,29 +65,29 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                 <div className="space-y-4">
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <CreditCard className="w-3 h-3" /> Mode de Règlement
+                            <CreditCard className="w-3 h-3" /> {t('creances:bulk_modal.payment_mode')}
                         </label>
                         <select
                             value={form.modePaiement}
                             onChange={(e) => form.setModePaiement(e.target.value)}
                             className="select select-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all font-bold"
                         >
-                            <option value="especes">💵 Espèces</option>
-                            <option value="om">🟧 Orange Money</option>
-                            <option value="momo">📱 Mobile Money</option>
-                            <option value="cheque">📝 Chèque</option>
-                            <option value="carte">💳 Carte</option>
-                            <option value="virement">🏦 Virement</option>
+                            <option value="especes">{t('creances:payment_modal.modes.cash')}</option>
+                            <option value="om">{t('creances:payment_modal.modes.om')}</option>
+                            <option value="momo">{t('creances:payment_modal.modes.momo')}</option>
+                            <option value="cheque">{t('creances:payment_modal.modes.check')}</option>
+                            <option value="carte">{t('creances:payment_modal.modes.card')}</option>
+                            <option value="virement">{t('creances:payment_modal.modes.transfer')}</option>
                         </select>
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black uppercase tracking-widest text-base-content/40 flex items-center gap-1.5 ml-1">
-                            <Hash className="w-3 h-3" /> Référence Groupée (optionnelle)
+                            <Hash className="w-3 h-3" /> {t('creances:bulk_modal.bulk_reference')}
                         </label>
                         <input
                             type="text"
-                            placeholder="N° chèque, virement, lot..."
+                            placeholder={t('creances:bulk_modal.reference_placeholder')}
                             value={form.referencePaiement}
                             onChange={(e) => form.setReferencePaiement(e.target.value)}
                             className="input input-bordered w-full focus:ring-2 focus:ring-primary/20 transition-all font-mono text-sm"
@@ -97,20 +100,20 @@ export const BulkPaiementModal: React.FC<BulkPaiementModalProps> = ({
                         <Info className="w-3 h-3 text-base-content/40" />
                     </div>
                     <p className="text-[10px] text-base-content/50 font-medium">
-                        La validation d'un superviseur sera requise à l'étape suivante.
+                        {t('creances:bulk_modal.supervisor_hint')}
                     </p>
                 </div>
 
                 <div className="pt-4 flex gap-3">
                     <button onClick={onClose} className="btn btn-ghost flex-1 font-bold uppercase tracking-widest text-xs">
-                        Annuler
+                        {t('creances:bulk_modal.cancel')}
                     </button>
                     <button 
                         onClick={onConfirm} 
                         className="btn btn-primary flex-1 font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 gap-2"
                     >
                         <CheckCircle2 className="w-4 h-4" />
-                        Confirmer le Règlement
+                        {t('creances:bulk_modal.confirm_payment')}
                     </button>
                 </div>
             </div>

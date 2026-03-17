@@ -16,7 +16,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
     onRefresh,
     onNew
 }) => {
-    const { t } = useTranslation();
+    const { t } = useTranslation(['stock', 'common']);
 
     return (
         <div className="p-4 bg-base-100 border-b border-base-200">
@@ -26,7 +26,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-base-content/40" />
                         <input
                             type="text"
-                            placeholder={t('avoirs.search_placeholder', 'Rechercher fournisseur ou numéro...')}
+                            placeholder={t('avoirs.search_placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="input input-bordered w-full pl-9 bg-base-200/50 focus:bg-base-100 transition-colors"
@@ -38,7 +38,7 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                     <button 
                         className="btn btn-square btn-ghost text-base-content/60 hover:text-primary hover:bg-primary/10 transition-colors"
                         onClick={onRefresh}
-                        title={t('common.refresh', 'Actualiser')}
+                        title={t('common:refresh')}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                     </button>
@@ -47,8 +47,8 @@ export const AvoirsFilters: React.FC<AvoirsFiltersProps> = ({
                         onClick={onNew}
                     >
                         <Plus className="w-4 h-4" />
-                        <span className="hidden sm:inline">{t('avoirs.create_btn', 'Nouvel Avoir')}</span>
-                        <span className="sm:hidden">{t('common.add', 'Ajouter')}</span>
+                        <span className="hidden sm:inline">{t('avoirs.create_btn')}</span>
+                        <span className="sm:hidden">{t('common:add')}</span>
                     </button>
                 </div>
             </div>

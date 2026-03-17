@@ -20,14 +20,14 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
     totalCount,
     onPageChange
 }) => {
-    const { t, i18n } = useTranslation();
+    const { t, i18n } = useTranslation(['stock', 'common']);
 
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center h-64 gap-4">
                 <span className="loading loading-spinner loading-lg text-primary"></span>
                 <p className="text-sm font-medium text-base-content/40 uppercase tracking-widest animate-pulse">
-                    {t('stock.ajustements.table.loading')}
+                    {t('ajustements.table.loading')}
                 </p>
             </div>
         );
@@ -39,7 +39,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                 <div className="p-4 bg-base-200 rounded-full mb-4">
                     <ClipboardList className="w-8 h-8 text-base-content/20" />
                 </div>
-                <p className="text-base-content/50 font-medium">{t('stock.ajustements.table.empty')}</p>
+                <p className="text-base-content/50 font-medium">{t('ajustements.table.empty')}</p>
             </div>
         );
     }
@@ -51,23 +51,23 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                     <thead>
                         <tr className="bg-base-200/50 border-b border-base-200">
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6">
-                                <div className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {t('stock.ajustements.table.date_header')}</div>
+                                <div className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /> {t('ajustements.table.date_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="flex items-center gap-1.5"><Package className="w-3 h-3" /> {t('stock.ajustements.table.product_header')}</div>
+                                <div className="flex items-center gap-1.5"><Package className="w-3 h-3" /> {t('ajustements.table.product_header')}</div>
                             </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="flex items-center gap-1.5"><Hash className="w-3 h-3" /> {t('stock.ajustements.table.cip_header')}</div>
+                                <div className="flex items-center gap-1.5"><Hash className="w-3 h-3" /> {t('ajustements.table.cip_header')}</div>
                                 </th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40">
-                                <div className="flex items-center gap-1.5"><User className="w-3 h-3" /> {t('stock.ajustements.table.user_header')}</div>
+                                <div className="flex items-center gap-1.5"><User className="w-3 h-3" /> {t('ajustements.table.user_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('stock.ajustements.table.before_header')}</th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('stock.ajustements.table.after_header')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('ajustements.table.before_header')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-right">{t('ajustements.table.after_header')}</th>
                             <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 text-center">
-                                <div className="flex items-center justify-center gap-1.5"><ArrowLeftRight className="w-3 h-3" /> {t('stock.ajustements.table.diff_header')}</div>
+                                <div className="flex items-center justify-center gap-1.5"><ArrowLeftRight className="w-3 h-3" /> {t('ajustements.table.diff_header')}</div>
                             </th>
-                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6">{t('stock.ajustements.table.reason_header')}</th>
+                            <th className="text-[10px] font-black uppercase tracking-widest text-base-content/40 px-6">{t('ajustements.table.reason_header')}</th>
                         </tr>
                     </thead>
                     <tbody className="text-sm">
@@ -101,7 +101,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
                                 </td>
                                 <td className="px-6">
                                     <span className="text-[10px] font-black uppercase tracking-tighter text-primary/60 bg-primary/5 px-2 py-1 rounded-md border border-primary/10">
-                                        {t(`stock.ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })}
+                                        {t(`ajustements.filters.reasons.${adj.reason_type}`, { defaultValue: adj.reason_type_display })}
                                     </span>
                                 </td>
                             </tr>
@@ -113,7 +113,7 @@ export const AjustementsTable: React.FC<AjustementsTableProps> = ({
             {/* Pagination */}
             <div className="mt-auto border-t border-base-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-base-100">
                 <div className="text-xs font-bold text-base-content/40 uppercase tracking-widest">
-                    {t('stock.ajustements.table.pagination', { current: currentPage, total: totalPages, count: totalCount })}
+                    {t('ajustements.table.pagination', { current: currentPage, total: totalPages, count: totalCount })}
                 </div>
                 <div className="flex items-center gap-1 bg-base-200 p-1 rounded-2xl shadow-inner">
                     <button 

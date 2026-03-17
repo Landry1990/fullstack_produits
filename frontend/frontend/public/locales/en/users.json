@@ -1,0 +1,146 @@
+{
+    "title": "User Management",
+    "subtitle": "Manage access and permissions for your team",
+    "new_user": "New User",
+    "actions": {
+        "create": "New User",
+        "edit": "Edit",
+        "delete": "Delete"
+    },
+    "table": {
+        "user": "User",
+        "role_access": "Role & Access",
+        "special_permissions": "Special Permissions",
+        "actions": "Actions",
+        "username": "Username",
+        "role": "Role",
+        "status": "Status",
+        "last_login": "Last login"
+    },
+    "roles": {
+        "ADMIN": "Administrator",
+        "PHARMACIEN": "Pharmacist / Manager",
+        "pharmacist": "Pharmacist (Full Admin)",
+        "CASHIER": "Cashier",
+        "cashier": "Cashier (Billing + Checkout)",
+        "SELLER": "Seller",
+        "seller": "Seller (Sales only)"
+    },
+    "badges": {
+        "pharmacist": "Pharmacist",
+        "full_access": "Full Access"
+    },
+    "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+    },
+    "form": {
+        "username": "Username *",
+        "password": "Password",
+        "password_hint": "(leave empty to keep current)",
+        "role": "Role *",
+        "firstname": "First Name",
+        "lastname": "Last Name",
+        "email": "Email",
+        "max_discount": "Max Discount (%)"
+    },
+    "modal": {
+        "new_title": "New User",
+        "edit_title": "Edit User",
+        "basic_info": "Basic Information",
+        "authorized_menus": "Authorized Menus",
+        "admin_note": "An administrator has access to all menus by default.",
+        "special_permissions": "Special Permissions & Sales",
+        "security_sudo": "Security & Sudo"
+    },
+    "permissions": {
+        "cash_out": "Can Cash Out",
+        "cash_out_desc": "Grants full access to the checkout module",
+        "returns": "Can perform returns",
+        "negative_stock": "Negative Stock allowed",
+        "modify_price": "Can modify price",
+        "generate_coupon": "Can generate coupons",
+        "modify_invoice": "Can modify invoices",
+        "cancel_invoice": "Cancel Invoices",
+        "cancel_promis": "Cancel Promis",
+        "delete_product": "Delete Products",
+        "delete_fournisseur": "Delete Suppliers",
+        "adjust_stock": "Adjust Stock",
+        "delete_commande": "Delete Order",
+        "close_commande": "Close Order",
+        "manage_perimes": "Manage Expired",
+        "manage_avoirs": "Manage Credits"
+    },
+    "messages": {
+        "load_error": "Error loading users",
+        "created": "User created successfully",
+        "updated": "User updated successfully",
+        "deleted": "User {{username}} deleted",
+        "delete_error": "Error deleting user",
+        "save_error": "Error saving user",
+        "delete_confirm_title": "Delete User?",
+        "delete_confirm": "Are you sure you want to delete {{username}}? This action is irreversible.",
+        "delete_btn": "Delete User",
+        "sudo_title": "Confirmation Required",
+        "sudo_message": "Please confirm your administrator password to perform this critical action.",
+        "access_denied": "Access restricted to administrators"
+    },
+    "sessions": {
+        "title": "User Sessions",
+        "subtitle": "Login history and working hours",
+        "tabs": {
+            "daily": "Daily",
+            "monthly": "Monthly Recap"
+        },
+        "date": "Date",
+        "operator": "Operator",
+        "all_operators": "All operators",
+        "workstation": "Workstation",
+        "first_login": "Start",
+        "last_logout": "End",
+        "duration": "Duration",
+        "status": "Status",
+        "filter": "Filter",
+        "loading": "Loading sessions...",
+        "no_result": "No sessions found for this period",
+        "not_closed": "Not closed",
+        "closed": "Closed",
+        "ongoing": "Ongoing",
+        "force_logout": "Force Logout",
+        "force_logout_confirm": "Are you sure you want to force logout {{username}}?",
+        "force_logout_success": "User {{username}} disconnected",
+        "force_logout_error": "Error during force logout",
+        "recap": {
+            "month": "Month",
+            "year": "Year",
+            "days_present": "Days present",
+            "total_hours": "Total Hours",
+            "avg_hours": "Average / Day",
+            "avg": "Avg."
+        },
+        "months": {
+            "january": "January",
+            "february": "February",
+            "march": "March",
+            "april": "April",
+            "may": "May",
+            "june": "June",
+            "july": "July",
+            "august": "August",
+            "september": "September",
+            "october": "October",
+            "november": "November",
+            "december": "December"
+        }
+    },
+    "password_confirm": {
+        "title": "Security Confirmation",
+        "message": "Please confirm your password to continue.",
+        "label": "Confirm your password to continue:",
+        "placeholder": "Your password...",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "incorrect": "Incorrect password.",
+        "tech_error": "Technical error during verification."
+    }
+}

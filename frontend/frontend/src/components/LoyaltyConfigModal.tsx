@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import PremiumModal from './common/PremiumModal'
 
 interface LoyaltySetting {
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
+    const { t } = useTranslation(['clients', 'common'])
     const [settings, setSettings] = useState<LoyaltySetting | null>(null)
     const [loading, setLoading] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -69,7 +71,7 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 auto_reward_threshold: 0,
                 auto_reward_percent: "0"
             } as LoyaltySetting)
-            toast.error('Erreur lors du chargement des paramètres')
+            toast.error(t('common:messages.error_loading'))
         } finally {
             setLoading(false)
         }
@@ -89,9 +91,9 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 await axios.post(`${apiBaseUrl}/api/loyalty-settings/`, settings)
             }
             onClose()
-            toast.success('Configuration enregistrée !')
+            toast.success(t('common:messages.saved'))
         } catch (err) {
-            toast.error('Erreur enregistrement')
+            toast.error(t('common:messages.error_saving'))
             console.error(err)
         } finally {
             setSaving(false)
@@ -102,8 +104,8 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
         <PremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title="💎 Configuration Fidélité"
-            subtitle="Paramétrer le programme de fidélité"
+            title={t('clients:loyalty.title')}
+            subtitle={t('clients:loyalty.subtitle')}
             icon={
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -120,44 +122,44 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                 ) : settings ? (
                     <form onSubmit={handleSave} className="space-y-5">
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Montant d'achat pour 1 point (FCFA)</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.amount_per_point')}</label>
                             <input 
                                 type="number" 
                                 className="input input-bordered w-full h-12 rounded-xl"
                                 value={settings.amount_per_point}
                                 onChange={e => setSettings({...settings, amount_per_point: e.target.value})}
                             />
-                            <p className="text-xs text-gray-400 mt-1">Ex: 1000 = 1 point par tranche de 1000 F</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.amount_per_point_hint')}</p>
                         </div>
 
-                        <div className="divider text-xs uppercase tracking-wider">Usage Manuel</div>
+                        <div className="divider text-xs uppercase tracking-wider">{t('clients:loyalty.manual_usage')}</div>
 
                         <div>
-                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Valeur d'un point (FCFA)</label>
+                            <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.point_value')}</label>
                             <input 
                                 type="number" 
                                 className="input input-bordered w-full h-12 rounded-xl"
                                 value={settings.point_value}
                                 onChange={e => setSettings({...settings, point_value: e.target.value})}
                             />
-                            <p className="text-xs text-gray-400 mt-1">Si utilisé comme monnaie. Ex: 10 F</p>
+                            <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.point_value_hint')}</p>
                         </div>
 
-                        <div className="divider text-xs uppercase tracking-wider">Récompense Automatique</div>
+                        <div className="divider text-xs uppercase tracking-wider">{t('clients:loyalty.auto_reward')}</div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Seuil (Points)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.threshold')}</label>
                                 <input 
                                     type="number" 
                                     className="input input-bordered w-full h-12 rounded-xl"
                                     value={settings.auto_reward_threshold}
                                     onChange={e => setSettings({...settings, auto_reward_threshold: parseInt(e.target.value) || 0})}
                                 />
-                                <p className="text-xs text-gray-400 mt-1">0 = Désactivé</p>
+                                <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.threshold_hint')}</p>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Remise (%)</label>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">{t('clients:loyalty.discount')}</label>
                                 <input 
                                     type="number" 
                                     className="input input-bordered w-full h-12 rounded-xl"
@@ -165,20 +167,20 @@ export default function LoyaltyConfigModal({ isOpen, onClose }: Props) {
                                     value={settings.auto_reward_percent}
                                     onChange={e => setSettings({...settings, auto_reward_percent: e.target.value})}
                                 />
-                                <p className="text-xs text-gray-400 mt-1">Ex: 5.00 pour 5%</p>
+                                <p className="text-xs text-gray-400 mt-1">{t('clients:loyalty.discount_hint')}</p>
                             </div>
                         </div>
 
                         <div className="flex justify-end gap-3 pt-2">
-                             <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={saving}>Annuler</button>
+                             <button type="button" className="btn btn-ghost px-6 rounded-xl" onClick={onClose} disabled={saving}>{t('common:cancel')}</button>
                              <button type="submit" className="btn btn-primary px-8 rounded-xl shadow-lg shadow-primary/20" disabled={saving}>
                                 {saving && <span className="loading loading-spinner"></span>}
-                                Enregistrer
+                                {t('common:save')}
                              </button>
                         </div>
                     </form>
                 ) : (
-                    <div className="text-error text-center py-8">Erreur de chargement</div>
+                    <div className="text-error text-center py-8">{t('common:error')}</div>
                 )}
             </div>
         </PremiumModal>

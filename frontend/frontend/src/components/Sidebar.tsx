@@ -6,123 +6,123 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 export default function Sidebar() {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation(['sidebar', 'common']);
   const { user, logout } = useAuth();
   const { isOpen, isCollapsed, toggleSidebar, closeSidebar, toggleCollapse } = useSidebar();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   
   const allMenuItems = [
-    { path: '/app', label: t('sidebar.dashboard'), key: 'dashboard', icon: (
+    { path: '/app', label: t('dashboard'), key: 'dashboard', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
     )},
-    { path: '/app/manager-dashboard', label: t('sidebar.manager_sidebar'), key: 'manager_sidebar', icon: (
+    { path: '/app/manager-dashboard', label: t('manager_sidebar'), key: 'manager_sidebar', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
     )},
     { 
-      label: t('sidebar.ventes.title'), 
+      label: t('ventes.title'), 
       key: 'ventes', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/ventes', label: t('sidebar.ventes.consultation'), key: 'ventes_consultation' },
-        { path: '/app/historique-ventes', label: t('sidebar.ventes.historique'), key: 'ventes_historique' },
-        { path: '/app/journal-caisse', label: t('sidebar.ventes.journal'), key: 'ventes_journal' },
-        { path: '/app/historique-clotures', label: t('sidebar.ventes.clotures'), key: 'ventes_clotures' },
-        { path: '/app/ordonnancier', label: t('sidebar.ventes.ordonnancier'), key: 'ventes_ordonnancier' },
-        { path: '/app/promotions', label: t('sidebar.ventes.promotions'), key: 'ventes_promotions' },
-        { path: '/app/caisse-centralisee', label: t('sidebar.ventes.caisse_centralisee'), key: 'caisse' } // Keeping 'caisse' as it might be a specific top-level permission
+        { path: '/app/ventes', label: t('ventes.consultation'), key: 'ventes_consultation' },
+        { path: '/app/historique-ventes', label: t('ventes.historique'), key: 'ventes_historique' },
+        { path: '/app/journal-caisse', label: t('ventes.journal'), key: 'ventes_journal' },
+        { path: '/app/historique-clotures', label: t('ventes.clotures'), key: 'ventes_clotures' },
+        { path: '/app/ordonnancier', label: t('ventes.ordonnancier'), key: 'ventes_ordonnancier' },
+        { path: '/app/promotions', label: t('ventes.promotions'), key: 'ventes_promotions' },
+        { path: '/app/caisse-centralisee', label: t('ventes.caisse_centralisee'), key: 'caisse' } // Keeping 'caisse' as it might be a specific top-level permission
       ]
     },
-    { path: '/app/facturation', label: t('sidebar.facturation'), key: 'facturation', icon: (
+    { path: '/app/facturation', label: t('facturation'), key: 'facturation', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
     )},
-    { path: '/app/produits', label: t('sidebar.produits'), key: 'produits', icon: (
+    { path: '/app/produits', label: t('produits'), key: 'produits', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
     )},
-    { path: '/app/vitrine', label: t('sidebar.vitrine'), key: 'vitrine', icon: (
+    { path: '/app/vitrine', label: t('vitrine'), key: 'vitrine', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
     )},
     { 
-      label: t('sidebar.commandes.local_title'), 
+      label: t('commandes.local_title'), 
       key: 'commandes_loc', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/locales', label: t('sidebar.commandes.new_current'), key: 'commandes_loc_current' },
-        { path: '/app/historique-achats/locales', label: t('sidebar.commandes.history'), key: 'commandes_loc_history' },
+        { path: '/app/commandes/locales', label: t('commandes.new_current'), key: 'commandes_loc_current' },
+        { path: '/app/historique-achats/locales', label: t('commandes.history'), key: 'commandes_loc_history' },
       ]
     },
     { 
-      label: t('sidebar.commandes.direct_title'), 
+      label: t('commandes.direct_title'), 
       key: 'commandes_dir', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
       ),
       submenus: [
-        { path: '/app/commandes/directes', label: t('sidebar.commandes.new_current'), key: 'commandes_dir_current' },
-        { path: '/app/historique-achats/directes', label: t('sidebar.commandes.history'), key: 'commandes_dir_history' },
+        { path: '/app/commandes/directes', label: t('commandes.new_current'), key: 'commandes_dir_current' },
+        { path: '/app/historique-achats/directes', label: t('commandes.history'), key: 'commandes_dir_history' },
       ]
     },
-    { path: '/app/fournisseurs', label: t('sidebar.fournisseurs.title'), key: 'fournisseurs', icon: (
+    { path: '/app/fournisseurs', label: t('fournisseurs.title'), key: 'fournisseurs', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
     )},
-    { path: '/app/clients', label: t('sidebar.clients'), key: 'clients', icon: (
+    { path: '/app/clients', label: t('clients'), key: 'clients', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
     )},
-    { path: '/app/creances', label: t('sidebar.creances'), key: 'creances', icon: (
+    { path: '/app/creances', label: t('creances'), key: 'creances', icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
     )},
     { 
-      label: t('sidebar.stock.title'), 
+      label: t('stock.title'), 
       key: 'inventaire', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
       ),
       submenus: [
-        { path: '/app/inventaire', label: t('sidebar.stock.inventaire.title'), key: 'inventaire_saisie' },
-        { path: '/app/journal-ajustements', label: t('sidebar.stock.journal'), key: 'inventaire_journal' },
-        { path: '/app/stock-analysis', label: t('sidebar.stock.analyse.title'), key: 'inventaire_analyse' },
-        { path: '/app/reappro-rayon', label: t('sidebar.stock.reappro.title', 'Réappro Rayon'), key: 'inventaire_reappro' },
-        { path: '/app/avoirs', label: t('sidebar.stock.avoirs'), key: 'inventaire_avoirs' },
-        { path: '/app/promis', label: t('sidebar.stock.promis'), key: 'inventaire_promis' },
-        { path: '/app/transformations', label: t('sidebar.stock.transformations.title'), key: 'inventaire_transformations' },
-        { path: '/app/perimes', label: t('sidebar.stock.perimes.title'), key: 'inventaire_perimes' },
-        { path: '/app/organisation', label: t('sidebar.stock.organisation.title', 'Organisation'), key: 'inventaire_organisation' },
-        { path: '/app/etats-inventaire', label: t('sidebar.stock.etats_inventaire.title', 'États Inventaires'), key: 'inventaire_etats' },
-        { path: '/app/rapport-ug', label: t('sidebar.stock.rapport_ug.title', 'Rapport Unités Gratuites (UG)'), key: 'inventaire_rapport_ug' }
+        { path: '/app/inventaire', label: t('stock.inventaire.title'), key: 'inventaire_saisie' },
+        { path: '/app/journal-ajustements', label: t('stock.journal'), key: 'inventaire_journal' },
+        { path: '/app/stock-analysis', label: t('stock.analyse.title'), key: 'inventaire_analyse' },
+        { path: '/app/reappro-rayon', label: t('stock.reappro.title', 'Réappro Rayon'), key: 'inventaire_reappro' },
+        { path: '/app/avoirs', label: t('stock.avoirs'), key: 'inventaire_avoirs' },
+        { path: '/app/promis', label: t('stock.promis'), key: 'inventaire_promis' },
+        { path: '/app/transformations', label: t('stock.transformations.title'), key: 'inventaire_transformations' },
+        { path: '/app/perimes', label: t('stock.perimes.title'), key: 'inventaire_perimes' },
+        { path: '/app/organisation', label: t('stock.organisation.title', 'Organisation'), key: 'inventaire_organisation' },
+        { path: '/app/etats-inventaire', label: t('stock.etats_inventaire.title', 'États Inventaires'), key: 'inventaire_etats' },
+        { path: '/app/rapport-ug', label: t('stock.rapport_ug.title', 'Rapport Unités Gratuites (UG)'), key: 'inventaire_rapport_ug' }
       ]
     },
     { 
-      label: t('sidebar.statistiques.title'), 
+      label: t('statistiques.title'), 
       key: 'statistiques', 
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
       ),
       submenus: [
-        { path: '/app/centre-rapports', label: t('sidebar.statistiques.rapports'), key: 'statistiques_rapports' },
-        { path: '/app/analyse-abc', label: t('sidebar.statistiques.abc'), key: 'statistiques_abc' },
-        { path: '/app/statistiques-fournisseurs', label: t('sidebar.statistiques.fournisseurs'), key: 'statistiques_fournisseurs' },
-        { path: '/app/rapports-mensuels', label: t('sidebar.statistiques.mensuel'), key: 'statistiques_mensuels' },
-        { path: '/app/module-financier', label: t('sidebar.statistiques.finances'), key: 'statistiques_finances' },
-        { path: '/app/classement-vendeurs', label: t('sidebar.statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques_vendeurs' },
-        { path: '/app/analyse-temporelle', label: t('sidebar.statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques_temporelle' },
-        { path: '/app/guide-financier', label: t('sidebar.statistiques.guide', 'Guide Financier 📖'), key: 'statistiques_guide' }
+        { path: '/app/centre-rapports', label: t('statistiques.rapports'), key: 'statistiques_rapports' },
+        { path: '/app/analyse-abc', label: t('statistiques.abc'), key: 'statistiques_abc' },
+        { path: '/app/statistiques-fournisseurs', label: t('statistiques.fournisseurs'), key: 'statistiques_fournisseurs' },
+        { path: '/app/rapports-mensuels', label: t('statistiques.mensuel'), key: 'statistiques_mensuels' },
+        { path: '/app/module-financier', label: t('statistiques.finances'), key: 'statistiques_finances' },
+        { path: '/app/classement-vendeurs', label: t('statistiques.classement_vendeurs', 'Classement Vendeurs'), key: 'statistiques_vendeurs' },
+        { path: '/app/analyse-temporelle', label: t('statistiques.analyse_temporelle', 'Analyse Temporelle'), key: 'statistiques_temporelle' },
+        { path: '/app/guide-financier', label: t('statistiques.guide', 'Guide Financier 📖'), key: 'statistiques_guide' }
       ]
     },
     {
-      label: t('sidebar.parametres.title'),
+      label: t('parametres.title'),
       key: 'settings',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
       ),
       submenus: [
-        { path: '/app/invoice-settings', label: t('sidebar.parametres.facture'), key: 'settings_facture' },
-        { path: '/app/pharmacy-settings', label: t('sidebar.parametres.pharmacie'), key: 'settings_pharmacie' },
+        { path: '/app/invoice-settings', label: t('parametres.facture'), key: 'settings_facture' },
+        { path: '/app/pharmacy-settings', label: t('parametres.pharmacie'), key: 'settings_pharmacie' },
         { path: '/app/whatsapp-history', label: 'Historique WhatsApp', key: 'settings_whatsapp' },
-        { path: '/app/settings/options', label: t('sidebar.parametres.etiquettes'), key: 'settings_etiquettes' }
+        { path: '/app/settings/options', label: t('parametres.etiquettes'), key: 'settings_etiquettes' }
       ]
     },
   ];
@@ -169,7 +169,7 @@ export default function Sidebar() {
   if (user?.is_superuser) {
     menuItems.push({
       path: '/app/utilisateurs',
-      label: t('sidebar.utilisateurs'),
+      label: t('utilisateurs'),
       key: 'utilisateurs',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -177,7 +177,7 @@ export default function Sidebar() {
     });
     menuItems.push({
       path: '/app/user-sessions',
-      label: t('sidebar.user_sessions_sidebar'),
+      label: t('user_sessions_sidebar'),
       key: 'user_sessions',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -185,7 +185,7 @@ export default function Sidebar() {
     });
     menuItems.push({
       path: '/app/journal-audit',
-      label: t('sidebar.audit'),
+      label: t('audit'),
       key: 'audit',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -250,7 +250,7 @@ export default function Sidebar() {
           {!isCollapsed && (
             <div className="min-w-0">
               <h1 className="text-xl font-bold text-white truncate uppercase tracking-wider">Zenith</h1>
-              <p className="text-xs text-green-400 truncate">{t('sidebar.app_subtitle')}</p>
+              <p className="text-xs text-green-400 truncate">{t('app_subtitle')}</p>
             </div>
           )}
         </div>

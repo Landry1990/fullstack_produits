@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import PremiumModal from './common/PremiumModal';
 import { formatCurrency } from '../utils/formatters';
 
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler, onPointer }: Props) {
+  const { t } = useTranslation(['providers', 'common']);
   const [echeances, setEcheances] = useState<Echeance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,8 +66,8 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
     <PremiumModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Échéancier Fournisseurs"
-      subtitle="Suivi des règlements et alertes de retards"
+      title={t('providers:schedule.title')}
+      subtitle={t('providers:schedule.subtitle')}
       icon={
         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -90,7 +92,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
             </div>
             <input 
               type="text" 
-              placeholder="Rechercher un fournisseur ou une référence..." 
+              placeholder={t('providers:schedule.search_placeholder')} 
               className="input input-sm input-bordered w-full pl-9"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -101,10 +103,10 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
           >
-            <option value="TOUS">Tous les statuts</option>
-            <option value="EN RETARD">🔴 En retard</option>
-            <option value="AUJOURD'HUI">🟠 Aujourd'hui</option>
-            <option value="À VENIR">🟢 À venir</option>
+            <option value="TOUS">{t('providers:schedule.status_all')}</option>
+            <option value="EN RETARD">{t('providers:schedule.status_late')}</option>
+            <option value="AUJOURD'HUI">{t('providers:schedule.status_today')}</option>
+            <option value="À VENIR">{t('providers:schedule.status_upcoming')}</option>
           </select>
         </div>
 
@@ -115,20 +117,20 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
         ) : filteredEcheances.length === 0 ? (
           <div className="text-center flex-1 flex flex-col justify-center p-10 bg-slate-50 rounded-xl border border-slate-100">
             <div className="text-4xl mb-4 opacity-50">✅</div>
-            <h3 className="text-lg font-bold text-slate-700">Aucun paiement trouvé</h3>
-            <p className="text-sm text-slate-500">Essayez de modifier vos filtres ou félicitations, tout est à jour !</p>
+            <h3 className="text-lg font-bold text-slate-700">{t('providers:schedule.empty')}</h3>
+            <p className="text-sm text-slate-500">{t('providers:schedule.empty_subtitle')}</p>
           </div>
         ) : (
           <div className="overflow-auto rounded-xl border border-slate-200 shadow-sm flex-1">
             <table className="table table-sm w-full table-pin-rows">
               <thead className="bg-[#f8fafc] text-[#64748b]">
                 <tr>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider py-3">Fournisseur</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider py-3">Référence / Type</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-right py-3">Montant Dû</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">Échéance</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">Statut</th>
-                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">Action</th>
+                  <th className="font-semibold uppercase text-[10px] tracking-wider py-3">{t('providers:schedule.table.provider')}</th>
+                  <th className="font-semibold uppercase text-[10px] tracking-wider py-3">{t('providers:schedule.table.ref_type')}</th>
+                  <th className="font-semibold uppercase text-[10px] tracking-wider text-right py-3">{t('providers:schedule.table.amount')}</th>
+                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.due_date')}</th>
+                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.status')}</th>
+                  <th className="font-semibold uppercase text-[10px] tracking-wider text-center py-3">{t('providers:schedule.table.action')}</th>
                 </tr>
               </thead>
               <tbody className="bg-white">
@@ -142,7 +144,7 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                           {e.numero_facture}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-wide">
-                          {e.type_reglement === 'RELEVE' ? 'Paiement Global' : 'Sur Facture'}
+                          {e.type_reglement === 'RELEVE' ? t('providers:schedule.type_statement') : t('providers:schedule.type_invoice')}
                         </div>
                     </td>
                     <td className="py-3 text-right">
@@ -173,17 +175,17 @@ export default function EcheancierFournisseursModal({ isOpen, onClose, onRegler,
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                          </svg>
-                         Régler
+                         {t('providers:schedule.table.pay_btn')}
                        </button>
                        <button 
                          className="btn btn-xs btn-neutral btn-outline rounded-full px-3 hover:shadow-md transition-all gap-1"
                          onClick={() => onPointer && onPointer(e.fournisseur_id, e.fournisseur_nom)}
-                         title="Détails des factures (Pointage)"
+                         title={t('providers:schedule.table.pointage_btn')}
                        >
                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                          </svg>
-                         Pointage
+                         {t('providers:schedule.table.pointage_btn')}
                        </button>
                     </td>
                   </tr>

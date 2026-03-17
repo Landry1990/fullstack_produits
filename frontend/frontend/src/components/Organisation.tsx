@@ -8,18 +8,18 @@ interface OrganisationProps {
 }
 
 export default function Organisation({ defaultTab = 'rayons' }: OrganisationProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('stock');
   const [activeTab, setActiveTab] = useState<'rayons' | 'formes' | 'groupes'>(defaultTab);
 
   const tabs = [
     { 
       id: 'rayons', 
-      label: t('stock.organisation.tabs.rayons'), 
+      label: t('organisation.tabs.rayons'), 
       icon: <FolderTree size={18} />, 
       color: 'primary',
       config: {
         type: 'rayon' as const,
-        title: t('stock.organisation.category_manager.name_label', { type: 'Rayon' }),
+        title: t('organisation.category_manager.name_label', { type: 'Rayon' }),
         icon: <FolderTree size={20} />,
         apiPath: '/api/rayons/',
         hasHierarchy: true,
@@ -28,12 +28,12 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
     },
     { 
       id: 'formes', 
-      label: t('stock.organisation.tabs.formes'), 
+      label: t('organisation.tabs.formes'), 
       icon: <Tablets size={18} />, 
       color: 'secondary',
       config: {
         type: 'forme' as const,
-        title: t('stock.organisation.category_manager.name_label', { type: 'Forme' }),
+        title: t('organisation.category_manager.name_label', { type: 'Forme' }),
         icon: <Tablets size={20} />,
         apiPath: '/api/formes/',
         hasHierarchy: false,
@@ -42,12 +42,12 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
     },
     { 
       id: 'groupes', 
-      label: t('stock.organisation.tabs.groupes'), 
+      label: t('organisation.tabs.groupes'), 
       icon: <LayoutGrid size={18} />, 
       color: 'accent',
       config: {
         type: 'groupe' as const,
-        title: t('stock.organisation.category_manager.name_label', { type: 'Groupe' }),
+        title: t('organisation.category_manager.name_label', { type: 'Groupe' }),
         icon: <LayoutGrid size={20} />,
         apiPath: '/api/groupes/',
         hasHierarchy: false,
@@ -64,8 +64,8 @@ export default function Organisation({ defaultTab = 'rayons' }: OrganisationProp
       <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 flex flex-col">
         <div className="p-6 border-b border-base-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
            <div>
-              <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('stock.organisation.title')}</h1>
-              <p className="text-base-content/60 text-sm mt-1">{t('stock.organisation.subtitle')}</p>
+              <h1 className="text-2xl font-bold text-base-content tracking-tight">{t('organisation.title')}</h1>
+              <p className="text-base-content/60 text-sm mt-1">{t('organisation.subtitle')}</p>
            </div>
 
            {/* Tabs Navigation (Style Ventes.tsx) */}
